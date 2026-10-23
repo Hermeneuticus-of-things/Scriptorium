@@ -541,6 +541,15 @@ export default function App({ api }) {
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
   const aiNode = (activeId.current && findNode(project.tree, activeId.current)) || selected;
   const editorialNode = aiNode && aiNode.type === 'text' ? aiNode : scrivSections[0] || null;
+  const linkTargets = flatten(project.tree)
+    .filter((n) => !n.root && n.type !== 'folder' && !inTrash(n.id))
+    .map((n) => ({ id: n.id, title: n.title }));
+  const openLink = (id) => {
+    if (findNode(project.tree, id)) {
+      go(id);
+      setView('editor');
+    } else report(new Error('Documentul legat nu mai există în proiect.'));
+  };
   const chapterFolder = selected && selected.children ? selected : findParent(project.tree, selectedId) || project.tree[0];
   const chapterDocs = flatten(chapterFolder.children || [])
     .filter((n) => n.type === 'text' && !inTrash(n.id))
@@ -624,6 +633,8 @@ export default function App({ api }) {
                 smartQuotes={smartQuotes}
                 onFocus={() => (activeId.current = selected.id)}
                 onChange={(html) => writeDocNow(selected.id, html)}
+                linkTargets={linkTargets}
+                onOpenLink={openLink}
               />
             )}
             {isFolderView && (
@@ -685,6 +696,8 @@ export default function App({ api }) {
                   smartQuotes={smartQuotes}
                   onFocus={() => (activeId.current = splitNode.id)}
                   onChange={(html) => writeDocNow(splitNode.id, html)}
+                  linkTargets={linkTargets}
+                  onOpenLink={openLink}
                 />
               )}
             </div>

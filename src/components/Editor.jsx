@@ -1,16 +1,18 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
+import { EditorContent, useEditor } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
 import { textToHtml } from '../lib/text.js';
 import FindBar from './FindBar.jsx';
+import FormatBar from './FormatBar.jsx';
 
 const Editor = forwardRef(function Editor(
-  { html, title, readOnly, typewriter, smartQuotes = true, compact = false, onChange, onFocus, onTitleClick },
+  { html, title, readOnly, typewriter, smartQuotes = true, compact = false, linkTargets = [], onOpenLink, onChange, onFocus, onTitleClick },
   ref,
 ) {
   const [showFind, setShowFind] = useState(false);
   const plainPaste = useRef(false);
+  const imageInput = useRef(null);
   const editor = useEditor(
     {
       extensions: buildExtensions({ smartQuotes }),
@@ -34,6 +36,23 @@ const Editor = forwardRef(function Editor(
           }
           // Paste and Match Style: the next paste keeps only the text.
           if (mod && e.shiftKey && e.key.toLowerCase() === 'v') plainPaste.current = true;
+          if (mod && !e.shiftKey && e.key.toLowerCase() === 'l') {
+            e.preventDefault();
+            const href = window.prompt('Adresa linkului:', editor?.getAttributes('link').href || 'https://');
+            if (href) editor?.chain().focus().extendMarkRange('link').setLink({ href }).run();
+            return true;
+          }
+          return false;
+        },
+        // Scrivener Links: Ctrl/Cmd+click (or any click when read-only) opens the target document.
+        handleClick: (_view, _pos, event) => {
+          const a = event.target.closest && event.target.closest('a[href]');
+          if (!a) return false;
+          const m = /^(?:scribner|scriptorium):\/\/doc\/([A-Za-z0-9-]+)/.exec(a.getAttribute('href'));
+          if (m && (event.ctrlKey || event.metaKey || readOnly)) {
+            onOpenLink?.(m[1]);
+            return true;
+          }
           return false;
         },
         handlePaste: (view, event) => {
@@ -54,25 +73,6 @@ const Editor = forwardRef(function Editor(
     },
     [smartQuotes],
   );
-
-  const active = useEditorState({
-    editor,
-    selector: ({ editor: ed }) =>
-      ed
-        ? {
-            bold: ed.isActive('bold'),
-            italic: ed.isActive('italic'),
-            underline: ed.isActive('underline'),
-            strike: ed.isActive('strike'),
-            h1: ed.isActive('heading', { level: 1 }),
-            h2: ed.isActive('heading', { level: 2 }),
-            quote: ed.isActive('blockquote'),
-            list: ed.isActive('bulletList'),
-            comment: ed.isActive('comment'),
-            hasSelection: !ed.state.selection.empty,
-          }
-        : {},
-  });
 
   useImperativeHandle(
     ref,
@@ -142,11 +142,6 @@ const Editor = forwardRef(function Editor(
   );
 
   if (!editor) return null;
-  const btn = (label, isOn, action, titleText, disabled = false) => (
-    <button className={isOn ? 'on' : ''} disabled={disabled} onMouseDown={(e) => e.preventDefault()} onClick={action} title={titleText}>
-      {label}
-    </button>
-  );
   const chain = () => editor.chain().focus();
 
   const addComment = () => {
@@ -157,30 +152,32 @@ const Editor = forwardRef(function Editor(
     const text = window.prompt('Nota de subsol:');
     if (text) chain().insertFootnote(text).run();
   };
+  const addAnnotation = () => {
+    const text = window.prompt('Adnotare inline (nu intră în Compile):');
+    if (text) chain().insertAnnotation(text).run();
+  };
+  const insertImage = () => imageInput.current?.click();
+  const onImageFile = (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => chain().setImage({ src: reader.result, alt: file.name }).run();
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div className={`editor ${compact ? 'compact' : ''}`}>
+      <input ref={imageInput} type="file" accept="image/*" hidden onChange={onImageFile} />
       {!readOnly && !compact && (
-        <div className="format-bar">
-          {btn(<b>B</b>, active.bold, () => chain().toggleBold().run(), 'Bold (Ctrl+B)')}
-          {btn(<i>I</i>, active.italic, () => chain().toggleItalic().run(), 'Italic (Ctrl+I)')}
-          {btn(<u>U</u>, active.underline, () => chain().toggleUnderline().run(), 'Subliniat (Ctrl+U)')}
-          {btn(<s>S</s>, active.strike, () => chain().toggleStrike().run(), 'Tăiat')}
-          <span className="sep" />
-          {btn('T1', active.h1, () => chain().toggleHeading({ level: 1 }).run(), 'Titlu 1')}
-          {btn('T2', active.h2, () => chain().toggleHeading({ level: 2 }).run(), 'Titlu 2')}
-          {btn('❝', active.quote, () => chain().toggleBlockquote().run(), 'Citat')}
-          {btn('•', active.list, () => chain().toggleBulletList().run(), 'Listă')}
-          {btn('— ', false, () => chain().insertContent('— ').run(), 'Linie de dialog')}
-          <span className="sep" />
-          {active.comment
-            ? btn('💬✕', true, () => chain().unsetComment().run(), 'Șterge comentariul')
-            : btn('💬', false, addComment, 'Comentariu pe textul selectat', !active.hasSelection)}
-          {btn('¹', false, addFootnote, 'Notă de subsol (dublu-clic pe număr pentru editare)')}
-          <span className="sep" />
-          {btn('↶', false, () => chain().undo().run(), 'Anulează (Ctrl+Z)')}
-          {btn('↷', false, () => chain().redo().run(), 'Refă (Ctrl+Y)')}
-        </div>
+        <FormatBar
+          editor={editor}
+          linkTargets={linkTargets}
+          onAddComment={addComment}
+          onAddFootnote={addFootnote}
+          onAddAnnotation={addAnnotation}
+          onInsertImage={insertImage}
+        />
       )}
       <div className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''}`}>
         <h2 className="doc-title" onClick={onTitleClick}>
