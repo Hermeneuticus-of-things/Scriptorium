@@ -33,6 +33,8 @@ import ExportDialog from './components/ExportDialog.jsx';
 import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc } from './lib/glossary.js';
 import { BackIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, OutlineIcon, ScriveningsIcon, SplitIcon } from './components/Icons.jsx';
 import { targetCrossed } from './lib/panelsExtra.js';
+import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
+import PageSetupDialog from './components/PageSetupDialog.jsx';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
@@ -237,11 +239,24 @@ export default function App({ api }) {
 
   const totalsRef = useRef(totals);
   totalsRef.current = totals;
+  const projectRef = useRef(project);
+  projectRef.current = project;
+  const docsRef = useRef(docs);
+  docsRef.current = docs;
 
   const recordHistory = useCallback(() => {
     clearTimeout(historyTimer.current);
     historyTimer.current = setTimeout(() => {
-      if (dir && api.recordHistory) api.recordHistory(dir, totalsRef.current).catch(() => {});
+      if (!dir || !api.recordHistory) return;
+      const pj = projectRef.current;
+      const ds = docsRef.current;
+      const chars = (ids) => ids.reduce((n, id) => n + htmlToText(ds[id] || '').length, 0);
+      let extra = {};
+      if (pj) {
+        const trash = new Set(flatten(pj.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
+        extra = { draftChars: chars(flatten(pj.tree[0].children).map((n) => n.id)), totalChars: chars(Object.keys(ds).filter((id) => !trash.has(id))) };
+      }
+      api.recordHistory(dir, { ...totalsRef.current, ...extra }).catch(() => {});
     }, HISTORY_DELAY);
   }, [api, dir]);
 
@@ -366,6 +381,10 @@ export default function App({ api }) {
       const openCounts = Object.fromEntries(entries.map(([id, h]) => [id, wordCount(h)]));
       const draftAtOpen = sumWords(res.project.tree[0], openCounts);
       setSessionStart(draftAtOpen);
+      const sOpen = settingsRef.current?.sharingSync || {};
+      if (res.project.syncFolder && (res.project.syncAuto || sOpen.syncOnOpen) && api.syncAuto) {
+        api.syncAuto(res.dir, { ...res.project, syncAuto: true, syncFormat: res.project.syncFormat || sOpen.format || 'rtf' }, 'open').then((r) => r?.action === 'in' && setToast(`Sincronizare automată: ${r.updated.length} actualizate, ${r.created.length} noi. Folosește „citește modificările” pentru documentele noi.`)).catch(() => {});
+      }
       // Anchor today's history at the counts on open, so the first save of the day is measured from here.
       const trashIds = new Set(flatten(res.project.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
       const totalAtOpen = Object.entries(openCounts).reduce((s, [id, c]) => s + (trashIds.has(id) ? 0 : c), 0);
@@ -378,6 +397,7 @@ export default function App({ api }) {
 
   const closeProject = async () => {
     await flush();
+    if (project?.syncFolder && (project.syncAuto || settings?.sharingSync?.syncOnClose)) await api.syncAuto?.(dir, { ...withSyncDefaults(project), syncAuto: true }, 'close').catch(() => {});
     api.releaseProject?.().catch(() => {});
     setProject(null);
     setDir(null);
@@ -843,8 +863,15 @@ export default function App({ api }) {
   const importWeb = async () => {
     const url = window.prompt('Adresa paginii web (http/https):', 'https://');
     if (!url || url === 'https://') return;
-    const page = await api.importWebPage(url);
-    importParts([{ title: page.title || url, html: page.html }]);
+    const page = await api.importWebPage(url, dir);
+    // The page and its images (saved offline in media/) go in with a single project save.
+    const node = newNode('text', page.title || url);
+    let tree = insertNear(project.tree, selectedId, node);
+    for (const m of page.media || []) tree = insertNear(tree, node.id, { ...newNode('media', m.title), id: m.id, media: m.media });
+    saveProject({ ...project, tree });
+    setDocs((d) => ({ ...d, [node.id]: page.html }));
+    await api.writeDoc(dir, node.id, 'docs', page.html);
+    go(node.id);
   };
   const importFilesCmd = async (mode = 'none', separator = '#') => {
     const res = await api.importFiles(dir, mode, separator);
@@ -1053,9 +1080,20 @@ export default function App({ api }) {
     const r = await api.exportScriv(dir, project);
     if (r) setToast(`Exportat ca proiect Scrivener: ${r.dir}`);
   };
+  // Project sync settings, falling back to Options → Sharing.
+  const withSyncDefaults = (pj) => {
+    const d = settings?.sharingSync || {};
+    return {
+      ...pj,
+      syncFormat: pj.syncFormat || d.format || 'rtf',
+      syncNotesFormat: pj.syncNotesFormat || (d.notesFormat && d.notesFormat !== 'same' ? d.notesFormat : undefined),
+      syncIncludeNotes: pj.syncIncludeNotes ?? d.includeNotes !== false,
+    };
+  };
   const syncOutCmd = async () => {
     await flush();
-    const r = await api.syncOut(dir, project, project.syncFolder, { format: project.syncFormat || 'rtf' });
+    const sp = withSyncDefaults(project);
+    const r = await api.syncOut(dir, sp, project.syncFolder, { format: sp.syncFormat, notesFormat: sp.syncNotesFormat, includeNotes: sp.syncIncludeNotes });
     if (r) saveProject({ ...project, syncFolder: r.folder });
   };
   const syncInCmd = async () => {
@@ -1272,6 +1310,9 @@ export default function App({ api }) {
     ['tools', 'research', 'Cercetare în proiect (RAG)', () => setShowResearch((v) => !v), !api.ragQuery],
     ['tools', 'glossaries', 'Generează glosare și cuprins de tipar', () => generateGlossaries().catch(report)],
     ['file', 'editorPackage', 'Pachet pentru editor…', () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(`Pachet creat în ${r.dir} (${r.files.length} fișiere)`)).catch(report), !api.editorPackage],
+    ['file', 'saveTemplate', 'Salvează ca șablon…', () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
+    ['file', 'pageSetup', 'Configurare pagină…', () => setDialog('pageSetup'), !api.getPageSetup],
+    ['file', 'printPreview', 'Previzualizare tipărire', () => flush().then(() => api.printPreview(dir, project, { ids: selectedId ? [selectedId] : [] })).catch(report), !api.printPreview],
     ['tools', 'nameGen', 'Generator de nume…', () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', 'Citire cu voce tare / Dictare', () => setShowSpeech((v) => !v)],
@@ -1744,6 +1785,8 @@ export default function App({ api }) {
           </div>
         </div>
       )}
+      {dialog === 'saveTemplate' && <SaveTemplateDialog api={api} dir={dir} project={project} onSaved={(t) => setToast(`Șablon salvat: ${t.title}`)} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'pageSetup' && <PageSetupDialog api={api} dir={dir} project={project} previewIds={selectedId ? [selectedId] : []} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
       {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || 'Din Scratchpad'); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(`Trimis în „${parent.title}”.`); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
       {showSpeech && <SpeechBar getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}

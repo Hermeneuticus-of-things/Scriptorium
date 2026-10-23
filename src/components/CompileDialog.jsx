@@ -24,6 +24,10 @@ const OUTPUTS = [
   ['md', 'Markdown'],
   ['mmd', 'MultiMarkdown'],
   ['txt', 'Text simplu'],
+  ['fountain', 'Fountain (scenariu)'],
+  ['fdx', 'Final Draft (.fdx)'],
+  ['tex', 'LaTeX'],
+  ['print', 'Tipărire (previzualizare)'],
 ];
 
 const PAGE_SIZES = [
@@ -101,10 +105,28 @@ function newCustomId() {
 export default function CompileDialog({ api, dir, project, selectionIds = [], onProjectChange, onClose, onError }) {
   const pc = project.compile || {};
   const [formats, setFormats] = useState(() => (Array.isArray(pc.formats) ? clone(pc.formats) : []));
-  const all = useMemo(() => [...PRESETS, ...formats], [formats]);
-  const [formatId, setFormatId] = useState(() => (all.some((f) => f.id === pc.formatId) ? pc.formatId : (PRESETS[0] || {}).id));
+  // Global formats (userData/compile-formats.json), shared by all projects.
+  const [globals, setGlobals] = useState([]);
+  const [globalsLoaded, setGlobalsLoaded] = useState(!api.listGlobalFormats);
+  useEffect(() => {
+    if (!api.listGlobalFormats) return;
+    api
+      .listGlobalFormats()
+      .then((l) => setGlobals(Array.isArray(l) ? l : []))
+      .catch(onError)
+      .finally(() => setGlobalsLoaded(true));
+  }, [api, onError]);
+  const all = useMemo(() => [...PRESETS, ...globals.filter((g) => !formats.some((f) => f.id === g.id)), ...formats], [formats, globals]);
+  const [formatId, setFormatId] = useState(() => (pc.formatId || (PRESETS[0] || {}).id));
   const format = all.find((f) => f.id === formatId) || PRESETS[0] || null;
+  const isGlobal = Boolean(format && format.global && !formats.some((f) => f.id === format.id));
   const editable = Boolean(format && !format.builtin);
+  useEffect(() => {
+    if (globalsLoaded && !all.some((f) => f.id === formatId)) setFormatId((PRESETS[0] || {}).id);
+  }, [globalsLoaded, all, formatId]);
+  const [collectionId, setCollectionId] = useState(pc.collectionId || '');
+  const [trackChanges, setTrackChanges] = useState(Boolean(pc.trackChanges));
+  const collections = (project.collections || []).filter((c) => Array.isArray(c.ids));
 
   const [output, setOutput] = useState(pc.output || 'docx');
   const [scope, setScope] = useState(pc.scope || 'draft');
@@ -133,9 +155,33 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   }, [scope, rootId, project.tree]);
 
   // --- format editing -------------------------------------------------------------
+  const saveGlobals = async (list) => {
+    const saved = await api.saveGlobalFormats(list);
+    setGlobals(Array.isArray(saved) ? saved : list);
+  };
   const patchFormat = (fn) => {
     if (!editable) return;
+    if (isGlobal) {
+      saveGlobals(globals.map((f) => (f.id === formatId ? fn(clone(f)) : f))).catch(onError);
+      return;
+    }
     setFormats((list) => list.map((f) => (f.id === formatId ? fn(clone(f)) : f)));
+  };
+  // Copies the current format into the global list (or back into the project).
+  const makeGlobal = async () => {
+    if (!format || !api.saveGlobalFormats) return;
+    try {
+      const copy = clone(format);
+      delete copy.builtin;
+      copy.basedOn = format.basedOn || format.id;
+      copy.id = newCustomId();
+      copy.global = true;
+      copy.name = window.prompt('Numele formatului global', format.name) || format.name;
+      await saveGlobals([...globals, copy]);
+      setFormatId(copy.id);
+    } catch (e) {
+      onError(e);
+    }
   };
   const setIn = (path, value) =>
     patchFormat((f) => {
@@ -165,7 +211,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   };
   const remove = () => {
     if (!editable || !window.confirm(`Ștergi formatul „${format.name}”?`)) return;
-    setFormats((l) => l.filter((f) => f.id !== formatId));
+    if (isGlobal) saveGlobals(globals.filter((f) => f.id !== formatId)).catch(onError);
+    else setFormats((l) => l.filter((f) => f.id !== formatId));
     setFormatId((PRESETS[0] || {}).id);
   };
 
@@ -185,6 +232,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     statuses,
     epub,
     coverId,
+    collectionId,
+    trackChanges,
   });
 
   const persist = () => {
@@ -205,7 +254,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
       epub,
       styles,
       styleCss: styleCss(styles, 'body'),
+      projectDir: dir, // <$img:Name> placeholders read images from the project's media
     };
+    if (collectionId) opts.collectionId = collectionId;
+    if (output === 'docx' && trackChanges) {
+      opts.trackChanges = true;
+      opts.trackAuthor = next.author || '';
+    }
     if (titlePage !== null) opts.titlePage = titlePage;
     if (toc !== null) opts.toc = toc;
     if (scope === 'folder' && rootId) opts.rootId = rootId;
@@ -222,6 +277,11 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     setDone('');
     try {
       const next = persist();
+      if (output === 'print') {
+        if (!api.printPreview) throw new Error('Previzualizarea tipăririi nu este disponibilă.');
+        await api.printPreview(dir, next, { ...(await buildOptions(next)), compiled: true });
+        return;
+      }
       const file = await api.exportCompiled(dir, next, output, await buildOptions(next));
       if (file) setDone(file);
     } catch (e) {
@@ -328,7 +388,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                 <li key={f.id}>
                   <button type="button" className={f.id === formatId ? 'active' : ''} onClick={() => setFormatId(f.id)}>
                     {f.name}
-                    {f.builtin ? '' : ' ✎'}
+                    {f.builtin ? '' : f.global && !formats.some((x) => x.id === f.id) ? ' 🌐' : ' ✎'}
                   </button>
                 </li>
               ))}
@@ -337,7 +397,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               <button type="button" onClick={duplicate}>Duplică</button>
               <button type="button" onClick={rename} disabled={!editable}>Redenumește</button>
               <button type="button" onClick={remove} disabled={!editable}>Șterge</button>
+              {api.saveGlobalFormats && (
+                <button type="button" onClick={makeGlobal} title="Salvează o copie disponibilă în toate proiectele">
+                  Salvează global
+                </button>
+              )}
             </div>
+            {isGlobal && <p className="muted small">Format global 🌐: modificările se salvează pentru toate proiectele.</p>}
             {!editable && <p className="muted small">Formatele predefinite nu se modifică. Duplică formatul pentru a-l personaliza.</p>}
           </aside>
 
@@ -409,6 +475,11 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <input type="checkbox" checked={toc ?? Boolean(format.toc)} onChange={(e) => setToc(e.target.checked)} /> Cuprins
                     {output === 'epub' && <span className="muted"> (în EPUB cuprinsul de navigare există mereu)</span>}
                   </label>
+                  {output === 'docx' && (
+                    <label className="check">
+                      <input type="checkbox" checked={trackChanges} onChange={(e) => setTrackChanges(e.target.checked)} /> Reviziile ca modificări urmărite Word (Track Changes)
+                    </label>
+                  )}
                   <fieldset>
                     <legend>Filtre (gol = toate)</legend>
                     <div className="cd-chips">
@@ -419,6 +490,17 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                         </label>
                       ))}
                     </div>
+                    {collections.length > 0 && (
+                      <label>
+                        Colecție
+                        <select value={collectionId} onChange={(e) => setCollectionId(e.target.value)}>
+                          <option value="">Toate documentele</option>
+                          {collections.map((c) => (
+                            <option key={c.id} value={c.id}>{c.title}</option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
                     <div className="cd-chips">
                       <span className="muted">Stări:</span>
                       {statusNames.map((s) => (
@@ -434,7 +516,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               {tab === 'sectiuni' && (
                 <fieldset disabled={!editable}>
                   <p className="muted small">
-                    Fiecare tip de secțiune primește o aranjare. Substituenți: &lt;$n&gt;, &lt;$n:roman&gt;, &lt;$n:words&gt;, &lt;$n:Words&gt;, &lt;$t&gt;, &lt;$projecttitle&gt;, &lt;$author&gt;. „\n” în prefix = rând nou.
+                    Fiecare tip de secțiune primește o aranjare. Substituenți: &lt;$n&gt;, &lt;$n:roman&gt;, &lt;$n:words&gt;, &lt;$n:Words&gt;, &lt;$t&gt;, &lt;$projecttitle&gt;, &lt;$author&gt;; în text, &lt;$img:Nume&gt; inserează imaginea din Cercetare cu acel nume. „\n” în prefix = rând nou.
                   </p>
                   <div className="row">
                     {[['folder', 'Dosare'], ['container', 'Documente cu subdocumente'], ['file', 'Documente']].map(([k, label]) => (

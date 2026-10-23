@@ -8,7 +8,7 @@ export default function ImportDialog({ api, target, onImported, onClose, onError
   const run = async () => {
     setBusy(true);
     try {
-      const parts = await api.importFile(mode, separator);
+      const parts = await (api.importText ? api.importText(mode, separator) : api.importFile(mode, separator));
       if (parts && parts.length) {
         onImported(parts);
         onClose();
@@ -23,8 +23,8 @@ export default function ImportDialog({ api, target, onImported, onClose, onError
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" role="dialog" aria-label="Importă text" onClick={(e) => e.stopPropagation()}>
-        <h2>Importă Word, text sau Markdown</h2>
-        <p className="muted">Documentele noi se adaugă lângă „{target}”. Formate: .docx, .txt, .md.</p>
+        <h2>Importă Word, RTF, ODT, text sau Markdown</h2>
+        <p className="muted">Documentele noi se adaugă lângă „{target}”. Formate: .docx, .rtf, .odt, .txt, .md{api.importText ? ', .html, .fountain, .fdx' : ''}. Modificările urmărite din Word devin marcaje de revizie.</p>
         <label>
           Împarte în documente
           <select value={mode} onChange={(e) => setMode(e.target.value)}>

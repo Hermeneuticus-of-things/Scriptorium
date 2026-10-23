@@ -59,7 +59,7 @@ const fmt = (id, patch = {}) => ({ ...JSON.parse(JSON.stringify(F.PRESETS.find((
 
 describe('compile formats', () => {
   it('ships the Romanian presets', () => {
-    expect(F.PRESETS.map((p) => p.name)).toEqual(['Manuscris standard', 'Carte tipărită (paperback)', 'E-book', 'Modern', 'Citire PDF A5']);
+    expect(F.PRESETS.map((p) => p.name)).toEqual(['Manuscris standard', 'Carte tipărită (paperback)', 'E-book', 'Modern', 'Citire PDF A5', 'Implicit (Default)', 'Times New Roman (dublu spațiat)', 'Courier (manuscris clasic)']);
     const ms = F.PRESETS[0];
     expect(ms.typography).toMatchObject({ fontFamily: 'Times New Roman', fontSizePt: 12, lineSpacing: 2 });
     expect(ms.separators.sameType.text).toBe('#');

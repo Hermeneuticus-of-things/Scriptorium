@@ -7,6 +7,19 @@ export function orderRecent(recent = [], pinned = []) {
   return [...pinned.filter((d) => byDir.has(d)).map((d) => byDir.get(d)), ...recent.filter((r) => !pin.has(r.dir))];
 }
 
+// [{category, templates}] in a stable category order (mirrors lib/templates.cjs groupTemplates).
+const CATEGORY_ORDER = ['Generale', 'Ficțiune', 'Non-ficțiune', 'Scenariu', 'Poezie', 'Ale mele'];
+export function groupTemplates(list = []) {
+  const map = new Map();
+  for (const t of list) {
+    const c = t.category || 'Generale';
+    if (!map.has(c)) map.set(c, []);
+    map.get(c).push(t);
+  }
+  const rank = (c) => (CATEGORY_ORDER.includes(c) ? CATEGORY_ORDER.indexOf(c) : CATEGORY_ORDER.length - 1);
+  return [...map.entries()].sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0], 'ro')).map(([category, templates]) => ({ category, templates }));
+}
+
 export default function Home({ api, settings: initialSettings, onOpen, onError, onSettings }) {
   const [settings, setLocal] = useState(initialSettings);
   useEffect(() => setLocal(initialSettings), [initialSettings]);
@@ -28,9 +41,29 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
   const [title, setTitle] = useState('');
   const [templates, setTemplates] = useState([{ id: 'blank', name: 'Gol' }]);
   const [templateId, setTemplateId] = useState('novel');
-  useEffect(() => {
-    api.listTemplates?.().then(setTemplates).catch(onError);
+  const loadTemplates = React.useCallback(() => {
+    const list = api.listAllTemplates || api.listTemplates;
+    list?.call(api).then((l) => l && setTemplates(l)).catch(onError);
   }, [api, onError]);
+  useEffect(loadTemplates, [loadTemplates]);
+  const chosen = templates.find((t) => t.id === templateId);
+  const create = async () => {
+    if (chosen && chosen.user && api.newFromTemplate) {
+      const r = await api.newFromTemplate(title.trim(), templateId);
+      return r ? api.openProject(r.dir) : null;
+    }
+    return api.newProject(title.trim(), templateId);
+  };
+  const removeTemplate = async () => {
+    if (!chosen || !chosen.user || !window.confirm(`Ștergi șablonul „${chosen.name}”?`)) return;
+    try {
+      await api.deleteTemplate(chosen.id);
+      setTemplateId('novel');
+      loadTemplates();
+    } catch (e) {
+      onError(e);
+    }
+  };
   const run = (fn) => async () => {
     try {
       onOpen(await fn());
@@ -50,12 +83,20 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
           <label>
             Șablon
             <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+              {groupTemplates(templates).map((g) => (
+                <optgroup key={g.category} label={g.category}>
+                  {g.templates.map((t) => (
+                    <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ''}{t.name}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
-          <button className="primary" disabled={!title.trim()} onClick={run(() => api.newProject(title.trim(), templateId))}>Creează</button>
+          {chosen && chosen.description && <p className="muted small">{chosen.description}</p>}
+          {chosen && chosen.user && api.deleteTemplate && (
+            <button className="link" onClick={removeTemplate}>Șterge șablonul</button>
+          )}
+          <button className="primary" disabled={!title.trim()} onClick={run(create)}>Creează</button>
         </section>
         <section>
           <h2>Deschide</h2>

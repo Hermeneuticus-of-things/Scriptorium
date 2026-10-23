@@ -50,6 +50,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     showInvisibles: Boolean(init.showInvisibles),
     aiEnabled: init.aiEnabled !== false,
     backupOnClose: init.backupOnClose !== false,
+    backupOnOpen: Boolean(init.backupOnOpen),
+    backupZip: init.backupZip !== false,
     backupEveryMin: init.backupEveryMin || 0,
     backupKeep: init.backupKeep || 10,
     backupDir: init.backupDir || '',
@@ -348,6 +350,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     backup: api.chooseBackupDir ? (
       <>
         {check('backupOnClose', t('set.backupOnClose'))}
+        {check('backupOnOpen', 'Backup și la deschiderea proiectului')}
+        {check('backupZip', 'Backup comprimat (zip); debifat = copie de folder')}
         <div className="row">
           <label>
             {t('set.backupEvery')}

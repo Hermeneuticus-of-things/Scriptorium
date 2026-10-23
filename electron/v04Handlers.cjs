@@ -12,6 +12,7 @@
 //   importBibliography: () => call('v04:importBibliography'),
 //   exportLatex: (dir, project, options) => call('v04:exportLatex', dir, project, options),
 //   exportPandoc: (dir, project, options) => call('v04:exportPandoc', dir, project, options),
+//   syncAuto: (dir, project, event) => call('v04:syncAuto', dir, project, event),
 const fs = require('fs');
 const path = require('path');
 const { exportScriv } = require('../lib/scrivExport.cjs');
@@ -54,17 +55,15 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     assertOpened(dir);
     const target = folder && fs.existsSync(folder) ? folder : await pickFolder(e, 'Sincronizează cu folder extern');
     if (!target) return null;
-    const manifest = folderSync.syncOut(project, target, reader(dir), options);
-    return { folder: target, files: Object.keys(manifest.files).length, format: manifest.format };
+    const manifest = folderSync.syncOut(project, target, reader(dir), { ...folderSync.syncOptions(project), ...options });
+    return { folder: target, files: Object.keys(manifest.files).length, format: manifest.format, formats: manifest.formats };
   });
 
   // File > Sync > With External Folder (read back). Scrivener behaviour: the external version wins,
   // but for conflicts (both sides edited) a snapshot of the project version is taken first.
   // New external files are written as new docs; the renderer inserts them into the binder
   // (folder 'draft' → Manuscript, 'notes' → Research).
-  handle('v04:syncIn', async (_e, dir, project, folder) => {
-    assertOpened(dir);
-    if (!folder || !fs.existsSync(folder)) throw new Error('Folderul de sincronizare nu există.');
+  const syncInto = (dir, project, folder) => {
     const write = (id, html) => {
       noteSelfWrite(path.join(dir, 'docs', `${id}.html`));
       store.writeDoc(dir, id, 'docs', html);
@@ -87,6 +86,22 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
       created,
       missing: res.missing,
     };
+  };
+  handle('v04:syncIn', async (_e, dir, project, folder) => {
+    assertOpened(dir);
+    if (!folder || !fs.existsSync(folder)) throw new Error('Folderul de sincronizare nu există.');
+    return syncInto(dir, project, folder);
+  });
+
+  // Automatic sync on project open ('open': read external edits in) and close ('close': write out).
+  // No-op (null) unless project.syncAuto and project.syncFolder are set; on open, a folder never synced is written first.
+  handle('v04:syncAuto', async (_e, dir, project, event) => {
+    assertOpened(dir);
+    const action = folderSync.autoSyncAction(project, event);
+    if (!action || !fs.existsSync(project.syncFolder)) return null;
+    if (action === 'in' && folderSync.readManifest(project.syncFolder)) return { action, ...syncInto(dir, project, project.syncFolder) };
+    const manifest = folderSync.syncOut(project, project.syncFolder, reader(dir), folderSync.syncOptions(project));
+    return { action: 'out', folder: project.syncFolder, files: Object.keys(manifest.files).length, updated: [], conflicts: [], created: [], missing: [] };
   });
 
   // File > Import > Bibliography (Zotero BibTeX / CSL-JSON)
