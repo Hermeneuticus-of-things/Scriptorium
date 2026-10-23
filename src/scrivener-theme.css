@@ -12,7 +12,7 @@
   --sc-inspector: #f3f3f3;
   --sc-paper: #ffffff;
   --sc-text: #1b1b1b;
-  --sc-muted: #6b6b6b;
+  --sc-muted: #5c5c5c;
   --sc-line: #d0d0d0;
   --sc-line-2: #bdbdbd;
   --sc-sel: #0078d7;
@@ -54,7 +54,7 @@
   --sc-muted: #a0a0a0;
   --sc-line: #444444;
   --sc-line-2: #555555;
-  --sc-sel: #2f7fd1;
+  --sc-sel: #1f6fc0;
   --sc-hover: #34414f;
   --sc-btn: #353535;
   --sc-btn-hover: #3d4752;
@@ -73,7 +73,7 @@
   :root[data-ui='classic'][data-theme='system'] {
     --sc-chrome: #2b2b2b; --sc-chrome-2: #333333; --sc-binder: #252a30; --sc-inspector: #2a2a2a;
     --sc-paper: #1e1e1e; --sc-text: #e6e6e6; --sc-muted: #a0a0a0; --sc-line: #444444; --sc-line-2: #555555;
-    --sc-sel: #2f7fd1; --sc-hover: #34414f; --sc-btn: #353535; --sc-btn-hover: #3d4752; --sc-btn-hover-line: #4c9be8;
+    --sc-sel: #1f6fc0; --sc-hover: #34414f; --sc-btn: #353535; --sc-btn-hover: #3d4752; --sc-btn-hover-line: #4c9be8;
     --sc-btn-on: #2c4a66; --sc-section: #383838; --sc-cork: #5a4632; --sc-cork-dot: rgba(0,0,0,.3);
     --sc-card: #2f2d28; --sc-card-rule: #c0504d; --sc-card-lines: #3c4652; --sc-workspace: #232323;
     color-scheme: dark;
@@ -397,3 +397,132 @@
 .sc-icon { width: 16px; height: 16px; flex-shrink: 0; vertical-align: -3px; }
 .sc-icon.lg { width: 20px; height: 20px; }
 [data-ui='classic'] .toolbar .sc-ico .sc-icon { width: 18px; height: 18px; }
+
+/* ============================================================
+   Fidelity / a11y pass
+   ============================================================ */
+/* Link text: #0078d7 is a selection fill colour; as text on the grey chrome it
+   fails WCAG AA (3.9:1). Links use a darker/lighter dedicated token. */
+:root[data-ui='classic'] { --sc-link: #005a9e; --sc-sel-row: #cce8ff; --sc-sel-row-line: #99d1ff; }
+:root[data-ui='classic'][data-theme='dark'] { --sc-link: #6cb6ff; --sc-sel-row: #24476b; --sc-sel-row-line: #3a6ea5; --sc-page-line: #3a3a3a; }
+@media (prefers-color-scheme: dark) {
+  :root[data-ui='classic'][data-theme='system'] { --sc-link: #6cb6ff; --sc-sel-row: #24476b; --sc-sel-row-line: #3a6ea5; --sc-page-line: #3a3a3a; --sc-sel-text: #fff; }
+  :root[data-ui='classic'][data-theme='system'] ::-webkit-scrollbar-thumb { background-color: #5a5a5a; }
+  :root[data-ui='classic'][data-theme='system'] .card header { color: var(--sc-text); }
+  :root[data-ui='classic'][data-theme='system'] .outliner th,
+  :root[data-ui='classic'][data-theme='system'] .compile-dialog .cd-table th { background: var(--sc-chrome-2); }
+  :root[data-ui='classic'][data-theme='system'] .outliner td { border-color: #333; }
+}
+[data-ui='classic'] button.link, [data-ui='classic'] a { color: var(--sc-link); }
+[data-ui='classic'] .binder-row.selected button.link { color: inherit; }
+
+/* Binder footer action sat flush against the edge */
+[data-ui='classic'] .binder > button.link { align-self: flex-start; margin: 4px 8px 2px; }
+
+/* Inspector lock toggle: SVG padlock, flat tool button */
+[data-ui='classic'] .inspector-lockbar { justify-content: flex-end; padding: 0 4px; background: var(--sc-chrome); }
+[data-ui='classic'] .inspector-lockbar .lock-toggle { background: transparent; border-color: transparent; min-height: 20px; padding: 1px 3px; color: var(--sc-muted); }
+[data-ui='classic'] .inspector-lockbar .lock-toggle.on { color: var(--sc-sel); background: var(--sc-btn-on); border-color: #7ab3e2; }
+/* colour well: a small swatch, not a full-width grey bar */
+[data-ui='classic'] .inspector input[type='color'] { width: 44px; min-height: 22px; height: 22px; padding: 1px; flex: none; }
+[data-ui='classic'] .inspector .bookmark-add { display: flex; gap: 6px; align-items: center; padding: 4px 0; }
+[data-ui='classic'] .inspector .bookmark-add select { flex: 1; min-width: 0; }
+[data-ui='classic'] .inspector .bookmark-add button { flex: none; white-space: nowrap; }
+
+/* ---------- corkboard cards ---------- */
+[data-ui='classic'] .card header { align-items: center; }
+[data-ui='classic'] .card .card-title { display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Scrivener cards carry no inline "open" link; keep it, but quiet until hover/focus */
+[data-ui='classic'] .card .card-open { font: 400 11px var(--sc-font); color: var(--sc-link); opacity: 0; transition: opacity .1s; }
+[data-ui='classic'] .card:hover .card-open, [data-ui='classic'] .card:focus-within .card-open, [data-ui='classic'] .card.selected .card-open { opacity: 1; }
+/* selected card: Windows highlight ring around the index card */
+[data-ui='classic'] .card.selected { outline: 2px solid var(--sc-sel); outline-offset: 2px; box-shadow: 0 0 0 5px color-mix(in srgb, var(--sc-sel) 25%, transparent), 1px 2px 4px rgba(0,0,0,.35); }
+[data-ui='classic'] .card:focus { outline: 2px solid var(--sc-sel); outline-offset: 2px; }
+[data-ui='classic'] .card:focus:not(:focus-visible):not(.selected) { outline: none; }
+/* group headings on the cork (Lines mode): a label strip readable on cork */
+[data-ui='classic'] .cork-line h3 {
+  display: inline-flex; padding: 2px 10px; font-size: 12px; color: var(--sc-text); text-shadow: none;
+  background: var(--sc-chrome); border: 1px solid var(--sc-line-2); box-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+[data-ui='classic'] .cork-line h3 .muted { color: var(--sc-muted); }
+
+/* ---------- outliner ---------- */
+/* titles are plain text (Scrivener), not blue links */
+[data-ui='classic'] .outliner .title-cell button.link { color: var(--sc-text); text-align: left; }
+[data-ui='classic'] .outliner .cell-edit { resize: none; min-height: 0; padding: 0; line-height: 1.35; color: var(--sc-muted); overflow: hidden; }
+[data-ui='classic'] .outliner td select { min-height: 20px; padding: 0 2px; border-color: transparent; background: transparent; }
+[data-ui='classic'] .outliner td select:hover, [data-ui='classic'] .outliner td select:focus { border-color: var(--sc-line-2); background: var(--sc-paper); }
+[data-ui='classic'] .outliner tbody tr.selected td { background: var(--sc-sel-row); box-shadow: inset 0 1px 0 var(--sc-sel-row-line), inset 0 -1px 0 var(--sc-sel-row-line); }
+[data-ui='classic'] .outliner tbody tr.selected:focus-within td { background: var(--sc-sel); color: var(--sc-sel-text); }
+[data-ui='classic'] .outliner tbody tr.selected:focus-within td .cell-edit,
+[data-ui='classic'] .outliner tbody tr.selected:focus-within td button.link { color: inherit; }
+[data-ui='classic'] .outliner tbody tr:focus { outline: none; }
+
+/* ---------- binder rename field / type-ahead ---------- */
+[data-ui='classic'] .binder-row input:not([type='checkbox']) {
+  min-height: 18px; padding: 0 3px; border: 1px solid var(--sc-sel); border-radius: 0;
+  background: var(--sc-paper); color: var(--sc-text); box-shadow: none; flex: 1; min-width: 0;
+}
+[data-ui='classic'] .binder-row:focus-visible, [data-ui='classic'] .binder [role='treeitem']:focus-visible { outline: 1px dotted var(--sc-text); outline-offset: -1px; }
+
+/* ---------- toolbar at laptop widths ----------
+   Toolbar items were allowed to shrink and wrap their text, so at ~1024px the
+   segmented view control got clipped ("Edito") and menu labels broke over 3 lines.
+   Items keep their natural width; the row wraps (menus drop to a second row, like
+   Scrivener's menubar + toolbar), and below 1280px the big buttons go icon-only
+   (Scrivener 3 for Windows shows icons only; labels stay as tooltips). */
+[data-ui='classic'] .toolbar { flex-wrap: wrap; row-gap: 2px; }
+[data-ui='classic'] .toolbar > *, [data-ui='classic'] .toolbar .menu > button { flex-shrink: 0; white-space: nowrap; }
+[data-ui='classic'] .toolbar .project-title { flex-shrink: 1; min-width: 4ch; }
+@media (max-width: 1280px) {
+  [data-ui='classic'] .toolbar .sc-ico { font-size: 0; gap: 0; }
+  [data-ui='classic'] .toolbar .seg button { padding: 3px 8px; }
+  [data-ui='classic'] .toolbar > button, [data-ui='classic'] .toolbar .menu > button { padding: 3px 5px; }
+}
+
+/* menu separators: margin-left plus width:100% pushed <hr> past the popup edge */
+[data-ui='classic'] .menu-pop hr { width: auto; align-self: stretch; border: none; border-top: 1px solid var(--sc-line); height: 0; }
+
+/* dark: red text marks need a lighter red to stay legible */
+:root[data-ui='classic'][data-theme='dark'] .color-a, :root[data-ui='classic'][data-theme='dark'] .stamp { color: #ffa39c; }
+@media (prefers-color-scheme: dark) {
+  :root[data-ui='classic'][data-theme='system'] .color-a, :root[data-ui='classic'][data-theme='system'] .stamp { color: #ffa39c; }
+}
+
+/* ---------- in-dialog tab strips (Statistics, History…) ----------
+   These tablists rendered as loose pill buttons (the active one as a blue
+   "primary" button). Windows/Scrivener uses a tab control on a panel edge.
+   The Options/Project Settings left category lists are excluded. */
+[data-ui='classic'] .modal:not(.settings-dialog):not(.ps-dialog) > .tabs[role='tablist'] {
+  gap: 0; flex-wrap: wrap; border-bottom: 1px solid var(--sc-line-2); margin-bottom: 0;
+}
+[data-ui='classic'] .modal:not(.settings-dialog):not(.ps-dialog) > .tabs[role='tablist'] > button {
+  border: 1px solid transparent; border-bottom: none; border-radius: 0; margin-bottom: -1px;
+  background: transparent; color: var(--sc-text); padding: 3px 10px; min-height: 24px; font-weight: 400;
+}
+[data-ui='classic'] .modal:not(.settings-dialog):not(.ps-dialog) > .tabs[role='tablist'] > button:hover:not(:disabled) { background: var(--sc-btn-hover); border-color: transparent; }
+[data-ui='classic'] .modal:not(.settings-dialog):not(.ps-dialog) > .tabs[role='tablist'] > button[aria-selected='true'] {
+  background: var(--sc-paper); border-color: var(--sc-line-2); border-bottom: 1px solid var(--sc-paper);
+}
+
+/* muted secondary text inside a blue selection fell to ~2:1; inherit the selection text colour */
+[data-ui='classic'] li.on .muted, [data-ui='classic'] .selected .muted, [data-ui='classic'] [aria-selected='true'] .muted { color: inherit; opacity: .85; }
+/* dark: the base --danger red (#b3261e) is unreadable on dark chrome */
+:root[data-ui='classic'][data-theme='dark'] { --danger: #ff8a80; }
+@media (prefers-color-scheme: dark) { :root[data-ui='classic'][data-theme='system'] { --danger: #ff8a80; } }
+/* home footer links: classic `button.link { border:none }` outranked the separator rule */
+[data-ui='classic'] .home-links > button.link + button.link { border-left: 1px solid var(--sc-line-2); padding-left: 16px; border-radius: 0; }
+/* outliner title cell: binder-style item icon before the title */
+[data-ui='classic'] .outliner .title-cell button.link { display: inline-flex; align-items: center; gap: 4px; }
+
+/* ---------- split editor ----------
+   Each pane rendered its own full format bar; in a vertical split at laptop
+   widths both wrapped to 6-7 rows and ate half the editor. Scrivener has one
+   format bar that follows the focused editor: show the second pane's bar only
+   while that pane has focus, and hide the first pane's bar meanwhile. */
+[data-ui='classic'] .workspace.split .pane.second .format-bar { display: none; }
+[data-ui='classic'] .workspace.split .pane.second:focus-within .format-bar { display: flex; }
+[data-ui='classic'] .workspace.split:has(.pane.second:focus-within) .pane:not(.second) .format-bar { display: none; }
+/* pane header: keep actions on one line, ellipsize the caption */
+[data-ui='classic'] .pane-head > * { white-space: nowrap; flex-shrink: 0; }
+[data-ui='classic'] .pane-head > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; }

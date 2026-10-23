@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookmarkIcon, CommentIcon, MetaIcon, NotesIcon, SnapshotIcon } from './Icons.jsx';
+import { BookmarkIcon, CommentIcon, LockIcon, MetaIcon, NotesIcon, SnapshotIcon, UnlockIcon } from './Icons.jsx';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { diffWords } from 'diff';
 import { buildExtensions } from '../editor/extensions.js';
@@ -151,12 +151,13 @@ export default function Inspector({
     <aside className={`inspector ${lockedId ? 'inspector-locked' : ''}`}>
       <div className="inspector-lockbar">
         <button
-          className={`link ${lockedId ? 'on' : ''}`}
+          className={`lock-toggle ${lockedId ? 'on' : ''}`}
           onClick={() => setLockedId(lockedId ? null : selectedNode.id)}
           title={lockedId ? 'Deblochează Inspectorul (urmează selecția)' : 'Blochează Inspectorul pe documentul curent'}
           aria-pressed={Boolean(lockedId)}
+          aria-label={lockedId ? 'Deblochează Inspectorul' : 'Blochează Inspectorul'}
         >
-          {lockedId ? '🔒' : '🔓'}
+          {lockedId ? <LockIcon /> : <UnlockIcon />}
         </button>
         {lockedId && <span className="muted small">Blocat pe: <strong>{node.title}</strong></span>}
         {pinnedOther && onOpen && <button className="link" onClick={() => onOpen(node.id)}>Deschide</button>}
@@ -506,7 +507,7 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen }) {
             </li>
           ))}
         </ul>
-        <div className="row">
+        <div className="row bookmark-add">
           <select value="" onChange={(e) => e.target.value && setBookmarks([...bookmarks, { id: e.target.value }])}>
             <option value="">+ document…</option>
             {linkTargets.filter((t) => t.id !== node.id).map((t) => (

@@ -39,7 +39,7 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
         <h2>Statistici</h2>
         <div className="tabs" role="tablist">
           {[['project', 'Proiect'], ['words', 'Frecvența cuvintelor'], ['sentences', 'Fraze'], ['pos', 'Părți de vorbire']].map(([k, l]) => (
-            <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
         <label>

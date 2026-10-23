@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { binderNav } from '../lib/tree.js';
 import { htmlToText } from '../lib/text.js';
+import { DocumentIcon, FolderIcon } from './Icons.jsx';
 
 // Columns the outline can show (Scrivener: Outliner > Columns).
 const BASE_COLUMNS = [
@@ -275,7 +276,6 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
               }}
               className={`${drag === n.id ? 'dragging' : ''} ${sel === n.id ? 'selected' : ''} ${dropHint && dropHint.id === n.id ? `drop-${dropHint.pos}` : ''}`}
               style={{
-                ...(sel === n.id ? { background: 'var(--sel, rgba(59,130,246,.15))' } : null),
                 ...(dropHint && dropHint.id === n.id ? { boxShadow: `inset 0 ${dropHint.pos === 'before' ? 2 : -2}px 0 var(--accent, #3b82f6)` } : null),
               }}
             >
@@ -308,7 +308,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
                   />
                 ) : (
                   <button className="link" tabIndex={-1} onClick={() => { setSel(n.id); focusRow(n.id); }} onDoubleClick={(e) => { e.stopPropagation(); onOpen(n.id); }} title="Clic: selectează · Dublu-clic: deschide · Enter: redenumește">
-                    {n.children ? '📁 ' : ''}
+                    {n.children ? <FolderIcon /> : <DocumentIcon />}
                     {n.title}
                   </button>
                 )}
