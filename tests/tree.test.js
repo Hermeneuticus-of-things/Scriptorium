@@ -85,3 +85,27 @@ describe('duplicateNode', () => {
     expect(duplicateNode(t, 'draft').id).toBe(null);
   });
 });
+
+import { convertNode, sortChildren, siblingInOrder } from '../src/lib/tree.js';
+describe('containers, convert, sort, navigation', () => {
+  it('drops inside a text document, making it a container', () => {
+    const t = [{ id: 'draft', root: 'draft', children: [{ id: 'a', type: 'text' }, { id: 'b', type: 'text' }] }];
+    const r = moveNode(t, 'b', 'a', 'inside');
+    expect(r[0].children[0].children.map((x) => x.id)).toEqual(['b']);
+  });
+  it('converts text <-> folder', () => {
+    const t = [{ id: 'draft', root: 'draft', children: [{ id: 'a', type: 'text' }] }];
+    const f = convertNode(t, 'a', 'folder');
+    expect(f[0].children[0]).toMatchObject({ type: 'folder', children: [] });
+    expect(convertNode(f, 'a', 'text')[0].children[0].children).toBeUndefined();
+  });
+  it('sorts children with Romanian collation and numbers', () => {
+    const t = [{ id: 'd', root: 'draft', children: [{ id: '1', title: 'Șarpe' }, { id: '2', title: 'Cap 10' }, { id: '3', title: 'Cap 2' }, { id: '4', title: 'Sat' }] }];
+    expect(sortChildren(t, 'd')[0].children.map((x) => x.title)).toEqual(['Cap 2', 'Cap 10', 'Sat', 'Șarpe']);
+  });
+  it('finds previous and next documents', () => {
+    const t = make();
+    expect(siblingInOrder(t, 'a', 1)).toBe('b');
+    expect(siblingInOrder(t, 'f', -1)).toBe(null);
+  });
+});

@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('api', {
   readMedia: (dir, file) => call('media:read', dir, file),
   mcpInfo: (dir) => call('mcp:info', dir),
   readStylesFromProject: () => call('styles:readFromProject'),
+  addMediaFiles: (dir) => call('media:add', dir),
   watchProject: (dir) => call('project:watch', dir),
   onProjectChanged: (fn) => {
     const listener = (_e, info) => fn(info);
