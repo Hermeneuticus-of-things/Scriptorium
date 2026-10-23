@@ -56,6 +56,8 @@ export const DEFAULT_KEYS = {
   quickRef: 'Ctrl+Shift+R',
   snapshot: 'Ctrl+5',
   stats: 'Ctrl+Shift+I',
+  saveAs: 'Ctrl+Shift+S',
+  print: 'Ctrl+P',
 };
 
 // Effective shortcut for a command; an empty string in settings disables it.
