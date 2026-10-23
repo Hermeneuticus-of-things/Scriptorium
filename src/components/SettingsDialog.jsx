@@ -5,6 +5,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [theme, setTheme] = useState(settings.theme || 'system');
   const [fontSize, setFontSize] = useState(settings.fontSize || 18);
   const [typewriter, setTypewriter] = useState(Boolean(settings.typewriter));
+  const [comp, setComp] = useState({ bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100 });
   const [smartQuotes, setSmartQuotes] = useState(settings.smartQuotes !== false);
   const [backupOnClose, setBackupOnClose] = useState(settings.backupOnClose !== false);
   const [backupEveryMin, setBackupEveryMin] = useState(settings.backupEveryMin || 0);
@@ -23,6 +24,10 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         theme,
         fontSize: Number(fontSize) || 18,
         typewriter,
+        compBg: comp.bg,
+        compWidth: Number(comp.width) || 40,
+        compPaper: comp.paper,
+        compFade: Number(comp.fade) || 100,
         smartQuotes,
         backupOnClose,
         backupEveryMin: Number(backupEveryMin) || 0,
@@ -64,6 +69,27 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <label className="check">
           <input type="checkbox" checked={typewriter} onChange={(e) => setTypewriter(e.target.checked)} /> Defilare tip mașină de scris (rândul curent la mijloc)
         </label>
+        <fieldset>
+          <legend>Mod compunere (F11)</legend>
+          <div className="row">
+            <label>
+              Fundal
+              <input type="color" value={comp.bg || '#1d1c1a'} onChange={(e) => setComp((c) => ({ ...c, bg: e.target.value }))} />
+            </label>
+            <label>
+              Lățimea textului (em)
+              <input type="number" min="25" max="80" value={comp.width} onChange={(e) => setComp((c) => ({ ...c, width: e.target.value }))} />
+            </label>
+            <label>
+              Opacitatea paginii (%)
+              <input type="number" min="0" max="100" step="5" value={comp.fade} onChange={(e) => setComp((c) => ({ ...c, fade: e.target.value }))} />
+            </label>
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={comp.paper} onChange={(e) => setComp((c) => ({ ...c, paper: e.target.checked }))} /> Pagină de hârtie în centru
+          </label>
+          {comp.bg && <button className="link" onClick={() => setComp((c) => ({ ...c, bg: '' }))}>Fundal implicit</button>}
+        </fieldset>
         <label className="check">
           <input type="checkbox" checked={smartQuotes} onChange={(e) => setSmartQuotes(e.target.checked)} /> Ghilimele „românești”, — din -- și … din trei puncte, automat
         </label>

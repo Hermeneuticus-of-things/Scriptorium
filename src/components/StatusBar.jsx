@@ -10,10 +10,10 @@ function Progress({ value, max, label }) {
   );
 }
 
-export default function StatusBar({ node, words, selectionCount = 1, totalDraft, draftTarget, sessionWords, sessionTarget, saveState }) {
+export default function StatusBar({ node, words, chars = 0, selectionCount = 1, totalDraft, draftTarget, sessionWords, sessionTarget, saveState }) {
   return (
     <footer className="statusbar">
-      <span>{node ? `${node.title}: ${words.toLocaleString('ro-RO')} cuvinte` : ''}</span>
+      <span>{node ? `${node.title}: ${words.toLocaleString('ro-RO')} cuvinte${chars ? ` · ${chars.toLocaleString('ro-RO')} caractere` : ''}` : ''}</span>
       {selectionCount > 1 && <span>{selectionCount} selectate</span>}
       {node && node.target > 0 && <Progress value={words} max={node.target} label="Țintă document" />}
       <span className="spacer" />

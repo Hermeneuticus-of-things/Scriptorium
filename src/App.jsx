@@ -11,6 +11,7 @@ import AiPanel from './components/AiPanel.jsx';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
+import StylesDialog from './components/StylesDialog.jsx';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
 import { projectWords } from './editor/writing.js';
@@ -561,6 +562,13 @@ export default function App({ api }) {
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
   const aiNode = (activeId.current && findNode(project.tree, activeId.current)) || selected;
   const editorialNode = aiNode && aiNode.type === 'text' ? aiNode : scrivSections[0] || null;
+  // Look of the selection in the active editor, for "Redefine style from selection".
+  const currentLook = () => {
+    const ed = activeHandle()?.editor;
+    if (!ed) return null;
+    const align = ['center', 'right', 'justify'].find((a) => ed.isActive({ textAlign: a })) || '';
+    return { bold: ed.isActive('bold'), italic: ed.isActive('italic'), underline: ed.isActive('underline'), align };
+  };
   const linkTargets = flatten(project.tree)
     .filter((n) => !n.root && n.type !== 'folder' && !inTrash(n.id))
     .map((n) => ({ id: n.id, title: n.title }));
@@ -589,12 +597,24 @@ export default function App({ api }) {
     { label: 'Istoricul scrisului…', action: () => setDialog('history'), disabled: !api.getHistory },
     { label: 'Backup-uri…', action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
+    { label: 'Stiluri…', action: () => setDialog('styles') },
     { label: 'Compilează…', action: () => flush().then(() => setDialog('compile')) },
     { label: 'Setări…', action: () => setDialog('settings') },
   ];
 
   return (
-    <div className={`app ${composition ? 'composition' : ''}`}>
+    <div
+      className={`app ${composition ? 'composition' : ''} ${composition && settings.compPaper !== false ? 'comp-paper' : ''}`}
+      style={
+        composition
+          ? {
+              '--comp-bg': settings.compBg || undefined,
+              '--comp-width': `${settings.compWidth || 40}em`,
+              '--comp-fade': (settings.compFade || 100) / 100,
+            }
+          : undefined
+      }
+    >
       <style>{styleCss(projectStyles)}</style>
       <header className="toolbar">
         <button onClick={closeProject} title="Închide proiectul">⌂</button>
@@ -660,6 +680,7 @@ export default function App({ api }) {
                 styles={projectStyles}
                 view={editorView}
                 onViewChange={setEditorView}
+                onManageStyles={() => setDialog('styles')}
               />
             )}
             {isFolderView && (
@@ -727,6 +748,7 @@ export default function App({ api }) {
                   styles={projectStyles}
                   view={editorView}
                   onViewChange={setEditorView}
+                  onManageStyles={() => setDialog('styles')}
                 />
               )}
             </div>
@@ -824,6 +846,7 @@ export default function App({ api }) {
       <StatusBar
         node={selected}
         words={selected ? (isFolderView ? scrivSections.reduce((s, n) => s + (counts[n.id] || 0), 0) : counts[selected.id] || 0) : 0}
+        chars={selected && !isFolderView ? htmlToText(docs[selected.id] || '').replace(/\s+/g, ' ').trim().length : 0}
         selectionCount={selectedIds.size}
         totalDraft={totals.draft}
         draftTarget={project.targets?.draft || 0}
@@ -869,6 +892,19 @@ export default function App({ api }) {
           onOpenProject={async (res) => {
             await flush();
             await openResult(res);
+          }}
+          onClose={() => setDialog(null)}
+          onError={report}
+        />
+      )}
+      {dialog === 'styles' && (
+        <StylesDialog
+          api={api}
+          project={project}
+          currentLook={currentLook()}
+          onSave={(styles) => {
+            saveProject({ ...project, styles });
+            setDialog(null);
           }}
           onClose={() => setDialog(null)}
           onError={report}

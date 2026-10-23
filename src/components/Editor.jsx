@@ -19,6 +19,7 @@ const Editor = forwardRef(function Editor(
     styles = [],
     view = {},
     onViewChange,
+    onManageStyles,
     onOpenLink,
     onChange,
     onFocus,
@@ -203,6 +204,7 @@ const Editor = forwardRef(function Editor(
           onAddFootnote={addFootnote}
           onAddAnnotation={addAnnotation}
           onInsertImage={insertImage}
+          onManageStyles={onManageStyles}
           styles={styles}
           view={view}
           onViewChange={onViewChange}
