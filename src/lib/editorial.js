@@ -231,7 +231,7 @@ const words = (s) => s.match(WORD) || [];
 function phraseRegex(list) {
   const alts = list
     .filter(Boolean)
-    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'))
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+').replace(/[șş]/g, '[șş]').replace(/[ȘŞ]/g, '[ȘŞ]').replace(/[țţ]/g, '[țţ]').replace(/[ȚŢ]/g, '[ȚŢ]'))
     .sort((a, b) => b.length - a.length);
   return alts.length ? new RegExp(`(?<![\\p{L}\\p{N}])(${alts.join('|')})(?![\\p{L}\\p{N}])`, 'giu') : null;
 }
