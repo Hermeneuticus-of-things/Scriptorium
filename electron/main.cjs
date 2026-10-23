@@ -725,6 +725,7 @@ handle('ai:run', (_e, payload) => {
 
 // "Testează conexiunea": tiny prompt to the provider chosen in the (possibly unsaved) form.
 handle('ai:test', async (_e, override = {}) => {
+  if (readSettings().aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
   const cfg = getAiConfig({ provider: override.provider, model: override.model, baseUrl: override.baseUrl });
   if (cfg.needsKey && !cfg.apiKey) throw new Error(aiProviders.missingKeyMessage(cfg.provider));
   const started = Date.now();

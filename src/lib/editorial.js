@@ -578,3 +578,13 @@ export function reattach(oldHtml, newHtml) {
   if (lost.length) html += `<p>${lost.map((x) => (x.includes('data-comment') ? x : x)).join(' ')}</p>`;
   return html;
 }
+
+/**
+ * True when an AI proposal no longer matches the document it was computed from
+ * (the user edited the document, or moved the selection, while the model was working).
+ * Applying it would silently overwrite those edits.
+ */
+export function proposalIsStale(p, currentHtml, currentSelText) {
+  if (p.selection) return (p.base !== undefined && p.base !== currentHtml) || (p.selText !== undefined && p.selText !== currentSelText);
+  return p.before !== currentHtml;
+}
