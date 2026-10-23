@@ -85,6 +85,12 @@ contextBridge.exposeInMainWorld('api', {
   removeDictionaryWord: (word) => call('spell:removeWord', word),
   cancelAi: () => call('ai:cancel'),
   runAi: (payload) => call('ai:run', payload),
+  // Streamed answer text of runAi({ runId }): fn({ runId, delta }).
+  onAiDelta: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('ai:delta', listener);
+    return () => ipcRenderer.removeListener('ai:delta', listener);
+  },
   testAi: (override) => call('ai:test', override),
   nlmExport: (dir, options) => call('nlm:export', dir, options),
   nlmOpen: () => call('nlm:open'),

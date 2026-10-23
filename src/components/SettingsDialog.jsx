@@ -22,9 +22,9 @@ const FONTS = [
   ["'Courier New', monospace", 'Courier New'],
 ];
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts }) {
+export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, initialTab }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
-  const [tab, setTab] = useState('general');
+  const [tab, setTab] = useState(() => (TABS.includes(initialTab) ? initialTab : 'general'));
   const [s, setS] = useState({
     language: init.language,
     reopenLastProject: init.reopenLastProject !== false,

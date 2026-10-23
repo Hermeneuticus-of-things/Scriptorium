@@ -3,6 +3,7 @@
 //   require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai });
 // Indexes live in memory per project dir; progress goes to the sender as 'rag:progress'.
 const rag = require('../lib/rag.cjs');
+const aiRuns = require('../lib/aiRuns.cjs');
 
 function collectSources(store, dir) {
   const project = store.loadProject(dir);
@@ -62,10 +63,16 @@ module.exports = function register({ handle, store, assertOpened, getSettings, g
     if (!indexes.has(dir)) await build(e, dir);
     // The ask step goes through lib/ai.cjs runAction -> lib/aiProviders complete() with the chosen provider.
     const cfg = getAiConfig ? getAiConfig() : { apiKey: getApiKey() };
-    const run =
-      (makeRun && makeRun(cfg)) ||
-      (({ text, question }) => ai.runAction({ action: 'ask', ...cfg, text, question }));
-    return queue.push('ask', () => rag.ask(indexFor(dir), String(q || ''), run, { k: Math.min(Number(opts.k) || 6, 20) }));
+    // Registered with aiRuns so "Anulează" (ai:cancel) and the AI timeout also stop the research answer.
+    const timeoutMs = (Number(getSettings().aiTimeoutSec) || 300) * 1000;
+    return queue.push('ask', () =>
+      aiRuns.track(e.sender.id, (signal) => {
+        const run =
+          (makeRun && makeRun({ ...cfg, signal })) ||
+          (({ text, question }) => ai.runAction({ action: 'ask', ...cfg, text, question, signal }));
+        return rag.ask(indexFor(dir), String(q || ''), run, { k: Math.min(Number(opts.k) || 6, 20) });
+      }, timeoutMs),
+    );
   });
   return { indexes, collectSources: (dir) => collectSources(store, dir) };
 };
