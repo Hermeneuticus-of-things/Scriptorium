@@ -16,7 +16,7 @@ export default function Home({ api, settings, onOpen, onError, onSettings }) {
   };
   return (
     <div className="home">
-      <h1>Scriptorium</h1>
+      <h1>Scribner</h1>
       <p className="muted">Scrie cărți lungi: binder, corkboard, snapshot-uri, Compile și asistent AI.</p>
       {api.isMock && <p className="warn">Mod demonstrativ în browser. Salvarea pe disc, importul .scriv și AI merg în aplicația desktop.</p>}
       <div className="home-grid">
@@ -35,7 +35,7 @@ export default function Home({ api, settings, onOpen, onError, onSettings }) {
         </section>
         <section>
           <h2>Deschide</h2>
-          <button onClick={run(() => api.openProject())}>Deschide proiect .scriptorium</button>
+          <button onClick={run(() => api.openProject())}>Deschide proiect .scribner</button>
           <button onClick={run(() => api.importScriv())}>Importă proiect Scrivener (.scriv)</button>
         </section>
         <section>

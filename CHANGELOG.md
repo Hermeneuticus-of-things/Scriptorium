@@ -67,3 +67,13 @@ Roadmap extins cu funcțiile Scrivener 3 (12 secțiuni, P1/P2/P3) și ordinea v0
 ### Rezultat (v0.2.1)
 - Ctrl+F în document (`src/components/FindBar.jsx`, `src/editor/docSearch.js`), Paste and Match Style, Split cu selecția ca titlu (Ctrl+Shift+K), duplicare (Ctrl+D, `duplicateNode` în `src/lib/tree.js`), spelling ro/en-US cu meniu contextual (`electron/main.cjs`).
 - Teste: 48/48; funcțiile verificate în Chromium.
+
+## 2026-10-23 — v0.2.2 — Redenumire în „Scribner”
+
+### Cerința user
+> "programul să se numească Scribner"
+
+### Rezultat
+- Numele vizibil, pachetul (`scribner`, appId `ro.scribner.app`), serverul MCP (`scribner`, `bin: scribner-mcp`), formatul proiectului (`<Nume>.scribner`), linkurile interne (`scribner://doc/…`), datele portabile (`Scribner-data`).
+- Compatibilitate: proiectele `.scriptorium` se deschid, se salvează în backup și se restaurează la fel; linkurile `scriptorium://` vechi rămân valide.
+- Repo-ul GitHub rămâne `Scriptorium` până la redenumirea lui din setările GitHub.

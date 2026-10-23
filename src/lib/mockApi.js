@@ -102,7 +102,7 @@ export function createMockApi() {
       throw new Error('Importul de fișiere funcționează doar în aplicația desktop.');
     },
     async newProject(title) {
-      const dir = `/demo/${title}.scriptorium`;
+      const dir = `/demo/${title}.scribner`;
       const s = newNode('text', 'Capitolul 1');
       state.projects[dir] = {
         ...demoProject().project,
@@ -115,7 +115,7 @@ export function createMockApi() {
       return { dir, project: structuredClone(state.projects[dir]) };
     },
     async openProject(dir) {
-      const d = dir || '/demo/Proiect demo.scriptorium';
+      const d = dir || '/demo/Proiect demo.scribner';
       const project = load(d);
       if (!state.settings.recent.some((r) => r.dir === d)) state.settings.recent.unshift({ dir: d, title: project.title });
       return { dir: d, project };

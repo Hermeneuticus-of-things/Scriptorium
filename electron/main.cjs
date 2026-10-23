@@ -13,7 +13,7 @@ const { fileToHtml, splitHtml } = require('../lib/docxImport.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
 if (process.env.PORTABLE_EXECUTABLE_DIR) {
-  app.setPath('userData', path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Scriptorium-data'));
+  app.setPath('userData', path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Scribner-data'));
 }
 
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -134,7 +134,7 @@ function createWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 600,
-    title: 'Scriptorium',
+    title: 'Scribner',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -208,7 +208,7 @@ handle('project:open', async (e, dirArg) => {
   let dir = dirArg;
   if (!dir) {
     const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
-      title: 'Deschide un proiect .scriptorium',
+      title: 'Deschide un proiect .scribner',
       properties: ['openDirectory'],
     });
     if (res.canceled) return null;
@@ -241,7 +241,7 @@ handle('doc:write', (_e, dir, id, kind, html) => {
   return true;
 });
 
-// MCP: the command an AI agent client uses to start the Scriptorium MCP server for
+// MCP: the command an AI agent client uses to start the Scribner MCP server for
 // the open project. Packaged builds run the server with Electron's own Node.
 handle('mcp:info', (_e, dir) => {
   assertOpened(dir);
@@ -252,8 +252,8 @@ handle('mcp:info', (_e, dir) => {
   const q = (s) => (/[\s"]/.test(s) ? `"${s.replace(/"/g, '\\"')}"` : s);
   const envPrefix = packaged ? '--env ELECTRON_RUN_AS_NODE=1 ' : '';
   return {
-    claudeCode: `claude mcp add scriptorium ${envPrefix}-- ${q(command)} ${q(server)} --project ${q(dir)}`,
-    desktopJson: JSON.stringify({ mcpServers: { scriptorium: { command, args: [server, '--project', dir], env } } }, null, 2),
+    claudeCode: `claude mcp add scribner ${envPrefix}-- ${q(command)} ${q(server)} --project ${q(dir)}`,
+    desktopJson: JSON.stringify({ mcpServers: { scribner: { command, args: [server, '--project', dir], env } } }, null, 2),
   };
 });
 
@@ -354,7 +354,7 @@ handle('import:scriv', async (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   const src = await dialog.showOpenDialog(win, { title: 'Alege folderul proiectului Scrivener (.scriv)', properties: ['openDirectory'] });
   if (src.canceled) return null;
-  const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Scriptorium?', properties: ['openDirectory', 'createDirectory'] });
+  const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Scribner?', properties: ['openDirectory', 'createDirectory'] });
   if (dest.canceled) return null;
   const result = importScriv(src.filePaths[0], dest.filePaths[0]);
   rememberRecent(result.dir, result.project.title);

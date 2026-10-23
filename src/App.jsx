@@ -45,14 +45,14 @@ const HISTORY_DELAY = 5000;
 // Per-machine UI state (open document, view, panel widths) kept in localStorage.
 function loadUi(dir) {
   try {
-    return JSON.parse(localStorage.getItem(`scriptorium-ui:${dir}`)) || {};
+    return JSON.parse(localStorage.getItem(`scribner-ui:${dir}`)) || {};
   } catch {
     return {};
   }
 }
 function saveUi(dir, ui) {
   try {
-    localStorage.setItem(`scriptorium-ui:${dir}`, JSON.stringify(ui));
+    localStorage.setItem(`scribner-ui:${dir}`, JSON.stringify(ui));
   } catch {
     /* storage unavailable: not critical */
   }

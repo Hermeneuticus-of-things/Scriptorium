@@ -36,7 +36,7 @@ afterAll(async () => {
   await client?.close();
 });
 
-describe('Scriptorium MCP server', () => {
+describe('Scribner MCP server', () => {
   it('lists the tools', async () => {
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name)).toEqual(
@@ -93,8 +93,8 @@ describe('Scriptorium MCP server', () => {
   it('reports errors without crashing and exposes resources', async () => {
     await expect(call('read_document', { id: 'nu-exista' })).rejects.toThrow('Element inexistent');
     const { resources } = await client.listResources();
-    expect(resources.some((r) => r.uri === 'scriptorium://binder')).toBe(true);
-    const binder = await client.readResource({ uri: 'scriptorium://binder' });
+    expect(resources.some((r) => r.uri === 'scribner://binder')).toBe(true);
+    const binder = await client.readResource({ uri: 'scribner://binder' });
     expect(JSON.parse(binder.contents[0].text)[0].title).toBe('Manuscris');
   });
 });

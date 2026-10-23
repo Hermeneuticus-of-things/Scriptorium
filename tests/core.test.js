@@ -12,7 +12,7 @@ const compile = require('../lib/compile.cjs');
 
 let tmp;
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scriptorium-'));
+  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-'));
 });
 
 describe('rtfToHtml', () => {
