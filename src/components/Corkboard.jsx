@@ -1,7 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cardHeight } from '../lib/panelsExtra.js';
+import { FolderIcon } from './Icons.jsx';
 
 const SIZES = { mic: 180, mediu: 230, mare: 300 };
+
+// Next card for an arrow key from card rectangles [{id, r: DOMRect}] (visual layout, so it
+// works for grid, lines and freeform). ←/→ previous/next in reading order; ↑/↓ the nearest
+// card horizontally in the row above / below; Home/End first/last.
+export function cardNeighbour(rects, id, key) {
+  const order = [...rects].sort((a, b) => (Math.abs(a.r.top - b.r.top) < 10 ? a.r.left - b.r.left : a.r.top - b.r.top));
+  const i = order.findIndex((x) => x.id === id);
+  if (i < 0) return order[0]?.id || null;
+  if (key === 'Home') return order[0].id;
+  if (key === 'End') return order[order.length - 1].id;
+  if (key === 'ArrowLeft') return order[i - 1]?.id || null;
+  if (key === 'ArrowRight') return order[i + 1]?.id || null;
+  const cur = order[i].r;
+  const cx = cur.left + cur.width / 2;
+  const below = key === 'ArrowDown';
+  const cands = order.filter((x) => (below ? x.r.top > cur.top + 10 : x.r.top < cur.top - 10));
+  if (!cands.length) return null;
+  const rowTop = below ? Math.min(...cands.map((x) => x.r.top)) : Math.max(...cands.map((x) => x.r.top));
+  const row = cands.filter((x) => Math.abs(x.r.top - rowTop) < 10);
+  row.sort((a, b) => Math.abs(a.r.left + a.r.width / 2 - cx) - Math.abs(b.r.left + b.r.width / 2 - cx));
+  return row[0].id;
+}
 
 function SynopsisImage({ file, readMedia }) {
   const [url, setUrl] = useState(null);
@@ -15,17 +38,51 @@ function SynopsisImage({ file, readMedia }) {
   return url ? <img className="card-image" src={url} alt="" /> : null;
 }
 
-function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins }) {
+function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins, selected, editing, onSelect, onKey, onEndEdit }) {
   return (
-    <article className={`card ${className} ${pins ? 'pinned' : ''}`} style={{ borderTopColor: colors[n.label] || 'transparent', ...style }} {...dragProps}>
+    <article
+      className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''}`}
+      style={{ borderTopColor: colors[n.label] || 'transparent', ...style }}
+      data-card-id={n.id}
+      tabIndex={0}
+      aria-selected={Boolean(selected)}
+      onFocus={(e) => e.target === e.currentTarget && onSelect?.(n.id)}
+      onMouseDown={(e) => !e.target.closest('textarea, input, button') && onSelect?.(n.id)}
+      onKeyDown={(e) => e.target === e.currentTarget && onKey?.(e, n)}
+      onDoubleClick={(e) => !e.target.closest('textarea, input, header') && onOpen(n.id)}
+      {...dragProps}
+    >
       {pins && <span className="card-pin" style={{ background: colors[n.label] || undefined }} aria-hidden="true" />}
       {n.label && n.label !== 'Fără' && colors[n.label] && <span className="card-tint" style={{ background: colors[n.label] }} />}
-      <header onDoubleClick={() => onOpen(n.id)} title="Dublu-clic pentru a deschide">
-        <span>
-          {n.children ? '📁 ' : ''}
-          {n.title}
-        </span>
-        <button className="link" onClick={() => onOpen(n.id)}>Deschide</button>
+      <header onDoubleClick={() => onOpen(n.id)} title="Dublu-clic: deschide · Enter: editează titlul">
+        {editing ? (
+          <input
+            autoFocus
+            defaultValue={n.title}
+            onFocus={(e) => e.target.select()}
+            onClick={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter') e.target.blur();
+              if (e.key === 'Escape') {
+                e.target.value = n.title;
+                e.target.blur();
+              }
+            }}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && v !== n.title) onPatch(n.id, { title: v });
+              onEndEdit?.(n.id);
+            }}
+          />
+        ) : (
+          <span className="card-title">
+            {n.children ? <FolderIcon /> : null}
+            {n.title}
+          </span>
+        )}
+        <button className="link card-open" onClick={() => onOpen(n.id)}>Deschide</button>
       </header>
       {n.synopsisImage && (n.showSynopsisImage !== false) ? (
         <SynopsisImage file={n.synopsisImage} readMedia={readMedia} />
@@ -70,7 +127,10 @@ export default function Corkboard(props) {
 function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia }) {
   const [drag, setDrag] = useState(null);
   const [hint, setHint] = useState(null);
+  const [sel, setSel] = useState(null);
+  const [editing, setEditing] = useState(null);
   const freeRef = useRef(null);
+  const boardRef = useRef(null);
   const cork = { mode: 'grid', size: 'mediu', by: 'label', ratio: '3:5', spacing: 16, columns: 0, pins: false, ...(folder?.cork || {}) };
   const setCork = (patch) => folder && onPatch(folder.id, { cork: { ...cork, ...patch } });
   const colors = Object.fromEntries(project.labels.map((l) => [l.name, l.color]));
@@ -103,6 +163,46 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
     },
   });
   const cardClass = (n) => `${drag === n.id ? 'dragging' : ''} ${hint && hint.id === n.id ? `drop-${hint.pos}` : ''}`;
+  const focusCard = (id) => setTimeout(() => boardRef.current?.querySelector(`[data-card-id="${CSS.escape(id)}"]`)?.focus(), 0);
+  // Keyboard on a focused card: arrows move between cards (↑/↓ by visual row), Enter edits
+  // the title, Ctrl+Enter opens the document, Ctrl+←/→ reorders (Scrivener corkboard).
+  const onKey = (e, n) => {
+    const order = items.map((x) => x.id);
+    const i = order.indexOf(n.id);
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      onOpen(n.id);
+    } else if (e.key === 'Enter' || e.key === 'F2') {
+      e.preventDefault();
+      setEditing(n.id);
+    } else if ((e.ctrlKey || e.metaKey) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const j = e.key === 'ArrowLeft' ? i - 1 : i + 1;
+      if (j >= 0 && j < order.length) {
+        onMove(n.id, order[j], e.key === 'ArrowLeft' ? 'before' : 'after');
+        focusCard(n.id);
+      }
+    } else if (!e.ctrlKey && !e.metaKey && !e.altKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+      const els = [...(boardRef.current?.querySelectorAll('[data-card-id]') || [])];
+      const rects = els.map((el) => ({ id: el.dataset.cardId, r: el.getBoundingClientRect() }));
+      const next = cardNeighbour(rects, n.id, e.key);
+      if (next) {
+        setSel(next);
+        focusCard(next);
+      }
+    }
+  };
+  const addCard = () => {
+    const node = onAdd(sel || undefined);
+    if (node && node.id) {
+      setSel(node.id);
+      setEditing(node.id);
+    }
+  };
+  const cardState = (n) => ({ selected: sel === n.id, editing: editing === n.id, onSelect: setSel, onKey, onEndEdit: (id) => (setEditing(null), focusCard(id)) });
   const common = { colors, keywordColors, onOpen, onPatch, readMedia, pins: Boolean(cork.pins) };
 
   // Freeform: cards keep {x, y} in node.corkPos; "Fixează ordinea" writes the visual
@@ -156,10 +256,10 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   }
 
   return (
-    <div className="corkboard" style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
+    <div ref={boardRef} className="corkboard" style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
       <div className="cork-head">
         <h2>{folder?.title}</h2>
-        <button onClick={onAdd}>+ Fișă</button>
+        <button onClick={addCard} title="Fișă nouă după fișa selectată">+ Fișă</button>
         <span className="spacer" />
         <div className="seg">
           <button className={cork.mode === 'grid' ? 'on' : ''} onClick={() => setCork({ mode: 'grid' })}>Grilă</button>
@@ -205,12 +305,12 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
           </div>
         </details>
       </div>
-      {items.length === 0 && <p className="hint">Nicio fișă. Adaugă un document în acest dosar.</p>}
+      {items.length === 0 && <p className="hint">Nicio fișă. Apasă „+ Fișă” (sau Ctrl+N) pentru a adăuga un document în „{folder?.title}”.</p>}
 
       {cork.mode === 'grid' && (
         <div className="cards" style={gridStyle}>
           {items.map((n) => (
-            <Card key={n.id} n={n} {...common} dragProps={gridDrag(n)} className={cardClass(n)} />
+            <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={gridDrag(n)} className={cardClass(n)} />
           ))}
         </div>
       )}
@@ -223,7 +323,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
             </h3>
             <div className="cards row-cards" style={{ gap }}>
               {g.items.map((n) => (
-                <Card key={n.id} n={n} {...common} dragProps={gridDrag(n)} className={cardClass(n)} />
+                <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={gridDrag(n)} className={cardClass(n)} />
               ))}
             </div>
           </section>
@@ -238,6 +338,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
                 key={n.id}
                 n={n}
                 {...common}
+                {...cardState(n)}
                 className="free-card"
                 style={{ left: pos.x, top: pos.y, width }}
                 dragProps={{ onMouseDown: (e) => startFree(n, e) }}

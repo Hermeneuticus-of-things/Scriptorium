@@ -1,0 +1,20 @@
+/* AI panels: live answer, diff preview, inline errors, history, bulk job bar. Uses theme tokens only. */
+.ai-provider { margin: 0; }
+.ai-keys { font-size: 11px; opacity: .8; }
+.ai-setup { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.ai-setup p { margin: 0; }
+.ai-live p { margin: 0 0 4px; }
+.ai-stream, .ai-diff { white-space: pre-wrap; font-family: Georgia, serif; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 10px; max-height: 40vh; overflow: auto; margin: 0; }
+.ai-stream { opacity: .85; }
+.ai-diff ins { background: rgba(46, 125, 50, .22); text-decoration: none; }
+.ai-diff del { background: rgba(179, 38, 30, .16); text-decoration: line-through; }
+.ai-result h4 { margin: 0 0 6px; }
+.ai-error { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; padding: 6px 8px; }
+.ai-history ul { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ai-history li { border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.ai-history-text { font-family: Georgia, serif; font-size: 13px; white-space: pre-wrap; }
+.ai-cite { font-size: .85em; vertical-align: super; padding: 0 1px; }
+.proposal .doc-choice { display: flex; gap: 6px; align-items: center; }
+.proposal .rejected > summary { opacity: .55; text-decoration: line-through; }
+.ai-job { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-top: 1px solid var(--line); background: var(--panel); font-size: 12px; }
+.ai-job progress { flex: 1; max-width: 240px; }

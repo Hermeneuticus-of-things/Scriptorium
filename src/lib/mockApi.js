@@ -40,7 +40,70 @@ function demoProject() {
 }
 
 export function createMockApi() {
-  const state = { settings: { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true, hasApiKey: true }, projects: {} };
+  const noKey = typeof location !== 'undefined' && /[?&]nokey\b/.test(location.search);
+  const state = { settings: { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true, hasApiKey: !noKey, aiLabel: 'Demo (simulat)', aiModel: 'demo-local' }, projects: {} };
+  // Simulated AI: streams its answer word by word ('ai:delta'), honours cancelAi, reports bulk progress.
+  const deltaFns = new Set();
+  const progressFns = new Set();
+  const live = new Set(); // abort flags of running requests
+  const wait = (ms, flag) => new Promise((res, rej) => {
+    const t = setTimeout(res, ms);
+    flag.onAbort = () => { clearTimeout(t); rej(new Error('Cererea AI a fost anulată.')); };
+  });
+  const simulate = async (answer, runId, speed = 25) => {
+    const flag = {};
+    live.add(flag);
+    try {
+      await wait(200, flag);
+      for (const w of answer.split(/(?<=\s)/)) {
+        if (runId) deltaFns.forEach((fn) => fn({ runId, delta: w }));
+        await wait(speed, flag);
+      }
+      return answer;
+    } finally {
+      live.delete(flag);
+    }
+  };
+  const fakeAnswer = ({ action, text = '', question = '', context = '' }) => {
+    const t = String(text).trim();
+    switch (action) {
+      case 'proofread':
+        return t.replace(/\bdimineata\b/g, 'dimineață').replace(/\bsi\b/g, 'și').replace(/ ,/g, ',').replace(/\s+\./g, '.').replace(/\bocttombrie\b/g, 'octombrie');
+      case 'summarize':
+        return `Sinopsis (demo): ${t.split(/(?<=[.!?])\s/)[0].slice(0, 160)}`;
+      case 'continue':
+        return 'Vântul a adus mirosul de frunze ude. Andrei a grăbit pasul, fără să se uite înapoi.';
+      case 'feedback':
+        return '1. Ritm: prima frază e bună, a doua încetinește.\n2. Claritate: „unde va ajunge” — concretizează.\n3. Tensiune: lipsește un obstacol în prima scenă.';
+      case 'consistency':
+        return /ochi verzi/.test(context) && /ochi albaștri/.test(t) ? 'Contradicție: în note Andrei are ochi verzi, aici „ochi albaștri”.' : 'Nicio contradicție față de notele proiectului.';
+      case 'ask':
+        return `Răspuns demo la „${question.slice(0, 80)}”: textul are ${t.split(/\s+/).filter(Boolean).length} cuvinte.`;
+      default:
+        throw new Error(`Acțiune necunoscută: ${action}`);
+    }
+  };
+  const bulk = async (job, docs, fn) => {
+    const flag = {};
+    live.add(flag);
+    let done = 0;
+    progressFns.forEach((f) => f({ job, done: 0, total: docs.length }));
+    try {
+      for (const d of docs) {
+        try {
+          await wait(400, flag);
+        } catch {
+          return true;
+        }
+        fn(d);
+        done++;
+        progressFns.forEach((f) => f({ job, done, total: docs.length, id: d.id, title: d.title }));
+      }
+      return false;
+    } finally {
+      live.delete(flag);
+    }
+  };
   const history = {};
   const files = {};
   const snaps = {};
@@ -151,7 +214,67 @@ export function createMockApi() {
       a.click();
       return a.download;
     },
+    onAiDelta(fn) {
+      deltaFns.add(fn);
+      return () => deltaFns.delete(fn);
+    },
+    onAiProgress(fn) {
+      progressFns.add(fn);
+      return () => progressFns.delete(fn);
+    },
+    async cancelAi() {
+      const n = live.size;
+      for (const f of [...live]) f.onAbort && f.onAbort();
+      return n;
+    },
+    async testAi() {
+      return { ok: true, provider: 'demo', label: state.settings.aiLabel, model: state.settings.aiModel, reply: 'OK', ms: 5 };
+    },
+    async aiBulkSynopsis(_dir, docs) {
+      const results = {};
+      const cancelled = await bulk('bulkSynopsis', docs.filter((d) => d.text.trim()), (d) => { results[d.id] = `Sinopsis (demo): ${d.text.slice(0, 80)}`; });
+      return { results, errors: {}, cachedCount: 0, cancelled };
+    },
+    async aiConsistency(_dir, docs, sheets) {
+      const cancelled = await bulk('consistency', docs, () => {});
+      return { sheets: sheets || { characters: {}, facts: [], docs: {} }, conflicts: [], findings: cancelled ? [] : [{ severity: 'MINOR', issue: 'Demo: nicio contradicție reală', docs: [], suggestion: '' }], errors: {}, cancelled };
+    },
+    async aiZoomReview(_dir, docs, levels) {
+      const findings = [];
+      const cancelled = await bulk('zoomReview', docs, (d) => findings.push({ level: (levels || ['Mezzo'])[0], docId: d.id, title: d.title, severity: 'MINOR', quote: d.text.slice(0, 40), issue: 'Demo: frază lungă', suggestion: 'Scurtează.' }));
+      return { findings, counts: {}, errors: {}, cancelled };
+    },
+    async ragQuery(dir, q, opts = {}) {
+      const words = String(q).toLowerCase().split(/\W+/u).filter((w) => w.length > 2);
+      const out = [];
+      const visit = (nodes, kind) => {
+        for (const n of nodes) {
+          const text = String(files[key(dir, n.id)] || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          const score = words.filter((w) => text.toLowerCase().includes(w)).length;
+          if (score && (!opts.kinds || opts.kinds.includes(kind))) out.push({ docId: n.id, title: n.title, kind, chunk: 0, score, text });
+          if (n.children) visit(n.children, kind);
+        }
+      };
+      const project = load(dir);
+      for (const root of project.tree) if (root.root !== 'trash') visit(root.children || [], root.root === 'research' ? 'research' : 'docs');
+      return out.sort((a, b) => b.score - a.score).slice(0, opts.k || 8);
+    },
+    async ragBuild() {
+      return { docs: 0, chunks: 0 };
+    },
+    async ragAsk(dir, q, opts = {}) {
+      const passages = await this.ragQuery(dir, q, opts);
+      if (!passages.length) return { answer: 'Nu am găsit pasaje relevante în proiect.', passages };
+      const answer = await simulate(`Conform pasajelor, ${passages[0].text.slice(0, 120)} [1]${passages[1] ? ` Vezi și [2].` : ''}`, null, 5);
+      return { answer, passages };
+    },
     async runAi(payload) {
+      if (state.settings.aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
+      if (!state.settings.hasApiKey) throw new Error('Setează cheia API în Setări.');
+      if (payload && payload.action !== 'editorial') {
+        const answer = await simulate(fakeAnswer(payload), payload.runId);
+        return { text: answer, stopReason: 'end_turn', provider: state.settings.aiLabel, model: state.settings.aiModel };
+      }
       if (payload && payload.action === 'editorial') {
         // Demo stand-in for Claude: applies simple fixes so the I-REP loop can be tried in the browser.
         const m = /<text>\n?([\s\S]*?)\n?<\/text>/.exec(payload.prompt);
@@ -160,10 +283,9 @@ export function createMockApi() {
           .replace(/\s*\(([^)]*)\)/g, ', $1')
           .replace(/\bse observă\b/gi, 'vedem')
           .replace(/:\s/g, ', ');
-        await new Promise((r) => setTimeout(r, 150));
-        return { text };
+        await simulate(text, payload.runId, 2);
+        return { text, provider: state.settings.aiLabel, model: state.settings.aiModel };
       }
-      throw new Error('Asistentul AI funcționează doar în aplicația desktop (cheia API stă în procesul principal).');
     },
   };
 }

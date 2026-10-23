@@ -1,7 +1,8 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { getHTMLFromFragment } from '@tiptap/core';
+import { createDocument, getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
+import { replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
 import FindBar from './FindBar.jsx';
@@ -121,7 +122,12 @@ const Editor = forwardRef(function Editor(
       setScriptElement: (el) => editor?.chain().focus().setScriptElement(el).run(),
       getHtml: () => editor?.getHTML() || '',
       getText: () => editor?.getText() || '',
-      setHtml: (h) => editor?.commands.setContent(h, { emitUpdate: false }),
+      // External update (other split pane, Inspector): replace only what changed so the caret stays put.
+      setHtml: (h) => {
+        if (!editor || editor.isDestroyed) return;
+        const tr = editor.state.tr;
+        if (replaceChangedRange(tr, createDocument(h || '<p></p>', editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true));
+      },
       getSelectionText: () => {
         if (!editor) return '';
         const { from, to } = editor.state.selection;

@@ -36,7 +36,7 @@ export default function FindBar({ editor, onClose }) {
   const replaceOne = () => {
     if (!ranges.length) return;
     const k = Math.min(index, ranges.length - 1);
-    replaceRanges(editor, [ranges[k]], replacement);
+    replaceRanges(editor, [ranges[k]], replacement, opts);
     setTimeout(() => select(k), 0);
   };
 
@@ -66,7 +66,7 @@ export default function FindBar({ editor, onClose }) {
       <button className={opts.regex ? 'on' : ''} onClick={toggle('regex')} title="Expresie regulată">.*</button>
       <input placeholder="Înlocuiește cu" value={replacement} onChange={(e) => setReplacement(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && onClose()} />
       <button onClick={replaceOne} disabled={!ranges.length}>Înlocuiește</button>
-      <button onClick={() => replaceRanges(editor, ranges, replacement)} disabled={!ranges.length}>Toate</button>
+      <button onClick={() => replaceRanges(editor, ranges, replacement, opts)} disabled={!ranges.length}>Toate</button>
       <button onClick={onClose} title="Închide (Esc)">×</button>
     </div>
   );

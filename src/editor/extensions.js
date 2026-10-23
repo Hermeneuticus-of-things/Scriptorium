@@ -1,5 +1,5 @@
 import { ScriptMode } from '../extensions/ScriptMode.js';
-import { Mark, Node, mergeAttributes } from '@tiptap/core';
+import { Extension, InputRule, Mark, Node, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { Typography } from '@tiptap/extension-typography';
@@ -186,11 +186,61 @@ const ScopedTextStyle = TextStyle.extend({
   },
 });
 
+// Romanian smart quotes: " → „ / ” and ' → « / » (nested) or ’ (apostrophe).
+// Typography's quote rules only open after whitespace or ASCII brackets, so they closed
+// quotes after an em-dash („—"Vino" → —”Vino”) or after „ (nested « became »), and turned
+// every in-word apostrophe (O'Brien, l'a) into ».
+const QUOTE_OPENER = /[\s([{<„“‘«—–\-\/]/u;
+/** Replacement for a typed " or ' given the block text before the cursor. */
+export function romanianQuote(before, ch) {
+  const prev = before.slice(-1);
+  const opens = prev === '' || QUOTE_OPENER.test(prev);
+  if (ch === '"') return opens ? '„' : '”';
+  if (opens) return '«';
+  // Close a pending « (one without a matching » after it); otherwise it is an apostrophe.
+  return before.lastIndexOf('«') > before.lastIndexOf('»') ? '»' : '’';
+}
+
+export const RomanianQuotes = Extension.create({
+  name: 'romanianQuotes',
+  addInputRules() {
+    return [
+      new InputRule({
+        find: /["']$/,
+        handler: ({ state, range, match }) => {
+          const $from = state.doc.resolve(range.from);
+          if ($from.parent.type.spec.code || $from.marks().some((m) => m.type.spec.code)) return null;
+          const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '\ufffc');
+          state.tr.insertText(romanianQuote(before, match[0]), range.from, range.to);
+          return undefined;
+        },
+      }),
+    ];
+  },
+});
+
+// Redo keys always consume the event. prosemirror-keymap retries a shifted letter without
+// Shift when the handler returns false, so Mod-Shift-z with an empty redo stack fell back to
+// Mod-z and UNDID the last edit whenever the key arrived as lowercase "z" (Caps Lock on, or
+// Cmd+Shift+Z on macOS).
+export const RedoKeys = Extension.create({
+  name: 'redoKeys',
+  priority: 1000,
+  addKeyboardShortcuts() {
+    const redo = () => {
+      this.editor.commands.redo();
+      return true;
+    };
+    return { 'Shift-Mod-z': redo, 'Mod-y': redo };
+  },
+});
+
 export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], corrections = null, showInvisibles = false } = {}) {
   // corrections: {smartDashes, smartEllipsis, autoCapitalize, replacements}; null keeps the
   // historical behaviour (dashes/ellipsis only through Typography when smartQuotes is on).
   const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [], ...corrections } : null;
   const ext = [
+    RedoKeys,
     ParagraphStyle,
     CharStyle,
     Revision,
@@ -227,11 +277,13 @@ export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuo
   if (corr) ext.push(Corrections.configure(corr));
   if (smartQuotes) {
     ext.push(
+      RomanianQuotes,
       Typography.configure({
-        openDoubleQuote: '„',
-        closeDoubleQuote: '”',
-        openSingleQuote: '«',
-        closeSingleQuote: '»',
+        // Quotes come from RomanianQuotes.
+        openDoubleQuote: false,
+        closeDoubleQuote: false,
+        openSingleQuote: false,
+        closeSingleQuote: false,
         // With explicit corrections, dashes/ellipsis are handled by the Corrections extension.
         emDash: corr ? false : '—',
         ellipsis: corr ? false : '…',

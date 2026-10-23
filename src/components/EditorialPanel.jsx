@@ -8,6 +8,7 @@ import {
   htmlToManuscript,
   lint,
   manuscriptToHtml,
+  proposalIsStale,
   reattach,
   repairPrompt,
   roundContext,
@@ -17,6 +18,8 @@ import {
 } from '../lib/editorial.js';
 import { htmlToText } from '../lib/text.js';
 import { findCanonDoc, parseCanonIndex, validateCanonIndex } from '../lib/canonIndex.js';
+import { providerText } from '../lib/aiSession.js';
+import '../ai.css';
 
 const LEVELS = [
   ['micro', 'Micro · selecția / paragraful'],
@@ -28,7 +31,7 @@ function blocking(issues, strict) {
   return issues.filter((i) => i.severity === 'GRAVE' || (strict && i.severity === 'MEDIU'));
 }
 
-export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile: baseProfile, project, dir, editorialLists, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings }) {
+export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile: baseProfile, project, dir, editorialLists, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings, aiLabel = '', aiModel = '' }) {
   const [tab, setTab] = useState('rep');
   const [level, setLevel] = useState('mezzo');
   const [maxLoops, setMaxLoops] = useState(3);
@@ -38,6 +41,8 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
   const [log, setLog] = useState([]);
   const [proposal, setProposal] = useState(null); // [{id, title, before, after, issuesAfter}]
   const [error, setError] = useState('');
+  const [rejected, setRejected] = useState(() => new Set()); // proposal ids the user turned down
+  const [lastRun, setLastRun] = useState(null);
   const [filter, setFilter] = useState('all');
   // User word lists (Setări → Editorial) and the canonical index (Index_de_Lucru).
   const [lists, setLists] = useState(editorialLists || null);
@@ -70,6 +75,16 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
   const shown = issues.filter((i) => filter === 'all' || i.severity === filter);
 
   const say = (line) => setLog((l) => [...l, line]);
+  useEffect(() => setRejected(new Set()), [proposal]);
+  // Esc cancels a running pass.
+  useEffect(() => {
+    if (!busy || !api.cancelAi) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') api.cancelAi().catch(() => {});
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [busy, api]);
 
   const ai = async (prompt, effort = 'high') => {
     const res = await api.runAi({ action: 'editorial', system: systemPrompt(profile), prompt, effort });
@@ -95,6 +110,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
   };
 
   const runRep = async () => {
+    setLastRun(() => runRep);
     setBusy(true);
     setError('');
     setLog([]);
@@ -114,7 +130,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           f = lint(current, { profile });
           say(`  bucla ${loop}: ${summarize(f).GRAVE} grave, ${summarize(f).MEDIU} medii`);
         }
-        setProposal([{ id: node.id, title: `${node.title} (selecție)`, before: selHtml, after: current, issuesAfter: f, selection: true }]);
+        setProposal([{ id: node.id, title: `${node.title} (selecție)`, before: selHtml, after: current, issuesAfter: f, selection: true, base: html, selText: sel }]);
       } else if (level === 'mezzo') {
         const { current, found } = await repairLoop({ id: node.id, title: node.title, html }, others);
         setProposal([{ id: node.id, title: node.title, before: html, after: current, issuesAfter: found }]);
@@ -135,6 +151,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
   };
 
   const runEdit = async () => {
+    setLastRun(() => runEdit);
     setBusy(true);
     setError('');
     setLog([]);
@@ -168,11 +185,26 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
     }
   };
 
+  const chosen = proposal ? proposal.filter((p) => !rejected.has(p.id)) : [];
   const accept = async () => {
-    for (const p of proposal) await onApply(p);
-    setLog((l) => [...l, `✓ aplicat pe ${proposal.length} document(e); snapshot salvat înainte`]);
+    if (!chosen.length) return setProposal(null);
+    // The user may have kept writing while the model worked: never overwrite those edits.
+    const currentOf = (id) => (id === node.id ? html : (chapter.find((d) => d.id === id) || {}).html);
+    const stale = chosen.filter((p) => proposalIsStale(p, currentOf(p.id), p.selection ? onSelectionText() : undefined));
+    if (stale.length) {
+      setError(`Documentul s-a schimbat între timp (${stale.map((p) => `„${p.title}”`).join(', ')}). Rulează din nou sau respinge acel document.`);
+      return;
+    }
+    for (const p of chosen) await onApply(p);
+    setLog((l) => [...l, `✓ aplicat pe ${chosen.length} document(e)${rejected.size ? `, ${rejected.size} respinse` : ''}; snapshot salvat înainte`]);
     setProposal(null);
   };
+  const toggle = (id) => setRejected((r) => {
+    const n = new Set(r);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
+    return n;
+  });
 
   return (
     <aside className="editorial">
@@ -180,6 +212,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
         <button className={tab === 'rep' ? 'on' : ''} onClick={() => setTab('rep')}>I-REP</button>
         {aiEnabled && <button className={tab === 'edit' ? 'on' : ''} onClick={() => setTab('edit')}>I-EDIT</button>}
       </div>
+      {aiEnabled && (aiLabel || aiModel) && <p className="muted small ai-provider">Model: {providerText(aiLabel, aiModel)}</p>}
       <p className="muted small">Profil: {profile.name}{canonNodes.length ? ` · Index_de_Lucru: ${canonNodes.length} noduri` : ''}</p>
       {canonProblems.length > 0 && (
         <details className="small">
@@ -214,6 +247,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
             <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} /> Și problemele medii blochează
           </label>
           <div className="ai-actions">
+            {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>Anulează</button>}
             <button onClick={() => onApply({ id: node.id, title: node.title, before: html, after: autofix(html), safe: true })} disabled={busy}>
               Reparații sigure (fără AI)
             </button>
@@ -250,6 +284,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           <div className="ai-actions">
             <button onClick={() => setRounds(new Set(ROUNDS.map((r) => r.id)))}>Toate</button>
             <button onClick={() => setRounds(new Set())}>Niciuna</button>
+            {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>Anulează</button>}
             <button className="primary" onClick={runEdit} disabled={busy || !hasKey || !rounds.size || level === 'micro'}>
               {busy ? 'Lucrez…' : 'I-EDIT: rulează rundele'}
             </button>
@@ -265,11 +300,17 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
 
       {aiEnabled && !hasKey && (
         <p className="warn">
-          Bucla AI cere cheia API. <button className="link" onClick={onOpenSettings}>Setări</button>
+          Bucla AI cere cheia API{aiLabel ? ` pentru ${aiLabel}` : ' a furnizorului AI'}. <button className="link" onClick={onOpenSettings}>Setări</button>
         </p>
       )}
-      {error && <p className="warn">{error}</p>}
-      {log.length > 0 && <pre className="rep-log">{log.join('\n')}</pre>}
+      {error && (
+        <div className="ai-error" role="alert">
+          <span>{error}</span>
+          {lastRun && !busy && <button className="link" onClick={lastRun}>Reîncearcă</button>}
+        </div>
+      )}
+      {busy && <p className="muted" aria-live="polite">Lucrez… {api.cancelAi && 'Esc anulează.'}</p>}
+      {log.length > 0 && <pre className="rep-log" aria-live="polite">{log.join('\n')}</pre>}
 
       {proposal && (
         <div className="proposal">
@@ -277,9 +318,18 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           {proposal.map((p) => {
             const s = summarize(p.issuesAfter || []);
             return (
-              <details key={p.id} open={proposal.length === 1}>
-                <summary>
-                  {p.title} · după: {s.GRAVE} grave, {s.MEDIU} medii
+              <details key={p.id} open={proposal.length === 1} className={`doc-choice-wrap${rejected.has(p.id) ? ' rejected' : ''}`}>
+                <summary className="doc-choice">
+                  {proposal.length > 1 && (
+                    <input
+                      type="checkbox"
+                      aria-label={`Aplică „${p.title}”`}
+                      checked={!rejected.has(p.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => toggle(p.id)}
+                    />
+                  )}
+                  {p.title} · după: {s.GRAVE} grave, {s.MEDIU} medii{p.before === p.after ? ' · fără modificări' : ''}
                 </summary>
                 <div className="snap-preview diff">
                   {diffWords(htmlToText(p.before), htmlToText(p.after)).map((part, i) =>
@@ -290,8 +340,10 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
             );
           })}
           <div className="ai-actions">
-            <button className="primary" onClick={accept}>Acceptă și aplică</button>
-            <button onClick={() => setProposal(null)}>Respinge</button>
+            <button className="primary" onClick={accept} disabled={!chosen.length}>
+              {proposal.length > 1 ? `Acceptă ${chosen.length} din ${proposal.length}` : 'Acceptă și aplică'}
+            </button>
+            <button onClick={() => setProposal(null)}>{proposal.length > 1 ? 'Respinge tot' : 'Respinge'}</button>
           </div>
         </div>
       )}
