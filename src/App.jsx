@@ -31,6 +31,7 @@ import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
 import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc } from './lib/glossary.js';
+import { BackIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, OutlineIcon, ScriveningsIcon, SplitIcon } from './components/Icons.jsx';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
@@ -173,6 +174,7 @@ export default function App({ api }) {
   useEffect(() => {
     const theme = settings?.theme || 'system';
     document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.ui = settings?.uiStyle || 'classic';
     document.documentElement.style.setProperty('--editor-font-size', `${settings?.fontSize || 18}px`);
   }, [settings]);
 
@@ -1141,20 +1143,21 @@ export default function App({ api }) {
       <style>{styleCss(projectStyles)}</style>
       <header className="toolbar">
         <button onClick={closeProject} title="Închide proiectul">⌂</button>
-        <button onClick={back} disabled={nav.index <= 0} title="Înapoi (Alt+←)">←</button>
-        <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title="Înainte (Alt+→)">→</button>
+        <button onClick={back} disabled={nav.index <= 0} title="Înapoi (Alt+←)" aria-label="Înapoi"><BackIcon /></button>
+        <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title="Înainte (Alt+→)" aria-label="Înainte"><ForwardIcon /></button>
         <strong className="project-title">{project.title}</strong>
         <div className="seg">
-          <button className={view === 'editor' ? 'on' : ''} onClick={() => setView('editor')}>Editor</button>
-          <button className={view === 'corkboard' ? 'on' : ''} onClick={() => setView('corkboard')}>Corkboard</button>
-          <button className={view === 'outline' ? 'on' : ''} onClick={() => setView('outline')}>Outline</button>
+          <button className={view === 'editor' ? 'on' : ''} onClick={() => setView('editor')} title="Editor / Scrivenings"><span className="sc-ico"><ScriveningsIcon />Editor</span></button>
+          <button className={view === 'corkboard' ? 'on' : ''} onClick={() => setView('corkboard')} title="Corkboard"><span className="sc-ico"><CorkboardIcon />Corkboard</span></button>
+          <button className={view === 'outline' ? 'on' : ''} onClick={() => setView('outline')} title="Outline"><span className="sc-ico"><OutlineIcon />Outline</span></button>
         </div>
         <span className="spacer" />
         <button className={splitId ? 'on' : ''} onClick={() => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)} title="Split editor (Alt+clic în binder alege documentul din dreapta)">
-          Split
+          <span className="sc-ico"><SplitIcon />Split</span>
         </button>
-        <button onClick={() => setComposition(true)} title="Mod compunere (F11)">Compunere</button>
-        <button className={showInspector ? 'on' : ''} onClick={() => setShowInspector((v) => !v)}>Inspector</button>
+        <button onClick={() => setComposition(true)} title="Mod compunere (F11)"><span className="sc-ico"><ComposeIcon />Compunere</span></button>
+        <button onClick={() => flush().then(() => setDialog('compile'))} title="Compilează (Ctrl+Shift+E)"><span className="sc-ico"><CompileIcon />Compile</span></button>
+        <button className={showInspector ? 'on' : ''} onClick={() => setShowInspector((v) => !v)} title="Inspector"><span className="sc-ico"><InspectorIcon />Inspector</span></button>
         <button className={showEditorial ? 'on' : ''} onClick={() => setShowEditorial((v) => !v)} title="I-REP (reparare + reverificare) și I-EDIT (runde editoriale)">
           {aiEnabled ? 'I-REP / I-EDIT' : 'I-REP'}
         </button>
@@ -1212,6 +1215,16 @@ export default function App({ api }) {
 
         <section className={`workspace ${splitNode && view === 'editor' ? 'split' : ''}`}>
           <div className="pane">
+            {view === 'editor' && selected && !composition && (
+              <div className="sc-header-bar">
+                <button onClick={back} disabled={nav.index <= 0} title="Înapoi (Alt+←)" aria-label="Înapoi"><BackIcon /></button>
+                <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title="Înainte (Alt+→)" aria-label="Înainte"><ForwardIcon /></button>
+                <DocumentIcon />
+                <strong style={{ flex: 1 }}>{selected.title}</strong>
+                {selected.locked && <LockIcon title="Blocat" />}
+                <button onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title="Split editor" aria-label="Split editor"><SplitIcon /></button>
+              </div>
+            )}
             {view === 'editor' && selected && selected.type === 'file' && !selected.children && (
               <MediaView api={api} dir={dir} node={selected} onError={report} />
             )}

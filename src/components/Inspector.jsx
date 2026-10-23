@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { BookmarkIcon, CommentIcon, MetaIcon, NotesIcon, SnapshotIcon } from './Icons.jsx';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { diffWords } from 'diff';
 import { buildExtensions } from '../editor/extensions.js';
@@ -96,13 +97,15 @@ export default function Inspector({ api, dir, project, node, html, words, allKey
     <aside className="inspector">
       <div className="tabs">
         {[
-          ['meta', 'Detalii'],
-          ['notes', 'Note'],
-          ['project', 'Proiect'],
-          ['annot', `Comentarii${notes.comments.length + notes.footnotes.length ? ` (${notes.comments.length + notes.footnotes.length})` : ''}`],
-          ['snapshots', 'Snapshot-uri'],
-        ].map(([id, label]) => (
-          <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>{label}</button>
+          ['meta', 'Detalii', MetaIcon],
+          ['notes', 'Note', NotesIcon],
+          ['project', 'Proiect', BookmarkIcon],
+          ['annot', `Comentarii${notes.comments.length + notes.footnotes.length ? ` (${notes.comments.length + notes.footnotes.length})` : ''}`, CommentIcon],
+          ['snapshots', 'Snapshot-uri', SnapshotIcon],
+        ].map(([id, label, Ico]) => (
+          <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)} title={label} aria-label={label}>
+            <Ico />
+          </button>
         ))}
       </div>
 

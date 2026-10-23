@@ -5,6 +5,8 @@ import { createMockApi } from './lib/mockApi.js';
 import { createWebApi } from './lib/webApi.js';
 import './styles.css';
 import './script.css';
+import './behaviour.css';
+import './scrivener-theme.css';
 
 // Electron: window.api from the preload. Browser: IndexedDB-backed web/PWA build,
 // or the in-memory demo with ?demo (also used when IndexedDB is unavailable).

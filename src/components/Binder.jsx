@@ -1,7 +1,10 @@
 import React, { useMemo, useState } from 'react';
+import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TrashIcon } from './Icons.jsx';
 
 function iconFor(node) {
-  if (node.root === 'trash') return '🗑';
+  if (node.root === 'trash') return <TrashIcon />;
+  if (node.root === 'draft') return <DraftIcon />;
+  if (node.root === 'research') return <ResearchIcon />;
   // Custom icon chosen in the Inspector (an emoji); Scrivener icon names fall through.
   if (node.icon && /\p{Extended_Pictographic}/u.test(node.icon)) return node.icon;
   if (node.type === 'file') {
@@ -13,7 +16,7 @@ function iconFor(node) {
     return '📎';
   }
   if (node.children && node.type !== 'folder') return '📑';
-  return node.children ? '📁' : '📄';
+  return node.children ? <FolderIcon /> : <DocumentIcon />;
 }
 
 function matches(node, query, docs) {
