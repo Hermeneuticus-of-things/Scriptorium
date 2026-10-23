@@ -57,6 +57,7 @@ export const DEFAULT_KEYS = {
   snapshot: 'Ctrl+5',
   stats: 'Ctrl+Shift+I',
   saveAs: 'Ctrl+Shift+S',
+  help: 'F1',
   print: 'Ctrl+P',
   fullScreen: 'Ctrl+Shift+F11',
   revealBinder: 'Ctrl+Alt+R',

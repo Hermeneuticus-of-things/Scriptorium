@@ -493,13 +493,15 @@ handle('menu:set', (e, spec) => {
           },
     ),
   }));
-  template.push({
-    label: 'Ajutor',
-    submenu: [
-      { label: 'Despre Scribner', click: () => dialog.showMessageBox(win, { message: `Scribner ${app.getVersion()}`, detail: 'Program de scris pentru cărți lungi, inspirat de Scrivener 3.' }) },
-      { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools' },
-    ],
-  });
+  // The renderer sends its own Help menu; About and developer tools are appended to it.
+  const extra = [
+    { type: 'separator' },
+    { label: 'Despre Scribner', click: () => dialog.showMessageBox(win, { message: `Scribner ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi, inspirat de Scrivener 3.' }) },
+    { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools' },
+  ];
+  const helpMenu = template.find((m, i) => spec[i] && spec[i].items.some((it) => it !== '-' && it.id === 'help'));
+  if (helpMenu) helpMenu.submenu.push(...extra);
+  else template.push({ label: 'Ajutor', submenu: extra.slice(1) });
   const menu = Menu.buildFromTemplate(template);
   if (win) {
     win.setMenu(menu);
