@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
@@ -7,15 +7,33 @@ import FindBar from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
 
 const Editor = forwardRef(function Editor(
-  { html, title, readOnly, typewriter, smartQuotes = true, compact = false, linkTargets = [], onOpenLink, onChange, onFocus, onTitleClick },
+  {
+    html,
+    title,
+    readOnly,
+    typewriter,
+    smartQuotes = true,
+    compact = false,
+    linkTargets = [],
+    words = [],
+    styles = [],
+    view = {},
+    onViewChange,
+    onOpenLink,
+    onChange,
+    onFocus,
+    onTitleClick,
+  },
   ref,
 ) {
   const [showFind, setShowFind] = useState(false);
+  const wordsRef = useRef(words);
+  wordsRef.current = words;
   const plainPaste = useRef(false);
   const imageInput = useRef(null);
   const editor = useEditor(
     {
-      extensions: buildExtensions({ smartQuotes }),
+      extensions: buildExtensions({ smartQuotes, getWords: () => wordsRef.current }),
       content: html || '<p></p>',
       editable: !readOnly,
       onUpdate: ({ editor: ed }) => onChange(ed.getHTML()),
@@ -141,6 +159,14 @@ const Editor = forwardRef(function Editor(
     [editor],
   );
 
+  // Focus modes and revision level live in the editor's storage.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.commands.setFocusMode(view.focus || 'off');
+    editor.commands.setCurrentParagraphHighlight(Boolean(view.currentParagraph));
+    editor.commands.setRevisionLevel(readOnly ? 0 : view.revision || 0);
+  }, [editor, view.focus, view.currentParagraph, view.revision, readOnly]);
+
   if (!editor) return null;
   const chain = () => editor.chain().focus();
 
@@ -177,9 +203,15 @@ const Editor = forwardRef(function Editor(
           onAddFootnote={addFootnote}
           onAddAnnotation={addAnnotation}
           onInsertImage={insertImage}
+          styles={styles}
+          view={view}
+          onViewChange={onViewChange}
         />
       )}
-      <div className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''}`}>
+      <div
+        className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? 'page-view' : ''} ${view.invisibles ? 'invisibles' : ''}`}
+        style={view.zoom && view.zoom !== 100 ? { '--zoom': view.zoom / 100 } : undefined}
+      >
         <h2 className="doc-title" onClick={onTitleClick}>
           {title}
         </h2>

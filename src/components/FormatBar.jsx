@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useEditorState } from '@tiptap/react';
+import { getHTMLFromFragment } from '@tiptap/core';
 import Menu from './Menu.jsx';
+import { htmlToManuscript } from '../lib/editorial.js';
 
 const TEXT_COLORS = ['#b3261e', '#c77700', '#2e7d32', '#1565c0', '#6a1b9a', '#5d4037', '#757575'];
 const HIGHLIGHTS = ['#fff176', '#a5d6a7', '#90caf9', '#f8bbd0', '#ffcc80'];
@@ -41,7 +43,17 @@ function Pop({ label, title, children }) {
   );
 }
 
-export default function FormatBar({ editor, linkTargets = [], onAddComment, onAddFootnote, onAddAnnotation, onInsertImage }) {
+export default function FormatBar({
+  editor,
+  linkTargets = [],
+  styles = [],
+  view = {},
+  onViewChange = () => {},
+  onAddComment,
+  onAddFootnote,
+  onAddAnnotation,
+  onInsertImage,
+}) {
   const s = useEditorState({
     editor,
     selector: ({ editor: ed }) => ({
@@ -155,6 +167,60 @@ export default function FormatBar({ editor, linkTargets = [], onAddComment, onAd
     { label: 'Elimină culoarea textului', action: () => chain().unsetColor().run() },
   ];
 
+  const setView = (patch) => {
+    onViewChange({ ...view, ...patch });
+    setTimeout(() => editor.commands.focus(), 0);
+  };
+
+  const styleItems = [
+    ...styles.filter((st) => st.type === 'para').map((st) => ({ label: `¶ ${st.name}`, action: () => chain().setParagraphStyle(st.id).run() })),
+    ...styles.filter((st) => st.type === 'char').map((st) => ({ label: `a ${st.name}`, action: () => chain().setCharStyle(st.id).run(), disabled: !s.hasSelection })),
+    '-',
+    { label: 'Fără stil de paragraf', action: () => chain().setParagraphStyle(null).run() },
+    { label: 'Fără stil de caractere', action: () => chain().setCharStyle(null).run() },
+  ];
+
+  const revisionItems = [
+    { label: view.revision ? `Oprește revizia (acum: ${view.revision})` : 'Revizia e oprită', action: () => setView({ revision: 0 }), disabled: !view.revision },
+    ...[1, 2, 3, 4, 5].map((n) => ({ label: `Runda ${n} de revizie (culoarea ${n})`, action: () => setView({ revision: n }) })),
+    '-',
+    { label: 'Acceptă reviziile (elimină toate culorile)', action: () => chain().removeRevisions().run() },
+    ...(view.revision ? [{ label: `Elimină doar runda ${view.revision}`, action: () => chain().removeRevisions(view.revision).run() }] : []),
+  ];
+
+  const viewItems = [
+    { label: `${view.focus === 'dialogue' ? '✓ ' : ''}Focus pe dialog`, action: () => setView({ focus: view.focus === 'dialogue' ? 'off' : 'dialogue' }) },
+    { label: `${view.focus === 'paragraph' ? '✓ ' : ''}Focus pe paragraful curent`, action: () => setView({ focus: view.focus === 'paragraph' ? 'off' : 'paragraph' }) },
+    { label: `${view.focus === 'sentence' ? '✓ ' : ''}Focus pe fraza curentă`, action: () => setView({ focus: view.focus === 'sentence' ? 'off' : 'sentence' }) },
+    { label: `${view.currentParagraph ? '✓ ' : ''}Evidențiază paragraful curent`, action: () => setView({ currentParagraph: !view.currentParagraph }) },
+    '-',
+    { label: `${view.pageView ? '✓ ' : ''}Page View (pagină A5)`, action: () => setView({ pageView: !view.pageView }) },
+    { label: `${view.invisibles ? '✓ ' : ''}Arată semnele de paragraf`, action: () => setView({ invisibles: !view.invisibles }) },
+    '-',
+    ...[75, 100, 125, 150, 200].map((z) => ({ label: `${(view.zoom || 100) === z ? '✓ ' : ''}Zoom ${z}%`, action: () => setView({ zoom: z }) })),
+  ];
+
+  const copySpecial = async (kind) => {
+    const { from, to, empty } = editor.state.selection;
+    const slice = empty ? editor.state.doc.content : editor.state.doc.slice(from, to).content;
+    const html = getHTMLFromFragment(slice, editor.schema);
+    let text = html;
+    if (kind === 'text') text = empty ? editor.getText({ blockSeparator: '\n\n' }) : editor.state.doc.textBetween(from, to, '\n\n');
+    if (kind === 'markdown') text = htmlToManuscript(html);
+    if (kind === 'clean') {
+      text = html
+        .replace(/<span[^>]*data-(?:footnote|annotation)="[^"]*"[^>]*>[\s\S]*?<\/span>/g, '')
+        .replace(/<span[^>]*data-comment="[^"]*"[^>]*>([\s\S]*?)<\/span>/g, '$1');
+    }
+    await navigator.clipboard.writeText(text);
+  };
+  const copyItems = [
+    { label: 'Ca text simplu', action: () => copySpecial('text') },
+    { label: 'Ca Markdown (***ALOGEN***, *ilustrații*, [^note])', action: () => copySpecial('markdown') },
+    { label: 'Ca HTML', action: () => copySpecial('html') },
+    { label: 'Ca HTML fără comentarii, adnotări și note', action: () => copySpecial('clean') },
+  ];
+
   return (
     <div className="format-bar">
       <select className="block-select" value={s.block} onChange={(e) => setBlock(e.target.value)} title="Stilul paragrafului">
@@ -205,6 +271,10 @@ export default function FormatBar({ editor, linkTargets = [], onAddComment, onAd
       <Menu label="Tabel" items={tableItems} />
       <Menu label="Caractere" items={SPECIAL.map((c) => ({ label: c, action: () => chain().insertContent(c).run() }))} />
       <Menu label="Transformă" items={transformItems} />
+      <Menu label="Stil" items={styleItems} />
+      <Menu label={view.revision ? `Revizie ${view.revision}` : 'Revizie'} items={revisionItems} />
+      <Menu label="Vizualizare" items={viewItems} />
+      <Menu label="Copiază special" items={copyItems} />
       <span className="sep" />
       {btn('↶', false, () => chain().undo().run(), 'Anulează (Ctrl+Z)')}
       {btn('↷', false, () => chain().redo().run(), 'Refă (Ctrl+Y)')}
