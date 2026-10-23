@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useEditorState } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import Menu from './Menu.jsx';
@@ -65,6 +65,120 @@ function Pop({ label, title, children }) {
       {open && (
         <div className="menu-pop narrow" onClick={() => setOpen(false)}>
           {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Scrivener keeps the format bar on one row; whatever does not fit goes into a
+// trailing "»" menu. Group widths are measured while they sit in the bar and cached,
+// so groups already in the overflow can be brought back when the pane grows.
+const MORE_WIDTH = 30;
+function OverflowBar({ groups }) {
+  const items = groups.map((g) => (Array.isArray(g) ? { el: g[0], sep: false } : { el: g, sep: true }));
+  const barRef = useRef(null);
+  const widths = useRef([]);
+  const [count, setCount] = useState(items.length);
+  const [open, setOpen] = useState(false);
+  const fit = useCallback(() => {
+    const bar = barRef.current;
+    if (!bar || !bar.offsetParent) return; // hidden (split pane without focus): keep the last layout
+    bar.querySelectorAll(':scope > .fb-group').forEach((el) => {
+      widths.current[Number(el.dataset.i)] = el.getBoundingClientRect().width;
+    });
+    const cs = getComputedStyle(bar);
+    const gap = parseFloat(cs.columnGap) || 0;
+    const avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const used = (n) => {
+      let w = 0;
+      for (let i = 0; i < n; i++) if (widths.current[i]) w += widths.current[i] + gap;
+      return w;
+    };
+    let n = items.length;
+    if (used(n) - gap > avail + 0.5) {
+      while (n > 1 && used(n) + MORE_WIDTH > avail) n--;
+    }
+    setCount((c) => (c === n ? c : n));
+  }, [items.length]);
+  useLayoutEffect(fit);
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!bar || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(() => fit());
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [fit]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDown = (e) => { if (!barRef.current?.querySelector('.fb-more')?.contains(e.target)) setOpen(false); };
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      // Esc closes an open dropdown inside the overflow first, then the overflow itself.
+      if (barRef.current?.querySelector('.fb-overflow-pop .menu-pop')) return;
+      setOpen(false);
+      barRef.current?.querySelector('.fb-more > button')?.focus();
+    };
+    // a fixed popup would drift away from its button: scrolling the editor closes it
+    const onScroll = (e) => { if (!barRef.current?.querySelector('.fb-overflow-pop')?.contains(e.target)) setOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onScroll);
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  useEffect(() => { if (count >= items.length) setOpen(false); }, [count, items.length]);
+  // The popup is position:fixed so the editor pane's overflow cannot clip it; it is
+  // right-aligned under the » button and kept inside the window. Dropdowns opened inside
+  // it open towards whichever side has room.
+  const popRef = useRef(null);
+  useLayoutEffect(() => {
+    const pop = popRef.current;
+    if (!open || !pop) return undefined;
+    const btn = barRef.current.querySelector('.fb-more > button').getBoundingClientRect();
+    const w = pop.offsetWidth;
+    pop.style.top = `${Math.round(btn.bottom + 4)}px`;
+    pop.style.left = `${Math.round(Math.max(4, Math.min(btn.right - w, window.innerWidth - w - 4)))}px`;
+    const flip = () => pop.querySelectorAll('.menu-pop').forEach((m) => {
+      if (m.dataset.placed) return;
+      m.dataset.placed = '1';
+      m.style.left = '0';
+      m.style.right = 'auto';
+      if (m.getBoundingClientRect().right > window.innerWidth - 4) {
+        m.style.left = 'auto';
+        m.style.right = '0';
+      }
+    });
+    const mo = new MutationObserver(flip);
+    mo.observe(pop, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, [open]);
+  const render = (it, i) =>
+    it.el == null ? null : (
+      <div key={i} data-i={i} className={`fb-group${it.sep && i > 0 ? ' fb-sep' : ''}`}>
+        {it.el}
+      </div>
+    );
+  const hidden = items.slice(count);
+  return (
+    <div className="format-bar" ref={barRef} role="toolbar" aria-label="Formatare">
+      {items.slice(0, count).map(render)}
+      {hidden.some((it) => it.el != null) && (
+        <div className="fb-more menu">
+          <button className={open ? 'on' : ''} title="Mai multe comenzi de formatare" aria-haspopup="true" aria-expanded={open} onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((o) => !o)}>
+            »
+          </button>
+          {open && (
+            // A chosen menu item closes the overflow as well.
+            <div className="fb-overflow-pop" ref={popRef} onClick={(e) => e.target.closest?.('[role="menuitem"]') && setOpen(false)}>
+              {hidden.map((it, k) => render(it, count + k))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -330,81 +444,91 @@ export default function FormatBar({
     { label: 'Ca HTML fără comentarii, adnotări și note', action: () => copySpecial('clean') },
   ];
 
-  return (
-    <div className="format-bar">
-      <select className="block-select" value={s.block} onChange={(e) => setBlock(e.target.value)} title="Stilul paragrafului">
-        <option value="p">Normal</option>
-        <option value="h1">Titlu 1</option>
-        <option value="h2">Titlu 2</option>
-        <option value="h3">Titlu 3</option>
-        <option value="quote">Citat</option>
-        <option value="code">Cod</option>
-      </select>
-      <select className="font-select" value={s.fontFamily} onChange={(e) => (e.target.value ? chain().setFontFamily(e.target.value).run() : chain().unsetFontFamily().run())} title="Fontul textului selectat">
-        <option value="">Font implicit</option>
-        {s.fontFamily && !FONTS.includes(s.fontFamily) && <option value={s.fontFamily}>{s.fontFamily}</option>}
-        {FONTS.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
-      </select>
-      <select className="size-select" value={s.fontSize} onChange={(e) => (e.target.value ? chain().setFontSize(e.target.value).run() : chain().unsetFontSize().run())} title="Mărimea fontului">
-        <option value="">–</option>
-        {s.fontSize && !SIZES.includes(parseFloat(s.fontSize)) && <option value={s.fontSize}>{s.fontSize}</option>}
-        {SIZES.map((z) => <option key={z} value={`${z}pt`}>{z}</option>)}
-      </select>
-      <span className="sep" />
-      {btn(<b>B</b>, s.bold, () => chain().toggleBold().run(), 'Bold (Ctrl+B)')}
-      {btn(<i>I</i>, s.italic, () => chain().toggleItalic().run(), 'Italic (Ctrl+I)')}
-      {btn(<u>U</u>, s.underline, () => chain().toggleUnderline().run(), 'Subliniat (Ctrl+U)')}
-      {btn(<s>S</s>, s.strike, () => chain().toggleStrike().run(), 'Tăiat')}
-      {btn(<span>x<sup>2</sup></span>, s.sup, () => chain().toggleSuperscript().run(), 'Superscript')}
-      {btn(<span>x<sub>2</sub></span>, s.sub, () => chain().toggleSubscript().run(), 'Subscript')}
-      {btn(<span style={{ fontVariant: 'small-caps' }}>Aa</span>, s.smallCaps, () => chain().toggleSmallCaps().run(), 'Majuscule mici (small caps)')}
-      {btn('AA', s.allCaps, () => chain().toggleAllCaps().run(), 'Toate majuscule (fără a schimba textul)')}
-      <Pop label={<span className="color-a">A</span>} title="Culoarea textului">
-        <Swatches colors={TEXT_COLORS} onPick={(c) => chain().setColor(c).run()} onClear={() => chain().unsetColor().run()} clearLabel="Automat" />
-        <CustomColor label="Altă culoare" onPick={(c) => chain().setColor(c).run()} />
-      </Pop>
-      <Pop label={<span className="hl-a">H</span>} title="Highlight">
-        <Swatches colors={HIGHLIGHTS} onPick={(c) => chain().toggleHighlight({ color: c }).run()} onClear={() => chain().unsetHighlight().run()} clearLabel="Fără" />
-        <CustomColor label="Altă culoare" onPick={(c) => chain().setHighlight({ color: c }).run()} />
-      </Pop>
-      <span className="sep" />
-      {btn('⯇', s.align === 'left', () => chain().unsetTextAlign().run(), 'Aliniere stânga')}
-      {btn('≡', s.align === 'center', () => chain().setTextAlign('center').run(), 'Centrat')}
-      {btn('⯈', s.align === 'right', () => chain().setTextAlign('right').run(), 'Aliniere dreapta')}
-      {btn('☰', s.align === 'justify', () => chain().setTextAlign('justify').run(), 'Justify')}
-      <span className="sep" />
-      {btn('•', s.bullet, () => chain().toggleBulletList().run(), 'Listă cu buline')}
-      {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), 'Listă numerotată')}
-      <Menu label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} />
-      {btn('⇥', false, () => chain().sinkListItem('listItem').run(), 'Indentează elementul de listă', !s.inList)}
-      {btn('⇤', false, () => chain().liftListItem('listItem').run(), 'Scoate din indentare', !s.inList)}
-      {btn('— ', false, () => chain().insertContent('— ').run(), 'Linie de dialog')}
-      <span className="sep" />
-      {s.comment
-        ? btn('💬✕', true, () => chain().unsetComment().run(), 'Șterge comentariul')
-        : btn('💬', false, onAddComment, 'Comentariu pe textul selectat', !s.hasSelection)}
-      {btn('¹', false, onAddFootnote, 'Notă de subsol (dublu-clic pe număr pentru editare)')}
-      {btn('✎', false, onAddAnnotation, 'Adnotare inline (nu intră în Compile)')}
-      {btn('🔗', s.link, insertLinkExternal, 'Link extern (Ctrl+L)')}
-      <Menu
-        label="[[ ]]"
-        items={linkTargets.length ? linkTargets.slice(0, 60).map((t) => ({ label: t.title, action: () => insertLinkInternal(t) })) : [{ label: 'Niciun document', action: () => {}, disabled: true }]}
-      />
-      <span className="sep" />
-      <Menu label="Inserează" items={insertItems} />
-      <Menu label="Paragraf" items={paraItems} />
-      <Menu label="Semne de carte" items={bookmarkItems} />
-      {s.image && <Menu label="Imagine" items={imageItems} />}
-      <Menu label="Tabel" items={tableItems} />
-      <Menu label="Caractere" items={SPECIAL.map((c) => ({ label: c, action: () => chain().insertContent(c).run() }))} />
-      <Menu label="Transformă" items={transformItems} />
-      <Menu label="Stil" items={styleItems} />
-      <Menu label={view.revision ? `Revizie ${view.revision}` : 'Revizie'} items={revisionItems} />
-      <Menu label="Vizualizare" items={viewItems} />
-      <Menu label="Copiază special" items={copyItems} />
-      <span className="sep" />
-      {btn('↶', false, () => chain().undo().run(), 'Anulează (Ctrl+Z)')}
-      {btn('↷', false, () => chain().redo().run(), 'Refă (Ctrl+Y)')}
-    </div>
-  );
+  // One entry per overflow unit, in bar order. A fragment starts a new separated
+  // section; a one-element array continues the previous section (the menu buttons).
+  const groups = [
+    <>
+        <select className="block-select" value={s.block} onChange={(e) => setBlock(e.target.value)} title="Stilul paragrafului">
+          <option value="p">Normal</option>
+          <option value="h1">Titlu 1</option>
+          <option value="h2">Titlu 2</option>
+          <option value="h3">Titlu 3</option>
+          <option value="quote">Citat</option>
+          <option value="code">Cod</option>
+        </select>
+        <select className="font-select" value={s.fontFamily} onChange={(e) => (e.target.value ? chain().setFontFamily(e.target.value).run() : chain().unsetFontFamily().run())} title="Fontul textului selectat">
+          <option value="">Font implicit</option>
+          {s.fontFamily && !FONTS.includes(s.fontFamily) && <option value={s.fontFamily}>{s.fontFamily}</option>}
+          {FONTS.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
+        </select>
+        <select className="size-select" value={s.fontSize} onChange={(e) => (e.target.value ? chain().setFontSize(e.target.value).run() : chain().unsetFontSize().run())} title="Mărimea fontului">
+          <option value="">–</option>
+          {s.fontSize && !SIZES.includes(parseFloat(s.fontSize)) && <option value={s.fontSize}>{s.fontSize}</option>}
+          {SIZES.map((z) => <option key={z} value={`${z}pt`}>{z}</option>)}
+        </select>
+    </>,
+    <>
+        {btn(<b>B</b>, s.bold, () => chain().toggleBold().run(), 'Bold (Ctrl+B)')}
+        {btn(<i>I</i>, s.italic, () => chain().toggleItalic().run(), 'Italic (Ctrl+I)')}
+        {btn(<u>U</u>, s.underline, () => chain().toggleUnderline().run(), 'Subliniat (Ctrl+U)')}
+        {btn(<s>S</s>, s.strike, () => chain().toggleStrike().run(), 'Tăiat')}
+        {btn(<span>x<sup>2</sup></span>, s.sup, () => chain().toggleSuperscript().run(), 'Superscript')}
+        {btn(<span>x<sub>2</sub></span>, s.sub, () => chain().toggleSubscript().run(), 'Subscript')}
+        {btn(<span style={{ fontVariant: 'small-caps' }}>Aa</span>, s.smallCaps, () => chain().toggleSmallCaps().run(), 'Majuscule mici (small caps)')}
+        {btn('AA', s.allCaps, () => chain().toggleAllCaps().run(), 'Toate majuscule (fără a schimba textul)')}
+        <Pop label={<span className="color-a">A</span>} title="Culoarea textului">
+          <Swatches colors={TEXT_COLORS} onPick={(c) => chain().setColor(c).run()} onClear={() => chain().unsetColor().run()} clearLabel="Automat" />
+          <CustomColor label="Altă culoare" onPick={(c) => chain().setColor(c).run()} />
+        </Pop>
+        <Pop label={<span className="hl-a">H</span>} title="Highlight">
+          <Swatches colors={HIGHLIGHTS} onPick={(c) => chain().toggleHighlight({ color: c }).run()} onClear={() => chain().unsetHighlight().run()} clearLabel="Fără" />
+          <CustomColor label="Altă culoare" onPick={(c) => chain().setHighlight({ color: c }).run()} />
+        </Pop>
+    </>,
+    <>
+        {btn('⯇', s.align === 'left', () => chain().unsetTextAlign().run(), 'Aliniere stânga')}
+        {btn('≡', s.align === 'center', () => chain().setTextAlign('center').run(), 'Centrat')}
+        {btn('⯈', s.align === 'right', () => chain().setTextAlign('right').run(), 'Aliniere dreapta')}
+        {btn('☰', s.align === 'justify', () => chain().setTextAlign('justify').run(), 'Justify')}
+    </>,
+    <>
+        {btn('•', s.bullet, () => chain().toggleBulletList().run(), 'Listă cu buline')}
+        {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), 'Listă numerotată')}
+        <Menu label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} />
+        {btn('⇥', false, () => chain().sinkListItem('listItem').run(), 'Indentează elementul de listă', !s.inList)}
+        {btn('⇤', false, () => chain().liftListItem('listItem').run(), 'Scoate din indentare', !s.inList)}
+        {btn('— ', false, () => chain().insertContent('— ').run(), 'Linie de dialog')}
+    </>,
+    <>
+        {s.comment
+          ? btn('💬✕', true, () => chain().unsetComment().run(), 'Șterge comentariul')
+          : btn('💬', false, onAddComment, 'Comentariu pe textul selectat', !s.hasSelection)}
+        {btn('¹', false, onAddFootnote, 'Notă de subsol (dublu-clic pe număr pentru editare)')}
+        {btn('✎', false, onAddAnnotation, 'Adnotare inline (nu intră în Compile)')}
+        {btn('🔗', s.link, insertLinkExternal, 'Link extern (Ctrl+L)')}
+        <Menu
+          label="[[ ]]"
+          items={linkTargets.length ? linkTargets.slice(0, 60).map((t) => ({ label: t.title, action: () => insertLinkInternal(t) })) : [{ label: 'Niciun document', action: () => {}, disabled: true }]}
+        />
+    </>,
+    <>
+        <Menu label="Inserează" items={insertItems} />
+    </>,
+    [<Menu label="Paragraf" items={paraItems} />],
+    [<Menu label="Semne de carte" items={bookmarkItems} />],
+    [s.image ? <Menu label="Imagine" items={imageItems} /> : null],
+    [<Menu label="Tabel" items={tableItems} />],
+    [<Menu label="Caractere" items={SPECIAL.map((c) => ({ label: c, action: () => chain().insertContent(c).run() }))} />],
+    [<Menu label="Transformă" items={transformItems} />],
+    [<Menu label="Stil" items={styleItems} />],
+    [<Menu label={view.revision ? `Revizie ${view.revision}` : 'Revizie'} items={revisionItems} />],
+    [<Menu label="Vizualizare" items={viewItems} />],
+    [<Menu label="Copiază special" items={copyItems} />],
+    <>
+        {btn('↶', false, () => chain().undo().run(), 'Anulează (Ctrl+Z)')}
+        {btn('↷', false, () => chain().redo().run(), 'Refă (Ctrl+Y)')}
+    </>,
+  ];
+
+  return <OverflowBar groups={groups} />;
 }

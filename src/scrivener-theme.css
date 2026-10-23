@@ -525,4 +525,28 @@
 [data-ui='classic'] .workspace.split:has(.pane.second:focus-within) .pane:not(.second) .format-bar { display: none; }
 /* pane header: keep actions on one line, ellipsize the caption */
 [data-ui='classic'] .pane-head > * { white-space: nowrap; flex-shrink: 0; }
-[data-ui='classic'] .pane-head > span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; }
+
+/* format bar overflow (») */
+[data-ui='classic'] .format-bar .fb-sep { border-left-color: var(--sc-line-2); padding-left: 4px; margin-left: 2px; }
+[data-ui='classic'] .format-bar .fb-overflow-pop { background: var(--sc-chrome); border-color: var(--sc-line); border-radius: 0; box-shadow: 0 4px 12px rgba(0,0,0,.2); gap: 2px 4px; padding: 4px; }
+[data-ui='classic'] .format-bar .fb-more > button { font-weight: 600; }
+/* pane header (split pane 2): the caption keeps a readable minimum and ellipsizes;
+   the actions never get clipped: when they do not fit beside it they wrap below. */
+.pane-head { flex-wrap: wrap; row-gap: 2px; }
+.pane-head > span { flex: 1 1 8em; min-width: 6em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pane-head > button { flex: none; white-space: nowrap; }
+[data-ui='classic'] .pane-head > span { flex: 1 1 8em; min-width: 6em; }
+/* primary buttons: Windows accent at a contrast that passes WCAG AA (4.5:1) with white text */
+[data-ui='classic'] button.primary { background: #005fb8; border-color: #004c93; }
+[data-ui='classic'] button.primary:hover:not(:disabled) { background: #0067c0; border-color: #004c93; }
+:root[data-ui='classic'][data-theme='dark'] button.primary { background: #0067c0; border-color: #4ca0e0; }
+/* Backup dialog: the action keeps its natural width; long backup names ellipsize */
+.backup-dialog > button.primary { align-self: flex-start; }
+.backup-list li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.backup-list li > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.backup-list li > small, .backup-list li > button { flex: none; }
+/* binder context menu: Windows-style flat menu */
+[data-ui='classic'] .ctx-menu { background: var(--sc-chrome); border-color: var(--sc-line-2); border-radius: 0; color: var(--sc-text); font: 12px var(--sc-font); box-shadow: 2px 3px 10px rgba(0,0,0,.25); padding: 2px; }
+[data-ui='classic'] .ctx-menu > button { border: none; background: transparent; box-shadow: none; border-radius: 0; padding: 3px 18px 3px 2px; min-height: 0; }
+[data-ui='classic'] .ctx-menu > button:focus:not(.disabled), [data-ui='classic'] .ctx-menu > button.open { background: var(--sc-hover); color: var(--sc-text); }
+[data-ui='classic'] .ctx-menu hr { border-top-color: var(--sc-line); }
