@@ -60,7 +60,11 @@ function readSettings() {
 
 function writeSettings(s) {
   fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
-  fs.writeFileSync(settingsFile(), JSON.stringify(s, null, 2));
+  // Write to a temp file and rename it over the old one, so a crash mid-write never leaves
+  // a truncated settings.json (API key and recent projects would be lost).
+  const tmp = `${settingsFile()}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(s, null, 2));
+  fs.renameSync(tmp, settingsFile());
 }
 
 function getApiKey() {
