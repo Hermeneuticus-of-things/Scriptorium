@@ -93,6 +93,9 @@ function saveUi(dir, ui) {
 
 export default function App({ api }) {
   const [settings, setSettings] = useState(null);
+  const settingsRef = useRef(null);
+  settingsRef.current = settings;
+  const openResultRef = useRef(null);
   if (settings) setLanguage(settings.language || 'ro');
   useEffect(() => {
     if (settings) applySettingsCss(settings);
@@ -148,7 +151,20 @@ export default function App({ api }) {
   const historyTimer = useRef(null);
 
   useEffect(() => {
-    api.getSettings().then(setSettings).catch((e) => setError(e.message));
+    api
+      .getSettings()
+      .then(async (s) => {
+        setSettings(s);
+        const last = s?.reopenLastProject !== false && s?.recent?.[0]?.dir;
+        if (last && openResultRef.current) {
+          try {
+            await openResultRef.current(await api.openProject(last));
+          } catch {
+            // The project moved or was deleted: stay on Home.
+          }
+        }
+      })
+      .catch((e) => setError(e.message));
   }, [api]);
 
   useEffect(() => {
@@ -222,7 +238,7 @@ export default function App({ api }) {
       pending.current.set(`${id}|${kind}`, html);
       setSaveState('se salvează…');
       clearTimeout(timer.current);
-      timer.current = setTimeout(flush, SAVE_DELAY);
+      timer.current = setTimeout(flush, Math.max(0.2, Number(settingsRef.current?.autosaveSec) || SAVE_DELAY / 1000) * 1000);
     },
     [flush],
   );
@@ -313,7 +329,7 @@ export default function App({ api }) {
       setSelectedId(start);
       setSelectedIds(new Set([start]));
       setNav({ stack: [start], index: 0 });
-      setView(ui.view || 'editor');
+      setView(ui.view || settingsRef.current?.defaultView || 'editor');
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
@@ -328,6 +344,7 @@ export default function App({ api }) {
     },
     [api],
   );
+  openResultRef.current = openResult;
 
   const closeProject = async () => {
     await flush();
@@ -813,6 +830,13 @@ export default function App({ api }) {
     else editorRefs.current.delete(id);
   };
   const smartQuotes = settings.smartQuotes !== false;
+  const corrections = {
+    smartDashes: settings.smartDashes !== false,
+    smartEllipsis: settings.smartEllipsis !== false,
+    autoCapitalize: Boolean(settings.autoCapitalize),
+    replacements: settings.autoReplacements || [],
+  };
+  const corrKey = JSON.stringify(corrections);
   // AI is optional: with it off, every feature that needs Claude is hidden and nothing else changes.
   const aiEnabled = settings.aiEnabled !== false;
   // Loads every text document of the project into memory (views and AI jobs over the whole book).
@@ -1123,6 +1147,10 @@ export default function App({ api }) {
           selectedIds={[...selectedIds]}
         />
         <Binder
+          binderEnter={settings.binderEnter}
+          binderDoubleClick={settings.binderDoubleClick}
+          onOpenItem={(id) => onBinderSelect(id, {})}
+          onQuickRef={openQuickRef}
           project={project}
           filterIds={collectionIds}
           filterTitle={activeCollection?.title}
@@ -1152,7 +1180,9 @@ export default function App({ api }) {
             {view === 'editor' && selected && selected.type !== 'file' && !selected.children && (
               <Editor
                 scriptFormat={scriptFormat}
-                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}`}
+                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${corrKey}`}
+                corrections={corrections}
+                showInvisibles={settings.showInvisibles}
                 ref={(r) => registerRef(selected.id, r)}
                 html={docs[selected.id] || ''}
                 title={selected.title}
@@ -1235,7 +1265,9 @@ export default function App({ api }) {
               ) : (
                 <Editor
                   scriptFormat={scriptFormat}
-                  key={`split-${splitNode.id}-${smartQuotes}`}
+                  key={`split-${splitNode.id}-${smartQuotes}-${corrKey}`}
+                  corrections={corrections}
+                  showInvisibles={settings.showInvisibles}
                   ref={(r) => mainIds.has(splitNode.id) || registerRef(splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
                   title={splitNode.title}

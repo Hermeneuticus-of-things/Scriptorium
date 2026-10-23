@@ -14,6 +14,8 @@ const Editor = forwardRef(function Editor(
     readOnly,
     typewriter,
     smartQuotes = true,
+    corrections = null,
+    showInvisibles = false,
     compact = false,
     linkTargets = [],
     words = [],
@@ -39,7 +41,7 @@ const Editor = forwardRef(function Editor(
   const imageInput = useRef(null);
   const editor = useEditor(
     {
-      extensions: buildExtensions({ smartQuotes, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current }),
+      extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current }),
       content: html || '<p></p>',
       editable: !readOnly,
       onUpdate: ({ editor: ed }) => {
@@ -99,7 +101,7 @@ const Editor = forwardRef(function Editor(
         },
       },
     },
-    [smartQuotes],
+    [smartQuotes, JSON.stringify(corrections)],
   );
 
   useImperativeHandle(
@@ -171,6 +173,12 @@ const Editor = forwardRef(function Editor(
     }),
     [editor],
   );
+
+  // Invisibles: Options setting or the per-view toggle (Format → paragraph marks).
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.commands.setInvisibles(Boolean(showInvisibles || view.invisibles));
+  }, [editor, showInvisibles, view.invisibles]);
 
   // Focus modes and revision level live in the editor's storage.
   useEffect(() => {
