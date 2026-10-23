@@ -2,17 +2,20 @@
 // v1.0 bulk AI IPC handlers: bulk synopsis, book consistency (living sheets), multi-zoom review.
 //
 // main.cjs registration (after `handle`, `readSettings`, `getApiKey`, `assertOpened` exist):
-//   require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, assertOpened, app });
+//   require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 // Cache file: <project>/.cache/ai-cache.json (falls back to userData when no dir is passed).
 const path = require('path');
 const batch = require('../lib/aiBatch.cjs');
+const providers = require('../lib/aiProviders.cjs');
 
-module.exports = function register({ handle, getSettings, getApiKey, assertOpened, app, makeRun = batch.makeRun }) {
+// getAiConfig() -> {provider, model, baseUrl, apiKey} (optional; falls back to Anthropic + getApiKey()).
+module.exports = function register({ handle, getSettings, getApiKey, getAiConfig, assertOpened, app, makeRun = batch.makeRun }) {
   const guard = () => {
     if (getSettings().aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
-    const key = getApiKey();
-    if (!key) throw new Error('Setează cheia API Anthropic în Setări.');
-    return makeRun(key);
+    const cfg = getAiConfig ? getAiConfig() : { provider: 'anthropic', apiKey: getApiKey() };
+    const r = providers.resolveConfig(cfg);
+    if (r.needsKey && !cfg.apiKey) throw new Error(providers.missingKeyMessage(r.provider));
+    return makeRun(getAiConfig ? cfg : cfg.apiKey);
   };
   const cacheFor = (dir) => {
     if (dir) {

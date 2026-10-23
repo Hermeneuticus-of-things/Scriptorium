@@ -8,6 +8,9 @@ const compile = require('../lib/compile.cjs');
 const scriptExport = require('../lib/scriptExport.cjs');
 const editorPackage = require('../lib/editorPackage.cjs');
 const ai = require('../lib/ai.cjs');
+const aiProviders = require('../lib/aiProviders.cjs');
+const aiKeys = require('../lib/aiKeys.cjs');
+const notebookLm = require('../lib/notebookLm.cjs');
 const backup = require('../lib/backup.cjs');
 const history = require('../lib/history.cjs');
 const { listTemplates } = require('../lib/templates.cjs');
@@ -67,26 +70,32 @@ function writeSettings(s) {
   fs.renameSync(tmp, settingsFile());
 }
 
-function getApiKey() {
+// AI provider + per-provider keys (lib/aiKeys.cjs). Keys never leave the main process.
+const aiProviderOf = (s) => (aiProviders.PRESETS[s.aiProvider] ? s.aiProvider : aiProviders.DEFAULT_PROVIDER);
+
+function getApiKey(provider) {
   const s = readSettings();
-  if (!s.apiKeyEnc) return process.env.ANTHROPIC_API_KEY || '';
-  const buf = Buffer.from(s.apiKeyEnc, 'base64');
-  return s.apiKeyPlain ? buf.toString('utf8') : safeStorage.decryptString(buf);
+  return aiKeys.getKey(s, provider || aiProviderOf(s), safeStorage);
 }
 
-function setApiKey(key) {
+function setApiKey(key, provider) {
   const s = readSettings();
-  if (!key) {
-    delete s.apiKeyEnc;
-    delete s.apiKeyPlain;
-  } else if (safeStorage.isEncryptionAvailable()) {
-    s.apiKeyEnc = safeStorage.encryptString(key).toString('base64');
-    delete s.apiKeyPlain;
-  } else {
-    s.apiKeyEnc = Buffer.from(key, 'utf8').toString('base64');
-    s.apiKeyPlain = true;
-  }
-  writeSettings(s);
+  writeSettings(aiKeys.setKey(s, provider || aiProviderOf(s), key, safeStorage));
+}
+
+/** {provider, model, baseUrl, apiKey}; `override` (unsaved Settings form) wins over saved values. */
+function getAiConfig(override = {}) {
+  const s = readSettings();
+  const provider = aiProviders.PRESETS[override.provider] ? override.provider : aiProviderOf(s);
+  const same = provider === aiProviderOf(s);
+  const model = override.model !== undefined ? override.model : same ? s.aiModel : '';
+  const baseUrl = override.baseUrl !== undefined ? override.baseUrl : same ? s.aiBaseUrl : '';
+  return { ...aiProviders.resolveConfig({ provider, model, baseUrl }), apiKey: aiKeys.getKey(s, provider, safeStorage) };
+}
+
+function migrateAiKeys() {
+  const s = readSettings();
+  if (aiKeys.needsMigration(s)) writeSettings(aiKeys.migrateKeys(s));
 }
 
 function rememberRecent(dir, title) {
@@ -262,7 +271,7 @@ function handle(channel, fn) {
     try {
       return { ok: true, value: await fn(event, ...args) };
     } catch (err) {
-      return { ok: false, error: channel.startsWith('ai:') ? ai.friendlyError(err) : err.message || String(err) };
+      return { ok: false, error: channel.startsWith('ai:') || channel === 'rag:ask' ? ai.friendlyError(err) : err.message || String(err) };
     }
   });
 }
@@ -290,13 +299,28 @@ handle('settings:get', () => {
     backupEveryMin: b.backupEveryMin,
     backupKeep: b.backupKeep,
     backupDir: b.backupDir,
-    hasApiKey: Boolean(getApiKey()),
+    aiProvider: aiProviderOf(s),
+    aiModel: s.aiModel || '',
+    aiBaseUrl: s.aiBaseUrl || '',
+    aiLabel: aiProviders.providerLabel(aiProviderOf(s)),
+    notebookLmUrl: s.notebookLmUrl || '',
+    // Only flags reach the renderer, never keys.
+    hasKeys: aiKeys.keyFlags(s, safeStorage),
+    // Current provider is usable: it has a key, or (local / custom servers) needs none.
+    hasApiKey: Boolean(getApiKey()) || !aiProviders.PRESETS[aiProviderOf(s)].needsKey,
   };
 });
 handle('settings:set', (_e, patch) => {
-  const { apiKey, ...rest } = patch;
-  if (apiKey !== undefined) setApiKey(apiKey);
+  // apiKey: key for patch.aiProvider (or the current provider); apiKeys: {provider: key|''}.
+  // Keys are stripped from the patch and only stored encrypted.
+  const { apiKey, apiKeys, apiKeyEnc, apiKeyPlain, hasKeys, hasApiKey, ...rest } = patch || {};
+  if (rest.aiProvider !== undefined && !aiProviders.PRESETS[rest.aiProvider]) delete rest.aiProvider;
+  if (rest.notebookLmUrl !== undefined) rest.notebookLmUrl = String(rest.notebookLmUrl || '').trim();
   writeSettings({ ...readSettings(), ...rest });
+  if (apiKeys && typeof apiKeys === 'object') {
+    for (const [p, k] of Object.entries(apiKeys)) if (aiProviders.PRESETS[p] && typeof k === 'string') setApiKey(k, p);
+  }
+  if (apiKey !== undefined) setApiKey(apiKey, rest.aiProvider);
   scheduleBackups();
   return true;
 });
@@ -476,8 +500,8 @@ handle('media:add', async (e, dir) => {
 
 require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
-require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, ai });
-require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, assertOpened, app });
+require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai });
+require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
@@ -694,7 +718,44 @@ handle('compile:preview', (_e, dir, project, options) => {
 
 handle('ai:run', (_e, payload) => {
   if (readSettings().aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
-  return ai.runAction({ ...payload, apiKey: getApiKey() });
+  // Provider, model and key come only from settings; the renderer can't pick them per call.
+  const { provider, model, baseUrl, apiKey, ...rest } = payload || {};
+  return ai.runAction({ ...rest, ...getAiConfig() });
+});
+
+// "Testează conexiunea": tiny prompt to the provider chosen in the (possibly unsaved) form.
+handle('ai:test', async (_e, override = {}) => {
+  const cfg = getAiConfig({ provider: override.provider, model: override.model, baseUrl: override.baseUrl });
+  if (cfg.needsKey && !cfg.apiKey) throw new Error(aiProviders.missingKeyMessage(cfg.provider));
+  const started = Date.now();
+  const text = await aiProviders.complete({
+    ...cfg,
+    system: 'Răspunzi foarte scurt.',
+    prompt: 'Răspunde doar cu cuvântul: OK',
+    maxTokens: 16,
+    effort: 'low',
+    signal: AbortSignal.timeout(60000),
+  });
+  return { ok: true, provider: cfg.provider, label: cfg.label, model: cfg.model, reply: String(text || '').slice(0, 200), ms: Date.now() - started };
+});
+
+// NotebookLM: no public API for personal accounts, so export sources + open the site.
+handle('nlm:export', async (e, dir, options = {}) => {
+  assertOpened(dir);
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Folder pentru sursele NotebookLM',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (res.canceled || !res.filePaths[0]) return null;
+  const project = store.loadProject(dir);
+  const out = notebookLm.exportNotebookLm({ project, readDoc: (id, kind) => store.readDoc(dir, id, kind), outDir: res.filePaths[0], ...options });
+  shell.openPath(out.dir);
+  return out;
+});
+handle('nlm:open', async () => {
+  const url = notebookLm.notebookUrl(readSettings().notebookLmUrl);
+  await shell.openExternal(url);
+  return url;
 });
 
 let quitting = false;
@@ -722,6 +783,11 @@ if (!gotLock) {
 
 app.whenReady().then(() => {
   if (!gotLock) return;
+  try {
+    migrateAiKeys();
+  } catch (err) {
+    console.error('Migrarea cheii API a eșuat', err);
+  }
   scheduleBackups();
   createWindow();
   app.on('activate', () => {

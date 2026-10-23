@@ -28,7 +28,7 @@ function blocking(issues, strict) {
   return issues.filter((i) => i.severity === 'GRAVE' || (strict && i.severity === 'MEDIU'));
 }
 
-export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile: baseProfile, project, dir, editorialLists, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings }) {
+export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile: baseProfile, project, dir, editorialLists, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings, aiLabel = '' }) {
   const [tab, setTab] = useState('rep');
   const [level, setLevel] = useState('mezzo');
   const [maxLoops, setMaxLoops] = useState(3);
@@ -265,7 +265,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
 
       {aiEnabled && !hasKey && (
         <p className="warn">
-          Bucla AI cere cheia API. <button className="link" onClick={onOpenSettings}>Setări</button>
+          Bucla AI cere cheia API{aiLabel ? ` pentru ${aiLabel}` : ' a furnizorului AI'}. <button className="link" onClick={onOpenSettings}>Setări</button>
         </p>
       )}
       {error && <p className="warn">{error}</p>}

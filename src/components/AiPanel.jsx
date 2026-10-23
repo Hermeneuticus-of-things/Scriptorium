@@ -8,7 +8,7 @@ const ACTIONS = [
   ['consistency', 'Consistență'],
 ];
 
-export default function AiPanel({ api, hasKey, node, getText, hasSelection, getContext, onInsert, onReplace, onReplaceAll, onSynopsis, onOpenSettings }) {
+export default function AiPanel({ api, hasKey, node, getText, hasSelection, getContext, onInsert, onReplace, onReplaceAll, onSynopsis, onOpenSettings, aiLabel = '' }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -42,9 +42,10 @@ export default function AiPanel({ api, hasKey, node, getText, hasSelection, getC
   return (
     <aside className="ai-panel">
       <h3>Asistent AI</h3>
+      {aiLabel && <p className="muted small">Furnizor: {aiLabel}</p>}
       {!hasKey && (
         <p className="warn">
-          Lipsește cheia API Anthropic. <button className="link" onClick={onOpenSettings}>Deschide Setări</button>
+          Lipsește cheia API {aiLabel ? `pentru ${aiLabel}` : 'a furnizorului AI'}. <button className="link" onClick={onOpenSettings}>Deschide Setări</button>
         </p>
       )}
       <p className="muted">Lucrează pe textul selectat sau, fără selecție, pe tot documentul „{node.title}”.</p>

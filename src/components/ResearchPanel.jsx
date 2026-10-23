@@ -8,7 +8,7 @@ const KINDS = [
 ];
 
 // NotebookLM-style research panel: local BM25 retrieval over the project (no AI),
-// optional answer with Claude built only from the retrieved passages.
+// optional answer from the chosen AI provider built only from the retrieved passages.
 export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose }) {
   const [q, setQ] = useState('');
   const [kind, setKind] = useState('');
@@ -44,7 +44,7 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose }) 
     setAnswer('');
     setResults(await api.ragQuery(dir, q, { k: 10, kinds: kind ? [kind] : undefined }));
   });
-  const ask = wrap('Claude formulează răspunsul…', async () => {
+  const ask = wrap('Modelul AI formulează răspunsul…', async () => {
     if (!q.trim()) return;
     const res = await api.ragAsk(dir, q, { k: 6 });
     setAnswer(res.answer);
@@ -87,7 +87,7 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose }) 
         </button>
         {aiEnabled && api.ragAsk && (
           <button onClick={ask} disabled={Boolean(busy) || !q.trim()}>
-            Întreabă Claude
+            Întreabă AI-ul
           </button>
         )}
         <button onClick={rebuild} disabled={Boolean(busy)} title="Reconstruiește indexul după modificări mari">
