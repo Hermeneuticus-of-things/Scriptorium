@@ -32,6 +32,7 @@ import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
 import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc } from './lib/glossary.js';
 import { BackIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, OutlineIcon, ScriveningsIcon, SplitIcon } from './components/Icons.jsx';
+import { targetCrossed } from './lib/panelsExtra.js';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
@@ -124,6 +125,7 @@ export default function App({ api }) {
   const [toast, setToast] = useState('');
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
+  const [revealId, setRevealId] = useState(null);
   const [showFloatInspector, setShowFloatInspector] = useState(false);
   const [floatNotes, setFloatNotes] = useState(null);
   const [aiReport, setAiReport] = useState(null);
@@ -189,6 +191,7 @@ export default function App({ api }) {
   }, [settings]);
 
   const report = useCallback((e) => setError(e?.message || String(e)), []);
+  const prevTargetCounts = useRef({});
   useEffect(() => {
     if (!showFloatInspector || !selectedId || !dir) return;
     setFloatNotes(null);
@@ -210,6 +213,18 @@ export default function App({ api }) {
     for (const [id, html] of Object.entries(docs)) map[id] = wordCount(html);
     return map;
   }, [docs]);
+
+  // Notification when a document reaches its target (Project Targets → notify documents).
+  useEffect(() => {
+    if (!project || project.targets?.notifyDocuments === false) return;
+    for (const n of flatten(project.tree)) {
+      if (!n.target || n.targetNotify === false) continue;
+      const cur = n.targetType === 'Characters' ? htmlToText(docs[n.id] || '').length : counts[n.id] || 0;
+      const prev = prevTargetCounts.current[n.id];
+      if (prev != null && targetCrossed(prev, cur, n.target) && typeof Notification !== 'undefined') new Notification('Țintă atinsă', { body: `„${n.title}”: ${n.target}` });
+      prevTargetCounts.current[n.id] = cur;
+    }
+  }, [counts]);
 
   const totals = useMemo(() => {
     if (!project) return { draft: 0, total: 0 };
@@ -481,7 +496,8 @@ export default function App({ api }) {
     setHideBinder(false);
     setActiveCollectionId(null);
     if (hoistId && hoistId !== selectedId && !ancestorIds(project.tree, selectedId).includes(hoistId)) setHoistId(null);
-    setTimeout(() => document.querySelector('.binder .binder-row.selected')?.scrollIntoView({ block: 'center' }), 50);
+    setRevealId(null);
+    setTimeout(() => setRevealId(selectedId), 0);
   };
   const hoistSelection = () => {
     const n = selected && (selected.children ? selected : findParent(project.tree, selected.id));
@@ -628,6 +644,29 @@ export default function App({ api }) {
     } catch (e) {
       report(e);
     }
+  };
+
+  // Alt-drag in the binder: copies the items (with children, text and notes) next to the target.
+  const copyItems = async (ids, targetId, pos) => {
+    await flush();
+    let tree = project.tree;
+    const copies = {};
+    for (const id of ids) {
+      const res = duplicateNode(tree, id, { withChildren: true });
+      if (!res.id) continue;
+      tree = moveNode(res.tree, res.id, targetId, pos);
+      for (const [from, to] of res.pairs) {
+        const html = docs[from] ?? (await api.readDoc(dir, from, 'docs'));
+        const notes = await api.readDoc(dir, from, 'notes');
+        if (html) {
+          copies[to] = html;
+          await api.writeDoc(dir, to, 'docs', html);
+        }
+        if (notes) await api.writeDoc(dir, to, 'notes', notes);
+      }
+    }
+    saveProject({ ...project, tree });
+    setDocs((d) => ({ ...d, ...copies }));
   };
 
   // Duplicates the selected item (with its notes, synopsis and, optionally, children).
@@ -1277,13 +1316,15 @@ export default function App({ api }) {
 
   return (
     <div
-      className={`app ${composition ? 'composition' : ''} ${composition && settings.compPaper !== false ? 'comp-paper' : ''}`}
+      className={`app ${composition ? 'composition' : ''} ${composition && settings.compPaper !== false ? 'comp-paper' : ''} ${composition && settings.compBgImage ? 'has-bg-image' : ''}`}
+      data-fit={settings.compBgImageFit || 'cover'}
       style={
         composition
           ? {
               '--comp-bg': settings.compBg || undefined,
               '--comp-width': `${settings.compWidth || 40}em`,
               '--comp-fade': (settings.compFade || 100) / 100,
+              '--comp-bg-image': settings.compBgImage ? `url("${/^(data:|https?:|file:)/.test(settings.compBgImage) ? settings.compBgImage : encodeURI(`file:///${settings.compBgImage.replace(/\\/g, '/').replace(/^\//, '')}`)}")` : undefined,
             }
           : undefined
       }
@@ -1347,6 +1388,8 @@ export default function App({ api }) {
           onOpenItem={(id) => onBinderSelect(id, {})}
           onQuickRef={openQuickRef}
           project={binderProject}
+          revealId={revealId}
+          onCopy={(ids, targetId, pos) => copyItems(ids, targetId, pos).catch(report)}
           filterIds={collectionIds}
           filterTitle={activeCollection?.title}
           docs={docs}
@@ -1355,7 +1398,7 @@ export default function App({ api }) {
           selectedIds={selectedIds}
           onSelect={onBinderSelect}
           onAdd={addItem}
-          onRename={(id, title) => (findNode(project.tree, id)?.separator && title.startsWith(SEPARATOR_LABEL) ? null : patchNode(id, { title }))}
+          onRename={(id, title) => patchNode(id, { title })}
           onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
           onKeyMove={(dir2) => selectedId && setTree(keyMove(project.tree, selectedId, dir2))}
           onTrash={trashSelection}
@@ -1428,6 +1471,14 @@ export default function App({ api }) {
             {view === 'corkboard' && (
               <Corkboard
                 project={project}
+                folders={selectedIds.size > 1 ? [...selectedIds].map((id) => findNode(project.tree, id)).filter((n) => n && n.children) : undefined}
+                onAddTo={(folderId) => {
+                  const f = findNode(project.tree, folderId);
+                  const node = newNode('text');
+                  setTree(updateNode(project.tree, folderId, { children: [...(f.children || []), node] }));
+                  setDocs((d) => ({ ...d, [node.id]: '<p></p>' }));
+                  api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
+                }}
                 folder={selected && selected.children ? selected : findParent(project.tree, selectedId) || project.tree[0]}
                 onOpen={(id) => {
                   go(id);
@@ -1450,6 +1501,7 @@ export default function App({ api }) {
             {view === 'outline' && (
               <Outliner
                 project={project}
+                docs={docs}
                 root={selected && selected.children ? selected : project.tree[0]}
                 counts={counts}
                 onOpen={(id) => {
@@ -1523,6 +1575,19 @@ export default function App({ api }) {
                   }}
                   onError={report}
                   flush={flush}
+                  docs={docs}
+                  counts={counts}
+                  onPatchNode={patchNode}
+                  onNotesChangeFor={(id, html) => queueWrite(id, 'notes', html)}
+                  authorName={settings.authorName || project.author || ''}
+                  onHtmlChange={(html, id) => {
+                    writeDocNow(id, html);
+                    editorRefs.current.get(id)?.setHtml(html);
+                  }}
+                  onJumpToComment={(index, c, id) => {
+                    go(id);
+                    setView('editor');
+                  }}
                 />
               )}
               {showResearch && dir && (
@@ -1609,6 +1674,12 @@ export default function App({ api }) {
       />
 
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>Ieși (Esc)</button>}
+      {composition && settings.compShowTargets && selected && (
+        <div className="comp-targets">
+          <span>Document: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
+          <span>Sesiune: {Math.max(0, totals.draft - sessionStart)}{project.targets?.session ? ` / ${project.targets.session}` : ''}</span>
+        </div>
+      )}
 
       {composition && showFloatInspector && selected && floatNotes !== null && (
         <FloatingInspector
@@ -1670,7 +1741,7 @@ export default function App({ api }) {
         </div>
       )}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
-      {showScratch && <Scratchpad load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
+      {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || 'Din Scratchpad'); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(`Trimis în „${parent.title}”.`); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
       {showSpeech && <SpeechBar getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
@@ -1783,6 +1854,7 @@ export default function App({ api }) {
         <TargetsDialog
           project={project}
           draftWords={totals.draft}
+          draftChars={totals.draftChars}
           onSave={(targets) => {
             saveProject({ ...project, targets });
             setDialog(null);
@@ -1890,18 +1962,7 @@ function sumWords(node, counts) {
   return total;
 }
 
-const SEPARATOR_LABEL = '────────';
-
-// Binder view of the project: hoisted to one folder, separators shown as a rule.
+// Binder view of the project, hoisted to one folder when focus is on.
 function binderProjectOf(project, hoistNode) {
-  if (!hoistNode && !flatten(project.tree).some((n) => n.separator)) return project;
-  {
-    const mark = (nodes) =>
-      nodes.map((n) => {
-        const m = n.separator ? { ...n, title: `${SEPARATOR_LABEL} ${n.title || ''}`.trim() } : n;
-        return n.children ? { ...m, children: mark(n.children) } : m;
-      });
-    const tree = hoistNode ? [hoistNode] : project.tree;
-    return { ...project, tree: mark(tree) };
-  }
+  return hoistNode ? { ...project, tree: [hoistNode] } : project;
 }

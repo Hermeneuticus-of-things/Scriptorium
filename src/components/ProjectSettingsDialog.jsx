@@ -7,8 +7,27 @@ const TABS = [
   ['statusuri', 'Statusuri'],
   ['metadate', 'Metadate'],
   ['sectiuni', 'Tipuri de secțiune'],
+  ['formatare', 'Formatare implicită'],
+  ['autocomplete', 'Auto-completare'],
+  ['backup', 'Backup'],
   ['foldere', 'Foldere speciale'],
 ];
+const FONTS = ['', 'Georgia, serif', "'Times New Roman', serif", "'Palatino Linotype', Palatino, serif", 'Garamond, serif', 'Arial, sans-serif', "'Courier New', monospace"];
+
+// Extra project settings kept outside lib/projectSettings.js (merged on save).
+function makeExtras(project) {
+  const f = project.defaultFormatting || {};
+  const b = project.backup || {};
+  return {
+    defaultFormatting: { font: f.font || '', size: f.size || '', lineHeight: f.lineHeight || '', firstIndent: f.firstIndent ?? '', spacing: f.spacing ?? '' },
+    autoComplete: (project.autoComplete || []).join('\n'),
+    backup: { override: Boolean(b.override), onClose: b.onClose !== false, everyMin: b.everyMin || 0, keep: b.keep || 10, exclude: Boolean(b.exclude) },
+    importFolder: project.importFolder || null,
+    inboxFolder: project.inboxFolder || null,
+  };
+}
+const numOrNull = (v) => (v === '' || v == null || !Number.isFinite(Number(v)) ? null : Number(v));
+
 const TYPE_NAMES = { text: 'Text', checkbox: 'Bifă', list: 'Listă', date: 'Dată' };
 const LEVELS = [
   ['folders', 'Dosare'],
@@ -43,6 +62,9 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
   const [d, setD] = useState(() => makeDraft(project));
   const [tab, setTab] = useState('proiect');
   const [errors, setErrors] = useState([]);
+  const [x, setX] = useState(() => makeExtras(project));
+  const setFmt = (p) => setX((o) => ({ ...o, defaultFormatting: { ...o.defaultFormatting, ...p } }));
+  const setBk = (p) => setX((o) => ({ ...o, backup: { ...o.backup, ...p } }));
 
   const set = (p) => setD((x) => ({ ...x, ...p }));
   const setList = (key, fn) => setD((x) => ({ ...x, [key]: fn(x[key]) }));
@@ -54,7 +76,18 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
     const errs = validateDraft(d);
     setErrors(errs);
     if (errs.length) return;
-    onSave(applyProjectSettings(project, d));
+    const f = x.defaultFormatting;
+    const fmt = Object.fromEntries(
+      Object.entries({ font: f.font || null, size: numOrNull(f.size), lineHeight: numOrNull(f.lineHeight), firstIndent: numOrNull(f.firstIndent), spacing: numOrNull(f.spacing) }).filter(([, v]) => v != null),
+    );
+    onSave({
+      ...applyProjectSettings(project, d),
+      defaultFormatting: Object.keys(fmt).length ? fmt : null,
+      autoComplete: [...new Set(x.autoComplete.split('\n').map((l) => l.trim()).filter(Boolean))],
+      backup: { ...x.backup, everyMin: Number(x.backup.everyMin) || 0, keep: Math.max(1, Number(x.backup.keep) || 10) },
+      importFolder: x.importFolder,
+      inboxFolder: x.inboxFolder,
+    });
   };
 
   const fullFromParts = () => set({ author: [d.authorFirst, d.authorLast].filter(Boolean).join(' ') });
@@ -332,6 +365,75 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               </select>
             </label>
             <p className="muted">Documentele din acest dosar apar ca modele la crearea unui document nou.</p>
+            <label>
+              Dosar pentru importuri
+              <select value={x.importFolder || ''} onChange={(e) => setX((o) => ({ ...o, importFolder: e.target.value || null }))}>
+                <option value="">(Cercetare)</option>
+                {(folders || []).map((f) => <option key={f.id} value={f.id}>{f.path || f.title}</option>)}
+              </select>
+            </label>
+            <label>
+              Dosar pentru notele trimise din Ciorne
+              <select value={x.inboxFolder || ''} onChange={(e) => setX((o) => ({ ...o, inboxFolder: e.target.value || null }))}>
+                <option value="">(Cercetare)</option>
+                {(folders || []).map((f) => <option key={f.id} value={f.id}>{f.path || f.title}</option>)}
+              </select>
+            </label>
+          </div>
+        )}
+
+        {tab === 'formatare' && (
+          <div className="fields">
+            <p className="muted">Formatarea folosită pentru documentele noi din acest proiect (gol = setările aplicației).</p>
+            <label>
+              Font
+              <select value={x.defaultFormatting.font} onChange={(e) => setFmt({ font: e.target.value })}>
+                {FONTS.map((f) => <option key={f} value={f}>{f ? f.split(',')[0].replace(/'/g, '') : '(din Opțiuni)'}</option>)}
+              </select>
+            </label>
+            <div className="row">
+              <label>Mărime (px)<input type="number" min="8" max="48" value={x.defaultFormatting.size} onChange={(e) => setFmt({ size: e.target.value })} /></label>
+              <label>Spațiere rânduri<input type="number" min="1" max="3" step="0.1" value={x.defaultFormatting.lineHeight} onChange={(e) => setFmt({ lineHeight: e.target.value })} /></label>
+            </div>
+            <div className="row">
+              <label>Indent prima linie (em)<input type="number" min="0" max="5" step="0.5" value={x.defaultFormatting.firstIndent} onChange={(e) => setFmt({ firstIndent: e.target.value })} /></label>
+              <label>Spațiu după paragraf (em)<input type="number" min="0" max="3" step="0.1" value={x.defaultFormatting.spacing} onChange={(e) => setFmt({ spacing: e.target.value })} /></label>
+            </div>
+            <p className="pdx-format-sample" style={{ fontFamily: x.defaultFormatting.font || undefined, fontSize: numOrNull(x.defaultFormatting.size) || undefined, lineHeight: numOrNull(x.defaultFormatting.lineHeight) || undefined, textIndent: `${numOrNull(x.defaultFormatting.firstIndent) || 0}em` }}>
+              Așa va arăta textul documentelor noi. Cuvintele curg pe pagină în ritmul ales.
+            </p>
+          </div>
+        )}
+
+        {tab === 'autocomplete' && (
+          <div className="fields">
+            <label>
+              Listă de auto-completare (câte un termen pe rând)
+              <textarea rows={10} value={x.autoComplete} onChange={(e) => setX((o) => ({ ...o, autoComplete: e.target.value }))} placeholder={'Nume de personaje\nLocuri\nTermeni'} />
+            </label>
+            <p className="muted">Termenii sunt propuși în timpul scrierii (și în formatele de scenariu).</p>
+          </div>
+        )}
+
+        {tab === 'backup' && (
+          <div className="fields">
+            <label className="check">
+              <input type="checkbox" checked={x.backup.exclude} onChange={(e) => setBk({ exclude: e.target.checked })} /> Exclude acest proiect din backup-urile automate
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={x.backup.override} disabled={x.backup.exclude} onChange={(e) => setBk({ override: e.target.checked })} /> Setări proprii de backup pentru acest proiect
+            </label>
+            {x.backup.override && !x.backup.exclude && (
+              <>
+                <label className="check">
+                  <input type="checkbox" checked={x.backup.onClose} onChange={(e) => setBk({ onClose: e.target.checked })} /> Backup la închidere
+                </label>
+                <div className="row">
+                  <label>La fiecare (minute, 0 = niciodată)<input type="number" min="0" step="5" value={x.backup.everyMin} onChange={(e) => setBk({ everyMin: e.target.value })} /></label>
+                  <label>Păstrează ultimele<input type="number" min="1" max="100" value={x.backup.keep} onChange={(e) => setBk({ keep: e.target.value })} /></label>
+                </div>
+              </>
+            )}
           </div>
         )}
 

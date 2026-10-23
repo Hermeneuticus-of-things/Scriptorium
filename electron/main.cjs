@@ -655,6 +655,25 @@ handle('editor:package', async (e, dir, project, options = {}) => {
   return pkg;
 });
 
+// Snapshot management from the Inspector: rename (title stored in the JSON) and delete.
+const snapPath = (dir, id, file) => {
+  if (!/^[A-Za-z0-9-]+$/.test(String(id)) || !/^[\w.-]+\.json$/.test(String(file))) throw new Error('Snapshot invalid');
+  return path.join(dir, 'snapshots', id, file);
+};
+handle('snap:delete', (_e, dir, id, file) => {
+  assertOpened(dir);
+  fs.unlinkSync(snapPath(dir, id, file));
+  return true;
+});
+handle('snap:rename', (_e, dir, id, file, name) => {
+  assertOpened(dir);
+  const p = snapPath(dir, id, file);
+  const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+  data.name = String(name || 'Snapshot');
+  fs.writeFileSync(p, JSON.stringify(data));
+  return true;
+});
+
 handle('compile:preview', (_e, dir, project, options) => {
   assertOpened(dir);
   return compile.previewHtml(project, (id) => store.readDoc(dir, id), options);

@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
 
-const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'backup', 'keyboard', 'ai', 'language'];
+const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'language'];
+const TAB_FALLBACK = { sharing: 'Partajare' };
+const tabLabel = (k) => {
+  const v = t(`set.tab.${k}`);
+  return !v || v === `set.tab.${k}` ? TAB_FALLBACK[k] || k : v;
+};
 const FONTS = [
   ['Georgia, serif', 'Georgia'],
   ["'Times New Roman', serif", 'Times New Roman'],
@@ -53,7 +58,27 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     setS((p) => ({ ...p, [k]: v }));
   };
   const [apiKey, setApiKey] = useState('');
-  const [comp, setComp] = useState({ bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100 });
+  const [comp, setComp] = useState({
+    bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100,
+    bgImage: settings.compBgImage || '', bgImageFit: settings.compBgImageFit || 'cover', showTargets: Boolean(settings.compShowTargets),
+  });
+  const [sharing, setSharing] = useState({
+    sync: { format: 'rtf', notesFormat: 'same', syncOnOpen: false, syncOnClose: false, includeNotes: true, ...(settings.sharingSync || {}) },
+    export: { format: 'docx', includeNotes: false, includeMeta: false, keepFolders: true, ...(settings.sharingExport || {}) },
+  });
+  const setSync = (p) => setSharing((x) => ({ ...x, sync: { ...x.sync, ...p } }));
+  const setExp = (p) => setSharing((x) => ({ ...x, export: { ...x.export, ...p } }));
+  const pickBgImage = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      onError(new Error('Imaginea e prea mare (maxim 4 MB).'));
+      return;
+    }
+    const r = new FileReader();
+    r.onload = () => setComp((c) => ({ ...c, bgImage: String(r.result) }));
+    r.readAsDataURL(file);
+  };
   const [draft, setDraft] = useState(project?.targets?.draft || 0);
   const [session, setSession] = useState(project?.targets?.session || 0);
   const [edBase, setEdBase] = useState(project?.editorialProfile?.base || 'generic');
@@ -98,6 +123,11 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         compWidth: Number(comp.width) || 40,
         compPaper: comp.paper,
         compFade: Number(comp.fade) || 100,
+        compBgImage: comp.bgImage,
+        compBgImageFit: comp.bgImageFit,
+        compShowTargets: comp.showTargets,
+        sharingSync: sharing.sync,
+        sharingExport: sharing.export,
         backupEveryMin: Number(s.backupEveryMin) || 0,
         backupKeep: Math.max(1, Number(s.backupKeep) || 10),
       };
@@ -226,6 +256,27 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <input type="checkbox" checked={comp.paper} onChange={(e) => setComp((c) => ({ ...c, paper: e.target.checked }))} /> {t('set.compPaper')}
           </label>
           {comp.bg && <button className="link" onClick={() => setComp((c) => ({ ...c, bg: '' }))}>{t('set.compBgDefault')}</button>}
+          <div className="row comp-bg-image">
+            <label>
+              Imagine de fundal
+              <input type="file" accept="image/*" onChange={pickBgImage} />
+            </label>
+            {comp.bgImage && (
+              <>
+                <span className="comp-bg-thumb" style={{ backgroundImage: `url("${comp.bgImage}")` }} aria-label="Previzualizare fundal" />
+                <select value={comp.bgImageFit} onChange={(e) => setComp((c) => ({ ...c, bgImageFit: e.target.value }))}>
+                  <option value="cover">Umple</option>
+                  <option value="contain">Încadrează</option>
+                  <option value="tile">Repetă</option>
+                  <option value="center">Centrat</option>
+                </select>
+                <button className="link" onClick={() => setComp((c) => ({ ...c, bgImage: '' }))}>Fără imagine</button>
+              </>
+            )}
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={comp.showTargets} onChange={(e) => setComp((c) => ({ ...c, showTargets: e.target.checked }))} /> Arată ținta (document și sesiune) în modul compunere
+          </label>
         </fieldset>
       </>
     ),
@@ -402,6 +453,51 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         )}
       </>
     ),
+    sharing: (
+      <>
+        <fieldset>
+          <legend>Sincronizare cu folder extern (implicit)</legend>
+          <div className="row">
+            <label>
+              Format text
+              <select value={sharing.sync.format} onChange={(e) => setSync({ format: e.target.value })}>
+                <option value="rtf">RTF</option>
+                <option value="txt">Text simplu</option>
+                <option value="md">Markdown</option>
+              </select>
+            </label>
+            <label>
+              Format note
+              <select value={sharing.sync.notesFormat} onChange={(e) => setSync({ notesFormat: e.target.value })}>
+                <option value="same">Ca textul</option>
+                <option value="rtf">RTF</option>
+                <option value="txt">Text simplu</option>
+                <option value="md">Markdown</option>
+              </select>
+            </label>
+          </div>
+          <label className="check"><input type="checkbox" checked={sharing.sync.includeNotes} onChange={(e) => setSync({ includeNotes: e.target.checked })} /> Sincronizează și notele</label>
+          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnOpen} onChange={(e) => setSync({ syncOnOpen: e.target.checked })} /> Sincronizează la deschiderea proiectului</label>
+          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnClose} onChange={(e) => setSync({ syncOnClose: e.target.checked })} /> Sincronizează la închiderea proiectului</label>
+        </fieldset>
+        <fieldset>
+          <legend>Export fișiere (implicit)</legend>
+          <label>
+            Format
+            <select value={sharing.export.format} onChange={(e) => setExp({ format: e.target.value })}>
+              <option value="docx">DOCX</option>
+              <option value="rtf">RTF</option>
+              <option value="md">Markdown</option>
+              <option value="txt">Text simplu</option>
+              <option value="html">HTML</option>
+            </select>
+          </label>
+          <label className="check"><input type="checkbox" checked={sharing.export.keepFolders} onChange={(e) => setExp({ keepFolders: e.target.checked })} /> Păstrează structura de dosare</label>
+          <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> Include notele</label>
+          <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> Include metadatele</label>
+        </fieldset>
+      </>
+    ),
     language: (
       <>
         <label>
@@ -423,7 +519,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <div className="tabs" role="tablist">
           {visibleTabs.map((k) => (
             <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} onClick={() => setTab(k)}>
-              {t(`set.tab.${k}`)}
+              {tabLabel(k)}
             </button>
           ))}
         </div>

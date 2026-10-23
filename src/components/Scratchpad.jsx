@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { noteToDocument } from '../lib/panelsExtra.js';
 
 /**
  * Floating scratchpad (notes independent of the project).
- * Props: load(): Promise<Note[]>|Note[], save(notes), onClose().
+ * Props: load(): Promise<Note[]>|Note[], save(notes), onClose(),
+ * onSendToProject?({title, html}, note) — "Trimite în proiect" creates a document from the note.
  * Note = { id, title, text, updated }.
  */
-export default function Scratchpad({ load, save, onClose }) {
+export default function Scratchpad({ load, save, onClose, onSendToProject }) {
   const [notes, setNotes] = useState([]);
   const [sel, setSel] = useState(null);
   const [pos, setPos] = useState({ x: 80, y: 80 });
@@ -58,6 +60,9 @@ export default function Scratchpad({ load, save, onClose }) {
         <strong>Ciorne (Scratchpad)</strong>
         <span>
           <button onClick={add} title="Notă nouă">+</button>
+          {onSendToProject && (
+            <button disabled={!cur} onClick={() => cur && onSendToProject(noteToDocument(cur), cur)} title="Trimite nota în proiect ca document nou">⇪ În proiect</button>
+          )}
           <button onClick={onClose} title="Închide">×</button>
         </span>
       </div>

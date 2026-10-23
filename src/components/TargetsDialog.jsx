@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { deadlinePlan } from '../lib/stats.js';
+import { measure } from '../lib/panelsExtra.js';
 
 // Display order Monday..Sunday; values follow Date#getDay (0 = Sunday).
 const DAYS = [[1, 'Lu'], [2, 'Ma'], [3, 'Mi'], [4, 'Jo'], [5, 'Vi'], [6, 'Sâ'], [0, 'Du']];
@@ -11,11 +12,13 @@ function TypeSelect({ value, onChange }) {
     <select value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="Words">cuvinte</option>
       <option value="Characters">caractere</option>
+      <option value="Pages">pagini</option>
     </select>
   );
 }
 
-export default function TargetsDialog({ project, draftWords, onSave, onClose }) {
+// draftChars (optional) makes character targets exact; pages use wordsPerPage.
+export default function TargetsDialog({ project, draftWords, draftChars, onSave, onClose }) {
   const t = project?.targets || {};
   const [draft, setDraft] = useState(t.draft || 0);
   const [draftType, setDraftType] = useState(t.draftType || 'Words');
@@ -26,13 +29,16 @@ export default function TargetsDialog({ project, draftWords, onSave, onClose }) 
   const [sessionReset, setSessionReset] = useState(t.sessionReset || 'midnight');
   const [countOnlyCompiled, setCountOnlyCompiled] = useState(Boolean(t.countOnlyCompiled));
   const [notify, setNotify] = useState(t.notify !== false);
+  const [notifyDocuments, setNotifyDocuments] = useState(t.notifyDocuments !== false);
+  const [wordsPerPage, setWordsPerPage] = useState(t.wordsPerPage || 250);
+  const current = measure({ words: draftWords || 0, chars: draftChars ?? Math.round((draftWords || 0) * 6) }, draftType, Number(wordsPerPage) || 250);
 
   const toggleDay = (d) => setWritingDays((w) => (w.includes(d) ? w.filter((x) => x !== d) : [...w, d].sort()));
   const plan = useMemo(
-    () => deadlinePlan({ draft: Number(draft) || 0, deadline, writingDays }, draftWords || 0),
-    [draft, deadline, writingDays, draftWords],
+    () => deadlinePlan({ draft: Number(draft) || 0, deadline, writingDays }, current),
+    [draft, deadline, writingDays, current],
   );
-  const unit = draftType === 'Characters' ? 'caractere' : 'cuvinte';
+  const unit = draftType === 'Characters' ? 'caractere' : draftType === 'Pages' ? 'pagini' : 'cuvinte';
 
   const save = () => {
     onSave({
@@ -46,6 +52,8 @@ export default function TargetsDialog({ project, draftWords, onSave, onClose }) 
       sessionReset,
       countOnlyCompiled,
       notify,
+      notifyDocuments,
+      wordsPerPage: Math.max(1, Number(wordsPerPage) || 250),
     });
   };
 
@@ -59,6 +67,13 @@ export default function TargetsDialog({ project, draftWords, onSave, onClose }) 
             <label>Ținta manuscrisului<input type="number" min="0" value={draft} onChange={(e) => setDraft(e.target.value)} /></label>
             <label>Unitate<TypeSelect value={draftType} onChange={setDraftType} /></label>
           </div>
+          {(draftType === 'Pages' || sessionType === 'Pages') && (
+            <label>
+              Cuvinte pe pagină
+              <input type="number" min="50" max="1000" step="10" value={wordsPerPage} onChange={(e) => setWordsPerPage(e.target.value)} />
+            </label>
+          )}
+          <p className="muted small">Acum: {fmt(current)} {unit}{draftChars == null && draftType === 'Characters' ? ' (estimare)' : ''}</p>
           <div className="row">
             <label>
               Termen limită
@@ -105,6 +120,9 @@ export default function TargetsDialog({ project, draftWords, onSave, onClose }) 
         </label>
         <label className="check">
           <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Notificare când atingi ținta
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={notifyDocuments} onChange={(e) => setNotifyDocuments(e.target.checked)} /> Notificare și pentru țintele documentelor
         </label>
         <div className="actions">
           <button onClick={onClose}>Anulează</button>

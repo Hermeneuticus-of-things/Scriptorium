@@ -68,6 +68,8 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('ai:progress', listener);
   },
   editorPackage: (dir, project, options) => call('editor:package', dir, project, options),
+  deleteSnapshot: (dir, id, file) => call('snap:delete', dir, id, file),
+  renameSnapshot: (dir, id, file, name) => call('snap:rename', dir, id, file, name),
   runAi: (payload) => call('ai:run', payload),
   newWindow: () => call('window:new'),
   toggleFullScreen: (on) => call('window:fullScreen', on),
