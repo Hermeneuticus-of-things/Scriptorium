@@ -5,6 +5,7 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { updateBlockDecorations } from './decoRanges.js';
 
 export const invisiblesKey = new PluginKey('invisibles');
 
@@ -15,11 +16,22 @@ export function spaceOffsets(text) {
   return out;
 }
 
+/** Space decorations of one text block at `pos`. */
+function buildBlock(block, pos) {
+  const decos = [];
+  block.forEach((child, offset) => {
+    if (!child.isText) return;
+    const at = pos + 1 + offset;
+    for (const i of spaceOffsets(child.text)) decos.push(Decoration.inline(at + i, at + i + 1, { class: 'inv-space' }));
+  });
+  return decos;
+}
+
 function build(doc) {
   const decos = [];
   doc.descendants((node, pos) => {
-    if (!node.isText) return true;
-    for (const i of spaceOffsets(node.text)) decos.push(Decoration.inline(pos + i, pos + i + 1, { class: 'inv-space' }));
+    if (!node.isTextblock) return true;
+    decos.push(...buildBlock(node, pos));
     return false;
   });
   return DecorationSet.create(doc, decos);
@@ -51,7 +63,9 @@ export const Invisibles = Extension.create({
             const meta = tr.getMeta(invisiblesKey);
             const on = meta === undefined ? prev.on : meta;
             if (!on) return { on, set: DecorationSet.empty };
-            if (meta !== undefined || tr.docChanged) return { on, set: build(state.doc) };
+            if (meta !== undefined && meta !== prev.on) return { on, set: build(state.doc) };
+            // Typing: rebuild only the touched blocks instead of the whole document.
+            if (tr.docChanged) return { on, set: updateBlockDecorations(prev.set, tr, buildBlock) };
             return prev;
           },
         },
