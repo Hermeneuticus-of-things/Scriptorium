@@ -206,3 +206,8 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Manual complet în română (22 de capitole, căutare cu evidențiere), variantă scurtă în engleză
 - [x] Tutorial interactiv: proiect „Tutorial Scribner” cu 15 lecții și exerciții
 
+## 7. Verificare în Electron real
+
+- [x] Test cap-coadă `npm run test:e2e` (Electron real, dialoguri simulate): proiect nou, text cu corecturi automate salvat pe disc, meniu nativ complet, Compile DOCX/PDF/EPUB, export `.scriv` și reimport; trece pe Linux
+- [ ] Același test pe Windows; import pe proiectul Karma real
+

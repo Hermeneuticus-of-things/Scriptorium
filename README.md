@@ -85,7 +85,7 @@ Fișiere text simple: le poți versiona cu git sau sincroniza cu orice cloud. Si
 
 ## Stare
 
-Testele (`npm test`) acoperă importul Scrivener, RTF, Compile, I-REP, serverul MCP și restul bibliotecilor. Planul complet și ce rămâne de verificat sunt în [`ROADMAP.md`](ROADMAP.md). Neverificat încă: rularea pe Windows în Electron și importul unui proiect Scrivener real mare.
+Testele (`npm test`, 312) acoperă importul Scrivener, RTF, Compile, I-REP, serverul MCP și restul bibliotecilor. Planul complet și ce rămâne de verificat sunt în [`ROADMAP.md`](ROADMAP.md). `npm run test:e2e` pornește aplicația reală în Electron: creează un proiect, scrie, compilează DOCX/PDF/EPUB, exportă `.scriv` și îl reimportă. Verificat pe Linux; neverificat încă pe Windows și pe un proiect Scrivener real mare.
 
 ## Licență
 
