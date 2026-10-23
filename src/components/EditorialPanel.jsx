@@ -8,6 +8,7 @@ import {
   htmlToManuscript,
   lint,
   manuscriptToHtml,
+  proposalIsStale,
   reattach,
   repairPrompt,
   roundContext,
@@ -114,7 +115,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           f = lint(current, { profile });
           say(`  bucla ${loop}: ${summarize(f).GRAVE} grave, ${summarize(f).MEDIU} medii`);
         }
-        setProposal([{ id: node.id, title: `${node.title} (selecție)`, before: selHtml, after: current, issuesAfter: f, selection: true }]);
+        setProposal([{ id: node.id, title: `${node.title} (selecție)`, before: selHtml, after: current, issuesAfter: f, selection: true, base: html, selText: sel }]);
       } else if (level === 'mezzo') {
         const { current, found } = await repairLoop({ id: node.id, title: node.title, html }, others);
         setProposal([{ id: node.id, title: node.title, before: html, after: current, issuesAfter: found }]);
@@ -169,6 +170,13 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
   };
 
   const accept = async () => {
+    // The user may have kept writing while the model worked: never overwrite those edits.
+    const currentOf = (id) => (id === node.id ? html : (chapter.find((d) => d.id === id) || {}).html);
+    const stale = proposal.filter((p) => proposalIsStale(p, currentOf(p.id), p.selection ? onSelectionText() : undefined));
+    if (stale.length) {
+      setError(`Documentul s-a schimbat între timp (${stale.map((p) => `„${p.title}”`).join(', ')}). Rulează din nou.`);
+      return;
+    }
     for (const p of proposal) await onApply(p);
     setLog((l) => [...l, `✓ aplicat pe ${proposal.length} document(e); snapshot salvat înainte`]);
     setProposal(null);
