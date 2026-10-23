@@ -61,6 +61,17 @@ export function findInHtml(html, re, context = 40) {
 export function replaceInHtml(html, re, replacement) {
   if (!re) return { html, count: 0 };
   let count = 0;
+  // Number of capture groups: $N beyond it stays literal (args after the groups are offset/input).
+  const groups = new RegExp(`${re.source}|`, re.flags).exec('').length - 1;
+  const expand = (args) =>
+    replacement.replace(/\$(\$|&|\d\d?)/g, (tok, k) => {
+      if (k === '$') return '$';
+      if (k === '&') return args[0];
+      let n = Number(k);
+      if (n > groups && k.length === 2 && Number(k[0]) <= groups) return (args[Number(k[0])] ?? '') + k[1];
+      if (n < 1 || n > groups) return tok;
+      return args[n] ?? '';
+    });
   const out = segments(html)
     .map((seg) => {
       if (seg.tag) return seg.s;
@@ -68,7 +79,7 @@ export function replaceInHtml(html, re, replacement) {
       return encode(
         seg.s.replace(re, (...args) => {
           count++;
-          return replacement.replace(/\$(\d)/g, (_, d) => args[Number(d)] ?? '');
+          return expand(args);
         }),
       );
     })

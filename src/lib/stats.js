@@ -155,7 +155,7 @@ export function wordFrequency(text, { minLength = 4, stopwords = ROMANIAN_STOPWO
   const all = (text || '').match(WORD_RE) || [];
   const map = new Map();
   for (const raw of all) {
-    const w = raw.toLocaleLowerCase('ro-RO').replace(/['’-]+$/u, '');
+    const w = raw.toLocaleLowerCase('ro-RO').replace(/['’-]+$/u, '').replace(/ş/g, 'ș').replace(/ţ/g, 'ț');
     if ([...w].length < minLength || (stopwords && stopwords.has(w))) continue;
     map.set(w, (map.get(w) || 0) + 1);
   }
