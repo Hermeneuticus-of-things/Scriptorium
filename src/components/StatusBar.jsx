@@ -10,7 +10,7 @@ function Progress({ value, max, label }) {
   );
 }
 
-export default function StatusBar({ node, words, chars = 0, selectionCount = 1, totalDraft, draftTarget, sessionWords, sessionTarget, saveState }) {
+export default function StatusBar({ node, words, chars = 0, selectionCount = 1, totalDraft, draftTarget, sessionWords, sessionTarget, saveState, zoom, onZoom }) {
   return (
     <footer className="statusbar">
       <span>{node ? `${node.title}: ${words.toLocaleString('ro-RO')} cuvinte${chars ? ` · ${chars.toLocaleString('ro-RO')} caractere` : ''}` : ''}</span>
@@ -20,6 +20,13 @@ export default function StatusBar({ node, words, chars = 0, selectionCount = 1, 
       <span>Manuscris: {totalDraft.toLocaleString('ro-RO')} cuvinte</span>
       <Progress value={totalDraft} max={draftTarget} label="Carte" />
       <Progress value={sessionWords} max={sessionTarget} label="Sesiune" />
+      {onZoom && (
+        <select className="zoom-select" value={zoom} onChange={(e) => onZoom(Number(e.target.value))} title="Zoom text" aria-label="Zoom text">
+          {[...new Set([75, 100, 125, 150, 175, 200, 250, 300, zoom])].sort((a, b) => a - b).map((z) => (
+            <option key={z} value={z}>{z}%</option>
+          ))}
+        </select>
+      )}
       <span className={`save ${saveState.startsWith('eroare') ? 'err' : ''}`}>{saveState}</span>
     </footer>
   );

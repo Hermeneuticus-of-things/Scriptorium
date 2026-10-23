@@ -71,7 +71,15 @@ import {
   produce,
   updateNode,
   rootOf,
+  restoreFromTrash,
+  moveManyInto,
+  moveTargets,
+  ancestorIds,
+  scriveningsList,
+  appendHtml,
 } from './lib/tree.js';
+import { autoSynopsis, lookupUrl } from './lib/textTools.js';
+import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
 import { replaceInHtml } from './lib/search.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 
@@ -141,6 +149,8 @@ export default function App({ api }) {
     }
   };
   const [splitId, setSplitId] = useState(null);
+  const [hoistId, setHoistId] = useState(null); // binder focused on one folder
+  const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
   const [composition, setComposition] = useState(false);
   const [error, setError] = useState('');
@@ -365,6 +375,7 @@ export default function App({ api }) {
 
   const go = async (id, { push = true } = {}) => {
     await flush();
+    setScrivList(null);
     setSelectedId(id);
     setSelectedIds(new Set([id]));
     if (push) {
@@ -418,6 +429,13 @@ export default function App({ api }) {
     setDocs((d) => ({ ...d, [id]: html }));
     queueWrite(id, 'docs', html);
   };
+  // Same document open in both panes: an edit in one is pushed into the other editor.
+  const writeSynced = (id, html, from) => {
+    writeDocNow(id, html);
+    if (id !== splitId) return;
+    const other = from === 'split' ? editorRefs.current.get(id) : editorRefs.current.get(`split:${id}`);
+    if (other && other.getHtml() !== html) other.setHtml(html);
+  };
 
   const addItem = (type, title, html) => {
     const node = newNode(type, title);
@@ -440,6 +458,105 @@ export default function App({ api }) {
     }
     setTree(tree);
   };
+
+  // --- Batch A: binder and document commands ---
+  const selectionList = () => (selectedIds.size ? [...selectedIds] : selectedId ? [selectedId] : []).filter((id) => {
+    const n = findNode(project.tree, id);
+    return n && !n.root;
+  });
+  const restoreSelection = () => {
+    let tree = project.tree;
+    for (const id of selectionList()) tree = restoreFromTrash(tree, id);
+    if (tree !== project.tree) setTree(tree);
+    else setToast('Selecția nu e în coș.');
+  };
+  const moveSelectionTo = (targetId) => setTree(moveManyInto(project.tree, selectionList(), targetId));
+  const toggleSeparator = () => {
+    let tree = project.tree;
+    for (const id of selectionList()) tree = updateNode(tree, id, { separator: !findNode(tree, id).separator });
+    setTree(tree);
+  };
+  const revealInBinder = () => {
+    if (!selectedId) return;
+    setHideBinder(false);
+    setActiveCollectionId(null);
+    if (hoistId && hoistId !== selectedId && !ancestorIds(project.tree, selectedId).includes(hoistId)) setHoistId(null);
+    setTimeout(() => document.querySelector('.binder .binder-row.selected')?.scrollIntoView({ block: 'center' }), 50);
+  };
+  const hoistSelection = () => {
+    const n = selected && (selected.children ? selected : findParent(project.tree, selected.id));
+    if (n) setHoistId(n.id);
+  };
+  const toggleFullScreen = () => (api.toggleFullScreen ? api.toggleFullScreen().catch(report) : document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());
+  const openMediaExternal = () => {
+    const file = selected?.media?.file;
+    if (file && api.openMediaExternal) api.openMediaExternal(dir, file).catch(report);
+  };
+  const selectionHtml = () => {
+    const ed = (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.editor;
+    if (!ed || ed.state.selection.empty) return '';
+    return getHTMLFromFragment(ed.state.selection.content().content, ed.schema);
+  };
+  const appendSelectionTo = async (targetId) => {
+    const html = selectionHtml();
+    if (!html) return setToast('Selectează mai întâi un text.');
+    await flush();
+    const current = docs[targetId] ?? (await api.readDoc(dir, targetId, 'docs'));
+    const next = appendHtml(current, html);
+    writeDocNow(targetId, next);
+    editorRefs.current.get(targetId)?.setHtml(next);
+    editorRefs.current.get(`split:${targetId}`)?.setHtml(next);
+    setToast(`Selecția a fost adăugată la „${findNode(project.tree, targetId)?.title}”.`);
+  };
+  const openScrivenings = (title, ids) => {
+    if (!ids.length) return setToast('Nimic de afișat în Scrivenings.');
+    loadAllDocs()
+      .then(() => {
+        setScrivList({ title, ids });
+        setView('editor');
+      })
+      .catch(report);
+  };
+  const lookupWord = (kind) => {
+    const h = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+    const word = (h?.getSelectionText() || '').trim().split(/\s+/).slice(0, 6).join(' ');
+    if (!word) return setToast('Selectează un cuvânt.');
+    window.open(lookupUrl(kind, word), '_blank');
+  };
+  const autoSynopsisSelection = async () => {
+    let tree = project.tree;
+    let n = 0;
+    for (const id of selectionList()) {
+      const node = findNode(tree, id);
+      if (node.type !== 'text') continue;
+      const html = docs[id] ?? (await api.readDoc(dir, id, 'docs'));
+      const syn = autoSynopsis(htmlToText(html || ''));
+      if (syn) {
+        tree = updateNode(tree, id, { synopsis: syn });
+        n += 1;
+      }
+    }
+    setTree(tree);
+    setToast(`Sinopsis generat pentru ${n} documente.`);
+  };
+  const snapshotSelection = async () => {
+    await flush();
+    const stamp = `Snapshot ${new Date().toLocaleString('ro-RO')}`;
+    const ids = selectionList().filter((id) => findNode(project.tree, id).type === 'text');
+    for (const id of ids) await api.takeSnapshot(dir, id, stamp);
+    setToast(`Snapshot salvat pentru ${ids.length} documente.`);
+  };
+  const swapPanes = () => {
+    if (!splitId || !selectedId) return;
+    const a = selectedId;
+    go(splitId);
+    setSplitId(a);
+  };
+  const saveLayouts = async (layouts) => {
+    await api.setSettings({ layouts });
+    setSettings(await api.getSettings());
+  };
+  const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
 
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
   // Layouts (Window > Layouts): named combinations of views and panels.
@@ -690,8 +807,8 @@ export default function App({ api }) {
     const page = await api.importWebPage(url);
     importParts([{ title: page.title || url, html: page.html }]);
   };
-  const importFilesCmd = async () => {
-    const res = await api.importFiles(dir, 'none', '#');
+  const importFilesCmd = async (mode = 'none', separator = '#') => {
+    const res = await api.importFiles(dir, mode, separator);
     if (!res) return;
     if (res.texts.length) importParts(res.texts);
     if (res.media.length) {
@@ -824,9 +941,14 @@ export default function App({ api }) {
 
   const trashRoot = project.tree.find((n) => n.root === 'trash');
   const inTrash = (id) => rootOf(project.tree, id)?.id === trashRoot.id;
-  const isFolderView = selected && selected.children && view === 'editor';
+  const scrivListNodes = scrivList && view === 'editor' ? scriveningsList(project.tree, scrivList.ids) : null;
+  const isFolderView = Boolean(scrivListNodes) || (selected && selected.children && view === 'editor');
   // A text container shows its own text first, then its sub-documents (Scrivener file group).
-  const scrivSections = isFolderView ? [...(selected.type === 'text' ? [selected] : []), ...flatten(selected.children).filter((n) => n.type === 'text')] : [];
+  const scrivSections = scrivListNodes || (isFolderView ? [...(selected.type === 'text' ? [selected] : []), ...flatten(selected.children).filter((n) => n.type === 'text')] : []);
+  // Binder shows the hoisted folder only; separators are displayed as a rule.
+  const hoistNode = hoistId ? findNode(project.tree, hoistId) : null;
+  const binderProject = binderProjectOf(project, hoistNode);
+  const editorAreaClass = `editor-area ${editorView.hideFormatBar ? 'hide-formatbar' : ''} ${editorView.hideComments ? 'hide-comments' : ''} ${editorView.hideRevisions ? 'hide-revisions' : ''}`;
   const activeCollection = activeCollectionId ? (project.collections || []).find((c) => c.id === activeCollectionId) : null;
   const collectionIds = activeCollection ? collectionNodes(project, activeCollection, docs).map((n) => n.id) : null;
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
@@ -1041,7 +1163,7 @@ export default function App({ api }) {
     ['file', 'save', 'Salvează acum', () => flush()],
     ['file', 'compile', 'Compilează…', () => flush().then(() => setDialog('compile'))],
     ['file', 'import', 'Importă Word / text / Markdown…', () => setDialog('import')],
-    ['file', 'importFiles', 'Importă fișiere (RTF, ODT, HTML, Fountain, media)…', () => importFilesCmd().catch(report), !api.importFiles],
+    ['file', 'importFiles', 'Importă fișiere (RTF, ODT, HTML, Fountain, media)…', () => setDialog('importSplit'), !api.importFiles],
     ['file', 'importOpml', 'Importă OPML…', () => importOpmlOutline().catch(report), !api.importOpml],
     ['file', 'importWeb', 'Importă pagină web…', () => importWeb().catch(report), !api.importWebPage],
     ['file', 'exportFiles', 'Exportă documente / OPML / CSV…', () => flush().then(() => setDialog('export'))],
@@ -1120,6 +1242,32 @@ export default function App({ api }) {
     ['tools', 'settings', 'Setări…', () => setDialog('settings')],
     ['tools', 'shortcuts', 'Scurtături de tastatură…', () => setDialog('shortcuts')],
     ['window', 'saveLayout', 'Salvează layout-ul curent…', saveLayout],
+    ['window', 'manageLayouts', 'Gestionează layout-urile…', () => setDialog('layouts')],
+    ['window', 'fullScreen', 'Ecran complet', toggleFullScreen],
+    ['document', 'moveTo', 'Mută în…', () => setDialog('moveTo'), !selectionList().length],
+    ['document', 'toggleSeparator', 'Marchează / demarchează ca separator', toggleSeparator, !selectionList().length],
+    ['document', 'restoreTrash', 'Restaurează din coș', restoreSelection, !selectionList().some((id) => inTrash(id))],
+    ['document', 'appendSelection', 'Adaugă selecția la document…', () => setDialog('appendTo')],
+    ['document', 'openExternal', 'Deschide în editor extern', openMediaExternal, !selected?.media?.file || !api.openMediaExternal],
+    ['document', 'autoSynopsis', 'Sinopsis automat din primele fraze', () => autoSynopsisSelection().catch(report), !selectionList().length],
+    ['document', 'snapshotSelection', 'Snapshot pentru documentele selectate', () => snapshotSelection().catch(report), !selectionList().length],
+    ['nav', 'revealBinder', 'Arată în binder', revealInBinder, !selectedId],
+    ['nav', 'hoist', 'Focus pe dosar (hoist)', hoistSelection, !selected],
+    ['nav', 'unhoist', 'Ieși din focus', () => setHoistId(null), !hoistId],
+    ['view', 'scrivSelection', 'Scrivenings pentru selecție', () => openScrivenings(`${selectionList().length} documente selectate`, selectionList())],
+    ['view', 'scrivCollection', 'Scrivenings pentru colecția activă', () => openScrivenings(activeCollection?.title || '', collectionIds || []), !activeCollection],
+    ['view', 'scrivTitles', 'Scrivenings: arată / ascunde titlurile', () => toggleView('scrivHideTitles')],
+    ['view', 'scrivSeparators', 'Scrivenings: arată / ascunde separatoarele', () => toggleView('scrivHideSeparators')],
+    ['view', 'toggleFormatBar', 'Arată / ascunde bara de format', () => toggleView('hideFormatBar')],
+    ['view', 'toggleComments', 'Aspect text: evidențierea comentariilor', () => toggleView('hideComments')],
+    ['view', 'toggleRevisions', 'Aspect text: culorile reviziilor', () => toggleView('hideRevisions')],
+    ['view', 'splitHorizontal', 'Split orizontal / vertical', () => toggleView('splitHorizontal')],
+    ['view', 'swapPanes', 'Inversează panourile', swapPanes, !splitId],
+    ['tools', 'lookupDict', 'Caută în dicționar (dexonline)', () => lookupWord('dictionary')],
+    ['tools', 'lookupSyn', 'Găsește sinonime (dexonline)', () => lookupWord('synonyms')],
+    ['tools', 'lookupWiki', 'Caută pe Wikipedia', () => lookupWord('wikipedia')],
+    ['tools', 'lookupGoogle', 'Caută cu Google', () => lookupWord('google')],
+    ['tools', 'checkSpelling', 'Verifică ortografia acum', () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];
   const commands = Object.fromEntries(
@@ -1187,12 +1335,18 @@ export default function App({ api }) {
           onChange={saveProject}
           selectedIds={[...selectedIds]}
         />
+        {hoistNode && (
+          <div className="hoist-bar">
+            <span>Focus: {hoistNode.title}</span>
+            <button className="link" onClick={() => setHoistId(null)}>Ieși din focus</button>
+          </div>
+        )}
         <Binder
           binderEnter={settings.binderEnter}
           binderDoubleClick={settings.binderDoubleClick}
           onOpenItem={(id) => onBinderSelect(id, {})}
           onQuickRef={openQuickRef}
-          project={project}
+          project={binderProject}
           filterIds={collectionIds}
           filterTitle={activeCollection?.title}
           docs={docs}
@@ -1201,7 +1355,7 @@ export default function App({ api }) {
           selectedIds={selectedIds}
           onSelect={onBinderSelect}
           onAdd={addItem}
-          onRename={(id, title) => patchNode(id, { title })}
+          onRename={(id, title) => (findNode(project.tree, id)?.separator && title.startsWith(SEPARATOR_LABEL) ? null : patchNode(id, { title }))}
           onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
           onKeyMove={(dir2) => selectedId && setTree(keyMove(project.tree, selectedId, dir2))}
           onTrash={trashSelection}
@@ -1213,8 +1367,8 @@ export default function App({ api }) {
         <div className="resizer" onMouseDown={startResize('binder')} role="separator" aria-label="Lățime binder" />
         </>)}
 
-        <section className={`workspace ${splitNode && view === 'editor' ? 'split' : ''}`}>
-          <div className="pane">
+        <section className={`workspace ${splitNode && view === 'editor' ? 'split' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
+          <div className={`pane ${editorAreaClass}`}>
             {view === 'editor' && selected && !composition && (
               <div className="sc-header-bar">
                 <button onClick={back} disabled={nav.index <= 0} title="Înapoi (Alt+←)" aria-label="Înapoi"><BackIcon /></button>
@@ -1225,10 +1379,10 @@ export default function App({ api }) {
                 <button onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title="Split editor" aria-label="Split editor"><SplitIcon /></button>
               </div>
             )}
-            {view === 'editor' && selected && selected.type === 'file' && !selected.children && (
+            {view === 'editor' && !scrivListNodes && selected && selected.type === 'file' && !selected.children && (
               <MediaView api={api} dir={dir} node={selected} onError={report} />
             )}
-            {view === 'editor' && selected && selected.type !== 'file' && !selected.children && (
+            {view === 'editor' && !scrivListNodes && selected && selected.type !== 'file' && !selected.children && (
               <Editor
                 scriptFormat={scriptFormat}
                 key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${corrKey}`}
@@ -1241,7 +1395,7 @@ export default function App({ api }) {
                 typewriter={settings.typewriter}
                 smartQuotes={smartQuotes}
                 onFocus={() => (activeId.current = selected.id)}
-                onChange={(html) => writeDocNow(selected.id, html)}
+                onChange={(html) => writeSynced(selected.id, html, 'main')}
                 linkTargets={linkTargets}
                 onOpenLink={openLink}
                 words={words}
@@ -1253,15 +1407,18 @@ export default function App({ api }) {
             )}
             {isFolderView && (
               <Scrivenings
-                key={`${selected.id}-${smartQuotes}`}
-                folder={selected}
+                key={`${scrivList ? scrivList.ids.join(',') : selected?.id}-${smartQuotes}`}
+                title={scrivList ? scrivList.title : selected?.title}
                 sections={scrivSections}
                 docs={docs}
                 settings={settings}
-                readOnlyIds={new Set(scrivSections.filter((n) => inTrash(n.id) || n.locked || n.id === splitId).map((n) => n.id))}
+                readOnlyIds={new Set(scrivSections.filter((n) => inTrash(n.id) || n.locked).map((n) => n.id))}
                 registerRef={registerRef}
                 onFocusSection={(id) => (activeId.current = id)}
-                onChange={writeDocNow}
+                onChange={(id, html) => writeSynced(id, html, 'main')}
+                showTitles={!editorView.scrivHideTitles}
+                showSeparators={!editorView.scrivHideSeparators}
+                onClose={scrivList ? () => setScrivList(null) : undefined}
                 onOpen={(id) => go(id)}
               />
             )}
@@ -1305,9 +1462,11 @@ export default function App({ api }) {
             )}
           </div>
           {splitNode && view === 'editor' && (
-            <div className="pane second">
+            <div className={`pane second ${editorAreaClass}`}>
               <div className="pane-head">
                 <span>Panoul 2 · blocat pe „{splitNode.title}”</span>
+                <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? 'Split vertical' : 'Split orizontal'}</button>
+                <button className="link" onClick={swapPanes}>Inversează</button>
                 <button className="link" onClick={() => go(splitNode.id)}>Deschide în principal</button>
                 <button className="link" onClick={() => setSplitId(null)}>Închide</button>
               </div>
@@ -1319,13 +1478,13 @@ export default function App({ api }) {
                   key={`split-${splitNode.id}-${smartQuotes}-${corrKey}`}
                   corrections={corrections}
                   showInvisibles={settings.showInvisibles}
-                  ref={(r) => mainIds.has(splitNode.id) || registerRef(splitNode.id, r)}
+                  ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
                   title={splitNode.title}
-                  readOnly={mainIds.has(splitNode.id) || inTrash(splitNode.id) || Boolean(splitNode.locked)}
+                  readOnly={inTrash(splitNode.id) || Boolean(splitNode.locked)}
                   smartQuotes={smartQuotes}
                   onFocus={() => (activeId.current = splitNode.id)}
-                  onChange={(html) => writeDocNow(splitNode.id, html)}
+                  onChange={(html) => writeSynced(splitNode.id, html, 'split')}
                   linkTargets={linkTargets}
                   onOpenLink={openLink}
                   words={words}
@@ -1445,6 +1604,8 @@ export default function App({ api }) {
         sessionWords={Math.max(0, totals.draft - sessionStart)}
         sessionTarget={project.targets?.session || 0}
         saveState={saveState}
+        zoom={editorView.zoom || 100}
+        onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
       />
 
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>Ieși (Esc)</button>}
@@ -1667,6 +1828,29 @@ export default function App({ api }) {
           />
         );
       })}
+      {dialog === 'moveTo' && (
+        <PickNodeDialog
+          title="Mută selecția în…"
+          items={moveTargets(project.tree, selectionList())}
+          onPick={moveSelectionTo}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'appendTo' && (
+        <PickNodeDialog
+          title="Adaugă selecția la sfârșitul documentului…"
+          items={flatten(project.tree)
+            .filter((n) => n.type === 'text' && !inTrash(n.id) && !n.locked)
+            .map((n) => ({ id: n.id, title: n.title, depth: ancestorIds(project.tree, n.id).length - 1 }))}
+          onPick={(id) => appendSelectionTo(id).catch(report)}
+          onClose={() => setDialog(null)}
+          emptyText="Niciun document."
+        />
+      )}
+      {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep) => importFilesCmd(mode, sep).catch(report)} onClose={() => setDialog(null)} />}
+      {dialog === 'layouts' && (
+        <LayoutsDialog layouts={settings.layouts || []} onChange={(l) => saveLayouts(l).catch(report)} onApply={applyLayout} onClose={() => setDialog(null)} />
+      )}
       {dialog === 'shortcuts' && (
         <ShortcutsDialog
           commands={commandList.map(([group, id, label]) => ({ group, id, label: cmdLabel(id, label) }))}
@@ -1704,4 +1888,20 @@ function sumWords(node, counts) {
   let total = counts[node.id] || 0;
   for (const c of node.children || []) total += sumWords(c, counts);
   return total;
+}
+
+const SEPARATOR_LABEL = '────────';
+
+// Binder view of the project: hoisted to one folder, separators shown as a rule.
+function binderProjectOf(project, hoistNode) {
+  if (!hoistNode && !flatten(project.tree).some((n) => n.separator)) return project;
+  {
+    const mark = (nodes) =>
+      nodes.map((n) => {
+        const m = n.separator ? { ...n, title: `${SEPARATOR_LABEL} ${n.title || ''}`.trim() } : n;
+        return n.children ? { ...m, children: mark(n.children) } : m;
+      });
+    const tree = hoistNode ? [hoistNode] : project.tree;
+    return { ...project, tree: mark(tree) };
+  }
 }

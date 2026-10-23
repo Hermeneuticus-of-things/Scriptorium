@@ -58,6 +58,8 @@ export const DEFAULT_KEYS = {
   stats: 'Ctrl+Shift+I',
   saveAs: 'Ctrl+Shift+S',
   print: 'Ctrl+P',
+  fullScreen: 'Ctrl+Shift+F11',
+  revealBinder: 'Ctrl+Alt+R',
 };
 
 // Effective shortcut for a command; an empty string in settings disables it.
