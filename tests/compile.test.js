@@ -343,3 +343,10 @@ describe('pdfOptions and print CSS', () => {
     expect(html).not.toContain('class="book"');
   });
 });
+
+describe('linked footnotes', () => {
+  it('compile as anchor text plus an inline footnote', () => {
+    const { linkedNotesInline } = require('../lib/compile.cjs');
+    expect(linkedNotesInline('<p>a <span data-linked-footnote="N" class="linked-footnote">b</span></p>')).toBe('<p>a b<span data-footnote="N" class="footnote"></span></p>');
+  });
+});

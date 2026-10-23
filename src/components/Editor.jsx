@@ -2,6 +2,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 import { EditorContent, useEditor } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
+import { collectCharacters } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
 import FindBar from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
@@ -24,20 +25,28 @@ const Editor = forwardRef(function Editor(
     onChange,
     onFocus,
     onTitleClick,
+    scriptFormat = null,
   },
   ref,
 ) {
   const [showFind, setShowFind] = useState(false);
   const wordsRef = useRef(words);
   wordsRef.current = words;
+  const scriptRef = useRef(scriptFormat);
+  scriptRef.current = scriptFormat;
+  const charsRef = useRef([]);
   const plainPaste = useRef(false);
   const imageInput = useRef(null);
   const editor = useEditor(
     {
-      extensions: buildExtensions({ smartQuotes, getWords: () => wordsRef.current }),
+      extensions: buildExtensions({ smartQuotes, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current }),
       content: html || '<p></p>',
       editable: !readOnly,
-      onUpdate: ({ editor: ed }) => onChange(ed.getHTML()),
+      onUpdate: ({ editor: ed }) => {
+        const out = ed.getHTML();
+        if (scriptRef.current) charsRef.current = collectCharacters(out);
+        onChange(out);
+      },
       onFocus: () => onFocus?.(),
       onSelectionUpdate: ({ editor: ed }) => {
         if (!typewriter) return;
@@ -97,6 +106,9 @@ const Editor = forwardRef(function Editor(
     ref,
     () => ({
       editor,
+      setScriptElement: (el) => editor?.chain().focus().setScriptElement(el).run(),
+      getHtml: () => editor?.getHTML() || '',
+      getText: () => editor?.getText() || '',
       setHtml: (h) => editor?.commands.setContent(h, { emitUpdate: false }),
       getSelectionText: () => {
         if (!editor) return '';
@@ -168,6 +180,17 @@ const Editor = forwardRef(function Editor(
     editor.commands.setRevisionLevel(readOnly ? 0 : view.revision || 0);
   }, [editor, view.focus, view.currentParagraph, view.revision, readOnly]);
 
+  // Project stylesheet for "Next style" on Enter and per-style shortcuts.
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) editor.storage.paragraphStyle.styles = styles || [];
+  }, [editor, styles]);
+
+  // Linguistic Focus: view.posFocus = noun|verb|adj|adv|conj ('' = off), view.posLang = auto|ro|en.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.commands.setLinguisticFocus(view.posFocus || null, view.posLang || 'auto');
+  }, [editor, view.posFocus, view.posLang]);
+
   if (!editor) return null;
   const chain = () => editor.chain().focus();
 
@@ -219,7 +242,7 @@ const Editor = forwardRef(function Editor(
         </h2>
         {readOnly && <p className="hint">Doar citire.</p>}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}
-        <EditorContent editor={editor} className="prose" />
+        <EditorContent editor={editor} className={scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'} />
       </div>
     </div>
   );

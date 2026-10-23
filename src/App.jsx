@@ -30,10 +30,18 @@ import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
+import FloatingInspector from './components/FloatingInspector.jsx';
+import BookmarksPanel from './components/BookmarksPanel.jsx';
+import ProjectNotesTabs from './components/ProjectNotesTabs.jsx';
+import TimelineView from './components/TimelineView.jsx';
+import RelationMap from './components/RelationMap.jsx';
+import PacingView from './components/PacingView.jsx';
 import NameGeneratorDialog from './components/NameGeneratorDialog.jsx';
 import Scratchpad from './components/Scratchpad.jsx';
 import SpeechBar from './components/SpeechBar.jsx';
 import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
+
+const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
 import { applySettingsCss } from './lib/settingsDefaults.js';
 import { setLanguage, cmdLabel, groupLabel } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
@@ -101,6 +109,10 @@ export default function App({ api }) {
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
   const [showScratch, setShowScratch] = useState(false);
+  const [showFloatInspector, setShowFloatInspector] = useState(false);
+  const [floatNotes, setFloatNotes] = useState(null);
+  const [aiReport, setAiReport] = useState(null);
+  const [aiProgress, setAiProgress] = useState(null);
   const [showSpeech, setShowSpeech] = useState(false);
   const [activeCollectionId, setActiveCollectionId] = useState(null);
   const [hideBinder, setHideBinder] = useState(false);
@@ -146,6 +158,21 @@ export default function App({ api }) {
   }, [settings]);
 
   const report = useCallback((e) => setError(e?.message || String(e)), []);
+  useEffect(() => {
+    if (!showFloatInspector || !selectedId || !dir) return;
+    setFloatNotes(null);
+    api.readDoc(dir, selectedId, 'notes').then((h) => setFloatNotes(h || '')).catch(report);
+  }, [showFloatInspector, selectedId, dir]);
+  useEffect(() => {
+    if (!api.onAiProgress) return undefined;
+    let timer;
+    const off = api.onAiProgress((p) => {
+      setAiProgress(`AI: ${p.done}/${p.total}${p.title ? ` · ${p.title}` : ''}`);
+      clearTimeout(timer);
+      timer = setTimeout(() => setAiProgress(null), 4000);
+    });
+    return () => { off(); clearTimeout(timer); };
+  }, []);
 
   const counts = useMemo(() => {
     const map = {};
@@ -788,6 +815,74 @@ export default function App({ api }) {
   const smartQuotes = settings.smartQuotes !== false;
   // AI is optional: with it off, every feature that needs Claude is hidden and nothing else changes.
   const aiEnabled = settings.aiEnabled !== false;
+  // Loads every text document of the project into memory (views and AI jobs over the whole book).
+  const loadAllDocs = async () => {
+    const out = { ...docs };
+    for (const n of flatten(project.tree)) {
+      if (n.type === 'text' && out[n.id] === undefined) out[n.id] = await api.readDoc(dir, n.id, 'docs');
+    }
+    setDocs(out);
+    return out;
+  };
+  const showWholeBook = (v) => loadAllDocs().then(() => setView(v)).catch(report);
+  const manuscriptDocs = async () => {
+    const all = await loadAllDocs();
+    const draft = project.tree[0];
+    const list = [];
+    const walk = (nodes, chapter) => {
+      for (const n of nodes || []) {
+        if (n.type === 'text' && n.include !== false) list.push({ id: n.id, title: n.title, text: htmlToText(all[n.id] || ''), synopsis: n.synopsis || '', chapter });
+        walk(n.children, n.type === 'folder' ? n.title : chapter);
+      }
+    };
+    walk(draft ? draft.children : [], draft?.title || '');
+    return list;
+  };
+  const runBulkSynopsis = async () => {
+    const list = (await manuscriptDocs()).filter((d) => !d.synopsis);
+    if (!list.length) return setToast('Toate documentele au deja sinopsis.');
+    const res = await api.aiBulkSynopsis(dir, list);
+    let tree = project.tree;
+    for (const [id, syn] of Object.entries(res.results)) tree = updateNode(tree, id, { synopsis: String(syn).trim() });
+    saveProject({ ...project, tree });
+    setToast(`Sinopsis scris pentru ${Object.keys(res.results).length} documente${Object.keys(res.errors).length ? `, ${Object.keys(res.errors).length} erori` : ''}.`);
+  };
+  const runConsistency = async () => {
+    const res = await api.aiConsistency(dir, await manuscriptDocs(), project.livingSheets || null, '');
+    saveProject({ ...project, livingSheets: res.sheets });
+    setAiReport({ title: 'Consistență pe toată cartea', findings: res.findings });
+  };
+  const runZoomReview = async (levels) => {
+    const res = await api.aiZoomReview(dir, await manuscriptDocs(), levels, '');
+    setAiReport({ title: 'Revizie pe niveluri de zoom', findings: res.findings });
+  };
+  const exportScrivCmd = async () => {
+    await flush();
+    const r = await api.exportScriv(dir, project);
+    if (r) setToast(`Exportat ca proiect Scrivener: ${r.dir}`);
+  };
+  const syncOutCmd = async () => {
+    await flush();
+    const r = await api.syncOut(dir, project, project.syncFolder, { format: project.syncFormat || 'rtf' });
+    if (r) saveProject({ ...project, syncFolder: r.folder });
+  };
+  const syncInCmd = async () => {
+    await flush();
+    const r = await api.syncIn(dir, project, project.syncFolder);
+    if (!r) return;
+    let tree = project.tree;
+    const notesRoot = tree.find((n) => n.root === 'research') || tree[1];
+    for (const c of r.created) {
+      const node = { ...newNode('text', c.title), id: c.id };
+      const parent = c.folder === 'draft' ? tree[0] : notesRoot;
+      tree = updateNode(tree, parent.id, { children: [...(findNode(tree, parent.id).children || []), node] });
+    }
+    saveProject({ ...project, tree });
+    const reload = {};
+    for (const id of [...r.updated, ...r.created.map((c) => c.id)].map((x) => (typeof x === 'string' ? x : x.id))) reload[id] = await api.readDoc(dir, id, 'docs');
+    setDocs((d) => ({ ...d, ...reload }));
+    setToast(`Sincronizare: ${r.updated.length} actualizate, ${r.conflicts.length} conflicte (cu snapshot), ${r.created.length} noi.`);
+  };
   const scriptFormat = settings?.scriptFormat || null;
   const setScriptFormat = async (f) => {
     await api.setSettings({ scriptFormat: f });
@@ -931,6 +1026,26 @@ export default function App({ api }) {
     ['format', 'styles', 'Stiluri…', () => setDialog('styles')],
     ['tools', 'irep', 'I-REP / I-EDIT', () => setShowEditorial((v) => !v)],
     ['tools', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    ['view', 'floatInspector', 'Inspector plutitor (compoziție)', () => setShowFloatInspector((v) => !v), !composition],
+    ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
+    ['view', 'viewRelations', 'Hartă de relații', () => showWholeBook('relations')],
+    ['view', 'viewPacing', 'Analiză de ritm', () => showWholeBook('pacing')],
+    ['view', 'posNouns', 'Focus lingvistic: substantive', () => setEditorView({ ...editorView, posFocus: editorView.posFocus === 'noun' ? '' : 'noun' })],
+    ['view', 'posVerbs', 'Focus lingvistic: verbe', () => setEditorView({ ...editorView, posFocus: editorView.posFocus === 'verb' ? '' : 'verb' })],
+    ['view', 'posOff', 'Focus lingvistic: oprit', () => setEditorView({ ...editorView, posFocus: '' })],
+    ['project', 'bookmarks', 'Semne de carte ale proiectului…', () => setDialog('bookmarks')],
+    ['project', 'bookmarkAdd', 'Adaugă documentul la semne de carte', () => !(project.bookmarks || []).some((b) => b.id === selectedId) && saveProject({ ...project, bookmarks: [...(project.bookmarks || []), { id: selectedId, title: selected?.title }] }), !selectedId],
+    ['project', 'projectNotes', 'Note proiect (file)…', () => setDialog('projectNotes')],
+    ['file', 'exportScriv', 'Exportă ca proiect Scrivener (.scriv)…', () => exportScrivCmd().catch(report), !api.exportScriv],
+    ['file', 'syncOut', 'Sincronizează cu folder extern: scrie…', () => syncOutCmd().catch(report), !api.syncOut],
+    ['file', 'syncIn', 'Sincronizează cu folder extern: citește modificările', () => syncInCmd().catch(report), !api.syncIn || !project?.syncFolder],
+    ['file', 'importBib', 'Importă bibliografie (Zotero BibTeX / CSL-JSON)…', () => api.importBibliography().then((r) => r && saveProject({ ...project, bibliography: r.entries })).catch(report), !api.importBibliography],
+    ['file', 'exportLatex', 'Exportă LaTeX…', () => flush().then(() => api.exportLatex(dir, project)).catch(report), !api.exportLatex],
+    ['file', 'exportPandoc', 'Exportă Pandoc Markdown…', () => flush().then(() => api.exportPandoc(dir, project)).catch(report), !api.exportPandoc],
+    ['file', 'exportMmd', 'Exportă MultiMarkdown…', () => flush().then(() => api.exportPandoc(dir, project, { flavor: 'mmd' })).catch(report), !api.exportPandoc],
+    ['tools', 'aiBulkSynopsis', 'Sinopsis AI în bloc', () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
+    ['tools', 'aiConsistency', 'Consistență pe toată cartea (fișe vii)', () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
+    ['tools', 'aiZoomReview', 'Revizie pe niveluri de zoom', () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
     ['tools', 'nameGen', 'Generator de nume…', () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', 'Citire cu voce tare / Dictare', () => setShowSpeech((v) => !v)],
@@ -985,6 +1100,16 @@ export default function App({ api }) {
         <Menu label="Document" items={documentMenu} />
         <Menu label="Navigare" items={navigateMenu} />
         <Menu label="Proiect" items={projectMenu} />
+        {!api.setAppMenu &&
+          ['file', 'view', 'format', 'tools'].map((g) => (
+            <Menu
+              key={g}
+              label={groupLabel(g)}
+              items={Object.values(commands)
+                .filter((c) => c.group === g)
+                .map((c) => ({ label: c.label, action: c.run, disabled: c.disabled, shortcut: c.key }))}
+            />
+          ))}
       </header>
 
       <div className="main">
@@ -1059,6 +1184,9 @@ export default function App({ api }) {
                 onOpen={(id) => go(id)}
               />
             )}
+            {view === 'timeline' && <TimelineView project={project} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
+            {view === 'relations' && <RelationMap project={project} docs={docs} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
+            {view === 'pacing' && <PacingView project={project} docs={docs} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
             {view === 'corkboard' && (
               <Corkboard
                 project={project}
@@ -1233,6 +1361,65 @@ export default function App({ api }) {
 
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>Ieși (Esc)</button>}
 
+      {composition && showFloatInspector && selected && floatNotes !== null && (
+        <FloatingInspector
+          node={selected}
+          project={project}
+          notesHtml={floatNotes}
+          onPatch={(p) => patchNode(selected.id, p)}
+          onNotesChange={(h) => queueWrite(selected.id, 'notes', h)}
+          onClose={() => setShowFloatInspector(false)}
+        />
+      )}
+      {dialog === 'bookmarks' && (
+        <div className="modal-backdrop" onClick={() => setDialog(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <BookmarksPanel
+              bookmarks={project.bookmarks || []}
+              currentId={selectedId}
+              nodeTitle={(id) => findNode(project.tree, id)?.title}
+              readDoc={(id) => api.readDoc(dir, id, 'docs')}
+              onChange={(bookmarks) => saveProject({ ...project, bookmarks })}
+              onOpen={(id) => { go(id); setDialog(null); }}
+              onError={report}
+            />
+          </div>
+        </div>
+      )}
+      {dialog === 'projectNotes' && (
+        <div className="modal-backdrop" onClick={() => setDialog(null)}>
+          <div className="modal wide" onClick={(e) => e.stopPropagation()}>
+            <ProjectNotesTabs
+              tabs={project.projectNotes}
+              readNote={(id) => api.readDoc(dir, id, 'notes')}
+              onNoteChange={(id, html) => queueWrite(id, 'notes', html)}
+              onTabsChange={(projectNotes) => saveProject({ ...project, projectNotes })}
+              onError={report}
+            />
+          </div>
+        </div>
+      )}
+      {aiProgress && <div className="toast">{aiProgress}</div>}
+      {aiReport && (
+        <div className="modal-backdrop" onClick={() => setAiReport(null)}>
+          <div className="modal wide" role="dialog" aria-label={aiReport.title} onClick={(e) => e.stopPropagation()}>
+            <h2>{aiReport.title}</h2>
+            {!aiReport.findings.length && <p>Nicio problemă găsită.</p>}
+            <div className="ai-findings">
+              {aiReport.findings.map((f, i) => (
+                <div key={i} className={`finding sev-${f.severity}`}>
+                  <strong>{f.severity}</strong> {f.level ? `[${f.level}] ` : ''}{f.title || f.character || ''}
+                  {f.quote && <blockquote>{f.quote}</blockquote>}
+                  <p>{f.issue}</p>
+                  {f.suggestion && <p className="muted">{f.suggestion}</p>}
+                  {f.docId && <button className="link" onClick={() => { go(f.docId); setAiReport(null); }}>Deschide</button>}
+                </div>
+              ))}
+            </div>
+            <div className="actions"><span className="spacer" /><button onClick={() => setAiReport(null)}>Închide</button></div>
+          </div>
+        </div>
+      )}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
       {showScratch && <Scratchpad load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
       {showSpeech && <SpeechBar getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}

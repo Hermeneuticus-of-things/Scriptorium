@@ -1,5 +1,28 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-23 — v0.4.0 — Roadmap 2.1–2.6, v0.4 și extra v1.0
+
+### Cerința user
+> "continua automat cu Roadmap pana la finalul proectului"
+
+### Decizii
+- Lucru în paralel pe agenți cu fișiere exclusive; integrarea în `App.jsx`, `main.cjs`, `preload.cjs` făcută centralizat.
+- Meniu nativ construit din registrul de comenzi (acceleratoare afișate, neînregistrate); în browser aceleași comenzi apar ca meniuri în fereastră.
+- KPF (Kindle) nu se poate produce cu unelte deschise: Kindle primește EPUB.
+- Lucrările AI în bloc sunt blocate când AI e oprit; fișele vii se salvează în `project.livingSheets`.
+
+### Rezultat
+- 2.1/2.2: stiluri Para+Char, stil următor, scurtături pe stil; conversii note inline ↔ legate; Linguistic Focus (euristic RO/EN); Inspector plutitor; bookmarks de proiect; note de proiect pe file; recente fixate.
+- 2.4: Compile complet (formate editabile, Section Layouts, separatoare, front/back matter, placeholders, înlocuiri, note de final, pagină, EPUB metadate + copertă, RTF/ODT/MD/MMD/TXT, previzualizare, selecție); notele legate compilate ca note de subsol.
+- 2.5: import RTF/ODT/HTML/FDX/Fountain/OPML/pagină web/media; export documente, OPML, CSV; Save As; Print.
+- 2.6: dialog scurtături, meniu nativ, Quick Reference, Opțiuni în 9 secțiuni, interfață RO/EN.
+- v0.4: Script Mode (film, teatru, benzi desenate, radio) + export FDX/Fountain; generator de nume; Scratchpad; citire cu voce și dictare; export .scriv; sync cu folder extern; bibliografie Zotero; LaTeX/Pandoc/MultiMarkdown.
+- v1.0: cronologie, hartă de relații, analiză de ritm; sinopsis AI în bloc, consistență cu fișe vii, revizie pe niveluri Maha→Nano.
+- Teste: 205 trec. Build Vite trece. Verificat în Chromium (mock API).
+
+### Neverificat
+Electron real pe Windows (meniu nativ, PDF, dialoguri de fișiere, dictare), apeluri Claude reale.
+
 ## 2026-10-23 — v0.1.0 — Program de scris tip Scrivener + extensii
 
 ### Cerința user

@@ -86,7 +86,11 @@ function setApiKey(key) {
 function rememberRecent(dir, title) {
   openedDirs.add(path.resolve(dir));
   const s = readSettings();
-  s.recent = [{ dir, title }, ...(s.recent || []).filter((r) => r.dir !== dir)].slice(0, 10);
+  const pinned = new Set(s.recentPinned || []);
+  const list = [{ dir, title }, ...(s.recent || []).filter((r) => r.dir !== dir)];
+  // Pinned projects never fall off the list; the rest keep the 10 most recent.
+  let free = 10;
+  s.recent = list.filter((r) => pinned.has(r.dir) || free-- > 0);
   writeSettings(s);
 }
 
@@ -319,6 +323,8 @@ handle('media:add', async (e, dir) => {
 });
 
 require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
+require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
+require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.

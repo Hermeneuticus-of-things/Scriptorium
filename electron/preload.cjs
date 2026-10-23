@@ -53,5 +53,19 @@ contextBridge.exposeInMainWorld('api', {
   exportCompiled: (dir, project, format, options) => call('compile:export', dir, project, format, options),
   previewCompiled: (dir, project, options) => call('compile:preview', dir, project, options),
   exportScript: (format, html, title) => call('script:export', format, html, title),
+  exportScriv: (dir, project) => call('v04:exportScriv', dir, project),
+  syncOut: (dir, project, folder, options) => call('v04:syncOut', dir, project, folder, options),
+  syncIn: (dir, project, folder) => call('v04:syncIn', dir, project, folder),
+  importBibliography: () => call('v04:importBibliography'),
+  exportLatex: (dir, project, options) => call('v04:exportLatex', dir, project, options),
+  exportPandoc: (dir, project, options) => call('v04:exportPandoc', dir, project, options),
+  aiBulkSynopsis: (dir, docs, opts) => call('ai:bulkSynopsis', dir, docs, opts),
+  aiConsistency: (dir, docs, sheets, notes) => call('ai:consistency', dir, docs, sheets, notes),
+  aiZoomReview: (dir, docs, levels, profileRules) => call('ai:zoomReview', dir, docs, levels, profileRules),
+  onAiProgress: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('ai:progress', listener);
+    return () => ipcRenderer.removeListener('ai:progress', listener);
+  },
   runAi: (payload) => call('ai:run', payload),
 });
