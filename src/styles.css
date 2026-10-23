@@ -82,7 +82,16 @@ textarea { resize: vertical; width: 100%; }
 
 /* Editor */
 .editor { display: flex; flex-direction: column; min-height: 100%; }
-.format-bar { position: sticky; top: 0; z-index: 2; display: flex; gap: 4px; padding: 6px 10px; background: var(--bg); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.format-bar { position: sticky; top: 0; z-index: 2; display: flex; gap: 4px; padding: 6px 10px; background: var(--bg); border-bottom: 1px solid var(--line); flex-wrap: nowrap; align-items: center; min-width: 0; }
+/* one row: each group keeps its natural width; what does not fit moves into the » menu */
+.format-bar .fb-group { display: flex; align-items: center; gap: inherit; flex: none; white-space: nowrap; }
+.format-bar .fb-sep { border-left: 1px solid var(--line); padding-left: 6px; margin-left: 2px; }
+.format-bar .fb-more { margin-left: auto; flex: none; }
+.format-bar .fb-overflow-pop { position: fixed; z-index: 60; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; width: max-content; max-width: min(460px, 92vw); padding: 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.format-bar .fb-overflow-pop .fb-sep { border-left: none; padding-left: 0; margin-left: 0; }
+.format-bar .fb-overflow-pop .fb-group { flex-wrap: wrap; }
+/* dropdowns inside the overflow: side chosen in FormatBar (flip at the window edge) */
+.format-bar .fb-overflow-pop .menu-pop { max-height: min(60vh, 420px); }
 .format-bar .sep { width: 1px; background: var(--line); margin: 0 4px; }
 .format-bar button { min-width: 32px; }
 .page { max-width: var(--editor-page-width, 46em); width: 100%; margin: 24px auto 40vh; padding: 40px 56px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
@@ -396,3 +405,14 @@ legend { color: var(--muted); padding: 0 4px; }
 .layout-list { list-style: none; padding: 0; display: grid; gap: 6px; }
 .layout-list li { display: flex; gap: 6px; }
 .layout-list input { flex: 1; }
+/* context menu (binder right-click) */
+.ctx-menu { min-width: 200px; max-width: 340px; max-height: calc(100vh - 8px); overflow-y: auto; padding: 4px; background: var(--paper); color: var(--ink, inherit); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.2); display: flex; flex-direction: column; font-size: 13px; }
+.ctx-menu > button { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; border: none; background: none; border-radius: 4px; padding: 4px 8px 4px 4px; min-height: 0; color: inherit; white-space: nowrap; }
+.ctx-menu > button:focus { outline: none; }
+.ctx-menu > button:focus:not(.disabled), .ctx-menu > button.open { background: var(--accent-soft); }
+.ctx-menu > button.disabled { opacity: .45; cursor: default; }
+.ctx-menu .ctx-check { width: 16px; flex: none; text-align: center; }
+.ctx-menu .ctx-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.ctx-menu kbd { flex: none; font: inherit; font-size: 11px; opacity: .7; background: none; border: none; }
+.ctx-menu .ctx-arrow { flex: none; font-size: 10px; opacity: .7; }
+.ctx-menu hr { border: none; border-top: 1px solid var(--line); margin: 4px 2px 4px 26px; }

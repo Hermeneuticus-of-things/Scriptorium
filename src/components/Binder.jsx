@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { containerIds, dragIds, iconTint } from '../lib/panelsExtra.js';
 import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
 import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TrashIcon } from './Icons.jsx';
+import ContextMenu from './ContextMenu.jsx';
 
 function iconFor(node) {
   if (node.root === 'trash') return <TrashIcon />;
@@ -30,7 +31,7 @@ function matches(node, query, docs) {
   return (docs[node.id] || '').replace(/<[^>]+>/g, ' ').toLocaleLowerCase('ro').includes(q);
 }
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder }) {
   const tintIcons = labelTintIcons ?? Boolean(project.labelTintIcons);
   // Behaviours from Options: Enter = 'rename' | 'newDoc' | 'open' ('edit' = 'open');
   // double-click = 'rename' | 'quickRef' | 'open' ('openQuickRef' = 'quickRef').
@@ -115,6 +116,73 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     );
   };
   const [dropHint, setDropHint] = useState(null);
+  const [ctx, setCtx] = useState(null); // { x, y, id }
+  const findById = (id) => {
+    let hit = null;
+    const walk = (ns, parent) => (ns || []).some((n) => (n.id === id ? ((hit = { node: n, parent }), true) : walk(n.children, n)));
+    walk(project.tree, null);
+    return hit;
+  };
+  // Right-click (or the Menu key / Shift+F10): select the row unless it is already part of the selection.
+  const openContext = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (editing) return;
+    if (id !== selectedId && !selectedIds.has(id)) select(id);
+    let { clientX: x, clientY: y } = e;
+    if (!x && !y) {
+      const r = rootRef.current?.querySelector(`[data-node-id="${CSS.escape(id)}"]`)?.getBoundingClientRect();
+      if (r) [x, y] = [r.left + 24, r.bottom];
+    }
+    setCtx({ x, y, id });
+  };
+  const contextItems = (id) => {
+    const hit = findById(id);
+    if (!hit) return [];
+    const node = hit.node;
+    const isRootNode = Boolean(node.root) || project.tree.some((r) => r.id === id);
+    const ids = selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [id];
+    const inside = (a, b) => { const h = findById(a); return h && (function has(n) { return n.id === b || (n.children || []).some(has); })(h.node); };
+    const targets = [];
+    const walk = (ns, depth) => (ns || []).forEach((n) => {
+      if (!n.children || n.root === 'trash' || ids.some((x) => inside(x, n.id))) return;
+      targets.push({ label: `${'\u2002'.repeat(depth)}${n.title}`, action: () => doDrop(ids, n.id, 'inside', false) });
+      walk(n.children, depth + 1);
+    });
+    walk(project.tree, 0);
+    const statusName = (st) => (typeof st === 'string' ? st : st?.name);
+    const items = [
+      { label: 'Adaugă', submenu: [
+        { label: 'Document nou', shortcut: 'Ctrl+N', action: () => onAdd('text') },
+        { label: 'Dosar nou', shortcut: 'Ctrl+Shift+N', action: () => onAdd('folder') },
+      ] },
+      '-',
+      { label: 'Redenumește', shortcut: 'F2', disabled: isRootNode || ids.length > 1, action: () => setEditing(id) },
+      ...(onCopy ? [{ label: 'Duplică', disabled: isRootNode, action: () => onCopy(ids, ids[ids.length - 1], 'after') }] : []),
+      { label: 'Mută în', disabled: isRootNode || !targets.length, submenu: targets },
+      { label: 'Mută în coș', shortcut: 'Del', disabled: isRootNode || node.root === 'trash', action: () => onTrash() },
+    ];
+    if (onPatchItems) {
+      items.push('-',
+        { label: 'Etichetă', disabled: isRootNode, submenu: (project.labels || []).map((l) => ({ label: l.name, checked: (node.label || '') === l.name, action: () => onPatchItems(ids, { label: l.name }) })) },
+        { label: 'Status', disabled: isRootNode, submenu: (project.statuses || []).map((st) => ({ label: statusName(st), checked: (node.status || '') === statusName(st), action: () => onPatchItems(ids, { status: statusName(st) }) })) },
+        { label: 'Include în Compile', checked: node.includeInCompile !== false, disabled: isRootNode, action: () => onPatchItems(ids, { includeInCompile: node.includeInCompile === false }) },
+        { label: 'Favorit', checked: Boolean(node.favorite), disabled: isRootNode, action: () => onPatchItems(ids, { favorite: !node.favorite }) });
+    }
+    items.push('-',
+      { label: 'Deschide în Quick Reference', disabled: !onQuickRef || isRootNode, action: () => onQuickRef(id) },
+      { label: 'Deschide în panoul 2', disabled: Boolean(node.children), action: () => onSelect(id, { alt: true }) },
+      '-',
+      { label: 'Extinde tot', action: () => setAllCollapsed(false) },
+      { label: 'Restrânge tot', action: () => setAllCollapsed(true) });
+    if (onSetTemplateFolder && node.children && !isRootNode) {
+      items.push('-', { label: 'Setează ca', submenu: [
+        { label: 'Dosar de șabloane', checked: project.templateFolder === id, action: () => onSetTemplateFolder(project.templateFolder === id ? null : id) },
+      ] });
+    }
+    if (node.root === 'trash') items.push('-', { label: 'Golește coșul', action: () => onEmptyTrash() });
+    return items;
+  };
 
   const labelColor = useMemo(() => Object.fromEntries(project.labels.map((l) => [l.name, l.color])), [project.labels]);
 
@@ -208,6 +276,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           }}
           onClick={(e) => select(node.id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
           onDoubleClick={() => runBehaviour(dblMode, node.id, Boolean(node.root))}
+          onContextMenu={(e) => openContext(e, node.id)}
         >
           {node.children ? (
             <button
@@ -299,6 +368,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           if (r.expand) setCollapsed((c) => ({ ...c, [r.expand]: false }));
           if (r.collapse) setCollapsed((c) => ({ ...c, [r.collapse]: true }));
           if (r.select) select(r.select, { shift: e.shiftKey && (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Home' || key === 'End') });
+        } else if ((key === 'ContextMenu' || (key === 'F10' && e.shiftKey)) && selected) {
+          openContext(e, selected);
         } else if (key === 'F2' && selected && !isRoot) {
           e.preventDefault();
           setEditing(selected);
@@ -354,6 +425,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
                   className={`binder-row ${selectedId === id ? 'selected' : selectedIds.has(id) ? 'multi' : ''}`}
                   data-node-id={id}
                   onClick={(e) => select(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
+                  onContextMenu={(e) => openContext(e, id)}
                 >
                   {renderIcon(node)}
                   {labelColor[node.label] && <span className="label-dot" style={{ background: labelColor[node.label] }} />}
@@ -367,6 +439,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         <ul className="tree">{project.tree.map((n) => renderNode(n, 0))}</ul>
       )}
       <button className="link" onClick={onEmptyTrash}>Golește coșul</button>
+      {ctx && <ContextMenu x={ctx.x} y={ctx.y} items={contextItems(ctx.id)} onClose={() => setCtx(null)} />}
     </aside>
   );
 }
