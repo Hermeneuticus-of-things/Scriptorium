@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">Cum circulă un proiect prin Scribner</title>
+  <desc id="desc">Importi din Scrivener 3, Word, Markdown sau Fountain; scrii și organizezi în binder, corkboard și outline; verifici cu I-REP; compilezi în DOCX, PDF, EPUB, RTF sau Markdown.</desc>
+  <rect width="1200" height="300" rx="22" fill="#f6f1e6"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <g transform="translate(48 60)">
+      <rect width="250" height="180" rx="12" fill="#fffdf6" stroke="#e2d8c6"/>
+      <rect y="0" width="250" height="6" rx="3" fill="#7a6f60"/>
+      <text x="24" y="50" font-size="26" font-weight="600" fill="#1f1b16">1 · Importă</text>
+      <text x="24" y="90" font-size="20" fill="#4a4238">Scrivener .scriv</text>
+      <text x="24" y="120" font-size="20" fill="#4a4238">Word, Markdown</text>
+      <text x="24" y="150" font-size="20" fill="#4a4238">Fountain, OPML</text>
+    </g>
+    <g transform="translate(330 60)">
+      <rect width="250" height="180" rx="12" fill="#fffdf6" stroke="#e2d8c6"/>
+      <rect y="0" width="250" height="6" rx="3" fill="#2b6fd6"/>
+      <text x="24" y="50" font-size="26" font-weight="600" fill="#1f1b16">2 · Scrie</text>
+      <text x="24" y="90" font-size="20" fill="#4a4238">binder, corkboard</text>
+      <text x="24" y="120" font-size="20" fill="#4a4238">outline, snapshot-uri</text>
+      <text x="24" y="150" font-size="20" fill="#4a4238">ținte, istoric</text>
+    </g>
+    <g transform="translate(612 60)">
+      <rect width="250" height="180" rx="12" fill="#fffdf6" stroke="#e2d8c6"/>
+      <rect y="0" width="250" height="6" rx="3" fill="#c2413a"/>
+      <text x="24" y="50" font-size="26" font-weight="600" fill="#1f1b16">3 · Revizuiește</text>
+      <text x="24" y="90" font-size="20" fill="#4a4238">I-REP și I-EDIT</text>
+      <text x="24" y="120" font-size="20" fill="#4a4238">reguli fără AI</text>
+      <text x="24" y="150" font-size="20" fill="#4a4238">Claude, dacă vrei</text>
+    </g>
+    <g transform="translate(894 60)">
+      <rect width="258" height="180" rx="12" fill="#1f1b16"/>
+      <text x="24" y="50" font-size="26" font-weight="600" fill="#f6f1e6">4 · Compilează</text>
+      <text x="24" y="90" font-size="20" fill="#e6dccb">DOCX, PDF, EPUB</text>
+      <text x="24" y="120" font-size="20" fill="#e6dccb">RTF, ODT, Markdown</text>
+      <text x="24" y="150" font-size="20" fill="#e6dccb">LaTeX, .scriv</text>
+    </g>
+    <g fill="#b8875a">
+      <path d="M322 150 l-18 -10 v20 z"/>
+      <path d="M604 150 l-18 -10 v20 z"/>
+      <path d="M886 150 l-18 -10 v20 z"/>
+    </g>
+  </g>
+</svg>

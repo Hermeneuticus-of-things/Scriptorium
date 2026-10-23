@@ -1,0 +1,14 @@
+{
+  "name": "Scribner",
+  "short_name": "Scribner",
+  "description": "Program de scris pentru cărți lungi",
+  "lang": "ro",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#2f3b52",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

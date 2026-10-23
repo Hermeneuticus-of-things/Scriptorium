@@ -1,0 +1,87 @@
+/* Help window. Uses the app tokens (--bg, --panel, --paper, --text, --muted, --line, --accent)
+   and, under [data-ui='classic'], the Scrivener-like chrome tokens. */
+
+.help-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, .28);
+  display: flex; align-items: center; justify-content: center;
+}
+.help-window {
+  width: min(1100px, 94vw); height: min(780px, 90vh);
+  display: flex; flex-direction: column;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .28);
+  overflow: hidden;
+}
+.help-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--bg);
+}
+.help-head button { min-width: 28px; }
+.help-title { margin: 0 10px 0 4px; white-space: nowrap; }
+.help-spacer { flex: 1; }
+.help-tabs { display: flex; gap: 2px; }
+.help-tabs button { padding: 3px 10px; border: 1px solid transparent; background: transparent; color: inherit; border-radius: 4px; cursor: pointer; }
+.help-tabs button.on { background: var(--accent-soft); border-color: var(--line); }
+
+.help-body { flex: 1; display: flex; min-height: 0; }
+.help-toc {
+  width: 280px; flex: none; display: flex; flex-direction: column;
+  border-right: 1px solid var(--line); background: var(--bg); min-height: 0;
+}
+.help-search { margin: 8px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--text); }
+.help-chapters, .help-results { flex: 1; overflow: auto; margin: 0; padding: 0 0 12px; }
+.help-chapters { list-style: none; }
+.help-chapters ul { list-style: none; margin: 0 0 4px; padding: 0 0 0 14px; }
+.help-chapter, .help-section, .help-result {
+  display: block; width: 100%; text-align: left; border: 0; background: transparent; color: inherit;
+  padding: 4px 12px; cursor: pointer; font: inherit;
+}
+.help-chapter { font-weight: 600; }
+.help-chapters li.open > .help-chapter { color: var(--accent); }
+.help-section { padding: 3px 10px; color: var(--muted); }
+.help-section.on { color: var(--text); background: var(--accent-soft); }
+.help-chapter:hover, .help-section:hover, .help-result:hover { background: var(--accent-soft); }
+
+.help-results-head { padding: 2px 12px 6px; color: var(--muted); font-size: .9em; }
+.help-result { border-bottom: 1px solid var(--line); padding: 6px 12px; }
+.help-result-title { display: block; font-weight: 600; }
+.help-result-chapter { display: block; color: var(--muted); font-size: .85em; }
+.help-result-snippet { display: block; font-size: .9em; margin-top: 2px; }
+.help-muted { color: var(--muted); }
+
+.help-content { flex: 1; overflow: auto; padding: 18px 28px 40px; background: var(--paper); line-height: 1.55; }
+.help-content article { max-width: 760px; }
+.help-content h1 { font-size: 1.5em; margin: 0 0 12px; }
+.help-content h2 { font-size: 1.15em; margin: 22px 0 6px; }
+.help-content h3 { font-size: 1em; margin: 16px 0 4px; }
+.help-content section.current > h2 { color: var(--accent); }
+.help-content pre { background: var(--bg); border: 1px solid var(--line); padding: 8px 10px; border-radius: 4px; overflow: auto; white-space: pre-wrap; }
+.help-content code { font-family: Consolas, 'Courier New', monospace; font-size: .92em; }
+.help-content kbd, .help-table kbd {
+  display: inline-block; padding: 0 5px; font: .85em/1.6 Consolas, monospace;
+  border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; background: var(--bg);
+}
+.help-content mark, .help-result-snippet mark { background: #ffe58a; color: #1b1b1b; padding: 0 1px; border-radius: 2px; }
+.help-table { border-collapse: collapse; width: 100%; margin: 6px 0 14px; }
+.help-table th, .help-table td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+.help-table th { color: var(--muted); font-weight: 600; }
+.help-content table:not(.help-table) td { padding: 3px 12px 3px 0; }
+
+/* Classic (Scrivener-like) chrome */
+[data-ui='classic'] .help-window { font: 12px/1.35 var(--sc-font); background: var(--sc-chrome); border-color: var(--sc-line-2); border-radius: 2px; }
+[data-ui='classic'] .help-head { background: var(--sc-chrome-2); border-color: var(--sc-line); }
+[data-ui='classic'] .help-head button { background: var(--sc-btn); border: 1px solid var(--sc-line); border-radius: 2px; color: var(--sc-text); }
+[data-ui='classic'] .help-head button:hover:not(:disabled) { background: var(--sc-btn-hover); border-color: var(--sc-btn-hover-line); }
+[data-ui='classic'] .help-tabs button.on { background: var(--sc-btn-on); border-color: var(--sc-btn-hover-line); }
+[data-ui='classic'] .help-toc { background: var(--sc-binder); border-color: var(--sc-line); }
+[data-ui='classic'] .help-section.on { background: var(--sc-sel); color: var(--sc-sel-text); }
+[data-ui='classic'] .help-chapter:hover, [data-ui='classic'] .help-section:hover:not(.on), [data-ui='classic'] .help-result:hover { background: var(--sc-hover); }
+[data-ui='classic'] .help-content { background: var(--sc-paper); font-size: 13px; }
+[data-ui='classic'][data-theme='dark'] .help-content mark { background: #8a6d00; color: #fff; }
+
+@media (max-width: 720px) {
+  .help-toc { width: 200px; }
+  .help-content { padding: 12px 14px; }
+}

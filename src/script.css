@@ -1,0 +1,32 @@
+/* Script Mode — generated from src/lib/scriptFormats.js (formatCss) */
+.script-mode p[data-script] { font-family: 'Courier Prime', 'Courier New', Courier, monospace; font-size: 12pt; line-height: 1.2; }
+.script-mode p[data-script]:first-child { margin-top: 0; }
+.script-element-picker { font-size: 12px; padding: 2px 6px; }
+.script-screenplay p[data-script="scene-heading"] { margin-bottom: 0; margin-top: 1.5em; font-weight: bold; text-transform: uppercase; }
+.script-screenplay p[data-script="action"] { margin-bottom: 0; margin-top: 1em; }
+.script-screenplay p[data-script="character"] { margin-bottom: 0; margin-top: 1em; margin-left: 37%; text-transform: uppercase; }
+.script-screenplay p[data-script="parenthetical"] { margin-bottom: 0; margin-left: 30%; margin-right: 30%; }
+.script-screenplay p[data-script="dialogue"] { margin-bottom: 0; margin-left: 17%; margin-right: 17%; }
+.script-screenplay p[data-script="transition"] { margin-bottom: 0; margin-top: 1em; text-align: right; text-transform: uppercase; }
+.script-screenplay p[data-script="shot"] { margin-bottom: 0; margin-top: 1em; text-transform: uppercase; }
+.script-screenplay p[data-script="general"] { margin-bottom: 0;  }
+.script-stageplay p[data-script="act"] { margin-bottom: 0; margin-top: 2em; text-align: center; text-decoration: underline; text-transform: uppercase; }
+.script-stageplay p[data-script="scene-heading"] { margin-bottom: 0; margin-top: 1.5em; text-align: center; text-transform: uppercase; }
+.script-stageplay p[data-script="stage-direction"] { margin-bottom: 0; margin-top: 1em; margin-left: 30%; font-style: italic; }
+.script-stageplay p[data-script="character"] { margin-bottom: 0; margin-top: 1em; text-align: center; text-transform: uppercase; }
+.script-stageplay p[data-script="parenthetical"] { margin-bottom: 0; margin-left: 30%; font-style: italic; }
+.script-stageplay p[data-script="dialogue"] { margin-bottom: 0; margin-left: 10%; margin-right: 10%; }
+.script-stageplay p[data-script="transition"] { margin-bottom: 0; margin-top: 1em; text-align: right; text-transform: uppercase; }
+.script-comic p[data-script="page"] { margin-bottom: 0; margin-top: 2em; font-weight: bold; text-decoration: underline; text-transform: uppercase; }
+.script-comic p[data-script="panel"] { margin-bottom: 0; margin-top: 1.2em; font-weight: bold; }
+.script-comic p[data-script="description"] { margin-bottom: 0; margin-top: 0.5em; }
+.script-comic p[data-script="character"] { margin-bottom: 0; margin-top: 0.8em; margin-left: 20%; text-transform: uppercase; }
+.script-comic p[data-script="dialogue"] { margin-bottom: 0; margin-left: 30%; }
+.script-comic p[data-script="caption"] { margin-bottom: 0; margin-top: 0.8em; margin-left: 20%; font-style: italic; }
+.script-comic p[data-script="sfx"] { margin-bottom: 0; margin-top: 0.8em; margin-left: 20%; text-transform: uppercase; }
+.script-radio p[data-script="scene-heading"] { margin-bottom: 0; margin-top: 1.5em; text-decoration: underline; text-transform: uppercase; }
+.script-radio p[data-script="direction"] { margin-bottom: 0; margin-top: 1em; margin-left: 25%; text-transform: uppercase; }
+.script-radio p[data-script="character"] { margin-bottom: 0; margin-top: 1em; text-transform: uppercase; }
+.script-radio p[data-script="dialogue"] { margin-bottom: 0; margin-left: 25%; line-height: 2; }
+.script-radio p[data-script="sound"] { margin-bottom: 0; margin-top: 1em; font-weight: bold; text-decoration: underline; text-transform: uppercase; }
+.script-radio p[data-script="music"] { margin-bottom: 0; margin-top: 1em; font-weight: bold; text-decoration: underline; text-transform: uppercase; }

@@ -1,0 +1,568 @@
+import React, { useState } from 'react';
+import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
+import { t, LANGUAGES } from '../lib/i18n.js';
+
+const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'language'];
+const TAB_FALLBACK = { sharing: 'Partajare' };
+const tabLabel = (k) => {
+  const v = t(`set.tab.${k}`);
+  return !v || v === `set.tab.${k}` ? TAB_FALLBACK[k] || k : v;
+};
+const FONTS = [
+  ['Georgia, serif', 'Georgia'],
+  ["'Times New Roman', serif", 'Times New Roman'],
+  ["'Palatino Linotype', Palatino, serif", 'Palatino'],
+  ['Garamond, serif', 'Garamond'],
+  ['Arial, sans-serif', 'Arial'],
+  ["'Segoe UI', system-ui, sans-serif", 'Segoe UI'],
+  ["'Courier New', monospace", 'Courier New'],
+];
+
+export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts }) {
+  const init = { ...DEFAULT_SETTINGS, ...settings };
+  const [tab, setTab] = useState('general');
+  const [s, setS] = useState({
+    language: init.language,
+    reopenLastProject: init.reopenLastProject !== false,
+    autosaveSec: init.autosaveSec,
+    checkUpdates: Boolean(init.checkUpdates),
+    theme: init.theme || 'system',
+    uiStyle: init.uiStyle || 'classic',
+    editorFont: init.editorFont,
+    fontSize: init.fontSize || 18,
+    lineHeight: init.lineHeight,
+    pageWidth: init.pageWidth,
+    binderFontSize: init.binderFontSize,
+    accentColor: init.accentColor || '',
+    binderEnter: init.binderEnter,
+    binderDoubleClick: init.binderDoubleClick,
+    typewriter: Boolean(init.typewriter),
+    smartQuotes: init.smartQuotes !== false,
+    smartDashes: init.smartDashes !== false,
+    smartEllipsis: init.smartEllipsis !== false,
+    smartFractions: Boolean(init.smartFractions),
+    autoCapitalize: Boolean(init.autoCapitalize),
+    spellLanguages: (init.spellLanguages || []).join(', '),
+    autoReplacements: (init.autoReplacements || []).map((r) => ({ ...r })),
+    paragraphIndent: init.paragraphIndent,
+    paragraphSpacing: init.paragraphSpacing,
+    defaultView: init.defaultView,
+    showInvisibles: Boolean(init.showInvisibles),
+    aiEnabled: init.aiEnabled !== false,
+    backupOnClose: init.backupOnClose !== false,
+    backupOnOpen: Boolean(init.backupOnOpen),
+    backupZip: init.backupZip !== false,
+    backupEveryMin: init.backupEveryMin || 0,
+    backupKeep: init.backupKeep || 10,
+    backupDir: init.backupDir || '',
+  });
+  const set = (k) => (e) => {
+    const v = e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e;
+    setS((p) => ({ ...p, [k]: v }));
+  };
+  const [apiKey, setApiKey] = useState('');
+  const [comp, setComp] = useState({
+    bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100,
+    bgImage: settings.compBgImage || '', bgImageFit: settings.compBgImageFit || 'cover', showTargets: Boolean(settings.compShowTargets),
+  });
+  const [sharing, setSharing] = useState({
+    sync: { format: 'rtf', notesFormat: 'same', syncOnOpen: false, syncOnClose: false, includeNotes: true, ...(settings.sharingSync || {}) },
+    export: { format: 'docx', includeNotes: false, includeMeta: false, keepFolders: true, ...(settings.sharingExport || {}) },
+  });
+  const setSync = (p) => setSharing((x) => ({ ...x, sync: { ...x.sync, ...p } }));
+  const setExp = (p) => setSharing((x) => ({ ...x, export: { ...x.export, ...p } }));
+  const pickBgImage = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      onError(new Error('Imaginea e prea mare (maxim 4 MB).'));
+      return;
+    }
+    const r = new FileReader();
+    r.onload = () => setComp((c) => ({ ...c, bgImage: String(r.result) }));
+    r.readAsDataURL(file);
+  };
+  const [draft, setDraft] = useState(project?.targets?.draft || 0);
+  const [session, setSession] = useState(project?.targets?.session || 0);
+  const [edBase, setEdBase] = useState(project?.editorialProfile?.base || 'generic');
+  const [edRules, setEdRules] = useState(project?.editorialProfile?.rules || {});
+  const [edLimit, setEdLimit] = useState(project?.editorialProfile?.canvasWordLimit ?? 3000);
+  const [mcp, setMcp] = useState(null);
+  // Editorial word lists, per profile (settings.editorialLists[profileId]).
+  const [edLists, setEdLists] = useState(() => {
+    const src = settings.editorialLists || {};
+    const out = {};
+    for (const id of ['karma', 'generic']) {
+      const l = src[id] || (src.forbidden || src.preferred ? src : {});
+      out[id] = {
+        forbidden: (l.forbidden || []).map((e) => `${e.word}${e.replacement ? ` => ${e.replacement}` : ''}${e.note ? ` # ${e.note}` : ''}`).join('\n'),
+        preferred: (l.preferred || []).map((e) => `${e.word}${e.replacement ? ` <= ${e.replacement}` : ''}${e.note ? ` # ${e.note}` : ''}`).join('\n'),
+        disabledWords: (l.disabledWords || []).join(', '),
+        builtins: { ...(l.builtins || {}) },
+      };
+    }
+    return out;
+  });
+  const edL = edLists[edBase] || edLists.karma;
+  const setEdL = (k, v) => setEdLists((all) => ({ ...all, [edBase]: { ...all[edBase], [k]: v } }));
+
+  const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' ? Number(v) : d);
+  const editRepl = (i, k, v) => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
+
+  const save = async () => {
+    try {
+      const patch = {
+        ...s,
+        autosaveSec: Math.max(1, num(s.autosaveSec, 2)),
+        fontSize: num(s.fontSize, 18) || 18,
+        lineHeight: num(s.lineHeight, 1.6),
+        pageWidth: num(s.pageWidth, 42),
+        binderFontSize: num(s.binderFontSize, 14),
+        spellLanguages: s.spellLanguages.split(',').map((x) => x.trim()).filter(Boolean),
+        autoReplacements: s.autoReplacements.filter((r) => r.from && r.from.trim()),
+        paragraphIndent: num(s.paragraphIndent, 0),
+        paragraphSpacing: num(s.paragraphSpacing, 0.6),
+        compBg: comp.bg,
+        compWidth: Number(comp.width) || 40,
+        compPaper: comp.paper,
+        compFade: Number(comp.fade) || 100,
+        compBgImage: comp.bgImage,
+        compBgImageFit: comp.bgImageFit,
+        compShowTargets: comp.showTargets,
+        sharingSync: sharing.sync,
+        sharingExport: sharing.export,
+        backupEveryMin: Number(s.backupEveryMin) || 0,
+        backupKeep: Math.max(1, Number(s.backupKeep) || 10),
+      };
+      const parseList = (txt, sep) =>
+        String(txt || '').split('\n').map((ln) => ln.trim()).filter(Boolean).map((ln) => {
+          const [main, ...note] = ln.split('#');
+          const [word, replacement] = main.split(sep).map((x) => (x || '').trim());
+          return { word, ...(replacement ? { replacement } : {}), ...(note.length ? { note: note.join('#').trim() } : {}) };
+        }).filter((e) => e.word);
+      patch.editorialLists = Object.fromEntries(Object.entries(edLists).map(([id, l]) => [id, {
+        forbidden: parseList(l.forbidden, '=>'),
+        preferred: parseList(l.preferred, '<='),
+        disabledWords: l.disabledWords.split(',').map((x) => x.trim()).filter(Boolean),
+        builtins: l.builtins,
+      }]));
+      if (apiKey.trim()) patch.apiKey = apiKey.trim();
+      await api.setSettings(patch);
+      if (project) {
+        onProjectChange({
+          ...project,
+          targets: { ...(project.targets || {}), draft: Number(draft) || 0, session: Number(session) || 0 },
+          editorialProfile: { ...(project.editorialProfile || {}), base: edBase, rules: edRules, canvasWordLimit: Number(edLimit) || 0 },
+        });
+      }
+      onClose();
+    } catch (e) {
+      onError(e);
+    }
+  };
+
+  const check = (k, label) => (
+    <label className="check">
+      <input type="checkbox" checked={Boolean(s[k])} onChange={set(k)} /> {label}
+    </label>
+  );
+
+  const panes = {
+    general: (
+      <>
+        {check('reopenLastProject', t('set.reopenLast'))}
+        <label>
+          {t('set.autosave')}
+          <input type="number" min="1" max="120" value={s.autosaveSec} onChange={set('autosaveSec')} />
+        </label>
+        {check('checkUpdates', t('set.checkUpdates'))}
+        {project && (
+          <div className="row">
+            <label>
+              {t('set.targetDraft')}
+              <input type="number" min="0" step="1000" value={draft} onChange={(e) => setDraft(e.target.value)} />
+            </label>
+            <label>
+              {t('set.targetSession')}
+              <input type="number" min="0" step="100" value={session} onChange={(e) => setSession(e.target.value)} />
+            </label>
+          </div>
+        )}
+      </>
+    ),
+    appearance: (
+      <>
+        <label>
+          {t('set.theme')}
+          <select value={s.theme} onChange={set('theme')}>
+            {['system', 'light', 'dark', 'sepia'].map((x) => <option key={x} value={x}>{t(`set.theme.${x}`)}</option>)}
+          </select>
+        </label>
+        <label>
+          Aspect interfață
+          <select value={s.uiStyle} onChange={set('uiStyle')}>
+            <option value="classic">Clasic (ca Scrivener 3)</option>
+            <option value="modern">Modern</option>
+          </select>
+        </label>
+        <div className="row">
+          <label>
+            {t('set.editorFont')}
+            <select value={s.editorFont} onChange={set('editorFont')}>
+              {!FONTS.some(([v]) => v === s.editorFont) && <option value={s.editorFont}>{s.editorFont}</option>}
+              {FONTS.map(([v, n]) => <option key={v} value={v} style={{ fontFamily: v }}>{n}</option>)}
+            </select>
+          </label>
+          <label>
+            {t('set.fontSize')}
+            <input type="number" min="12" max="32" value={s.fontSize} onChange={set('fontSize')} />
+          </label>
+        </div>
+        <div className="row">
+          <label>
+            {t('set.lineHeight')}
+            <input type="number" min="1" max="3" step="0.1" value={s.lineHeight} onChange={set('lineHeight')} />
+          </label>
+          <label>
+            {t('set.pageWidth')}
+            <input type="number" min="25" max="120" value={s.pageWidth} onChange={set('pageWidth')} />
+          </label>
+          <label>
+            {t('set.binderFontSize')}
+            <input type="number" min="10" max="22" value={s.binderFontSize} onChange={set('binderFontSize')} />
+          </label>
+        </div>
+        <label>
+          {t('set.accent')}
+          <div className="row">
+            <input type="color" value={s.accentColor || '#8a5a2b'} onChange={set('accentColor')} />
+            {s.accentColor && <button onClick={() => set('accentColor')('')}>{t('btn.default')}</button>}
+          </div>
+        </label>
+        <fieldset>
+          <legend>{t('set.composition')}</legend>
+          <div className="row">
+            <label>
+              {t('set.compBg')}
+              <input type="color" value={comp.bg || '#1d1c1a'} onChange={(e) => setComp((c) => ({ ...c, bg: e.target.value }))} />
+            </label>
+            <label>
+              {t('set.compWidth')}
+              <input type="number" min="25" max="80" value={comp.width} onChange={(e) => setComp((c) => ({ ...c, width: e.target.value }))} />
+            </label>
+            <label>
+              {t('set.compFade')}
+              <input type="number" min="0" max="100" step="5" value={comp.fade} onChange={(e) => setComp((c) => ({ ...c, fade: e.target.value }))} />
+            </label>
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={comp.paper} onChange={(e) => setComp((c) => ({ ...c, paper: e.target.checked }))} /> {t('set.compPaper')}
+          </label>
+          {comp.bg && <button className="link" onClick={() => setComp((c) => ({ ...c, bg: '' }))}>{t('set.compBgDefault')}</button>}
+          <div className="row comp-bg-image">
+            <label>
+              Imagine de fundal
+              <input type="file" accept="image/*" onChange={pickBgImage} />
+            </label>
+            {comp.bgImage && (
+              <>
+                <span className="comp-bg-thumb" style={{ backgroundImage: `url("${comp.bgImage}")` }} aria-label="Previzualizare fundal" />
+                <select value={comp.bgImageFit} onChange={(e) => setComp((c) => ({ ...c, bgImageFit: e.target.value }))}>
+                  <option value="cover">Umple</option>
+                  <option value="contain">Încadrează</option>
+                  <option value="tile">Repetă</option>
+                  <option value="center">Centrat</option>
+                </select>
+                <button className="link" onClick={() => setComp((c) => ({ ...c, bgImage: '' }))}>Fără imagine</button>
+              </>
+            )}
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={comp.showTargets} onChange={(e) => setComp((c) => ({ ...c, showTargets: e.target.checked }))} /> Arată ținta (document și sesiune) în modul compunere
+          </label>
+        </fieldset>
+      </>
+    ),
+    behaviors: (
+      <>
+        <label>
+          {t('set.binderEnter')}
+          <select value={s.binderEnter} onChange={set('binderEnter')}>
+            {['edit', 'newDoc'].map((x) => <option key={x} value={x}>{t(`set.binderEnter.${x}`)}</option>)}
+          </select>
+        </label>
+        <label>
+          {t('set.binderDbl')}
+          <select value={s.binderDoubleClick} onChange={set('binderDoubleClick')}>
+            {['rename', 'openQuickRef'].map((x) => <option key={x} value={x}>{t(`set.binderDbl.${x}`)}</option>)}
+          </select>
+        </label>
+        {check('typewriter', t('set.typewriter'))}
+      </>
+    ),
+    corrections: (
+      <>
+        {check('smartQuotes', t('set.smartQuotes'))}
+        {check('smartDashes', t('set.smartDashes'))}
+        {check('smartEllipsis', t('set.smartEllipsis'))}
+        {check('smartFractions', 'Fracții: 1/2 → ½, 3/4 → ¾')}
+        {check('autoCapitalize', t('set.autoCapitalize'))}
+        <label>
+          {t('set.spellLangs')}
+          <input value={s.spellLanguages} onChange={set('spellLanguages')} placeholder="ro, en-US" />
+        </label>
+        {api.listDictionaryWords && <PersonalDictionary api={api} onError={onError} />}
+        <fieldset>
+          <legend>{t('set.replacements')}</legend>
+          {s.autoReplacements.map((r, i) => (
+            <div className="row" key={i}>
+              <input aria-label={t('set.replaceFrom')} placeholder={t('set.replaceFrom')} value={r.from} onChange={(e) => editRepl(i, 'from', e.target.value)} />
+              <input aria-label={t('set.replaceTo')} placeholder={t('set.replaceTo')} value={r.to} onChange={(e) => editRepl(i, 'to', e.target.value)} />
+              <button onClick={() => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.filter((_, j) => j !== i) }))}>{t('btn.remove')}</button>
+            </div>
+          ))}
+          <button onClick={() => setS((p) => ({ ...p, autoReplacements: [...p.autoReplacements, { from: '', to: '' }] }))}>{t('btn.add')}</button>
+        </fieldset>
+      </>
+    ),
+    editing: (
+      <>
+        <div className="row">
+          <label>
+            {t('set.paraIndent')}
+            <input type="number" min="0" max="5" step="0.5" value={s.paragraphIndent} onChange={set('paragraphIndent')} />
+          </label>
+          <label>
+            {t('set.paraSpacing')}
+            <input type="number" min="0" max="3" step="0.1" value={s.paragraphSpacing} onChange={set('paragraphSpacing')} />
+          </label>
+        </div>
+        <label>
+          {t('set.defaultView')}
+          <select value={s.defaultView} onChange={set('defaultView')}>
+            <option value="editor">{t('cmd.viewEditor')}</option>
+            <option value="corkboard">{t('cmd.viewCorkboard')}</option>
+            <option value="outline">{t('cmd.viewOutline')}</option>
+          </select>
+        </label>
+        {check('showInvisibles', t('set.showInvisibles'))}
+      </>
+    ),
+    backup: api.chooseBackupDir ? (
+      <>
+        {check('backupOnClose', t('set.backupOnClose'))}
+        {check('backupOnOpen', 'Backup și la deschiderea proiectului')}
+        {check('backupZip', 'Backup comprimat (zip); debifat = copie de folder')}
+        <div className="row">
+          <label>
+            {t('set.backupEvery')}
+            <input type="number" min="0" step="5" value={s.backupEveryMin} onChange={set('backupEveryMin')} />
+          </label>
+          <label>
+            {t('set.backupKeep')}
+            <input type="number" min="1" max="100" value={s.backupKeep} onChange={set('backupKeep')} />
+          </label>
+        </div>
+        <label>
+          {t('set.backupDir')}
+          <div className="row">
+            <input value={s.backupDir} readOnly placeholder={t('set.backupDirPh')} />
+            <button onClick={async () => set('backupDir')((await api.chooseBackupDir()) || s.backupDir)}>{t('btn.choose')}</button>
+            {s.backupDir && <button onClick={() => set('backupDir')('')}>{t('btn.default')}</button>}
+          </div>
+        </label>
+      </>
+    ) : null,
+    keyboard: (
+      <>
+        <p className="muted small">{t('set.keyboardInfo')}</p>
+        <button disabled={!onShortcuts} onClick={() => onShortcuts?.()}>{t('set.openShortcuts')}</button>
+      </>
+    ),
+    ai: (
+      <>
+        {check('aiEnabled', t('set.aiEnabled'))}
+        <label>
+          {t('set.apiKey')} {settings.hasApiKey ? t('set.apiKeySet') : ''}
+          <input type="password" autoComplete="off" placeholder="sk-ant-…" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+        </label>
+        {settings.hasApiKey && (
+          <button className="link" onClick={() => api.setSettings({ apiKey: '' }).then(onClose).catch(onError)}>{t('set.apiKeyDelete')}</button>
+        )}
+        {project && (
+          <fieldset>
+            <legend>{t('set.editorial')}</legend>
+            <label>
+              {t('set.edBase')}
+              <select value={edBase} onChange={(e) => setEdBase(e.target.value)}>
+                <option value="karma">{t('set.edBase.karma')}</option>
+                <option value="generic">{t('set.edBase.generic')}</option>
+              </select>
+            </label>
+            <label>
+              {t('set.edLimit')}
+              <input type="number" min="0" step="100" value={edLimit} onChange={(e) => setEdLimit(e.target.value)} />
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={Boolean(edRules.canvasHeader)} onChange={(e) => setEdRules((r) => ({ ...r, canvasHeader: e.target.checked }))} /> {t('set.edHeader')}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={Boolean(edRules.canvasFooter)} onChange={(e) => setEdRules((r) => ({ ...r, canvasFooter: e.target.checked }))} /> {t('set.edFooter')}
+            </label>
+          </fieldset>
+        )}
+        <fieldset>
+          <legend>Editorial · liste de cuvinte (profil {edBase === 'generic' ? 'Generic' : 'Română'})</legend>
+          <label>
+            Cuvinte interzise, câte unul pe rând: <code>cuvânt =&gt; înlocuire # notă</code>
+            <textarea rows={4} value={edL.forbidden} onChange={(e) => setEdL('forbidden', e.target.value)} placeholder={'gest => faptă\nurmă => depunere # P3'} />
+          </label>
+          <label>
+            Forme preferate: <code>formă preferată &lt;= variantă evitată, alta # notă</code>
+            <textarea rows={4} value={edL.preferred} onChange={(e) => setEdL('preferred', e.target.value)} placeholder={'rânduiala lumii <= logica internă'} />
+          </label>
+          <p className="muted small">Liste încorporate active:</p>
+          {[
+            ['bannedAcademic', 'Lexic academic'],
+            ['bannedTransitions', 'Tranziții P9'],
+            ['selfReference', 'Autoreferințe R7'],
+            ['llmResidue', 'Reziduuri LLM P3'],
+            ['passive', 'Pasive'],
+            ['teleology', 'Teleologie'],
+          ].map(([k, label]) => (
+            <label key={k} className="check">
+              <input type="checkbox" checked={edL.builtins[k] !== false} onChange={(e) => setEdL('builtins', { ...edL.builtins, [k]: e.target.checked })} /> {label}
+            </label>
+          ))}
+          <label>
+            Cuvinte încorporate dezactivate (separate prin virgulă)
+            <input value={edL.disabledWords} onChange={(e) => setEdL('disabledWords', e.target.value)} placeholder="astfel, mai sus" />
+          </label>
+        </fieldset>
+        {api.mcpInfo && dir && (
+          <fieldset>
+            <legend>{t('set.mcp')}</legend>
+            <p className="muted small">{t('set.mcpInfo')}</p>
+            <button onClick={async () => setMcp(await api.mcpInfo(dir))}>{t('set.mcpShow')}</button>
+            {mcp && (
+              <>
+                <label>
+                  Claude Code
+                  <textarea readOnly rows={2} value={mcp.claudeCode} onFocus={(e) => e.target.select()} />
+                </label>
+                <label>
+                  Claude Desktop (claude_desktop_config.json)
+                  <textarea readOnly rows={7} value={mcp.desktopJson} onFocus={(e) => e.target.select()} />
+                </label>
+              </>
+            )}
+          </fieldset>
+        )}
+      </>
+    ),
+    sharing: (
+      <>
+        <fieldset>
+          <legend>Sincronizare cu folder extern (implicit)</legend>
+          <div className="row">
+            <label>
+              Format text
+              <select value={sharing.sync.format} onChange={(e) => setSync({ format: e.target.value })}>
+                <option value="rtf">RTF</option>
+                <option value="txt">Text simplu</option>
+                <option value="md">Markdown</option>
+              </select>
+            </label>
+            <label>
+              Format note
+              <select value={sharing.sync.notesFormat} onChange={(e) => setSync({ notesFormat: e.target.value })}>
+                <option value="same">Ca textul</option>
+                <option value="rtf">RTF</option>
+                <option value="txt">Text simplu</option>
+                <option value="md">Markdown</option>
+              </select>
+            </label>
+          </div>
+          <label className="check"><input type="checkbox" checked={sharing.sync.includeNotes} onChange={(e) => setSync({ includeNotes: e.target.checked })} /> Sincronizează și notele</label>
+          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnOpen} onChange={(e) => setSync({ syncOnOpen: e.target.checked })} /> Sincronizează la deschiderea proiectului</label>
+          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnClose} onChange={(e) => setSync({ syncOnClose: e.target.checked })} /> Sincronizează la închiderea proiectului</label>
+        </fieldset>
+        <fieldset>
+          <legend>Export fișiere (implicit)</legend>
+          <label>
+            Format
+            <select value={sharing.export.format} onChange={(e) => setExp({ format: e.target.value })}>
+              <option value="docx">DOCX</option>
+              <option value="rtf">RTF</option>
+              <option value="md">Markdown</option>
+              <option value="txt">Text simplu</option>
+              <option value="html">HTML</option>
+            </select>
+          </label>
+          <label className="check"><input type="checkbox" checked={sharing.export.keepFolders} onChange={(e) => setExp({ keepFolders: e.target.checked })} /> Păstrează structura de dosare</label>
+          <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> Include notele</label>
+          <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> Include metadatele</label>
+        </fieldset>
+      </>
+    ),
+    language: (
+      <>
+        <label>
+          {t('set.language')}
+          <select value={s.language} onChange={set('language')}>
+            {LANGUAGES.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
+          </select>
+        </label>
+        <p className="muted small">{t('set.languageNote')}</p>
+      </>
+    ),
+  };
+  const visibleTabs = TABS.filter((k) => panes[k]);
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal settings-dialog" role="dialog" aria-label={t('set.title')} onClick={(e) => e.stopPropagation()}>
+        <h2>{t('set.title')}</h2>
+        <div className="tabs" role="tablist">
+          {visibleTabs.map((k) => (
+            <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} onClick={() => setTab(k)}>
+              {tabLabel(k)}
+            </button>
+          ))}
+        </div>
+        <div role="tabpanel" style={{ minHeight: 260, marginTop: 8 }}>{panes[tab]}</div>
+        <div className="actions">
+          <button onClick={onClose}>{t('btn.cancel')}</button>
+          <button className="primary" onClick={save}>{t('btn.save')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Personal dictionary: words added with "Adaugă în dicționar"; they can be removed here.
+function PersonalDictionary({ api, onError }) {
+  const [words, setWords] = React.useState(null);
+  const [filter, setFilter] = React.useState('');
+  const load = () => api.listDictionaryWords().then((w) => setWords([...w].sort((a, b) => a.localeCompare(b, 'ro')))).catch(onError);
+  React.useEffect(() => {
+    load();
+  }, []);
+  if (!words) return null;
+  const shown = words.filter((w) => w.toLowerCase().includes(filter.toLowerCase()));
+  return (
+    <fieldset>
+      <legend>Dicționar personal ({words.length})</legend>
+      {words.length > 8 && <input placeholder="Caută cuvânt…" value={filter} onChange={(e) => setFilter(e.target.value)} />}
+      {!words.length && <p className="muted">Gol. Cuvintele intră aici din meniul de clic dreapta: „Adaugă în dicționar”.</p>}
+      <div style={{ maxHeight: 160, overflow: 'auto' }}>
+        {shown.map((w) => (
+          <div key={w} className="row" style={{ justifyContent: 'space-between' }}>
+            <span>{w}</span>
+            <button className="link" onClick={() => api.removeDictionaryWord(w).then(load).catch(onError)}>Șterge</button>
+          </div>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
