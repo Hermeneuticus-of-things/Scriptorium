@@ -18,18 +18,21 @@ export const POS_CLASSES = [
   ['adj', 'Adjective'],
   ['adv', 'Adverbe'],
   ['conj', 'Conjuncții'],
+  ['pron', 'Pronume'],
 ];
 
 const set = (s) => new Set(s.split(/\s+/).filter(Boolean));
 
 const CLOSED = {
   ro: {
+    pron: set('eu tu el ea noi voi ei ele mă ma te se ne vă îl il îi ii le mi mie ți ti ție tie își isi îmi imi îți iti lui lor dânsul dânsa dânșii dânsele dumneata dumneavoastră dumnealui dumneaei mine tine sine meu mea mei mele tău tau tăi tale său săi sale nostru noastră noștri noastre vostru voastră voștri voastre acesta aceasta aceștia acestea acela aceea aceia acelea cine cineva ceva nimeni nimic oricine orice fiecare toți toate altcineva altceva'),
     conj: set('și si iar dar însă insa ci sau ori nici că ca să sa dacă daca deși desi fiindcă fiindca deoarece căci caci încât incat ca deci totuși totusi precum cum când cand până pana'),
     other: set('a al ai ale alor un o unui unei niște niste cel cea cei cele lui lor ei el ea ele eu tu noi voi ei mă ma te se ne vă va îl il o îi ii le mi ți ti și-a îmi imi îți iti își isi meu mea mei mele tău tau ta tăi tale său sau sa săi sale nostru noastră voastră acest această acesta aceasta aceștia acestea acel acea acela aceea aceia acelea ce care cine cât cat câtă câți câte orice oricine nimic nimeni tot toată toți toate fiecare alt altă alți alte în in pe la de cu din spre pentru prin fără fara sub peste între intre după dupa lângă langa către catre despre până asupra contra datorită'),
     adv: set('nu foarte mai prea chiar doar numai tot încă inca deja acum atunci aici acolo astfel așa asa bine rău rau mult puțin putin mereu niciodată niciodata întotdeauna totdeauna uneori apoi azi astăzi ieri mâine mâine curând curand repede încet incet aproape departe sus jos înainte inainte înapoi inapoi poate desigur abia iarăși iarasi oare'),
     verb: set('este e sunt ești esti suntem sunteți era erau eram fost fi fie va vor vom voi vei am ai are avem aveți au avea aveau aș ar ați ați poate pot putea trebuie'),
   },
   en: {
+    pron: set('i you he she it we they me him her us them myself yourself himself herself itself ourselves yourselves themselves mine yours hers ours theirs who whom whoever someone somebody something anyone anybody anything everyone everybody everything nobody nothing none one'),
     conj: set('and but or nor so yet for because although though while whereas if unless since that whether than as when whenever where after before until once'),
     other: set('the a an this that these those i you he she it we they me him her us them my your his its our their mine yours hers ours theirs who whom whose which what in on at by with from to of into onto over under about above below between through during without within against among upon off up down out some any no every each all both either neither many much few several'),
     adv: set('not very too also just only still already now then here there soon never always often sometimes again quite rather almost even ever yet perhaps maybe well away back today yesterday tomorrow'),
@@ -63,6 +66,7 @@ export function tagWord(word, lang = 'ro', prev = '') {
   if (!/\p{L}/u.test(w)) return 'other';
   const c = CLOSED[L];
   if (c.conj.has(w)) return 'conj';
+  if (c.pron.has(w)) return 'pron';
   if (c.verb.has(w)) return 'verb';
   if (c.adv.has(w)) return 'adv';
   if (c.other.has(w)) return 'other';

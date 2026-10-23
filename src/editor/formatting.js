@@ -1,0 +1,487 @@
+// Paragraph and character formatting beyond StarterKit (Scrivener "Format" menu):
+// per-paragraph spacing/indents/tab stops/direction, small caps and all caps,
+// text bookmarks, page breaks, image size/alignment, select word/sentence/paragraph,
+// copy/paste formatting, "Convert to Default Formatting" and find by formatting.
+// Units: indents and tab stops in cm, spacing before/after in pt, line height unitless.
+import { Extension, Mark, Node, mergeAttributes } from '@tiptap/core';
+import { Image } from '@tiptap/extension-image';
+import { TextSelection } from '@tiptap/pm/state';
+
+// --- Paragraph attributes -------------------------------------------------
+
+const num = (v) => {
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? Math.round(n * 1000) / 1000 : null;
+};
+const unitVal = (v, unit) => (v && String(v).trim().endsWith(unit) ? num(v) : null);
+
+// Reads one declaration from the inline style attribute (el.style can merge
+// margin longhands into a shorthand, losing the per-side values in some engines).
+function styleValue(el, prop) {
+  const css = prop.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+  const m = new RegExp(`(?:^|;)\\s*${css}\\s*:\\s*([^;]+)`, 'i').exec(el.getAttribute('style') || '');
+  return m ? m[1].trim() : '';
+}
+
+export const PARA_FORMAT_ATTRS = ['lineHeight', 'spaceBefore', 'spaceAfter', 'firstIndent', 'indentLeft', 'indentRight', 'tabStops', 'dir'];
+
+/** "2,4.5" ↔ [2, 4.5] (cm, sorted, unique). */
+export function parseTabStops(s) {
+  if (!s) return null;
+  const out = [...new Set(String(s).split(/[,\s]+/).map(num).filter((n) => n !== null && n > 0))].sort((a, b) => a - b);
+  return out.length ? out : null;
+}
+export const serializeTabStops = (stops) => (stops && stops.length ? stops.join(',') : null);
+
+/** CSS declarations for a paragraph's format attributes (used by renderHTML and tests). */
+export function paragraphCss(a = {}) {
+  const d = [];
+  if (a.lineHeight) d.push(`line-height: ${a.lineHeight}`);
+  if (a.spaceBefore !== null && a.spaceBefore !== undefined) d.push(`margin-top: ${a.spaceBefore}pt`);
+  if (a.spaceAfter !== null && a.spaceAfter !== undefined) d.push(`margin-bottom: ${a.spaceAfter}pt`);
+  if (a.firstIndent !== null && a.firstIndent !== undefined) d.push(`text-indent: ${a.firstIndent}cm`);
+  if (a.indentLeft) d.push(`margin-left: ${a.indentLeft}cm`);
+  if (a.indentRight) d.push(`margin-right: ${a.indentRight}cm`);
+  const tabs = parseTabStops(a.tabStops);
+  if (tabs) d.push(`tab-size: ${tabs[0]}cm`);
+  return d.join('; ');
+}
+
+export const ParagraphFormat = Extension.create({
+  name: 'paragraphFormat',
+  addGlobalAttributes() {
+    // Each value is written twice: as CSS (for display and compiled HTML) and as a
+    // data attribute (exact round-trip even when the serializer merges margins).
+    const styleAttr = (cssProp, unit, key) => {
+      const data = `data-${key.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}`;
+      return {
+        default: null,
+        parseHTML: (el) => {
+          if (el.hasAttribute(data)) return num(el.getAttribute(data));
+          const v = styleValue(el, cssProp);
+          if (unit) return unitVal(v, unit);
+          return /^\d*\.?\d+$/.test(String(v || '').trim()) ? num(v) : null;
+        },
+        renderHTML: (attrs) => {
+          const css = paragraphCss({ [key]: attrs[key] });
+          return css ? { style: css, [data]: String(attrs[key]) } : {};
+        },
+      };
+    };
+    return [
+      {
+        types: ['paragraph', 'heading'],
+        attributes: {
+          lineHeight: styleAttr('lineHeight', '', 'lineHeight'),
+          spaceBefore: styleAttr('marginTop', 'pt', 'spaceBefore'),
+          spaceAfter: styleAttr('marginBottom', 'pt', 'spaceAfter'),
+          firstIndent: styleAttr('textIndent', 'cm', 'firstIndent'),
+          indentLeft: styleAttr('marginLeft', 'cm', 'indentLeft'),
+          indentRight: styleAttr('marginRight', 'cm', 'indentRight'),
+          tabStops: {
+            default: null,
+            parseHTML: (el) => serializeTabStops(parseTabStops(el.getAttribute('data-tabs'))),
+            renderHTML: (a) => {
+              const tabs = parseTabStops(a.tabStops);
+              if (!tabs) return {};
+              return { 'data-tabs': serializeTabStops(tabs), style: `tab-size: ${tabs[0]}cm` };
+            },
+          },
+          dir: {
+            default: null,
+            parseHTML: (el) => (el.getAttribute('dir') === 'rtl' ? 'rtl' : null),
+            renderHTML: (a) => (a.dir === 'rtl' ? { dir: 'rtl' } : {}),
+          },
+        },
+      },
+    ];
+  },
+  addStorage() {
+    return { clipboard: null, defaults: {} };
+  },
+  addCommands() {
+    return {
+      setParagraphFormat:
+        (attrs) =>
+        ({ chain }) =>
+          chain().updateAttributes('paragraph', attrs).updateAttributes('heading', attrs).run(),
+      toggleRtl:
+        () =>
+        ({ editor, commands }) => {
+          const cur = editor.state.selection.$from.parent.attrs.dir;
+          return commands.setParagraphFormat({ dir: cur === 'rtl' ? null : 'rtl' });
+        },
+      selectWord:
+        () =>
+        ({ state, dispatch }) => selectBy(state, dispatch, wordBounds),
+      selectSentence:
+        () =>
+        ({ state, dispatch }) => selectBy(state, dispatch, sentenceBounds),
+      selectParagraph:
+        () =>
+        ({ state, dispatch }) => selectBy(state, dispatch, (t) => [0, t.length]),
+      copyFormat:
+        () =>
+        ({ editor, state }) => {
+          editor.storage.paragraphFormat.clipboard = captureFormat(state);
+          return true;
+        },
+      pasteFormat:
+        () =>
+        ({ editor, state, tr, dispatch }) => {
+          const clip = editor.storage.paragraphFormat.clipboard;
+          if (!clip) return false;
+          applyFormat(state, tr, clip);
+          if (dispatch) dispatch(tr);
+          return true;
+        },
+      applyDefaultFormatting:
+        (defaults) =>
+        ({ editor, state, tr, dispatch }) => {
+          resetToDefault(state, tr, defaults || editor.storage.paragraphFormat.defaults || {});
+          if (dispatch) dispatch(tr);
+          return true;
+        },
+    };
+  },
+  addKeyboardShortcuts() {
+    return {
+      'Mod-Alt-Shift-w': () => this.editor.commands.selectWord(),
+      'Mod-Alt-Shift-s': () => this.editor.commands.selectSentence(),
+      'Mod-Alt-Shift-p': () => this.editor.commands.selectParagraph(),
+      'Mod-Alt-c': () => this.editor.commands.copyFormat(),
+      'Mod-Alt-v': () => this.editor.commands.pasteFormat(),
+      // Tab inserts a tab character in paragraphs that have tab stops (ruler).
+      Tab: () => {
+        const { $from } = this.editor.state.selection;
+        if ($from.parent.type.name !== 'paragraph' || !$from.parent.attrs.tabStops || $from.parent.attrs.script) return false;
+        return this.editor.commands.insertContent('\t');
+      },
+    };
+  },
+});
+
+// --- Select word / sentence / paragraph -------------------------------------
+
+const WORD_CH = /[\p{L}\p{N}\p{M}_'’-]/u;
+
+/** [from, to] of the word at text offset (empty range when not on a word). */
+export function wordBounds(text, offset) {
+  let a = Math.min(offset, text.length);
+  let b = a;
+  while (a > 0 && WORD_CH.test(text[a - 1])) a--;
+  while (b < text.length && WORD_CH.test(text[b])) b++;
+  return [a, b];
+}
+
+/** [from, to] of the sentence at offset (trailing spaces excluded). */
+export function sentenceBounds(text, offset) {
+  for (const m of text.matchAll(/[^.!?…]+(?:[.!?…]+[”"»)]*)?\s*/gu)) {
+    const a = m.index;
+    const b = a + m[0].length;
+    if (offset >= a && (offset < b || b === text.length)) {
+      const lead = m[0].length - m[0].trimStart().length;
+      return [a + lead, a + m[0].trimEnd().length];
+    }
+  }
+  return [offset, offset];
+}
+
+function selectBy(state, dispatch, fn) {
+  const { $from } = state.selection;
+  if (!$from.parent.isTextblock) return false;
+  const text = $from.parent.textBetween(0, $from.parent.content.size, undefined, '￼');
+  const [a, b] = fn(text, $from.parentOffset);
+  const start = $from.start();
+  if (dispatch) dispatch(state.tr.setSelection(TextSelection.create(state.doc, start + a, start + b)).scrollIntoView());
+  return true;
+}
+
+// --- Copy / paste formatting, default formatting ---------------------------
+
+// Marks that are content, not formatting: never copied or removed by format paste.
+const CONTENT_MARKS = ['comment', 'linkedFootnote', 'link', 'bookmark', 'revision'];
+const PARA_KEYS = [...PARA_FORMAT_ATTRS, 'textAlign', 'styleName'];
+
+export function captureFormat(state) {
+  const { $from, from, empty } = state.selection;
+  const marks = (empty ? state.storedMarks || $from.marks() : state.doc.resolve(Math.min(from + 1, $from.end())).marks()).filter((m) => !CONTENT_MARKS.includes(m.type.name));
+  const para = {};
+  for (const k of PARA_KEYS) if (k in $from.parent.attrs) para[k] = $from.parent.attrs[k];
+  return { marks: marks.map((m) => m.toJSON()), para };
+}
+
+function eachTextblock(state, fn) {
+  const { from, to } = state.selection;
+  state.doc.nodesBetween(from, to, (node, pos) => {
+    if (!node.isTextblock) return true;
+    fn(node, pos);
+    return false;
+  });
+}
+
+export function applyFormat(state, tr, clip) {
+  const { from, to, empty } = state.selection;
+  if (!empty) {
+    for (const [, type] of Object.entries(state.schema.marks)) if (!CONTENT_MARKS.includes(type.name)) tr.removeMark(from, to, type);
+    for (const mj of clip.marks || []) {
+      const type = state.schema.marks[mj.type];
+      if (type) tr.addMark(from, to, type.create(mj.attrs));
+    }
+  }
+  eachTextblock(state, (node, pos) => {
+    const attrs = { ...node.attrs };
+    for (const [k, v] of Object.entries(clip.para || {})) if (k in attrs) attrs[k] = v;
+    tr.setNodeMarkup(pos, undefined, attrs);
+  });
+  return tr;
+}
+
+/**
+ * Convert to Default Formatting: paragraph format attributes take the project
+ * defaults, text alignment is cleared, per-span font family and size are removed.
+ * defaults: { lineHeight, spaceBefore, spaceAfter, firstIndent, indentLeft, indentRight, align }.
+ * Applies to the selection, or to the whole document when nothing is selected.
+ */
+export function resetToDefault(state, tr, defaults = {}) {
+  const { empty } = state.selection;
+  const from = empty ? 0 : state.selection.from;
+  const to = empty ? state.doc.content.size : state.selection.to;
+  state.doc.nodesBetween(from, to, (node, pos) => {
+    if (node.isTextblock && node.type.name !== 'codeBlock') {
+      const attrs = { ...node.attrs };
+      for (const k of PARA_FORMAT_ATTRS) if (k in attrs && k !== 'dir') attrs[k] = defaults[k] ?? null;
+      if ('textAlign' in attrs) attrs.textAlign = defaults.align || null;
+      tr.setNodeMarkup(pos, undefined, attrs);
+    }
+    if (node.isText) {
+      const ts = node.marks.find((m) => m.type.name === 'textStyle');
+      if (ts && (ts.attrs.fontFamily || ts.attrs.fontSize)) {
+        const a = Math.max(pos, from);
+        const b = Math.min(pos + node.nodeSize, to);
+        tr.removeMark(a, b, ts.type);
+        const rest = { ...ts.attrs, fontFamily: null, fontSize: null };
+        if (Object.values(rest).some((v) => v)) tr.addMark(a, b, ts.type.create(rest));
+      }
+    }
+    return true;
+  });
+  return tr;
+}
+
+// --- Marks: small caps, all caps, bookmarks ---------------------------------
+
+// No inline style here: TextStyle would also claim a styled <span>. The look comes
+// from CSS on [data-caps] (editor-extra.css; Compile needs the same rule).
+const capsMark = (name, kind) =>
+  Mark.create({
+    name,
+    parseHTML: () => [{ tag: `span[data-caps="${kind}"]` }],
+    renderHTML: ({ HTMLAttributes }) => ['span', mergeAttributes(HTMLAttributes, { 'data-caps': kind }), 0],
+    addCommands() {
+      return { [`toggle${name[0].toUpperCase()}${name.slice(1)}`]: () => ({ commands }) => commands.toggleMark(name) };
+    },
+  });
+
+export const SmallCaps = capsMark('smallCaps', 'small');
+export const AllCaps = capsMark('allCaps', 'all');
+
+// Text bookmark: <span data-bookmark="name" class="bookmark">anchor</span>.
+export const Bookmark = Mark.create({
+  name: 'bookmark',
+  inclusive: false,
+  excludes: '',
+  addAttributes() {
+    return {
+      name: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-bookmark') || '',
+        renderHTML: (a) => ({ 'data-bookmark': a.name, title: a.name }),
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[data-bookmark]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes, { class: 'bookmark' }), 0];
+  },
+  addCommands() {
+    return {
+      setBookmark:
+        (name) =>
+        ({ state, tr, dispatch }) => {
+          const { from, to, empty, $from } = state.selection;
+          let a = from;
+          let b = to;
+          if (empty) {
+            // no selection: bookmark the word at the cursor (or the whole paragraph if none)
+            const text = $from.parent.textBetween(0, $from.parent.content.size, undefined, '￼');
+            let [wa, wb] = wordBounds(text, $from.parentOffset);
+            if (wa === wb) [wa, wb] = [0, text.length];
+            a = $from.start() + wa;
+            b = $from.start() + wb;
+          }
+          if (a === b) return false;
+          if (dispatch) dispatch(tr.addMark(a, b, state.schema.marks.bookmark.create({ name })));
+          return true;
+        },
+      removeBookmark:
+        (name) =>
+        ({ state, tr, dispatch }) => {
+          const type = state.schema.marks.bookmark;
+          for (const r of listBookmarks(state.doc)) if (!name || r.name === name) tr.removeMark(r.from, r.to, type);
+          if (dispatch) dispatch(tr);
+          return true;
+        },
+      goToBookmark:
+        (name) =>
+        ({ state, tr, dispatch }) => {
+          const hit = listBookmarks(state.doc).find((r) => r.name === name);
+          if (!hit) return false;
+          if (dispatch) dispatch(tr.setSelection(TextSelection.create(state.doc, hit.from, hit.to)).scrollIntoView());
+          return true;
+        },
+    };
+  },
+});
+
+/** Bookmarks in document order: [{ name, from, to }] (adjacent pieces merged). */
+export function listBookmarks(doc) {
+  return markRanges(doc, (m) => m.type.name === 'bookmark', (m) => m.attrs.name).map((r) => ({ name: r.key, from: r.from, to: r.to }));
+}
+
+function markRanges(doc, test, keyOf = () => '') {
+  const out = [];
+  doc.descendants((node, pos) => {
+    if (!node.isInline) return true;
+    for (const m of node.marks) {
+      if (!test(m)) continue;
+      const key = keyOf(m);
+      const last = out[out.length - 1];
+      if (last && last.key === key && last.to === pos) last.to = pos + node.nodeSize;
+      else out.push({ key, from: pos, to: pos + node.nodeSize });
+    }
+    return true;
+  });
+  return out;
+}
+
+// --- Find by formatting -------------------------------------------------------
+
+export const FORMAT_KINDS = [
+  ['comment', 'Comentarii'],
+  ['footnote', 'Note de subsol'],
+  ['annotation', 'Adnotări inline'],
+  ['highlight', 'Highlight'],
+  ['color', 'Culoare text'],
+  ['revision', 'Revizii'],
+  ['style', 'Stil (paragraf sau caractere)'],
+  ['bookmark', 'Semne de carte'],
+];
+
+/**
+ * Ranges [{from, to}] of content with a given formatting, in document order.
+ * value narrows: highlight/color = colour, revision = level, style = style id, bookmark = name.
+ */
+export function findFormatting(doc, kind, value = null) {
+  const v = value === '' ? null : value;
+  const markTest = {
+    comment: (m) => m.type.name === 'comment',
+    footnote: (m) => m.type.name === 'linkedFootnote',
+    highlight: (m) => m.type.name === 'highlight' && (!v || String(m.attrs.color).toLowerCase() === String(v).toLowerCase()),
+    color: (m) => m.type.name === 'textStyle' && !!m.attrs.color && (!v || String(m.attrs.color).toLowerCase() === String(v).toLowerCase()),
+    revision: (m) => m.type.name === 'revision' && (!v || Number(m.attrs.level) === Number(v)),
+    style: (m) => m.type.name === 'charStyle' && (!v || m.attrs.name === v),
+    bookmark: (m) => m.type.name === 'bookmark' && (!v || m.attrs.name === v),
+  }[kind];
+  const out = markTest ? markRanges(doc, markTest, (m) => JSON.stringify(m.attrs)) : [];
+  doc.descendants((node, pos) => {
+    if (kind === 'footnote' && node.type.name === 'footnote') out.push({ from: pos, to: pos + node.nodeSize });
+    if (kind === 'annotation' && node.type.name === 'annotation') out.push({ from: pos, to: pos + node.nodeSize });
+    if (kind === 'style' && node.isTextblock && node.attrs.styleName && (!v || node.attrs.styleName === v)) {
+      out.push({ from: pos + 1, to: pos + node.nodeSize - 1 });
+    }
+    return true;
+  });
+  return out.map(({ from, to }) => ({ from, to })).sort((a, b) => a.from - b.from || a.to - b.to);
+}
+
+// --- Page break (separate from the horizontal rule) ---------------------------
+// Rendered as <hr data-page-break class="page-break">: Compile already treats <hr>
+// as a break, so compiled output is unchanged; the editor draws it as a dashed line.
+
+export const PageBreak = Node.create({
+  name: 'pageBreak',
+  group: 'block',
+  atom: true,
+  selectable: true,
+  parseHTML() {
+    return [{ tag: 'hr[data-page-break]', priority: 60 }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['hr', mergeAttributes(HTMLAttributes, { 'data-page-break': 'true', class: 'page-break' })];
+  },
+  addCommands() {
+    return {
+      setPageBreak:
+        () =>
+        ({ commands }) =>
+          commands.insertContent({ type: this.name }),
+    };
+  },
+  addKeyboardShortcuts() {
+    return { 'Mod-Enter': () => this.editor.commands.setPageBreak() };
+  },
+});
+
+// --- Image with width and alignment ----------------------------------------------
+
+const ALIGN_CSS = {
+  left: 'float: left; margin: 0 1em 0.5em 0',
+  right: 'float: right; margin: 0 0 0.5em 1em',
+  center: 'display: block; margin: 0.5em auto',
+};
+
+export const ScaledImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: null,
+        parseHTML: (el) => el.getAttribute('width') || (el.style.width || null),
+        renderHTML: (a) => (a.width ? { width: a.width } : {}),
+      },
+      align: {
+        default: null,
+        parseHTML: (el) => (ALIGN_CSS[el.getAttribute('data-align')] ? el.getAttribute('data-align') : null),
+        renderHTML: (a) => (ALIGN_CSS[a.align] ? { 'data-align': a.align, style: ALIGN_CSS[a.align] } : {}),
+      },
+    };
+  },
+  addCommands() {
+    return {
+      ...this.parent?.(),
+      setImageFormat:
+        (attrs) =>
+        ({ commands }) =>
+          commands.updateAttributes('image', attrs),
+    };
+  },
+});
+
+export const ListStyle = Extension.create({
+  name: 'listStyle',
+  addCommands() {
+    return {
+      // type: '1' | 'a' | 'A' | 'i' | 'I' — creates an ordered list if needed.
+      setOrderedListType:
+        (type) =>
+        ({ editor, chain }) => {
+          const c = chain();
+          if (!editor.isActive('orderedList')) c.toggleOrderedList();
+          return c.updateAttributes('orderedList', { type: type === '1' ? null : type }).run();
+        },
+    };
+  },
+});

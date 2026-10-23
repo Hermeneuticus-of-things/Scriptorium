@@ -39,6 +39,25 @@ const STAGE_PLAY = {
   enter: { act: 'scene-heading', 'scene-heading': 'stage-direction', 'stage-direction': 'character', character: 'dialogue', parenthetical: 'dialogue', dialogue: 'character', transition: 'scene-heading' },
 };
 
+// UK stage play: character names on the left margin, speech indented beside/under
+// them, stage directions indented and italic, acts and scenes centred.
+const STAGE_PLAY_UK = {
+  id: 'stageplay-uk',
+  label: 'Piesă de teatru (UK)',
+  defaultElement: 'stage-direction',
+  elements: [
+    el('act', 'Act', { upper: true, css: { marginTop: '2em', textAlign: 'center', fontWeight: 'bold' } }),
+    el('scene-heading', 'Scenă', { upper: true, fdx: 'Scene Heading', css: { marginTop: '1.5em', textAlign: 'center', textDecoration: 'underline' } }),
+    el('stage-direction', 'Indicație scenică', { fdx: 'Action', css: { marginTop: '1em', marginLeft: '25%', fontStyle: 'italic' } }),
+    el('character', 'Personaj', { upper: true, fdx: 'Character', css: { marginTop: '1em' } }),
+    el('parenthetical', 'Paranteză', { fdx: 'Parenthetical', css: { marginLeft: '25%', fontStyle: 'italic' } }),
+    el('dialogue', 'Replică', { fdx: 'Dialogue', css: { marginLeft: '25%' } }),
+    el('transition', 'Tranziție', { upper: true, fdx: 'Transition', css: { marginTop: '1em', textAlign: 'right' } }),
+  ],
+  tab: { ...STAGE_PLAY.tab },
+  enter: { ...STAGE_PLAY.enter },
+};
+
 const COMIC = {
   id: 'comic',
   label: 'Benzi desenate',
@@ -72,7 +91,7 @@ const BBC_RADIO = {
   enter: { 'scene-heading': 'direction', direction: 'character', character: 'dialogue', dialogue: 'character', sound: 'character', music: 'character' },
 };
 
-export const SCRIPT_FORMATS = { screenplay: SCREENPLAY, stageplay: STAGE_PLAY, comic: COMIC, radio: BBC_RADIO };
+export const SCRIPT_FORMATS = { screenplay: SCREENPLAY, stageplay: STAGE_PLAY, 'stageplay-uk': STAGE_PLAY_UK, comic: COMIC, radio: BBC_RADIO };
 export const SCRIPT_FORMAT_LIST = Object.values(SCRIPT_FORMATS);
 
 export function getFormat(id) {
@@ -141,4 +160,32 @@ export function completeCharacter(names, prefix) {
   const p = String(prefix || '').trim().toUpperCase();
   if (!p) return [];
   return names.filter((n) => n.startsWith(p) && n !== p);
+}
+
+export const SCENE_PREFIXES = ['INT. ', 'EXT. ', 'INT./EXT. ', 'EXT./INT. '];
+
+/** Scene headings used in the document (data-script / data-style="scene-heading"), most frequent first. */
+export function collectSceneHeadings(html) {
+  const counts = new Map();
+  const re = /<p[^>]*data-(?:script|style)="scene-heading"[^>]*>([\s\S]*?)<\/p>/g;
+  let m;
+  while ((m = re.exec(String(html || '')))) {
+    const h = m[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim().toUpperCase();
+    if (h) counts.set(h, (counts.get(h) || 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([h]) => h);
+}
+
+/** Scene heading completions: INT./EXT. prefixes first, then earlier headings (and their place part). */
+export function completeSceneHeading(headings, prefix) {
+  const p = String(prefix || '').replace(/^\s+/, '').toUpperCase();
+  if (!p) return [];
+  const places = [];
+  for (const h of headings || []) {
+    places.push(h);
+    // "INT. CASA - ZI" also offers "INT. CASA - " for a new time of day
+    const dash = h.lastIndexOf(' - ');
+    if (dash > 0) places.push(h.slice(0, dash + 3));
+  }
+  return [...new Set([...SCENE_PREFIXES, ...places])].filter((c) => c.startsWith(p) && c !== p);
 }

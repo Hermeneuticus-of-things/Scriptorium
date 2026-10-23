@@ -1,0 +1,59 @@
+/* Editor formatting extras (Batch B): caps, bookmarks, page breaks, images, ruler,
+   current line, fade, page sizes, format find, UK stage play. */
+.prose [data-caps="small"] { font-variant: small-caps; }
+.prose [data-caps="all"] { text-transform: uppercase; }
+.prose .bookmark { border-left: 2px solid var(--accent, #1565c0); padding-left: 1px; background: color-mix(in srgb, var(--accent, #1565c0) 8%, transparent); }
+.prose .bookmark::before { content: '🔖'; font-size: 0.6em; vertical-align: super; opacity: 0.6; }
+.prose hr.page-break { border: none; border-top: 2px dashed var(--line, #bbb); margin: 2em 0; position: relative; overflow: visible; }
+.prose hr.page-break::after { content: 'salt de pagină'; position: absolute; left: 50%; top: -0.75em; transform: translateX(-50%); background: var(--paper, #fff); color: var(--muted, #888); font-size: 11px; padding: 0 6px; }
+.prose hr.page-break.ProseMirror-selectednode { border-top-color: var(--accent, #1565c0); }
+.prose img { max-width: 100%; height: auto; }
+.prose img.ProseMirror-selectednode { outline: 2px solid var(--accent, #1565c0); }
+.prose p[data-tabs] { white-space: pre-wrap; }
+.prose p[dir="rtl"], .prose h1[dir="rtl"], .prose h2[dir="rtl"], .prose h3[dir="rtl"] { unicode-bidi: isolate; }
+.prose ol[type="a"] { list-style-type: lower-alpha; }
+.prose ol[type="A"] { list-style-type: upper-alpha; }
+.prose ol[type="i"] { list-style-type: lower-roman; }
+.prose ol[type="I"] { list-style-type: upper-roman; }
+
+/* Focus modes: configurable fade, real current line */
+.prose .ProseMirror .faded { opacity: var(--fade-opacity, .28); }
+.prose { position: relative; }
+.prose .ProseMirror { position: relative; z-index: 1; }
+.current-line-overlay { position: absolute; z-index: 0; pointer-events: none; border-radius: 3px; background: color-mix(in srgb, var(--accent-soft, #e3ecfa) 70%, transparent); transition: top .08s; }
+
+/* Format bar extras */
+.format-bar .font-select { max-width: 9em; }
+.format-bar .size-select { width: 4em; }
+.custom-color { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 6px; cursor: pointer; }
+.custom-color input[type="color"] { width: 28px; height: 20px; padding: 0; border: none; background: none; }
+.format-find .count { font-size: 12px; color: var(--muted, #888); min-width: 5em; }
+
+/* Ruler */
+.ruler { position: relative; height: 22px; margin: -12px 0 14px; border-bottom: 1px solid var(--line, #ccc); background: color-mix(in srgb, var(--panel, #f5f5f5) 80%, transparent); user-select: none; font-size: 9px; color: var(--muted, #888); cursor: copy; }
+.ruler-tick { position: absolute; bottom: 0; height: 6px; border-left: 1px solid currentColor; padding-left: 2px; line-height: 0; }
+.ruler-tick.half { height: 3px; }
+.ruler-tick:not(.half) { height: 8px; }
+.ruler-handle, .ruler-tab { position: absolute; width: 0; height: 0; transform: translateX(-5px); cursor: ew-resize; touch-action: none; }
+.ruler-handle.first { top: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid var(--accent, #1565c0); }
+.ruler-handle.left { bottom: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 7px solid var(--accent, #1565c0); }
+.ruler-handle.right { bottom: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 7px solid var(--muted, #666); }
+.ruler-tab { top: 4px; width: 8px; height: 8px; transform: translateX(0); border-left: 2px solid var(--text, #333); border-bottom: 2px solid var(--text, #333); }
+.ruler-tab.removing { opacity: .3; }
+
+/* Page View sizes, facing pages and approximate page breaks */
+.page.page-view { --page-w: 148mm; --page-h: 210mm; max-width: var(--page-w); min-height: var(--page-h);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--page-h) - 1px), var(--line, #ccc) calc(var(--page-h) - 1px), var(--line, #ccc) var(--page-h)); }
+.page.page-view.page-a4 { --page-w: 210mm; --page-h: 297mm; padding: 25mm 25mm; }
+.page.page-view.page-letter { --page-w: 8.5in; --page-h: 11in; padding: 1in 1in; }
+.page.page-view.facing { max-width: calc(var(--page-w) * 2 + 12mm); background-image: none; }
+.page.page-view.facing .ProseMirror { column-count: 2; column-gap: 24mm; column-rule: 1px dashed var(--line, #ccc); }
+
+/* Script Mode: Stage Play (UK) — generated from formatCss('stageplay-uk') */
+.script-stageplay-uk p[data-script="act"] { margin-bottom: 0; margin-top: 2em; text-align: center; font-weight: bold; text-transform: uppercase; }
+.script-stageplay-uk p[data-script="scene-heading"] { margin-bottom: 0; margin-top: 1.5em; text-align: center; text-decoration: underline; text-transform: uppercase; }
+.script-stageplay-uk p[data-script="stage-direction"] { margin-bottom: 0; margin-top: 1em; margin-left: 25%; font-style: italic; }
+.script-stageplay-uk p[data-script="character"] { margin-bottom: 0; margin-top: 1em; text-transform: uppercase; }
+.script-stageplay-uk p[data-script="parenthetical"] { margin-bottom: 0; margin-left: 25%; font-style: italic; }
+.script-stageplay-uk p[data-script="dialogue"] { margin-bottom: 0; margin-left: 25%; }
+.script-stageplay-uk p[data-script="transition"] { margin-bottom: 0; margin-top: 1em; text-align: right; text-transform: uppercase; }

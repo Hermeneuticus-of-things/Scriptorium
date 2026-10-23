@@ -3,7 +3,7 @@
 // elements are transformed on input. Also accepts imported data-style ids.
 import { Extension } from '@tiptap/core';
 import { Plugin } from '@tiptap/pm/state';
-import { ALL_SCRIPT_ELEMENTS, completeCharacter, isUppercase, nextOnEnter, nextOnTab } from '../lib/scriptFormats.js';
+import { ALL_SCRIPT_ELEMENTS, completeCharacter, completeSceneHeading, isUppercase, nextOnEnter, nextOnTab } from '../lib/scriptFormats.js';
 
 export const ScriptMode = Extension.create({
   name: 'scriptMode',
@@ -12,6 +12,7 @@ export const ScriptMode = Extension.create({
     return {
       getFormat: () => null, // returns format id ('screenplay'…) or null when script mode is off
       getCharacters: () => [], // names for autocomplete
+      getSceneHeadings: () => [], // earlier scene headings for autocomplete
     };
   },
 
@@ -60,6 +61,19 @@ export const ScriptMode = Extension.create({
           if (dispatch) dispatch(state.tr.insertText(hit.slice(text.length), $from.end()));
           return true;
         },
+      completeSceneHeading:
+        () =>
+        ({ editor, state, dispatch }) => {
+          const { $from, empty } = state.selection;
+          if (!empty || editor.getAttributes('paragraph').script !== 'scene-heading') return false;
+          if ($from.parentOffset !== $from.parent.content.size) return false;
+          const text = $from.parent.textContent;
+          const [hit] = completeSceneHeading(this.options.getSceneHeadings() || [], text);
+          if (!hit) return false;
+          const typed = text.replace(/^\s+/, '').length;
+          if (dispatch) dispatch(state.tr.insertText(hit.slice(typed), $from.end()));
+          return true;
+        },
     };
   },
 
@@ -70,6 +84,7 @@ export const ScriptMode = Extension.create({
         if (!active()) return false;
         // On a character line with a matching prefix, Tab completes first.
         if (this.editor.commands.completeCharacterName()) return true;
+        if (this.editor.commands.completeSceneHeading()) return true;
         return this.editor.commands.cycleScriptElement(false);
       },
       'Shift-Tab': () => active() && this.editor.commands.cycleScriptElement(true),

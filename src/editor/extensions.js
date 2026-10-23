@@ -3,16 +3,17 @@ import { Mark, Node, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import { Typography } from '@tiptap/extension-typography';
-import { Image } from '@tiptap/extension-image';
 import { TableKit } from '@tiptap/extension-table';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { Highlight } from '@tiptap/extension-highlight';
-import { TextStyle, Color } from '@tiptap/extension-text-style';
+import { TextStyle, Color, FontFamily, FontSize } from '@tiptap/extension-text-style';
 import { Superscript } from '@tiptap/extension-superscript';
 import { Subscript } from '@tiptap/extension-subscript';
 import { LinguisticFocus } from '../extensions/LinguisticFocus.js';
 import { Corrections } from './corrections.js';
 import { Invisibles } from './invisibles.js';
+import { AllCaps, Bookmark, ListStyle, PageBreak, ParagraphFormat, ScaledImage, SmallCaps } from './formatting.js';
+import { LineHighlight } from './lineHighlight.js';
 import { AutoComplete, CharStyle, ParagraphStyle, Revision, WritingFocus } from './writing.js';
 
 // Comment attached to a text range: <span data-comment="text" class="comment">…</span>
@@ -26,15 +27,21 @@ export const Comment = Mark.create({
         parseHTML: (el) => el.getAttribute('data-comment') || '',
         renderHTML: (attrs) => ({ 'data-comment': attrs.comment, title: attrs.comment }),
       },
+      // Inspector metadata: data-comment-color/-author/-date (legacy data-color/data-author still read).
       color: {
         default: null,
-        parseHTML: (el) => el.getAttribute('data-color'),
-        renderHTML: (attrs) => (attrs.color ? { 'data-color': attrs.color, style: `--comment-color: ${attrs.color}` } : {}),
+        parseHTML: (el) => el.getAttribute('data-comment-color') || el.getAttribute('data-color'),
+        renderHTML: (attrs) => (attrs.color ? { 'data-comment-color': attrs.color, style: `--comment-color: ${attrs.color}; background-color: color-mix(in srgb, ${attrs.color} 25%, transparent)` } : {}),
       },
       author: {
         default: null,
-        parseHTML: (el) => el.getAttribute('data-author'),
-        renderHTML: (attrs) => (attrs.author ? { 'data-author': attrs.author } : {}),
+        parseHTML: (el) => el.getAttribute('data-comment-author') || el.getAttribute('data-author'),
+        renderHTML: (attrs) => (attrs.author ? { 'data-comment-author': attrs.author } : {}),
+      },
+      date: {
+        default: null,
+        parseHTML: (el) => el.getAttribute('data-comment-date'),
+        renderHTML: (attrs) => (attrs.date ? { 'data-comment-date': attrs.date } : {}),
       },
     };
   },
@@ -170,10 +177,19 @@ export const UnsupportedImage = Node.create({
   },
 });
 
-export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], corrections = null, showInvisibles = false } = {}) {
+// TextStyle claims every <span style>; spans owned by other marks (comment colour,
+// revision colour) would otherwise gain an empty extra <span> on each reload.
+const OWN_SPANS = '[data-comment],[data-revision],[data-caps],[data-bookmark],[data-linked-footnote]';
+const ScopedTextStyle = TextStyle.extend({
+  parseHTML() {
+    return [{ tag: 'span', consuming: false, getAttrs: (el) => (el.hasAttribute('style') && !el.matches(OWN_SPANS) ? {} : false) }];
+  },
+});
+
+export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], corrections = null, showInvisibles = false } = {}) {
   // corrections: {smartDashes, smartEllipsis, autoCapitalize, replacements}; null keeps the
   // historical behaviour (dashes/ellipsis only through Typography when smartQuotes is on).
-  const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, replacements: [], ...corrections } : null;
+  const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [], ...corrections } : null;
   const ext = [
     ParagraphStyle,
     CharStyle,
@@ -187,14 +203,23 @@ export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuo
     LinkedFootnote,
     Annotation,
     LinguisticFocus,
-    ScriptMode.configure({ getFormat: getScriptFormat, getCharacters }),
+    ScriptMode.configure({ getFormat: getScriptFormat, getCharacters, getSceneHeadings }),
     UnsupportedImage,
-    Image.configure({ allowBase64: true, inline: true }),
+    ScaledImage.configure({ allowBase64: true, inline: true }),
     TableKit.configure({ table: { resizable: false } }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Highlight.configure({ multicolor: true }),
-    TextStyle,
+    ScopedTextStyle,
     Color,
+    FontFamily,
+    FontSize,
+    SmallCaps,
+    AllCaps,
+    Bookmark,
+    PageBreak,
+    ParagraphFormat,
+    ListStyle,
+    LineHighlight,
     Superscript,
     Subscript,
     Invisibles.configure({ enabled: showInvisibles }),

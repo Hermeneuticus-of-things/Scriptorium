@@ -2,10 +2,12 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 import { EditorContent, useEditor } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
-import { collectCharacters } from '../lib/scriptFormats.js';
+import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
 import FindBar from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
+import FormatFind from './FormatFind.jsx';
+import Ruler from './Ruler.jsx';
 
 const Editor = forwardRef(function Editor(
   {
@@ -28,10 +30,13 @@ const Editor = forwardRef(function Editor(
     onFocus,
     onTitleClick,
     scriptFormat = null,
+    defaultFormatting = null,
   },
   ref,
 ) {
   const [showFind, setShowFind] = useState(false);
+  const [showFormatFind, setShowFormatFind] = useState(false);
+  const scenesRef = useRef([]);
   const wordsRef = useRef(words);
   wordsRef.current = words;
   const scriptRef = useRef(scriptFormat);
@@ -41,12 +46,15 @@ const Editor = forwardRef(function Editor(
   const imageInput = useRef(null);
   const editor = useEditor(
     {
-      extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current }),
+      extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current }),
       content: html || '<p></p>',
       editable: !readOnly,
       onUpdate: ({ editor: ed }) => {
         const out = ed.getHTML();
-        if (scriptRef.current) charsRef.current = collectCharacters(out);
+        if (scriptRef.current) {
+          charsRef.current = collectCharacters(out);
+          scenesRef.current = collectSceneHeadings(out);
+        }
         onChange(out);
       },
       onFocus: () => onFocus?.(),
@@ -61,7 +69,9 @@ const Editor = forwardRef(function Editor(
           const mod = e.ctrlKey || e.metaKey;
           if (mod && !e.shiftKey && e.key.toLowerCase() === 'f') {
             e.preventDefault();
-            setShowFind(true);
+            // Ctrl+Alt+F: find by formatting
+            if (e.altKey) setShowFormatFind(true);
+            else setShowFind(true);
             return true;
           }
           // Paste and Match Style: the next paste keeps only the text.
@@ -155,6 +165,7 @@ const Editor = forwardRef(function Editor(
       // Splits the document at the cursor. Returns {before, after, title} as HTML;
       // the title is the selected text, if any.
       openFind: () => setShowFind(true),
+      openFormatFind: () => setShowFormatFind(true),
       // useSelectionAsTitle=false: plain split at the cursor (Scrivener "Split at Selection").
       splitAtCursor: (useSelectionAsTitle = true) => {
         if (!editor) return null;
@@ -186,7 +197,22 @@ const Editor = forwardRef(function Editor(
     editor.commands.setFocusMode(view.focus || 'off');
     editor.commands.setCurrentParagraphHighlight(Boolean(view.currentParagraph));
     editor.commands.setRevisionLevel(readOnly ? 0 : view.revision || 0);
-  }, [editor, view.focus, view.currentParagraph, view.revision, readOnly]);
+    editor.commands.setCurrentLineHighlight(Boolean(view.currentLine));
+    editor.commands.setFadeOpacity(view.fadeOpacity ?? 0.28);
+  }, [editor, view.focus, view.currentParagraph, view.currentLine, view.fadeOpacity, view.revision, readOnly]);
+
+  // Script Mode auto-complete lists for the document as loaded.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || !scriptFormat) return;
+    const out = editor.getHTML();
+    charsRef.current = collectCharacters(out);
+    scenesRef.current = collectSceneHeadings(out);
+  }, [editor, scriptFormat]);
+
+  // Project default paragraph formatting for "Convert to Default Formatting".
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) editor.storage.paragraphFormat.defaults = defaultFormatting || {};
+  }, [editor, defaultFormatting]);
 
   // Project stylesheet for "Next style" on Enter and per-style shortcuts.
   useEffect(() => {
@@ -236,19 +262,23 @@ const Editor = forwardRef(function Editor(
           onAddAnnotation={addAnnotation}
           onInsertImage={insertImage}
           onManageStyles={onManageStyles}
+          onFindFormatting={() => setShowFormatFind(true)}
+          defaultFormatting={defaultFormatting}
           styles={styles}
           view={view}
           onViewChange={onViewChange}
         />
       )}
       <div
-        className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? 'page-view' : ''} ${view.invisibles ? 'invisibles' : ''}`}
+        className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? `page-view page-${view.pageSize || 'a5'}` : ''} ${view.pageView && view.facing ? 'facing' : ''} ${view.invisibles ? 'invisibles' : ''}`}
         style={view.zoom && view.zoom !== 100 ? { '--zoom': view.zoom / 100 } : undefined}
       >
         <h2 className="doc-title" onClick={onTitleClick}>
           {title}
         </h2>
         {readOnly && <p className="hint">Doar citire.</p>}
+        {showFormatFind && <FormatFind editor={editor} styles={styles} onClose={() => { setShowFormatFind(false); editor.commands.focus(); }} />}
+        {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={(view.zoom || 100) / 100} />}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}
         <EditorContent editor={editor} className={scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'} />
       </div>
