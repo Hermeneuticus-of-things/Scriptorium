@@ -1,74 +1,92 @@
-# Scribner
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Scribner: program de scris pentru texte lungi, cu binder, corkboard, outline și Compile ca în Scrivener 3">
+</p>
 
-Program de scris pentru cărți lungi, inspirat de Scrivener și scris de la zero (Electron + React). Deschide proiectele tale Scrivener 3 și adaugă un asistent AI.
+<p align="center">
+  <img src="./assets/readme/showcase.png" width="100%" alt="Capturi din Scribner: editorul cu binder și Inspector, corkboard-ul cu fișe și fereastra Compile">
+</p>
 
-## Ce face
+Scribner este un program de scris pentru texte lungi: romane, non-ficțiune, teze, scenarii. Organizezi textul în bucăți mici pe care le muți liber, apoi îl compilezi într-un singur manuscris. Este scris de la zero după funcțiile Scrivener 3, fără cod din Scrivener, și deschide proiectele tale `.scriv` fără să piardă nimic.
 
-- **Binder**: Manuscris / Cercetare / Coș, dosare și documente, drag & drop, redenumire cu dublu-clic, căutare în tot proiectul.
-- **Editor**: bold, italic, subliniat, tăiat, titluri, citat, listă, linie de dialog; mod compunere pe tot ecranul (F11); defilare tip mașină de scris.
-- **Corkboard**: fișe cu sinopsis editabil, culoarea etichetei, status.
-- **Outline**: tabel cu titlu, sinopsis, etichetă, status, Include în Compile și număr de cuvinte.
-- **Inspector**: sinopsis, etichetă, status, Include în Compile, țintă de cuvinte, note per document, snapshot-uri (salvare, previzualizare, restaurare).
-- **Ținte**: cuvinte pe carte, pe sesiune și pe document, în bara de jos.
-- **Import Scrivener 3** (`.scriv`): binder, text (RTF), note, sinopsis, etichete, status și Include in Compile.
-- **Compile**: DOCX (pentru editor), PDF A5, EPUB 3, HTML. Dosarele devin capitole, separator între scene, font și mărime.
-- **Asistent AI (Claude)**: corectură, sinopsis automat, continuare în stilul tău, critică editorială, verificare de consistență față de notele din Cercetare, întrebări libere. Rezultatul se poate insera, înlocui selecția/documentul sau pune ca sinopsis.
+AI-ul este opțional. Toate funcțiile merg fără el, iar comutatorul din Setări îl oprește complet.
 
-Scurtături: Ctrl+N document nou, Ctrl+Shift+N dosar nou, Ctrl+S salvare imediată (salvarea e oricum automată), F11 mod compunere, Esc ieșire.
+## Cum lucrezi
 
-## Pornire pe Windows
+<p align="center">
+  <img src="./assets/readme/workflow.svg" width="100%" alt="Fluxul de lucru: importă, scrie, revizuiește, compilează">
+</p>
+
+**Importă.** Proiecte Scrivener 1/2/3 cu tot ce conțin: text, note, sinopsis, etichete, status, cuvinte cheie, metadate, colecții, snapshot-uri, istoric și media. Plus Word, RTF, ODT, HTML, Markdown, Fountain, Final Draft, OPML, pagini web și bibliografii Zotero.
+
+**Scrie.** Binder cu Manuscris, Cercetare și Coș; Scrivenings, split editor, corkboard, outline, Inspector. Comentarii, note de subsol, stiluri, mod compunere, ținte de cuvinte, snapshot-uri cu diff, căutare și înlocuire în tot proiectul, Script Mode pentru scenarii.
+
+**Revizuiește.** I-REP găsește și repară problemele de tipografie și stil, apoi reverifică. I-EDIT rulează runde editoriale. Profilul implicit „Generic” merge pe orice text; profilul „Română” aplică DOOM III și regulile P1–P13 / R0–R11.
+
+**Compilează.** Formate editabile (manuscris standard, carte tipărită, e-book), secțiuni, pagină de titlu, cuprins, note de subsol sau de final, antet și subsol. Ieșire în DOCX, PDF, EPUB, HTML, RTF, ODT, Markdown, LaTeX sau înapoi în `.scriv`.
+
+## Pornire
 
 Ai nevoie de Node.js 22+.
 
-```
-cd "PROJECTS\Scribner"
+```bash
 npm install
 npm start          # construiește și pornește aplicația
-npm run dist:win   # creează Scribner.exe portabil în release\
+npm run dist:win   # creează Scribner.exe portabil în release/
 ```
 
-Versiunea portabilă își ține setările lângă .exe, în `Scribner-data\`, deci merge de pe stick sau de pe `D:`.
+Versiunea portabilă își ține setările lângă `.exe`, în `Scribner-data/`, deci merge de pe stick.
 
-`npm run dev` deschide interfața în browser, cu un proiect demo în memorie (fără salvare pe disc, import sau AI).
+`npm run dev` deschide interfața în browser. Cu `?demo` la finalul adresei pornește un proiect demonstrativ în memorie.
 
-## Asistentul AI
+## Ce mai are
 
-Pune cheia API Anthropic în Setări (⚙). Cheia e criptată cu protecția sistemului de operare și rămâne în procesul principal; interfața nu o vede. Modelul folosit: `claude-opus-5-5`.
+<details>
+<summary><strong>Asistent AI (Claude)</strong></summary>
 
-## I-REP și I-EDIT
+Pune cheia API Anthropic în Setări. Cheia e criptată de sistemul de operare și rămâne în procesul principal; interfața nu o vede. Asistentul face corectură, sinopsis, continuare în stilul tău, critică și verificare de consistență. În bloc: sinopsis pentru toate documentele, fișe de personaje care se actualizează, revizie pe niveluri de la carte la frază.
 
-Panoul „I-REP / I-EDIT” aplică profilul editorial al proiectului (implicit regulile `karma-book-engine`: R0–R11, P1–P13, ALOGEN, DOOM III).
+</details>
 
-- **I-REP** găsește problemele (em-dash, paranteze, construcții binare, pasive, ALOGEN, reziduuri LLM, redundanță), face reparațiile sigure fără AI, apoi rulează bucle repară → reverifică cu Claude până nu mai rămân probleme grave. Nivel micro (selecția), mezzo (documentul) sau macro (tot capitolul).
-- **I-EDIT** rulează rundele alese din R0–R11, apoi P3 și bucla de verificare.
-- Rezultatul apare ca diff; la acceptare se face snapshot înainte. Comentariile, adnotările și alinierea se păstrează.
+<details>
+<summary><strong>Agenți AI prin MCP</strong></summary>
 
-## Agenți AI prin MCP
+Serverul `mcp/server.mjs` dă acces unui agent (Claude Code, Claude Desktop, orice client MCP) la un proiect: citire și scriere, binder, căutare, metadate, note, comentarii, I-REP, snapshot-uri, Compile. Fiecare scriere face snapshot înainte și se notează în `agent-log.jsonl`.
 
-Serverul `mcp/server.mjs` dă acces agenților (Claude Code, Claude Desktop, orice client MCP) la un proiect: citire și scriere de documente, binder, căutare și înlocuire, metadate, note, comentarii, note de subsol, I-REP (`lint`), snapshot-uri, Compile, istoric. Fiecare scriere face snapshot înainte și se notează în `agent-log.jsonl`. Aplicația deschisă se actualizează singură când un agent modifică fișierele.
-
-Comanda exactă de conectare apare în Setări → Conexiune MCP. Manual:
-
-```
-claude mcp add scribner -- node "C:\...\Scribner\mcp\server.mjs" --project "D:\Carti\Karma.scribner"
+```bash
+claude mcp add scribner -- node "/cale/Scribner/mcp/server.mjs" --project "/cale/Cartea mea.scribner"
 ```
 
-`--read-only` permite doar citirea.
+`--read-only` permite doar citirea. Comanda exactă apare în Setări → Conexiune MCP.
 
-## Formatul proiectului
+</details>
 
-```
+<details>
+<summary><strong>Unelte de scriitor</strong></summary>
+
+Cronologie, hartă de relații între personaje, analiză de ritm, generator de nume, Scratchpad, citire cu voce tare, dictare, cercetare locală în proiect, Quick Reference, layouts salvate, scurtături configurabile, ferestre multiple, interfață în română și engleză.
+
+</details>
+
+<details>
+<summary><strong>Formatul proiectului</strong></summary>
+
+```text
 Cartea mea.scribner/
-  project.json          binder, etichete, statusuri, ținte
-  docs/<id>.html        textul fiecărui document
-  notes/<id>.html       notele
-  snapshots/<id>/*.json snapshot-urile
+  project.json           binder, etichete, statusuri, ținte, setări Compile
+  docs/<id>.html         textul fiecărui document
+  notes/<id>.html        notele
+  snapshots/<id>/*.json  snapshot-urile
+  media/                 imagini, PDF, audio
 ```
 
-Fișiere text simple: le poți versiona cu git sau sincroniza cu orice cloud.
+Fișiere text simple: le poți versiona cu git sau sincroniza cu orice cloud. Sincronizarea cu un folder extern și exportul ca pachet pentru versiunea web sunt în meniul Fișier.
 
-## Teste
+</details>
 
-```
-npm test
-```
+## Stare
+
+Testele (`npm test`) acoperă importul Scrivener, RTF, Compile, I-REP, serverul MCP și restul bibliotecilor. Planul complet și ce rămâne de verificat sunt în [`ROADMAP.md`](ROADMAP.md). Neverificat încă: rularea pe Windows în Electron și importul unui proiect Scrivener real mare.
+
+## Licență
+
+MIT. Vezi [`LICENSE`](LICENSE).
