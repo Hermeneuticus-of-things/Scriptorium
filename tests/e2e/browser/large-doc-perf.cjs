@@ -50,9 +50,17 @@ const LIMIT = Number(process.env.LIMIT_MS || 100);
       return ms;
     });
     check(`${name}: editor transaction < 20ms`, editorMs < 20, `${editorMs.toFixed(1)}ms`);
-    // Invisibles/linguistic add tens of thousands of inline spans; the remaining cost is
-    // Chrome's native editing/hit-testing over that DOM (see report), so only log it.
-    const strict = !['invisibles', 'linguistic'].includes(name);
+    if (name === 'linguistic') {
+      // The dimmed runs must really look dimmed (colour, not opacity: see LinguisticFocus.js).
+      const dim = await page.evaluate(() => {
+        const span = document.querySelector('.pane .ProseMirror .pos-faded');
+        return span ? [getComputedStyle(span).color, getComputedStyle(span.parentElement).color] : null;
+      });
+      check('linguistic: faded runs are dimmed', dim && dim[0] !== dim[1], JSON.stringify(dim));
+    }
+    // Invisibles add tens of thousands of inline spans; the remaining cost is Chrome's native
+    // editing/hit-testing over that DOM, so only log it.
+    const strict = name !== 'invisibles';
     const info = `median ${med.toFixed(1)}ms max ${max.toFixed(1)}ms`;
     if (strict) check(`${name}: keystroke latency median < ${LIMIT}ms`, med < LIMIT, info);
     else console.log(`INFO ${name}: keystroke latency ${info}`);

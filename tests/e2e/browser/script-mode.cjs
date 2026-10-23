@@ -27,12 +27,12 @@ const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
   // Linguistic focus on/off
   const before = await ed(page).innerHTML();
   await page.evaluate(() => document.querySelector('.pane .ProseMirror').editor.commands.setLinguisticFocus('noun', 'ro'));
-  const faded = await page.locator('.pane .ProseMirror .faded').count();
+  const faded = await page.locator('.pane .ProseMirror .pos-faded').count();
   check('linguistic focus fades text', faded > 0, `${faded}`);
   await page.keyboard.type('x', { delay: 10 });
   await page.keyboard.press('Backspace');
   await page.evaluate(() => document.querySelector('.pane .ProseMirror').editor.commands.setLinguisticFocus(null));
-  check('linguistic focus off restores DOM', (await ed(page).innerHTML()) === before && (await page.locator('.pane .ProseMirror .faded').count()) === 0);
+  check('linguistic focus off restores DOM', (await ed(page).innerHTML()) === before && (await page.locator('.pane .ProseMirror .pos-faded').count()) === 0);
   check('no console errors', errors.length === 0, errors.join(' | '));
   await browser.close();
   done();
