@@ -6,14 +6,22 @@ import { Extension, InputRule } from '@tiptap/core';
 
 const WORD = /[\p{L}\p{N}_]/u;
 
+/** Vulgar fractions used by the smartFractions correction. */
+export const FRACTIONS = { '1/2': '½', '1/3': '⅓', '2/3': '⅔', '1/4': '¼', '3/4': '¾', '1/5': '⅕', '2/5': '⅖', '3/5': '⅗', '4/5': '⅘', '1/6': '⅙', '5/6': '⅚', '1/7': '⅐', '1/8': '⅛', '3/8': '⅜', '5/8': '⅝', '7/8': '⅞', '1/9': '⅑', '1/10': '⅒' };
+
 /**
  * Given the text of the current block before the cursor (`before`) and the character
  * just typed (`ch`), returns the correction to apply or null:
  * { deleteFrom: number of chars to remove from the end of `before`, insert: replacement text incl. `ch` }.
  */
 export function correctionFor(before, ch, opts = {}) {
-  const { smartDashes = true, smartEllipsis = true, autoCapitalize = false, replacements = [] } = opts;
+  const { smartDashes = true, smartEllipsis = true, autoCapitalize = false, smartFractions = false, replacements = [] } = opts;
   const text = String(before ?? '');
+  // "1/2" → "½" when a non-digit follows a standalone fraction
+  if (smartFractions && !/[\d/]/.test(ch)) {
+    const m = /(?:^|[^\d/])(\d{1,2}\/\d{1,2})$/.exec(text);
+    if (m && FRACTIONS[m[1]]) return { deleteFrom: m[1].length, insert: FRACTIONS[m[1]] + ch };
+  }
   // "--" → "—" (fires on the second hyphen)
   if (smartDashes && ch === '-' && text.endsWith('-') && !text.endsWith('--')) return { deleteFrom: 1, insert: '—' };
   // "..." → "…"
@@ -54,11 +62,11 @@ export function simulateTyping(chars, opts) {
 export const Corrections = Extension.create({
   name: 'corrections',
   addOptions() {
-    return { smartDashes: true, smartEllipsis: true, autoCapitalize: false, replacements: [] };
+    return { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [] };
   },
   addInputRules() {
     const opts = this.options;
-    if (!opts.smartDashes && !opts.smartEllipsis && !opts.autoCapitalize && !(opts.replacements || []).length) return [];
+    if (!opts.smartDashes && !opts.smartEllipsis && !opts.autoCapitalize && !opts.smartFractions && !(opts.replacements || []).length) return [];
     // One rule matching any single typed char; correctionFor decides.
     return [
       new InputRule({

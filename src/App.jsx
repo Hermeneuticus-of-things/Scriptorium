@@ -1000,6 +1000,7 @@ export default function App({ api }) {
   const corrections = {
     smartDashes: settings.smartDashes !== false,
     smartEllipsis: settings.smartEllipsis !== false,
+    smartFractions: Boolean(settings.smartFractions),
     autoCapitalize: Boolean(settings.autoCapitalize),
     replacements: settings.autoReplacements || [],
   };
@@ -1430,6 +1431,7 @@ export default function App({ api }) {
                 scriptFormat={scriptFormat}
                 key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${corrKey}`}
                 corrections={corrections}
+                defaultFormatting={project.defaultFormatting}
                 showInvisibles={settings.showInvisibles}
                 ref={(r) => registerRef(selected.id, r)}
                 html={docs[selected.id] || ''}
@@ -1529,6 +1531,8 @@ export default function App({ api }) {
                   scriptFormat={scriptFormat}
                   key={`split-${splitNode.id}-${smartQuotes}-${corrKey}`}
                   corrections={corrections}
+                  defaultFormatting={project.defaultFormatting}
+                defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
                   html={docs[splitNode.id] || ''}

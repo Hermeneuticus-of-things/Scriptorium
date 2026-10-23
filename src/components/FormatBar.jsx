@@ -6,9 +6,26 @@ import { htmlToManuscript } from '../lib/editorial.js';
 import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linkedToFootnotes } from '../lib/noteConvert.js';
 import { isParaStyle } from '../lib/styles.js';
 import { POS_CLASSES } from '../lib/pos.js';
+import { listBookmarks } from '../editor/formatting.js';
 
 const TEXT_COLORS = ['#b3261e', '#c77700', '#2e7d32', '#1565c0', '#6a1b9a', '#5d4037', '#757575'];
 const HIGHLIGHTS = ['#fff176', '#a5d6a7', '#90caf9', '#f8bbd0', '#ffcc80'];
+const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Verdana', 'Calibri', 'Courier New', 'Courier Prime'];
+const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
+const LIST_TYPES = [['1', '1. 2. 3.'], ['a', 'a. b. c.'], ['A', 'A. B. C.'], ['i', 'i. ii. iii.'], ['I', 'I. II. III.']];
+const TIME_FORMATS = [
+  ['Ora (14:05)', () => new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })],
+  ['Data și ora', () => new Date().toLocaleString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })],
+  ['Data scurtă (23.10.2026)', () => new Date().toLocaleDateString('ro-RO')],
+  ['Data ISO (2026-10-23)', () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }],
+  ['Ziua săptămânii și data', () => new Date().toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })],
+];
+const ask = (label, cur) => {
+  const v = window.prompt(label, cur ?? '');
+  if (v === null) return undefined;
+  const n = parseFloat(String(v).replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
+};
 const SPECIAL = ['„', '”', '«', '»', '—', '–', '…', '§', '¶', '†', '•', '°', '×', 'ā', 'ī', 'ū', 'ṛ', 'ṝ', 'ḷ', 'ṅ', 'ñ', 'ṭ', 'ḍ', 'ṇ', 'ś', 'ṣ', 'ḥ', 'ṃ', 'Ā', 'Ī', 'Ū', 'Ś', 'Ṣ'];
 const PLACEHOLDERS = [
   ['<$n>', 'Număr capitol'],
@@ -28,6 +45,14 @@ function Swatches({ colors, onPick, onClear, clearLabel }) {
       ))}
       <button onMouseDown={(e) => e.preventDefault()} onClick={onClear}>{clearLabel}</button>
     </div>
+  );
+}
+
+function CustomColor({ onPick, label }) {
+  return (
+    <label className="custom-color" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+      {label} <input type="color" onChange={(e) => onPick(e.target.value)} />
+    </label>
   );
 }
 
@@ -57,6 +82,8 @@ export default function FormatBar({
   onAddAnnotation,
   onInsertImage,
   onManageStyles,
+  onFindFormatting,
+  defaultFormatting = null,
 }) {
   const s = useEditorState({
     editor,
@@ -86,6 +113,14 @@ export default function FormatBar({
       comment: ed.isActive('comment'),
       link: ed.isActive('link'),
       hasSelection: !ed.state.selection.empty,
+      smallCaps: ed.isActive('smallCaps'),
+      allCaps: ed.isActive('allCaps'),
+      fontFamily: ed.getAttributes('textStyle').fontFamily || '',
+      fontSize: ed.getAttributes('textStyle').fontSize || '',
+      image: ed.isActive('image'),
+      para: { ...ed.state.selection.$from.parent.attrs },
+      bookmarks: [...new Set(listBookmarks(ed.state.doc).map((b) => b.name))],
+      inBookmark: ed.isActive('bookmark') ? ed.getAttributes('bookmark').name : null,
     }),
   });
   const chain = () => editor.chain().focus();
@@ -146,8 +181,10 @@ export default function FormatBar({
   const insertItems = [
     { label: 'Imagine…', action: onInsertImage },
     { label: 'Link extern…', shortcut: 'Ctrl+L', action: insertLinkExternal },
-    { label: 'Linie orizontală / salt de pagină', action: () => chain().setHorizontalRule().run() },
+    { label: 'Linie orizontală', action: () => chain().setHorizontalRule().run() },
+    { label: 'Salt de pagină', shortcut: 'Ctrl+Enter', action: () => chain().setPageBreak().run() },
     { label: 'Data de azi', action: () => chain().insertContent(new Date().toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })).run() },
+    ...TIME_FORMATS.map(([label, fn]) => ({ label, action: () => chain().insertContent(fn()).run() })),
     '-',
     { label: 'Comentariu pe selecție', action: onAddComment, disabled: !s.hasSelection },
     { label: 'Adnotare inline', action: onAddAnnotation },
@@ -206,11 +243,70 @@ export default function FormatBar({
     ...POS_CLASSES.map(([id, name]) => ({ label: `${view.posFocus === id ? '✓ ' : ''}Focus lingvistic: ${name}`, action: () => setView({ posFocus: view.posFocus === id ? '' : id }) })),
     { label: `Limba pentru focus lingvistic: ${{ auto: 'automat', ro: 'română', en: 'engleză' }[view.posLang || 'auto']}`, action: () => setView({ posLang: { auto: 'ro', ro: 'en', en: 'auto' }[view.posLang || 'auto'] }) },
     { label: `${view.currentParagraph ? '✓ ' : ''}Evidențiază paragraful curent`, action: () => setView({ currentParagraph: !view.currentParagraph }) },
+    { label: `${view.currentLine ? '✓ ' : ''}Evidențiază linia curentă`, action: () => setView({ currentLine: !view.currentLine }) },
+    ...[[0.1, 'puternică'], [0.28, 'medie'], [0.5, 'slabă']].map(([v, n]) => ({ label: `${(view.fadeOpacity ?? 0.28) === v ? '✓ ' : ''}Estompare text ${n}`, action: () => setView({ fadeOpacity: v }) })),
     '-',
-    { label: `${view.pageView ? '✓ ' : ''}Page View (pagină A5)`, action: () => setView({ pageView: !view.pageView }) },
+    ...[['a5', 'A5'], ['a4', 'A4'], ['letter', 'Letter']].map(([id, n]) => ({ label: `${view.pageView && (view.pageSize || 'a5') === id ? '✓ ' : ''}Page View ${n}`, action: () => setView({ pageView: !(view.pageView && (view.pageSize || 'a5') === id), pageSize: id }) })),
+    { label: `${view.facing ? '✓ ' : ''}Pagini față-verso`, action: () => setView({ facing: !view.facing, pageView: true }) },
+    { label: `${view.ruler ? '✓ ' : ''}Arată rigla`, action: () => setView({ ruler: !view.ruler }) },
     { label: `${view.invisibles ? '✓ ' : ''}Arată semnele de paragraf`, action: () => setView({ invisibles: !view.invisibles }) },
     '-',
     ...[75, 100, 125, 150, 200].map((z) => ({ label: `${(view.zoom || 100) === z ? '✓ ' : ''}Zoom ${z}%`, action: () => setView({ zoom: z }) })),
+  ];
+
+  const p = s.para;
+  const setPara = (attrs) => chain().setParagraphFormat(attrs).run();
+  const num = (label, key, cur) => {
+    const v = ask(label, cur);
+    if (v !== undefined) setPara({ [key]: v });
+  };
+  const paraItems = [
+    ...[1, 1.15, 1.5, 2].map((v) => ({ label: `${p.lineHeight === v ? '✓ ' : ''}Spațiere între rânduri ${v}`, action: () => setPara({ lineHeight: v }) })),
+    { label: 'Spațiere între rânduri…', action: () => num('Spațiere între rânduri (ex. 1.3; gol = implicit):', 'lineHeight', p.lineHeight) },
+    '-',
+    { label: `Spațiu înainte… (${p.spaceBefore ?? '–'} pt)`, action: () => num('Spațiu înainte de paragraf, în pt (gol = implicit):', 'spaceBefore', p.spaceBefore) },
+    { label: `Spațiu după… (${p.spaceAfter ?? '–'} pt)`, action: () => num('Spațiu după paragraf, în pt (gol = implicit):', 'spaceAfter', p.spaceAfter) },
+    { label: `Indent prima linie… (${p.firstIndent ?? '–'} cm)`, action: () => num('Indent prima linie, în cm (negativ = agățat; gol = implicit):', 'firstIndent', p.firstIndent) },
+    { label: `Indent stânga… (${p.indentLeft ?? 0} cm)`, action: () => num('Indent stânga, în cm:', 'indentLeft', p.indentLeft) },
+    { label: `Indent dreapta… (${p.indentRight ?? 0} cm)`, action: () => num('Indent dreapta, în cm:', 'indentRight', p.indentRight) },
+    { label: 'Mărește indentul stânga (+1 cm)', action: () => setPara({ indentLeft: (p.indentLeft || 0) + 1 }) },
+    { label: 'Micșorează indentul stânga (−1 cm)', action: () => setPara({ indentLeft: Math.max(0, (p.indentLeft || 0) - 1) || null }) },
+    { label: 'Tab stops… (cm, separate prin virgulă)', action: () => { const v = window.prompt('Tab stops în cm (ex. 2, 4.5, 8):', p.tabStops || ''); if (v !== null) setPara({ tabStops: v.replace(/\s+/g, '') || null }); } },
+    '-',
+    { label: `${p.dir === 'rtl' ? '✓ ' : ''}Scriere de la dreapta la stânga (RTL)`, action: () => chain().toggleRtl().run() },
+    { label: `${view.ruler ? '✓ ' : ''}Arată rigla`, action: () => setView({ ruler: !view.ruler }) },
+    '-',
+    { label: 'Copiază formatarea', shortcut: 'Ctrl+Alt+C', action: () => chain().copyFormat().run() },
+    { label: 'Lipește formatarea', shortcut: 'Ctrl+Alt+V', action: () => chain().pasteFormat().run() },
+    { label: s.hasSelection ? 'Formatarea implicită pe selecție' : 'Formatarea implicită pe tot documentul', action: () => chain().applyDefaultFormatting(defaultFormatting || undefined).run() },
+    '-',
+    { label: 'Selectează cuvântul', shortcut: 'Ctrl+Alt+Shift+W', action: () => chain().selectWord().run() },
+    { label: 'Selectează fraza', shortcut: 'Ctrl+Alt+Shift+S', action: () => chain().selectSentence().run() },
+    { label: 'Selectează paragraful', shortcut: 'Ctrl+Alt+Shift+P', action: () => chain().selectParagraph().run() },
+  ];
+
+  const addBookmark = () => {
+    const name = window.prompt('Numele semnului de carte:', s.hasSelection ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' ').slice(0, 40) : '');
+    if (name) chain().setBookmark(name.trim()).run();
+  };
+  const bookmarkItems = [
+    { label: 'Adaugă semn de carte…', action: addBookmark },
+    { label: s.inBookmark ? `Șterge „${s.inBookmark}”` : 'Șterge semnul de la cursor', action: () => chain().removeBookmark(s.inBookmark).run(), disabled: !s.inBookmark },
+    '-',
+    ...(s.bookmarks.length ? s.bookmarks.map((b) => ({ label: `→ ${b}`, action: () => chain().goToBookmark(b).run() })) : [{ label: 'Niciun semn de carte', action: () => {}, disabled: true }]),
+    '-',
+    { label: 'Caută după formatare…', action: () => onFindFormatting?.(), disabled: !onFindFormatting },
+  ];
+
+  const imageItems = [
+    ...['25%', '50%', '75%', '100%'].map((w) => ({ label: `Lățime ${w}`, action: () => chain().setImageFormat({ width: w }).run() })),
+    { label: 'Lățime… (px sau %)', action: () => { const w = window.prompt('Lățimea imaginii (ex. 300 sau 60%):', editor.getAttributes('image').width || ''); if (w !== null) chain().setImageFormat({ width: w.trim() || null }).run(); } },
+    { label: 'Mărimea originală', action: () => chain().setImageFormat({ width: null, height: null }).run() },
+    '-',
+    { label: 'În text', action: () => chain().setImageFormat({ align: null }).run() },
+    { label: 'Aliniată la stânga (textul o înconjoară)', action: () => chain().setImageFormat({ align: 'left' }).run() },
+    { label: 'Centrată', action: () => chain().setImageFormat({ align: 'center' }).run() },
+    { label: 'Aliniată la dreapta (textul o înconjoară)', action: () => chain().setImageFormat({ align: 'right' }).run() },
   ];
 
   const copySpecial = async (kind) => {
@@ -244,6 +340,16 @@ export default function FormatBar({
         <option value="quote">Citat</option>
         <option value="code">Cod</option>
       </select>
+      <select className="font-select" value={s.fontFamily} onChange={(e) => (e.target.value ? chain().setFontFamily(e.target.value).run() : chain().unsetFontFamily().run())} title="Fontul textului selectat">
+        <option value="">Font implicit</option>
+        {s.fontFamily && !FONTS.includes(s.fontFamily) && <option value={s.fontFamily}>{s.fontFamily}</option>}
+        {FONTS.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
+      </select>
+      <select className="size-select" value={s.fontSize} onChange={(e) => (e.target.value ? chain().setFontSize(e.target.value).run() : chain().unsetFontSize().run())} title="Mărimea fontului">
+        <option value="">–</option>
+        {s.fontSize && !SIZES.includes(parseFloat(s.fontSize)) && <option value={s.fontSize}>{s.fontSize}</option>}
+        {SIZES.map((z) => <option key={z} value={`${z}pt`}>{z}</option>)}
+      </select>
       <span className="sep" />
       {btn(<b>B</b>, s.bold, () => chain().toggleBold().run(), 'Bold (Ctrl+B)')}
       {btn(<i>I</i>, s.italic, () => chain().toggleItalic().run(), 'Italic (Ctrl+I)')}
@@ -251,11 +357,15 @@ export default function FormatBar({
       {btn(<s>S</s>, s.strike, () => chain().toggleStrike().run(), 'Tăiat')}
       {btn(<span>x<sup>2</sup></span>, s.sup, () => chain().toggleSuperscript().run(), 'Superscript')}
       {btn(<span>x<sub>2</sub></span>, s.sub, () => chain().toggleSubscript().run(), 'Subscript')}
+      {btn(<span style={{ fontVariant: 'small-caps' }}>Aa</span>, s.smallCaps, () => chain().toggleSmallCaps().run(), 'Majuscule mici (small caps)')}
+      {btn('AA', s.allCaps, () => chain().toggleAllCaps().run(), 'Toate majuscule (fără a schimba textul)')}
       <Pop label={<span className="color-a">A</span>} title="Culoarea textului">
         <Swatches colors={TEXT_COLORS} onPick={(c) => chain().setColor(c).run()} onClear={() => chain().unsetColor().run()} clearLabel="Automat" />
+        <CustomColor label="Altă culoare" onPick={(c) => chain().setColor(c).run()} />
       </Pop>
       <Pop label={<span className="hl-a">H</span>} title="Highlight">
         <Swatches colors={HIGHLIGHTS} onPick={(c) => chain().toggleHighlight({ color: c }).run()} onClear={() => chain().unsetHighlight().run()} clearLabel="Fără" />
+        <CustomColor label="Altă culoare" onPick={(c) => chain().setHighlight({ color: c }).run()} />
       </Pop>
       <span className="sep" />
       {btn('⯇', s.align === 'left', () => chain().unsetTextAlign().run(), 'Aliniere stânga')}
@@ -265,6 +375,7 @@ export default function FormatBar({
       <span className="sep" />
       {btn('•', s.bullet, () => chain().toggleBulletList().run(), 'Listă cu buline')}
       {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), 'Listă numerotată')}
+      <Menu label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} />
       {btn('⇥', false, () => chain().sinkListItem('listItem').run(), 'Indentează elementul de listă', !s.inList)}
       {btn('⇤', false, () => chain().liftListItem('listItem').run(), 'Scoate din indentare', !s.inList)}
       {btn('— ', false, () => chain().insertContent('— ').run(), 'Linie de dialog')}
@@ -281,6 +392,9 @@ export default function FormatBar({
       />
       <span className="sep" />
       <Menu label="Inserează" items={insertItems} />
+      <Menu label="Paragraf" items={paraItems} />
+      <Menu label="Semne de carte" items={bookmarkItems} />
+      {s.image && <Menu label="Imagine" items={imageItems} />}
       <Menu label="Tabel" items={tableItems} />
       <Menu label="Caractere" items={SPECIAL.map((c) => ({ label: c, action: () => chain().insertContent(c).run() }))} />
       <Menu label="Transformă" items={transformItems} />

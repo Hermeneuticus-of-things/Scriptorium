@@ -40,6 +40,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     smartQuotes: init.smartQuotes !== false,
     smartDashes: init.smartDashes !== false,
     smartEllipsis: init.smartEllipsis !== false,
+    smartFractions: Boolean(init.smartFractions),
     autoCapitalize: Boolean(init.autoCapitalize),
     spellLanguages: (init.spellLanguages || []).join(', '),
     autoReplacements: (init.autoReplacements || []).map((r) => ({ ...r })),
@@ -302,6 +303,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         {check('smartQuotes', t('set.smartQuotes'))}
         {check('smartDashes', t('set.smartDashes'))}
         {check('smartEllipsis', t('set.smartEllipsis'))}
+        {check('smartFractions', 'Fracții: 1/2 → ½, 3/4 → ¾')}
         {check('autoCapitalize', t('set.autoCapitalize'))}
         <label>
           {t('set.spellLangs')}
