@@ -306,3 +306,11 @@ legend { color: var(--muted); padding: 0 4px; }
 .page.page-view { max-width: 148mm; min-height: 210mm; padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
 .page.invisibles .ProseMirror p::after, .page.invisibles .ProseMirror h1::after, .page.invisibles .ProseMirror h2::after, .page.invisibles .ProseMirror h3::after { content: '¶'; color: var(--muted); opacity: .5; margin-left: 2px; }
 .page.invisibles .ProseMirror br::after { content: '↵'; }
+.app.composition .workspace { background: var(--comp-bg, var(--bg)); }
+.app.composition .page { max-width: var(--comp-width, 40em); }
+.app.composition.comp-paper .page { background: color-mix(in srgb, var(--paper) calc(var(--comp-fade, 1) * 100%), transparent); border: none; box-shadow: 0 0 40px rgba(0,0,0,.25); padding: 48px 56px; }
+.styles-layout { display: grid; grid-template-columns: 200px 1fr; gap: 16px; }
+.style-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 6px; max-height: 50vh; overflow: auto; }
+.style-list li { padding: 6px 10px; cursor: pointer; border-bottom: 1px solid var(--line); }
+.style-list li.on { background: var(--accent-soft); }
+.style-preview { border: 1px dashed var(--line); padding: 10px; font-family: Georgia, serif; border-radius: 6px; }

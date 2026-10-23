@@ -170,6 +170,11 @@ handle('settings:get', () => {
     theme: s.theme,
     fontSize: s.fontSize,
     typewriter: s.typewriter,
+    compBg: s.compBg || '',
+    compWidth: s.compWidth || 40,
+    compPaper: s.compPaper !== false,
+    compFade: s.compFade || 100,
+    spellLanguages: s.spellLanguages || ['ro', 'en-US'],
     smartQuotes: s.smartQuotes !== false,
     backupOnClose: b.backupOnClose,
     backupEveryMin: b.backupEveryMin,
@@ -290,6 +295,17 @@ handle('project:watch', (e, dir) => {
   assertOpened(dir);
   watchProject(dir, e.sender);
   return true;
+});
+
+// Stylesheet import: read only the "styles" list of another project.
+handle('styles:readFromProject', async (e) => {
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Alege proiectul din care imporți stilurile',
+    properties: ['openDirectory'],
+  });
+  if (res.canceled) return null;
+  const project = store.loadProject(res.filePaths[0]);
+  return Array.isArray(project.styles) ? project.styles : [];
 });
 
 handle('media:read', (_e, dir, file) => {

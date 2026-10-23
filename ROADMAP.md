@@ -96,19 +96,23 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 ## 2. v0.3: revizie și publicare
 
 ### 2.1 Editor și format
-- [ ] Bara de format completă: superscript, subscript, culoare text, highlight (5 culori), aliniere, tabele, imagini, liste numerotate
-- [ ] Ruler: indent prima linie, spațiere, tab-uri
-- [ ] Styles (Paragraph / Character / Para+Char), panou, Redefine, Next style, scurtături, import stylesheet
-- [ ] Revision Mode (5 nivele de culoare), eliminare culori de revizie
-- [ ] Adnotări inline din bara editorului, conversie inline ↔ comentariu, inline ↔ notă legată
-- [ ] Scrivener Links `[[` și linkuri externe din bara editorului
-- [ ] Page View, Text Zoom, Show Invisibles, header/footer bar
-- [ ] Linguistic Focus (dialog, părți de vorbire), Highlight current line
-- [ ] Composition: fundal, lățime, opacitate, Inspector plutitor
-- [ ] Transformations: majuscule, spații duble, ghilimele
-- [ ] Insert: dată, placeholder, caractere speciale, salt de pagină
-- [ ] Copy Special (text simplu, HTML, Markdown, fără note)
-- [ ] Auto-complete cu nume din proiect
+- [x] Bara de format completă: stil de paragraf, superscript, subscript, culoare text, highlight (5 culori), aliniere, tabele (rânduri, coloane, antet, unire, împărțire), imagini, liste numerotate cu indentare
+- [~] Ruler: indent și spațiere prin stiluri; lipsesc riglă vizuală și tab-uri
+- [x] Styles de paragraf și de caractere: panou, creare, editare, Redefine din selecție, import din alt proiect (păstrează / înlocuiește / adaugă), duse în Compile
+- [ ] Styles: Para+Char, Next style, scurtături de tastatură
+- [x] Revision Mode (5 runde colorate), acceptarea tuturor sau a unei runde, eliminate la Compile
+- [x] Adnotări inline din bara editorului, conversie adnotare ↔ comentariu
+- [ ] Conversie adnotare / notă inline ↔ notă legată
+- [x] Scrivener Links `[[ ]]` (Ctrl+clic deschide documentul) și linkuri externe (Ctrl+L)
+- [x] Page View (A5), Text Zoom 75–200%, semne de paragraf, caractere în bara de stare
+- [x] Linguistic Focus: dialog, paragraf, frază; evidențierea paragrafului curent
+- [ ] Linguistic Focus pe părți de vorbire (substantive, verbe, adjective)
+- [x] Composition: fundal, lățimea textului, opacitatea paginii, pagină de hârtie
+- [ ] Composition: Inspector plutitor
+- [x] Transformations: majuscule, minuscule, Title Case, propoziție, spații duble, ghilimele, cratime
+- [x] Insert: dată, placeholdere Scrivener, caractere speciale (inclusiv diacritice sanscrite), linie / salt de pagină
+- [x] Copy Special (text simplu, Markdown, HTML, HTML fără note)
+- [x] Auto-complete cu nume din proiect (Tab)
 
 ### 2.2 Proiect și organizare
 - [ ] Project Settings complet: Labels, Status, Custom Metadata, Section Types, Auto-complete, Special Folders, Bookmarks
