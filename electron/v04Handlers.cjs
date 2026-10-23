@@ -20,6 +20,23 @@ const folderSync = require('../lib/folderSync.cjs');
 const { parseBibliography } = require('../lib/bibliography.cjs');
 const adv = require('../lib/advancedExport.cjs');
 const { safeName } = require('../lib/exporters.cjs');
+const history = require('../lib/history.cjs');
+
+// io for exportScriv: text, media, snapshots (with their html) and the writing history.
+function scrivExportIo(store, dir) {
+  return {
+    readDoc: (id, kind) => {
+      try {
+        return store.readDoc(dir, id, kind);
+      } catch {
+        return '';
+      }
+    },
+    readMedia: (file) => store.readMedia(dir, file),
+    listSnapshots: (id) => store.listSnapshots(dir, id),
+    readHistory: () => history.readHistory(dir),
+  };
+}
 
 module.exports = function register({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite }) {
   const winOf = (e) => BrowserWindow.fromWebContents(e.sender);
@@ -47,7 +64,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     assertOpened(dir);
     const parent = await pickFolder(e, 'Exportă ca proiect Scrivener: alege folderul');
     if (!parent) return null;
-    return exportScriv(project, { readDoc: (id, kind) => reader(dir, kind)(id), readMedia: (file) => store.readMedia(dir, file) }, parent);
+    return exportScriv(project, scrivExportIo(store, dir), parent);
   });
 
   // File > Sync > With External Folder (write)
@@ -131,3 +148,5 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     return saveText(e, mmd ? 'Exportă MultiMarkdown' : 'Exportă Pandoc Markdown', `${safeName(project.title)}.${mmd ? 'mmd' : 'md'}`, [{ name: 'Markdown', extensions: [mmd ? 'mmd' : 'md'] }], text);
   });
 };
+
+module.exports.scrivExportIo = scrivExportIo;
