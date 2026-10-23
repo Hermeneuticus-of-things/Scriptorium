@@ -157,6 +157,8 @@ label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--t
 .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .home-grid section { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 .home-grid h2 { margin: 0; font-size: 16px; }
+.home-links { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+.home-links > * + * { border-left: 1px solid var(--line); padding-left: 16px; border-radius: 0; }
 .recent { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 
 @media (max-width: 900px) {
@@ -350,12 +352,12 @@ legend { color: var(--muted); padding: 0 4px; }
 .col-chooser { position: relative; }
 .col-chooser summary { cursor: pointer; border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; background: var(--paper); }
 .col-list { position: absolute; right: 0; z-index: 10; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.15); display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
-.quickref { position: fixed; z-index: 15; width: 420px; height: 360px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.25); display: flex; flex-direction: column; resize: both; overflow: hidden; }
+.quickref { position: fixed; z-index: 9; width: 420px; height: 360px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.25); display: flex; flex-direction: column; resize: both; overflow: hidden; }
 .quickref-head { display: flex; gap: 8px; align-items: center; padding: 6px 10px; background: var(--panel); border-bottom: 1px solid var(--line); cursor: move; }
 .quickref-body { flex: 1; overflow: auto; }
 .quickref-body .page { margin: 0; border: none; box-shadow: none; padding: 12px 18px; max-width: none; }
 .quickref-body .prose .ProseMirror { min-height: 0; font-size: 15px; }
-.shortcut-table { max-height: 60vh; overflow: auto; columns: 2; column-gap: 24px; }
+.shortcut-table { max-height: 60vh; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 0 24px; align-items: start; }
 .shortcut-table section { break-inside: avoid; margin-bottom: 10px; }
 .shortcut-table h4 { margin: 0 0 4px; }
 .shortcut-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
@@ -365,7 +367,7 @@ legend { color: var(--muted); padding: 0 4px; }
 
 /* --- roadmap 2.1/2.2: linked footnotes, floating inspector, bookmarks, note tabs, pinned recents --- */
 .prose .linked-footnote { text-decoration: underline dotted; text-decoration-color: var(--accent, #1565c0); background: color-mix(in srgb, var(--accent, #1565c0) 10%, transparent); }
-.floating-inspector { position: fixed; z-index: 60; width: 300px; max-height: 80vh; overflow: auto; background: var(--panel, var(--bg, #fff)); color: inherit; border: 1px solid var(--border, #ccc); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.25); padding: 0 10px 10px; }
+.floating-inspector { position: fixed; z-index: 9; width: 300px; max-height: 80vh; overflow: auto; background: var(--panel, var(--bg, #fff)); color: inherit; border: 1px solid var(--border, #ccc); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.25); padding: 0 10px 10px; }
 .floating-inspector .fi-head { display: flex; align-items: center; gap: 6px; cursor: move; padding: 8px 0; user-select: none; border-bottom: 1px solid var(--border, #ccc); margin-bottom: 8px; }
 .floating-inspector .fi-notes .notes { min-height: 80px; border: 1px solid var(--border, #ccc); border-radius: 4px; padding: 4px; }
 .bookmarks-panel .bookmark-list { list-style: none; padding: 0; margin: 4px 0; }

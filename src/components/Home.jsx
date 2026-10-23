@@ -124,9 +124,11 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
           {recent.length > pinned.length && <button className="link" onClick={clearRecent}>Golește lista (păstrează fixatele)</button>}
         </section>
       </div>
-      <button className="link" onClick={onSettings}>Setări</button>
-      {onHelp && <> · <button className="link" onClick={onHelp}>Manual (F1)</button></>}
-      {onTutorial && <> · <button className="link" onClick={onTutorial}>Tutorial interactiv</button></>}
+      <nav className="home-links">
+        <button className="link" onClick={onSettings}>Setări</button>
+        {onHelp && <button className="link" onClick={onHelp}>Manual (F1)</button>}
+        {onTutorial && <button className="link" onClick={onTutorial}>Tutorial interactiv</button>}
+      </nav>
     </div>
   );
 }

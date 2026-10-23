@@ -1,5 +1,18 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-23 — v0.6.0 — Bug-uri reparate la cauză, AI cu orice furnizor, UI/UX ca Scrivener 3
+
+### Cerința user
+> "repare bug cu best practice root cause" · "ori ce cheie API, nu doar Anthropic" · "NotebookLM" · "UI și UX (Scrivener clone)"
+
+### Rezultat
+- Bug-uri reproduse cu test, apoi reparate la cauză: sincronizare folder (căi în afara folderului), import mixt, salvări din stare veche, scrieri pierdute la eroare, setări atomice, snapshot cu dată invalidă, MCP after_id, editor (redo/undo, cursor în split, $n, ghilimele românești, apostrof, regex pătratice, viteză pe documente lungi), AI (raționament în răspuns, răspunsuri goale/blocate/tăiate, cache pe model, propuneri peste editări noi, anulare și limită de timp).
+- AI cu orice furnizor (Anthropic, OpenAI, Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Ollama, LM Studio, compatibil OpenAI), cheie criptată per furnizor; export pentru NotebookLM.
+- UX ca Scrivener 3: săgeți și căutare din tastatură în binder, Delete în coș, documente noi în modul redenumire, undo/redo în binder, corkboard și outline din tastatură, scurtături fără Ctrl+Alt (AltGr).
+- UI: contrast AA în luminos și întunecat, bara de unelte la 1024 px, ferestre care nu ies din ecran, stări de selecție ca în Scrivener.
+- CI nou (teste, build, E2E Electron), `npm audit` 0 vulnerabilități.
+- Teste: 386 trec; E2E Electron OK local și în CI.
+
 ## 2026-10-23 — v0.5.1 — CI reparat
 
 ### Cerința user

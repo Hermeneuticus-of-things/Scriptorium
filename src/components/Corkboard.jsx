@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cardHeight } from '../lib/panelsExtra.js';
+import { FolderIcon } from './Icons.jsx';
 
 const SIZES = { mic: 180, mediu: 230, mare: 300 };
 
@@ -41,7 +42,7 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
   return (
     <article
       className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''}`}
-      style={{ borderTopColor: colors[n.label] || 'transparent', ...(selected ? { outline: '2px solid var(--accent, #3b82f6)', outlineOffset: 2 } : null), ...style }}
+      style={{ borderTopColor: colors[n.label] || 'transparent', ...style }}
       data-card-id={n.id}
       tabIndex={0}
       aria-selected={Boolean(selected)}
@@ -76,12 +77,12 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
             }}
           />
         ) : (
-          <span>
-            {n.children ? '📁 ' : ''}
+          <span className="card-title">
+            {n.children ? <FolderIcon /> : null}
             {n.title}
           </span>
         )}
-        <button className="link" onClick={() => onOpen(n.id)}>Deschide</button>
+        <button className="link card-open" onClick={() => onOpen(n.id)}>Deschide</button>
       </header>
       {n.synopsisImage && (n.showSynopsisImage !== false) ? (
         <SynopsisImage file={n.synopsisImage} readMedia={readMedia} />
