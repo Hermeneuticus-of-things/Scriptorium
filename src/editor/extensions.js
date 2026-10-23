@@ -1,3 +1,4 @@
+import { ScriptMode } from '../extensions/ScriptMode.js';
 import { Mark, Node, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Placeholder } from '@tiptap/extension-placeholder';
@@ -9,6 +10,7 @@ import { Highlight } from '@tiptap/extension-highlight';
 import { TextStyle, Color } from '@tiptap/extension-text-style';
 import { Superscript } from '@tiptap/extension-superscript';
 import { Subscript } from '@tiptap/extension-subscript';
+import { LinguisticFocus } from '../extensions/LinguisticFocus.js';
 import { AutoComplete, CharStyle, ParagraphStyle, Revision, WritingFocus } from './writing.js';
 
 // Comment attached to a text range: <span data-comment="text" class="comment">…</span>
@@ -87,6 +89,36 @@ export const Footnote = Node.create({
   },
 });
 
+// Linked footnote (Scrivener "linked footnote"): a mark over the anchor text,
+// <span data-linked-footnote="note" class="linked-footnote">anchor</span>.
+export const LinkedFootnote = Mark.create({
+  name: 'linkedFootnote',
+  inclusive: false,
+  addAttributes() {
+    return {
+      text: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-linked-footnote') || '',
+        renderHTML: (attrs) => ({ 'data-linked-footnote': attrs.text, title: attrs.text }),
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[data-linked-footnote]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes, { class: 'linked-footnote' }), 0];
+  },
+  addCommands() {
+    return {
+      setLinkedFootnote:
+        (text) =>
+        ({ commands }) =>
+          commands.setMark(this.name, { text }),
+    };
+  },
+});
+
 // Inline annotation (Scrivener "inline annotation"): a note inside the text that never compiles.
 export const Annotation = Node.create({
   name: 'annotation',
@@ -136,7 +168,7 @@ export const UnsupportedImage = Node.create({
   },
 });
 
-export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [] } = {}) {
+export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [] } = {}) {
   const ext = [
     ParagraphStyle,
     CharStyle,
@@ -147,7 +179,10 @@ export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuo
     Placeholder.configure({ placeholder }),
     Comment,
     Footnote,
+    LinkedFootnote,
     Annotation,
+    LinguisticFocus,
+    ScriptMode.configure({ getFormat: getScriptFormat, getCharacters }),
     UnsupportedImage,
     Image.configure({ allowBase64: true, inline: true }),
     TableKit.configure({ table: { resizable: false } }),

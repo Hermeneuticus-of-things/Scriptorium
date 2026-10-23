@@ -25,7 +25,7 @@ function decl(st) {
   if (st.underline) d.push('text-decoration: underline');
   if (st.color) d.push(`color: ${st.color}`);
   if (st.size && st.size !== 100) d.push(`font-size: ${st.size}%`);
-  if (st.type === 'para') {
+  if (st.type === 'para' || st.type === 'both') {
     if (st.align) d.push(`text-align: ${st.align}`);
     if (st.indent) d.push(`margin-left: ${st.indent}em`, `margin-right: ${st.indent}em`);
     if (st.spacing) d.push(`margin-top: ${st.spacing}em`, `margin-bottom: ${st.spacing}em`);
@@ -38,8 +38,79 @@ function decl(st) {
 export function styleCss(styles, scope = '.prose') {
   return styles
     .map((st) => {
-      const sel = st.type === 'para' ? `${scope} [data-style="${st.id}"]` : `${scope} [data-char-style="${st.id}"]`;
+      const sel = st.type === 'para' || st.type === 'both' ? `${scope} [data-style="${st.id}"]` : `${scope} [data-char-style="${st.id}"]`;
       return `${sel} { ${decl(st)} }`;
     })
     .join('\n');
+}
+
+// --- Style kinds, "Next style", keyboard shortcuts ------------------------
+// type: 'para' (paragraph), 'char' (characters) or 'both' (Para+Char: applied to
+// the whole paragraph, carrying both paragraph layout and character look).
+// next: id of the style for the paragraph created by Enter at the end of a
+// paragraph with this style; undefined/'' = keep the same style, 'none' = no style.
+// shortcut: e.g. "Ctrl+Alt+1" (Ctrl means Ctrl or Cmd).
+
+export const STYLE_KINDS = [
+  ['para', 'Paragraf'],
+  ['char', 'Caractere'],
+  ['both', 'Paragraf + caractere'],
+];
+
+export const isParaStyle = (st) => Boolean(st) && (st.type === 'para' || st.type === 'both');
+export const isCharStyle = (st) => Boolean(st) && st.type === 'char';
+
+// Style id for the new paragraph after Enter; null = no style.
+export function nextStyleId(styles, id) {
+  if (!id) return null;
+  const st = (styles || []).find((s) => s.id === id);
+  if (!st || !st.next) return id;
+  if (st.next === 'none') return null;
+  return (styles || []).some((s) => s.id === st.next) ? st.next : id;
+}
+
+const MOD_ORDER = ['Ctrl', 'Alt', 'Shift'];
+// Canonical "Ctrl+Alt+Shift+K" form; '' when the text is not a usable shortcut.
+export function normalizeShortcut(text) {
+  if (!text) return '';
+  const parts = String(text).split('+').map((p) => p.trim()).filter(Boolean);
+  const mods = new Set();
+  let key = '';
+  for (const p of parts) {
+    const l = p.toLowerCase();
+    if (['ctrl', 'control', 'cmd', 'meta', 'mod', 'command'].includes(l)) mods.add('Ctrl');
+    else if (['alt', 'option', 'opt'].includes(l)) mods.add('Alt');
+    else if (l === 'shift') mods.add('Shift');
+    else key = p.length === 1 ? p.toUpperCase() : p[0].toUpperCase() + p.slice(1).toLowerCase();
+  }
+  if (!key || (!mods.has('Ctrl') && !mods.has('Alt'))) return '';
+  return [...MOD_ORDER.filter((m) => mods.has(m)), key].join('+');
+}
+
+// Shortcut string for a keydown event (uses e.code so Alt+digit works on macOS).
+export function eventShortcut(e) {
+  const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code || '') || /^Key([A-Z])$/.exec(e.code || '');
+  const key = m ? m[1] : e.key;
+  if (!key || ['Control', 'Alt', 'Shift', 'Meta'].includes(key)) return '';
+  const parts = [];
+  if (e.ctrlKey || e.metaKey) parts.push('Ctrl');
+  if (e.altKey) parts.push('Alt');
+  if (e.shiftKey) parts.push('Shift');
+  parts.push(key.length === 1 ? key.toUpperCase() : key);
+  return normalizeShortcut(parts.join('+'));
+}
+
+export function styleForShortcut(styles, shortcut) {
+  if (!shortcut) return null;
+  return (styles || []).find((s) => s.shortcut && normalizeShortcut(s.shortcut) === shortcut) || null;
+}
+
+// Shortcuts used by more than one style (shown as a warning in the dialog).
+export function duplicateShortcuts(styles) {
+  const seen = new Map();
+  for (const s of styles || []) {
+    const k = normalizeShortcut(s.shortcut);
+    if (k) seen.set(k, (seen.get(k) || 0) + 1);
+  }
+  return [...seen].filter(([, n]) => n > 1).map(([k]) => k);
 }

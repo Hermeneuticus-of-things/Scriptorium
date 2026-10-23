@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { stylesOf } from '../lib/styles.js';
+import { STYLE_KINDS, duplicateShortcuts, isParaStyle, normalizeShortcut, stylesOf } from '../lib/styles.js';
 
 const EMPTY = { name: 'Stil nou', type: 'para', bold: false, italic: false, smallCaps: false, underline: false, align: '', indent: 0, size: 100, color: '' };
 
@@ -21,6 +21,7 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
   const [styles, setStyles] = useState(() => structuredClone(stylesOf(project)));
   const [sel, setSel] = useState(0);
   const st = styles[sel];
+  const dupes = duplicateShortcuts(styles);
 
   const patch = (p) => setStyles((all) => all.map((x, i) => (i === sel ? { ...x, ...p } : x)));
   const add = () => {
@@ -66,7 +67,8 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
           <ul className="style-list">
             {styles.map((s, i) => (
               <li key={s.id} className={i === sel ? 'on' : ''} onClick={() => setSel(i)}>
-                <span className="muted">{s.type === 'para' ? '¶' : 'a'}</span> {s.name}
+                <span className="muted">{s.type === 'both' ? '¶a' : s.type === 'para' ? '¶' : 'a'}</span> {s.name}
+                {s.shortcut && <kbd className="muted"> {s.shortcut}</kbd>}
               </li>
             ))}
           </ul>
@@ -80,11 +82,37 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
                 <label>
                   Tip
                   <select value={st.type} onChange={(e) => patch({ type: e.target.value })}>
-                    <option value="para">Paragraf</option>
-                    <option value="char">Caractere</option>
+                    {STYLE_KINDS.map(([k, label]) => (
+                      <option key={k} value={k}>{label}</option>
+                    ))}
                   </select>
                 </label>
               </div>
+              <div className="row">
+                {isParaStyle(st) && (
+                  <label>
+                    Stilul următor (după Enter)
+                    <select value={st.next || ''} onChange={(e) => patch({ next: e.target.value || undefined })}>
+                      <option value="">Același stil</option>
+                      <option value="none">Fără stil</option>
+                      {styles.filter((x) => isParaStyle(x) && x.id !== st.id).map((x) => (
+                        <option key={x.id} value={x.id}>{x.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <label>
+                  Scurtătură
+                  <input
+                    placeholder="ex. Ctrl+Alt+1"
+                    defaultValue={st.shortcut || ''}
+                    key={`sc-${st.id}`}
+                    onBlur={(e) => patch({ shortcut: normalizeShortcut(e.target.value) || undefined })}
+                    title="Ctrl (sau Cmd) și/sau Alt, plus o tastă"
+                  />
+                </label>
+              </div>
+              {dupes.length > 0 && <p className="warn">Scurtătură folosită de mai multe stiluri: {dupes.join(', ')}</p>}
               <div className="checks">
                 {[
                   ['bold', 'Bold'],
@@ -107,7 +135,7 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
                   <input type="color" value={st.color || '#000000'} onChange={(e) => patch({ color: e.target.value === '#000000' ? '' : e.target.value })} />
                 </label>
               </div>
-              {st.type === 'para' && (
+              {isParaStyle(st) && (
                 <div className="row">
                   <label>
                     Aliniere
@@ -133,7 +161,7 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
                 textAlign: st.align || 'left',
                 fontSize: `${st.size || 100}%`,
                 color: st.color || undefined,
-                marginLeft: st.type === 'para' ? `${st.indent || 0}em` : 0,
+                marginLeft: isParaStyle(st) ? `${st.indent || 0}em` : 0,
               }}>
                 Fapta lasă o urmă care se maturizează în timp.
               </p>

@@ -3,6 +3,9 @@ import { useEditorState } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import Menu from './Menu.jsx';
 import { htmlToManuscript } from '../lib/editorial.js';
+import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linkedToFootnotes } from '../lib/noteConvert.js';
+import { isParaStyle } from '../lib/styles.js';
+import { POS_CLASSES } from '../lib/pos.js';
 
 const TEXT_COLORS = ['#b3261e', '#c77700', '#2e7d32', '#1565c0', '#6a1b9a', '#5d4037', '#757575'];
 const HIGHLIGHTS = ['#fff176', '#a5d6a7', '#90caf9', '#f8bbd0', '#ffcc80'];
@@ -16,61 +19,6 @@ const PLACEHOLDERS = [
   ['<$date>', 'Data compilării'],
   ['<$p>', 'Număr pagină'],
 ];
-
-// Inline annotation -> comment on the word just before it (Scrivener "Convert
-// Inline Annotations to Comments"). Annotations at the start of a paragraph
-// anchor on the following word.
-function annotationsToComments(editor) {
-  const { state } = editor;
-  const type = state.schema.marks.comment;
-  const found = [];
-  state.doc.descendants((node, pos) => {
-    if (node.type.name === 'annotation') found.push({ pos, text: node.attrs.text });
-  });
-  if (!found.length) return;
-  const tr = state.tr;
-  for (const a of found.reverse()) {
-    const $pos = state.doc.resolve(a.pos);
-    const parentStart = a.pos - $pos.parentOffset;
-    const before = $pos.parent.textBetween(0, $pos.parentOffset, undefined, '￼');
-    const after = $pos.parent.textBetween($pos.parentOffset + 1, $pos.parent.content.size, undefined, '￼');
-    const mb = /([\p{L}\p{N}’'-]+)[\s\p{P}]*$/u.exec(before);
-    const ma = /^[\s\p{P}]*([\p{L}\p{N}’'-]+)/u.exec(after);
-    tr.delete(a.pos, a.pos + 1);
-    if (mb) {
-      const end = parentStart + mb.index + mb[1].length;
-      tr.addMark(end - mb[1].length, end, type.create({ comment: a.text }));
-    } else if (ma) {
-      // "after" starts right behind the deleted annotation, i.e. at a.pos once it is gone
-      const start = a.pos + (ma[0].length - ma[1].length);
-      tr.addMark(start, start + ma[1].length, type.create({ comment: a.text }));
-    }
-  }
-  editor.view.dispatch(tr);
-}
-
-// Comment -> inline annotation placed right after the commented text.
-function commentsToAnnotations(editor) {
-  const { state } = editor;
-  const markType = state.schema.marks.comment;
-  const nodeType = state.schema.nodes.annotation;
-  const ranges = [];
-  state.doc.descendants((node, pos) => {
-    if (!node.isText) return;
-    const m = node.marks.find((x) => x.type === markType);
-    if (!m) return;
-    const last = ranges[ranges.length - 1];
-    if (last && last.to === pos && last.text === m.attrs.comment) last.to = pos + node.nodeSize;
-    else ranges.push({ from: pos, to: pos + node.nodeSize, text: m.attrs.comment });
-  });
-  if (!ranges.length) return;
-  const tr = state.tr;
-  for (const r of ranges.reverse()) {
-    tr.removeMark(r.from, r.to, markType);
-    tr.insert(r.to, nodeType.create({ text: r.text }));
-  }
-  editor.view.dispatch(tr);
-}
 
 function Swatches({ colors, onPick, onClear, clearLabel }) {
   return (
@@ -220,6 +168,8 @@ export default function FormatBar({
     '-',
     { label: 'Adnotări inline → comentarii', action: () => annotationsToComments(editor) },
     { label: 'Comentarii → adnotări inline', action: () => commentsToAnnotations(editor) },
+    { label: 'Note de subsol inline → note legate', action: () => footnotesToLinked(editor) },
+    { label: 'Note legate → note de subsol inline', action: () => linkedToFootnotes(editor) },
     '-',
     { label: 'Șterge formatarea caracterelor', action: () => chain().unsetAllMarks().run() },
     { label: 'Elimină highlight-ul', action: () => chain().unsetHighlight().run() },
@@ -232,8 +182,8 @@ export default function FormatBar({
   };
 
   const styleItems = [
-    ...styles.filter((st) => st.type === 'para').map((st) => ({ label: `¶ ${st.name}`, action: () => chain().setParagraphStyle(st.id).run() })),
-    ...styles.filter((st) => st.type === 'char').map((st) => ({ label: `a ${st.name}`, action: () => chain().setCharStyle(st.id).run(), disabled: !s.hasSelection })),
+    ...styles.filter(isParaStyle).map((st) => ({ label: `${st.type === 'both' ? '¶a' : '¶'} ${st.name}`, shortcut: st.shortcut || undefined, action: () => chain().setParagraphStyle(st.id).run() })),
+    ...styles.filter((st) => st.type === 'char').map((st) => ({ label: `a ${st.name}`, shortcut: st.shortcut || undefined, action: () => chain().setCharStyle(st.id).run(), disabled: !s.hasSelection })),
     '-',
     { label: 'Fără stil de paragraf', action: () => chain().setParagraphStyle(null).run() },
     { label: 'Fără stil de caractere', action: () => chain().setCharStyle(null).run() },
@@ -253,6 +203,8 @@ export default function FormatBar({
     { label: `${view.focus === 'dialogue' ? '✓ ' : ''}Focus pe dialog`, action: () => setView({ focus: view.focus === 'dialogue' ? 'off' : 'dialogue' }) },
     { label: `${view.focus === 'paragraph' ? '✓ ' : ''}Focus pe paragraful curent`, action: () => setView({ focus: view.focus === 'paragraph' ? 'off' : 'paragraph' }) },
     { label: `${view.focus === 'sentence' ? '✓ ' : ''}Focus pe fraza curentă`, action: () => setView({ focus: view.focus === 'sentence' ? 'off' : 'sentence' }) },
+    ...POS_CLASSES.map(([id, name]) => ({ label: `${view.posFocus === id ? '✓ ' : ''}Focus lingvistic: ${name}`, action: () => setView({ posFocus: view.posFocus === id ? '' : id }) })),
+    { label: `Limba pentru focus lingvistic: ${{ auto: 'automat', ro: 'română', en: 'engleză' }[view.posLang || 'auto']}`, action: () => setView({ posLang: { auto: 'ro', ro: 'en', en: 'auto' }[view.posLang || 'auto'] }) },
     { label: `${view.currentParagraph ? '✓ ' : ''}Evidențiază paragraful curent`, action: () => setView({ currentParagraph: !view.currentParagraph }) },
     '-',
     { label: `${view.pageView ? '✓ ' : ''}Page View (pagină A5)`, action: () => setView({ pageView: !view.pageView }) },

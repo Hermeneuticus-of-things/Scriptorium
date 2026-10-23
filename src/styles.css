@@ -209,7 +209,7 @@ label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--t
 .card.drop-before { box-shadow: -4px 0 0 var(--accent); }
 .card.drop-after { box-shadow: 4px 0 0 var(--accent); }
 .menu { position: relative; }
-.menu-pop { position: absolute; right: 0; top: calc(100% + 4px); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 4px; min-width: 280px; z-index: 30; display: flex; flex-direction: column; }
+.menu-pop { max-height: 75vh; overflow: auto; position: absolute; right: 0; top: calc(100% + 4px); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 4px; min-width: 280px; z-index: 30; display: flex; flex-direction: column; }
 .menu-pop button { border: none; background: none; text-align: left; display: flex; justify-content: space-between; gap: 12px; padding: 6px 10px; border-radius: 5px; }
 .menu-pop button:hover:not(:disabled) { background: var(--accent-soft); }
 .menu-pop hr { border: none; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
@@ -362,3 +362,19 @@ legend { color: var(--muted); padding: 0 4px; }
 .shortcut-row span { flex: 1; font-size: 13px; }
 .shortcut-row input { width: 130px; text-align: center; cursor: pointer; }
 .shortcut-row.conflict input { border-color: var(--danger); color: var(--danger); }
+
+/* --- roadmap 2.1/2.2: linked footnotes, floating inspector, bookmarks, note tabs, pinned recents --- */
+.prose .linked-footnote { text-decoration: underline dotted; text-decoration-color: var(--accent, #1565c0); background: color-mix(in srgb, var(--accent, #1565c0) 10%, transparent); }
+.floating-inspector { position: fixed; z-index: 60; width: 300px; max-height: 80vh; overflow: auto; background: var(--panel, var(--bg, #fff)); color: inherit; border: 1px solid var(--border, #ccc); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.25); padding: 0 10px 10px; }
+.floating-inspector .fi-head { display: flex; align-items: center; gap: 6px; cursor: move; padding: 8px 0; user-select: none; border-bottom: 1px solid var(--border, #ccc); margin-bottom: 8px; }
+.floating-inspector .fi-notes .notes { min-height: 80px; border: 1px solid var(--border, #ccc); border-radius: 4px; padding: 4px; }
+.bookmarks-panel .bookmark-list { list-style: none; padding: 0; margin: 4px 0; }
+.bookmarks-panel .bookmark-list li { display: flex; align-items: center; gap: 4px; }
+.bookmarks-panel .bookmark-list li > .link { flex: 1; text-align: left; }
+.bookmarks-panel .bookmark-list li.on > .link { font-weight: 600; }
+.bookmarks-panel .bookmark-preview { max-height: 40vh; overflow: auto; border-top: 1px solid var(--border, #ccc); padding-top: 6px; font-size: 90%; }
+.project-notes-tabs .tabs { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 6px; }
+.project-notes-tabs .tabs button.on { font-weight: 600; border-bottom: 2px solid var(--accent, #1565c0); }
+.home .recent li { display: flex; align-items: center; gap: 6px; }
+.home .recent .pin { border: 0; background: none; cursor: pointer; opacity: .5; }
+.home .recent .pin.on, .home .recent li:hover .pin { opacity: 1; }

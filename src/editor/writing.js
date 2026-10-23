@@ -4,6 +4,7 @@
 import { Extension, Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { eventShortcut, isCharStyle, nextStyleId, styleForShortcut } from '../lib/styles.js';
 
 export const REVISION_COLORS = ['#c62828', '#1565c0', '#2e7d32', '#6a1b9a', '#ef6c00'];
 
@@ -26,13 +27,68 @@ export const ParagraphStyle = Extension.create({
       },
     ];
   },
+  // storage.styles: the project stylesheet (set by the Editor component), used for
+  // "Next style" on Enter and per-style keyboard shortcuts.
+  addStorage() {
+    return { styles: [] };
+  },
   addCommands() {
     return {
       setParagraphStyle:
         (name) =>
         ({ commands }) =>
           commands.updateAttributes(this.editor.isActive('heading') ? 'heading' : 'paragraph', { styleName: name || null }),
+      applyNamedStyle:
+        (id) =>
+        ({ commands }) => {
+          const st = this.storage.styles.find((x) => x.id === id);
+          if (!st) return false;
+          if (isCharStyle(st)) return !this.editor.state.selection.empty && commands.setCharStyle(id);
+          return commands.setParagraphStyle(id);
+        },
     };
+  },
+  addKeyboardShortcuts() {
+    return {
+      Enter: ({ editor }) => {
+        const { selection } = editor.state;
+        const { $from, empty } = selection;
+        if (!empty || !$from.parent.isTextblock || $from.parentOffset !== $from.parent.content.size) return false;
+        if ($from.depth > 1 && $from.node(-1).type.name === 'listItem') return false;
+        const cur = $from.parent.attrs.styleName;
+        if (!cur) return false;
+        const next = nextStyleId(this.storage.styles, cur);
+        if (next === cur) return false;
+        return editor
+          .chain()
+          .splitBlock()
+          .command(({ tr }) => {
+            const $p = tr.selection.$from;
+            if (!('styleName' in $p.parent.attrs)) return true;
+            tr.setNodeMarkup($p.before(), undefined, { ...$p.parent.attrs, styleName: next });
+            return true;
+          })
+          .run();
+      },
+    };
+  },
+  addProseMirrorPlugins() {
+    const ext = this;
+    return [
+      new Plugin({
+        key: new PluginKey('styleShortcuts'),
+        props: {
+          handleKeyDown(_view, e) {
+            if (!(e.ctrlKey || e.metaKey || e.altKey)) return false;
+            const st = styleForShortcut(ext.storage.styles, eventShortcut(e));
+            if (!st) return false;
+            e.preventDefault();
+            ext.editor.commands.applyNamedStyle(st.id);
+            return true;
+          },
+        },
+      }),
+    ];
   },
 });
 

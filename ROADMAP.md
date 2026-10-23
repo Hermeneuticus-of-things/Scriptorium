@@ -100,16 +100,16 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Bara de format completă: stil de paragraf, superscript, subscript, culoare text, highlight (5 culori), aliniere, tabele (rânduri, coloane, antet, unire, împărțire), imagini, liste numerotate cu indentare
 - [~] Ruler: indent și spațiere prin stiluri; lipsesc riglă vizuală și tab-uri
 - [x] Styles de paragraf și de caractere: panou, creare, editare, Redefine din selecție, import din alt proiect (păstrează / înlocuiește / adaugă), duse în Compile
-- [ ] Styles: Para+Char, Next style, scurtături de tastatură
+- [x] Styles: Para+Char, Next style, scurtături de tastatură
 - [x] Revision Mode (5 runde colorate), acceptarea tuturor sau a unei runde, eliminate la Compile
 - [x] Adnotări inline din bara editorului, conversie adnotare ↔ comentariu
-- [ ] Conversie adnotare / notă inline ↔ notă legată
+- [x] Conversie adnotare / notă inline ↔ notă legată
 - [x] Scrivener Links `[[ ]]` (Ctrl+clic deschide documentul) și linkuri externe (Ctrl+L)
 - [x] Page View (A5), Text Zoom 75–200%, semne de paragraf, caractere în bara de stare
 - [x] Linguistic Focus: dialog, paragraf, frază; evidențierea paragrafului curent
-- [ ] Linguistic Focus pe părți de vorbire (substantive, verbe, adjective)
+- [~] Linguistic Focus pe părți de vorbire (substantive, verbe, adjective): etichetare euristică RO/EN, aproximativă
 - [x] Composition: fundal, lățimea textului, opacitatea paginii, pagină de hârtie
-- [ ] Composition: Inspector plutitor
+- [x] Composition: Inspector plutitor
 - [x] Transformations: majuscule, minuscule, Title Case, propoziție, spații duble, ghilimele, cratime
 - [x] Insert: dată, placeholdere Scrivener, caractere speciale (inclusiv diacritice sanscrite), linie / salt de pagină
 - [x] Copy Special (text simplu, Markdown, HTML, HTML fără note)
@@ -122,16 +122,16 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Keywords: fereastră proiect, culori, ierarhie, redenumire cu unire, căutare după keyword
 - [x] Collections: tab-uri deasupra binderului, manuale (din selecție), din căutare, colorate, adaugă/scoate selecția
 - [x] Bookmarks în Inspector (spre documente și pagini web)
-- [ ] Bookmarks de proiect cu previzualizare
+- [x] Bookmarks de proiect cu previzualizare
 - [x] Template Sheets: „Nou din șablon” (text, note, sinopsis, etichetă, cuvinte cheie)
 - [x] Document-container (text cu sub-documente, drop în document), conversie Text ↔ Folder
 - [x] Icoane personalizate, Lock document (doar citire), sortare conținut (A→Z, Z→A, dată), favorite
 - [x] Media în Cercetare: adăugare imagini, PDF, audio, video, cu vizualizare
-- [ ] Pagini web salvate offline în Cercetare
+- [~] Pagini web salvate offline în Cercetare: importul paginii ca document gata; imaginile rămân linkuri
 - [x] Căutare avansată: câmpuri, operatori (oricare / toate / frază), filtre (etichetă, status, cuvinte cheie, zonă, coș, Compile), salvare ca colecție, înlocuire în text, note, titluri și sinopsis cu snapshot
 - [x] Project Targets: carte și sesiune în cuvinte sau caractere, termen limită cu zile de scris și cuvinte pe zi, reset sesiune, notificare
 - [x] Statistici: proiect / Compile / tot / selecție, pagini estimate, timp de citire, frecvența cuvintelor (cu cuvinte de legătură românești), lungimea frazelor
-- [ ] Note de proiect cu mai multe tab-uri
+- [x] Note de proiect cu mai multe tab-uri
 - [x] Go To (Ctrl+G), document anterior/următor (Ctrl+Alt+↑/↓), dosarul părinte, favorite
 - [x] AI opțional: comutator „Funcții AI” în Setări; fără AI totul funcționează (verificarea I-REP și reparațiile sigure rămân)
 
@@ -143,52 +143,52 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Outline: coloane alese (inclusiv metadate proprii, țintă, progres, date), sortare, titlu editabil (dublu-clic), drag & drop, extinde/restrânge tot, totaluri
 
 ### 2.4 Compile complet
-- [ ] Formate: Standard Manuscript, Paperback, Ebook, Modern; editabile și salvate
-- [ ] Section Layouts legate de Section Types (titlu, prefix/sufix, page break, separator)
-- [ ] Front matter / Back matter, pagină de titlu, cuprins
-- [ ] Placeholders: `<$n>`, `<$t>`, `<$wc>`, `<$p>`, `<$projecttitle>`, `<$author>`, numere romane/în litere
-- [ ] Replacements, transformări, mapare stiluri
-- [ ] Note: de subsol / de final / comentarii Word
-- [ ] Pagină: mărime (A5, A4, 6×9, 5×8), margini oglindite, antet/subsol pe pagini pare/impare
-- [ ] Metadate și copertă EPUB
-- [ ] Formate în plus: RTF, ODT, Markdown, MultiMarkdown, text simplu
-- [ ] Compile doar pentru o selecție sau un grup, previzualizare
+- [x] Formate: Standard Manuscript, Paperback, Ebook, Modern; editabile și salvate
+- [x] Section Layouts legate de Section Types (titlu, prefix/sufix, page break, separator)
+- [x] Front matter / Back matter, pagină de titlu, cuprins
+- [x] Placeholders: `<$n>`, `<$t>`, `<$wc>`, `<$p>`, `<$projecttitle>`, `<$author>`, numere romane/în litere
+- [x] Replacements, transformări, mapare stiluri
+- [x] Note: de subsol / de final / comentarii Word
+- [x] Pagină: mărime (A5, A4, 6×9, 5×8), margini oglindite, antet/subsol pe pagini pare/impare
+- [x] Metadate și copertă EPUB
+- [x] Formate în plus: RTF, ODT, Markdown, MultiMarkdown, text simplu
+- [x] Compile doar pentru o selecție sau un grup, previzualizare
 - [ ] Pachetul pentru editor (ce merge în „PENTRU EDITOR”, după specificația ta)
 
 ### 2.5 Import / export / siguranță
-- [ ] Import RTF, ODT, HTML, OPML, PDF, imagini, pagini web
-- [ ] Export documente ca fișiere (DOCX/RTF/MD/TXT) cu structura de foldere și metadate
-- [ ] Export OPML, Export metadate CSV
-- [ ] Print, Page Setup, Print Preview
-- [ ] Proprietăți proiect (titlu, autor, abreviere), Save As
-- [ ] Recente: fixare, ștergere
+- [x] Import RTF, ODT, HTML, OPML, PDF, imagini, pagini web
+- [x] Export documente ca fișiere (DOCX/RTF/MD/TXT) cu structura de foldere și metadate
+- [x] Export OPML, Export metadate CSV
+- [~] Print, Page Setup, Print Preview: tipărire document gata; pagina și previzualizarea sunt în Compile
+- [x] Proprietăți proiect (titlu, autor, abreviere), Save As
+- [x] Recente: fixare, ștergere
 
 ### 2.6 Interfață
-- [ ] Meniu complet (Fișier, Editare, Vizualizare, Navigare, Proiect, Documente, Format, Unelte, Fereastră, Ajutor)
-- [ ] Scurtături configurabile
-- [ ] Layouts salvate, Quick Reference
-- [ ] Options complete: General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard
-- [ ] Interfață în română și engleză
+- [x] Meniu complet (Fișier, Editare, Vizualizare, Navigare, Proiect, Documente, Format, Unelte, Fereastră, Ajutor)
+- [x] Scurtături configurabile
+- [x] Layouts salvate, Quick Reference
+- [x] Options complete: General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard
+- [x] Interfață în română și engleză
 
 ---
 
 ## 3. v0.4: paritate avansată
 
-- [ ] Script Mode: Screenplay, Stage Play, Comic, BBC Radio; elemente cu Tab/Enter; export FDX și Fountain
-- [ ] Sync cu folder extern (Dropbox/Drive), RTF/TXT/MD, conflicte cu snapshot
-- [ ] Export ca proiect Scrivener (.scriv)
+- [x] Script Mode: Screenplay, Stage Play, Comic, BBC Radio; elemente cu Tab/Enter; export FDX și Fountain
+- [x] Sync cu folder extern (Dropbox/Drive), RTF/TXT/MD, conflicte cu snapshot
+- [x] Export ca proiect Scrivener (.scriv)
 - [ ] Mai multe ferestre de proiect
-- [ ] Name Generator, Text-to-speech, Dictare, Scratchpad
-- [ ] Import Zotero, bibliografie
-- [ ] Export Kindle (KPF), LaTeX, Pandoc
+- [x] Name Generator, Text-to-speech, Dictare, Scratchpad
+- [x] Import Zotero, bibliografie
+- [~] Export Kindle (KPF), LaTeX, Pandoc: LaTeX, Pandoc și MultiMarkdown gata; KPF nu se poate produce deschis, Kindle primește EPUB
 
 ## 4. v1.0: paritate completă + extra
 
 - [ ] Toate rândurile `[ ]` din `FEATURES-SCRIVENER3.md` închise sau mutate explicit la `[-]`
-- [ ] Sinopsis AI în bloc, consistență pe toată cartea, fișe vii
-- [ ] Cronologie, hartă de relații, analiză de ritm
+- [x] Sinopsis AI în bloc, consistență pe toată cartea, fișe vii
+- [x] Cronologie, hartă de relații, analiză de ritm
 - [ ] Panou NotebookLM / RAG cu cozi asincrone și cache pe concept (fluxul NLM din workspace)
-- [ ] Revizie multi-agent pe niveluri de zoom (Maha / Macro / Mezzo / Micro / Nano), cu rapoarte GRAVE/MEDIU
+- [x] Revizie multi-agent pe niveluri de zoom (Maha / Macro / Mezzo / Micro / Nano), cu rapoarte GRAVE/MEDIU
 - [ ] PWA / sync mobil
 
 ## 5. Excluse intenționat

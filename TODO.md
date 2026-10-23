@@ -47,3 +47,15 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 - [x] Split with Selection as Title
 - [x] Duplicare
 - [x] Spelling ro + meniu contextual (netestat pe Windows)
+
+## Session 2026-10-23 (roadmap automat)
+### Request: continuă automat roadmap-ul până la final
+- [x] 2.1/2.2 goluri editor și proiect
+- [x] 2.4 Compile complet
+- [x] 2.5 import/export, Save As, Print
+- [x] 2.6 meniu, scurtături, Quick Reference, Opțiuni, RO/EN
+- [x] v0.4 Script Mode, sync folder, export .scriv, bibliografie, LaTeX/Pandoc, unelte de scris
+- [x] v1.0 cronologie, relații, ritm, AI în bloc
+- [ ] Corecturi automate, comportament binder, autosave: setările există, legarea în editor urmează
+- [ ] Mai multe ferestre de proiect, panou NotebookLM/RAG, PWA
+- [ ] 1.2: listă cuvinte interzise în Setări, glosare automate, index canonic

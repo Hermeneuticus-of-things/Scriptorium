@@ -4,7 +4,7 @@ import { diffWords } from 'diff';
 import { buildExtensions } from '../editor/extensions.js';
 import { htmlToText } from '../lib/text.js';
 
-function Notes({ initial, onChange, placeholder }) {
+export function Notes({ initial, onChange, placeholder }) {
   const editor = useEditor({
     extensions: buildExtensions({ placeholder }),
     content: initial || '<p></p>',
