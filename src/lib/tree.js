@@ -94,9 +94,103 @@ export function updateNode(tree, id, patch) {
   return produce(tree, (t) => Object.assign(findNode(t, id), patch));
 }
 
+// Trashing remembers where the item was (trashedFrom = {parentId, index}) so it can be restored.
 export function moveToTrash(tree, id) {
   const trash = tree.find((n) => n.root === 'trash');
-  return moveNode(tree, id, trash.id, 'inside');
+  const node = findNode(tree, id);
+  if (!node || node.root || rootOf(tree, id)?.id === trash.id) return tree;
+  const parent = findParent(tree, id);
+  const list = parent ? parent.children : tree;
+  const from = { parentId: parent ? parent.id : null, index: list.findIndex((n) => n.id === id) };
+  const moved = moveNode(tree, id, trash.id, 'inside');
+  return produce(moved, (t) => {
+    findNode(t, id).trashedFrom = from;
+  });
+}
+
+// Puts a trashed item back at its original place (or at the end of the Draft when
+// the original parent is gone or itself in the trash).
+export function restoreFromTrash(tree, id) {
+  const trash = tree.find((n) => n.root === 'trash');
+  const node = findNode(tree, id);
+  if (!node || node.root || rootOf(tree, id)?.id !== trash.id) return tree;
+  const from = node.trashedFrom || {};
+  return produce(tree, (t) => {
+    const moving = detach(t, id);
+    delete moving.trashedFrom;
+    let parent = from.parentId ? findNode(t, from.parentId) : null;
+    if (!parent || rootOf(t, parent.id)?.id === trash.id || (!parent.children && parent.type !== 'text')) parent = t[0];
+    parent.children ||= [];
+    const idx = Number.isInteger(from.index) ? Math.max(0, Math.min(from.index, parent.children.length)) : parent.children.length;
+    parent.children.splice(idx, 0, moving);
+  });
+}
+
+// Moves several items (binder order kept) inside a container ("Move To").
+export function moveManyInto(tree, ids, targetId) {
+  const target = findNode(tree, targetId);
+  if (!target || (!target.children && target.type !== 'text')) return tree;
+  let t = tree;
+  for (const n of inOrder(tree, ids)) {
+    if (n.root || n.id === targetId || isDescendant(t, n.id, targetId)) continue;
+    // skip items whose ancestor is also moved: they travel with it
+    if (ids.some((other) => other !== n.id && isDescendant(t, other, n.id))) continue;
+    t = moveNode(t, n.id, targetId, 'inside');
+  }
+  return t;
+}
+
+// Containers a selection can be moved into: [{id, title, depth}], excluding the
+// selection itself, its descendants and the trash.
+export function moveTargets(tree, excludeIds = []) {
+  const out = [];
+  const visit = (nodes, depth) => {
+    for (const n of nodes) {
+      if (n.root === 'trash' || excludeIds.includes(n.id)) continue;
+      if (n.children) {
+        out.push({ id: n.id, title: n.title, depth });
+        visit(n.children, depth + 1);
+      }
+    }
+  };
+  visit(tree, 0);
+  return out;
+}
+
+// Ids of the ancestors of a node (outermost first), for Reveal in Binder.
+export function ancestorIds(tree, id) {
+  const out = [];
+  let p = findParent(tree, id);
+  while (p) {
+    out.unshift(p.id);
+    p = findParent(tree, p.id);
+  }
+  return out;
+}
+
+// Ordered text documents for Scrivenings over an arbitrary list of ids: binder order,
+// containers expanded into their text descendants, duplicates removed.
+export function scriveningsList(tree, ids) {
+  const out = [];
+  const seen = new Set();
+  const add = (n) => {
+    if (seen.has(n.id)) return;
+    seen.add(n.id);
+    if (n.type === 'text') out.push(n);
+  };
+  for (const n of inOrder(tree, ids)) {
+    if (n.root === 'trash') continue;
+    if (!n.root) add(n);
+    if (n.children) flatten(n.children).forEach(add);
+  }
+  return out;
+}
+
+// Appends an HTML fragment to the end of a document's HTML.
+export function appendHtml(targetHtml, html, { separator = false } = {}) {
+  const base = (targetHtml || '').replace(/(<p><\/p>\s*)+$/, '');
+  if (!html) return base;
+  return `${base}${base && separator ? '<hr>' : ''}${html}`;
 }
 
 export function emptyTrash(tree) {

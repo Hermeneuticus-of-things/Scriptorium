@@ -138,12 +138,30 @@ function setupSpelling(win) {
   } catch {
     /* system spellchecker (Windows/macOS) decides the languages */
   }
+  // Words ignored for this session ("Ignoră"): no suggestions menu for them.
+  const ignored = new Set();
+  const lookup = (url) => shell.openExternal(url);
   win.webContents.on('context-menu', (_e, params) => {
     const items = [];
-    if (params.misspelledWord) {
+    if (params.misspelledWord && !ignored.has(params.misspelledWord.toLowerCase())) {
       for (const s of params.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => win.webContents.replaceMisspelling(s) });
       if (!params.dictionarySuggestions.length) items.push({ label: 'Nicio sugestie', enabled: false });
       items.push({ label: `Adaugă „${params.misspelledWord}” în dicționar`, click: () => ses.addWordToSpellCheckerDictionary(params.misspelledWord) });
+      items.push({ label: `Ignoră „${params.misspelledWord}”`, click: () => ignored.add(params.misspelledWord.toLowerCase()) });
+      items.push({ type: 'separator' });
+    }
+    const word = (params.selectionText || params.misspelledWord || '').trim();
+    if (word && word.length < 80) {
+      const q = encodeURIComponent(word);
+      items.push({
+        label: 'Unelte de scris',
+        submenu: [
+          { label: 'Caută în dicționar (dexonline)', click: () => lookup(`https://dexonline.ro/definitie/${q}`) },
+          { label: 'Sinonime (dexonline)', click: () => lookup(`https://dexonline.ro/definitie/${q}/sinonime`) },
+          { label: 'Wikipedia', click: () => lookup(`https://ro.wikipedia.org/w/index.php?search=${q}`) },
+          { label: 'Google', click: () => lookup(`https://www.google.com/search?q=${q}`) },
+        ],
+      });
       items.push({ type: 'separator' });
     }
     if (params.isEditable) {
@@ -154,12 +172,30 @@ function setupSpelling(win) {
         { label: 'Lipește fără formatare', role: 'pasteAndMatchStyle', enabled: params.editFlags.canPaste },
         { type: 'separator' },
         { label: 'Selectează tot', role: 'selectAll' },
+        { type: 'separator' },
+        { label: 'Verifică ortografia acum', click: () => recheckSpelling(win) },
       );
     } else if (params.selectionText) {
       items.push({ label: 'Copiază', role: 'copy' });
     }
     if (items.length) Menu.buildFromTemplate(items).popup({ window: win });
   });
+}
+
+// "Check document now": Chromium re-checks editable text when spellcheck is toggled.
+function recheckSpelling(win) {
+  const ses = win.webContents.session;
+  try {
+    ses.setSpellCheckerEnabled(false);
+    ses.setSpellCheckerEnabled(true);
+  } catch {
+    /* older Electron */
+  }
+  win.webContents
+    .executeJavaScript(
+      "document.querySelectorAll('[contenteditable=\"true\"]').forEach((el) => { el.spellcheck = false; setTimeout(() => { el.spellcheck = true; }, 30); }); true",
+    )
+    .catch(() => {});
 }
 
 function createWindow() {
@@ -200,6 +236,18 @@ handle('project:release', (e) => {
   closeWatchers(e.sender.id);
   return true;
 });
+handle('window:fullScreen', (e, on) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (!win) return false;
+  win.setFullScreen(on === undefined ? !win.isFullScreen() : Boolean(on));
+  return win.isFullScreen();
+});
+handle('spell:recheck', (e) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (win) recheckSpelling(win);
+  return true;
+});
+
 handle('window:new', () => {
   createWindow();
   return true;
@@ -473,6 +521,15 @@ handle('media:read', (_e, dir, file) => {
   assertOpened(dir);
   const { data, mime } = store.readMedia(dir, file);
   return `data:${mime};base64,${data.toString('base64')}`;
+});
+
+// Open in External Editor: hands the media file to the OS default application.
+handle('media:openExternal', async (_e, dir, file) => {
+  assertOpened(dir);
+  if (!/^[A-Za-z0-9-]+\.[a-z0-9]+$/.test(file)) throw new Error(`Fișier media invalid: ${file}`);
+  const err = await shell.openPath(path.join(dir, 'media', file));
+  if (err) throw new Error(err);
+  return true;
 });
 
 handle('backup:now', async (_e, dir) => {

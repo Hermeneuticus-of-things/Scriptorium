@@ -378,3 +378,19 @@ legend { color: var(--muted); padding: 0 4px; }
 .home .recent li { display: flex; align-items: center; gap: 6px; }
 .home .recent .pin { border: 0; background: none; cursor: pointer; opacity: .5; }
 .home .recent .pin.on, .home .recent li:hover .pin { opacity: 1; }
+
+/* --- Batch A: scrivenings toggles, split orientation, hoist, separators, text appearance, format bar --- */
+.scrivenings.no-titles .scriv-section .doc-title { display: none; }
+.scrivenings.no-separators .scriv-section .page.flow { border-bottom-color: transparent; border-top-color: transparent; }
+.scriv-head .link { margin-left: 12px; }
+.workspace.split.split-h { flex-direction: column; }
+.workspace.split.split-h .pane + .pane { border-left: none; border-top: 1px solid var(--line); }
+.hoist-bar { display: flex; align-items: center; gap: 8px; padding: 4px 8px; font-size: 12px; background: var(--accent-soft); border-bottom: 1px solid var(--line); }
+.hoist-bar span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.editor-area.hide-formatbar .format-bar { display: none; }
+.editor-area.hide-comments .prose .comment { background: none; border-bottom: none; cursor: text; }
+.editor-area.hide-revisions .prose [data-revision] { color: inherit !important; text-decoration: none; }
+.statusbar .zoom-select { font-size: 11px; padding: 0 2px; }
+.layout-list { list-style: none; padding: 0; display: grid; gap: 6px; }
+.layout-list li { display: flex; gap: 6px; }
+.layout-list input { flex: 1; }
