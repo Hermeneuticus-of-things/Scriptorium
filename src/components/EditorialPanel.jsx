@@ -222,6 +222,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
             <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} /> Și problemele medii blochează
           </label>
           <div className="ai-actions">
+            {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>Anulează</button>}
             <button onClick={() => onApply({ id: node.id, title: node.title, before: html, after: autofix(html), safe: true })} disabled={busy}>
               Reparații sigure (fără AI)
             </button>
@@ -258,6 +259,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           <div className="ai-actions">
             <button onClick={() => setRounds(new Set(ROUNDS.map((r) => r.id)))}>Toate</button>
             <button onClick={() => setRounds(new Set())}>Niciuna</button>
+            {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>Anulează</button>}
             <button className="primary" onClick={runEdit} disabled={busy || !hasKey || !rounds.size || level === 'micro'}>
               {busy ? 'Lucrez…' : 'I-EDIT: rulează rundele'}
             </button>

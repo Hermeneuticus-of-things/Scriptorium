@@ -83,6 +83,7 @@ contextBridge.exposeInMainWorld('api', {
   syncAuto: (dir, project, event) => call('v04:syncAuto', dir, project, event),
   listDictionaryWords: () => call('spell:listWords'),
   removeDictionaryWord: (word) => call('spell:removeWord', word),
+  cancelAi: () => call('ai:cancel'),
   runAi: (payload) => call('ai:run', payload),
   testAi: (override) => call('ai:test', override),
   nlmExport: (dir, options) => call('nlm:export', dir, options),
