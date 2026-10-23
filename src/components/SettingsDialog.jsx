@@ -22,6 +22,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     autosaveSec: init.autosaveSec,
     checkUpdates: Boolean(init.checkUpdates),
     theme: init.theme || 'system',
+    uiStyle: init.uiStyle || 'classic',
     editorFont: init.editorFont,
     fontSize: init.fontSize || 18,
     lineHeight: init.lineHeight,
@@ -162,6 +163,13 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           {t('set.theme')}
           <select value={s.theme} onChange={set('theme')}>
             {['system', 'light', 'dark', 'sepia'].map((x) => <option key={x} value={x}>{t(`set.theme.${x}`)}</option>)}
+          </select>
+        </label>
+        <label>
+          Aspect interfață
+          <select value={s.uiStyle} onChange={set('uiStyle')}>
+            <option value="classic">Clasic (ca Scrivener 3)</option>
+            <option value="modern">Modern</option>
           </select>
         </label>
         <div className="row">

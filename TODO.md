@@ -56,6 +56,9 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 - [x] 2.6 meniu, scurtături, Quick Reference, Opțiuni, RO/EN
 - [x] v0.4 Script Mode, sync folder, export .scriv, bibliografie, LaTeX/Pandoc, unelte de scris
 - [x] v1.0 cronologie, relații, ritm, AI în bloc
-- [ ] Corecturi automate, comportament binder, autosave: setările există, legarea în editor urmează
-- [ ] Mai multe ferestre de proiect, panou NotebookLM/RAG, PWA
-- [ ] 1.2: listă cuvinte interzise în Setări, glosare automate, index canonic
+- [x] Corecturi automate, comportament binder, autosave
+- [x] Mai multe ferestre de proiect, panou NotebookLM/RAG, PWA
+- [x] 1.2: listă cuvinte interzise în Setări, glosare automate, index canonic
+- [x] Aspect Scrivener 3 pe toate paginile
+- [x] Profil generic implicit; profilul cărții = „Română”
+- [ ] Verificare pe Windows în Electron real; proiect Karma real; Claude real

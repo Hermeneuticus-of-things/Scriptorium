@@ -1,5 +1,18 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-23 — v0.5.0 — Aspect Scrivener 3, profil generic, ferestre, web, Karma
+
+### Cerința user
+> "toate paginile să arate ca Scrivener 3" · "Karma este doar exemplu, programul este pentru orice fel de text" · profilul Karma „să se numească Română”
+
+### Rezultat
+- Temă „Clasic (ca Scrivener 3)” implicită pe toate paginile, cu variantă întunecată; iconițe SVG proprii (bara de unelte, binder, taburile Inspectorului), bara de titlu deasupra editorului; „Modern” rămâne în Setări → Aspect.
+- Profil editorial implicit „Generic: orice text”; profilul cărții se numește „Română”; numele glosarelor și ale pachetului pentru editor urmează profilul.
+- Setările din Opțiuni au efect (corecturi automate cu Ctrl+Z, invizibile, binder, autosave, redeschidere, vedere implicită).
+- Ferestre multiple, versiune web/PWA cu IndexedDB și pachete de proiect, panou de cercetare local (BM25) cu răspuns Claude opțional.
+- Liste de cuvinte în Setări, glosare și cuprins de tipar, index canonic în R1/R6, pachet pentru editor.
+- Teste: 238 trec. Build trece. Verificat în Chromium (?demo).
+
 ## 2026-10-23 — v0.4.0 — Roadmap 2.1–2.6, v0.4 și extra v1.0
 
 ### Cerința user
