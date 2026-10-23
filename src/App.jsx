@@ -30,6 +30,10 @@ import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
+import NameGeneratorDialog from './components/NameGeneratorDialog.jsx';
+import Scratchpad from './components/Scratchpad.jsx';
+import SpeechBar from './components/SpeechBar.jsx';
+import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 import { applySettingsCss } from './lib/settingsDefaults.js';
 import { setLanguage, cmdLabel, groupLabel } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
@@ -96,6 +100,8 @@ export default function App({ api }) {
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
+  const [showScratch, setShowScratch] = useState(false);
+  const [showSpeech, setShowSpeech] = useState(false);
   const [activeCollectionId, setActiveCollectionId] = useState(null);
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
@@ -782,6 +788,20 @@ export default function App({ api }) {
   const smartQuotes = settings.smartQuotes !== false;
   // AI is optional: with it off, every feature that needs Claude is hidden and nothing else changes.
   const aiEnabled = settings.aiEnabled !== false;
+  const scriptFormat = settings?.scriptFormat || null;
+  const setScriptFormat = async (f) => {
+    await api.setSettings({ scriptFormat: f });
+    setSettings(await api.getSettings());
+  };
+  const speechText = () => {
+    const h = activeHandle();
+    return h?.getSelectionText() || h?.getText?.() || '';
+  };
+  const exportScript = async (fmt) => {
+    const h = activeHandle();
+    if (!h || !api.exportScript) return;
+    await api.exportScript(fmt, h.getHtml(), selected?.title || 'Scenariu');
+  };
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
   const aiNode = (activeId.current && findNode(project.tree, activeId.current)) || selected;
   const editorialNode = aiNode && aiNode.type === 'text' ? aiNode : scrivSections[0] || null;
@@ -911,6 +931,13 @@ export default function App({ api }) {
     ['format', 'styles', 'Stiluri…', () => setDialog('styles')],
     ['tools', 'irep', 'I-REP / I-EDIT', () => setShowEditorial((v) => !v)],
     ['tools', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    ['tools', 'nameGen', 'Generator de nume…', () => setDialog('names')],
+    ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
+    ['tools', 'speech', 'Citire cu voce tare / Dictare', () => setShowSpeech((v) => !v)],
+    ['format', 'scriptOff', 'Mod scenariu: dezactivat', () => setScriptFormat(null).catch(report), !scriptFormat],
+    ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, `Mod scenariu: ${f.label}`, () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
+    ['file', 'exportFdx', 'Exportă scenariu Final Draft (.fdx)…', () => flush().then(() => exportScript('fdx')).catch(report), !api.exportScript || !scriptFormat],
+    ['file', 'exportFountain', 'Exportă scenariu Fountain…', () => flush().then(() => exportScript('fountain')).catch(report), !api.exportScript || !scriptFormat],
     ['tools', 'settings', 'Setări…', () => setDialog('settings')],
     ['tools', 'shortcuts', 'Scurtături de tastatură…', () => setDialog('shortcuts')],
     ['window', 'saveLayout', 'Salvează layout-ul curent…', saveLayout],
@@ -999,6 +1026,7 @@ export default function App({ api }) {
             )}
             {view === 'editor' && selected && selected.type !== 'file' && !selected.children && (
               <Editor
+                scriptFormat={scriptFormat}
                 key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}`}
                 ref={(r) => registerRef(selected.id, r)}
                 html={docs[selected.id] || ''}
@@ -1078,6 +1106,7 @@ export default function App({ api }) {
                 <p className="hint">Alege un document cu Alt+clic în binder.</p>
               ) : (
                 <Editor
+                  scriptFormat={scriptFormat}
                   key={`split-${splitNode.id}-${smartQuotes}`}
                   ref={(r) => mainIds.has(splitNode.id) || registerRef(splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
@@ -1204,6 +1233,9 @@ export default function App({ api }) {
 
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>Ieși (Esc)</button>}
 
+      {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
+      {showScratch && <Scratchpad load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
+      {showSpeech && <SpeechBar getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (

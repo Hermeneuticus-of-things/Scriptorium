@@ -52,5 +52,6 @@ contextBridge.exposeInMainWorld('api', {
   getHistory: (dir) => call('history:get', dir),
   exportCompiled: (dir, project, format, options) => call('compile:export', dir, project, format, options),
   previewCompiled: (dir, project, options) => call('compile:preview', dir, project, options),
+  exportScript: (format, html, title) => call('script:export', format, html, title),
   runAi: (payload) => call('ai:run', payload),
 });
