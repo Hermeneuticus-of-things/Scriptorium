@@ -1,0 +1,72 @@
+{
+  "name": "scribner",
+  "productName": "Scribner",
+  "version": "0.2.0",
+  "description": "Program de scris cărți lungi, inspirat de Scrivener 3: import .scriv fără pierderi, Compile, I-REP / I-EDIT, asistent Claude, server MCP pentru agenți AI",
+  "main": "electron/main.cjs",
+  "private": true,
+  "bin": {
+    "scribner-mcp": "mcp/server.mjs"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:web": "vite build --outDir dist-web",
+    "start": "vite build && electron .",
+    "test": "vitest run",
+    "mcp": "node mcp/server.mjs",
+    "dist:win": "vite build && electron-builder --win portable",
+    "test:e2e": "vite build && node tests/e2e/electron.e2e.cjs"
+  },
+  "build": {
+    "appId": "ro.scribner.app",
+    "asar": false,
+    "files": [
+      "dist/**",
+      "electron/**",
+      "lib/**",
+      "mcp/**",
+      "src/lib/**",
+      "package.json"
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "directories": {
+      "output": "release"
+    }
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.2.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@tiptap/core": "^3.32.0",
+    "@tiptap/extension-highlight": "^3.32.0",
+    "@tiptap/extension-image": "^3.32.0",
+    "@tiptap/extension-placeholder": "^3.32.0",
+    "@tiptap/extension-subscript": "^3.32.0",
+    "@tiptap/extension-superscript": "^3.32.0",
+    "@tiptap/extension-table": "^3.32.0",
+    "@tiptap/extension-text-align": "^3.32.0",
+    "@tiptap/extension-text-style": "^3.32.0",
+    "@tiptap/extension-typography": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/react": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
+    "diff": "^9.0.0",
+    "docx": "^9.14.0",
+    "fast-xml-parser": "^5.11.2",
+    "jszip": "^3.10.2",
+    "mammoth": "^1.13.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
+    "jsdom": "^29.1.1",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}
