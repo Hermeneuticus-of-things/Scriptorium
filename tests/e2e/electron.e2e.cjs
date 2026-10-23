@@ -81,8 +81,20 @@ const watchdog = setTimeout(() => {
     const imp = await win.evaluate(() => window.api.importScriv()).catch((e) => 'ERR ' + e.message);
     log('re-import .scriv:', typeof imp === 'string' ? imp : `${imp?.project?.title} · docs: ${JSON.stringify(imp?.stats || {}).slice(0, 120)}`);
   }
+  // Typing right before closing the window must reach the disk (no Ctrl+S, before the autosave delay).
+  step = 'close with unsaved typing';
+  await win.locator('.pane .ProseMirror').first().click();
+  await win.keyboard.press('Control+End');
+  await win.keyboard.type(' Ultima frază înainte de închidere.');
+  const closed = app.waitForEvent('close');
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
+  await closed;
+  const lastText = fs.readdirSync(docsDir).map((f) => fs.readFileSync(path.join(docsDir, f), 'utf8')).join('\n');
+  const keptOnClose = lastText.includes('Ultima frază înainte de închidere.');
+  log('typing kept on close:', keptOnClose);
+  if (!keptOnClose) errs.push('typing lost on window close');
   log('errors:', errs);
-  await app.close();
+  await app.close().catch(() => {});
   const ok = !errs.length && ['docx', 'pdf', 'epub'].every((f) => fs.existsSync(path.join(W, `out.${f}`)));
   log(ok ? 'E2E OK' : 'E2E FAILED');
   clearTimeout(watchdog);
