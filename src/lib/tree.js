@@ -58,8 +58,9 @@ export function moveNode(tree, id, targetId, position) {
   return produce(tree, (t) => {
     const node = detach(t, id);
     const target = findNode(t, targetId);
-    if (position === 'inside' && target.children) {
-      target.children.push(node);
+    // A text document can hold sub-documents too (Scrivener "file group").
+    if (position === 'inside' && (target.children || target.type === 'text')) {
+      (target.children ||= []).push(node);
       return;
     }
     if (target.root) {
@@ -149,6 +150,40 @@ export function duplicateNode(tree, id, { withChildren = true, newId = () => cry
     list.splice(list.findIndex((n) => n.id === id) + 1, 0, copy);
   });
   return { tree: next, pairs, id: copy.id };
+}
+
+// Text <-> folder (Scrivener "Convert to Folder / Convert to File"). Text keeps its
+// sub-documents either way; an empty children list is dropped from a text.
+export function convertNode(tree, id, type) {
+  return produce(tree, (t) => {
+    const n = findNode(t, id);
+    if (!n || n.root || n.type === 'file') return;
+    n.type = type;
+    if (type === 'folder') n.children ||= [];
+    else if (n.children && !n.children.length) delete n.children;
+  });
+}
+
+// Sorts the children of a container: by 'title' (Romanian collation), 'created', 'modified'.
+export function sortChildren(tree, id, by = 'title', descending = false) {
+  return produce(tree, (t) => {
+    const n = findNode(t, id);
+    if (!n || !n.children) return;
+    const key = (x) => (by === 'title' ? x.title || '' : x[by] || '');
+    n.children.sort((a, b) => {
+      const r = by === 'title' ? key(a).localeCompare(key(b), 'ro', { numeric: true }) : String(key(a)).localeCompare(String(key(b)));
+      return descending ? -r : r;
+    });
+  });
+}
+
+// Previous / next document in binder order (skipping roots), for Navigate menu.
+export function siblingInOrder(tree, id, dir) {
+  const order = flatten(tree).filter((n) => !n.root);
+  const i = order.findIndex((n) => n.id === id);
+  if (i < 0) return null;
+  const next = order[i + dir];
+  return next ? next.id : null;
 }
 
 // Binder order of the given ids.

@@ -297,6 +297,23 @@ handle('project:watch', (e, dir) => {
   return true;
 });
 
+// Add images, PDFs, audio, video or any file to the Research folder (copied into media/).
+handle('media:add', async (e, dir) => {
+  assertOpened(dir);
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Adaugă fișiere în Cercetare',
+    properties: ['openFile', 'multiSelections'],
+  });
+  if (res.canceled) return [];
+  return res.filePaths.map((src) => {
+    const id = store.newId();
+    const ext = path.extname(src).slice(1) || 'bin';
+    noteSelfWrite(path.join(dir, 'media', `${id}.${ext.toLowerCase()}`));
+    const file = store.writeMedia(dir, id, ext, fs.readFileSync(src));
+    return { id, title: path.basename(src).replace(/\.[^.]+$/, ''), media: { file, mime: store.mimeFor(file), name: path.basename(src) } };
+  });
+});
+
 // Stylesheet import: read only the "styles" list of another project.
 handle('styles:readFromProject', async (e) => {
   const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {

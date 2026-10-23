@@ -69,7 +69,7 @@ function Keywords({ value, all, onChange }) {
   );
 }
 
-export default function Inspector({ api, dir, project, node, html, words, allKeywords, onPatch, onNotesChange, onProjectNotesChange, onRestore, onError, flush }) {
+export default function Inspector({ api, dir, project, node, html, words, allKeywords, linkTargets = [], onOpen, onPatch, onNotesChange, onProjectNotesChange, onRestore, onError, flush }) {
   const [tab, setTab] = useState('meta');
   const [snaps, setSnaps] = useState([]);
   const [preview, setPreview] = useState(null);
@@ -152,6 +152,7 @@ export default function Inspector({ api, dir, project, node, html, words, allKey
             </>
           )}
           {!isRoot && <CustomFields project={project} node={node} onPatch={onPatch} />}
+          {!isRoot && <DocumentExtras project={project} node={node} onPatch={onPatch} linkTargets={linkTargets} onOpen={onOpen} />}
           <MetaTable project={project} node={node} />
           <p className="muted">{words.toLocaleString('ro-RO')} cuvinte în acest document</p>
         </div>
@@ -271,17 +272,88 @@ function CustomFields({ project, node, onPatch }) {
   );
 }
 
+const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥', '🧭', '🗝️', '📌', '🕯️', '🌿', '🌊', '⛰️', '🏛️', '👤', '👥', '🗺️', '📅', '🔬', '📚', '✉️', '🎭'];
+
+// Icon, section type, lock, favorite and bookmarks (Scrivener: Inspector > Bookmarks).
+function DocumentExtras({ project, node, onPatch, linkTargets, onOpen }) {
+  const bookmarks = node.bookmarks || [];
+  const types = project.sectionTypes || [];
+  const setBookmarks = (b) => onPatch({ bookmarks: b });
+  return (
+    <div className="fields">
+      <div className="row">
+        <label>
+          Icoană
+          <select value={node.icon && /\p{Extended_Pictographic}/u.test(node.icon) ? node.icon : ''} onChange={(e) => onPatch({ icon: e.target.value || null })}>
+            <option value="">Implicită</option>
+            {ICONS.map((i) => (
+              <option key={i} value={i}>{i}</option>
+            ))}
+          </select>
+        </label>
+        {types.length > 0 && (
+          <label>
+            Tip secțiune
+            <select value={node.sectionType || ''} onChange={(e) => onPatch({ sectionType: e.target.value || null })}>
+              <option value="">După nivel</option>
+              {types.map((t) => (
+                <option key={t.id} value={t.title}>{t.title}</option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+      <div className="checks">
+        <label className="check">
+          <input type="checkbox" checked={Boolean(node.locked)} onChange={(e) => onPatch({ locked: e.target.checked })} /> Blocat (doar citire)
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={Boolean(node.favorite)} onChange={(e) => onPatch({ favorite: e.target.checked })} /> Favorit
+        </label>
+      </div>
+      <label>
+        Bookmark-uri
+        <ul className="bookmarks">
+          {bookmarks.map((b, i) => (
+            <li key={i}>
+              {b.url ? (
+                <a href={b.url} target="_blank" rel="noreferrer">{b.url}</a>
+              ) : (
+                <button className="link" onClick={() => onOpen?.(b.id)}>{linkTargets.find((t) => t.id === b.id)?.title || 'Document șters'}</button>
+              )}
+              <button className="link" aria-label="Șterge bookmark" onClick={() => setBookmarks(bookmarks.filter((_, k) => k !== i))}>×</button>
+            </li>
+          ))}
+        </ul>
+        <div className="row">
+          <select value="" onChange={(e) => e.target.value && setBookmarks([...bookmarks, { id: e.target.value }])}>
+            <option value="">+ document…</option>
+            {linkTargets.filter((t) => t.id !== node.id).map((t) => (
+              <option key={t.id} value={t.id}>{t.title}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => {
+              const url = window.prompt('Adresa web:', 'https://');
+              if (url && /^https?:\/\//.test(url)) setBookmarks([...bookmarks, { url }]);
+            }}
+          >
+            + link web
+          </button>
+        </div>
+      </label>
+    </div>
+  );
+}
+
 // Read-only facts: dates, section type, Scrivener origin, bookmarks.
 function MetaTable({ project, node }) {
   const fmt = (d) => (d ? new Date(d).toLocaleString('ro-RO') : '');
   const rows = [
     ['Creat', fmt(node.created)],
     ['Modificat', fmt(node.modified)],
-    ['Tip secțiune', node.sectionType || ''],
-    ['Icoană', node.icon || ''],
     ['Țintă', node.target ? `${node.target} ${node.targetType === 'Characters' ? 'caractere' : 'cuvinte'}` : ''],
     ['Origine Scrivener', node.scrivener ? `${node.scrivener.type} · ${node.scrivener.uuid}` : ''],
-    ['Bookmark-uri', (node.bookmarks || []).map((b) => (b.url ? b.url : titleOf(project, b.id))).join(', ')],
   ].filter(([, v]) => v);
   if (!rows.length) return null;
   return (

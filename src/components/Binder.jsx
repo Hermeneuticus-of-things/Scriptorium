@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 
 function iconFor(node) {
   if (node.root === 'trash') return '🗑';
+  // Custom icon chosen in the Inspector (an emoji); Scrivener icon names fall through.
+  if (node.icon && /\p{Extended_Pictographic}/u.test(node.icon)) return node.icon;
   if (node.type === 'file') {
     const mime = node.media?.mime || '';
     if (mime.startsWith('image/')) return '🖼';
@@ -41,7 +43,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const dropPosition = (e, node) => {
     const r = e.currentTarget.getBoundingClientRect();
     const y = (e.clientY - r.top) / r.height;
-    if (node.children && y > 0.25 && y < 0.75) return 'inside';
+    if ((node.children || node.type === 'text') && y > 0.25 && y < 0.75) return 'inside';
     if (node.root) return 'inside';
     return y < 0.5 ? 'before' : 'after';
   };
@@ -108,7 +110,11 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
               }}
             />
           ) : (
-            <span className={`title ${node.includeInCompile === false ? 'excluded' : ''}`}>{node.title}</span>
+            <span className={`title ${node.includeInCompile === false ? 'excluded' : ''}`}>
+              {node.title}
+              {node.locked && <span className="badge" title="Blocat (doar citire)"> 🔒</span>}
+              {node.favorite && <span className="badge" title="Favorit"> ★</span>}
+            </span>
           )}
         </div>
         {node.children && isOpen && <ul>{node.children.map((c) => renderNode(c, depth + 1))}</ul>}

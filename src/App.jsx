@@ -12,6 +12,10 @@ import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
+import GoToDialog from './components/GoToDialog.jsx';
+import ProjectSettingsDialog from './components/ProjectSettingsDialog.jsx';
+import StatisticsDialog from './components/StatisticsDialog.jsx';
+import TargetsDialog from './components/TargetsDialog.jsx';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
 import { projectWords } from './editor/writing.js';
@@ -32,6 +36,9 @@ import {
   insertNear,
   keyMove,
   duplicateNode,
+  convertNode,
+  sortChildren,
+  siblingInOrder,
   moveNode,
   moveToTrash,
   emptyTrash,
@@ -73,6 +80,7 @@ export default function App({ api }) {
   const [showAi, setShowAi] = useState(false);
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
+  const [toast, setToast] = useState('');
   const [editorView, setEditorViewState] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('scribner-editor-view')) || {};
@@ -201,6 +209,23 @@ export default function App({ api }) {
       }
     });
   }, [api, dir, report]);
+
+  // "Notify when target is reached" (Project Targets): once per session and per target.
+  const notified = useRef({});
+  useEffect(() => {
+    if (!project || project.targets?.notify === false) return;
+    const t = project.targets || {};
+    const checks = [
+      ['session', t.session, Math.max(0, totals.draft - sessionStart), 'Ai atins ținta sesiunii'],
+      ['draft', t.draft, totals.draft, 'Ai atins ținta cărții'],
+    ];
+    for (const [key, target, value, msg] of checks) {
+      if (target > 0 && value >= target && !notified.current[key]) {
+        notified.current[key] = true;
+        setToast(`${msg}: ${value.toLocaleString('ro-RO')} cuvinte.`);
+      }
+    }
+  }, [project, totals.draft, sessionStart]);
 
   // Remember UI state per project.
   useEffect(() => {
@@ -342,6 +367,52 @@ export default function App({ api }) {
   };
 
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
+  const goSibling = (dir) => {
+    const id = selectedId && siblingInOrder(project.tree, selectedId, dir);
+    if (id) go(id);
+  };
+
+  // New document from a Template Sheet: copies its text, notes, synopsis, label and keywords.
+  const newFromTemplate = async (tpl) => {
+    await flush();
+    const node = newNode(tpl.type === 'folder' ? 'folder' : 'text', tpl.title);
+    Object.assign(node, {
+      synopsis: tpl.synopsis || '',
+      label: tpl.label || 'Fără',
+      keywords: [...(tpl.keywords || [])],
+      custom: tpl.custom ? { ...tpl.custom } : undefined,
+      includeInCompile: true,
+    });
+    setTree(insertNear(project.tree, selectedId, node));
+    const html = docs[tpl.id] ?? (await api.readDoc(dir, tpl.id, 'docs'));
+    const notes = await api.readDoc(dir, tpl.id, 'notes');
+    if (html) await api.writeDoc(dir, node.id, 'docs', html);
+    if (notes) await api.writeDoc(dir, node.id, 'notes', notes);
+    setDocs((d) => ({ ...d, [node.id]: html || '' }));
+    go(node.id);
+    setView('editor');
+  };
+
+  // Images, PDFs, audio and video added to the Research folder.
+  const addMediaToResearch = async () => {
+    try {
+      const items = await api.addMediaFiles(dir);
+      if (!items || !items.length) return;
+      const research = project.tree.find((n) => n.root === 'research');
+      let tree = project.tree;
+      for (const it of items) {
+        const node = { ...newNode('text', it.title), id: it.id, type: 'file', media: it.media, includeInCompile: false };
+        if (/^image\//.test(it.media.mime)) node.synopsisImage = it.media.file;
+        tree = insertNear(tree, research.id, node);
+      }
+      setTree(tree);
+      go(items[0].id);
+      setView('editor');
+    } catch (e) {
+      report(e);
+    }
+  };
+
   // Duplicates the selected item (with its notes, synopsis and, optionally, children).
   const duplicateSelection = async (withChildren) => {
     const node = selectedId && findNode(project.tree, selectedId);
@@ -490,6 +561,12 @@ export default function App({ api }) {
       } else if (mod && !e.shiftKey && k === 'd') {
         e.preventDefault();
         duplicateSelection(true);
+      } else if (mod && !e.shiftKey && !e.altKey && k === 'g') {
+        e.preventDefault();
+        setDialog('goto');
+      } else if (mod && e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        e.preventDefault();
+        goSibling(e.key === 'ArrowUp' ? -1 : 1);
       } else if (mod && e.shiftKey && k === 'm') {
         e.preventDefault();
         mergeSelection();
@@ -583,20 +660,54 @@ export default function App({ api }) {
     .filter((n) => n.type === 'text' && !inTrash(n.id))
     .map((n) => ({ id: n.id, title: n.title, html: docs[n.id] || '' }));
 
+  const templateFolder = project.templateFolder ? findNode(project.tree, project.templateFolder) : null;
+  const favorites = flatten(project.tree).filter((n) => n.favorite && !inTrash(n.id));
+  const canContain = selected && !selected.root && selected.type !== 'file';
+
+  const documentMenu = [
+    { label: 'Caută în document', shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
+    { label: 'Împarte documentul la cursor', shortcut: 'Ctrl+K', action: () => splitDocument(false) },
+    { label: 'Împarte cu selecția ca titlu', shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
+    { label: 'Unește documentele selectate', shortcut: 'Ctrl+Shift+M', action: mergeSelection },
+    { label: 'Duplică (cu sub-documente)', shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
+    { label: 'Duplică doar elementul', action: () => duplicateSelection(false) },
+    '-',
+    { label: 'Convertește în dosar', action: () => setTree(convertNode(project.tree, selectedId, 'folder')), disabled: !canContain || selected.type === 'folder' },
+    { label: 'Convertește în document text', action: () => setTree(convertNode(project.tree, selectedId, 'text')), disabled: !canContain || selected.type === 'text' },
+    { label: 'Sortează conținutul A → Z', action: () => setTree(sortChildren(project.tree, selectedId, 'title')), disabled: !selected?.children },
+    { label: 'Sortează conținutul Z → A', action: () => setTree(sortChildren(project.tree, selectedId, 'title', true)), disabled: !selected?.children },
+    { label: 'Sortează după data creării', action: () => setTree(sortChildren(project.tree, selectedId, 'created')), disabled: !selected?.children },
+    '-',
+    ...(templateFolder && templateFolder.children && templateFolder.children.length
+      ? templateFolder.children.map((t) => ({ label: `Nou din șablon: ${t.title}`, action: () => newFromTemplate(t) }))
+      : [{ label: 'Nou din șablon (alege dosarul de șabloane în Setările proiectului)', action: () => {}, disabled: true }]),
+    { label: 'Adaugă fișiere în Cercetare (imagini, PDF, audio, video)…', action: addMediaToResearch, disabled: !api.addMediaFiles },
+  ];
+
+  const navigateMenu = [
+    { label: 'Mergi la…', shortcut: 'Ctrl+G', action: () => setDialog('goto') },
+    { label: 'Documentul anterior', shortcut: 'Ctrl+Alt+↑', action: () => goSibling(-1) },
+    { label: 'Documentul următor', shortcut: 'Ctrl+Alt+↓', action: () => goSibling(1) },
+    { label: 'Dosarul părinte', action: () => {
+      const parent = selectedId && findParent(project.tree, selectedId);
+      if (parent) go(parent.id);
+    } },
+    { label: 'Înapoi', shortcut: 'Alt+←', action: back },
+    { label: 'Înainte', shortcut: 'Alt+→', action: forward },
+    '-',
+    ...(favorites.length ? favorites.map((f) => ({ label: `★ ${f.title}`, action: () => go(f.id) })) : [{ label: 'Niciun favorit (bifează „Favorit” în Inspector)', action: () => {}, disabled: true }]),
+  ];
+
   const projectMenu = [
     { label: 'Caută și înlocuiește…', shortcut: 'Ctrl+Shift+F', action: () => setDialog('find') },
     { label: 'Importă Word / text / Markdown…', action: () => setDialog('import') },
     '-',
-    { label: 'Caută în document', shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
-    { label: 'Împarte documentul la cursor', shortcut: 'Ctrl+K', action: () => splitDocument(false) },
-    { label: 'Împarte cu selecția ca titlu', shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
-    { label: 'Duplică (cu sub-documente)', shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
-    { label: 'Duplică doar elementul', action: () => duplicateSelection(false) },
-    { label: 'Unește documentele selectate', shortcut: 'Ctrl+Shift+M', action: mergeSelection },
-    '-',
     { label: 'Istoricul scrisului…', action: () => setDialog('history'), disabled: !api.getHistory },
     { label: 'Backup-uri…', action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
+    { label: 'Setările proiectului (etichete, statusuri, metadate, tipuri de secțiune)…', action: () => setDialog('projectSettings') },
+    { label: 'Ținte și termen limită…', action: () => setDialog('targets') },
+    { label: 'Statistici…', action: () => setDialog('stats') },
     { label: 'Stiluri…', action: () => setDialog('styles') },
     { label: 'Compilează…', action: () => flush().then(() => setDialog('compile')) },
     { label: 'Setări…', action: () => setDialog('settings') },
@@ -636,6 +747,8 @@ export default function App({ api }) {
           I-REP / I-EDIT
         </button>
         <button className={showAi ? 'on' : ''} onClick={() => setShowAi((v) => !v)}>Asistent AI</button>
+        <Menu label="Document" items={documentMenu} />
+        <Menu label="Navigare" items={navigateMenu} />
         <Menu label="Proiect" items={projectMenu} />
       </header>
 
@@ -665,11 +778,11 @@ export default function App({ api }) {
             )}
             {view === 'editor' && selected && selected.type !== 'file' && !selected.children && (
               <Editor
-                key={`${selected.id}-${smartQuotes}`}
+                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}`}
                 ref={(r) => registerRef(selected.id, r)}
                 html={docs[selected.id] || ''}
                 title={selected.title}
-                readOnly={inTrash(selected.id)}
+                readOnly={inTrash(selected.id) || Boolean(selected.locked)}
                 typewriter={settings.typewriter}
                 smartQuotes={smartQuotes}
                 onFocus={() => (activeId.current = selected.id)}
@@ -690,7 +803,7 @@ export default function App({ api }) {
                 sections={scrivSections}
                 docs={docs}
                 settings={settings}
-                readOnlyIds={new Set(scrivSections.filter((n) => inTrash(n.id) || n.id === splitId).map((n) => n.id))}
+                readOnlyIds={new Set(scrivSections.filter((n) => inTrash(n.id) || n.locked || n.id === splitId).map((n) => n.id))}
                 registerRef={registerRef}
                 onFocusSection={(id) => (activeId.current = id)}
                 onChange={writeDocNow}
@@ -738,7 +851,7 @@ export default function App({ api }) {
                   ref={(r) => mainIds.has(splitNode.id) || registerRef(splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
                   title={splitNode.title}
-                  readOnly={mainIds.has(splitNode.id) || inTrash(splitNode.id)}
+                  readOnly={mainIds.has(splitNode.id) || inTrash(splitNode.id) || Boolean(splitNode.locked)}
                   smartQuotes={smartQuotes}
                   onFocus={() => (activeId.current = splitNode.id)}
                   onChange={(html) => writeDocNow(splitNode.id, html)}
@@ -769,6 +882,8 @@ export default function App({ api }) {
                   html={docs[selected.id] || ''}
                   words={counts[selected.id] || 0}
                   allKeywords={allKeywords}
+                  linkTargets={linkTargets}
+                  onOpen={openLink}
                   onPatch={(patch) => patchNode(selected.id, patch)}
                   onNotesChange={(html) => queueWrite(selected.id, 'notes', html)}
                   onProjectNotesChange={(html) => queueWrite('project-notes', 'notes', html)}
@@ -897,6 +1012,51 @@ export default function App({ api }) {
           onError={report}
         />
       )}
+      {dialog === 'goto' && (
+        <GoToDialog
+          items={flatten(project.tree)
+            .filter((n) => !n.root && !inTrash(n.id))
+            .map((n) => {
+              const parts = [];
+              let p = findParent(project.tree, n.id);
+              while (p) {
+                parts.unshift(p.title);
+                p = findParent(project.tree, p.id);
+              }
+              return { id: n.id, title: n.title, path: parts.join(' / '), favorite: n.favorite };
+            })}
+          onGo={(id) => {
+            go(id);
+            setView('editor');
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'projectSettings' && (
+        <ProjectSettingsDialog
+          project={project}
+          folders={flatten(project.tree)
+            .filter((n) => n.children && n.type !== 'file')
+            .map((n) => ({ id: n.id, title: n.title, path: n.title }))}
+          onSave={(next) => {
+            saveProject(next);
+            setDialog(null);
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'stats' && <StatisticsDialog project={project} docs={docs} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} />}
+      {dialog === 'targets' && (
+        <TargetsDialog
+          project={project}
+          draftWords={totals.draft}
+          onSave={(targets) => {
+            saveProject({ ...project, targets });
+            setDialog(null);
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'styles' && (
         <StylesDialog
           api={api}
@@ -913,6 +1073,12 @@ export default function App({ api }) {
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
       {dialog === 'import' && <ImportDialog api={api} target={selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
       {error && <ErrorToast message={error} onClose={() => setError('')} />}
+      {toast && (
+        <div className="toast ok-toast" role="status">
+          <span>{toast}</span>
+          <button onClick={() => setToast('')} aria-label="Închide">×</button>
+        </div>
+      )}
     </div>
   );
 }
