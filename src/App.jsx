@@ -35,6 +35,7 @@ import { BackIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, Forwar
 import { targetCrossed } from './lib/panelsExtra.js';
 import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
+import HelpWindow from './components/HelpWindow.jsx';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
@@ -125,6 +126,7 @@ export default function App({ api }) {
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
+  const [help, setHelp] = useState(null);
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [revealId, setRevealId] = useState(null);
@@ -945,7 +947,7 @@ export default function App({ api }) {
   const lastMenu = useRef('');
   useEffect(() => {
     if (!api.setAppMenu || !project) return;
-    const titles = { file: 'Fișier', edit: 'Editare', view: 'Vizualizare', nav: 'Navigare', project: 'Proiect', document: 'Document', format: 'Format', tools: 'Unelte', window: 'Fereastră' };
+    const titles = { file: 'Fișier', edit: 'Editare', view: 'Vizualizare', nav: 'Navigare', project: 'Proiect', document: 'Document', format: 'Format', tools: 'Unelte', window: 'Fereastră', help: 'Ajutor' };
     const spec = Object.entries(titles).map(([g, label]) => ({
       label: groupLabel(g) || label,
       items: Object.values(commandsRef.current)
@@ -986,7 +988,27 @@ export default function App({ api }) {
   if (!project) {
     return (
       <>
-        <Home api={api} settings={settings} onOpen={(res) => openResult(res).catch(report)} onError={report} onSettings={() => setDialog('settings')} />
+        <Home
+          api={api}
+          settings={settings}
+          onOpen={(res) => openResult(res).catch(report)}
+          onError={report}
+          onSettings={() => setDialog('settings')}
+          onHelp={() => setHelp({ topic: null, tab: 'manual' })}
+          onTutorial={api.newProject ? () => api.newProject('Tutorial Scribner', 'tutorial').then(openResult).catch(report) : undefined}
+        />
+        {help && (
+          <HelpWindow
+            initialTopic={help.topic}
+            initialTab={help.tab}
+            settings={settings}
+            onClose={() => setHelp(null)}
+            onStartTutorial={() => {
+              setHelp(null);
+              api.newProject('Tutorial Scribner', 'tutorial').then(openResult).catch(report);
+            }}
+          />
+        )}
         {dialog === 'settings' && (
           <SettingsDialog
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
@@ -1140,6 +1162,14 @@ export default function App({ api }) {
     for (const [id, html] of Object.entries(written)) await api.writeDoc(dir, id, 'docs', html);
     setDocs((d) => ({ ...d, ...written }));
     setToast(`Glosare generate în Cercetare: ${alogen.terms.length} termeni alogeni, ${reading.terms?.length ?? 0} termeni de lectură, cuprins cu ${toc.entries.length} intrări.`);
+  };
+  const helpContext = () => (composition ? 'composition' : view === 'editor' && selected?.children ? 'scrivenings' : dialog || view);
+  const startTutorial = () => {
+    setHelp(null);
+    flush()
+      .then(() => api.newProject('Tutorial Scribner', 'tutorial'))
+      .then(openResult)
+      .catch(report);
   };
   const scriptFormat = settings?.scriptFormat || null;
   const setScriptFormat = async (f) => {
@@ -1313,6 +1343,14 @@ export default function App({ api }) {
     ['file', 'saveTemplate', 'Salvează ca șablon…', () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
     ['file', 'pageSetup', 'Configurare pagină…', () => setDialog('pageSetup'), !api.getPageSetup],
     ['file', 'printPreview', 'Previzualizare tipărire', () => flush().then(() => api.printPreview(dir, project, { ids: selectedId ? [selectedId] : [] })).catch(report), !api.printPreview],
+    ['help', 'help', 'Manualul Scribner', () => setHelp({ topic: null, tab: 'manual' })],
+    ['help', 'helpContext', 'Ajutor pentru vederea curentă', () => setHelp({ topic: helpContext(), tab: 'manual' })],
+    ['help', 'helpShortcuts', 'Lista scurtăturilor', () => setHelp({ topic: null, tab: 'shortcuts' })],
+    ['help', 'helpPlaceholders', 'Placeholders pentru Compile', () => setHelp({ topic: null, tab: 'placeholders' })],
+    ['help', 'helpSyntax', 'Sintaxă Markdown / Fountain / Script Mode', () => setHelp({ topic: null, tab: 'syntax' })],
+    ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
+    ['help', 'reportIssue', 'Raportează o problemă…', () => window.open('https://github.com/Hermeneuticus-of-things/Scriptorium/issues', '_blank')],
+    ['help', 'about', 'Despre Scribner', () => window.alert('Scribner: program de scris pentru texte lungi, inspirat de Scrivener 3.'), Boolean(api.setAppMenu)],
     ['tools', 'nameGen', 'Generator de nume…', () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', 'Citire cu voce tare / Dictare', () => setShowSpeech((v) => !v)],
@@ -1397,7 +1435,7 @@ export default function App({ api }) {
         <Menu label="Navigare" items={navigateMenu} />
         <Menu label="Proiect" items={projectMenu} />
         {!api.setAppMenu &&
-          ['file', 'view', 'format', 'tools'].map((g) => (
+          ['file', 'view', 'format', 'tools', 'help'].map((g) => (
             <Menu
               key={g}
               label={groupLabel(g)}
@@ -1785,6 +1823,7 @@ export default function App({ api }) {
           </div>
         </div>
       )}
+      {help && <HelpWindow initialTopic={help.topic} initialTab={help.tab} settings={settings} onClose={() => setHelp(null)} onStartTutorial={startTutorial} />}
       {dialog === 'saveTemplate' && <SaveTemplateDialog api={api} dir={dir} project={project} onSaved={(t) => setToast(`Șablon salvat: ${t.title}`)} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'pageSetup' && <PageSetupDialog api={api} dir={dir} project={project} previewIds={selectedId ? [selectedId] : []} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}

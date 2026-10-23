@@ -1,0 +1,221 @@
+// Scribner user manual (English, condensed). Same chapter and section ids as manual.ro.js
+// so context help works in both languages.
+
+const k = (s) => s.split('+').map((p) => `<kbd>${p}</kbd>`).join('+');
+
+export const MANUAL_EN = [
+  {
+    id: 'start',
+    title: 'Getting started',
+    sections: [
+      { id: 'start-intro', title: 'What Scribner is', html: `<p>Scribner is a writing program for long texts. You write in <strong>small documents</strong> (scenes, chapters, sections) arranged in a tree called the <strong>binder</strong>, move them freely, and <strong>Compile</strong> them into one manuscript (DOCX, PDF, EPUB and more). It follows the ideas of Scrivener 3 but is written from scratch; Scrivener <code>.scriv</code> projects can be imported and exported. AI is <strong>optional</strong> and can be switched off entirely in <em>Settings → AI</em>.</p>` },
+      { id: 'start-window', title: 'The main window', html: `<p><strong>Binder</strong> on the left (Draft, Research, Trash; toggle ${k('Ctrl+Alt+B')}), the <strong>work area</strong> in the middle (Editor ${k('Ctrl+1')}, Corkboard ${k('Ctrl+2')}, Outline ${k('Ctrl+3')}), the <strong>Inspector</strong> on the right (${k('Ctrl+Alt+I')}). The top bar has Back/Forward, Split, Composition, Compile, Inspector, I-REP and the Document, Navigate and Project menus. Panel widths are remembered per project.</p>` },
+      { id: 'start-first-project', title: 'Your first project in five minutes', html: `<ol><li>On the Home screen pick a template, type a title, click Create and choose a folder.</li><li>Select a scene in the binder and write.</li><li>${k('Ctrl+N')} adds a document, ${k('Ctrl+Shift+N')} a folder.</li><li>Fill in the synopsis in the Inspector; it shows on the corkboard card.</li><li>${k('Ctrl+Shift+E')} opens Compile.</li></ol><p>Saving is automatic; ${k('Ctrl+S')} saves immediately. To learn by doing, use <em>Help → Interactive tutorial</em>.</p>` },
+      { id: 'start-saving', title: 'Saving, backups and project files', html: `<p>A project is a <code>Name.scribner</code> folder of plain files (<code>project.json</code>, <code>docs/</code>, <code>notes/</code>, <code>snapshots/</code>, <code>media/</code>). Autosave runs after a few idle seconds. Automatic backups are configured in <em>Settings → Backup</em>; <em>File → Backups…</em> lists and restores them (as a separate project). <em>Save as…</em> (${k('Ctrl+Shift+S')}) copies the project.</p>` },
+    ],
+  },
+  {
+    id: 'projects',
+    title: 'Projects and templates',
+    sections: [
+      { id: 'projects-home', title: 'Home screen', html: `<p>Recent projects (pin favourites, clear list), open, import from Scrivener, and new project from a template. <em>Settings → General</em> can reopen the last project at startup.</p>` },
+      { id: 'projects-templates', title: 'Built-in templates', html: `<p>General: Blank. Fiction: Novel, Novel with parts, Short story collection, Short story (manuscript format), Formatted novel. Non-fiction: Non-fiction, Essay, Thesis, Lecture notes, Recipe collection. Script: Screenplay, Stage play. Poetry: Poetry collection. Some include a <em>Templates</em> folder (character and place sheets) used by <em>Document → New from template</em>.</p>` },
+      { id: 'projects-user-templates', title: 'Your own templates', html: `<p><em>File → Save as template…</em> stores the current project (without snapshots and history) with a title, category, description and icon. It appears on the Home screen.</p>` },
+      { id: 'projects-properties', title: 'Project properties and settings', html: `<p><em>Project → Project settings…</em>: title, author, title abbreviation, labels, statuses, custom metadata, section types, default formatting, auto-complete, template folder, backup options. Author and title feed Compile placeholders.</p>` },
+      { id: 'projects-windows', title: 'Windows and layouts', html: `<p><em>File → New window</em>. <em>Window → Save current layout…</em> and <em>Manage layouts…</em>; each saved layout becomes a Window menu command. Full screen: ${k('Ctrl+Shift+F11')}.</p>` },
+    ],
+  },
+  {
+    id: 'binder',
+    title: 'Binder',
+    sections: [
+      { id: 'binder-basics', title: 'Draft, Research, Trash', html: `<p>Only <strong>Draft</strong> (Manuscris) is compiled. <strong>Research</strong> holds notes, sources and media. <strong>Trash</strong> keeps deleted items; <em>Restore from Trash</em> puts them back. Text documents can have children.</p>` },
+      { id: 'binder-organize', title: 'Creating, moving, renaming', html: `<p>${k('Ctrl+N')} / ${k('Ctrl+Shift+N')} new document / folder; ${k('F2')} rename; drag &amp; drop (Alt-drag copies); ${k('Ctrl')}/${k('Shift')}+click for multiple selection; ${k('Ctrl+↑')}/${k('Ctrl+↓')} move, ${k('Ctrl+←')}/${k('Ctrl+→')} change level. <em>Move to…</em>, <em>Duplicate</em> (${k('Ctrl+D')}), convert, sort and separator commands are in the Document menu.</p>` },
+      { id: 'binder-hoist', title: 'Hoist, favourites, binder search', html: `<p><em>Navigate → Hoist binder</em> shows only one folder. <em>Reveal in Binder</em>: ${k('Ctrl+Alt+R')}. Tick <em>Favourite</em> in the Inspector to list a document in the Navigate menu. Icons and colours are set in the Inspector.</p>` },
+      { id: 'binder-media', title: 'Media in Research', html: `<p><em>Document → Add files to Research</em> imports images, PDF, audio and video, viewable in the editor. <code>&lt;$img:Name&gt;</code> inserts a Research image at Compile.</p>` },
+    ],
+  },
+  {
+    id: 'editor',
+    title: 'Editor and formatting',
+    sections: [
+      { id: 'editor-basics', title: 'Writing', html: `<p>Format Bar: styles, font, bold/italic/underline/strike, super/subscript, small caps, colours, highlight, alignment, lists, comments. Smart quotes, dashes, ellipses, auto-capitalisation and custom replacements are set in <em>Settings → Corrections</em>. ${k('Ctrl+Shift+V')} pastes and matches style.</p>` },
+      { id: 'editor-paragraph', title: 'Paragraphs, ruler, tables, images', html: `<p>Paragraph menu for spacing and indents, ruler with tab stops, numbered lists, tables, images with width and alignment, inserts (date, page break, link, placeholder), RTL paragraphs. Select paragraph/sentence/word: ${k('Ctrl+Alt+Shift+P')}/${k('S')}/${k('W')}. Copy/paste formatting: ${k('Ctrl+Alt+C')}/${k('Ctrl+Alt+V')}.</p>` },
+      { id: 'editor-split-merge', title: 'Split and merge', html: `<p>Split at cursor ${k('Ctrl+K')}, split with selection as title ${k('Ctrl+Shift+K')}, merge ${k('Ctrl+Shift+M')}; a snapshot is taken first. <em>Append selection to document…</em> sends text elsewhere.</p>` },
+      { id: 'editor-view', title: 'Zoom, page view, focus', html: `<p>Footer with counts and target, page view, typewriter scrolling, invisibles, current-line highlight, fading, linguistic focus (nouns, verbs), and text-appearance toggles for comments and revisions.</p>` },
+      { id: 'editor-revisions', title: 'Revision mode and tracked changes', html: `<p>Five revision colours. Tracked changes in DOCX become revision marks on import and are written back on export.</p>` },
+      { id: 'editor-links', title: 'Links, bookmarks, look-up', html: `<p>Type <code>[[</code> for an internal link. Project bookmarks in the Project menu. Dictionary, synonyms (dexonline), Wikipedia and Google look-ups in the Tools menu. Spelling uses the system spellchecker (Romanian and English).</p>` },
+    ],
+  },
+  {
+    id: 'styles',
+    title: 'Styles',
+    sections: [
+      { id: 'styles-basics', title: 'Paragraph and character styles', html: `<p><em>Format → Styles…</em>: create, rename, redefine from selection, next style, shortcuts.</p>` },
+      { id: 'styles-compile', title: 'Styles on import and Compile', html: `<p>Import a stylesheet from another project. Style names are kept in DOCX output.</p>` },
+    ],
+  },
+  {
+    id: 'comments',
+    title: 'Comments and notes',
+    sections: [
+      { id: 'comments-comments', title: 'Comments', html: `<p>Linked comments with colour, author and date, listed in the Inspector. Inline annotations convert to comments and back. Neither reaches the compiled book (comments can be exported as Word comments).</p>` },
+      { id: 'comments-footnotes', title: 'Footnotes', html: `<p>Insert from the Format Bar; double-click to edit. Compile can output footnotes, chapter endnotes or book endnotes.</p>` },
+      { id: 'comments-notes', title: 'Document and project notes', html: `<p>Each document has notes in the Inspector. <em>Project → Project notes (tabs)…</em> holds shared notes.</p>` },
+      { id: 'comments-find-format', title: 'Find by formatting', html: `<p>${k('Ctrl+Alt+F')} finds comments, notes, annotations, highlights, colours, revisions, styles, bookmarks.</p>` },
+    ],
+  },
+  {
+    id: 'scrivenings',
+    title: 'Scrivenings, split, Quick Reference, composition',
+    sections: [
+      { id: 'scrivenings-basics', title: 'Scrivenings', html: `<p>Selecting a folder in Editor view shows its documents as one editable text. Also for a selection or the active collection; titles and separators can be toggled.</p>` },
+      { id: 'scrivenings-split', title: 'Split editor', html: `<p>The Split button opens a second pane; ${k('Alt')}+click in the binder opens a document there. Horizontal/vertical, swap, lock.</p>` },
+      { id: 'scrivenings-quickref', title: 'Quick Reference', html: `<p>${k('Ctrl+Shift+R')} opens the current document in a small floating window.</p>` },
+      { id: 'scrivenings-composition', title: 'Composition mode', html: `<p>${k('F11')} hides everything but the text; options in <em>Settings → Appearance</em>. ${k('Esc')} leaves.</p>` },
+      { id: 'scrivenings-nav', title: 'Navigation', html: `<p>Back/Forward ${k('Alt+←')}/${k('Alt+→')}, previous/next document ${k('Ctrl+Alt+↑')}/${k('Ctrl+Alt+↓')}, Go to ${k('Ctrl+G')}.</p>` },
+    ],
+  },
+  {
+    id: 'corkboard',
+    title: 'Corkboard',
+    sections: [
+      { id: 'corkboard-basics', title: 'Index cards', html: `<p>${k('Ctrl+2')}: cards with title and synopsis; drag to reorder.</p>` },
+      { id: 'corkboard-options', title: 'Size, freeform, arrange', html: `<p>Card size, ratio, spacing, columns; freeform mode with <em>Commit order</em>; arrange by label, status or keyword; several folders stacked.</p>` },
+    ],
+  },
+  {
+    id: 'outline',
+    title: 'Outline',
+    sections: [{ id: 'outline-basics', title: 'The outliner', html: `<p>${k('Ctrl+3')}: hierarchical list with selectable columns (label, status, include, words, characters, target, progress, dates, keywords, section type, custom metadata), sorting, inline editing, drag &amp; drop.</p>` }],
+  },
+  {
+    id: 'inspector',
+    title: 'Inspector and metadata',
+    sections: [
+      { id: 'inspector-basics', title: 'What the Inspector holds', html: `<p>Synopsis (text or image), label, status, include in Compile, section type, keywords, custom metadata, target, dates, icon, favourite, notes, bookmarks, snapshots, comments and footnotes. The lock keeps it on one document.</p>` },
+      { id: 'inspector-labels', title: 'Labels, status, keywords', html: `<p>Defined in Project settings; <em>Project → Keywords…</em> manages keywords. <em>Auto-generate synopsis from text</em> works without AI.</p>` },
+      { id: 'inspector-metadata', title: 'Custom metadata and section types', html: `<p>Text, Checkbox, List and Date fields. Section types tell Compile how each document looks; assigned by level or manually.</p>` },
+    ],
+  },
+  {
+    id: 'snapshots',
+    title: 'Snapshots',
+    sections: [
+      { id: 'snapshots-basics', title: 'Document versions', html: `<p>${k('Ctrl+5')} takes a snapshot. Automatic snapshots before split, merge, project replace, sync and MCP writes.</p>` },
+      { id: 'snapshots-compare', title: 'Compare and restore', html: `<p>View, diff against current text or another snapshot, rename, delete, restore (the current text is snapshotted first).</p>` },
+    ],
+  },
+  {
+    id: 'search',
+    title: 'Search and collections',
+    sections: [
+      { id: 'search-doc', title: 'Find in document', html: `<p>${k('Ctrl+F')} opens find and replace in the current document, with highlighting and next/previous.</p>` },
+      { id: 'search-project', title: 'Project find and replace', html: `<p>${k('Ctrl+Shift+F')}: regex, whole words, case, trash; replace also in titles, synopses, notes, with a snapshot first.</p>` },
+      { id: 'search-advanced', title: 'Advanced search', html: `<p>Search in specific fields with filters; save as a search collection.</p>` },
+      { id: 'search-collections', title: 'Collections', html: `<p>Tabs above the binder holding document lists; Scrivenings and Compile can use them.</p>` },
+    ],
+  },
+  {
+    id: 'targets',
+    title: 'Targets and statistics',
+    sections: [
+      { id: 'targets-project', title: 'Project and session targets', html: `<p><em>Project → Targets and deadline…</em>: book target (words, characters or pages), session target, deadline and writing days, reset rules, notification.</p>` },
+      { id: 'targets-document', title: 'Document target', html: `<p>Set in the Inspector; shown in the footer and Outline.</p>` },
+      { id: 'targets-stats', title: 'Statistics and writing history', html: `<p>${k('Ctrl+Shift+I')} statistics; <em>Writing history…</em> with daily/monthly charts and CSV.</p>` },
+    ],
+  },
+  {
+    id: 'compile',
+    title: 'Compile',
+    sections: [
+      { id: 'compile-basics', title: 'How Compile works', html: `<p>${k('Ctrl+Shift+E')}. Choose a <strong>format</strong> (Standard manuscript, Paperback, E-book, Modern, PDF A5 reading, Default, Times New Roman, Courier), an <strong>output</strong> (DOCX, PDF, EPUB, HTML, RTF, ODT, Markdown, MultiMarkdown, plain text, Fountain, FDX, LaTeX, Print) and the <strong>contents</strong>. Duplicate built-in formats to edit them; <em>Save global</em> shares a format across projects.</p>` },
+      { id: 'compile-content', title: 'Contents tab', html: `<p>Compiled folder, filters by label/status/collection, per-document include, front and back matter.</p>` },
+      { id: 'compile-sections', title: 'Sections and separators', html: `<p>Each section type gets a layout (title, prefix/suffix such as <code>Chapter &lt;$n&gt;</code>, case, alignment, page break). Separators: text, page break, blank line or none.</p>` },
+      { id: 'compile-placeholders', title: 'Placeholders', html: `<p><code>&lt;$n&gt;</code> (with <code>:roman</code>, <code>:lroman</code>, <code>:words</code>, <code>:Words</code>, <code>:WORDS</code>), <code>&lt;$t&gt;</code>, <code>&lt;$wc&gt;</code>, <code>&lt;$projecttitle&gt;</code>, <code>&lt;$abbr_title&gt;</code>, <code>&lt;$author&gt;</code>, <code>&lt;$surname&gt;</code>, <code>&lt;$forename&gt;</code>, <code>&lt;$date&gt;</code>, <code>&lt;$year&gt;</code>, <code>&lt;$p&gt;</code> (headers/footers), <code>&lt;$img:Name&gt;</code>. Full list in the Placeholders tab. Number words are Romanian.</p>` },
+      { id: 'compile-replacements', title: 'Replacements and transformations', html: `<p>Find → replace pairs applied only to the compiled text (regex, whole word, case); quote/dash conversion, highlight and colour removal.</p>` },
+      { id: 'compile-notes', title: 'Notes and comments', html: `<p>Footnotes, chapter endnotes or book endnotes; comments removed or exported as Word comments (DOCX).</p>` },
+      { id: 'compile-page', title: 'Page setup', html: `<p>Paper size, margins, font, line spacing, headers and footers (first page and odd/even can differ). For single documents: <em>File → Page setup…</em>, <em>Print preview</em>, <em>Print</em> (${k('Ctrl+P')}).</p>` },
+      { id: 'compile-epub', title: 'EPUB and metadata', html: `<p>Title, author, ISBN, language, keywords, cover image; EPUB 3 with title page and generated TOC.</p>` },
+      { id: 'compile-other-exports', title: 'LaTeX, Pandoc, MultiMarkdown', html: `<p>Direct exports in the File menu; <code>[@key]</code> citations use the imported bibliography.</p>` },
+    ],
+  },
+  {
+    id: 'import',
+    title: 'Import/export, Scrivener .scriv, sync',
+    sections: [
+      { id: 'import-files', title: 'Importing files', html: `<p>Word, RTF, ODT, text, Markdown (plus HTML, Fountain, FDX on desktop) with splitting at Heading 1, Heading 1–2 or a separator line. Also OPML, web pages, Zotero bibliographies and project bundles.</p>` },
+      { id: 'import-scrivener', title: 'Scrivener projects', html: `<p>Import Scrivener 1/2/3 from the Home screen; everything is converted and a full copy stays in <code>scrivener-original/</code>; an import report follows. <em>File → Export as Scrivener project</em> writes back.</p>` },
+      { id: 'import-export', title: 'Exporting documents', html: `<p>Documents as DOCX/RTF/ODT/TXT/MD with folder structure, OPML, CSV metadata, editor package, web/mobile bundle.</p>` },
+      { id: 'import-sync', title: 'External folder sync', html: `<p>Write documents to a folder (RTF, TXT, MD, FDX, Fountain), edit elsewhere, then read changes back (snapshots first). Can run on open/close.</p>` },
+    ],
+  },
+  {
+    id: 'script',
+    title: 'Script Mode',
+    sections: [
+      { id: 'script-basics', title: 'Scripts', html: `<p><em>Format → Script mode</em>: Screenplay, Stage play, Stage play (UK), Comic, BBC radio drama. Each paragraph has an element.</p>` },
+      { id: 'script-keys', title: 'Tab and Enter', html: `<p><kbd>Tab</kbd> changes the element, ${k('Shift+Tab')} goes back, <kbd>Enter</kbd> picks the next element. See the Syntax tab. Character names and scene headings auto-complete.</p>` },
+      { id: 'script-export', title: 'Final Draft and Fountain', html: `<p>Export .fdx and .fountain from the File menu or Compile; both can be imported.</p>` },
+    ],
+  },
+  {
+    id: 'tools',
+    title: 'Tools',
+    sections: [
+      { id: 'tools-names', title: 'Name generator', html: `<p>Names by culture, gender and format; copy or insert.</p>` },
+      { id: 'tools-scratchpad', title: 'Scratchpad', html: `<p>A global notepad; send a note into the open project.</p>` },
+      { id: 'tools-speech', title: 'Read aloud and dictation', html: `<p>System voices read the text; dictation where the system supports it.</p>` },
+      { id: 'tools-timeline', title: 'Timeline', html: `<p>Scenes on a time axis from custom metadata (Date, Time, Duration, Location, POV) or <code>Date: …</code> lines in the synopsis.</p>` },
+      { id: 'tools-relations', title: 'Relationship map', html: `<p>Characters that share scenes, guessed from capitalised names.</p>` },
+      { id: 'tools-pacing', title: 'Pacing analysis', html: `<p>Per-scene length, dialogue share and sentence length, without AI.</p>` },
+      { id: 'tools-research', title: 'Project research and glossaries', html: `<p>Local retrieval over the project (RAG), with an optional AI answer; glossary and print TOC generation.</p>` },
+    ],
+  },
+  {
+    id: 'irep',
+    title: 'I-REP/I-EDIT review and profiles',
+    sections: [
+      { id: 'irep-basics', title: 'I-REP', html: `<p>Check, apply safe fixes, re-check, in loops; works without AI.</p>` },
+      { id: 'irep-iedit', title: 'I-EDIT', html: `<p>Editorial rounds run by the AI, previewed before applying, with a snapshot first.</p>` },
+      { id: 'irep-profiles', title: 'Profiles: Generic and Romanian', html: `<p><strong>Generic</strong> (default): typography and LLM residue for any text. <strong>Romanian</strong>: DOOM III, P1–P13, R0–R11, foreign terms. Set in <em>Settings → AI</em>; stored per project.</p>` },
+    ],
+  },
+  {
+    id: 'ai',
+    title: 'Optional AI and MCP',
+    sections: [
+      { id: 'ai-setup', title: 'Enabling AI', html: `<p><em>Settings → AI</em>: enable and enter an Anthropic API key, encrypted by the OS and kept in the main process.</p>` },
+      { id: 'ai-assistant', title: 'The assistant', html: `<p>Proofreading, synopsis, continuation, critique, consistency and questions; bulk synopsis, living character sheets and zoom-level review in the Tools menu.</p>` },
+      { id: 'ai-mcp', title: 'AI agents via MCP', html: `<p><code>mcp/server.mjs</code> gives an MCP client read/write access to a project; every write is snapshotted and logged in <code>agent-log.jsonl</code>. <code>--read-only</code> limits to reading. The exact command is in <em>Settings → AI → MCP connection</em>.</p>` },
+    ],
+  },
+  {
+    id: 'settings',
+    title: 'Settings',
+    sections: [{ id: 'settings-tabs', title: 'Settings tabs', html: `<p>General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard, AI, Language. The portable build keeps settings in <code>Scribner-data/</code> next to the executable.</p>` }],
+  },
+  {
+    id: 'shortcuts',
+    title: 'Shortcuts',
+    sections: [
+      { id: 'shortcuts-config', title: 'Customising shortcuts', html: `<p><em>Tools → Keyboard shortcuts…</em>: click a command, press the keys, save. Empty disables; conflicts are marked.</p>` },
+      { id: 'shortcuts-common', title: 'Most used', html: `<p>${k('Ctrl+S')} save, ${k('Ctrl+N')} new document, ${k('Ctrl+1')}–${k('Ctrl+3')} views, ${k('F11')} composition, ${k('Ctrl+K')} split, ${k('Ctrl+G')} go to, ${k('Ctrl+5')} snapshot, ${k('Ctrl+Shift+E')} Compile, ${k('F1')} manual.</p>` },
+    ],
+  },
+  {
+    id: 'faq',
+    title: 'Troubleshooting and FAQ',
+    sections: [
+      { id: 'faq-missing-compile', title: 'A document is missing from the compiled book', html: `<p>Is it in Draft? Is <em>Include in Compile</em> ticked? Do the Contents filters exclude it? Does its section type hide text?</p>` },
+      { id: 'faq-placeholder', title: 'A placeholder shows as text', html: `<p>Check spelling and the Placeholders tab; <code>&lt;$p&gt;</code> only works in headers/footers.</p>` },
+      { id: 'faq-spelling', title: 'Romanian spelling not underlined', html: `<p>On Windows/macOS install the Romanian language pack in the OS.</p>` },
+      { id: 'faq-lost-text', title: 'I lost text', html: `<p>Undo, snapshots, Trash, then <em>File → Backups…</em>.</p>` },
+      { id: 'faq-ai', title: 'AI commands are greyed out', html: `<p>Enable AI and enter the key in <em>Settings → AI</em>.</p>` },
+      { id: 'faq-scriv', title: 'Scrivener import missed something', html: `<p>Read the import report; the original copy is in <code>scrivener-original/</code>.</p>` },
+      { id: 'faq-report', title: 'Reporting a problem', html: `<p><em>Help → Report a problem</em> opens the GitHub issues page. Include the version, OS and steps to reproduce.</p>` },
+    ],
+  },
+];
+
+export default MANUAL_EN;

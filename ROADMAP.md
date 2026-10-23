@@ -199,3 +199,10 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 | Simplenote / Index Card | Servicii închise |
 | MathType | Program comercial; în locul lui vine un editor MathML |
 | EndNote / Bookends | În locul lor vine Zotero |
+
+## 6. Ajutor (ca în Scrivener)
+
+- [x] Meniu Ajutor: manual (F1), ajutor pentru vederea curentă, scurtături, placeholders, sintaxă Markdown / Fountain / Script Mode, raportează o problemă, despre
+- [x] Manual complet în română (22 de capitole, căutare cu evidențiere), variantă scurtă în engleză
+- [x] Tutorial interactiv: proiect „Tutorial Scribner” cu 15 lecții și exerciții
+

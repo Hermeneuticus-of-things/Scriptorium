@@ -8,6 +8,7 @@ import './script.css';
 import './behaviour.css';
 import './panels-extra.css';
 import './editor-extra.css';
+import './help/help.css';
 import './scrivener-theme.css';
 
 // Electron: window.api from the preload. Browser: IndexedDB-backed web/PWA build,
