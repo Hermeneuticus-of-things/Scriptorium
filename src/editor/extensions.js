@@ -11,6 +11,8 @@ import { TextStyle, Color } from '@tiptap/extension-text-style';
 import { Superscript } from '@tiptap/extension-superscript';
 import { Subscript } from '@tiptap/extension-subscript';
 import { LinguisticFocus } from '../extensions/LinguisticFocus.js';
+import { Corrections } from './corrections.js';
+import { Invisibles } from './invisibles.js';
 import { AutoComplete, CharStyle, ParagraphStyle, Revision, WritingFocus } from './writing.js';
 
 // Comment attached to a text range: <span data-comment="text" class="comment">…</span>
@@ -168,7 +170,10 @@ export const UnsupportedImage = Node.create({
   },
 });
 
-export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [] } = {}) {
+export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], corrections = null, showInvisibles = false } = {}) {
+  // corrections: {smartDashes, smartEllipsis, autoCapitalize, replacements}; null keeps the
+  // historical behaviour (dashes/ellipsis only through Typography when smartQuotes is on).
+  const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, replacements: [], ...corrections } : null;
   const ext = [
     ParagraphStyle,
     CharStyle,
@@ -192,7 +197,9 @@ export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuo
     Color,
     Superscript,
     Subscript,
+    Invisibles.configure({ enabled: showInvisibles }),
   ];
+  if (corr) ext.push(Corrections.configure(corr));
   if (smartQuotes) {
     ext.push(
       Typography.configure({
@@ -200,8 +207,9 @@ export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuo
         closeDoubleQuote: '”',
         openSingleQuote: '«',
         closeSingleQuote: '»',
-        emDash: '—',
-        ellipsis: '…',
+        // With explicit corrections, dashes/ellipsis are handled by the Corrections extension.
+        emDash: corr ? false : '—',
+        ellipsis: corr ? false : '…',
         // Rules that would change ordinary Romanian text unexpectedly.
         laquo: false,
         raquo: false,

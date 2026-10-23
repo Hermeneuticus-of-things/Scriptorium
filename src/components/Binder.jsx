@@ -25,7 +25,26 @@ function matches(node, query, docs) {
   return (docs[node.id] || '').replace(/<[^>]+>/g, ' ').toLocaleLowerCase('ro').includes(q);
 }
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '' }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef }) {
+  // Behaviours from Options: Enter = 'rename' | 'newDoc' | 'open' ('edit' = 'open');
+  // double-click = 'rename' | 'quickRef' | 'open' ('openQuickRef' = 'quickRef').
+  const enterMode = binderEnter === 'edit' ? 'open' : binderEnter;
+  const dblMode = binderDoubleClick === 'openQuickRef' ? 'quickRef' : binderDoubleClick || 'rename';
+  const runBehaviour = (mode, id, isRootNode) => {
+    if (!id) return false;
+    if (mode === 'rename') {
+      if (isRootNode) return false;
+      setEditing(id);
+    } else if (mode === 'newDoc') onAdd('text');
+    else if (mode === 'open') {
+      if (onOpenItem) onOpenItem(id);
+      else onSelect(id, {});
+    } else if (mode === 'quickRef') {
+      if (isRootNode || !onQuickRef) return false;
+      onQuickRef(id);
+    } else return false;
+    return true;
+  };
   const [collapsed, setCollapsed] = useState({});
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState('');
@@ -78,7 +97,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             setDropHint(null);
           }}
           onClick={(e) => onSelect(node.id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
-          onDoubleClick={() => !node.root && setEditing(node.id)}
+          onDoubleClick={() => runBehaviour(dblMode, node.id, Boolean(node.root))}
         >
           {node.children ? (
             <button
@@ -137,6 +156,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           onKeyMove(map[e.key]);
         } else if (e.key === 'F2' && selected && !isRoot) {
           setEditing(selected);
+        } else if (e.key === 'Enter' && !mod && enterMode && runBehaviour(enterMode, selected, isRoot)) {
+          e.preventDefault();
         }
       }}
       tabIndex={-1}

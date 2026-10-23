@@ -1,0 +1,27 @@
+/* Show invisibles: ¶ at the end of paragraphs/headings, · over spaces. */
+[data-invisibles="on"] .ProseMirror p::after,
+[data-invisibles="on"] .ProseMirror h1::after,
+[data-invisibles="on"] .ProseMirror h2::after,
+[data-invisibles="on"] .ProseMirror h3::after,
+[data-invisibles="on"] .ProseMirror li > p:last-child::after,
+.ProseMirror[data-invisibles="on"] p::after,
+.ProseMirror[data-invisibles="on"] h1::after,
+.ProseMirror[data-invisibles="on"] h2::after,
+.ProseMirror[data-invisibles="on"] h3::after {
+  content: '¶';
+  color: var(--muted, #999);
+  opacity: 0.6;
+  pointer-events: none;
+}
+[data-invisibles="on"] .ProseMirror br::after { content: '↵'; color: var(--muted, #999); opacity: 0.6; }
+.inv-space { position: relative; }
+.inv-space::after {
+  content: '·';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  color: var(--muted, #999);
+  opacity: 0.7;
+  pointer-events: none;
+}
