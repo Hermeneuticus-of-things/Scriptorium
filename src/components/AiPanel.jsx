@@ -58,7 +58,12 @@ export default function AiPanel({ api, hasKey, node, getText, hasSelection, getC
       </div>
       <textarea rows={3} placeholder="Întreabă orice despre text sau proiect…" value={question} onChange={(e) => setQuestion(e.target.value)} />
       <button disabled={busy || !question.trim()} onClick={() => run('ask')}>Întreabă</button>
-      {busy && <p className="muted">Se lucrează…</p>}
+      {busy && (
+        <p className="muted">
+          Se lucrează…{' '}
+          {api.cancelAi && <button className="link" onClick={() => api.cancelAi()}>Anulează</button>}
+        </p>
+      )}
       {error && <p className="warn">{error}</p>}
       {result && (
         <div className="ai-result">

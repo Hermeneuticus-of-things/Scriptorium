@@ -8,6 +8,7 @@ const compile = require('../lib/compile.cjs');
 const scriptExport = require('../lib/scriptExport.cjs');
 const editorPackage = require('../lib/editorPackage.cjs');
 const ai = require('../lib/ai.cjs');
+const aiRuns = require('../lib/aiRuns.cjs');
 const aiProviders = require('../lib/aiProviders.cjs');
 const aiKeys = require('../lib/aiKeys.cjs');
 const notebookLm = require('../lib/notebookLm.cjs');
@@ -719,9 +720,13 @@ handle('compile:preview', (_e, dir, project, options) => {
 handle('ai:run', (_e, payload) => {
   if (readSettings().aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
   // Provider, model and key come only from settings; the renderer can't pick them per call.
-  const { provider, model, baseUrl, apiKey, ...rest } = payload || {};
-  return ai.runAction({ ...rest, ...getAiConfig() });
+  const { provider, model, baseUrl, apiKey, signal: _ignored, ...rest } = payload || {};
+  const timeoutMs = (Number(readSettings().aiTimeoutSec) || 300) * 1000;
+  return aiRuns.track(_e.sender.id, (signal) => ai.runAction({ ...rest, ...getAiConfig(), signal }), timeoutMs);
 });
+
+// Cancels every AI request started by this window (panels and bulk jobs).
+handle('ai:cancel', (e) => aiRuns.cancel(e.sender.id));
 
 // "Testează conexiunea": tiny prompt to the provider chosen in the (possibly unsaved) form.
 handle('ai:test', async (_e, override = {}) => {
