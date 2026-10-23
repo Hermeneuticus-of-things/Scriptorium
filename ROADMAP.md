@@ -29,6 +29,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 | [x] | Asistent AI Claude: corectură, sinopsis, continuare, critică, consistență, întrebări |
 | [x] | Import Scrivener fără pierderi (testat pe un proiect de test complet; neverificat încă pe Karma Book real) |
 | [~] | I-REP / I-EDIT (motor de reguli Karma, bucle micro/mezzo/macro, panou; verificat cu simulator, nu cu Claude real) |
+| [x] | AI opțional: programul funcționează complet și fără AI |
 
 ---
 
@@ -115,28 +116,31 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Auto-complete cu nume din proiect (Tab)
 
 ### 2.2 Proiect și organizare
-- [ ] Project Settings complet: Labels, Status, Custom Metadata, Section Types, Auto-complete, Special Folders, Bookmarks
-- [ ] Custom Metadata editabile în Inspector și coloane în Outline
-- [ ] Section Types: pe nivel (Folders/Containers/Files) și manual per document
-- [ ] Keywords: fereastră proiect, culori, ierarhie, căutare după keyword
-- [ ] Collections: tab-uri, manuale, din căutare, colorate
-- [ ] Bookmarks în Inspector (document + proiect) cu previzualizare
-- [ ] Template Sheets: „Nou din șablon”
-- [ ] Document-container (text cu copii), conversie Text ↔ Folder
-- [ ] Icoane personalizate, Lock document, Sort children, Separator
-- [ ] Media în Cercetare: imagini, PDF, audio, video, pagini web, cu vizualizare
-- [ ] Project Search avansat (câmpuri, operatori, salvat ca colecție), Replace și în titluri/sinopsis/note
-- [ ] Project Targets complete: deadline, zile de scris, reset sesiune, doar textul din Compile, notificare, caractere
-- [ ] Project Statistics și Text Statistics (frecvență cuvinte, pagini estimate)
+- [x] Project Settings: proprietăți proiect, Labels (culori, ordine, titlul coloanei), Status, Custom Metadata (Text/Checkbox/List/Date), Section Types cu implicite pe nivel, Template Sheets; redenumirile și ștergerile se propagă în tot proiectul
+- [x] Custom Metadata editabile în Inspector și coloane în Outline
+- [x] Section Types manual per document (Inspector); implicitele pe nivel se aplică la Compile (2.4)
+- [x] Keywords: fereastră proiect, culori, ierarhie, redenumire cu unire, căutare după keyword
+- [x] Collections: tab-uri deasupra binderului, manuale (din selecție), din căutare, colorate, adaugă/scoate selecția
+- [x] Bookmarks în Inspector (spre documente și pagini web)
+- [ ] Bookmarks de proiect cu previzualizare
+- [x] Template Sheets: „Nou din șablon” (text, note, sinopsis, etichetă, cuvinte cheie)
+- [x] Document-container (text cu sub-documente, drop în document), conversie Text ↔ Folder
+- [x] Icoane personalizate, Lock document (doar citire), sortare conținut (A→Z, Z→A, dată), favorite
+- [x] Media în Cercetare: adăugare imagini, PDF, audio, video, cu vizualizare
+- [ ] Pagini web salvate offline în Cercetare
+- [x] Căutare avansată: câmpuri, operatori (oricare / toate / frază), filtre (etichetă, status, cuvinte cheie, zonă, coș, Compile), salvare ca colecție, înlocuire în text, note, titluri și sinopsis cu snapshot
+- [x] Project Targets: carte și sesiune în cuvinte sau caractere, termen limită cu zile de scris și cuvinte pe zi, reset sesiune, notificare
+- [x] Statistici: proiect / Compile / tot / selecție, pagini estimate, timp de citire, frecvența cuvintelor (cu cuvinte de legătură românești), lungimea frazelor
 - [ ] Note de proiect cu mai multe tab-uri
-- [ ] Go To (Ctrl+G), Next/Previous document, Enclosing group, Reveal in Binder, Favorite
+- [x] Go To (Ctrl+G), document anterior/următor (Ctrl+Alt+↑/↓), dosarul părinte, favorite
+- [x] AI opțional: comutator „Funcții AI” în Setări; fără AI totul funcționează (verificarea I-REP și reparațiile sigure rămân)
 
 ### 2.3 Corkboard și Outline
-- [ ] Freeform corkboard, Commit order
-- [ ] Arrange by label / status / keyword (linii)
-- [ ] Mărime card, ratio, coloane, stampile status, culoarea etichetei, keywords pe card
-- [ ] Synopsis imagine
-- [ ] Outline: coloane alese, sortare, titlu editabil, drag & drop, expand/collapse
+- [x] Corkboard liber (mutare cu mouse-ul, poziții salvate) și „Fixează ordinea” în binder
+- [x] Aranjare pe linii după etichetă / status / cuvânt cheie
+- [x] Mărimea fișelor (mic / mediu / mare), ștampile de status, nuanța etichetei, cuvinte cheie pe fișă
+- [x] Sinopsis imagine (din media)
+- [x] Outline: coloane alese (inclusiv metadate proprii, țintă, progres, date), sortare, titlu editabil (dublu-clic), drag & drop, extinde/restrânge tot, totaluri
 
 ### 2.4 Compile complet
 - [ ] Formate: Standard Manuscript, Paperback, Ebook, Modern; editabile și salvate

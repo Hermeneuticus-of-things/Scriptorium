@@ -176,6 +176,7 @@ handle('settings:get', () => {
     compFade: s.compFade || 100,
     spellLanguages: s.spellLanguages || ['ro', 'en-US'],
     smartQuotes: s.smartQuotes !== false,
+    aiEnabled: s.aiEnabled !== false,
     backupOnClose: b.backupOnClose,
     backupEveryMin: b.backupEveryMin,
     backupKeep: b.backupKeep,
@@ -420,7 +421,10 @@ handle('compile:export', async (e, dir, project, format, options) => {
   return res.filePath;
 });
 
-handle('ai:run', (_e, payload) => ai.runAction({ ...payload, apiKey: getApiKey() }));
+handle('ai:run', (_e, payload) => {
+  if (readSettings().aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
+  return ai.runAction({ ...payload, apiKey: getApiKey() });
+});
 
 let quitting = false;
 app.on('before-quit', (event) => {

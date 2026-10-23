@@ -16,6 +16,11 @@ import GoToDialog from './components/GoToDialog.jsx';
 import ProjectSettingsDialog from './components/ProjectSettingsDialog.jsx';
 import StatisticsDialog from './components/StatisticsDialog.jsx';
 import TargetsDialog from './components/TargetsDialog.jsx';
+import CollectionsBar from './components/CollectionsBar.jsx';
+import KeywordsDialog from './components/KeywordsDialog.jsx';
+import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
+import { collectionNodes, createCollection } from './lib/collections.js';
+import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
 import { projectWords } from './editor/writing.js';
@@ -81,6 +86,8 @@ export default function App({ api }) {
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
+  const [activeCollectionId, setActiveCollectionId] = useState(null);
+  const [searchSeed, setSearchSeed] = useState('');
   const [editorView, setEditorViewState] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('scribner-editor-view')) || {};
@@ -483,6 +490,47 @@ export default function App({ api }) {
     go(first.id);
   };
 
+  // Advanced search replace: text, notes, titles and synopses, with a snapshot of every changed document.
+  const replaceAdvanced = async (criteria, replacement) => {
+    await flush();
+    const fields = (criteria.fields && criteria.fields.length ? criteria.fields : ['title', 'text', 'notes', 'synopsis']).filter((f) => ['title', 'text', 'notes', 'synopsis'].includes(f));
+    const notesById = {};
+    if (fields.includes('notes')) for (const n of flatten(project.tree)) if (!n.root) notesById[n.id] = await api.readDoc(dir, n.id, 'notes');
+    const terms = buildTerms(criteria);
+    if (!terms || !terms.length) return 0;
+    const results = searchProject(project, docs, notesById, criteria);
+    let tree = project.tree;
+    const nextDocs = {};
+    let total = 0;
+    for (const { node } of results) {
+      let docHtml = docs[node.id] || '';
+      let notesHtml = notesById[node.id] || '';
+      let current = node;
+      let count = 0;
+      for (const re of terms) {
+        const r = replaceInFields(current, docHtml, notesHtml, re, replacement, fields);
+        current = r.node;
+        docHtml = r.docHtml;
+        notesHtml = r.notesHtml;
+        count += r.count;
+      }
+      if (!count) continue;
+      await api.takeSnapshot(dir, node.id, 'Automat înainte de înlocuire').catch(report);
+      if (docHtml !== (docs[node.id] || '')) {
+        await api.writeDoc(dir, node.id, 'docs', docHtml);
+        nextDocs[node.id] = docHtml;
+      }
+      if (fields.includes('notes') && notesHtml !== (notesById[node.id] || '')) await api.writeDoc(dir, node.id, 'notes', notesHtml);
+      tree = updateNode(tree, node.id, { title: current.title, synopsis: current.synopsis });
+      total += count;
+    }
+    saveProject({ ...project, tree });
+    setDocs((d) => ({ ...d, ...nextDocs }));
+    for (const [id, html] of Object.entries(nextDocs)) editorRefs.current.get(id)?.setHtml(html);
+    recordHistory();
+    return total;
+  };
+
   const replaceAllInProject = async (ids, re, replacement) => {
     await flush();
     let total = 0;
@@ -628,7 +676,10 @@ export default function App({ api }) {
   const trashRoot = project.tree.find((n) => n.root === 'trash');
   const inTrash = (id) => rootOf(project.tree, id)?.id === trashRoot.id;
   const isFolderView = selected && selected.children && view === 'editor';
-  const scrivSections = isFolderView ? flatten(selected.children).filter((n) => n.type === 'text') : [];
+  // A text container shows its own text first, then its sub-documents (Scrivener file group).
+  const scrivSections = isFolderView ? [...(selected.type === 'text' ? [selected] : []), ...flatten(selected.children).filter((n) => n.type === 'text')] : [];
+  const activeCollection = activeCollectionId ? (project.collections || []).find((c) => c.id === activeCollectionId) : null;
+  const collectionIds = activeCollection ? collectionNodes(project, activeCollection, docs).map((n) => n.id) : null;
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
   const splitNode = splitId ? findNode(project.tree, splitId) : null;
   const registerRef = (id, r) => {
@@ -636,6 +687,8 @@ export default function App({ api }) {
     else editorRefs.current.delete(id);
   };
   const smartQuotes = settings.smartQuotes !== false;
+  // AI is optional: with it off, every feature that needs Claude is hidden and nothing else changes.
+  const aiEnabled = settings.aiEnabled !== false;
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
   const aiNode = (activeId.current && findNode(project.tree, activeId.current)) || selected;
   const editorialNode = aiNode && aiNode.type === 'text' ? aiNode : scrivSections[0] || null;
@@ -700,6 +753,8 @@ export default function App({ api }) {
 
   const projectMenu = [
     { label: 'Caută și înlocuiește…', shortcut: 'Ctrl+Shift+F', action: () => setDialog('find') },
+    { label: 'Căutare avansată (câmpuri, filtre, colecții)…', action: () => { setSearchSeed(''); setDialog('advsearch'); } },
+    { label: 'Cuvinte cheie…', action: () => setDialog('keywords') },
     { label: 'Importă Word / text / Markdown…', action: () => setDialog('import') },
     '-',
     { label: 'Istoricul scrisului…', action: () => setDialog('history'), disabled: !api.getHistory },
@@ -744,17 +799,27 @@ export default function App({ api }) {
         <button onClick={() => setComposition(true)} title="Mod compunere (F11)">Compunere</button>
         <button className={showInspector ? 'on' : ''} onClick={() => setShowInspector((v) => !v)}>Inspector</button>
         <button className={showEditorial ? 'on' : ''} onClick={() => setShowEditorial((v) => !v)} title="I-REP (reparare + reverificare) și I-EDIT (runde editoriale)">
-          I-REP / I-EDIT
+          {aiEnabled ? 'I-REP / I-EDIT' : 'I-REP'}
         </button>
-        <button className={showAi ? 'on' : ''} onClick={() => setShowAi((v) => !v)}>Asistent AI</button>
+        {aiEnabled && <button className={showAi ? 'on' : ''} onClick={() => setShowAi((v) => !v)}>Asistent AI</button>}
         <Menu label="Document" items={documentMenu} />
         <Menu label="Navigare" items={navigateMenu} />
         <Menu label="Proiect" items={projectMenu} />
       </header>
 
       <div className="main">
+        <div className="binder-col" style={{ width: widths.binder }}>
+        <CollectionsBar
+          project={project}
+          active={activeCollectionId}
+          onSelect={setActiveCollectionId}
+          onChange={saveProject}
+          selectedIds={[...selectedIds]}
+        />
         <Binder
           project={project}
+          filterIds={collectionIds}
+          filterTitle={activeCollection?.title}
           docs={docs}
           width={widths.binder}
           selectedId={selectedId}
@@ -769,6 +834,7 @@ export default function App({ api }) {
             if (window.confirm('Golești coșul? Documentele din coș vor fi scoase din proiect.')) setTree(emptyTrash(project.tree));
           }}
         />
+        </div>
         <div className="resizer" onMouseDown={startResize('binder')} role="separator" aria-label="Lățime binder" />
 
         <section className={`workspace ${splitNode && view === 'editor' ? 'split' : ''}`}>
@@ -821,6 +887,15 @@ export default function App({ api }) {
                 onPatch={patchNode}
                 onAdd={() => addItem('text')}
                 onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
+                onReorder={(folderId, ids) =>
+                  setTree(
+                    produce(project.tree, (t) => {
+                      const f = findNode(t, folderId);
+                      f.children.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+                    }),
+                  )
+                }
+                readMedia={api.readMedia ? (file) => api.readMedia(dir, file) : null}
               />
             )}
             {view === 'outline' && (
@@ -833,6 +908,7 @@ export default function App({ api }) {
                   setView('editor');
                 }}
                 onPatch={patchNode}
+                onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
               />
             )}
           </div>
@@ -895,7 +971,7 @@ export default function App({ api }) {
                   flush={flush}
                 />
               )}
-              {showAi && (
+              {showAi && aiEnabled && (
                 <AiPanel
                   api={api}
                   hasKey={settings.hasApiKey}
@@ -916,6 +992,7 @@ export default function App({ api }) {
               )}
               {showEditorial && editorialNode && (
                 <EditorialPanel
+                  aiEnabled={aiEnabled}
                   key={`ed-${editorialNode.id}`}
                   api={api}
                   hasKey={settings.hasApiKey}
@@ -1010,6 +1087,37 @@ export default function App({ api }) {
           }}
           onClose={() => setDialog(null)}
           onError={report}
+        />
+      )}
+      {dialog === 'keywords' && (
+        <KeywordsDialog
+          project={project}
+          onSave={(next) => saveProject(next)}
+          onClose={() => setDialog(null)}
+          onSearchKeyword={(name) => {
+            setSearchSeed(name);
+            setDialog('advsearch');
+          }}
+        />
+      )}
+      {dialog === 'advsearch' && (
+        <AdvancedSearchDialog
+          project={project}
+          docs={docs}
+          initialQuery={searchSeed}
+          readNotes={(id) => api.readDoc(dir, id, 'notes')}
+          onOpen={(id) => {
+            go(id);
+            setView('editor');
+          }}
+          onReplace={replaceAdvanced}
+          onSaveAsCollection={(title, criteria) => {
+            const { query, ...options } = criteria;
+            const r = createCollection(project, { title, type: 'search', search: { query, options } });
+            saveProject(r.project);
+            setActiveCollectionId(r.id);
+          }}
+          onClose={() => setDialog(null)}
         />
       )}
       {dialog === 'goto' && (

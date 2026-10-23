@@ -7,6 +7,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [typewriter, setTypewriter] = useState(Boolean(settings.typewriter));
   const [comp, setComp] = useState({ bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100 });
   const [smartQuotes, setSmartQuotes] = useState(settings.smartQuotes !== false);
+  const [aiEnabled, setAiEnabled] = useState(settings.aiEnabled !== false);
   const [backupOnClose, setBackupOnClose] = useState(settings.backupOnClose !== false);
   const [backupEveryMin, setBackupEveryMin] = useState(settings.backupEveryMin || 0);
   const [backupKeep, setBackupKeep] = useState(settings.backupKeep || 10);
@@ -29,6 +30,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         compPaper: comp.paper,
         compFade: Number(comp.fade) || 100,
         smartQuotes,
+        aiEnabled,
         backupOnClose,
         backupEveryMin: Number(backupEveryMin) || 0,
         backupKeep: Math.max(1, Number(backupKeep) || 10),
@@ -172,6 +174,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             )}
           </fieldset>
         )}
+        <label className="check">
+          <input type="checkbox" checked={aiEnabled} onChange={(e) => setAiEnabled(e.target.checked)} /> Funcții AI (asistent, I-EDIT, bucla de reparare AI). Fără ele, Scribner funcționează complet: verificarea I-REP și reparațiile sigure rămân.
+        </label>
         <label>
           Cheie API Anthropic {settings.hasApiKey ? '(setată, lasă gol ca s-o păstrezi)' : ''}
           <input type="password" autoComplete="off" placeholder="sk-ant-…" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />

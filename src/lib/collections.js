@@ -1,0 +1,181 @@
+// Collections (manual id lists or saved searches) and project keyword management.
+// Pure: every function returns a new project object and never mutates its input.
+
+import { flatten } from './tree.js';
+import { searchProject } from './projectSearch.js';
+
+const newId = () =>
+  globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+
+const uniq = (arr) => [...new Set(arr)];
+
+function withCollection(project, collectionId, fn) {
+  const next = structuredClone(project);
+  const c = (next.collections || []).find((x) => x.id === collectionId);
+  if (c) fn(c, next);
+  return next;
+}
+
+export function createCollection(project, { title = 'Colecție nouă', color = '', type = 'manual', ids = [], search = null, id } = {}) {
+  const next = structuredClone(project);
+  const cid = id || newId();
+  const col = { id: cid, title, color, type };
+  if (type === 'search') col.search = structuredClone(search || { query: '', options: {} });
+  else col.ids = uniq(ids);
+  next.collections = [...(next.collections || []), col];
+  return { project: next, id: cid };
+}
+
+export const renameCollection = (project, collectionId, title) =>
+  withCollection(project, collectionId, (c) => {
+    c.title = title;
+  });
+
+export const recolorCollection = (project, collectionId, color) =>
+  withCollection(project, collectionId, (c) => {
+    c.color = color || '';
+  });
+
+export function deleteCollection(project, collectionId) {
+  const next = structuredClone(project);
+  next.collections = (next.collections || []).filter((c) => c.id !== collectionId);
+  return next;
+}
+
+export const addToCollection = (project, collectionId, ids) =>
+  withCollection(project, collectionId, (c) => {
+    if (c.type === 'search') return;
+    c.ids = uniq([...(c.ids || []), ...ids]);
+  });
+
+export const removeFromCollection = (project, collectionId, ids) =>
+  withCollection(project, collectionId, (c) => {
+    const drop = new Set(ids);
+    c.ids = (c.ids || []).filter((i) => !drop.has(i));
+  });
+
+export const moveInCollection = (project, collectionId, id, newIndex) =>
+  withCollection(project, collectionId, (c) => {
+    const ids = c.ids || [];
+    const from = ids.indexOf(id);
+    if (from < 0) return;
+    ids.splice(from, 1);
+    ids.splice(Math.max(0, Math.min(newIndex, ids.length)), 0, id);
+  });
+
+// Criteria object for a search collection.
+export const collectionCriteria = (collection) => ({
+  ...(collection.search?.options || {}),
+  query: collection.search?.query || '',
+});
+
+/** Ordered nodes of a collection (manual: stored order; search: binder order). */
+export function collectionNodes(project, collection, docs = {}, notesById = {}) {
+  if (!collection) return [];
+  if (collection.type === 'search') {
+    return searchProject(project, docs, notesById, collectionCriteria(collection)).map((r) => r.node);
+  }
+  const byId = new Map(flatten(project.tree || []).map((n) => [n.id, n]));
+  return (collection.ids || []).map((id) => byId.get(id)).filter(Boolean);
+}
+
+// ---------- keywords ----------
+
+/** Union of keywordDefs and every node.keywords, with usage counts. */
+export function listKeywords(project) {
+  const map = new Map();
+  for (const d of project.keywordDefs || []) map.set(d.name, { name: d.name, color: d.color || '', parent: d.parent ?? null, count: 0, defined: true });
+  for (const n of flatten(project.tree || [])) {
+    for (const k of n.keywords || []) {
+      if (!map.has(k)) map.set(k, { name: k, color: '', parent: null, count: 0, defined: false });
+      map.get(k).count++;
+    }
+  }
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'ro'));
+}
+
+function mapNodes(nodes, fn) {
+  for (const n of nodes) {
+    fn(n);
+    if (n.children) mapNodes(n.children, fn);
+  }
+}
+
+function ensureDef(project, name) {
+  project.keywordDefs = project.keywordDefs || [];
+  let d = project.keywordDefs.find((x) => x.name === name);
+  if (!d) {
+    d = { name, color: '', parent: null };
+    project.keywordDefs.push(d);
+  }
+  return d;
+}
+
+export function addKeyword(project, name, { color = '', parent = null } = {}) {
+  const next = structuredClone(project);
+  const n = String(name || '').trim();
+  if (!n) return next;
+  const d = ensureDef(next, n);
+  if (color) d.color = color;
+  if (parent && parent !== n) d.parent = parent;
+  return next;
+}
+
+/** Renames a keyword everywhere (defs, parents, node keywords deduped). Merges into `next` if it exists. */
+export function renameKeyword(project, old, nextName) {
+  const target = String(nextName || '').trim();
+  const out = structuredClone(project);
+  if (!target || target === old) return out;
+  mapNodes(out.tree || [], (n) => {
+    if (n.keywords?.includes(old)) n.keywords = uniq(n.keywords.map((k) => (k === old ? target : k)));
+  });
+  const defs = out.keywordDefs || [];
+  const oldDef = defs.find((d) => d.name === old);
+  const existing = defs.find((d) => d.name === target);
+  if (oldDef && existing) {
+    if (!existing.color) existing.color = oldDef.color;
+    if (!existing.parent && oldDef.parent !== target) existing.parent = oldDef.parent;
+    out.keywordDefs = defs.filter((d) => d !== oldDef);
+  } else if (oldDef) {
+    oldDef.name = target;
+  }
+  for (const d of out.keywordDefs || []) {
+    if (d.parent === old) d.parent = target;
+    if (d.parent === d.name) d.parent = null;
+  }
+  return out;
+}
+
+export function deleteKeyword(project, name) {
+  const out = structuredClone(project);
+  mapNodes(out.tree || [], (n) => {
+    if (n.keywords?.includes(name)) n.keywords = n.keywords.filter((k) => k !== name);
+  });
+  out.keywordDefs = (out.keywordDefs || []).filter((d) => d.name !== name);
+  for (const d of out.keywordDefs) if (d.parent === name) d.parent = null;
+  return out;
+}
+
+export function setKeywordColor(project, name, color) {
+  const out = structuredClone(project);
+  ensureDef(out, name).color = color || '';
+  return out;
+}
+
+/** Sets parent (null clears). Refuses self-parenting and cycles. */
+export function setKeywordParent(project, name, parent) {
+  const out = structuredClone(project);
+  const p = parent || null;
+  if (p) {
+    const defs = out.keywordDefs || [];
+    let cur = p;
+    const seen = new Set();
+    while (cur && !seen.has(cur)) {
+      if (cur === name) return out;
+      seen.add(cur);
+      cur = defs.find((d) => d.name === cur)?.parent || null;
+    }
+  }
+  ensureDef(out, name).parent = p;
+  return out;
+}
