@@ -9,7 +9,7 @@ export const MANUAL_EN = [
     title: 'Getting started',
     sections: [
       { id: 'start-intro', title: 'What Scribner is', html: `<p>Scribner is a writing program for long texts. You write in <strong>small documents</strong> (scenes, chapters, sections) arranged in a tree called the <strong>binder</strong>, move them freely, and <strong>Compile</strong> them into one manuscript (DOCX, PDF, EPUB and more). It follows the ideas of Scrivener 3 but is written from scratch; Scrivener <code>.scriv</code> projects can be imported and exported. AI is <strong>optional</strong> and can be switched off entirely in <em>Settings → AI</em>.</p>` },
-      { id: 'start-window', title: 'The main window', html: `<p><strong>Binder</strong> on the left (Draft, Research, Trash; toggle ${k('Ctrl+Alt+B')}), the <strong>work area</strong> in the middle (Editor ${k('Ctrl+1')}, Corkboard ${k('Ctrl+2')}, Outline ${k('Ctrl+3')}), the <strong>Inspector</strong> on the right (${k('Ctrl+Alt+I')}). The top bar has Back/Forward, Split, Composition, Compile, Inspector, I-REP and the Document, Navigate and Project menus. Panel widths are remembered per project.</p>` },
+      { id: 'start-window', title: 'The main window', html: `<p><strong>Binder</strong> on the left (Draft, Research, Trash; toggle ${k('Ctrl+Shift+B')}), the <strong>work area</strong> in the middle (Editor ${k('Ctrl+1')}, Corkboard ${k('Ctrl+2')}, Outline ${k('Ctrl+3')}), the <strong>Inspector</strong> on the right (${k('Ctrl+Shift+I')}). The top bar has Back/Forward, Split, Composition, Compile, Inspector, I-REP and the Document, Navigate and Project menus. Panel widths are remembered per project.</p>` },
       { id: 'start-first-project', title: 'Your first project in five minutes', html: `<ol><li>On the Home screen pick a template, type a title, click Create and choose a folder.</li><li>Select a scene in the binder and write.</li><li>${k('Ctrl+N')} adds a document, ${k('Ctrl+Shift+N')} a folder.</li><li>Fill in the synopsis in the Inspector; it shows on the corkboard card.</li><li>${k('Ctrl+Shift+E')} opens Compile.</li></ol><p>Saving is automatic; ${k('Ctrl+S')} saves immediately. To learn by doing, use <em>Help → Interactive tutorial</em>.</p>` },
       { id: 'start-saving', title: 'Saving, backups and project files', html: `<p>A project is a <code>Name.scribner</code> folder of plain files (<code>project.json</code>, <code>docs/</code>, <code>notes/</code>, <code>snapshots/</code>, <code>media/</code>). Autosave runs after a few idle seconds. Automatic backups are configured in <em>Settings → Backup</em>; <em>File → Backups…</em> lists and restores them (as a separate project). <em>Save as…</em> (${k('Ctrl+Shift+S')}) copies the project.</p>` },
     ],
@@ -30,7 +30,7 @@ export const MANUAL_EN = [
     title: 'Binder',
     sections: [
       { id: 'binder-basics', title: 'Draft, Research, Trash', html: `<p>Only <strong>Draft</strong> (Manuscris) is compiled. <strong>Research</strong> holds notes, sources and media. <strong>Trash</strong> keeps deleted items; <em>Restore from Trash</em> puts them back. Text documents can have children.</p>` },
-      { id: 'binder-organize', title: 'Creating, moving, renaming', html: `<p>${k('Ctrl+N')} / ${k('Ctrl+Shift+N')} new document / folder; ${k('F2')} rename; drag &amp; drop (Alt-drag copies); ${k('Ctrl')}/${k('Shift')}+click for multiple selection; ${k('Ctrl+↑')}/${k('Ctrl+↓')} move, ${k('Ctrl+←')}/${k('Ctrl+→')} change level. <em>Move to…</em>, <em>Duplicate</em> (${k('Ctrl+D')}), convert, sort and separator commands are in the Document menu.</p>` },
+      { id: 'binder-organize', title: 'Creating, moving, renaming', html: `<p>${k('Ctrl+N')} / ${k('Ctrl+Shift+N')} new document / folder (created after the selection, title ready to type; ${k('Enter')} then moves to the editor); ${k('F2')} rename; ${k('↑')}/${k('↓')}/${k('←')}/${k('→')} navigate, collapse, expand, type letters to jump; ${k('Delete')} moves to the Trash (no confirmation; Empty Trash asks); ${k('Ctrl+Z')}/${k('Ctrl+Y')} undo/redo binder moves while the binder has focus; ${k('Esc')} back to the editor; drag &amp; drop (Alt-drag copies); ${k('Ctrl')}/${k('Shift')}+click for multiple selection; ${k('Ctrl+↑')}/${k('Ctrl+↓')} move, ${k('Ctrl+←')}/${k('Ctrl+→')} change level. <em>Move to…</em>, <em>Duplicate</em> (${k('Ctrl+D')}), convert, sort and separator commands are in the Document menu.</p>` },
       { id: 'binder-hoist', title: 'Hoist, favourites, binder search', html: `<p><em>Navigate → Hoist binder</em> shows only one folder. <em>Reveal in Binder</em>: ${k('Ctrl+Alt+R')}. Tick <em>Favourite</em> in the Inspector to list a document in the Navigate menu. Icons and colours are set in the Inspector.</p>` },
       { id: 'binder-media', title: 'Media in Research', html: `<p><em>Document → Add files to Research</em> imports images, PDF, audio and video, viewable in the editor. <code>&lt;$img:Name&gt;</code> inserts a Research image at Compile.</p>` },
     ],
@@ -80,7 +80,7 @@ export const MANUAL_EN = [
     id: 'corkboard',
     title: 'Corkboard',
     sections: [
-      { id: 'corkboard-basics', title: 'Index cards', html: `<p>${k('Ctrl+2')}: cards with title and synopsis; drag to reorder.</p>` },
+      { id: 'corkboard-basics', title: 'Index cards', html: `<p>${k('Ctrl+2')}: cards with title and synopsis; drag to reorder. Double-click a title to open the document; click selects a card, arrows move between cards, ${k('Enter')}/${k('F2')} edits the title, ${k('Ctrl+Enter')} opens, ${k('Ctrl+←')}/${k('Ctrl+→')} reorders; <em>+ Card</em> adds after the selected card with its title ready to type. Outline: click selects, double-click opens, ↑/↓ navigate, ←/→ collapse/expand, ${k('Enter')} renames.</p>` },
       { id: 'corkboard-options', title: 'Size, freeform, arrange', html: `<p>Card size, ratio, spacing, columns; freeform mode with <em>Commit order</em>; arrange by label, status or keyword; several folders stacked.</p>` },
     ],
   },
@@ -122,7 +122,7 @@ export const MANUAL_EN = [
     sections: [
       { id: 'targets-project', title: 'Project and session targets', html: `<p><em>Project → Targets and deadline…</em>: book target (words, characters or pages), session target, deadline and writing days, reset rules, notification.</p>` },
       { id: 'targets-document', title: 'Document target', html: `<p>Set in the Inspector; shown in the footer and Outline.</p>` },
-      { id: 'targets-stats', title: 'Statistics and writing history', html: `<p>${k('Ctrl+Shift+I')} statistics; <em>Writing history…</em> with daily/monthly charts and CSV.</p>` },
+      { id: 'targets-stats', title: 'Statistics and writing history', html: `<p>${k('Ctrl+Alt+Shift+I')} statistics, ${k('Ctrl+Shift+T')} targets; <em>Writing history…</em> with daily/monthly charts and CSV.</p>` },
     ],
   },
   {

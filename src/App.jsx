@@ -81,6 +81,12 @@ import {
   ancestorIds,
   scriveningsList,
   appendHtml,
+  keyMoveMany,
+  selectionAfterRemoval,
+  emptyHistory,
+  historyPush,
+  historyUndo,
+  historyRedo,
 } from './lib/tree.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
@@ -368,6 +374,35 @@ export default function App({ api }) {
   );
 
   const setTree = useCallback((tree) => saveProject({ ...project, tree }), [project, saveProject]);
+  // Binder structure changes (add, move, trash, restore) are undoable with Ctrl+Z while the
+  // binder has focus, as in Scrivener. Metadata edits made in between are preserved.
+  const binderHistory = useRef(emptyHistory());
+  const [renameId, setRenameId] = useState(null);
+  const setTreeU = (tree) => {
+    if (tree === project.tree) return;
+    binderHistory.current = historyPush(binderHistory.current, project.tree, tree);
+    setTree(tree);
+  };
+  const undoBinder = (redo = false) => {
+    const res = (redo ? historyRedo : historyUndo)(binderHistory.current, project.tree);
+    if (!res) {
+      if ((redo ? binderHistory.current.future : binderHistory.current.past).length) {
+        binderHistory.current = emptyHistory();
+        setToast('Nu se mai poate anula: structura proiectului s-a schimbat între timp (împărțire, unire sau golirea coșului).');
+      }
+      return;
+    }
+    binderHistory.current = res.history;
+    setTree(res.tree);
+    if (selectedId && !findNode(res.tree, selectedId)) {
+      const first = res.tree[0];
+      setSelectedId(first.id);
+      setSelectedIds(new Set([first.id]));
+    }
+  };
+  useEffect(() => {
+    binderHistory.current = emptyHistory();
+  }, [dir]);
 
   const openResult = useCallback(
     async (res) => {
@@ -486,9 +521,12 @@ export default function App({ api }) {
     if (other && other.getHtml() !== html) other.setHtml(html);
   };
 
-  const addItem = (type, title, html) => {
+  // New items go after the selection (inside it when it is a folder), are selected and put in
+  // rename mode in the binder (Scrivener); Enter on the title then moves the cursor to the editor.
+  const addItem = (type, title, html, anchorId = selectedId) => {
     const node = newNode(type, title);
-    setTree(insertNear(project.tree, selectedId, node));
+    setTreeU(insertNear(project.tree, anchorId, node));
+    if (!title && !hideBinder) setRenameId(node.id);
     const content = html ?? (type === 'text' ? '<p></p>' : '');
     setDocs((d) => ({ ...d, [node.id]: content }));
     if (content) api.writeDoc(dir, node.id, 'docs', content).catch(report);
@@ -497,15 +535,31 @@ export default function App({ api }) {
     return node;
   };
 
+  // Puts the cursor in the editor of a document once it is mounted (after go()).
+  const focusEditor = (id, tries = 10) => {
+    const h = id && editorRefs.current.get(id);
+    if (h?.focus) h.focus();
+    else if (tries > 0) setTimeout(() => focusEditor(id, tries - 1), 50);
+  };
   const patchNode = (id, patch) => setTree(updateNode(project.tree, id, patch));
 
   const trashSelection = () => {
     let tree = project.tree;
-    for (const id of selectedIds.size ? selectedIds : [selectedId]) {
+    const ids = [...(selectedIds.size ? selectedIds : [selectedId])].filter((id) => {
       const n = findNode(tree, id);
-      if (n && !n.root) tree = moveToTrash(tree, id);
+      return n && !n.root && !inTrash(id);
+    });
+    if (!ids.length) {
+      if (selectedId && inTrash(selectedId)) setToast('Elementul e deja în coș. Folosește „Golește coșul” pentru ștergerea definitivă sau „Restaurează din coș”.');
+      return;
     }
-    setTree(tree);
+    const nextSel = selectionAfterRemoval(tree, ids);
+    for (const id of ids) tree = moveToTrash(tree, id);
+    setTreeU(tree);
+    // like Scrivener: the selection moves to the neighbour, not into the trash
+    const sel = nextSel && findNode(tree, nextSel) ? nextSel : tree[0].id;
+    setSelectedId(sel);
+    setSelectedIds(new Set([sel]));
   };
 
   // --- Batch A: binder and document commands ---
@@ -516,10 +570,10 @@ export default function App({ api }) {
   const restoreSelection = () => {
     let tree = project.tree;
     for (const id of selectionList()) tree = restoreFromTrash(tree, id);
-    if (tree !== project.tree) setTree(tree);
+    if (tree !== project.tree) setTreeU(tree);
     else setToast('Selecția nu e în coș.');
   };
-  const moveSelectionTo = (targetId) => setTree(moveManyInto(project.tree, selectionList(), targetId));
+  const moveSelectionTo = (targetId) => setTreeU(moveManyInto(project.tree, selectionList(), targetId));
   const toggleSeparator = () => {
     let tree = project.tree;
     for (const id of selectionList()) tree = updateNode(tree, id, { separator: !findNode(tree, id).separator });
@@ -699,6 +753,7 @@ export default function App({ api }) {
         if (notes) await api.writeDoc(dir, to, 'notes', notes);
       }
     }
+    binderHistory.current = historyPush(binderHistory.current, projectRef.current.tree, tree);
     saveProject({ ...projectRef.current, tree });
     setDocs((d) => ({ ...d, ...copies }));
   };
@@ -748,6 +803,7 @@ export default function App({ api }) {
     setDocs((d) => ({ ...d, [second.id]: parts.after }));
     await api.writeDoc(dir, second.id, 'docs', parts.after).catch(report);
     go(second.id);
+    focusEditor(second.id); // Scrivener: the cursor continues in the new part
   };
 
   const mergeSelection = async () => {
@@ -1498,8 +1554,24 @@ export default function App({ api }) {
           onSelect={onBinderSelect}
           onAdd={addItem}
           onRename={(id, title) => patchNode(id, { title })}
-          onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
-          onKeyMove={(dir2) => selectedId && setTree(keyMove(project.tree, selectedId, dir2))}
+          onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
+          onMoveMany={(ids, targetId, pos) => {
+            let t = project.tree;
+            (pos === 'after' ? [...ids].reverse() : ids).forEach((id) => (t = moveNode(t, id, targetId, pos)));
+            setTreeU(t);
+          }}
+          onKeyMove={(dir2) => selectedId && setTreeU(keyMoveMany(project.tree, selectedIds.size ? [...selectedIds] : [selectedId], dir2))}
+          onUndo={undoBinder}
+          renameId={renameId}
+          onRenameDone={(id, committed) => {
+            setRenameId(null);
+            if (committed && findNode(project.tree, id)?.type === 'text') focusEditor(id);
+          }}
+          onFocusEditor={() => focusEditor(selectedId)}
+          onRangeSelect={(ids, id) => {
+            setSelectedIds(new Set(ids));
+            if (id) setSelectedId(id);
+          }}
           onTrash={trashSelection}
           onEmptyTrash={() => {
             if (window.confirm('Golești coșul? Documentele din coș vor fi scoase din proiect.')) setTree(emptyTrash(project.tree));
@@ -1583,10 +1655,16 @@ export default function App({ api }) {
                 onOpen={(id) => {
                   go(id);
                   setView('editor');
+                  focusEditor(id);
                 }}
                 onPatch={patchNode}
-                onAdd={() => addItem('text')}
-                onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
+                onAdd={(afterId) => {
+                  const node = addItem('text', undefined, undefined, typeof afterId === 'string' ? afterId : selectedId);
+                  setRenameId(null); // the card's own title goes into edit mode instead
+                  return node;
+                }}
+                onRename={(id, title) => patchNode(id, { title })}
+                onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
                 onReorder={(folderId, ids) =>
                   setTree(
                     produce(project.tree, (t) => {
@@ -1607,9 +1685,10 @@ export default function App({ api }) {
                 onOpen={(id) => {
                   go(id);
                   setView('editor');
+                  focusEditor(id);
                 }}
                 onPatch={patchNode}
-                onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
+                onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
               />
             )}
           </div>
