@@ -28,8 +28,11 @@ export const ROUNDS = [
 ];
 
 export const KARMA_PROFILE = {
+  // Internal id stays 'karma' so existing projects keep their choice; shown to the user as "Română".
   id: 'karma',
-  name: 'Karma (karma-book-engine)',
+  name: 'Română (DOOM III, P1–P13, R0–R11, termeni străini)',
+  // Names of generated documents and of the editor package for this profile.
+  names: { foreign: 'Glosar_Alogeni_Indieni', reading: 'Glosar_de_lectură', toc: 'Cuprins_de_tipar', packageFolder: '📤 PENTRU EDITOR {date}' },
   canvasWordLimit: 3000,
   maxExplicitNoi: 1,
   rules: {
@@ -86,7 +89,8 @@ export const KARMA_PROFILE = {
 export const GENERIC_PROFILE = {
   ...KARMA_PROFILE,
   id: 'generic',
-  name: 'Generic românesc (doar tipografie și reziduuri LLM)',
+  name: 'Generic: orice text (tipografie și reziduuri LLM)',
+  names: { foreign: 'Glosar de termeni', reading: 'Glosar de lectură', toc: 'Cuprins de tipar', packageFolder: 'Pachet pentru editor {date}' },
   canvasWordLimit: 0,
   rules: Object.fromEntries(Object.keys(KARMA_PROFILE.rules).map((k) => [k, ['asciiQuotes', 'capitalStart', 'llmResidue', 'repetitionMicro', 'repetitionMezzo', 'metronome', 'attentionDecay'].includes(k)])),
 };
@@ -95,9 +99,10 @@ export const PROFILES = [KARMA_PROFILE, GENERIC_PROFILE];
 
 export function profileFor(project, settings) {
   const p = project && project.editorialProfile;
-  let out = KARMA_PROFILE;
+  // Any kind of text by default; the Karma profile is chosen explicitly per project.
+  let out = GENERIC_PROFILE;
   if (p) {
-    const base = PROFILES.find((x) => x.id === p.base) || KARMA_PROFILE;
+    const base = PROFILES.find((x) => x.id === p.base) || GENERIC_PROFILE;
     out = { ...base, ...p, id: base.id, rules: { ...base.rules, ...(p.rules || {}) } };
   }
   return settings && settings.editorialLists ? applyLists(out, settings.editorialLists) : out;

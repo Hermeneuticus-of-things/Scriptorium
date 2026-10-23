@@ -229,7 +229,7 @@ export default function FormatBar({
   };
   const copyItems = [
     { label: 'Ca text simplu', action: () => copySpecial('text') },
-    { label: 'Ca Markdown (***ALOGEN***, *ilustrații*, [^note])', action: () => copySpecial('markdown') },
+    { label: 'Ca Markdown (***termeni***, *ilustrații*, [^note])', action: () => copySpecial('markdown') },
     { label: 'Ca HTML', action: () => copySpecial('html') },
     { label: 'Ca HTML fără comentarii, adnotări și note', action: () => copySpecial('clean') },
   ];

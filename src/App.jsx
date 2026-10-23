@@ -915,9 +915,10 @@ export default function App({ api }) {
   const generateGlossaries = async () => {
     await flush();
     const book = await collectBookDocs(project, (id) => docs[id] ?? api.readDoc(dir, id, 'docs'));
-    const alogen = buildAlogenGlossary(book);
-    const reading = buildReadingGlossary(book, { exclude: alogen.terms.map((t) => t.term) });
-    const toc = buildPrintToc(project, { docs: book, includeHeadings: true });
+    const names = profileFor(project, settings).names;
+    const alogen = buildAlogenGlossary(book, { title: names.foreign });
+    const reading = buildReadingGlossary(book, { title: names.reading, exclude: alogen.terms.map((t) => t.term) });
+    const toc = buildPrintToc(project, { docs: book, includeHeadings: true, title: names.toc });
     let tree = project.tree;
     const research = tree.find((n) => n.root === 'research');
     const written = {};
@@ -1106,7 +1107,7 @@ export default function App({ api }) {
     ['file', 'importBundle', 'Importă pachet de proiect…', () => api.importBundle().then(openResult).catch(report), !api.importBundle],
     ['tools', 'research', 'Cercetare în proiect (RAG)', () => setShowResearch((v) => !v), !api.ragQuery],
     ['tools', 'glossaries', 'Generează glosare și cuprins de tipar', () => generateGlossaries().catch(report)],
-    ['file', 'editorPackage', 'Pachet PENTRU EDITOR…', () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(`Pachet creat în ${r.dir} (${r.files.length} fișiere)`)).catch(report), !api.editorPackage],
+    ['file', 'editorPackage', 'Pachet pentru editor…', () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(`Pachet creat în ${r.dir} (${r.files.length} fișiere)`)).catch(report), !api.editorPackage],
     ['tools', 'nameGen', 'Generator de nume…', () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', 'Citire cu voce tare / Dictare', () => setShowSpeech((v) => !v)],
