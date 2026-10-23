@@ -436,27 +436,33 @@ handle('import:scriv', async (e) => {
 handle('compile:export', async (e, dir, project, format, options) => {
   assertOpened(dir);
   const read = (id) => store.readDoc(dir, id);
-  const ext = { docx: 'docx', epub: 'epub', pdf: 'pdf', html: 'html' }[format];
-  if (!ext) throw new Error(`Format necunoscut: ${format}`);
+  const info = compile.OUTPUT_FORMATS[format];
+  if (!info) throw new Error(`Format necunoscut: ${format}`);
   const res = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender), {
     title: 'Compilează manuscrisul',
-    defaultPath: `${project.title}.${ext}`,
-    filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
+    defaultPath: `${project.title}.${info.ext}`,
+    filters: [{ name: info.name, extensions: [info.ext] }],
   });
   if (res.canceled) return null;
-  let data;
-  if (format === 'docx') data = await compile.compileDocx(project, read, options);
-  else if (format === 'epub') data = await compile.compileEpub(project, read, options);
-  else if (format === 'html') data = compile.compileHtml(project, read, options);
-  else {
-    const pdfWin = new BrowserWindow({ show: false, webPreferences: { sandbox: true, javascript: false } });
-    await pdfWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(compile.compileHtml(project, read, options))}`);
-    data = await pdfWin.webContents.printToPDF({ pageSize: 'A5', printBackground: false, margins: { marginType: 'default' } });
-    pdfWin.destroy();
-  }
+  const data = await compile.compile(project, read, format, options, {
+    renderPdf: async (html, pdfOpts) => {
+      const pdfWin = new BrowserWindow({ show: false, webPreferences: { sandbox: true, javascript: false } });
+      try {
+        await pdfWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+        return await pdfWin.webContents.printToPDF(pdfOpts);
+      } finally {
+        pdfWin.destroy();
+      }
+    },
+  });
   fs.writeFileSync(res.filePath, data);
   shell.showItemInFolder(res.filePath);
   return res.filePath;
+});
+
+handle('compile:preview', (_e, dir, project, options) => {
+  assertOpened(dir);
+  return compile.previewHtml(project, (id) => store.readDoc(dir, id), options);
 });
 
 handle('ai:run', (_e, payload) => {
