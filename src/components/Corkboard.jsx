@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cardHeight } from '../lib/panelsExtra.js';
 import { FolderIcon } from './Icons.jsx';
+import { t } from '../lib/i18n.js';
 
 const SIZES = { mic: 180, mediu: 230, mare: 300 };
 
@@ -44,8 +45,10 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
       className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''}`}
       style={{ borderTopColor: colors[n.label] || 'transparent', ...style }}
       data-card-id={n.id}
+      role="gridcell"
       tabIndex={0}
       aria-selected={Boolean(selected)}
+      aria-label={n.title || t('ui.app.fara_titlu')}
       onFocus={(e) => e.target === e.currentTarget && onSelect?.(n.id)}
       onMouseDown={(e) => !e.target.closest('textarea, input, button') && onSelect?.(n.id)}
       onKeyDown={(e) => e.target === e.currentTarget && onKey?.(e, n)}
@@ -54,7 +57,7 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
     >
       {pins && <span className="card-pin" style={{ background: colors[n.label] || undefined }} aria-hidden="true" />}
       {n.label && n.label !== 'Fără' && colors[n.label] && <span className="card-tint" style={{ background: colors[n.label] }} />}
-      <header onDoubleClick={() => onOpen(n.id)} title="Dublu-clic: deschide · Enter: editează titlul">
+      <header onDoubleClick={() => onOpen(n.id)} title={t('ui.corkboard.dublu_clic_deschide_enter_editeaza')}>
         {editing ? (
           <input
             autoFocus
@@ -82,13 +85,14 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
             {n.title}
           </span>
         )}
-        <button className="link card-open" onClick={() => onOpen(n.id)}>Deschide</button>
+        <button className="link card-open" onClick={() => onOpen(n.id)}>{t('ui.app.deschide')}</button>
       </header>
       {n.synopsisImage && (n.showSynopsisImage !== false) ? (
         <SynopsisImage file={n.synopsisImage} readMedia={readMedia} />
       ) : (
         <textarea
-          placeholder="Sinopsis…"
+          aria-label={t('ui.corkboard.sinopsis_x', { title: n.title || '' })}
+          placeholder={t('ui.corkboard.sinopsis')}
           defaultValue={n.synopsis}
           onBlur={(e) => e.target.value !== (n.synopsis || '') && onPatch(n.id, { synopsis: e.target.value })}
         />
@@ -241,9 +245,9 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   };
 
   const groupKey = (n) => {
-    if (cork.by === 'status') return n.status && n.status !== 'Fără' ? n.status : 'Fără status';
-    if (cork.by === 'keyword') return (n.keywords && n.keywords[0]) || 'Fără cuvinte cheie';
-    return n.label && n.label !== 'Fără' ? n.label : 'Fără etichetă';
+    if (cork.by === 'status') return n.status && n.status !== 'Fără' ? n.status : t('ui.corkboard.fara_status');
+    if (cork.by === 'keyword') return (n.keywords && n.keywords[0]) || t('ui.corkboard.fara_cuvinte_cheie');
+    return n.label && n.label !== 'Fără' ? n.label : t('ui.corkboard.fara_eticheta');
   };
   const groups = [];
   if (cork.mode === 'lines') {
@@ -259,45 +263,45 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
     <div ref={boardRef} className="corkboard" style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
       <div className="cork-head">
         <h2>{folder?.title}</h2>
-        <button onClick={addCard} title="Fișă nouă după fișa selectată">+ Fișă</button>
+        <button onClick={addCard} title={t('ui.corkboard.fisa_noua_dupa_fisa_selectata')}>{t('ui.corkboard.fisa')}</button>
         <span className="spacer" />
         <div className="seg">
-          <button className={cork.mode === 'grid' ? 'on' : ''} onClick={() => setCork({ mode: 'grid' })}>Grilă</button>
+          <button className={cork.mode === 'grid' ? 'on' : ''} onClick={() => setCork({ mode: 'grid' })}>{t('ui.corkboard.grila')}</button>
           <button className={cork.mode === 'lines' ? 'on' : ''} onClick={() => setCork({ mode: 'lines' })}>Linii</button>
           <button className={cork.mode === 'free' ? 'on' : ''} onClick={() => setCork({ mode: 'free' })}>Liber</button>
         </div>
         {cork.mode === 'lines' && (
-          <select value={cork.by} onChange={(e) => setCork({ by: e.target.value })} title="Aranjează pe linii după">
-            <option value="label">după etichetă</option>
-            <option value="status">după status</option>
-            <option value="keyword">după cuvânt cheie</option>
+          <select value={cork.by} onChange={(e) => setCork({ by: e.target.value })} title={t('ui.corkboard.aranjeaza_pe_linii_dupa')}>
+            <option value="label">{t('ui.corkboard.dupa_eticheta')}</option>
+            <option value="status">{t('ui.corkboard.dupa_status')}</option>
+            <option value="keyword">{t('ui.corkboard.dupa_cuvant_cheie')}</option>
           </select>
         )}
-        {cork.mode === 'free' && <button onClick={commitOrder} title="Scrie ordinea de pe panou în binder">Fixează ordinea</button>}
-        <select value={cork.size} onChange={(e) => setCork({ size: e.target.value })} title="Mărimea fișelor">
-          <option value="mic">Fișe mici</option>
-          <option value="mediu">Fișe medii</option>
-          <option value="mare">Fișe mari</option>
+        {cork.mode === 'free' && <button onClick={commitOrder} title={t('ui.corkboard.scrie_ordinea_de_pe_panou')}>{t('ui.corkboard.fixeaza_ordinea')}</button>}
+        <select value={cork.size} onChange={(e) => setCork({ size: e.target.value })} title={t('ui.corkboard.marimea_fiselor')}>
+          <option value="mic">{t('ui.corkboard.fise_mici')}</option>
+          <option value="mediu">{t('ui.corkboard.fise_medii')}</option>
+          <option value="mare">{t('ui.corkboard.fise_mari')}</option>
         </select>
         <details className="cork-options">
           <summary>Aspect</summary>
           <div className="cork-options-body">
             <label>
-              Proporție
+              {t('ui.corkboard.proportie')}
               <select value={cork.ratio} onChange={(e) => setCork({ ratio: e.target.value })}>
-                <option value="3:5">3 × 5 (fișă)</option>
+                <option value="3:5">{t('ui.corkboard.3_5_fisa')}</option>
                 <option value="4:6">4 × 6</option>
-                <option value="1:1">Pătrat</option>
-                <option value="4:3">Înalt</option>
+                <option value="1:1">{t('ui.corkboard.patrat')}</option>
+                <option value="4:3">{t('ui.corkboard.inalt')}</option>
               </select>
             </label>
             <label>
-              Spațiere
+              {t('ui.corkboard.spatiere')}
               <input type="number" min="0" max="80" step="4" value={cork.spacing} onChange={(e) => setCork({ spacing: Number(e.target.value) || 0 })} />
             </label>
             <label>
               Coloane
-              <input type="number" min="0" max="12" value={cork.columns} onChange={(e) => setCork({ columns: Number(e.target.value) || 0 })} title="0 = automat" />
+              <input type="number" min="0" max="12" value={cork.columns} onChange={(e) => setCork({ columns: Number(e.target.value) || 0 })} title={t('ui.corkboard.0_automat')} />
             </label>
             <label className="check">
               <input type="checkbox" checked={Boolean(cork.pins)} onChange={(e) => setCork({ pins: e.target.checked })} /> Pioneze
@@ -305,13 +309,15 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
           </div>
         </details>
       </div>
-      {items.length === 0 && <p className="hint">Nicio fișă. Apasă „+ Fișă” (sau Ctrl+N) pentru a adăuga un document în „{folder?.title}”.</p>}
+      {items.length === 0 && <p className="hint">{t('ui.corkboard.nicio_fisa_apasa_fisa_sau')}{folder?.title}”.</p>}
 
       {cork.mode === 'grid' && (
-        <div className="cards" style={gridStyle}>
-          {items.map((n) => (
-            <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={gridDrag(n)} className={cardClass(n)} />
-          ))}
+        <div className="cards" style={gridStyle} role="grid" aria-label={t('ui.corkboard.panou_x', { title: folder?.title || '' })}>
+          <div role="row" style={{ display: 'contents' }}>
+            {items.map((n) => (
+              <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={gridDrag(n)} className={cardClass(n)} />
+            ))}
+          </div>
         </div>
       )}
 
@@ -321,16 +327,19 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
             <h3>
               {cork.by === 'label' && colors[g.key] && <span className="label-dot" style={{ background: colors[g.key] }} />} {g.key} <small className="muted">({g.items.length})</small>
             </h3>
-            <div className="cards row-cards" style={{ gap }}>
-              {g.items.map((n) => (
-                <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={gridDrag(n)} className={cardClass(n)} />
-              ))}
+            <div className="cards row-cards" style={{ gap }} role="grid" aria-label={g.key}>
+              <div role="row" style={{ display: 'contents' }}>
+                {g.items.map((n) => (
+                  <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={gridDrag(n)} className={cardClass(n)} />
+                ))}
+              </div>
             </div>
           </section>
         ))}
 
       {cork.mode === 'free' && (
-        <div className="freeform" ref={freeRef}>
+        <div className="freeform" ref={freeRef} role="grid" aria-label={t('ui.corkboard.panou_x', { title: folder?.title || '' })}>
+          <div role="row" style={{ display: 'contents' }}>
           {items.map((n, i) => {
             const pos = n.corkPos || autoPos(i);
             return (
@@ -345,6 +354,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
               />
             );
           })}
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import Editor from './Editor.jsx';
+import { t } from '../lib/i18n.js';
 
 // Floating Quick Reference panel: another document open next to the main editor.
 export default function QuickRef({ node, html, x, y, readOnly, smartQuotes, onChange, onMove, onClose, onOpen }) {
@@ -20,8 +21,8 @@ export default function QuickRef({ node, html, x, y, readOnly, smartQuotes, onCh
       <div className="quickref-head" onMouseDown={startDrag}>
         <strong>{node.title}</strong>
         <span className="spacer" />
-        <button className="link" onMouseDown={(e) => e.stopPropagation()} onClick={onOpen} title="Deschide în editorul principal">Deschide</button>
-        <button className="link" onMouseDown={(e) => e.stopPropagation()} onClick={onClose} aria-label="Închide">×</button>
+        <button className="link" onMouseDown={(e) => e.stopPropagation()} onClick={onOpen} title={t('ui.quickRef.deschide_in_editorul_principal')}>{t('ui.app.deschide')}</button>
+        <button className="link" onMouseDown={(e) => e.stopPropagation()} onClick={onClose} aria-label={t('btn.close')}>×</button>
       </div>
       <div className="quickref-body">
         <Editor compact html={html} title="" readOnly={readOnly} smartQuotes={smartQuotes} onChange={onChange} />

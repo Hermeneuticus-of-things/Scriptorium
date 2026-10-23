@@ -2,6 +2,7 @@
 // Covers the editing subset (projects, docs, notes, snapshots, history, settings) and
 // sync with the desktop app through a single-file bundle (same shape as lib/bundle.cjs).
 import { newNode } from './text.js';
+import { mergeProject } from './projectMerge.js';
 
 export const BUNDLE_FORMAT = 'scribner-bundle';
 export const BUNDLE_VERSION = 1;
@@ -33,6 +34,33 @@ export function createIdbKv(indexedDB = globalThis.indexedDB) {
   return {
     get: (k) => tx('readonly', (s) => s.get(k)),
     put: (k, v) => tx('readwrite', (s) => s.put(v, k)).then(() => true),
+    // Several writes in one transaction: all or nothing (bundle import).
+    putMany: (entries) =>
+      tx('readwrite', (s) => {
+        for (const [k, v] of entries) s.put(v, k);
+      }).then(() => true),
+    // Read-modify-write in one transaction, so another tab can't write in between.
+    update: async (k, fn) => {
+      const db = await dbp;
+      return new Promise((resolve, reject) => {
+        const t = db.transaction(STORE, 'readwrite');
+        const st = t.objectStore(STORE);
+        let out;
+        const req = st.get(k);
+        req.onsuccess = () => {
+          try {
+            out = fn(req.result);
+            st.put(out, k);
+          } catch (err) {
+            t.abort();
+            reject(err);
+          }
+        };
+        t.oncomplete = () => resolve(out);
+        t.onerror = () => reject(t.error);
+        t.onabort = () => reject(t.error);
+      });
+    },
     del: (k) => tx('readwrite', (s) => s.delete(k)).then(() => true),
     keys: async (prefix = '') => {
       const all = await tx('readonly', (s) => s.getAllKeys());
@@ -46,6 +74,15 @@ export function createMemoryKv() {
   return {
     get: async (k) => (m.has(k) ? structuredClone(m.get(k)) : undefined),
     put: async (k, v) => (m.set(k, structuredClone(v)), true),
+    putMany: async (entries) => {
+      for (const [k, v] of entries) m.set(k, structuredClone(v));
+      return true;
+    },
+    update: async (k, fn) => {
+      const out = fn(m.has(k) ? structuredClone(m.get(k)) : undefined);
+      m.set(k, structuredClone(out));
+      return structuredClone(out);
+    },
     del: async (k) => m.delete(k),
     keys: async (prefix = '') => [...m.keys()].filter((k) => k.startsWith(prefix)),
   };
@@ -127,6 +164,38 @@ export function summarizeHistory(hist) {
     .map(([date, d]) => ({ date, draft: d.draftEnd - d.draftStart, total: d.totalEnd - d.totalStart, draftWords: d.draftEnd }));
 }
 
+// Browser storage full (IndexedDB quota): a message the writer can act on.
+export const QUOTA_MESSAGE = 'Spațiul de stocare al browserului este plin. Exportă proiectul ca pachet (.json), apoi șterge proiecte sau snapshot-uri vechi.';
+export function isQuotaError(err) {
+  const name = err && (err.name || (err.inner && err.inner.name));
+  return name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED' || /quota/i.test(String(err && err.message));
+}
+function friendly(err) {
+  if (!isQuotaError(err)) return err;
+  const e = new Error(QUOTA_MESSAGE);
+  e.code = 'QUOTA';
+  e.cause = err;
+  return e;
+}
+function guardKv(kv) {
+  const wrap = (fn) => (fn ? async (...a) => {
+    try {
+      return await fn(...a);
+    } catch (err) {
+      throw friendly(err);
+    }
+  } : undefined);
+  return { ...kv, put: wrap(kv.put), putMany: wrap(kv.putMany), update: wrap(kv.update), del: wrap(kv.del) };
+}
+
+// File name for a bundle download: titles may hold / \ : * ? " < > | or be empty.
+export function bundleFileName(title) {
+  const safe = String(title || '').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').replace(/^[.\s]+|[.\s]+$/g, '').slice(0, 120);
+  return `${safe || 'Proiect'}.scribner.json`;
+}
+
+const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
 function download(name, text, type = 'application/json') {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], { type }));
@@ -150,7 +219,48 @@ const DEFAULT_SETTINGS = { recent: [], theme: 'system', fontSize: 18, typewriter
 
 // ---- api -----------------------------------------------------------------------
 
-export function createWebApi({ kv = createIdbKv() } = {}) {
+// channel: BroadcastChannel-like ({ postMessage, onmessage / addEventListener }) shared
+// by the tabs of this browser; a tab that edits a project tells the others, which
+// reload (same 'project:changed' shape as the desktop watcher).
+function defaultChannel() {
+  try {
+    return typeof BroadcastChannel === 'function' ? new BroadcastChannel('scribner-projects') : null;
+  } catch {
+    return null;
+  }
+}
+
+export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChannel() } = {}) {
+  const kv = guardKv(rawKv);
+  const tabId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const listeners = new Set();
+  const emit = (info) => {
+    for (const fn of [...listeners]) {
+      try {
+        fn(info);
+      } catch {
+        /* a listener's error is its own */
+      }
+    }
+  };
+  if (channel) {
+    const onMsg = (ev) => {
+      const m = ev && ev.data;
+      if (!m || m.type !== 'changed' || m.from === tabId) return;
+      emit({ dir: m.dir, files: m.files, external: true });
+    };
+    if (channel.addEventListener) channel.addEventListener('message', onMsg);
+    else channel.onmessage = onMsg;
+  }
+  const announce = (dir, files) => {
+    try {
+      channel?.postMessage({ type: 'changed', from: tabId, dir, files });
+    } catch {
+      /* closed channel */
+    }
+  };
+  // Merge base per project (the version this tab last loaded or wrote): see saveProject.
+  const bases = new Map();
   const settings = async () => ({ ...DEFAULT_SETTINGS, ...((await kv.get(K.settings)) || {}) });
   const putSettings = async (patch) => kv.put(K.settings, { ...(await settings()), ...patch });
   const remember = async (dir, title) => {
@@ -174,7 +284,8 @@ export function createWebApi({ kv = createIdbKv() } = {}) {
     }
     for (const k of await kv.keys(K.snapPrefix(dir))) {
       const id = k.slice(K.snapPrefix(dir).length);
-      snapshots[id] = ((await kv.get(k)) || []).map(({ name, date, html }) => ({ name, date, html }));
+      const list = ((await kv.get(k)) || []).map(({ name, date, html }) => ({ name, date, html }));
+      if (list.length) snapshots[id] = list;
     }
     return { format: BUNDLE_FORMAT, version: BUNDLE_VERSION, exported: new Date().toISOString(), project, docs, notes, snapshots };
   }
@@ -183,12 +294,23 @@ export function createWebApi({ kv = createIdbKv() } = {}) {
     validateBundle(bundle);
     const dir = newWebDir();
     const project = structuredClone(bundle.project);
-    await kv.put(K.project(dir), project);
-    for (const [id, html] of Object.entries(bundle.docs || {})) await kv.put(K.doc(dir, 'docs', id), String(html));
-    for (const [id, html] of Object.entries(bundle.notes || {})) await kv.put(K.doc(dir, 'notes', id), String(html));
+    const entries = [];
+    for (const [id, html] of Object.entries(bundle.docs || {})) entries.push([K.doc(dir, 'docs', id), String(html)]);
+    for (const [id, html] of Object.entries(bundle.notes || {})) entries.push([K.doc(dir, 'notes', id), String(html)]);
     for (const [id, list] of Object.entries(bundle.snapshots || {})) {
-      await kv.put(K.snaps(dir, id), (list || []).map((s, i) => ({ file: `${Date.parse(s.date) || Date.now()}-${i}`, ...s })));
+      // Bundles carry no file ids: give each snapshot a unique one (index), never the incoming `file`.
+      entries.push([K.snaps(dir, id), (Array.isArray(list) ? list : []).map((s, i) => ({ name: s.name || 'Snapshot', date: s.date, html: String(s.html || ''), file: `${Date.parse(s.date) || Date.now()}-${i}` }))]);
     }
+    // project.json last: a failed (quota) import never leaves a half project that opens.
+    entries.push([K.project(dir), project]);
+    try {
+      if (kv.putMany) await kv.putMany(entries);
+      else for (const [k, v] of entries) await kv.put(k, v);
+    } catch (err) {
+      for (const [k] of entries) await rawKv.del(k).catch(() => {});
+      throw err;
+    }
+    bases.set(dir, structuredClone(project));
     await remember(dir, project.title);
     return { dir, project };
   }
@@ -211,6 +333,7 @@ export function createWebApi({ kv = createIdbKv() } = {}) {
       const { project, docs } = blankProject(title || 'Proiect nou');
       await kv.put(K.project(dir), project);
       for (const [id, html] of Object.entries(docs)) await kv.put(K.doc(dir, 'docs', id), html);
+      bases.set(dir, structuredClone(project));
       await remember(dir, project.title);
       return { dir, project };
     },
@@ -220,17 +343,49 @@ export function createWebApi({ kv = createIdbKv() } = {}) {
         return this.importBundle();
       }
       const project = await need(dir);
+      if (!bases.has(dir)) bases.set(dir, structuredClone(project));
       await remember(dir, project.title);
       return { dir, project };
     },
+    // Re-read after another tab changed the project (merge base unchanged).
+    async reloadProject(dir) {
+      return { dir, project: await need(dir) };
+    },
+    async watchProject() {
+      return true;
+    },
+    onProjectChanged(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
+    // Another tab may have saved since this tab loaded: three-way merge against the
+    // stored version instead of overwriting it (same rules as the desktop app).
     async saveProject(dir, project) {
-      await kv.put(K.project(dir), project);
+      const base = bases.get(dir);
+      let merged = false;
+      const apply = (stored) => {
+        if (base && stored && !sameJson(stored, base)) {
+          merged = true;
+          return mergeProject(base, project, stored);
+        }
+        return project;
+      };
+      let out;
+      if (kv.update) out = await kv.update(K.project(dir), apply);
+      else {
+        out = apply(await kv.get(K.project(dir)));
+        await kv.put(K.project(dir), out);
+      }
+      if (!merged) bases.set(dir, structuredClone(project));
+      else emit({ dir, files: ['project.json'], merged: true });
+      announce(dir, ['project.json']);
       return true;
     },
     async deleteProject(dir) {
       for (const k of [...(await kv.keys(K.docPrefix(dir))), ...(await kv.keys(K.snapPrefix(dir)))]) await kv.del(k);
       await kv.del(K.project(dir));
       await kv.del(K.history(dir));
+      bases.delete(dir);
       const s = await settings();
       await putSettings({ recent: (s.recent || []).filter((r) => r.dir !== dir) });
       return true;
@@ -240,17 +395,37 @@ export function createWebApi({ kv = createIdbKv() } = {}) {
     },
     async writeDoc(dir, id, kind, html) {
       await kv.put(K.doc(dir, kind, id), html);
+      announce(dir, [`${kind === 'notes' ? 'notes' : 'docs'}/${id}.html`]);
       return true;
     },
     async takeSnapshot(dir, id, name) {
       const date = new Date().toISOString();
-      const s = { file: String(Date.now()), name: name || 'Snapshot', date, html: (await kv.get(K.doc(dir, 'docs', id))) || '' };
-      const list = (await kv.get(K.snaps(dir, id))) || [];
-      await kv.put(K.snaps(dir, id), [s, ...list]);
+      const html = (await kv.get(K.doc(dir, 'docs', id))) || '';
+      let s;
+      const add = (list) => {
+        const prev = Array.isArray(list) ? list : [];
+        // Unique file id even for two snapshots in the same millisecond.
+        let file = String(Date.now());
+        for (let n = 2; prev.some((x) => x.file === file); n++) file = `${Date.now()}-${n}`;
+        s = { file, name: name || 'Snapshot', date, html };
+        return [s, ...prev];
+      };
+      if (kv.update) await kv.update(K.snaps(dir, id), add);
+      else await kv.put(K.snaps(dir, id), add(await kv.get(K.snaps(dir, id))));
       return s;
     },
     async listSnapshots(dir, id) {
       return (await kv.get(K.snaps(dir, id))) || [];
+    },
+    async deleteSnapshot(dir, id, file) {
+      const list = (await kv.get(K.snaps(dir, id))) || [];
+      await kv.put(K.snaps(dir, id), list.filter((x) => x.file !== file));
+      return true;
+    },
+    async renameSnapshot(dir, id, file, name) {
+      const list = (await kv.get(K.snaps(dir, id))) || [];
+      await kv.put(K.snaps(dir, id), list.map((x) => (x.file === file ? { ...x, name: String(name || 'Snapshot') } : x)));
+      return true;
     },
     async recordHistory(dir, counts) {
       await kv.put(K.history(dir), recordDay(await kv.get(K.history(dir)), counts));
@@ -263,7 +438,7 @@ export function createWebApi({ kv = createIdbKv() } = {}) {
     importBundleData,
     async exportBundle(dir) {
       const data = await exportBundleData(dir);
-      return download(`${data.project.title || 'Proiect'}.scribner.json`, JSON.stringify(data));
+      return download(bundleFileName(data.project.title), JSON.stringify(data));
     },
     async importBundle() {
       const file = await pickFile('.json,application/json');

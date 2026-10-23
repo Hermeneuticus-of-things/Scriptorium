@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { t } from '../lib/i18n.js';
 
 // Pick a binder item from a list [{id, title, depth}] (Move To, Append Selection to Document).
-export function PickNodeDialog({ title, items, onPick, onClose, emptyText = 'Nimic de ales.' }) {
+export function PickNodeDialog({ title, items, onPick, onClose, emptyText = t('ui.batchADialogs.nimic_de_ales') }) {
   const [q, setQ] = useState('');
   const list = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase('ro');
@@ -18,7 +19,7 @@ export function PickNodeDialog({ title, items, onPick, onClose, emptyText = 'Nim
         <h3>{title}</h3>
         <input
           autoFocus
-          placeholder="Filtrează…"
+          placeholder={t('ui.batchADialogs.filtreaza')}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => {
@@ -29,13 +30,13 @@ export function PickNodeDialog({ title, items, onPick, onClose, emptyText = 'Nim
         <ul className="goto-list">
           {list.map((x) => (
             <li key={x.id} style={{ paddingLeft: 8 + (q ? 0 : (x.depth || 0) * 14) }} onClick={() => pick(x)}>
-              <span>{x.title || 'Fără titlu'}</span>
+              <span>{x.title || t('ui.app.fara_titlu')}</span>
             </li>
           ))}
           {list.length === 0 && <li className="muted">{emptyText}</li>}
         </ul>
         <div className="row-actions">
-          <button onClick={onClose}>Renunță</button>
+          <button onClick={onClose}>{t('ui.batchADialogs.renunta')}</button>
         </div>
       </div>
     </div>
@@ -48,15 +49,15 @@ export function ImportSplitDialog({ onImport, onClose }) {
   const [separator, setSeparator] = useState('#');
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label="Importă fișiere" onClick={(e) => e.stopPropagation()}>
-        <h3>Importă fișiere</h3>
+      <div className="modal" role="dialog" aria-label={t('ui.batchADialogs.importa_fisiere')} onClick={(e) => e.stopPropagation()}>
+        <h3>{t('ui.batchADialogs.importa_fisiere')}</h3>
         <label className="field">
-          Împărțire
+          {t('ui.batchADialogs.impartire')}
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
-            <option value="none">Fără împărțire (un document per fișier)</option>
-            <option value="h1">La titluri de nivel 1</option>
-            <option value="h2">La titluri de nivel 1 și 2</option>
-            <option value="separator">La un separator ales</option>
+            <option value="none">{t('ui.batchADialogs.fara_impartire_un_document_per')}</option>
+            <option value="h1">{t('ui.batchADialogs.la_titluri_de_nivel_1')}</option>
+            <option value="h2">{t('ui.batchADialogs.la_titluri_de_nivel_1_2')}</option>
+            <option value="separator">{t('ui.batchADialogs.la_un_separator_ales')}</option>
           </select>
         </label>
         {mode === 'separator' && (
@@ -66,7 +67,7 @@ export function ImportSplitDialog({ onImport, onClose }) {
           </label>
         )}
         <div className="row-actions">
-          <button onClick={onClose}>Renunță</button>
+          <button onClick={onClose}>{t('ui.batchADialogs.renunta')}</button>
           <button
             className="primary"
             onClick={() => {
@@ -74,7 +75,7 @@ export function ImportSplitDialog({ onImport, onClose }) {
               onClose();
             }}
           >
-            Alege fișierele…
+            {t('ui.batchADialogs.alege_fisierele')}
           </button>
         </div>
       </div>
@@ -87,9 +88,9 @@ export function LayoutsDialog({ layouts, onChange, onApply, onClose }) {
   const [names, setNames] = useState(() => layouts.map((l) => l.name));
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label="Gestionează layout-urile" onClick={(e) => e.stopPropagation()}>
+      <div className="modal" role="dialog" aria-label={t('ui.batchADialogs.gestioneaza_layout_urile')} onClick={(e) => e.stopPropagation()}>
         <h3>Layout-uri</h3>
-        {layouts.length === 0 && <p className="muted">Niciun layout salvat.</p>}
+        {layouts.length === 0 && <p className="muted">{t('ui.batchADialogs.niciun_layout_salvat')}</p>}
         <ul className="layout-list">
           {layouts.map((l, i) => (
             <li key={`${l.name}-${i}`}>
@@ -101,20 +102,20 @@ export function LayoutsDialog({ layouts, onChange, onApply, onClose }) {
                   if (name && name !== l.name) onChange(layouts.map((x, k) => (k === i ? { ...x, name } : x)));
                 }}
               />
-              <button onClick={() => onApply(l)}>Aplică</button>
+              <button onClick={() => onApply(l)}>{t('btn.apply')}</button>
               <button
                 onClick={() => {
                   setNames((n) => n.filter((_x, k) => k !== i));
                   onChange(layouts.filter((_x, k) => k !== i));
                 }}
               >
-                Șterge
+                {t('btn.delete')}
               </button>
             </li>
           ))}
         </ul>
         <div className="row-actions">
-          <button onClick={onClose}>Închide</button>
+          <button onClick={onClose}>{t('btn.close')}</button>
         </div>
       </div>
     </div>

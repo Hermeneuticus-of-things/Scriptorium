@@ -3,6 +3,7 @@ import { containerIds, dragIds, iconTint } from '../lib/panelsExtra.js';
 import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
 import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TrashIcon } from './Icons.jsx';
 import ContextMenu from './ContextMenu.jsx';
+import { t as tr } from '../lib/i18n.js';
 
 function iconFor(node) {
   if (node.root === 'trash') return <TrashIcon />;
@@ -30,6 +31,8 @@ function matches(node, query, docs) {
   if ((node.keywords || []).some((k) => k.toLocaleLowerCase('ro').includes(q))) return true;
   return (docs[node.id] || '').replace(/<[^>]+>/g, ' ').toLocaleLowerCase('ro').includes(q);
 }
+
+const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
 export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder }) {
   const tintIcons = labelTintIcons ?? Boolean(project.labelTintIcons);
@@ -60,6 +63,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const [drag, setDrag] = useState(null); // array of dragged ids
   const [copying, setCopying] = useState(false);
   const rootRef = useRef(null);
+  const treeRef = useRef(null); // the role=tree list: holds focus, aria-activedescendant follows the selection
   const anchorRef = useRef(selectedId); // Shift range anchor
   const typed = useRef({ text: '', at: 0 });
   const renameOutcome = useRef(null); // 'commit' (Enter) | 'cancel' (Esc) | null (blur)
@@ -152,35 +156,35 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     walk(project.tree, 0);
     const statusName = (st) => (typeof st === 'string' ? st : st?.name);
     const items = [
-      { label: 'Adaugă', submenu: [
-        { label: 'Document nou', shortcut: 'Ctrl+N', action: () => onAdd('text') },
-        { label: 'Dosar nou', shortcut: 'Ctrl+Shift+N', action: () => onAdd('folder') },
+      { label: tr('btn.add'), submenu: [
+        { label: tr('cmd.newText'), shortcut: 'Ctrl+N', action: () => onAdd('text') },
+        { label: tr('cmd.newFolder'), shortcut: 'Ctrl+Shift+N', action: () => onAdd('folder') },
       ] },
       '-',
-      { label: 'Redenumește', shortcut: 'F2', disabled: isRootNode || ids.length > 1, action: () => setEditing(id) },
-      ...(onCopy ? [{ label: 'Duplică', disabled: isRootNode, action: () => onCopy(ids, ids[ids.length - 1], 'after') }] : []),
-      { label: 'Mută în', disabled: isRootNode || !targets.length, submenu: targets },
-      { label: 'Mută în coș', shortcut: 'Del', disabled: isRootNode || node.root === 'trash', action: () => onTrash() },
+      { label: tr('set.binderDbl.rename'), shortcut: 'F2', disabled: isRootNode || ids.length > 1, action: () => setEditing(id) },
+      ...(onCopy ? [{ label: tr('cmd.duplicate'), disabled: isRootNode, action: () => onCopy(ids, ids[ids.length - 1], 'after') }] : []),
+      { label: tr('ui.binder.muta_in'), disabled: isRootNode || !targets.length, submenu: targets },
+      { label: tr('ui.binder.muta_in_cos'), shortcut: 'Del', disabled: isRootNode || node.root === 'trash', action: () => onTrash() },
     ];
     if (onPatchItems) {
       items.push('-',
-        { label: 'Etichetă', disabled: isRootNode, submenu: (project.labels || []).map((l) => ({ label: l.name, checked: (node.label || '') === l.name, action: () => onPatchItems(ids, { label: l.name }) })) },
+        { label: tr('ui.binder.eticheta'), disabled: isRootNode, submenu: (project.labels || []).map((l) => ({ label: l.name, checked: (node.label || '') === l.name, action: () => onPatchItems(ids, { label: l.name }) })) },
         { label: 'Status', disabled: isRootNode, submenu: (project.statuses || []).map((st) => ({ label: statusName(st), checked: (node.status || '') === statusName(st), action: () => onPatchItems(ids, { status: statusName(st) }) })) },
-        { label: 'Include în Compile', checked: node.includeInCompile !== false, disabled: isRootNode, action: () => onPatchItems(ids, { includeInCompile: node.includeInCompile === false }) },
-        { label: 'Favorit', checked: Boolean(node.favorite), disabled: isRootNode, action: () => onPatchItems(ids, { favorite: !node.favorite }) });
+        { label: tr('ui.binder.include_in_compile'), checked: node.includeInCompile !== false, disabled: isRootNode, action: () => onPatchItems(ids, { includeInCompile: node.includeInCompile === false }) },
+        { label: tr('ui.binder.favorit'), checked: Boolean(node.favorite), disabled: isRootNode, action: () => onPatchItems(ids, { favorite: !node.favorite }) });
     }
     items.push('-',
-      { label: 'Deschide în Quick Reference', disabled: !onQuickRef || isRootNode, action: () => onQuickRef(id) },
-      { label: 'Deschide în panoul 2', disabled: Boolean(node.children), action: () => onSelect(id, { alt: true }) },
+      { label: tr('ui.binder.deschide_in_quick_reference'), disabled: !onQuickRef || isRootNode, action: () => onQuickRef(id) },
+      { label: tr('ui.binder.deschide_in_panoul_2'), disabled: Boolean(node.children), action: () => onSelect(id, { alt: true }) },
       '-',
-      { label: 'Extinde tot', action: () => setAllCollapsed(false) },
-      { label: 'Restrânge tot', action: () => setAllCollapsed(true) });
+      { label: tr('ui.binder.extinde_tot'), action: () => setAllCollapsed(false) },
+      { label: tr('ui.binder.restrange_tot'), action: () => setAllCollapsed(true) });
     if (onSetTemplateFolder && node.children && !isRootNode) {
-      items.push('-', { label: 'Setează ca', submenu: [
-        { label: 'Dosar de șabloane', checked: project.templateFolder === id, action: () => onSetTemplateFolder(project.templateFolder === id ? null : id) },
+      items.push('-', { label: tr('ui.binder.seteaza_ca'), submenu: [
+        { label: tr('ui.binder.dosar_de_sabloane'), checked: project.templateFolder === id, action: () => onSetTemplateFolder(project.templateFolder === id ? null : id) },
       ] });
     }
-    if (node.root === 'trash') items.push('-', { label: 'Golește coșul', action: () => onEmptyTrash() });
+    if (node.root === 'trash') items.push('-', { label: tr('ui.binder.goleste_cosul'), action: () => onEmptyTrash() });
     return items;
   };
 
@@ -241,8 +245,14 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     const isOpen = query || !collapsed[node.id];
     const hint = dropHint && dropHint.id === node.id ? dropHint.pos : '';
     return (
-      <li key={node.id}>
+      <li key={node.id} role="none">
         <div
+          role="treeitem"
+          id={rowDomId(node.id)}
+          aria-level={depth + 1}
+          aria-selected={selectedId === node.id || selectedIds.has(node.id)}
+          aria-expanded={node.children ? Boolean(isOpen) : undefined}
+          aria-label={node.title || tr('ui.app.fara_titlu')}
           className={`binder-row ${selectedId === node.id ? 'selected' : selectedIds.has(node.id) ? 'multi' : ''} ${hint ? `drop-${hint}` : ''} ${node.root ? 'root' : ''} ${hint && copying ? 'drop-copy' : ''} ${node.separator ? 'separator' : ''}`}
           data-node-id={node.id}
           style={{ paddingLeft: 8 + depth * 14 }}
@@ -281,6 +291,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           {node.children ? (
             <button
               className="twisty"
+              tabIndex={-1}
+              aria-hidden="true"
               onClick={(e) => {
                 e.stopPropagation();
                 setCollapsed((c) => ({ ...c, [node.id]: !c[node.id] }));
@@ -306,7 +318,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
                 setEditing(null);
                 onRenameDone?.(node.id, outcome === 'commit');
                 // back to the binder after Esc so arrow keys keep working
-                if (outcome === 'cancel') setTimeout(() => rootRef.current?.focus(), 0);
+                if (outcome === 'cancel') setTimeout(() => (treeRef.current || rootRef.current)?.focus(), 0);
               }}
               onKeyDown={(e) => {
                 e.stopPropagation();
@@ -331,12 +343,12 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
               </span>
             ) : <span className={`title ${node.includeInCompile === false ? 'excluded' : ''}`}>
               {node.title}
-              {node.locked && <span className="badge" title="Blocat (doar citire)"> 🔒</span>}
-              {node.favorite && <span className="badge" title="Favorit"> ★</span>}
+              {node.locked && <span className="badge" title={tr('ui.binder.blocat_doar_citire')}> 🔒</span>}
+              {node.favorite && <span className="badge" title={tr('ui.binder.favorit')}> ★</span>}
             </span>
           )}
         </div>
-        {node.children && isOpen && <ul>{node.children.map((c) => renderNode(c, depth + 1))}</ul>}
+        {node.children && isOpen && <ul role="group">{node.children.map((c) => renderNode(c, depth + 1))}</ul>}
       </li>
     );
   };
@@ -348,6 +360,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     <aside
       ref={rootRef}
       className="binder"
+      aria-label={tr('ui.binder.binder')}
       onKeyDown={(e) => {
         if (editing || e.target.tagName === 'INPUT') return;
         const mod = e.ctrlKey || e.metaKey;
@@ -377,7 +390,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           // Delete / Ctrl+Delete: move the selection to the trash (no confirmation, it is undoable)
           e.preventDefault();
           onTrash();
-          setTimeout(() => rootRef.current?.focus(), 0);
+          setTimeout(() => (treeRef.current || rootRef.current)?.focus(), 0);
         } else if (key === 'Enter' && !mod && enterMode && runBehaviour(enterMode, selected, isRoot)) {
           e.preventDefault();
         } else if (key === 'Escape' && onFocusEditor) {
@@ -399,18 +412,18 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
       tabIndex={-1}
     >
       <div className="binder-tools">
-        <button onClick={() => onAdd('text')} title="Document nou (Ctrl+N)">+ Doc</button>
-        <button onClick={() => onAdd('folder')} title="Dosar nou (Ctrl+Shift+N)">+ Dosar</button>
-        <button disabled={!selected || isRoot} onClick={() => setEditing(selected)} title="Redenumește (F2 / dublu-clic)">✎</button>
-        <button disabled={!selected || isRoot} onClick={() => onTrash()} title="Mută în coș (selecția)">🗑</button>
-        <button onClick={() => setAllCollapsed(false)} title="Extinde tot">⊞</button>
-        <button onClick={() => setAllCollapsed(true)} title="Restrânge tot">⊟</button>
+        <button onClick={() => onAdd('text')} title={tr('ui.binder.document_nou_ctrl_n')}>+ Doc</button>
+        <button onClick={() => onAdd('folder')} title={tr('ui.binder.dosar_nou_ctrl_shift_n')}>{tr('ui.binder.dosar')}</button>
+        <button disabled={!selected || isRoot} onClick={() => setEditing(selected)} title={tr('ui.binder.redenumeste_f2_dublu_clic')}>✎</button>
+        <button disabled={!selected || isRoot} onClick={() => onTrash()} title={tr('ui.binder.muta_in_cos_selectia')}>🗑</button>
+        <button onClick={() => setAllCollapsed(false)} title={tr('ui.binder.extinde_tot')}>⊞</button>
+        <button onClick={() => setAllCollapsed(true)} title={tr('ui.binder.restrange_tot')}>⊟</button>
       </div>
-      <input className="search" type="search" placeholder="Caută în proiect…" value={query} onChange={(e) => setQuery(e.target.value)} />
-      <p className="tip">Ctrl/Shift+clic: selecție multiplă · Alt+clic: panoul 2 · săgeți: navighează · Ctrl+săgeți: mută · F2: redenumește · Del: în coș · Ctrl+Z: anulează · Alt+tragere: copiază</p>
+      <input className="search" type="search" aria-label={tr('ui.binder.cauta_in_proiect')} placeholder={tr('ui.binder.cauta_in_proiect')} value={query} onChange={(e) => setQuery(e.target.value)} />
+      <p className="tip">{tr('ui.binder.ctrl_shift_clic_selectie_multipla')}</p>
       {filterIds ? (
-        <ul className="tree collection-list" aria-label={`Colecția ${filterTitle}`}>
-          {filterIds.length === 0 && <li className="muted">Colecția e goală.</li>}
+        <ul className="tree collection-list" role="listbox" aria-multiselectable="true" tabIndex={0} ref={treeRef} aria-activedescendant={selected && filterIds.includes(selected) ? rowDomId(selected) : undefined} aria-label={tr('ui.binder.colectia_x', { filterTitle: filterTitle })}>
+          {filterIds.length === 0 && <li className="muted" role="presentation">{tr('ui.binder.colectia_e_goala')}</li>}
           {filterIds.map((id) => {
             let node = null;
             const find = (ns) => ns.forEach((n) => {
@@ -420,8 +433,11 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             find(project.tree);
             if (!node) return null;
             return (
-              <li key={id}>
+              <li key={id} role="none">
                 <div
+                  role="option"
+                  id={rowDomId(id)}
+                  aria-selected={selectedId === id || selectedIds.has(id)}
                   className={`binder-row ${selectedId === id ? 'selected' : selectedIds.has(id) ? 'multi' : ''}`}
                   data-node-id={id}
                   onClick={(e) => select(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
@@ -436,9 +452,19 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           })}
         </ul>
       ) : (
-        <ul className="tree">{project.tree.map((n) => renderNode(n, 0))}</ul>
+        <ul
+          className="tree"
+          role="tree"
+          ref={treeRef}
+          tabIndex={0}
+          aria-label={tr('ui.binder.binder')}
+          aria-multiselectable="true"
+          aria-activedescendant={selected ? rowDomId(selected) : undefined}
+        >
+          {project.tree.map((n) => renderNode(n, 0))}
+        </ul>
       )}
-      <button className="link" onClick={onEmptyTrash}>Golește coșul</button>
+      <button className="link" onClick={onEmptyTrash}>{tr('ui.binder.goleste_cosul')}</button>
       {ctx && <ContextMenu x={ctx.x} y={ctx.y} items={contextItems(ctx.id)} onClose={() => setCtx(null)} />}
     </aside>
   );

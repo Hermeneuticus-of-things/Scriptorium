@@ -15,7 +15,7 @@ export const noChange = (parts) => parts.every((p) => !p.added && !p.removed);
  * replace (proofread: diff + Accept/Reject), insert (continue), synopsis, read (feedback, consistency, ask).
  */
 export function actionKind(action) {
-  if (action === 'proofread') return 'replace';
+  if (action === 'proofread' || action === 'translate') return 'replace';
   if (action === 'continue') return 'insert';
   if (action === 'summarize') return 'synopsis';
   return 'read';

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Pentru cine e Scribner</title>
+  <desc id="desc">Trei feluri de a folosi Scribner: scrii o carte, traduci o carte, scrii o lucrare sau o teză.</desc>
+  <rect width="1200" height="420" rx="24" fill="#f6f1e6"/>
+  <text x="600" y="66" text-anchor="middle" font-family="Georgia, serif" font-size="40" fill="#1f1b16">Pentru cine e</text>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <!-- Writer -->
+    <g transform="translate(48 100)">
+      <rect width="348" height="280" rx="18" fill="#fffdf6" stroke="#e5dccb"/>
+      <circle cx="56" cy="58" r="30" fill="#f4e3d3"/>
+      <path d="M44 72 L68 46 L74 52 L50 78 L42 80 Z" fill="#c2413a"/>
+      <text x="102" y="66" font-size="28" font-weight="700" fill="#1f1b16">Scrii o carte</text>
+      <text x="28" y="132" font-size="21" fill="#3d362d">Fiecare scenă e o fișă.</text>
+      <text x="28" y="166" font-size="21" fill="#3d362d">Le muți până stă povestea.</text>
+      <text x="28" y="200" font-size="21" fill="#3d362d">Vezi câte cuvinte ai scris azi.</text>
+      <text x="28" y="250" font-size="19" fill="#8a5a2b" font-weight="600">roman · povestiri · scenariu</text>
+    </g>
+    <!-- Translator -->
+    <g transform="translate(426 100)">
+      <rect width="348" height="280" rx="18" fill="#1f1b16"/>
+      <circle cx="56" cy="58" r="30" fill="#3a332b"/>
+      <text x="40" y="66" font-size="22" font-weight="700" fill="#fbf7ef">A</text>
+      <text x="58" y="74" font-size="22" font-weight="700" fill="#e9b07a">Ă</text>
+      <text x="102" y="66" font-size="28" font-weight="700" fill="#fbf7ef">Traduci o carte</text>
+      <text x="28" y="132" font-size="21" fill="#e6dccb">Originalul la stânga,</text>
+      <text x="28" y="166" font-size="21" fill="#e6dccb">traducerea la dreapta.</text>
+      <text x="28" y="200" font-size="21" fill="#e6dccb">Glosar și note la îndemână.</text>
+      <text x="28" y="250" font-size="19" fill="#e9b07a" font-weight="600">Word în, Word înapoi la editură</text>
+    </g>
+    <!-- Student -->
+    <g transform="translate(804 100)">
+      <rect width="348" height="280" rx="18" fill="#fffdf6" stroke="#e5dccb"/>
+      <circle cx="56" cy="58" r="30" fill="#dfe8f5"/>
+      <rect x="40" y="46" width="32" height="24" rx="2" fill="#2b6fd6"/>
+      <line x1="56" y1="46" x2="56" y2="70" stroke="#fff" stroke-width="2"/>
+      <text x="102" y="66" font-size="28" font-weight="700" fill="#1f1b16">Scrii o lucrare</text>
+      <text x="28" y="132" font-size="21" fill="#3d362d">Cercetarea lângă text.</text>
+      <text x="28" y="166" font-size="21" fill="#3d362d">Bibliografie din Zotero.</text>
+      <text x="28" y="200" font-size="21" fill="#3d362d">Cuprins și note, automat.</text>
+      <text x="28" y="250" font-size="19" fill="#2b6fd6" font-weight="600">teză · eseu · articol</text>
+    </g>
+  </g>
+</svg>

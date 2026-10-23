@@ -20,12 +20,13 @@ import { htmlToText } from '../lib/text.js';
 import { findCanonDoc, parseCanonIndex, validateCanonIndex } from '../lib/canonIndex.js';
 import { providerText } from '../lib/aiSession.js';
 import '../ai.css';
+import { t, uiLocale } from '../lib/i18n.js';
 
-const LEVELS = [
-  ['micro', 'Micro · selecția / paragraful'],
-  ['mezzo', 'Mezzo · documentul'],
-  ['macro', 'Macro · tot capitolul (dosarul)'],
-];
+const LEVELS = () => ([
+  ['micro', t('ui.editorialPanel.micro_selectia_paragraful')],
+  ['mezzo', t('ui.editorialPanel.mezzo_documentul')],
+  ['macro', t('ui.editorialPanel.macro_tot_capitolul_dosarul')],
+]);
 
 function blocking(issues, strict) {
   return issues.filter((i) => i.severity === 'GRAVE' || (strict && i.severity === 'MEDIU'));
@@ -95,17 +96,17 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
   const repairLoop = async (doc, otherDocs) => {
     let current = autofix(doc.html);
     let found = lint(current, { profile, otherDocs });
-    say(`„${doc.title}”: ${summarize(found).GRAVE} grave, ${summarize(found).MEDIU} medii la start (după reparațiile sigure)`);
+    say(t('ui.editorialPanel.x_x_grave_x_medii', { title: doc.title, GRAVE: summarize(found).GRAVE, MEDIU: summarize(found).MEDIU }));
     for (let loop = 1; loop <= maxLoops && blocking(found, strict).length; loop++) {
       const md = htmlToManuscript(current);
       const fixed = await ai(repairPrompt(md, found.filter((i) => i.severity !== 'MINOR'), level), 'high');
       current = autofix(reattach(current, manuscriptToHtml(fixed)));
       found = lint(current, { profile, otherDocs });
       const s = summarize(found);
-      say(`  bucla ${loop}: ${s.GRAVE} grave, ${s.MEDIU} medii, ${s.MINOR} minore`);
+      say(t('ui.editorialPanel.bucla_x_x_grave_x_2', { loop: loop, GRAVE: s.GRAVE, MEDIU: s.MEDIU, MINOR: s.MINOR }));
     }
-    if (blocking(found, strict).length) say(`  ⚠ rămân ${blocking(found, strict).length} probleme blocante după ${maxLoops} bucle`);
-    else say('  ✓ reverificare curată');
+    if (blocking(found, strict).length) say(t('ui.editorialPanel.raman_x_probleme_blocante_dupa', { length: blocking(found, strict).length, maxLoops: maxLoops }));
+    else say(t('ui.editorialPanel.reverificare_curata'));
     return { current, found };
   };
 
@@ -118,19 +119,19 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
     try {
       if (level === 'micro') {
         const sel = onSelectionText();
-        if (!sel) throw new Error('Selectează un fragment în editor pentru nivelul micro.');
+        if (!sel) throw new Error(t('ui.editorialPanel.selecteaza_un_fragment_in_editor'));
         const selHtml = manuscriptToHtml(sel);
         const found = lint(selHtml, { profile });
-        say(`Selecție: ${summarize(found).GRAVE} grave, ${summarize(found).MEDIU} medii`);
+        say(t('ui.editorialPanel.selectie_x_grave_x_medii', { GRAVE: summarize(found).GRAVE, MEDIU: summarize(found).MEDIU }));
         let current = selHtml;
         let f = found;
         for (let loop = 1; loop <= maxLoops && blocking(f, strict).length; loop++) {
           const fixed = await ai(repairPrompt(htmlToManuscript(current), f, 'micro'), 'medium');
           current = autofix(manuscriptToHtml(fixed));
           f = lint(current, { profile });
-          say(`  bucla ${loop}: ${summarize(f).GRAVE} grave, ${summarize(f).MEDIU} medii`);
+          say(t('ui.editorialPanel.bucla_x_x_grave_x', { loop: loop, GRAVE: summarize(f).GRAVE, MEDIU: summarize(f).MEDIU }));
         }
-        setProposal([{ id: node.id, title: `${node.title} (selecție)`, before: selHtml, after: current, issuesAfter: f, selection: true, base: html, selText: sel }]);
+        setProposal([{ id: node.id, title: t('ui.editorialPanel.x_selectie', { title: node.title }), before: selHtml, after: current, issuesAfter: f, selection: true, base: html, selText: sel }]);
       } else if (level === 'mezzo') {
         const { current, found } = await repairLoop({ id: node.id, title: node.title, html }, others);
         setProposal([{ id: node.id, title: node.title, before: html, after: current, issuesAfter: found }]);
@@ -171,7 +172,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           const fixed = await ai(roundPrompt(r, htmlToManuscript(current), roundContext(r, { chapterContext: ctx, canonNodes, title: doc.title })), r.id === 'R4b' || r.id === 'R10' ? 'high' : 'medium');
           current = autofix(reattach(current, manuscriptToHtml(fixed)));
           const s = summarize(lint(current, { profile }));
-          say(`  ${r.id} ${r.title}: ${s.GRAVE} grave, ${s.MEDIU} medii`);
+          say(t('ui.editorialPanel.x_x_x_grave_x', { id: r.id, title: r.title, GRAVE: s.GRAVE, MEDIU: s.MEDIU }));
         }
         // P3 final sterilization + I-REP verification loop
         const { current: verified, found } = await repairLoop({ ...doc, html: current }, chapter.filter((d) => d.id !== doc.id));
@@ -192,11 +193,11 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
     const currentOf = (id) => (id === node.id ? html : (chapter.find((d) => d.id === id) || {}).html);
     const stale = chosen.filter((p) => proposalIsStale(p, currentOf(p.id), p.selection ? onSelectionText() : undefined));
     if (stale.length) {
-      setError(`Documentul s-a schimbat între timp (${stale.map((p) => `„${p.title}”`).join(', ')}). Rulează din nou sau respinge acel document.`);
+      setError(t('ui.editorialPanel.documentul_s_a_schimbat_intre', { v0: stale.map((p) => `„${p.title}”`).join(', ') }));
       return;
     }
     for (const p of chosen) await onApply(p);
-    setLog((l) => [...l, `✓ aplicat pe ${chosen.length} document(e)${rejected.size ? `, ${rejected.size} respinse` : ''}; snapshot salvat înainte`]);
+    setLog((l) => [...l, t('ui.editorialPanel.aplicat_pe_x_document_e', { length: chosen.length, v1: rejected.size ? `, ${rejected.size} respinse` : '' })]);
     setProposal(null);
   };
   const toggle = (id) => setRejected((r) => {
@@ -230,12 +231,12 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
       <label>
         Nivel
         <select value={level} onChange={(e) => setLevel(e.target.value)}>
-          {LEVELS.map(([id, label]) => (
+          {LEVELS().map(([id, label]) => (
             <option key={id} value={id}>{label}</option>
           ))}
         </select>
       </label>
-      {level === 'macro' && <p className="muted small">{chapter.length} documente în ordinea din binder.</p>}
+      {level === 'macro' && <p className="muted small">{chapter.length} {t('ui.editorialPanel.documente_in_ordinea_din_binder')}</p>}
 
       {tab === 'rep' && (
         <>
@@ -244,16 +245,16 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
             <input type="number" min="1" max="8" value={maxLoops} onChange={(e) => setMaxLoops(Math.max(1, Math.min(8, Number(e.target.value) || 1)))} />
           </label>
           <label className="check">
-            <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} /> Și problemele medii blochează
+            <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} /> {t('ui.editorialPanel.si_problemele_medii_blocheaza')}
           </label>
           <div className="ai-actions">
-            {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>Anulează</button>}
+            {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>{t('btn.cancel')}</button>}
             <button onClick={() => onApply({ id: node.id, title: node.title, before: html, after: autofix(html), safe: true })} disabled={busy}>
-              Reparații sigure (fără AI)
+              {t('ui.editorialPanel.reparatii_sigure_fara_ai')}
             </button>
             {aiEnabled && (
               <button className="primary" onClick={runRep} disabled={busy || !hasKey}>
-                {busy ? 'Lucrez…' : 'I-REP: repară + reverifică'}
+                {busy ? 'Lucrez…' : t('ui.editorialPanel.i_rep_repara_reverifica')}
               </button>
             )}
           </div>
@@ -282,17 +283,17 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
             ))}
           </div>
           <div className="ai-actions">
-            <button onClick={() => setRounds(new Set(ROUNDS.map((r) => r.id)))}>Toate</button>
-            <button onClick={() => setRounds(new Set())}>Niciuna</button>
-            {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>Anulează</button>}
+            <button onClick={() => setRounds(new Set(ROUNDS.map((r) => r.id)))}>{t('ui.editorialPanel.toate')}</button>
+            <button onClick={() => setRounds(new Set())}>{t('ui.editorialPanel.niciuna')}</button>
+            {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>{t('btn.cancel')}</button>}
             <button className="primary" onClick={runEdit} disabled={busy || !hasKey || !rounds.size || level === 'micro'}>
-              {busy ? 'Lucrez…' : 'I-EDIT: rulează rundele'}
+              {busy ? 'Lucrez…' : t('ui.editorialPanel.i_edit_ruleaza_rundele')}
             </button>
           </div>
-          {level === 'micro' && <p className="muted small">I-EDIT lucrează pe document sau capitol.</p>}
+          {level === 'micro' && <p className="muted small">{t('ui.editorialPanel.i_edit_lucreaza_pe_document')}</p>}
           {node.editorial?.rounds && (
             <p className="muted small">
-              Ultimele runde: {Object.entries(node.editorial.rounds).map(([k, d]) => `${k} ${new Date(d).toLocaleDateString('ro-RO')}`).join(' · ')}
+              Ultimele runde: {Object.entries(node.editorial.rounds).map(([k, d]) => `${k} ${new Date(d).toLocaleDateString(uiLocale())}`).join(' · ')}
             </p>
           )}
         </>
@@ -300,16 +301,16 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
 
       {aiEnabled && !hasKey && (
         <p className="warn">
-          Bucla AI cere cheia API{aiLabel ? ` pentru ${aiLabel}` : ' a furnizorului AI'}. <button className="link" onClick={onOpenSettings}>Setări</button>
+          Bucla AI cere cheia API{aiLabel ? t('ui.editorialPanel.pentru_x', { aiLabel: aiLabel }) : ' a furnizorului AI'}. <button className="link" onClick={onOpenSettings}>{t('set.title')}</button>
         </p>
       )}
       {error && (
         <div className="ai-error" role="alert">
           <span>{error}</span>
-          {lastRun && !busy && <button className="link" onClick={lastRun}>Reîncearcă</button>}
+          {lastRun && !busy && <button className="link" onClick={lastRun}>{t('ui.aiPanel.reincearca')}</button>}
         </div>
       )}
-      {busy && <p className="muted" aria-live="polite">Lucrez… {api.cancelAi && 'Esc anulează.'}</p>}
+      {busy && <p className="muted" aria-live="polite">Lucrez… {api.cancelAi && t('ui.editorialPanel.esc_anuleaza')}</p>}
       {log.length > 0 && <pre className="rep-log" aria-live="polite">{log.join('\n')}</pre>}
 
       {proposal && (
@@ -323,13 +324,13 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
                   {proposal.length > 1 && (
                     <input
                       type="checkbox"
-                      aria-label={`Aplică „${p.title}”`}
+                      aria-label={t('ui.editorialPanel.aplica_x', { title: p.title })}
                       checked={!rejected.has(p.id)}
                       onClick={(e) => e.stopPropagation()}
                       onChange={() => toggle(p.id)}
                     />
                   )}
-                  {p.title} · după: {s.GRAVE} grave, {s.MEDIU} medii{p.before === p.after ? ' · fără modificări' : ''}
+                  {p.title} {t('ui.editorialPanel.dupa')} {s.GRAVE} grave, {s.MEDIU} medii{p.before === p.after ? t('ui.editorialPanel.fara_modificari') : ''}
                 </summary>
                 <div className="snap-preview diff">
                   {diffWords(htmlToText(p.before), htmlToText(p.after)).map((part, i) =>
@@ -341,15 +342,15 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           })}
           <div className="ai-actions">
             <button className="primary" onClick={accept} disabled={!chosen.length}>
-              {proposal.length > 1 ? `Acceptă ${chosen.length} din ${proposal.length}` : 'Acceptă și aplică'}
+              {proposal.length > 1 ? t('ui.editorialPanel.accepta_x_din_x', { length: chosen.length, length1: proposal.length }) : t('ui.editorialPanel.accepta_si_aplica')}
             </button>
-            <button onClick={() => setProposal(null)}>{proposal.length > 1 ? 'Respinge tot' : 'Respinge'}</button>
+            <button onClick={() => setProposal(null)}>{proposal.length > 1 ? t('ui.editorialPanel.respinge_tot') : 'Respinge'}</button>
           </div>
         </div>
       )}
 
-      <h4>Probleme în „{node.title}”</h4>
-      {shown.length === 0 && <p className="ok">Nicio problemă detectată.</p>}
+      <h4>{t('ui.editorialPanel.probleme_in')}{node.title}”</h4>
+      {shown.length === 0 && <p className="ok">{t('ui.editorialPanel.nicio_problema_detectata')}</p>}
       <ul className="issues">
         {shown.slice(0, 300).map((i) => (
           <li key={i.id} className={`sev-${i.severity}`} onClick={() => onJump(i)}>

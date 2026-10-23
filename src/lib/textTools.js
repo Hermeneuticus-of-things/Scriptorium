@@ -15,16 +15,4 @@ export function autoSynopsis(text, { maxSentences = 2, maxChars = 280 } = {}) {
   return out;
 }
 
-const LOOKUPS = {
-  dictionary: (q) => `https://dexonline.ro/definitie/${q}`,
-  synonyms: (q) => `https://dexonline.ro/definitie/${q}/sinonime`,
-  wikipedia: (q) => `https://ro.wikipedia.org/w/index.php?search=${q}`,
-  google: (q) => `https://www.google.com/search?q=${q}`,
-};
-
-// URL for a Writing Tools lookup ('dictionary' | 'synonyms' | 'wikipedia' | 'google').
-export function lookupUrl(kind, word) {
-  const w = String(word || '').trim();
-  if (!w || !LOOKUPS[kind]) return '';
-  return LOOKUPS[kind](encodeURIComponent(w));
-}
+export { lookupUrl } from './lookups.js';
