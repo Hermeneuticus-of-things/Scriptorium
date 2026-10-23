@@ -1342,6 +1342,8 @@ export default function App({ api }) {
     ['tools', 'aiBulkSynopsis', 'Sinopsis AI în bloc', () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
     ['tools', 'aiConsistency', 'Consistență pe toată cartea (fișe vii)', () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
     ['tools', 'aiZoomReview', 'Revizie pe niveluri de zoom', () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
+    ['tools', 'nlmExport', 'Exportă pentru NotebookLM…', () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(`NotebookLM: ${r.files.length} surse în „${r.dir}”.${r.warnings.length ? ` ${r.warnings.join(' ')}` : ''}`)).catch(report), !dir || !api.nlmExport],
+    ['tools', 'nlmOpen', 'Deschide NotebookLM', () => api.nlmOpen().catch(report), !api.nlmOpen],
     ['file', 'newWindow', 'Fereastră nouă', () => api.newWindow().catch(report), !api.newWindow],
     ['file', 'exportBundle', 'Exportă pachet pentru web / mobil…', () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', 'Importă pachet de proiect…', () => api.importBundle().then(openResult).catch(report), !api.importBundle],
@@ -1687,6 +1689,7 @@ export default function App({ api }) {
                 <AiPanel
                   api={api}
                   hasKey={settings.hasApiKey}
+                  aiLabel={settings.aiLabel}
                   node={aiNode}
                   getText={() => activeHandle()?.getSelectionText() || htmlToText(docs[aiNode.id])}
                   hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
@@ -1710,6 +1713,7 @@ export default function App({ api }) {
                   key={`ed-${editorialNode.id}`}
                   api={api}
                   hasKey={settings.hasApiKey}
+                  aiLabel={settings.aiLabel}
                   profile={profileFor(project)}
                   node={editorialNode}
                   html={docs[editorialNode.id] || ''}

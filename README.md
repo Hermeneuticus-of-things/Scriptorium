@@ -41,22 +41,26 @@ Versiunea portabilă își ține setările lângă `.exe`, în `Scribner-data/`,
 ## Ce mai are
 
 <details>
-<summary><strong>Asistent AI (Claude)</strong></summary>
+<summary><strong>Asistent AI (orice furnizor)</strong></summary>
 
-Pune cheia API Anthropic în Setări. Cheia e criptată de sistemul de operare și rămâne în procesul principal; interfața nu o vede. Asistentul face corectură, sinopsis, continuare în stilul tău, critică și verificare de consistență. În bloc: sinopsis pentru toate documentele, fișe de personaje care se actualizează, revizie pe niveluri de la carte la frază.
+Alegi furnizorul în Setări → AI și pui cheia lui API: Anthropic (Claude), OpenAI, Google Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, un model local prin Ollama sau LM Studio (fără cheie), sau orice server compatibil OpenAI cu URL propriu. Modelul îl scrii tu, exact cum îl numește furnizorul. Fiecare furnizor are cheia lui; cheile sunt criptate de sistemul de operare și rămân în procesul principal, interfața vede doar dacă o cheie există. Butonul „Testează conexiunea” trimite o cerere minimă și arată răspunsul sau eroarea.
+
+Asistentul face corectură, sinopsis, continuare în stilul tău, critică și verificare de consistență. În bloc: sinopsis pentru toate documentele, fișe de personaje care se actualizează, revizie pe niveluri de la carte la frază. Cercetarea în proiect (RAG) folosește același furnizor pentru răspunsuri.
+
+**NotebookLM.** NotebookLM nu are API public pentru conturile personale, așa că Unelte → Exportă pentru NotebookLM… scrie folderul `NotebookLM - <Titlu>`: un fișier Markdown pe capitol (dosarele de prim nivel din Manuscris), cercetarea și notele ca surse separate și un cuprins cu sinopsisurile. Exportul respectă limita de 50 de surse și împarte fișierele foarte lungi. Încarci fișierele în notebook; Unelte → Deschide NotebookLM deschide notebook-ul al cărui link l-ai pus în Setări (sau pagina principală).
 
 </details>
 
 <details>
 <summary><strong>Agenți AI prin MCP</strong></summary>
 
-Serverul `mcp/server.mjs` dă acces unui agent (Claude Code, Claude Desktop, orice client MCP) la un proiect: citire și scriere, binder, căutare, metadate, note, comentarii, I-REP, snapshot-uri, Compile. Fiecare scriere face snapshot înainte și se notează în `agent-log.jsonl`.
+Serverul `mcp/server.mjs` dă acces la un proiect oricărui client MCP (Claude Code, Claude Desktop, Cursor, VS Code, Gemini CLI, alți agenți), indiferent de modelul din spate: citire și scriere, binder, căutare, metadate, note, comentarii, I-REP, snapshot-uri, Compile. Fiecare scriere face snapshot înainte și se notează în `agent-log.jsonl`. Exemplu cu Claude Code:
 
 ```bash
 claude mcp add scribner -- node "/cale/Scribner/mcp/server.mjs" --project "/cale/Cartea mea.scribner"
 ```
 
-`--read-only` permite doar citirea. Comanda exactă apare în Setări → Conexiune MCP.
+`--read-only` permite doar citirea. Alți clienți primesc aceeași comandă (`node mcp/server.mjs --project …`) în configurația lor de servere MCP. Comanda exactă apare în Setări → Conexiune MCP.
 
 </details>
 
@@ -85,7 +89,7 @@ Fișiere text simple: le poți versiona cu git sau sincroniza cu orice cloud. Si
 
 ## Stare
 
-Testele (`npm test`, 312) acoperă importul Scrivener, RTF, Compile, I-REP, serverul MCP și restul bibliotecilor. Planul complet și ce rămâne de verificat sunt în [`ROADMAP.md`](ROADMAP.md). `npm run test:e2e` pornește aplicația reală în Electron: creează un proiect, scrie, compilează DOCX/PDF/EPUB, exportă `.scriv` și îl reimportă. Verificat pe Linux; neverificat încă pe Windows și pe un proiect Scrivener real mare.
+Testele (`npm test`, 348) acoperă importul Scrivener, RTF, Compile, I-REP, serverul MCP și restul bibliotecilor. Planul complet și ce rămâne de verificat sunt în [`ROADMAP.md`](ROADMAP.md). `npm run test:e2e` pornește aplicația reală în Electron: creează un proiect, scrie, compilează DOCX/PDF/EPUB, exportă `.scriv` și îl reimportă. Verificat pe Linux; neverificat încă pe Windows și pe un proiect Scrivener real mare.
 
 ## Licență
 
