@@ -55,7 +55,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [comp, setComp] = useState({ bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100 });
   const [draft, setDraft] = useState(project?.targets?.draft || 0);
   const [session, setSession] = useState(project?.targets?.session || 0);
-  const [edBase, setEdBase] = useState(project?.editorialProfile?.base || 'karma');
+  const [edBase, setEdBase] = useState(project?.editorialProfile?.base || 'generic');
   const [edRules, setEdRules] = useState(project?.editorialProfile?.rules || {});
   const [edLimit, setEdLimit] = useState(project?.editorialProfile?.canvasWordLimit ?? 3000);
   const [mcp, setMcp] = useState(null);
@@ -346,7 +346,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </fieldset>
         )}
         <fieldset>
-          <legend>Editorial · liste de cuvinte (profil {edBase === 'generic' ? 'Generic' : 'Karma'})</legend>
+          <legend>Editorial · liste de cuvinte (profil {edBase === 'generic' ? 'Generic' : 'Română'})</legend>
           <label>
             Cuvinte interzise, câte unul pe rând: <code>cuvânt =&gt; înlocuire # notă</code>
             <textarea rows={4} value={edL.forbidden} onChange={(e) => setEdL('forbidden', e.target.value)} placeholder={'gest => faptă\nurmă => depunere # P3'} />

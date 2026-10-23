@@ -26,6 +26,9 @@ beforeAll(async () => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-'));
   dir = store.projectDirFor(tmp, 'Karma');
   store.createProject(dir, 'Karma', 'novel');
+  // This test exercises the Karma profile rules (R3, R11); the default profile is generic.
+  const pj = path.join(dir, 'project.json');
+  fs.writeFileSync(pj, JSON.stringify({ ...JSON.parse(fs.readFileSync(pj, 'utf8')), editorialProfile: { base: 'karma' } }));
   client = new Client({ name: 'test', version: '1.0.0' });
   await client.connect(
     new StdioClientTransport({ command: process.execPath, args: [path.resolve('mcp/server.mjs'), '--project', dir], stderr: 'ignore' }),

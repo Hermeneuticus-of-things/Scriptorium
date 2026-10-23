@@ -254,8 +254,9 @@ export function buildPrintToc(project, opts = {}) {
 /** All three at once. readDoc may be sync or async. Returns {docs, alogen, reading, toc}. */
 export async function buildGlossaries(project, readDoc, opts = {}) {
   const docs = opts.docs || (await collectBookDocs(project, readDoc, opts));
-  const alogen = buildAlogenGlossary(docs, opts.alogen || { date: opts.date });
-  const reading = buildReadingGlossary(docs, { exclude: alogen.terms.map((t) => t.term), ...(opts.reading || {}) });
-  const toc = buildPrintToc(project, { docs, ...(opts.toc || {}) });
+  const t = opts.titles || {};
+  const alogen = buildAlogenGlossary(docs, { title: t.foreign, ...(opts.alogen || { date: opts.date }) });
+  const reading = buildReadingGlossary(docs, { title: t.reading, exclude: alogen.terms.map((x) => x.term), ...(opts.reading || {}) });
+  const toc = buildPrintToc(project, { docs, title: t.toc, ...(opts.toc || {}) });
   return { docs, alogen, reading, toc };
 }
