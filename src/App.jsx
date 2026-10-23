@@ -30,6 +30,8 @@ import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
+import { applySettingsCss } from './lib/settingsDefaults.js';
+import { setLanguage, cmdLabel, groupLabel } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
 import FindDialog from './components/FindDialog.jsx';
 import HistoryDialog from './components/HistoryDialog.jsx';
@@ -79,6 +81,10 @@ function saveUi(dir, ui) {
 
 export default function App({ api }) {
   const [settings, setSettings] = useState(null);
+  if (settings) setLanguage(settings.language || 'ro');
+  useEffect(() => {
+    if (settings) applySettingsCss(settings);
+  }, [settings]);
   const [dir, setDir] = useState(null);
   const [project, setProject] = useState(null);
   const [docs, setDocs] = useState({}); // id -> html cache (main text)
@@ -702,7 +708,7 @@ export default function App({ api }) {
     if (!api.setAppMenu || !project) return;
     const titles = { file: 'Fișier', edit: 'Editare', view: 'Vizualizare', nav: 'Navigare', project: 'Proiect', document: 'Document', format: 'Format', tools: 'Unelte', window: 'Fereastră' };
     const spec = Object.entries(titles).map(([g, label]) => ({
-      label,
+      label: groupLabel(g) || label,
       items: Object.values(commandsRef.current)
         .filter((c) => c.group === g)
         .map((c) => ({ id: c.id, label: c.label, key: c.key, disabled: c.disabled })),
@@ -744,6 +750,7 @@ export default function App({ api }) {
         <Home api={api} settings={settings} onOpen={(res) => openResult(res).catch(report)} onError={report} onSettings={() => setDialog('settings')} />
         {dialog === 'settings' && (
           <SettingsDialog
+            onShortcuts={project ? () => setDialog('shortcuts') : undefined}
             api={api}
             settings={settings}
             project={null}
@@ -910,7 +917,7 @@ export default function App({ api }) {
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];
   const commands = Object.fromEntries(
-    commandList.map(([group, id, label, run, disabled]) => [id, { group, id, label, run, disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
+    commandList.map(([group, id, label, run, disabled]) => [id, { group, id, label: cmdLabel(id, label), run, disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
   );
   commandsRef.current = commands;
 
@@ -1201,6 +1208,7 @@ export default function App({ api }) {
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (
         <SettingsDialog
+            onShortcuts={project ? () => setDialog('shortcuts') : undefined}
           api={api}
           settings={settings}
           project={project}
@@ -1354,7 +1362,7 @@ export default function App({ api }) {
       })}
       {dialog === 'shortcuts' && (
         <ShortcutsDialog
-          commands={commandList.map(([group, id, label]) => ({ group, id, label }))}
+          commands={commandList.map(([group, id, label]) => ({ group, id, label: cmdLabel(id, label) }))}
           settings={settings}
           onSave={async (shortcuts) => {
             await api.setSettings({ shortcuts });

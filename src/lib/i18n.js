@@ -1,0 +1,140 @@
+// Minimal i18n: t(key, vars), setLanguage/getLanguage, cmdLabel(id, fallback). Romanian is default.
+const ro = {
+  // menu groups
+  'group.file': 'Fișier', 'group.edit': 'Editare', 'group.view': 'Vizualizare', 'group.nav': 'Navigare',
+  'group.project': 'Proiect', 'group.document': 'Documente', 'group.format': 'Format', 'group.tools': 'Unelte',
+  'group.window': 'Fereastră', 'group.help': 'Ajutor',
+  // commands
+  'cmd.save': 'Salvează acum', 'cmd.compile': 'Compilează…', 'cmd.import': 'Importă Word / text / Markdown…',
+  'cmd.importFiles': 'Importă fișiere (RTF, ODT, HTML, Fountain, media)…', 'cmd.importOpml': 'Importă OPML…',
+  'cmd.importWeb': 'Importă pagină web…', 'cmd.exportFiles': 'Exportă documente / OPML / CSV…', 'cmd.saveAs': 'Salvează ca…',
+  'cmd.print': 'Tipărește documentul…', 'cmd.backups': 'Backup-uri…', 'cmd.closeProject': 'Închide proiectul',
+  'cmd.findDoc': 'Caută în document', 'cmd.findProject': 'Caută și înlocuiește în proiect…', 'cmd.advSearch': 'Căutare avansată…',
+  'cmd.viewEditor': 'Editor', 'cmd.viewCorkboard': 'Corkboard', 'cmd.viewOutline': 'Outline', 'cmd.composition': 'Mod compunere',
+  'cmd.toggleInspector': 'Arată / ascunde Inspectorul', 'cmd.toggleBinder': 'Arată / ascunde binderul',
+  'cmd.split': 'Împarte documentul la cursor', 'cmd.quickRef': 'Quick Reference pentru documentul curent',
+  'cmd.goto': 'Mergi la…', 'cmd.prevDoc': 'Documentul anterior', 'cmd.nextDoc': 'Documentul următor', 'cmd.back': 'Înapoi', 'cmd.forward': 'Înainte',
+  'cmd.newText': 'Document nou', 'cmd.newFolder': 'Dosar nou', 'cmd.projectSettings': 'Setările proiectului…',
+  'cmd.targets': 'Ținte și termen limită…', 'cmd.stats': 'Statistici…', 'cmd.keywords': 'Cuvinte cheie…', 'cmd.history': 'Istoricul scrisului…',
+  'cmd.splitTitle': 'Împarte cu selecția ca titlu', 'cmd.merge': 'Unește documentele selectate', 'cmd.duplicate': 'Duplică', 'cmd.snapshot': 'Snapshot acum',
+  'cmd.styles': 'Stiluri…', 'cmd.irep': 'I-REP / I-EDIT', 'cmd.ai': 'Asistent AI', 'cmd.settings': 'Setări…',
+  'cmd.shortcuts': 'Scurtături de tastatură…', 'cmd.saveLayout': 'Salvează layout-ul curent…', 'cmd.layout': 'Layout: {name}',
+  // buttons
+  'btn.save': 'Salvează', 'btn.cancel': 'Anulează', 'btn.ok': 'OK', 'btn.close': 'Închide', 'btn.choose': 'Alege…',
+  'btn.default': 'Implicit', 'btn.add': 'Adaugă', 'btn.remove': 'Șterge', 'btn.delete': 'Șterge', 'btn.apply': 'Aplică',
+  // settings
+  'set.title': 'Setări',
+  'set.tab.general': 'General', 'set.tab.appearance': 'Aspect', 'set.tab.behaviors': 'Comportament', 'set.tab.corrections': 'Corecturi',
+  'set.tab.editing': 'Editare', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Tastatură', 'set.tab.ai': 'AI', 'set.tab.language': 'Limbă',
+  'set.reopenLast': 'La pornire, redeschide ultimul proiect', 'set.autosave': 'Salvare automată după (secunde de inactivitate)',
+  'set.checkUpdates': 'Caută actualizări (dezactivat: aplicația nu contactează rețeaua)',
+  'set.targetDraft': 'Țintă carte (cuvinte)', 'set.targetSession': 'Țintă sesiune (cuvinte)',
+  'set.theme': 'Temă', 'set.theme.system': 'Ca sistemul', 'set.theme.light': 'Luminoasă', 'set.theme.dark': 'Întunecată', 'set.theme.sepia': 'Sepia',
+  'set.editorFont': 'Fontul editorului', 'set.fontSize': 'Mărimea textului în editor (px)', 'set.lineHeight': 'Interlinie',
+  'set.pageWidth': 'Lățimea paginii (em)', 'set.binderFontSize': 'Mărimea textului în binder (px)', 'set.accent': 'Culoare de accent',
+  'set.composition': 'Mod compunere (F11)', 'set.compBg': 'Fundal', 'set.compWidth': 'Lățimea textului (em)', 'set.compFade': 'Opacitatea paginii (%)',
+  'set.compPaper': 'Pagină de hârtie în centru', 'set.compBgDefault': 'Fundal implicit',
+  'set.binderEnter': 'Enter în binder', 'set.binderEnter.edit': 'Editează documentul', 'set.binderEnter.newDoc': 'Creează document nou',
+  'set.binderDbl': 'Dublu-clic în binder', 'set.binderDbl.rename': 'Redenumește', 'set.binderDbl.openQuickRef': 'Deschide Quick Reference',
+  'set.typewriter': 'Defilare tip mașină de scris (rândul curent la mijloc)',
+  'set.smartQuotes': 'Ghilimele „românești” automat', 'set.smartDashes': 'Liniuță — din --', 'set.smartEllipsis': '… din trei puncte',
+  'set.autoCapitalize': 'Majusculă automată la început de propoziție', 'set.spellLangs': 'Limbi pentru corectura ortografică (separate prin virgulă)',
+  'set.replacements': 'Înlocuiri automate', 'set.replaceFrom': 'Înlocuiește', 'set.replaceTo': 'Cu',
+  'set.paraIndent': 'Indentare implicită a paragrafului (em)', 'set.paraSpacing': 'Spațiu după paragraf (em)',
+  'set.defaultView': 'Vizualizare implicită', 'set.showInvisibles': 'Arată caracterele invizibile',
+  'set.backupOnClose': 'Backup automat la închidere', 'set.backupEvery': 'Și la fiecare (minute, 0 = nu)', 'set.backupKeep': 'Păstrează ultimele',
+  'set.backupDir': 'Folder backup (gol = lângă proiect)', 'set.backupDirPh': 'lângă proiect, în <Nume>.backups',
+  'set.keyboardInfo': 'Fiecare comandă poate avea propria scurtătură.', 'set.openShortcuts': 'Configurează scurtăturile…',
+  'set.aiEnabled': 'Funcții AI (asistent, I-EDIT, bucla de reparare AI). Fără ele, Scribner funcționează complet: verificarea I-REP și reparațiile sigure rămân.',
+  'set.apiKey': 'Cheie API Anthropic', 'set.apiKeySet': '(setată, lasă gol ca s-o păstrezi)', 'set.apiKeyDelete': 'Șterge cheia API',
+  'set.editorial': 'Profil editorial (I-REP / I-EDIT)', 'set.edBase': 'Reguli de bază',
+  'set.edBase.karma': 'Karma (karma-book-engine: P1–P13, R0–R11, ALOGEN, DOOM III)', 'set.edBase.generic': 'Generic românesc (tipografie + reziduuri LLM)',
+  'set.edLimit': 'Limita de cuvinte pe canvas (0 = fără)', 'set.edHeader': 'Verifică prima linie „Cap. N / Secț. N / Subcap. N”',
+  'set.edFooter': 'Verifică nota finală „¹ Cap. N / Subcap. … · ← anterior · → următor”',
+  'set.mcp': 'Conexiune MCP pentru agenți AI',
+  'set.mcpInfo': 'Agenții (Claude Code, Claude Desktop, alți clienți MCP) pot citi și edita proiectele prin serverul MCP Scribner. Fiecare scriere face snapshot înainte.',
+  'set.mcpShow': 'Arată comanda de conectare',
+  'set.language': 'Limba interfeței', 'set.languageNote': 'Unele texte se schimbă după repornire.',
+};
+
+const en = {
+  'group.file': 'File', 'group.edit': 'Edit', 'group.view': 'View', 'group.nav': 'Navigate',
+  'group.project': 'Project', 'group.document': 'Documents', 'group.format': 'Format', 'group.tools': 'Tools',
+  'group.window': 'Window', 'group.help': 'Help',
+  'cmd.save': 'Save now', 'cmd.compile': 'Compile…', 'cmd.import': 'Import Word / text / Markdown…',
+  'cmd.importFiles': 'Import files (RTF, ODT, HTML, Fountain, media)…', 'cmd.importOpml': 'Import OPML…',
+  'cmd.importWeb': 'Import web page…', 'cmd.exportFiles': 'Export documents / OPML / CSV…', 'cmd.saveAs': 'Save as…',
+  'cmd.print': 'Print document…', 'cmd.backups': 'Backups…', 'cmd.closeProject': 'Close project',
+  'cmd.findDoc': 'Find in document', 'cmd.findProject': 'Project find and replace…', 'cmd.advSearch': 'Advanced search…',
+  'cmd.viewEditor': 'Editor', 'cmd.viewCorkboard': 'Corkboard', 'cmd.viewOutline': 'Outline', 'cmd.composition': 'Composition mode',
+  'cmd.toggleInspector': 'Show / hide Inspector', 'cmd.toggleBinder': 'Show / hide Binder',
+  'cmd.split': 'Split document at cursor', 'cmd.quickRef': 'Quick Reference for current document',
+  'cmd.goto': 'Go to…', 'cmd.prevDoc': 'Previous document', 'cmd.nextDoc': 'Next document', 'cmd.back': 'Back', 'cmd.forward': 'Forward',
+  'cmd.newText': 'New document', 'cmd.newFolder': 'New folder', 'cmd.projectSettings': 'Project settings…',
+  'cmd.targets': 'Targets and deadline…', 'cmd.stats': 'Statistics…', 'cmd.keywords': 'Keywords…', 'cmd.history': 'Writing history…',
+  'cmd.splitTitle': 'Split with selection as title', 'cmd.merge': 'Merge selected documents', 'cmd.duplicate': 'Duplicate', 'cmd.snapshot': 'Take snapshot',
+  'cmd.styles': 'Styles…', 'cmd.irep': 'I-REP / I-EDIT', 'cmd.ai': 'AI assistant', 'cmd.settings': 'Settings…',
+  'cmd.shortcuts': 'Keyboard shortcuts…', 'cmd.saveLayout': 'Save current layout…', 'cmd.layout': 'Layout: {name}',
+  'btn.save': 'Save', 'btn.cancel': 'Cancel', 'btn.ok': 'OK', 'btn.close': 'Close', 'btn.choose': 'Choose…',
+  'btn.default': 'Default', 'btn.add': 'Add', 'btn.remove': 'Remove', 'btn.delete': 'Delete', 'btn.apply': 'Apply',
+  'set.title': 'Settings',
+  'set.tab.general': 'General', 'set.tab.appearance': 'Appearance', 'set.tab.behaviors': 'Behaviors', 'set.tab.corrections': 'Corrections',
+  'set.tab.editing': 'Editing', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Keyboard', 'set.tab.ai': 'AI', 'set.tab.language': 'Language',
+  'set.reopenLast': 'On startup, reopen last project', 'set.autosave': 'Autosave after (seconds of inactivity)',
+  'set.checkUpdates': 'Check for updates (off: the app never contacts the network)',
+  'set.targetDraft': 'Book target (words)', 'set.targetSession': 'Session target (words)',
+  'set.theme': 'Theme', 'set.theme.system': 'System', 'set.theme.light': 'Light', 'set.theme.dark': 'Dark', 'set.theme.sepia': 'Sepia',
+  'set.editorFont': 'Editor font', 'set.fontSize': 'Editor text size (px)', 'set.lineHeight': 'Line height',
+  'set.pageWidth': 'Page width (em)', 'set.binderFontSize': 'Binder text size (px)', 'set.accent': 'Accent color',
+  'set.composition': 'Composition mode (F11)', 'set.compBg': 'Background', 'set.compWidth': 'Text width (em)', 'set.compFade': 'Page opacity (%)',
+  'set.compPaper': 'Paper page in the center', 'set.compBgDefault': 'Default background',
+  'set.binderEnter': 'Enter in binder', 'set.binderEnter.edit': 'Edit document', 'set.binderEnter.newDoc': 'Create new document',
+  'set.binderDbl': 'Double-click in binder', 'set.binderDbl.rename': 'Rename', 'set.binderDbl.openQuickRef': 'Open Quick Reference',
+  'set.typewriter': 'Typewriter scrolling (current line centered)',
+  'set.smartQuotes': 'Smart quotes', 'set.smartDashes': 'Em dash from --', 'set.smartEllipsis': '… from three dots',
+  'set.autoCapitalize': 'Auto-capitalize sentences', 'set.spellLangs': 'Spell-check languages (comma separated)',
+  'set.replacements': 'Auto-replacements', 'set.replaceFrom': 'Replace', 'set.replaceTo': 'With',
+  'set.paraIndent': 'Default paragraph indent (em)', 'set.paraSpacing': 'Space after paragraph (em)',
+  'set.defaultView': 'Default view', 'set.showInvisibles': 'Show invisible characters',
+  'set.backupOnClose': 'Automatic backup on close', 'set.backupEvery': 'And every (minutes, 0 = never)', 'set.backupKeep': 'Keep the latest',
+  'set.backupDir': 'Backup folder (empty = next to project)', 'set.backupDirPh': 'next to project, in <Name>.backups',
+  'set.keyboardInfo': 'Every command can have its own shortcut.', 'set.openShortcuts': 'Configure shortcuts…',
+  'set.aiEnabled': 'AI features (assistant, I-EDIT, AI repair loop). Without them Scribner is fully functional: I-REP checks and safe fixes remain.',
+  'set.apiKey': 'Anthropic API key', 'set.apiKeySet': '(set, leave empty to keep it)', 'set.apiKeyDelete': 'Delete API key',
+  'set.editorial': 'Editorial profile (I-REP / I-EDIT)', 'set.edBase': 'Base rules',
+  'set.edBase.karma': 'Karma (karma-book-engine: P1–P13, R0–R11, ALOGEN, DOOM III)', 'set.edBase.generic': 'Generic Romanian (typography + LLM residue)',
+  'set.edLimit': 'Canvas word limit (0 = none)', 'set.edHeader': 'Check first line “Cap. N / Secț. N / Subcap. N”',
+  'set.edFooter': 'Check final note “¹ Cap. N / Subcap. … · ← previous · → next”',
+  'set.mcp': 'MCP connection for AI agents',
+  'set.mcpInfo': 'Agents (Claude Code, Claude Desktop, other MCP clients) can read and edit projects through the Scribner MCP server. Every write takes a snapshot first.',
+  'set.mcpShow': 'Show connection command',
+  'set.language': 'Interface language', 'set.languageNote': 'Some texts change after restart.',
+};
+
+export const dictionaries = { ro, en };
+export const LANGUAGES = [{ id: 'ro', label: 'Română' }, { id: 'en', label: 'English' }];
+let current = 'ro';
+const listeners = new Set();
+
+export function setLanguage(lang) {
+  const next = dictionaries[lang] ? lang : 'ro';
+  if (next === current) return;
+  current = next;
+  listeners.forEach((fn) => fn(current));
+}
+export const getLanguage = () => current;
+export const onLanguageChange = (fn) => (listeners.add(fn), () => listeners.delete(fn));
+
+export function t(key, vars) {
+  let s = dictionaries[current][key] ?? ro[key] ?? key;
+  if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] != null ? String(vars[k]) : m));
+  return s;
+}
+export const has = (key) => key in dictionaries[current] || key in ro;
+
+/** Label for a command id; layout:N ids and unknown ids fall back. */
+export function cmdLabel(id, fallback) {
+  const key = `cmd.${id}`;
+  return has(key) ? t(key) : fallback ?? id;
+}
+export const groupLabel = (group) => (has(`group.${group}`) ? t(`group.${group}`) : group);

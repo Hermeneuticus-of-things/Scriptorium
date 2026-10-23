@@ -1,40 +1,87 @@
 import React, { useState } from 'react';
+import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
+import { t, LANGUAGES } from '../lib/i18n.js';
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError }) {
+const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'backup', 'keyboard', 'ai', 'language'];
+const FONTS = [
+  ['Georgia, serif', 'Georgia'],
+  ["'Times New Roman', serif", 'Times New Roman'],
+  ["'Palatino Linotype', Palatino, serif", 'Palatino'],
+  ['Garamond, serif', 'Garamond'],
+  ['Arial, sans-serif', 'Arial'],
+  ["'Segoe UI', system-ui, sans-serif", 'Segoe UI'],
+  ["'Courier New', monospace", 'Courier New'],
+];
+
+export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts }) {
+  const init = { ...DEFAULT_SETTINGS, ...settings };
+  const [tab, setTab] = useState('general');
+  const [s, setS] = useState({
+    language: init.language,
+    reopenLastProject: init.reopenLastProject !== false,
+    autosaveSec: init.autosaveSec,
+    checkUpdates: Boolean(init.checkUpdates),
+    theme: init.theme || 'system',
+    editorFont: init.editorFont,
+    fontSize: init.fontSize || 18,
+    lineHeight: init.lineHeight,
+    pageWidth: init.pageWidth,
+    binderFontSize: init.binderFontSize,
+    accentColor: init.accentColor || '',
+    binderEnter: init.binderEnter,
+    binderDoubleClick: init.binderDoubleClick,
+    typewriter: Boolean(init.typewriter),
+    smartQuotes: init.smartQuotes !== false,
+    smartDashes: init.smartDashes !== false,
+    smartEllipsis: init.smartEllipsis !== false,
+    autoCapitalize: Boolean(init.autoCapitalize),
+    spellLanguages: (init.spellLanguages || []).join(', '),
+    autoReplacements: (init.autoReplacements || []).map((r) => ({ ...r })),
+    paragraphIndent: init.paragraphIndent,
+    paragraphSpacing: init.paragraphSpacing,
+    defaultView: init.defaultView,
+    showInvisibles: Boolean(init.showInvisibles),
+    aiEnabled: init.aiEnabled !== false,
+    backupOnClose: init.backupOnClose !== false,
+    backupEveryMin: init.backupEveryMin || 0,
+    backupKeep: init.backupKeep || 10,
+    backupDir: init.backupDir || '',
+  });
+  const set = (k) => (e) => {
+    const v = e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e;
+    setS((p) => ({ ...p, [k]: v }));
+  };
   const [apiKey, setApiKey] = useState('');
-  const [theme, setTheme] = useState(settings.theme || 'system');
-  const [fontSize, setFontSize] = useState(settings.fontSize || 18);
-  const [typewriter, setTypewriter] = useState(Boolean(settings.typewriter));
   const [comp, setComp] = useState({ bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100 });
-  const [smartQuotes, setSmartQuotes] = useState(settings.smartQuotes !== false);
-  const [aiEnabled, setAiEnabled] = useState(settings.aiEnabled !== false);
-  const [backupOnClose, setBackupOnClose] = useState(settings.backupOnClose !== false);
-  const [backupEveryMin, setBackupEveryMin] = useState(settings.backupEveryMin || 0);
-  const [backupKeep, setBackupKeep] = useState(settings.backupKeep || 10);
-  const [backupDir, setBackupDir] = useState(settings.backupDir || '');
   const [draft, setDraft] = useState(project?.targets?.draft || 0);
+  const [session, setSession] = useState(project?.targets?.session || 0);
   const [edBase, setEdBase] = useState(project?.editorialProfile?.base || 'karma');
   const [edRules, setEdRules] = useState(project?.editorialProfile?.rules || {});
   const [edLimit, setEdLimit] = useState(project?.editorialProfile?.canvasWordLimit ?? 3000);
   const [mcp, setMcp] = useState(null);
-  const [session, setSession] = useState(project?.targets?.session || 0);
+
+  const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' ? Number(v) : d);
+  const editRepl = (i, k, v) => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
 
   const save = async () => {
     try {
       const patch = {
-        theme,
-        fontSize: Number(fontSize) || 18,
-        typewriter,
+        ...s,
+        autosaveSec: Math.max(1, num(s.autosaveSec, 2)),
+        fontSize: num(s.fontSize, 18) || 18,
+        lineHeight: num(s.lineHeight, 1.6),
+        pageWidth: num(s.pageWidth, 42),
+        binderFontSize: num(s.binderFontSize, 14),
+        spellLanguages: s.spellLanguages.split(',').map((x) => x.trim()).filter(Boolean),
+        autoReplacements: s.autoReplacements.filter((r) => r.from && r.from.trim()),
+        paragraphIndent: num(s.paragraphIndent, 0),
+        paragraphSpacing: num(s.paragraphSpacing, 0.6),
         compBg: comp.bg,
         compWidth: Number(comp.width) || 40,
         compPaper: comp.paper,
         compFade: Number(comp.fade) || 100,
-        smartQuotes,
-        aiEnabled,
-        backupOnClose,
-        backupEveryMin: Number(backupEveryMin) || 0,
-        backupKeep: Math.max(1, Number(backupKeep) || 10),
-        backupDir,
+        backupEveryMin: Number(s.backupEveryMin) || 0,
+        backupKeep: Math.max(1, Number(s.backupKeep) || 10),
       };
       if (apiKey.trim()) patch.apiKey = apiKey.trim();
       await api.setSettings(patch);
@@ -51,115 +98,229 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     }
   };
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label="Setări" onClick={(e) => e.stopPropagation()}>
-        <h2>Setări</h2>
+  const check = (k, label) => (
+    <label className="check">
+      <input type="checkbox" checked={Boolean(s[k])} onChange={set(k)} /> {label}
+    </label>
+  );
+
+  const panes = {
+    general: (
+      <>
+        {check('reopenLastProject', t('set.reopenLast'))}
         <label>
-          Temă
-          <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-            <option value="system">Ca sistemul</option>
-            <option value="light">Luminoasă</option>
-            <option value="dark">Întunecată</option>
-            <option value="sepia">Sepia</option>
-          </select>
+          {t('set.autosave')}
+          <input type="number" min="1" max="120" value={s.autosaveSec} onChange={set('autosaveSec')} />
         </label>
-        <label>
-          Mărimea textului în editor (px)
-          <input type="number" min="12" max="32" value={fontSize} onChange={(e) => setFontSize(e.target.value)} />
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={typewriter} onChange={(e) => setTypewriter(e.target.checked)} /> Defilare tip mașină de scris (rândul curent la mijloc)
-        </label>
-        <fieldset>
-          <legend>Mod compunere (F11)</legend>
-          <div className="row">
-            <label>
-              Fundal
-              <input type="color" value={comp.bg || '#1d1c1a'} onChange={(e) => setComp((c) => ({ ...c, bg: e.target.value }))} />
-            </label>
-            <label>
-              Lățimea textului (em)
-              <input type="number" min="25" max="80" value={comp.width} onChange={(e) => setComp((c) => ({ ...c, width: e.target.value }))} />
-            </label>
-            <label>
-              Opacitatea paginii (%)
-              <input type="number" min="0" max="100" step="5" value={comp.fade} onChange={(e) => setComp((c) => ({ ...c, fade: e.target.value }))} />
-            </label>
-          </div>
-          <label className="check">
-            <input type="checkbox" checked={comp.paper} onChange={(e) => setComp((c) => ({ ...c, paper: e.target.checked }))} /> Pagină de hârtie în centru
-          </label>
-          {comp.bg && <button className="link" onClick={() => setComp((c) => ({ ...c, bg: '' }))}>Fundal implicit</button>}
-        </fieldset>
-        <label className="check">
-          <input type="checkbox" checked={smartQuotes} onChange={(e) => setSmartQuotes(e.target.checked)} /> Ghilimele „românești”, — din -- și … din trei puncte, automat
-        </label>
-        {api.chooseBackupDir && (
-          <fieldset>
-            <legend>Backup</legend>
-            <label className="check">
-              <input type="checkbox" checked={backupOnClose} onChange={(e) => setBackupOnClose(e.target.checked)} /> Backup automat la închidere
-            </label>
-            <div className="row">
-              <label>
-                Și la fiecare (minute, 0 = nu)
-                <input type="number" min="0" step="5" value={backupEveryMin} onChange={(e) => setBackupEveryMin(e.target.value)} />
-              </label>
-              <label>
-                Păstrează ultimele
-                <input type="number" min="1" max="100" value={backupKeep} onChange={(e) => setBackupKeep(e.target.value)} />
-              </label>
-            </div>
-            <label>
-              Folder backup (gol = lângă proiect)
-              <div className="row">
-                <input value={backupDir} readOnly placeholder="lângă proiect, în <Nume>.backups" />
-                <button onClick={async () => setBackupDir((await api.chooseBackupDir()) || backupDir)}>Alege…</button>
-                {backupDir && <button onClick={() => setBackupDir('')}>Implicit</button>}
-              </div>
-            </label>
-          </fieldset>
-        )}
+        {check('checkUpdates', t('set.checkUpdates'))}
         {project && (
           <div className="row">
             <label>
-              Țintă carte (cuvinte)
+              {t('set.targetDraft')}
               <input type="number" min="0" step="1000" value={draft} onChange={(e) => setDraft(e.target.value)} />
             </label>
             <label>
-              Țintă sesiune (cuvinte)
+              {t('set.targetSession')}
               <input type="number" min="0" step="100" value={session} onChange={(e) => setSession(e.target.value)} />
             </label>
           </div>
         )}
+      </>
+    ),
+    appearance: (
+      <>
+        <label>
+          {t('set.theme')}
+          <select value={s.theme} onChange={set('theme')}>
+            {['system', 'light', 'dark', 'sepia'].map((x) => <option key={x} value={x}>{t(`set.theme.${x}`)}</option>)}
+          </select>
+        </label>
+        <div className="row">
+          <label>
+            {t('set.editorFont')}
+            <select value={s.editorFont} onChange={set('editorFont')}>
+              {!FONTS.some(([v]) => v === s.editorFont) && <option value={s.editorFont}>{s.editorFont}</option>}
+              {FONTS.map(([v, n]) => <option key={v} value={v} style={{ fontFamily: v }}>{n}</option>)}
+            </select>
+          </label>
+          <label>
+            {t('set.fontSize')}
+            <input type="number" min="12" max="32" value={s.fontSize} onChange={set('fontSize')} />
+          </label>
+        </div>
+        <div className="row">
+          <label>
+            {t('set.lineHeight')}
+            <input type="number" min="1" max="3" step="0.1" value={s.lineHeight} onChange={set('lineHeight')} />
+          </label>
+          <label>
+            {t('set.pageWidth')}
+            <input type="number" min="25" max="120" value={s.pageWidth} onChange={set('pageWidth')} />
+          </label>
+          <label>
+            {t('set.binderFontSize')}
+            <input type="number" min="10" max="22" value={s.binderFontSize} onChange={set('binderFontSize')} />
+          </label>
+        </div>
+        <label>
+          {t('set.accent')}
+          <div className="row">
+            <input type="color" value={s.accentColor || '#8a5a2b'} onChange={set('accentColor')} />
+            {s.accentColor && <button onClick={() => set('accentColor')('')}>{t('btn.default')}</button>}
+          </div>
+        </label>
+        <fieldset>
+          <legend>{t('set.composition')}</legend>
+          <div className="row">
+            <label>
+              {t('set.compBg')}
+              <input type="color" value={comp.bg || '#1d1c1a'} onChange={(e) => setComp((c) => ({ ...c, bg: e.target.value }))} />
+            </label>
+            <label>
+              {t('set.compWidth')}
+              <input type="number" min="25" max="80" value={comp.width} onChange={(e) => setComp((c) => ({ ...c, width: e.target.value }))} />
+            </label>
+            <label>
+              {t('set.compFade')}
+              <input type="number" min="0" max="100" step="5" value={comp.fade} onChange={(e) => setComp((c) => ({ ...c, fade: e.target.value }))} />
+            </label>
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={comp.paper} onChange={(e) => setComp((c) => ({ ...c, paper: e.target.checked }))} /> {t('set.compPaper')}
+          </label>
+          {comp.bg && <button className="link" onClick={() => setComp((c) => ({ ...c, bg: '' }))}>{t('set.compBgDefault')}</button>}
+        </fieldset>
+      </>
+    ),
+    behaviors: (
+      <>
+        <label>
+          {t('set.binderEnter')}
+          <select value={s.binderEnter} onChange={set('binderEnter')}>
+            {['edit', 'newDoc'].map((x) => <option key={x} value={x}>{t(`set.binderEnter.${x}`)}</option>)}
+          </select>
+        </label>
+        <label>
+          {t('set.binderDbl')}
+          <select value={s.binderDoubleClick} onChange={set('binderDoubleClick')}>
+            {['rename', 'openQuickRef'].map((x) => <option key={x} value={x}>{t(`set.binderDbl.${x}`)}</option>)}
+          </select>
+        </label>
+        {check('typewriter', t('set.typewriter'))}
+      </>
+    ),
+    corrections: (
+      <>
+        {check('smartQuotes', t('set.smartQuotes'))}
+        {check('smartDashes', t('set.smartDashes'))}
+        {check('smartEllipsis', t('set.smartEllipsis'))}
+        {check('autoCapitalize', t('set.autoCapitalize'))}
+        <label>
+          {t('set.spellLangs')}
+          <input value={s.spellLanguages} onChange={set('spellLanguages')} placeholder="ro, en-US" />
+        </label>
+        <fieldset>
+          <legend>{t('set.replacements')}</legend>
+          {s.autoReplacements.map((r, i) => (
+            <div className="row" key={i}>
+              <input aria-label={t('set.replaceFrom')} placeholder={t('set.replaceFrom')} value={r.from} onChange={(e) => editRepl(i, 'from', e.target.value)} />
+              <input aria-label={t('set.replaceTo')} placeholder={t('set.replaceTo')} value={r.to} onChange={(e) => editRepl(i, 'to', e.target.value)} />
+              <button onClick={() => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.filter((_, j) => j !== i) }))}>{t('btn.remove')}</button>
+            </div>
+          ))}
+          <button onClick={() => setS((p) => ({ ...p, autoReplacements: [...p.autoReplacements, { from: '', to: '' }] }))}>{t('btn.add')}</button>
+        </fieldset>
+      </>
+    ),
+    editing: (
+      <>
+        <div className="row">
+          <label>
+            {t('set.paraIndent')}
+            <input type="number" min="0" max="5" step="0.5" value={s.paragraphIndent} onChange={set('paragraphIndent')} />
+          </label>
+          <label>
+            {t('set.paraSpacing')}
+            <input type="number" min="0" max="3" step="0.1" value={s.paragraphSpacing} onChange={set('paragraphSpacing')} />
+          </label>
+        </div>
+        <label>
+          {t('set.defaultView')}
+          <select value={s.defaultView} onChange={set('defaultView')}>
+            <option value="editor">{t('cmd.viewEditor')}</option>
+            <option value="corkboard">{t('cmd.viewCorkboard')}</option>
+            <option value="outline">{t('cmd.viewOutline')}</option>
+          </select>
+        </label>
+        {check('showInvisibles', t('set.showInvisibles'))}
+      </>
+    ),
+    backup: api.chooseBackupDir ? (
+      <>
+        {check('backupOnClose', t('set.backupOnClose'))}
+        <div className="row">
+          <label>
+            {t('set.backupEvery')}
+            <input type="number" min="0" step="5" value={s.backupEveryMin} onChange={set('backupEveryMin')} />
+          </label>
+          <label>
+            {t('set.backupKeep')}
+            <input type="number" min="1" max="100" value={s.backupKeep} onChange={set('backupKeep')} />
+          </label>
+        </div>
+        <label>
+          {t('set.backupDir')}
+          <div className="row">
+            <input value={s.backupDir} readOnly placeholder={t('set.backupDirPh')} />
+            <button onClick={async () => set('backupDir')((await api.chooseBackupDir()) || s.backupDir)}>{t('btn.choose')}</button>
+            {s.backupDir && <button onClick={() => set('backupDir')('')}>{t('btn.default')}</button>}
+          </div>
+        </label>
+      </>
+    ) : null,
+    keyboard: (
+      <>
+        <p className="muted small">{t('set.keyboardInfo')}</p>
+        <button disabled={!onShortcuts} onClick={() => onShortcuts?.()}>{t('set.openShortcuts')}</button>
+      </>
+    ),
+    ai: (
+      <>
+        {check('aiEnabled', t('set.aiEnabled'))}
+        <label>
+          {t('set.apiKey')} {settings.hasApiKey ? t('set.apiKeySet') : ''}
+          <input type="password" autoComplete="off" placeholder="sk-ant-…" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+        </label>
+        {settings.hasApiKey && (
+          <button className="link" onClick={() => api.setSettings({ apiKey: '' }).then(onClose).catch(onError)}>{t('set.apiKeyDelete')}</button>
+        )}
         {project && (
           <fieldset>
-            <legend>Profil editorial (I-REP / I-EDIT)</legend>
+            <legend>{t('set.editorial')}</legend>
             <label>
-              Reguli de bază
+              {t('set.edBase')}
               <select value={edBase} onChange={(e) => setEdBase(e.target.value)}>
-                <option value="karma">Karma (karma-book-engine: P1–P13, R0–R11, ALOGEN, DOOM III)</option>
-                <option value="generic">Generic românesc (tipografie + reziduuri LLM)</option>
+                <option value="karma">{t('set.edBase.karma')}</option>
+                <option value="generic">{t('set.edBase.generic')}</option>
               </select>
             </label>
             <label>
-              Limita de cuvinte pe canvas (0 = fără)
+              {t('set.edLimit')}
               <input type="number" min="0" step="100" value={edLimit} onChange={(e) => setEdLimit(e.target.value)} />
             </label>
             <label className="check">
-              <input type="checkbox" checked={Boolean(edRules.canvasHeader)} onChange={(e) => setEdRules((r) => ({ ...r, canvasHeader: e.target.checked }))} /> Verifică prima linie „Cap. N / Secț. N / Subcap. N”
+              <input type="checkbox" checked={Boolean(edRules.canvasHeader)} onChange={(e) => setEdRules((r) => ({ ...r, canvasHeader: e.target.checked }))} /> {t('set.edHeader')}
             </label>
             <label className="check">
-              <input type="checkbox" checked={Boolean(edRules.canvasFooter)} onChange={(e) => setEdRules((r) => ({ ...r, canvasFooter: e.target.checked }))} /> Verifică nota finală „¹ Cap. N / Subcap. … · ← anterior · → următor”
+              <input type="checkbox" checked={Boolean(edRules.canvasFooter)} onChange={(e) => setEdRules((r) => ({ ...r, canvasFooter: e.target.checked }))} /> {t('set.edFooter')}
             </label>
           </fieldset>
         )}
         {api.mcpInfo && dir && (
           <fieldset>
-            <legend>Conexiune MCP pentru agenți AI</legend>
-            <p className="muted small">Agenții (Claude Code, Claude Desktop, alți clienți MCP) pot citi și edita proiectele prin serverul MCP Scribner. Fiecare scriere face snapshot înainte.</p>
-            <button onClick={async () => setMcp(await api.mcpInfo(dir))}>Arată comanda de conectare</button>
+            <legend>{t('set.mcp')}</legend>
+            <p className="muted small">{t('set.mcpInfo')}</p>
+            <button onClick={async () => setMcp(await api.mcpInfo(dir))}>{t('set.mcpShow')}</button>
             {mcp && (
               <>
                 <label>
@@ -174,21 +335,37 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             )}
           </fieldset>
         )}
-        <label className="check">
-          <input type="checkbox" checked={aiEnabled} onChange={(e) => setAiEnabled(e.target.checked)} /> Funcții AI (asistent, I-EDIT, bucla de reparare AI). Fără ele, Scribner funcționează complet: verificarea I-REP și reparațiile sigure rămân.
-        </label>
+      </>
+    ),
+    language: (
+      <>
         <label>
-          Cheie API Anthropic {settings.hasApiKey ? '(setată, lasă gol ca s-o păstrezi)' : ''}
-          <input type="password" autoComplete="off" placeholder="sk-ant-…" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+          {t('set.language')}
+          <select value={s.language} onChange={set('language')}>
+            {LANGUAGES.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
+          </select>
         </label>
-        {settings.hasApiKey && (
-          <button className="link" onClick={() => api.setSettings({ apiKey: '' }).then(onClose).catch(onError)}>
-            Șterge cheia API
-          </button>
-        )}
+        <p className="muted small">{t('set.languageNote')}</p>
+      </>
+    ),
+  };
+  const visibleTabs = TABS.filter((k) => panes[k]);
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal settings-dialog" role="dialog" aria-label={t('set.title')} onClick={(e) => e.stopPropagation()}>
+        <h2>{t('set.title')}</h2>
+        <div className="tabs" role="tablist">
+          {visibleTabs.map((k) => (
+            <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} onClick={() => setTab(k)}>
+              {t(`set.tab.${k}`)}
+            </button>
+          ))}
+        </div>
+        <div role="tabpanel" style={{ minHeight: 260, marginTop: 8 }}>{panes[tab]}</div>
         <div className="actions">
-          <button onClick={onClose}>Anulează</button>
-          <button className="primary" onClick={save}>Salvează</button>
+          <button onClick={onClose}>{t('btn.cancel')}</button>
+          <button className="primary" onClick={save}>{t('btn.save')}</button>
         </div>
       </div>
     </div>
