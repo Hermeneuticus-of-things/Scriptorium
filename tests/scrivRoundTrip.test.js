@@ -86,8 +86,8 @@ function build() {
   img.media.file = store.writeMedia(dir, img.id, 'png', Buffer.from(PNG, 'base64'));
   pdf.media.file = store.writeMedia(dir, pdf.id, 'pdf', PDF);
 
-  project.bookmarks = [{ id: scene2.id }, { id: research.id }, { url: 'https://example.com/proj' }];
-  scene1.bookmarks = [{ id: research.id }, { url: 'https://example.com/doc' }, { id: deleted }];
+  project.bookmarks = [{ id: scene2.id, title: 'Scena a doua' }, { url: 'https://example.com/proj', title: 'Site' }, { id: research.id }];
+  scene1.bookmarks = [{ url: 'https://example.com/doc' }, { id: research.id, title: 'Paris' }, { id: deleted }];
   project.collections = [
     { id: 'c1', title: 'De revizuit', color: '#0000ff', type: 'manual', ids: [scene2.id, scene1.id, deleted] },
     { id: 'c2', title: 'Goală', color: '', type: 'manual', ids: [] },
@@ -104,7 +104,8 @@ function build() {
     '<table><tbody><tr><td><p>a1</p></td><td><p>b1</p></td></tr><tr><td><p>a2</p></td><td><p>b2</p></td></tr></tbody></table>',
     `<p>Imagine <img src="data:image/png;base64,${PNG}" width="40"> și gif <img src="data:image/gif;base64,${GIF}"></p>`,
     `<p><a href="https://example.com/x?a=1&amp;b=2">extern</a> <a href="scribner://doc/${scene2.id}" class="internal-link">intern</a> <a href="scribner://doc/${deleted}" class="internal-link">mort</a></p>`,
-    '<p>Text <span data-comment="Verifică asta" data-comment-color="#ff8800" data-comment-author="Ana" class="comment">ancorat</span> aici.</p>',
+    '<p>Text <span data-comment="Verifică asta" data-comment-color="#ff8800" data-comment-author="Ana" data-comment-date="2024-03-04T05:06:07.000Z" class="comment">ancorat</span> aici.</p>',
+    '<p>Un <span data-caps="small">Nume Propriu</span> aici</p>',
     '<p>Notă<span data-footnote="Notă de subsol ă" class="footnote"></span> după ș</p>',
     '<p><span data-linked-footnote="Notă legată" class="linked-footnote">ancora</span> rest</p>',
     '<p>Adnotare <span data-annotation="de rescris ț" class="annotation"></span> gata</p>',
@@ -212,13 +213,14 @@ describe('Scrivener export -> import round trip', () => {
     expect(s1.targetType).toBe('Words');
     expect(s1.icon).toBe('🔥');
     expect(s1.locked).toBe(true);
-    // Section type is written (<MetaData><SectionType>UUID</SectionType>) but the importer lists 'SectionType' in
-    // ARRAY_TAGS, so meta.SectionType is an array and textOf() yields '' (KNOWN importer bug, see report).
+    // Section type as Scrivener 3 stores it: <MetaData><SectionType>UUID</SectionType>, UUID defined under <SectionTypes>.
     const scrivx = fs.readFileSync(path.join(res.dir, 'Roman bogat.scrivx'), 'utf8');
     const stId = (t) => new RegExp(`<SectionType ID="([0-9A-F-]{36})"><Title>${t}</Title>`).exec(scrivx)[1];
     expect(scrivx).toContain(`<SectionType>${stId('Scenă')}</SectionType>`);
     expect(scrivx.split(`<SectionType>${stId('Capitol')}</SectionType>`).length).toBe(3); // by title and by id
-    expect(s1.sectionType).toBe('');
+    expect(s1.sectionType).toBe('Scenă');
+    expect(byTitle(p.tree, 'Capitolul 1').sectionType).toBe('Capitol');
+    expect(byTitle(p.tree, 'Text cu copii').sectionType).toBe('Capitol'); // source referenced the type by id
     expect(s1.created).toBe('2024-01-02T10:00:00.000Z');
     expect(s1.modified).toBe('2024-02-03T11:00:00.000Z');
     expect(s1.custom).toEqual({ POV: 'Ana', Verificat: true, Ton: 'Vesel', 'Data acțiunii': '2024-03-01' });
@@ -262,8 +264,9 @@ describe('Scrivener export -> import round trip', () => {
     const s1 = byTitle(p.tree, 'Scena unu');
     const s2 = byTitle(p.tree, 'Scena doi');
     const r = byTitle(p.tree, 'Notițe Paris');
-    expect(p.bookmarks).toEqual([{ id: s2.id }, { id: r.id }, { url: 'https://example.com/proj' }]);
-    expect(s1.bookmarks).toEqual([{ id: r.id }, { url: 'https://example.com/doc' }]);
+    void s2;
+    expect(p.bookmarks).toEqual([{ id: s2.id, title: 'Scena a doua' }, { url: 'https://example.com/proj', title: 'Site' }, { id: r.id }]);
+    expect(s1.bookmarks).toEqual([{ url: 'https://example.com/doc' }, { id: r.id, title: 'Paris' }]);
     expect(res.warnings.some((w) => w.includes(src.deleted))).toBe(true);
   });
 
@@ -282,9 +285,14 @@ describe('Scrivener export -> import round trip', () => {
     expect(html).toContain('<blockquote><p>Citat lung</p></blockquote>');
     expect(html).toContain('<p>Rând<br>nou</p>');
     expect(html).toMatch(/<hr class="page-break"><p>După pauză<\/p>/);
-    // named styles: text kept; Scribner style ids are not read back by the importer (see report)
-    expect(html).toContain('Un motto');
-    expect(html).toContain('termen');
+    // named styles come back by name as Scribner styles, with their definitions
+    expect(html).toContain('<p data-style="motto" style="text-align: right">Un motto</p>');
+    expect(html).toContain('<p>Un <span data-char-style="termen">termen</span>.</p>');
+    expect(p.styles).toEqual([
+      { id: 'motto', name: 'Motto', type: 'para', italic: true, align: 'right' },
+      { id: 'termen', name: 'Termen', type: 'char', italic: true },
+    ]);
+    expect(html).toContain('<p>Un <span data-caps="small">Nume Propriu</span> aici</p>'); // \\scaps, not upper-cased
   });
 
   it('links: external, internal remapped to new ids, deleted target kept as text', () => {
@@ -299,10 +307,11 @@ describe('Scrivener export -> import round trip', () => {
 
   it('comments, footnotes (inline and linked), annotations', () => {
     const html = doc('Scena unu');
-    expect(html).toContain('<span data-comment="Verifică asta" data-color="#ff8800" data-author="Ana" class="comment">ancorat</span>');
+    expect(html).toContain('<span data-comment="Verifică asta" data-color="#ff8800" data-author="Ana" data-comment-date="2024-03-04T05:06:07.000Z" class="comment">ancorat</span>');
     expect(html).toContain('Notă<span data-footnote="Notă de subsol ă" class="footnote"></span> după ș</p>');
-    // linked footnote: anchor text + note survive; it comes back as an inline footnote after the anchor
-    expect(html).toContain('ancora<span data-footnote="Notă legată" class="footnote"></span> rest');
+    // linked footnote (Footnote="Yes" in content.comments) comes back as a linked footnote over its anchor
+    expect(html).toContain('<p><span data-linked-footnote="Notă legată" class="linked-footnote">ancora</span> rest</p>');
+    expect(imp.stats.footnotes).toBe(2);
     expect(html).toContain('Adnotare <span data-annotation="de rescris ț" class="annotation"></span> gata');
     expect(imp.stats.comments).toBe(1);
     expect(res.comments).toBe(2);
@@ -335,8 +344,9 @@ describe('Scrivener export -> import round trip', () => {
   });
 
   it('project notes: every tab, in order, with its title', () => {
-    const html = store.readDoc(imp.dir, 'project-notes', 'notes');
-    expect(html).toBe('<h2>Idei</h2><p>Idei generale</p><h2>Lume</h2><p>Geografia lumii</p><h2>Cronologie</h2><p>Anul 1900</p>');
+    expect(p.projectNotes.map((t) => t.title)).toEqual(['Idei', 'Lume', 'Cronologie']);
+    expect(p.projectNotes[0].id).toBe('project-notes');
+    expect(p.projectNotes.map((t) => store.readDoc(imp.dir, t.id, 'notes'))).toEqual(['<p>Idei generale</p>', '<p>Geografia lumii</p>', '<p>Anul 1900</p>']);
   });
 
   it('writing history', () => {
@@ -369,8 +379,9 @@ describe('Scrivener RTF writer details', () => {
   it('escapes RTF specials and astral characters', () => {
     expect(back('<p>{a} \\ b 😀 &lt;$x&gt;</p>')).toBe('<p>{a} \\ b 😀 &lt;$x&gt;</p>');
   });
-  it('nested lists keep their items (levels flatten on import)', () => {
-    expect(store.htmlToText(back('<ul><li><p>a</p><ul><li><p>b</p></li></ul></li></ul>'))).toBe('a\n\nb\n\n');
+  it('nested lists keep their levels', () => {
+    const html = '<ul><li><p>a</p><ol><li><p>b</p></li><li><p>c</p></li></ol></li><li><p>d</p></li></ul>';
+    expect(back(html)).toBe(html);
   });
   it('accepts readMedia returning a Buffer as well as {data}', () => {
     const dir = path.join(tmp, 'm.scribner');
@@ -404,11 +415,10 @@ describe('Scrivener import edge cases', () => {
   it('comment entry whose anchor is gone is kept at the end of the text', () => {
     expect(rtfToHtml('{\\rtf1\\ansi text\\par}', { comments: { [U.c]: { text: 'orfan', footnote: false } } })).toBe('<p>text</p><p><span data-annotation="orfan" class="annotation"></span></p>');
   });
-  it('KNOWN importer bug: a Scrivener inline footnote leaks \\uc0 so later \\uN? keep a stray "?"', () => {
-    // As Scrivener writes it: {\Scrv_fn=...\end_Scrv_fn}. lib/rtf.cjs preprocessScrivenerMarkers inserts \uc0 and eats the
-    // closing brace, so uc stays 0 for the rest of the document. scrivRtf.cjs works around it with \uc1 after the note.
-    const html = rtfToHtml('{\\rtf1\\ansi\\uc1 a{\\Scrv_fn=n\\end_Scrv_fn} \\u259?\\par}');
-    expect(html).toBe('<p>a<span data-footnote="n" class="footnote"></span> ă?</p>');
+  it('a Scrivener inline footnote group scopes \\uc: no stray "?" after it', () => {
+    // As Scrivener writes it: {\Scrv_fn=...\end_Scrv_fn}; the closing brace restores the outer \uc1.
+    expect(rtfToHtml('{\\rtf1\\ansi\\uc1 a{\\Scrv_fn=n\\end_Scrv_fn} \\u259?\\par}')).toBe('<p>a<span data-footnote="n" class="footnote"></span> ă</p>');
+    expect(rtfToHtml('{\\rtf1\\ansi\\uc1 a{\\Scrv_annot\\text=\\uc0 x\\end_Scrv_annot} \\u259?\\par}')).toBe('<p>a<span data-annotation="x" class="annotation"></span> ă</p>');
   });
   it('item without a Data folder imports as empty text; bookmarks/collections to missing UUIDs are dropped', () => {
     const scriv = path.join(tmp, 'Gol.scriv');
@@ -423,5 +433,17 @@ describe('Scrivener import edge cases', () => {
     expect(store.readDoc(r.dir, item.id)).toBe('<p></p>');
     expect(item.bookmarks).toEqual([]);
     expect(r.project.collections[0].ids).toEqual([item.id]);
+  });
+});
+
+describe('table headers and all caps survive the round trip', () => {
+  it('th stays th and data-caps="all" stays all caps', () => {
+    const { htmlToScrivRtf } = require('../lib/scrivRtf.cjs');
+    const { rtfToHtml } = require('../lib/rtf.cjs');
+    const out = htmlToScrivRtf('<table><tr><th>Nume</th><th>Rol</th></tr><tr><td>Ana</td><td>eroină</td></tr></table><p>Un <span data-caps="all">titlu</span> mare.</p>');
+    const html = rtfToHtml(typeof out === 'string' ? out : out.rtf);
+    expect(html).toMatch(/<th[^>]*>\s*(<p[^>]*>)?Nume/);
+    expect(html).toMatch(/<td[^>]*>\s*(<p[^>]*>)?Ana/);
+    expect(html).toMatch(/data-caps="all"[^>]*>titlu/);
   });
 });

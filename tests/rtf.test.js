@@ -32,7 +32,8 @@ describe('rtfToHtml v2', () => {
       },
     });
     expect(html).toContain('<span data-comment="Verifică data" data-color="#ffd666" data-author="Ed" class="comment">comentat</span>');
-    expect(html).toContain('nota<span data-footnote="Sursa: arhiva" class="footnote"></span>');
+    // Footnote="Yes" entry = Scrivener linked footnote: kept as a mark over its anchor
+    expect(html).toContain('<span data-linked-footnote="Sursa: arhiva" class="linked-footnote">nota</span>');
     expect(html).toContain('data-annotation="Fără ancoră"');
   });
 
@@ -77,7 +78,54 @@ describe('rtfToHtml v2', () => {
     expect(html).toContain('<h1>Titlu</h1>');
     expect(html).toContain('<blockquote><p>Citat</p></blockquote>');
     expect(html).toContain('<h2>Sub</h2>');
-    expect(html).toContain('x <em>acc</em> y');
+    // a character style is kept by name, not guessed into <em>
+    expect(html).toContain('x <span data-char-style="emphasis">acc</span> y');
+  });
+
+  it('named paragraph/character styles keep their names (stylesheet and Scrivener markers)', () => {
+    const rtf = String.raw`{\rtf1\ansi{\stylesheet{\s0 Normal;}{\s3 Motto;}{\*\cs4 Accent;}{\*\cs5 Code Span;}}\pard\s3 Sus\par\pard\plain Normal {\cs4 tare} și {\cs5 cod}\par\pard <$Scr_Ps::2>Scris<!$Scr_Ps::2>\par}`;
+    const seen = [];
+    const html = rtfToHtml(rtf, { styleNames: { 2: 'Scrisoare' }, styleId: (name, kind) => (seen.push([name, kind]), name === 'Accent' ? 'accent-x' : name.toLowerCase().replace(/ /g, '-')) });
+    expect(html).toBe('<p data-style="motto">Sus</p><p>Normal <span data-char-style="accent-x">tare</span> și <span data-char-style="code-span">cod</span></p><p data-style="scrisoare">Scris</p>');
+    expect(seen).toEqual(expect.arrayContaining([['Motto', 'para'], ['Accent', 'char'], ['Code Span', 'char'], ['Scrisoare', 'para']]));
+  });
+
+  it('inline note groups scope \\uc: no stray "?" after a footnote or annotation (as Scrivener writes them)', () => {
+    // Scrivener 3 content.rtf: \uc0 is set inside the note group; after the group the outer \uc1 applies again
+    const fn = rtfToHtml(String.raw`{\rtf1\ansi\ansicpg1252\uc1 a{\Scrv_fn=\uc0 not\u259 \end_Scrv_fn} \u259?b\u351?\par}`);
+    expect(fn).toBe('<p>a<span data-footnote="notă" class="footnote"></span> ăbş</p>');
+    const an = rtfToHtml(String.raw`{\rtf1\ansi\uc1 x{\Scrv_annot \color={\R=0\G=0\B=1}\text=de \u351?ters\end_Scrv_annot} \u259?\par}`);
+    expect(an).toBe('<p>x<span data-annotation="de şters" class="annotation"></span> ă</p>');
+    // a note right after \uN must not be eaten by the fallback skip
+    expect(rtfToHtml(String.raw`{\rtf1\ansi\uc1 \u259?{\Scrv_fn=n\end_Scrv_fn}\par}`)).toBe('<p>ă<span data-footnote="n" class="footnote"></span></p>');
+  });
+
+  it('nested lists from \\ilvl, \\pnlvl and indentation', () => {
+    const cocoa = String.raw`{\rtf1\ansi\pard\li720\fi-720\ls1\ilvl0{\listtext\uc0\u8226 }A\par
+\pard\li1440\fi-720\ls1\ilvl1{\listtext 1.}B\par
+{\listtext 2.}C\par
+\pard\li720\fi-720\ls1\ilvl0{\listtext\uc0\u8226 }D\par
+\pard After\par}`;
+    expect(rtfToHtml(cocoa)).toBe('<ul><li><p>A</p><ol><li><p>B</p></li><li><p>C</p></li></ol></li><li><p>D</p></li></ul><p>After</p>');
+    const word = String.raw`{\rtf1\ansi{\pntext a}\pard{\*\pn\pnlvlblt}\pnlvl1 X\par{\pntext b}\pard\pnlvl2 Y\par}`;
+    expect(rtfToHtml(word)).toBe('<ul><li><p>X</p><ul><li><p>Y</p></li></ul></li></ul>');
+    const indentOnly = String.raw`{\rtf1\ansi\pard\li720\ls1{\listtext -}P\par\pard\li1440\ls1{\listtext -}Q\par}`;
+    expect(rtfToHtml(indentOnly)).toBe('<ul><li><p>P</p><ul><li><p>Q</p></li></ul></li></ul>');
+  });
+
+  it('table header rows (\\trhdr) become th', () => {
+    const rtf = String.raw`{\rtf1\ansi\trowd\trhdr\cellx1000\cellx2000\pard\intbl Nume\cell Rol\cell\row\trowd\cellx1000\cellx2000\pard\intbl Ana\cell Erou\cell\row}`;
+    expect(rtfToHtml(rtf)).toBe('<table><tbody><tr><th><p>Nume</p></th><th><p>Rol</p></th></tr><tr><td><p>Ana</p></td><td><p>Erou</p></td></tr></tbody></table>');
+  });
+
+  it('small caps and all caps keep the text as typed', () => {
+    const html = rtfToHtml(String.raw`{\rtf1\ansi a {\scaps Mic} b {\caps Mare}\par}`);
+    expect(html).toBe('<p>a <span data-caps="small">Mic</span> b <span data-caps="all">Mare</span></p>');
+  });
+
+  it('comment dates are kept', () => {
+    const rtf = String.raw`{\rtf1\ansi {\field{\*\fldinst HYPERLINK "scrivcmt://C1"}{\fldrslt x}}\par}`;
+    expect(rtfToHtml(rtf, { comments: { C1: { text: 'n', footnote: false, date: '2024-03-04T05:06:07.000Z' } } })).toBe('<p><span data-comment="n" data-comment-date="2024-03-04T05:06:07.000Z" class="comment">x</span></p>');
   });
 
   it('keeps <$placeholders> and astral unicode', () => {
