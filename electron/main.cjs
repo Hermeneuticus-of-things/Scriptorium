@@ -5,6 +5,7 @@ const path = require('path');
 const store = require('../lib/store.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
 const compile = require('../lib/compile.cjs');
+const scriptExport = require('../lib/scriptExport.cjs');
 const ai = require('../lib/ai.cjs');
 const backup = require('../lib/backup.cjs');
 const history = require('../lib/history.cjs');
@@ -457,6 +458,19 @@ handle('compile:export', async (e, dir, project, format, options) => {
   });
   fs.writeFileSync(res.filePath, data);
   shell.showItemInFolder(res.filePath);
+  return res.filePath;
+});
+
+handle('script:export', async (e, format, html, title) => {
+  const ext = format === 'fdx' ? 'fdx' : 'fountain';
+  const res = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Exportă scenariul',
+    defaultPath: `${title || 'Scenariu'}.${ext}`,
+    filters: [{ name: ext === 'fdx' ? 'Final Draft' : 'Fountain', extensions: [ext] }],
+  });
+  if (res.canceled) return null;
+  const data = ext === 'fdx' ? scriptExport.htmlToFdx(html, { title }) : scriptExport.htmlToFountain(html, { title });
+  fs.writeFileSync(res.filePath, data, 'utf8');
   return res.filePath;
 });
 
