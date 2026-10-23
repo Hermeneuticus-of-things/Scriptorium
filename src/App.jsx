@@ -30,6 +30,7 @@ import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
+import ResearchPanel from './components/ResearchPanel.jsx';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
 import ProjectNotesTabs from './components/ProjectNotesTabs.jsx';
@@ -112,6 +113,7 @@ export default function App({ api }) {
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
   const [showScratch, setShowScratch] = useState(false);
+  const [showResearch, setShowResearch] = useState(false);
   const [showFloatInspector, setShowFloatInspector] = useState(false);
   const [floatNotes, setFloatNotes] = useState(null);
   const [aiReport, setAiReport] = useState(null);
@@ -348,6 +350,7 @@ export default function App({ api }) {
 
   const closeProject = async () => {
     await flush();
+    api.releaseProject?.().catch(() => {});
     setProject(null);
     setDir(null);
     setDocs({});
@@ -1070,6 +1073,10 @@ export default function App({ api }) {
     ['tools', 'aiBulkSynopsis', 'Sinopsis AI în bloc', () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
     ['tools', 'aiConsistency', 'Consistență pe toată cartea (fișe vii)', () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
     ['tools', 'aiZoomReview', 'Revizie pe niveluri de zoom', () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
+    ['file', 'newWindow', 'Fereastră nouă', () => api.newWindow().catch(report), !api.newWindow],
+    ['file', 'exportBundle', 'Exportă pachet pentru web / mobil…', () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
+    ['file', 'importBundle', 'Importă pachet de proiect…', () => api.importBundle().then(openResult).catch(report), !api.importBundle],
+    ['tools', 'research', 'Cercetare în proiect (RAG)', () => setShowResearch((v) => !v), !api.ragQuery],
     ['tools', 'nameGen', 'Generator de nume…', () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', 'Citire cu voce tare / Dictare', () => setShowSpeech((v) => !v)],
@@ -1314,6 +1321,9 @@ export default function App({ api }) {
                   onError={report}
                   flush={flush}
                 />
+              )}
+              {showResearch && dir && (
+                <ResearchPanel api={api} dir={dir} aiEnabled={aiEnabled} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
               )}
               {showAi && aiEnabled && (
                 <AiPanel

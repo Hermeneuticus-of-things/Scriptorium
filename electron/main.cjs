@@ -11,6 +11,7 @@ const backup = require('../lib/backup.cjs');
 const history = require('../lib/history.cjs');
 const { listTemplates } = require('../lib/templates.cjs');
 const { fileToHtml, splitHtml } = require('../lib/docxImport.cjs');
+const bundle = require('../lib/bundle.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
 if (process.env.PORTABLE_EXECUTABLE_DIR) {
@@ -94,6 +95,33 @@ function rememberRecent(dir, title) {
   writeSettings(s);
 }
 
+// Multiple project windows: each window shows at most one project and a project
+// is open in at most one window. windowDirs: webContents id -> resolved dir.
+const windowDirs = new Map();
+
+function windowOwning(dir) {
+  const key = path.resolve(dir);
+  for (const [wcId, d] of windowDirs) {
+    if (d !== key) continue;
+    const win = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed() && w.webContents.id === wcId);
+    if (win) return win;
+    windowDirs.delete(wcId);
+  }
+  return null;
+}
+
+// Returns false (and focuses the other window) when the project is open elsewhere.
+function claimDir(sender, dir) {
+  const other = windowOwning(dir);
+  if (other && other.webContents.id !== sender.id) {
+    if (other.isMinimized()) other.restore();
+    other.focus();
+    return false;
+  }
+  windowDirs.set(sender.id, path.resolve(dir));
+  return true;
+}
+
 function assertOpened(dir) {
   if (!openedDirs.has(path.resolve(dir))) throw new Error('Proiectul nu a fost deschis în această sesiune.');
 }
@@ -134,11 +162,13 @@ function setupSpelling(win) {
 }
 
 function createWindow() {
+  const offset = BrowserWindow.getAllWindows().length * 30;
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 900,
     minHeight: 600,
+    ...(offset ? { x: 80 + offset, y: 60 + offset } : {}),
     title: 'Scribner',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -149,13 +179,30 @@ function createWindow() {
   });
   win.setMenuBarVisibility(false);
   setupSpelling(win);
+  const wcId = win.webContents.id;
+  win.on('closed', () => {
+    windowDirs.delete(wcId);
+    closeWatchers(wcId);
+  });
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
   if (process.env.VITE_DEV_SERVER_URL) win.loadURL(process.env.VITE_DEV_SERVER_URL);
   else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  return win;
 }
+
+// The window closed its project (back to the start screen): free it for other windows.
+handle('project:release', (e) => {
+  windowDirs.delete(e.sender.id);
+  closeWatchers(e.sender.id);
+  return true;
+});
+handle('window:new', () => {
+  createWindow();
+  return true;
+});
 
 function handle(channel, fn) {
   ipcMain.handle(channel, async (event, ...args) => {
@@ -213,6 +260,7 @@ handle('project:new', async (e, title, templateId) => {
   if (res.canceled) return null;
   const dir = store.projectDirFor(res.filePaths[0], title);
   const project = store.createProject(dir, title, templateId);
+  claimDir(e.sender, dir);
   rememberRecent(dir, title);
   return { dir, project };
 });
@@ -229,9 +277,42 @@ handle('project:open', async (e, dirArg) => {
   } else if (!(readSettings().recent || []).some((r) => r.dir === dir)) {
     throw new Error('Proiectul nu este în lista recentă.');
   }
+  // Already open in another window: focus it and leave this one as it is.
+  if (!claimDir(e.sender, dir)) return null;
   const project = store.loadProject(dir);
   rememberRecent(dir, project.title);
   return { dir, project };
+});
+
+// Single-file project bundle (.json) for sync with the web/PWA build.
+handle('project:exportBundle', async (e, dir) => {
+  assertOpened(dir);
+  const data = bundle.exportBundle(dir);
+  const res = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Exportă proiectul ca pachet (pentru web / mobil)',
+    defaultPath: `${data.project.title || 'Proiect'}.scribner.json`,
+    filters: [{ name: 'Pachet Scribner', extensions: ['json'] }],
+  });
+  if (res.canceled) return null;
+  fs.writeFileSync(res.filePath, JSON.stringify(data));
+  return res.filePath;
+});
+handle('project:importBundle', async (e) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  const src = await dialog.showOpenDialog(win, {
+    title: 'Importă un pachet de proiect',
+    properties: ['openFile'],
+    filters: [{ name: 'Pachet Scribner', extensions: ['json'] }],
+  });
+  if (src.canceled) return null;
+  const data = JSON.parse(fs.readFileSync(src.filePaths[0], 'utf8'));
+  bundle.validateBundle(data);
+  const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul?', properties: ['openDirectory', 'createDirectory'] });
+  if (dest.canceled) return null;
+  const result = bundle.importBundle(data, dest.filePaths[0]);
+  claimDir(e.sender, result.dir);
+  rememberRecent(result.dir, result.project.title);
+  return result;
 });
 
 handle('project:save', (_e, dir, project) => {
@@ -273,12 +354,27 @@ handle('mcp:info', (_e, dir) => {
 // Reload the open project when files change outside the app (an AI agent via MCP,
 // a sync client). Writes made by the app itself are ignored.
 const selfWrites = new Map(); // absolute file -> time
-const watchers = new Map(); // dir -> fs.FSWatcher
+const watchers = new Map(); // `${webContentsId}|${dir}` -> fs.FSWatcher (one per window)
+function closeWatchers(wcId) {
+  for (const [k, w] of watchers) {
+    if (k.startsWith(`${wcId}|`)) {
+      try {
+        w.close();
+      } catch {
+        /* already closed */
+      }
+      watchers.delete(k);
+    }
+  }
+}
 function noteSelfWrite(file) {
   selfWrites.set(path.resolve(file), Date.now());
 }
 function watchProject(dir, webContents) {
-  if (watchers.has(dir)) return;
+  const wkey = `${webContents.id}|${path.resolve(dir)}`;
+  if (watchers.has(wkey)) return;
+  // A window watches only its current project.
+  closeWatchers(webContents.id);
   let timer = null;
   const changed = new Set();
   try {
@@ -294,7 +390,7 @@ function watchProject(dir, webContents) {
         changed.clear();
       }, 400);
     });
-    watchers.set(dir, w);
+    watchers.set(wkey, w);
   } catch {
     /* recursive watch unsupported: external changes appear on reopen */
   }
@@ -324,6 +420,7 @@ handle('media:add', async (e, dir) => {
 
 require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
+require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, ai });
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators
@@ -392,6 +489,7 @@ handle('backup:restore', async (_e, dir, file) => {
   if (!allowed) throw new Error('Backup necunoscut.');
   const target = await backup.restoreBackup(file, path.dirname(dir));
   const project = store.loadProject(target);
+  claimDir(_e.sender, target);
   rememberRecent(target, project.title);
   return { dir: target, project };
 });
@@ -436,6 +534,7 @@ handle('import:scriv', async (e) => {
   const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Scribner?', properties: ['openDirectory', 'createDirectory'] });
   if (dest.canceled) return null;
   const result = importScriv(src.filePaths[0], dest.filePaths[0]);
+  claimDir(e.sender, result.dir);
   rememberRecent(result.dir, result.project.title);
   return result;
 });
@@ -498,7 +597,23 @@ app.on('before-quit', (event) => {
   backupAll().finally(() => app.quit());
 });
 
+// Single instance: a second launch focuses the existing app instead of starting
+// another process (several windows live inside the one instance).
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    } else createWindow();
+  });
+}
+
 app.whenReady().then(() => {
+  if (!gotLock) return;
   scheduleBackups();
   createWindow();
   app.on('activate', () => {
