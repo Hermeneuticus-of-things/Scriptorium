@@ -40,5 +40,5 @@ jobs:
 
       - name: End-to-end in Electron
         run: |
-          npm install --no-save playwright
+          npm install --no-save playwright@1.63.0
           xvfb-run -a npm run test:e2e
