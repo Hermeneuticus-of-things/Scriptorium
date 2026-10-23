@@ -317,6 +317,8 @@ handle('media:add', async (e, dir) => {
   });
 });
 
+require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
+
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
 handle('menu:set', (e, spec) => {

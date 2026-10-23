@@ -25,6 +25,14 @@ contextBridge.exposeInMainWorld('api', {
   mcpInfo: (dir) => call('mcp:info', dir),
   readStylesFromProject: () => call('styles:readFromProject'),
   addMediaFiles: (dir) => call('media:add', dir),
+  importFiles: (dir, mode, separator) => call('io:importFiles', dir, mode, separator),
+  importOpml: () => call('io:importOpml'),
+  importWebPage: (url) => call('io:importWebPage', url),
+  exportDocuments: (dir, project, ids, options) => call('io:exportDocuments', dir, project, ids, options),
+  exportOpml: (dir, project) => call('io:exportOpml', dir, project),
+  exportCsv: (dir, project, wordCounts) => call('io:exportCsv', dir, project, wordCounts),
+  saveProjectAs: (dir, newTitle) => call('io:saveAs', dir, newTitle),
+  printDocument: (html, title) => call('io:printDocument', html, title),
   setAppMenu: (spec) => call('menu:set', spec),
   onMenuCommand: (fn) => {
     const listener = (_e, id) => fn(id);

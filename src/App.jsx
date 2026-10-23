@@ -29,6 +29,7 @@ import { htmlToManuscript } from './lib/editorial.js';
 import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
+import ExportDialog from './components/ExportDialog.jsx';
 import SettingsDialog from './components/SettingsDialog.jsx';
 import FindDialog from './components/FindDialog.jsx';
 import HistoryDialog from './components/HistoryDialog.jsx';
@@ -595,6 +596,64 @@ export default function App({ api }) {
     if (created.length) go(created[0][0]);
   };
 
+  // OPML outline → binder items with synopsis, label and status names.
+  const importOpmlOutline = async () => {
+    const items = await api.importOpml();
+    if (!items || !items.length) return;
+    const byName = (list, name) => (name ? (list || []).find((x) => x.name === name)?.id : undefined);
+    const build = (it) => {
+      const kids = (it.children || []).map(build);
+      const node = newNode(kids.length ? 'folder' : 'text', it.title || 'Fără titlu');
+      if (it.synopsis) node.synopsis = it.synopsis;
+      const lab = byName(project.labels, it.label);
+      const st = byName(project.statuses, it.status);
+      if (lab) node.label = lab;
+      if (st) node.status = st;
+      if (kids.length) node.children = kids;
+      return node;
+    };
+    let tree = project.tree;
+    let anchor = selectedId;
+    for (const it of items) {
+      const node = build(it);
+      tree = insertNear(tree, anchor, node);
+      anchor = node.id;
+    }
+    saveProject({ ...project, tree });
+    setToast(`Import OPML: ${items.length} elemente de nivel superior.`);
+  };
+  const importWeb = async () => {
+    const url = window.prompt('Adresa paginii web (http/https):', 'https://');
+    if (!url || url === 'https://') return;
+    const page = await api.importWebPage(url);
+    importParts([{ title: page.title || url, html: page.html }]);
+  };
+  const importFilesCmd = async () => {
+    const res = await api.importFiles(dir, 'none', '#');
+    if (!res) return;
+    if (res.texts.length) importParts(res.texts);
+    if (res.media.length) {
+      let tree = project.tree;
+      for (const m of res.media) {
+        const node = { ...newNode('media', m.title), id: m.id, media: m.media };
+        tree = insertNear(tree, selectedId, node);
+      }
+      saveProject({ ...project, tree });
+    }
+  };
+  const saveAs = async () => {
+    const title = window.prompt('Titlul copiei:', `${project.title} (copie)`);
+    if (!title) return;
+    await flush();
+    const copy = await api.saveProjectAs(dir, title);
+    if (copy) await openResult(copy);
+  };
+  const printCurrent = () => {
+    const html = docs[selectedId];
+    if (html == null) return;
+    api.printDocument(`<h1>${(selected?.title || '').replace(/</g, '&lt;')}</h1>${html}`, selected?.title).catch(report);
+  };
+
   const words = useMemo(() => (project ? projectWords(project, docs) : []), [project, docs]);
   const projectStyles = stylesOf(project);
 
@@ -802,6 +861,12 @@ export default function App({ api }) {
     ['file', 'save', 'Salvează acum', () => flush()],
     ['file', 'compile', 'Compilează…', () => flush().then(() => setDialog('compile'))],
     ['file', 'import', 'Importă Word / text / Markdown…', () => setDialog('import')],
+    ['file', 'importFiles', 'Importă fișiere (RTF, ODT, HTML, Fountain, media)…', () => importFilesCmd().catch(report), !api.importFiles],
+    ['file', 'importOpml', 'Importă OPML…', () => importOpmlOutline().catch(report), !api.importOpml],
+    ['file', 'importWeb', 'Importă pagină web…', () => importWeb().catch(report), !api.importWebPage],
+    ['file', 'exportFiles', 'Exportă documente / OPML / CSV…', () => flush().then(() => setDialog('export'))],
+    ['file', 'saveAs', 'Salvează ca…', () => saveAs().catch(report), !api.saveProjectAs],
+    ['file', 'print', 'Tipărește documentul…', printCurrent, !api.printDocument],
     ['file', 'backups', 'Backup-uri…', () => setDialog('backup'), !api.listBackups],
     ['file', 'closeProject', 'Închide proiectul', closeProject],
     ['edit', 'findDoc', 'Caută în document', () => editorHandle()?.openFind()],
@@ -1132,6 +1197,7 @@ export default function App({ api }) {
 
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>Ieși (Esc)</button>}
 
+      {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (
         <SettingsDialog
