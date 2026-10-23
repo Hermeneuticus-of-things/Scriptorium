@@ -7,6 +7,21 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { guessLang, tagText } from '../lib/pos.js';
 import { updateBlockDecorations } from '../editor/decoRanges.js';
 
+// Faded runs are dimmed with a text colour, not the shared `.faded` class: `opacity` below 1
+// gives every one of the tens of thousands of spans its own stacking context, which made
+// Chrome's per-keystroke style/layout/selection work several times slower on long documents.
+// The rule is a class (one shared declaration) rather than an inline style on every span, which
+// keeps style recalculation cheap; it is injected once so it works without the app stylesheet.
+const FADED = { class: 'pos-faded' };
+const FADED_CSS = '.ProseMirror .pos-faded { color: color-mix(in srgb, currentColor calc(var(--fade-opacity, .28) * 100%), transparent); }';
+function ensureFadedCss(doc) {
+  if (!doc || doc.getElementById('pos-faded-css')) return;
+  const el = doc.createElement('style');
+  el.id = 'pos-faded-css';
+  el.textContent = FADED_CSS;
+  doc.head.appendChild(el);
+}
+
 export const linguisticFocusKey = new PluginKey('linguisticFocus');
 
 /** Fading decorations for one text block at `pos`. */
@@ -18,11 +33,11 @@ export function blockLinguisticDecorations(node, pos, cls, lang) {
   const start = pos + 1;
   for (const w of tagText(text, l)) {
     if (w.tag === cls) {
-      if (w.from > last) decos.push(Decoration.inline(start + last, start + w.from, { class: 'faded' }));
+      if (w.from > last) decos.push(Decoration.inline(start + last, start + w.from, FADED));
       last = w.to;
     }
   }
-  if (last < text.length) decos.push(Decoration.inline(start + last, start + text.length, { class: 'faded' }));
+  if (last < text.length) decos.push(Decoration.inline(start + last, start + text.length, FADED));
   return decos;
 }
 
@@ -68,6 +83,10 @@ export const LinguisticFocus = Extension.create({
             // Typing: re-tag only the touched blocks instead of the whole document.
             return updateBlockDecorations(old, tr, (node, pos) => blockLinguisticDecorations(node, pos, cls, lang));
           },
+        },
+        view(view) {
+          ensureFadedCss(view.dom?.ownerDocument);
+          return {};
         },
         props: {
           decorations(state) {
