@@ -1619,7 +1619,6 @@ export default function App({ api }) {
                   key={`split-${splitNode.id}-${smartQuotes}-${corrKey}`}
                   corrections={corrections}
                   defaultFormatting={project.defaultFormatting}
-                defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
                   html={docs[splitNode.id] || ''}

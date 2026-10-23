@@ -24,7 +24,12 @@ const watchdog = setTimeout(() => {
   step = 'launched';
   app.process().stderr?.on('data', (d) => process.env.CI && process.stderr.write(`[main] ${d}`));
   // Native dialogs are scripted: each call takes the next answer from a queue.
-  await app.evaluate(({ dialog, Menu }, W) => {
+  await app.evaluate(({ dialog, Menu, shell }, W) => {
+    // Revealing compiled files or opening links would start the desktop's file manager or browser,
+    // whose processes outlive the app on CI runners.
+    shell.showItemInFolder = () => {};
+    shell.openPath = async () => '';
+    shell.openExternal = async () => {};
     global.__answers = [];
     dialog.showOpenDialog = async () => { const a = global.__answers.shift(); return a ? { canceled: false, filePaths: [a] } : { canceled: true, filePaths: [] }; };
     dialog.showSaveDialog = async () => { const a = global.__answers.shift(); return a ? { canceled: false, filePath: a } : { canceled: true }; };
@@ -86,9 +91,11 @@ const watchdog = setTimeout(() => {
   await win.locator('.pane .ProseMirror').first().click();
   await win.keyboard.press('Control+End');
   await win.keyboard.type(' Ultima frază înainte de închidere.');
-  const closed = app.waitForEvent('close');
+  // Wait for the window itself to go away (the app process may outlive it briefly).
+  const closed = win.waitForEvent('close', { timeout: 30000 });
   await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
   await closed;
+  await new Promise((r) => setTimeout(r, 500));
   const lastText = fs.readdirSync(docsDir).map((f) => fs.readFileSync(path.join(docsDir, f), 'utf8')).join('\n');
   const keptOnClose = lastText.includes('Ultima frază înainte de închidere.');
   log('typing kept on close:', keptOnClose);
