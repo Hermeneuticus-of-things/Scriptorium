@@ -212,9 +212,18 @@ export default function App({ api }) {
     return () => { off(); clearTimeout(timer); };
   }, []);
 
+  // Word counts per document; only documents whose HTML changed are counted again.
+  const countCache = useRef(new Map());
   const counts = useMemo(() => {
     const map = {};
-    for (const [id, html] of Object.entries(docs)) map[id] = wordCount(html);
+    for (const [id, html] of Object.entries(docs)) {
+      const hit = countCache.current.get(id);
+      if (hit && hit.html === html) map[id] = hit.n;
+      else {
+        map[id] = wordCount(html);
+        countCache.current.set(id, { html, n: map[id] });
+      }
+    }
     return map;
   }, [docs]);
 
