@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { containerIds, dragIds, iconTint } from '../lib/panelsExtra.js';
+import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
 import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TrashIcon } from './Icons.jsx';
 
 function iconFor(node) {
@@ -29,7 +30,7 @@ function matches(node, query, docs) {
   return (docs[node.id] || '').replace(/<[^>]+>/g, ' ').toLocaleLowerCase('ro').includes(q);
 }
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect }) {
   const tintIcons = labelTintIcons ?? Boolean(project.labelTintIcons);
   // Behaviours from Options: Enter = 'rename' | 'newDoc' | 'open' ('edit' = 'open');
   // double-click = 'rename' | 'quickRef' | 'open' ('openQuickRef' = 'quickRef').
@@ -44,6 +45,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     else if (mode === 'open') {
       if (onOpenItem) onOpenItem(id);
       else onSelect(id, {});
+      // "Edit document": the cursor goes into the editor (Scrivener)
+      onFocusEditor?.(id);
     } else if (mode === 'quickRef') {
       if (isRootNode || !onQuickRef) return false;
       onQuickRef(id);
@@ -56,6 +59,27 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const [drag, setDrag] = useState(null); // array of dragged ids
   const [copying, setCopying] = useState(false);
   const rootRef = useRef(null);
+  const anchorRef = useRef(selectedId); // Shift range anchor
+  const typed = useRef({ text: '', at: 0 });
+  const renameOutcome = useRef(null); // 'commit' (Enter) | 'cancel' (Esc) | null (blur)
+  const autoExpand = useRef({ id: null, timer: 0 });
+  // New items arrive in rename mode (Scrivener): open the ancestors and edit the title.
+  useEffect(() => {
+    if (!renameId) return;
+    const trail = [];
+    const find = (ns, path) => (ns || []).some((n) => (n.id === renameId ? (trail.push(...path), true) : n.children ? find(n.children, [...path, n.id]) : false));
+    find(project.tree, []);
+    if (trail.length) setCollapsed((c) => ({ ...c, ...Object.fromEntries(trail.map((id) => [id, false])) }));
+    setQuery('');
+    setEditing(renameId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renameId]);
+  // Keep the keyboard-selected row visible.
+  useEffect(() => {
+    if (!selectedId || !rootRef.current || !rootRef.current.contains(document.activeElement)) return;
+    rootRef.current.querySelector(`[data-node-id="${CSS.escape(selectedId)}"]`)?.scrollIntoView?.({ block: 'nearest' });
+  }, [selectedId]);
+  useEffect(() => () => clearTimeout(autoExpand.current.timer), []);
   // Reveal in Binder: open every ancestor of revealId, then scroll its row into view.
   useEffect(() => {
     if (!revealId) return;
@@ -100,6 +124,42 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     return (node.children || []).some(visible);
   };
 
+  const rows = () =>
+    filterIds
+      ? filterIds.map((id) => ({ id, depth: 0, parentId: null, container: false, open: false }))
+      : visibleRows(project.tree, (n) => Boolean(query) || !collapsed[n.id], visible);
+  const titleOf = (id) => {
+    let t = '';
+    const find = (ns) => (ns || []).some((n) => (n.id === id ? ((t = n.title), true) : find(n.children)));
+    find(project.tree);
+    return t;
+  };
+  const select = (id, { ctrl = false, shift = false, alt = false } = {}) => {
+    if (shift && !ctrl && !alt && onRangeSelect) {
+      onRangeSelect(rangeIds(rows(), anchorRef.current || selectedId || id, id), id);
+      return;
+    }
+    if (!ctrl && !alt) anchorRef.current = id;
+    onSelect(id, { ctrl, shift, alt });
+  };
+  // Hovering a closed container during a drag opens it after a short delay (Scrivener).
+  const hoverExpand = (node, pos) => {
+    const a = autoExpand.current;
+    const wants = node.children && node.children.length && collapsed[node.id] && pos === 'inside';
+    if (!wants) {
+      if (a.id) clearTimeout(a.timer);
+      a.id = null;
+      return;
+    }
+    if (a.id === node.id) return;
+    clearTimeout(a.timer);
+    a.id = node.id;
+    a.timer = setTimeout(() => {
+      setCollapsed((c) => ({ ...c, [node.id]: false }));
+      a.id = null;
+    }, 700);
+  };
+
   const dropPosition = (e, node) => {
     const r = e.currentTarget.getBoundingClientRect();
     const y = (e.clientY - r.top) / r.height;
@@ -124,6 +184,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             e.dataTransfer.effectAllowed = onCopy ? 'copyMove' : 'move';
           }}
           onDragEnd={() => {
+            hoverExpand(node, null);
             setDrag(null);
             setDropHint(null);
             setCopying(false);
@@ -134,7 +195,9 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             const copy = Boolean(e.altKey && onCopy);
             e.dataTransfer.dropEffect = copy ? 'copy' : 'move';
             setCopying(copy);
-            setDropHint({ id: node.id, pos: dropPosition(e, node) });
+            const pos = dropPosition(e, node);
+            hoverExpand(node, pos);
+            if (!dropHint || dropHint.id !== node.id || dropHint.pos !== pos) setDropHint({ id: node.id, pos });
           }}
           onDrop={(e) => {
             e.preventDefault();
@@ -143,7 +206,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             setDropHint(null);
             setCopying(false);
           }}
-          onClick={(e) => onSelect(node.id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
+          onClick={(e) => select(node.id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
           onDoubleClick={() => runBehaviour(dblMode, node.id, Boolean(node.root))}
         >
           {node.children ? (
@@ -166,13 +229,28 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
               autoFocus
               defaultValue={node.title}
               onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.target.select()}
               onBlur={(e) => {
-                onRename(node.id, e.target.value.trim() || node.title);
+                const outcome = renameOutcome.current;
+                renameOutcome.current = null;
+                if (outcome !== 'cancel') onRename(node.id, e.target.value.trim() || node.title);
                 setEditing(null);
+                onRenameDone?.(node.id, outcome === 'commit');
+                // back to the binder after Esc so arrow keys keep working
+                if (outcome === 'cancel') setTimeout(() => rootRef.current?.focus(), 0);
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') e.target.blur();
-                if (e.key === 'Escape') setEditing(null);
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  renameOutcome.current = 'commit';
+                  e.target.blur();
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  renameOutcome.current = 'cancel';
+                  e.target.blur();
+                }
               }}
             />
           ) : (
@@ -205,13 +283,46 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         if (editing || e.target.tagName === 'INPUT') return;
         const mod = e.ctrlKey || e.metaKey;
         const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'outdent', ArrowRight: 'indent' };
-        if (mod && map[e.key]) {
+        const key = e.key;
+        if (mod && !e.altKey && !e.shiftKey && map[key]) {
           e.preventDefault();
-          onKeyMove(map[e.key]);
-        } else if (e.key === 'F2' && selected && !isRoot) {
+          if (!filterIds) onKeyMove(map[key]);
+        } else if (mod && !e.altKey && (key === 'z' || key === 'Z' || key === 'y' || key === 'Y')) {
+          // Undo / redo of binder structure (Ctrl+Z, Ctrl+Y / Ctrl+Shift+Z)
+          e.preventDefault();
+          e.stopPropagation();
+          onUndo?.(key.toLowerCase() === 'y' || e.shiftKey);
+        } else if (!mod && !e.altKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)) {
+          e.preventDefault();
+          const list = rows();
+          const r = binderNav(list, selected, key);
+          if (r.expand) setCollapsed((c) => ({ ...c, [r.expand]: false }));
+          if (r.collapse) setCollapsed((c) => ({ ...c, [r.collapse]: true }));
+          if (r.select) select(r.select, { shift: e.shiftKey && (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Home' || key === 'End') });
+        } else if (key === 'F2' && selected && !isRoot) {
+          e.preventDefault();
           setEditing(selected);
-        } else if (e.key === 'Enter' && !mod && enterMode && runBehaviour(enterMode, selected, isRoot)) {
+        } else if ((key === 'Delete' || (key === 'Backspace' && mod)) && !e.altKey && selected && !isRoot) {
+          // Delete / Ctrl+Delete: move the selection to the trash (no confirmation, it is undoable)
           e.preventDefault();
+          onTrash();
+          setTimeout(() => rootRef.current?.focus(), 0);
+        } else if (key === 'Enter' && !mod && enterMode && runBehaviour(enterMode, selected, isRoot)) {
+          e.preventDefault();
+        } else if (key === 'Escape' && onFocusEditor) {
+          e.preventDefault();
+          onFocusEditor(selected);
+        } else if (!mod && !e.altKey && key.length === 1 && key !== ' ') {
+          // type-ahead: jump to the row whose title starts with the typed letters
+          const now = Date.now();
+          const t = typed.current;
+          t.text = now - t.at < 700 ? t.text + key : key;
+          t.at = now;
+          const hit = typeAhead(rows(), titleOf, selected, t.text);
+          if (hit) {
+            e.preventDefault();
+            select(hit);
+          }
         }
       }}
       tabIndex={-1}
@@ -225,7 +336,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         <button onClick={() => setAllCollapsed(true)} title="Restrânge tot">⊟</button>
       </div>
       <input className="search" type="search" placeholder="Caută în proiect…" value={query} onChange={(e) => setQuery(e.target.value)} />
-      <p className="tip">Ctrl/Shift+clic: selecție multiplă · Alt+clic: deschide în panoul 2 · Ctrl+săgeți: mută · Alt+tragere: copiază</p>
+      <p className="tip">Ctrl/Shift+clic: selecție multiplă · Alt+clic: panoul 2 · săgeți: navighează · Ctrl+săgeți: mută · F2: redenumește · Del: în coș · Ctrl+Z: anulează · Alt+tragere: copiază</p>
       {filterIds ? (
         <ul className="tree collection-list" aria-label={`Colecția ${filterTitle}`}>
           {filterIds.length === 0 && <li className="muted">Colecția e goală.</li>}
@@ -241,7 +352,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
               <li key={id}>
                 <div
                   className={`binder-row ${selectedId === id ? 'selected' : selectedIds.has(id) ? 'multi' : ''}`}
-                  onClick={(e) => onSelect(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
+                  data-node-id={id}
+                  onClick={(e) => select(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
                 >
                   {renderIcon(node)}
                   {labelColor[node.label] && <span className="label-dot" style={{ background: labelColor[node.label] }} />}
