@@ -1,4 +1,5 @@
 import { getHTMLFromFragment } from '@tiptap/core';
+import { keyFromEvent, shortcutFor } from './lib/commands.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Home from './components/Home.jsx';
 import Binder from './components/Binder.jsx';
@@ -11,6 +12,8 @@ import AiPanel from './components/AiPanel.jsx';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
+import QuickRef from './components/QuickRef.jsx';
+import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
 import GoToDialog from './components/GoToDialog.jsx';
 import ProjectSettingsDialog from './components/ProjectSettingsDialog.jsx';
@@ -87,6 +90,8 @@ export default function App({ api }) {
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
   const [activeCollectionId, setActiveCollectionId] = useState(null);
+  const [hideBinder, setHideBinder] = useState(false);
+  const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
   const [searchSeed, setSearchSeed] = useState('');
   const [editorView, setEditorViewState] = useState(() => {
     try {
@@ -374,6 +379,31 @@ export default function App({ api }) {
   };
 
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
+  // Layouts (Window > Layouts): named combinations of views and panels.
+  const saveLayout = async () => {
+    const name = window.prompt('Numele layout-ului:', `Layout ${(settings.layouts || []).length + 1}`);
+    if (!name) return;
+    const layout = { name, view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, split: Boolean(splitId) };
+    const layouts = [...(settings.layouts || []).filter((l) => l.name !== name), layout];
+    await api.setSettings({ layouts });
+    setSettings(await api.getSettings());
+    setToast(`Layout „${name}” salvat.`);
+  };
+  const applyLayout = (l) => {
+    setView(l.view || 'editor');
+    setShowInspector(l.showInspector !== false);
+    setShowAi(Boolean(l.showAi));
+    setShowEditorial(Boolean(l.showEditorial));
+    setHideBinder(Boolean(l.hideBinder));
+    if (l.widths) setWidths(l.widths);
+    if (l.editorView) setEditorView(l.editorView);
+    if (!l.split) setSplitId(null);
+  };
+
+  // Quick Reference: floating panels with another document (Scrivener: Open in Quick Reference).
+  const openQuickRef = (id) =>
+    setQuickRefs((q) => (q.some((x) => x.id === id) ? q : [...q, { id, x: 120 + q.length * 30, y: 90 + q.length * 30 }]));
+
   const goSibling = (dir) => {
     const id = selectedId && siblingInOrder(project.tree, selectedId, dir);
     if (id) go(id);
@@ -585,52 +615,49 @@ export default function App({ api }) {
     return parts.join('\n\n').slice(0, 60000);
   };
 
-  // --- keyboard shortcuts ---
+  // --- keyboard shortcuts: driven by the command registry (configurable in Settings) ---
+  const commandsRef = useRef({});
   useEffect(() => {
     const onKey = (e) => {
       if (!project) return;
-      const mod = e.ctrlKey || e.metaKey;
-      const k = e.key.toLowerCase();
-      if (mod && k === 's') {
-        e.preventDefault();
-        flush();
-      } else if (mod && k === 'n') {
-        e.preventDefault();
-        addItem(e.shiftKey ? 'folder' : 'text');
-      } else if (mod && e.shiftKey && k === 'f') {
-        e.preventDefault();
-        setDialog('find');
-      } else if (e.key === 'F11') {
-        e.preventDefault();
-        setComposition((c) => !c);
-      } else if (mod && k === 'k') {
-        e.preventDefault();
-        splitDocument(e.shiftKey);
-      } else if (mod && !e.shiftKey && k === 'd') {
-        e.preventDefault();
-        duplicateSelection(true);
-      } else if (mod && !e.shiftKey && !e.altKey && k === 'g') {
-        e.preventDefault();
-        setDialog('goto');
-      } else if (mod && e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-        e.preventDefault();
-        goSibling(e.key === 'ArrowUp' ? -1 : 1);
-      } else if (mod && e.shiftKey && k === 'm') {
-        e.preventDefault();
-        mergeSelection();
-      } else if (e.altKey && e.key === 'ArrowLeft') {
-        e.preventDefault();
-        back();
-      } else if (e.altKey && e.key === 'ArrowRight') {
-        e.preventDefault();
-        forward();
-      } else if (e.key === 'Escape' && composition) {
+      if (e.key === 'Escape' && composition) {
         setComposition(false);
+        return;
+      }
+      const combo = keyFromEvent(e);
+      if (!combo) return;
+      for (const [id, cmd] of Object.entries(commandsRef.current)) {
+        if (cmd.key && cmd.key === combo && !cmd.disabled) {
+          e.preventDefault();
+          cmd.run();
+          return;
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
+  // Native application menu: send the menu built from the registry whenever it changes.
+  const lastMenu = useRef('');
+  useEffect(() => {
+    if (!api.setAppMenu || !project) return;
+    const titles = { file: 'Fișier', edit: 'Editare', view: 'Vizualizare', nav: 'Navigare', project: 'Proiect', document: 'Document', format: 'Format', tools: 'Unelte', window: 'Fereastră' };
+    const spec = Object.entries(titles).map(([g, label]) => ({
+      label,
+      items: Object.values(commandsRef.current)
+        .filter((c) => c.group === g)
+        .map((c) => ({ id: c.id, label: c.label, key: c.key, disabled: c.disabled })),
+    }));
+    const json = JSON.stringify(spec);
+    if (json === lastMenu.current) return;
+    lastMenu.current = json;
+    api.setAppMenu(spec).catch(() => {});
+  });
+  // Native application menu: commands come back by id.
+  useEffect(() => {
+    if (!api.onMenuCommand) return undefined;
+    return api.onMenuCommand((id) => commandsRef.current[id]?.run());
+  }, [api]);
 
   // --- resizable panels ---
   const startResize = (which) => (e) => {
@@ -768,6 +795,60 @@ export default function App({ api }) {
     { label: 'Setări…', action: () => setDialog('settings') },
   ];
 
+  // Command registry: every command has an id, a label, a menu group and a
+  // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
+  const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+  const commandList = [
+    ['file', 'save', 'Salvează acum', () => flush()],
+    ['file', 'compile', 'Compilează…', () => flush().then(() => setDialog('compile'))],
+    ['file', 'import', 'Importă Word / text / Markdown…', () => setDialog('import')],
+    ['file', 'backups', 'Backup-uri…', () => setDialog('backup'), !api.listBackups],
+    ['file', 'closeProject', 'Închide proiectul', closeProject],
+    ['edit', 'findDoc', 'Caută în document', () => editorHandle()?.openFind()],
+    ['edit', 'findProject', 'Caută și înlocuiește în proiect…', () => setDialog('find')],
+    ['edit', 'advSearch', 'Căutare avansată…', () => { setSearchSeed(''); setDialog('advsearch'); }],
+    ['view', 'viewEditor', 'Editor', () => setView('editor')],
+    ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
+    ['view', 'viewOutline', 'Outline', () => setView('outline')],
+    ['view', 'composition', 'Mod compunere', () => setComposition((c) => !c)],
+    ['view', 'toggleInspector', 'Arată / ascunde Inspectorul', () => setShowInspector((v) => !v)],
+    ['view', 'toggleBinder', 'Arată / ascunde binderul', () => setHideBinder((v) => !v)],
+    ['view', 'split', 'Împarte documentul la cursor', () => splitDocument(false)],
+    ['view', 'quickRef', 'Quick Reference pentru documentul curent', () => selected && !selected.root && openQuickRef(selected.id)],
+    ['nav', 'goto', 'Mergi la…', () => setDialog('goto')],
+    ['nav', 'prevDoc', 'Documentul anterior', () => goSibling(-1)],
+    ['nav', 'nextDoc', 'Documentul următor', () => goSibling(1)],
+    ['nav', 'back', 'Înapoi', back],
+    ['nav', 'forward', 'Înainte', forward],
+    ['project', 'newText', 'Document nou', () => addItem('text')],
+    ['project', 'newFolder', 'Dosar nou', () => addItem('folder')],
+    ['project', 'projectSettings', 'Setările proiectului…', () => setDialog('projectSettings')],
+    ['project', 'targets', 'Ținte și termen limită…', () => setDialog('targets')],
+    ['project', 'stats', 'Statistici…', () => setDialog('stats')],
+    ['project', 'keywords', 'Cuvinte cheie…', () => setDialog('keywords')],
+    ['project', 'history', 'Istoricul scrisului…', () => setDialog('history'), !api.getHistory],
+    ['document', 'splitTitle', 'Împarte cu selecția ca titlu', () => splitDocument(true)],
+    ['document', 'merge', 'Unește documentele selectate', mergeSelection],
+    ['document', 'duplicate', 'Duplică', () => duplicateSelection(true)],
+    ['document', 'snapshot', 'Snapshot acum', async () => {
+      if (!selected || selected.root) return;
+      await flush();
+      await api.takeSnapshot(dir, selected.id, `Snapshot ${new Date().toLocaleString('ro-RO')}`).catch(report);
+      setToast('Snapshot salvat.');
+    }],
+    ['format', 'styles', 'Stiluri…', () => setDialog('styles')],
+    ['tools', 'irep', 'I-REP / I-EDIT', () => setShowEditorial((v) => !v)],
+    ['tools', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    ['tools', 'settings', 'Setări…', () => setDialog('settings')],
+    ['tools', 'shortcuts', 'Scurtături de tastatură…', () => setDialog('shortcuts')],
+    ['window', 'saveLayout', 'Salvează layout-ul curent…', saveLayout],
+    ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
+  ];
+  const commands = Object.fromEntries(
+    commandList.map(([group, id, label, run, disabled]) => [id, { group, id, label, run, disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
+  );
+  commandsRef.current = commands;
+
   return (
     <div
       className={`app ${composition ? 'composition' : ''} ${composition && settings.compPaper !== false ? 'comp-paper' : ''}`}
@@ -808,6 +889,7 @@ export default function App({ api }) {
       </header>
 
       <div className="main">
+        {!hideBinder && !composition && (<>
         <div className="binder-col" style={{ width: widths.binder }}>
         <CollectionsBar
           project={project}
@@ -836,6 +918,7 @@ export default function App({ api }) {
         />
         </div>
         <div className="resizer" onMouseDown={startResize('binder')} role="separator" aria-label="Lățime binder" />
+        </>)}
 
         <section className={`workspace ${splitNode && view === 'editor' ? 'split' : ''}`}>
           <div className="pane">
@@ -1180,6 +1263,41 @@ export default function App({ api }) {
       )}
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
       {dialog === 'import' && <ImportDialog api={api} target={selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
+      {quickRefs.map((q) => {
+        const n = findNode(project.tree, q.id);
+        if (!n) return null;
+        return (
+          <QuickRef
+            key={q.id}
+            node={n}
+            html={docs[q.id] || ''}
+            x={q.x}
+            y={q.y}
+            readOnly={inTrash(q.id) || Boolean(n.locked) || mainIds.has(q.id) || n.type !== 'text'}
+            smartQuotes={smartQuotes}
+            onChange={(html) => writeDocNow(q.id, html)}
+            onMove={(x, y) => setQuickRefs((all) => all.map((r) => (r.id === q.id ? { ...r, x, y } : r)))}
+            onClose={() => setQuickRefs((all) => all.filter((r) => r.id !== q.id))}
+            onOpen={() => {
+              setQuickRefs((all) => all.filter((r) => r.id !== q.id));
+              go(q.id);
+              setView('editor');
+            }}
+          />
+        );
+      })}
+      {dialog === 'shortcuts' && (
+        <ShortcutsDialog
+          commands={commandList.map(([group, id, label]) => ({ group, id, label }))}
+          settings={settings}
+          onSave={async (shortcuts) => {
+            await api.setSettings({ shortcuts });
+            setSettings(await api.getSettings());
+            setDialog(null);
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {error && <ErrorToast message={error} onClose={() => setError('')} />}
       {toast && (
         <div className="toast ok-toast" role="status">
