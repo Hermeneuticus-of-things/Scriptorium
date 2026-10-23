@@ -84,11 +84,12 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [ ] Verificat cu Claude Code real pe Windows
 
 ### 1.4 Restul v0.2
-- [ ] Paste and Match Style (Ctrl+Shift+V)
-- [ ] Find & Replace în documentul curent (Ctrl+F)
-- [ ] Split with Selection as Title
-- [ ] Duplicare document
-- [ ] Spelling în română (dicționar ro, ignoră, dicționar personal)
+- [x] Paste and Match Style (Ctrl+Shift+V și din meniul contextual)
+- [x] Find & Replace în documentul curent (Ctrl+F): următor/anterior, contor, majuscule, cuvinte întregi, regex, înlocuiește unul/toate
+- [x] Split with Selection as Title (Ctrl+Shift+K); Ctrl+K împarte doar la cursor
+- [x] Duplicare document sau dosar (Ctrl+D), cu sau fără sub-documente, cu note
+- [x] Spelling ro + en-US, meniu contextual cu sugestii, „Adaugă în dicționar”, Taie/Copiază/Lipește
+- [ ] Spelling verificat pe Windows (acolo folosește corectorul sistemului: trebuie instalat pachetul de limbă română)
 
 ---
 

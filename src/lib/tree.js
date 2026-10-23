@@ -127,6 +127,30 @@ export function keyMove(tree, id, dir) {
   return tree;
 }
 
+// Copies a node (and optionally its children) right after the original, with new
+// ids and " (copie)" on the top title. Returns {tree, pairs: [[oldId, newId], …], id}.
+export function duplicateNode(tree, id, { withChildren = true, newId = () => crypto.randomUUID() } = {}) {
+  const original = findNode(tree, id);
+  if (!original || original.root) return { tree, pairs: [], id: null };
+  const pairs = [];
+  const clone = (n, top) => {
+    const copy = structuredClone({ ...n, children: undefined });
+    copy.id = newId();
+    pairs.push([n.id, copy.id]);
+    if (top) copy.title = `${n.title} (copie)`;
+    if (n.children) copy.children = withChildren ? n.children.map((c) => clone(c, false)) : [];
+    if (!n.children) delete copy.children;
+    return copy;
+  };
+  const copy = clone(original, true);
+  const next = produce(tree, (t) => {
+    const parent = findParent(t, id);
+    const list = parent ? parent.children : t;
+    list.splice(list.findIndex((n) => n.id === id) + 1, 0, copy);
+  });
+  return { tree: next, pairs, id: copy.id };
+}
+
 // Binder order of the given ids.
 export function inOrder(tree, ids) {
   const set = new Set(ids);

@@ -28,6 +28,7 @@ import {
   inOrder,
   insertNear,
   keyMove,
+  duplicateNode,
   moveNode,
   moveToTrash,
   emptyTrash,
@@ -323,12 +324,34 @@ export default function App({ api }) {
   };
 
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
-  const splitDocument = async () => {
+  // Duplicates the selected item (with its notes, synopsis and, optionally, children).
+  const duplicateSelection = async (withChildren) => {
+    const node = selectedId && findNode(project.tree, selectedId);
+    if (!node || node.root) return;
+    await flush();
+    const { tree, pairs, id } = duplicateNode(project.tree, node.id, { withChildren });
+    if (!id) return;
+    saveProject({ ...project, tree });
+    const copies = {};
+    for (const [from, to] of pairs) {
+      const html = docs[from] ?? (await api.readDoc(dir, from, 'docs'));
+      const notes = await api.readDoc(dir, from, 'notes');
+      if (html) {
+        copies[to] = html;
+        await api.writeDoc(dir, to, 'docs', html);
+      }
+      if (notes) await api.writeDoc(dir, to, 'notes', notes);
+    }
+    setDocs((d) => ({ ...d, ...copies }));
+    go(id);
+  };
+
+  const splitDocument = async (useSelectionAsTitle = false) => {
     const id = activeId.current || selectedId;
     const node = findNode(project.tree, id);
     const handle = editorRefs.current.get(id);
     if (!node || node.type !== 'text' || !handle) return;
-    const parts = handle.splitAtCursor();
+    const parts = handle.splitAtCursor(useSelectionAsTitle);
     if (!parts) return;
     await flush();
     await api.takeSnapshot(dir, id, 'Automat înainte de împărțire').catch(report);
@@ -440,9 +463,12 @@ export default function App({ api }) {
       } else if (e.key === 'F11') {
         e.preventDefault();
         setComposition((c) => !c);
-      } else if (mod && !e.shiftKey && k === 'k') {
+      } else if (mod && k === 'k') {
         e.preventDefault();
-        splitDocument();
+        splitDocument(e.shiftKey);
+      } else if (mod && !e.shiftKey && k === 'd') {
+        e.preventDefault();
+        duplicateSelection(true);
       } else if (mod && e.shiftKey && k === 'm') {
         e.preventDefault();
         mergeSelection();
@@ -524,7 +550,11 @@ export default function App({ api }) {
     { label: 'Caută și înlocuiește…', shortcut: 'Ctrl+Shift+F', action: () => setDialog('find') },
     { label: 'Importă Word / text / Markdown…', action: () => setDialog('import') },
     '-',
-    { label: 'Împarte documentul la cursor', shortcut: 'Ctrl+K', action: splitDocument },
+    { label: 'Caută în document', shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
+    { label: 'Împarte documentul la cursor', shortcut: 'Ctrl+K', action: () => splitDocument(false) },
+    { label: 'Împarte cu selecția ca titlu', shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
+    { label: 'Duplică (cu sub-documente)', shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
+    { label: 'Duplică doar elementul', action: () => duplicateSelection(false) },
     { label: 'Unește documentele selectate', shortcut: 'Ctrl+Shift+M', action: mergeSelection },
     '-',
     { label: 'Istoricul scrisului…', action: () => setDialog('history'), disabled: !api.getHistory },
