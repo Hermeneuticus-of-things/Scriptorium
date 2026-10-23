@@ -1,5 +1,15 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-23 — v0.6.1 — .scriv round trip: favorite
+
+### Cerința user
+> Round trip .scriv: SectionType, \\Scrv_fn/\\uc, styleKind, favorite/stiluri/note de proiect/date comentarii/titluri bookmark, snapshot-uri și istoric la export.
+
+### Rezultat
+- Punctele 1, 2, 3, 5 și restul din 4 erau deja reparate în v0.6.0 (testele trec fără marcaje KNOWN).
+- node.favorite lipsea complet: exportul scrie acum `<MetaData><Favorite>Yes</Favorite>`, importul îl citește. Test nou în tests/scrivRoundTrip.test.js.
+- Fișiere: lib/scrivExport.cjs, lib/scrivImport.cjs, tests/scrivRoundTrip.test.js. vitest: 443/443.
+
 ## 2026-10-23 — v0.6.0 — Bug-uri reparate la cauză, AI cu orice furnizor, UI/UX ca Scrivener 3
 
 ### Cerința user

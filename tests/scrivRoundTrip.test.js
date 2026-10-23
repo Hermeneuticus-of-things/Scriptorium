@@ -213,6 +213,8 @@ describe('Scrivener export -> import round trip', () => {
     expect(s1.targetType).toBe('Words');
     expect(s1.icon).toBe('🔥');
     expect(s1.locked).toBe(true);
+    expect(s1.favorite).toBe(true);
+    expect(s2.favorite).toBeUndefined();
     // Section type as Scrivener 3 stores it: <MetaData><SectionType>UUID</SectionType>, UUID defined under <SectionTypes>.
     const scrivx = fs.readFileSync(path.join(res.dir, 'Roman bogat.scrivx'), 'utf8');
     const stId = (t) => new RegExp(`<SectionType ID="([0-9A-F-]{36})"><Title>${t}</Title>`).exec(scrivx)[1];
