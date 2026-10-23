@@ -69,10 +69,10 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Alegerea profilului editorial în Setări (Karma / Generic), limita canvas, verificarea antetului și notei canonice
 - [x] Clic pe o problemă selectează textul în editor
 - [x] Bucla verificată în browser cu simulator de AI
-- [ ] Editarea listelor de cuvinte interzise din Setări
+- [x] Editarea listelor de cuvinte interzise din Setări
 - [ ] Test end-to-end cu Claude real
-- [ ] Glosare generate automat: `Glosar_Alogeni_Indieni`, `Glosar_de_lectură`, `Cuprins_de_tipar`
-- [ ] Index canonic (`Index_de_Lucru`, noduri N.N.N cu tip/greutate/dependențe) ca sursă pentru R1 și R6 macro
+- [x] Glosare generate automat: `Glosar_Alogeni_Indieni`, `Glosar_de_lectură`, `Cuprins_de_tipar`
+- [x] Index canonic (`Index_de_Lucru`, noduri N.N.N cu tip/greutate/dependențe) ca sursă pentru R1 și R6 macro
 - [ ] „VKB2” și definițiile tale exacte pentru I-REP / I-EDIT (nu le am; aștept fișierele)
 
 ### 1.3 Conexiune MCP pentru agenți AI
@@ -153,7 +153,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Metadate și copertă EPUB
 - [x] Formate în plus: RTF, ODT, Markdown, MultiMarkdown, text simplu
 - [x] Compile doar pentru o selecție sau un grup, previzualizare
-- [ ] Pachetul pentru editor (ce merge în „PENTRU EDITOR”, după specificația ta)
+- [~] Pachetul pentru editor: variantă implicită (DOCX, sinopsis, glosare, raport I-REP, jurnal snapshot-uri, README); se ajustează după specificația ta
 
 ### 2.5 Import / export / siguranță
 - [x] Import RTF, ODT, HTML, OPML, PDF, imagini, pagini web
@@ -177,7 +177,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Script Mode: Screenplay, Stage Play, Comic, BBC Radio; elemente cu Tab/Enter; export FDX și Fountain
 - [x] Sync cu folder extern (Dropbox/Drive), RTF/TXT/MD, conflicte cu snapshot
 - [x] Export ca proiect Scrivener (.scriv)
-- [ ] Mai multe ferestre de proiect
+- [x] Mai multe ferestre de proiect
 - [x] Name Generator, Text-to-speech, Dictare, Scratchpad
 - [x] Import Zotero, bibliografie
 - [~] Export Kindle (KPF), LaTeX, Pandoc: LaTeX, Pandoc și MultiMarkdown gata; KPF nu se poate produce deschis, Kindle primește EPUB
@@ -187,9 +187,9 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [ ] Toate rândurile `[ ]` din `FEATURES-SCRIVENER3.md` închise sau mutate explicit la `[-]`
 - [x] Sinopsis AI în bloc, consistență pe toată cartea, fișe vii
 - [x] Cronologie, hartă de relații, analiză de ritm
-- [ ] Panou NotebookLM / RAG cu cozi asincrone și cache pe concept (fluxul NLM din workspace)
+- [x] Panou NotebookLM / RAG cu cozi asincrone și cache pe concept (fluxul NLM din workspace)
 - [x] Revizie multi-agent pe niveluri de zoom (Maha / Macro / Mezzo / Micro / Nano), cu rapoarte GRAVE/MEDIU
-- [ ] PWA / sync mobil
+- [~] PWA / sync mobil: versiune web cu IndexedDB și pachete de proiect; sincronizare automată nu există
 
 ## 5. Excluse intenționat
 

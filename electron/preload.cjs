@@ -67,6 +67,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('ai:progress', listener);
     return () => ipcRenderer.removeListener('ai:progress', listener);
   },
+  editorPackage: (dir, project, options) => call('editor:package', dir, project, options),
   runAi: (payload) => call('ai:run', payload),
   newWindow: () => call('window:new'),
   releaseProject: () => call('project:release'),

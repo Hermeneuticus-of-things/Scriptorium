@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { diffWords } from 'diff';
 import {
   ROUNDS,
+  applyLists,
   autofix,
   cleanModelText,
   htmlToManuscript,
@@ -9,11 +10,13 @@ import {
   manuscriptToHtml,
   reattach,
   repairPrompt,
+  roundContext,
   roundPrompt,
   summarize,
   systemPrompt,
 } from '../lib/editorial.js';
 import { htmlToText } from '../lib/text.js';
+import { findCanonDoc, parseCanonIndex, validateCanonIndex } from '../lib/canonIndex.js';
 
 const LEVELS = [
   ['micro', 'Micro · selecția / paragraful'],
@@ -25,7 +28,7 @@ function blocking(issues, strict) {
   return issues.filter((i) => i.severity === 'GRAVE' || (strict && i.severity === 'MEDIU'));
 }
 
-export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings }) {
+export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile: baseProfile, project, dir, editorialLists, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings }) {
   const [tab, setTab] = useState('rep');
   const [level, setLevel] = useState('mezzo');
   const [maxLoops, setMaxLoops] = useState(3);
@@ -36,9 +39,33 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile,
   const [proposal, setProposal] = useState(null); // [{id, title, before, after, issuesAfter}]
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  // User word lists (Setări → Editorial) and the canonical index (Index_de_Lucru).
+  const [lists, setLists] = useState(editorialLists || null);
+  const [canonNodes, setCanonNodes] = useState([]);
+  const [canonProblems, setCanonProblems] = useState([]);
+  useEffect(() => {
+    if (editorialLists) return setLists(editorialLists);
+    let live = true;
+    api?.getSettings?.().then((st) => live && setLists(st?.editorialLists || null)).catch(() => {});
+    return () => { live = false; };
+  }, [api, editorialLists]);
+  const canonDoc = useMemo(() => (project ? findCanonDoc(project.tree) : null), [project]);
+  useEffect(() => {
+    if (!canonDoc || !api?.readDoc || !dir) return setCanonNodes([]);
+    let live = true;
+    api.readDoc(dir, canonDoc.id).then((h) => {
+      if (!live) return;
+      const { nodes, errors } = parseCanonIndex(h || '');
+      setCanonNodes(nodes);
+      setCanonProblems([...errors.map((e) => ({ severity: 'MEDIU', message: e.message })), ...validateCanonIndex(nodes)]);
+    }).catch(() => {});
+    return () => { live = false; };
+  }, [api, dir, canonDoc]);
+  const profile = useMemo(() => (lists ? applyLists(baseProfile, lists) : baseProfile), [baseProfile, lists]);
+  const canon = canonNodes.length ? { nodes: canonNodes } : null;
 
   const others = useMemo(() => chapter.filter((d) => d.id !== node.id), [chapter, node.id]);
-  const issues = useMemo(() => lint(html, { profile, otherDocs: others }), [html, profile, others]);
+  const issues = useMemo(() => lint(html, { profile, otherDocs: others, canon, title: node.title }), [html, profile, others, canon, node.title]);
   const sum = summarize(issues);
   const shown = issues.filter((i) => filter === 'all' || i.severity === filter);
 
@@ -124,7 +151,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile,
           .slice(0, 40000);
         say(`„${doc.title}”: Blackbox P1 · ${rounds.size} runde`);
         for (const r of ROUNDS.filter((x) => rounds.has(x.id))) {
-          const fixed = await ai(roundPrompt(r, htmlToManuscript(current), r.id === 'R1' || r.id === 'R6' ? ctx : ''), r.id === 'R4b' || r.id === 'R10' ? 'high' : 'medium');
+          const fixed = await ai(roundPrompt(r, htmlToManuscript(current), roundContext(r, { chapterContext: ctx, canonNodes, title: doc.title })), r.id === 'R4b' || r.id === 'R10' ? 'high' : 'medium');
           current = autofix(reattach(current, manuscriptToHtml(fixed)));
           const s = summarize(lint(current, { profile }));
           say(`  ${r.id} ${r.title}: ${s.GRAVE} grave, ${s.MEDIU} medii`);
@@ -153,7 +180,13 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile,
         <button className={tab === 'rep' ? 'on' : ''} onClick={() => setTab('rep')}>I-REP</button>
         {aiEnabled && <button className={tab === 'edit' ? 'on' : ''} onClick={() => setTab('edit')}>I-EDIT</button>}
       </div>
-      <p className="muted small">Profil: {profile.name}</p>
+      <p className="muted small">Profil: {profile.name}{canonNodes.length ? ` · Index_de_Lucru: ${canonNodes.length} noduri` : ''}</p>
+      {canonProblems.length > 0 && (
+        <details className="small">
+          <summary>Index_de_Lucru: {canonProblems.length} probleme</summary>
+          <ul>{canonProblems.slice(0, 50).map((p, i) => <li key={i}>[{p.severity}] {p.message}</li>)}</ul>
+        </details>
+      )}
 
       <div className="rep-summary">
         <button className={`pill grave ${filter === 'GRAVE' ? 'on' : ''}`} onClick={() => setFilter(filter === 'GRAVE' ? 'all' : 'GRAVE')}>{sum.GRAVE} grave</button>

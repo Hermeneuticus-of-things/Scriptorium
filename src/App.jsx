@@ -30,6 +30,7 @@ import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
+import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc } from './lib/glossary.js';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
@@ -858,7 +859,7 @@ export default function App({ api }) {
     const list = [];
     const walk = (nodes, chapter) => {
       for (const n of nodes || []) {
-        if (n.type === 'text' && n.include !== false) list.push({ id: n.id, title: n.title, text: htmlToText(all[n.id] || ''), synopsis: n.synopsis || '', chapter });
+        if (n.type === 'text' && n.includeInCompile !== false) list.push({ id: n.id, title: n.title, text: htmlToText(all[n.id] || ''), synopsis: n.synopsis || '', chapter });
         walk(n.children, n.type === 'folder' ? n.title : chapter);
       }
     };
@@ -909,6 +910,33 @@ export default function App({ api }) {
     for (const id of [...r.updated, ...r.created.map((c) => c.id)].map((x) => (typeof x === 'string' ? x : x.id))) reload[id] = await api.readDoc(dir, id, 'docs');
     setDocs((d) => ({ ...d, ...reload }));
     setToast(`Sincronizare: ${r.updated.length} actualizate, ${r.conflicts.length} conflicte (cu snapshot), ${r.created.length} noi.`);
+  };
+  // Glossaries and print TOC as documents in Research (replaced when generated again).
+  const generateGlossaries = async () => {
+    await flush();
+    const book = await collectBookDocs(project, (id) => docs[id] ?? api.readDoc(dir, id, 'docs'));
+    const alogen = buildAlogenGlossary(book);
+    const reading = buildReadingGlossary(book, { exclude: alogen.terms.map((t) => t.term) });
+    const toc = buildPrintToc(project, { docs: book, includeHeadings: true });
+    let tree = project.tree;
+    const research = tree.find((n) => n.root === 'research');
+    const written = {};
+    for (const g of [alogen, reading, toc]) {
+      const existing = flatten(research.children || []).find((n) => n.title === g.title && n.type === 'text');
+      const id = existing ? existing.id : null;
+      if (existing) {
+        await api.takeSnapshot(dir, id, 'Înainte de regenerare');
+        written[id] = g.html;
+      } else {
+        const node = newNode('text', g.title);
+        tree = updateNode(tree, research.id, { children: [...(findNode(tree, research.id).children || []), node] });
+        written[node.id] = g.html;
+      }
+    }
+    saveProject({ ...project, tree });
+    for (const [id, html] of Object.entries(written)) await api.writeDoc(dir, id, 'docs', html);
+    setDocs((d) => ({ ...d, ...written }));
+    setToast(`Glosare generate în Cercetare: ${alogen.terms.length} termeni alogeni, ${reading.terms?.length ?? 0} termeni de lectură, cuprins cu ${toc.entries.length} intrări.`);
   };
   const scriptFormat = settings?.scriptFormat || null;
   const setScriptFormat = async (f) => {
@@ -1077,6 +1105,8 @@ export default function App({ api }) {
     ['file', 'exportBundle', 'Exportă pachet pentru web / mobil…', () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', 'Importă pachet de proiect…', () => api.importBundle().then(openResult).catch(report), !api.importBundle],
     ['tools', 'research', 'Cercetare în proiect (RAG)', () => setShowResearch((v) => !v), !api.ragQuery],
+    ['tools', 'glossaries', 'Generează glosare și cuprins de tipar', () => generateGlossaries().catch(report)],
+    ['file', 'editorPackage', 'Pachet PENTRU EDITOR…', () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(`Pachet creat în ${r.dir} (${r.files.length} fișiere)`)).catch(report), !api.editorPackage],
     ['tools', 'nameGen', 'Generator de nume…', () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', 'Citire cu voce tare / Dictare', () => setShowSpeech((v) => !v)],
@@ -1346,6 +1376,8 @@ export default function App({ api }) {
               )}
               {showEditorial && editorialNode && (
                 <EditorialPanel
+                  project={project}
+                  dir={dir}
                   aiEnabled={aiEnabled}
                   key={`ed-${editorialNode.id}`}
                   api={api}
