@@ -51,5 +51,6 @@ contextBridge.exposeInMainWorld('api', {
   recordHistory: (dir, counts) => call('history:record', dir, counts),
   getHistory: (dir) => call('history:get', dir),
   exportCompiled: (dir, project, format, options) => call('compile:export', dir, project, format, options),
+  previewCompiled: (dir, project, options) => call('compile:preview', dir, project, options),
   runAi: (payload) => call('ai:run', payload),
 });

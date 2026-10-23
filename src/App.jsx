@@ -1205,7 +1205,7 @@ export default function App({ api }) {
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>Ieși (Esc)</button>}
 
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
-      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (
         <SettingsDialog
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
