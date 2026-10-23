@@ -1,5 +1,18 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-23 — v0.5.1 — CI reparat
+
+### Cerința user
+> "repare bug cu best practice root cause"
+
+### Cauza
+Fluxul „NodeJS with Webpack” rula `npx webpack`, dar Scribner se construiește cu Vite și nu are webpack: CI pica la fiecare push pe `main`. Fluxul SLSA semna două fișiere de exemplu („artifact1/2”), nu aplicația.
+
+### Rezultat
+- `.github/workflows/ci.yml` (în locul șablonului webpack): Node 22, `npm ci`, `npm test`, build Vite, build web, test cap-coadă în Electron cu `xvfb-run`.
+- SLSA: construiește artefactele reale (Scribner pentru Windows, zip, și versiunea web), le semnează și le atașează la release; generator `v2.1.0`.
+- Verificat: toți pașii CI rulați într-o clonă curată trec (312 teste, build, E2E OK).
+
 ## 2026-10-23 — v0.5.0 — Aspect Scrivener 3, profil generic, ferestre, web, Karma
 
 ### Cerința user
