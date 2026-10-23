@@ -311,6 +311,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           {t('set.spellLangs')}
           <input value={s.spellLanguages} onChange={set('spellLanguages')} placeholder="ro, en-US" />
         </label>
+        {api.listDictionaryWords && <PersonalDictionary api={api} onError={onError} />}
         <fieldset>
           <legend>{t('set.replacements')}</legend>
           {s.autoReplacements.map((r, i) => (
@@ -536,5 +537,32 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         </div>
       </div>
     </div>
+  );
+}
+
+// Personal dictionary: words added with "Adaugă în dicționar"; they can be removed here.
+function PersonalDictionary({ api, onError }) {
+  const [words, setWords] = React.useState(null);
+  const [filter, setFilter] = React.useState('');
+  const load = () => api.listDictionaryWords().then((w) => setWords([...w].sort((a, b) => a.localeCompare(b, 'ro')))).catch(onError);
+  React.useEffect(() => {
+    load();
+  }, []);
+  if (!words) return null;
+  const shown = words.filter((w) => w.toLowerCase().includes(filter.toLowerCase()));
+  return (
+    <fieldset>
+      <legend>Dicționar personal ({words.length})</legend>
+      {words.length > 8 && <input placeholder="Caută cuvânt…" value={filter} onChange={(e) => setFilter(e.target.value)} />}
+      {!words.length && <p className="muted">Gol. Cuvintele intră aici din meniul de clic dreapta: „Adaugă în dicționar”.</p>}
+      <div style={{ maxHeight: 160, overflow: 'auto' }}>
+        {shown.map((w) => (
+          <div key={w} className="row" style={{ justifyContent: 'space-between' }}>
+            <span>{w}</span>
+            <button className="link" onClick={() => api.removeDictionaryWord(w).then(load).catch(onError)}>Șterge</button>
+          </div>
+        ))}
+      </div>
+    </fieldset>
   );
 }
