@@ -63,7 +63,7 @@ Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și docu
 | [x] | 0.3 | Find by formatting: comentarii, note, highlight, culoare text, revizii, stil, adnotări — Caută formatare (Ctrl+Alt+F): comentarii, note, adnotări, highlight, culoare, revizii, stil, semne de carte |
 | [x] | 0.3 | Find Synonyms, Look up in dictionary — dexonline (definiție + sinonime) din meniul contextual și comenzi |
 | [x] | 0.1 | Spelling: corector Chromium |
-| [~] | 0.2 | Spelling în română (dicționar ro), Check document now, dicționar personal, ignoră — ro + en-US, sugestii, „Adaugă în dicționar”, „Ignoră” (pe sesiune), „Verifică ortografia acum”; lipsește gestionarea dicționarului personal |
+| [x] | 0.2 | Spelling în română (dicționar ro), Check document now, dicționar personal, ignoră — ro + en-US, sugestii, „Adaugă în dicționar”, „Ignoră” (pe sesiune), „Verifică ortografia acum”, dicționar personal în Setări → Corecturi |
 | [x] | 0.3 | Text Substitutions (smart quotes ✓, dashes ✓, elipse ✓, autocorectare personalizată, fracții) — + fracții (smartFractions) |
 | [x] | 0.3 | Auto-complete list (nume din proiect) |
 | [x] | 0.3 | Transformations: majuscule/minuscule/Title Case, eliminare spații duble, convertire ghilimele, conversie inline ↔ linked notes, convertire adnotări în comentarii |
@@ -134,7 +134,7 @@ Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și docu
 | [x] | 0.3 | Project Search: căutare în titlu/text/note/sinopsis/metadate/keywords, operatori, salvată |
 | [x] | 0.2 | Project Replace (cu snapshot automat) |
 | [x] | 0.3 | Project Replace: și în titluri, sinopsis, note |
-| [~] | 0.2 | Project Targets: carte și sesiune ✓ |
+| [x] | 0.2 | Project Targets: carte și sesiune |
 | [x] | 0.3 | Project Targets: deadline, zilele de scris, resetarea sesiunii (miezul nopții / la deschidere), numără doar textul inclus în Compile, notificare la atingere, țintă în caractere sau pagini — deadline, zile, reset sesiune, doar Compile, notificare (și pentru documente), cuvinte/caractere/pagini |
 | [x] | 0.2 | Writing History (pe zile, CSV) |
 | [x] | 0.3 | Writing History: lunar, caractere, alte documente separat — zilnic și lunar, caractere (când istoricul le înregistrează), CSV |
@@ -143,7 +143,7 @@ Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și docu
 | [x] | 0.2 | Project Notes |
 | [x] | 0.3 | Project Notes: mai multe tab-uri |
 | [x] | 0.3 | Project Keywords: fereastră cu listă, culori, ierarhie, căutare după keyword |
-| [~] | 0.2 | Keywords per document ✓, culori ✗ |
+| [x] | 0.2 | Keywords per document, culori (fereastra Cuvinte cheie) |
 | [x] | 0.3 | Project Settings: Labels (nume, culori, titlu rubrică), Status, Custom Metadata (Text, Checkbox, List, Date), Section Types, Formatting implicit, Auto-complete, Backup per proiect, Compile, Bookmarks proiect, Special Folders — + Formatare implicită, listă Auto-complete, Backup per proiect, Foldere speciale (șabloane, importuri, ciorne) |
 | [x] | 0.3 | Custom Metadata: valori per document în Inspector și coloane în Outline |
 | [x] | 0.3 | Section Types: definire, atribuire pe nivel (Folders/Containers/Files) și manual per document |
@@ -164,7 +164,7 @@ Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și docu
 | [x] | 0.2 | Snapshots: take, list, view, restore |
 | [x] | 0.2 | Snapshots: comparare cu textul curent |
 | [x] | 0.3 | Snapshots: comparare între două snapshot-uri, titlu editabil, ștergere, auto-snapshot la sync, snapshot pentru toate documentele selectate — comparare cu textul curent sau între două snapshot-uri, titlu editabil, ștergere (IPC snap:rename/snap:delete) |
-| [~] | 0.3 | Convert: Text to Folder / Folder to Text, To Default Formatting — Text ↔ Folder există; lipsește To Default Formatting |
+| [x] | 0.3 | Convert: Text to Folder / Folder to Text, To Default Formatting (Format → Paragraf) |
 | [x] | 0.3 | Auto-generate Synopsis from text — local din primele fraze (fără AI) și Sinopsis AI în bloc |
 | [x] | 0.3 | Lock Document (doar citire) |
 | [x] | 0.3 | Sort children (alfabetic, după dată) |

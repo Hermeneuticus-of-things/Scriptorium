@@ -81,6 +81,8 @@ contextBridge.exposeInMainWorld('api', {
   listGlobalFormats: () => call('io:listGlobalFormats'),
   saveGlobalFormats: (list) => call('io:saveGlobalFormats', list),
   syncAuto: (dir, project, event) => call('v04:syncAuto', dir, project, event),
+  listDictionaryWords: () => call('spell:listWords'),
+  removeDictionaryWord: (word) => call('spell:removeWord', word),
   runAi: (payload) => call('ai:run', payload),
   newWindow: () => call('window:new'),
   toggleFullScreen: (on) => call('window:fullScreen', on),

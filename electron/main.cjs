@@ -677,6 +677,10 @@ handle('snap:rename', (_e, dir, id, file, name) => {
   return true;
 });
 
+// Personal spelling dictionary (Options → Corrections).
+handle('spell:listWords', (e) => e.sender.session.listWordsInSpellCheckerDictionary());
+handle('spell:removeWord', (e, word) => e.sender.session.removeWordFromSpellCheckerDictionary(String(word)));
+
 handle('compile:preview', (_e, dir, project, options) => {
   assertOpened(dir);
   return compile.previewHtml(project, (id) => store.readDoc(dir, id), options);
