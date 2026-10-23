@@ -9,6 +9,7 @@ import { Highlight } from '@tiptap/extension-highlight';
 import { TextStyle, Color } from '@tiptap/extension-text-style';
 import { Superscript } from '@tiptap/extension-superscript';
 import { Subscript } from '@tiptap/extension-subscript';
+import { AutoComplete, CharStyle, ParagraphStyle, Revision, WritingFocus } from './writing.js';
 
 // Comment attached to a text range: <span data-comment="text" class="comment">…</span>
 export const Comment = Mark.create({
@@ -135,8 +136,13 @@ export const UnsupportedImage = Node.create({
   },
 });
 
-export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true } = {}) {
+export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [] } = {}) {
   const ext = [
+    ParagraphStyle,
+    CharStyle,
+    Revision,
+    WritingFocus,
+    AutoComplete.configure({ getWords }),
     StarterKit.configure({ link: { openOnClick: false, protocols: ['scribner', 'scriptorium'] } }),
     Placeholder.configure({ placeholder }),
     Comment,

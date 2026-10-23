@@ -297,3 +297,12 @@ legend { color: var(--muted); padding: 0 4px; }
 .prose ol, .prose ul { padding-left: 1.6em; }
 .prose pre { background: var(--panel); padding: 8px 12px; border-radius: 6px; font-size: .85em; white-space: pre-wrap; }
 .prose .selectedCell { background: var(--accent-soft); }
+.prose .revision { text-decoration: underline dotted; text-underline-offset: 3px; }
+.prose .faded { opacity: .28; transition: opacity .2s; }
+.prose .current-paragraph { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); border-radius: 4px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-soft) 55%, transparent); }
+.ghost-completion { color: var(--muted); opacity: .6; pointer-events: none; }
+.ghost-completion::after { content: ' ⇥'; font-size: .7em; }
+.page { zoom: var(--zoom, 1); }
+.page.page-view { max-width: 148mm; min-height: 210mm; padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+.page.invisibles .ProseMirror p::after, .page.invisibles .ProseMirror h1::after, .page.invisibles .ProseMirror h2::after, .page.invisibles .ProseMirror h3::after { content: '¶'; color: var(--muted); opacity: .5; margin-left: 2px; }
+.page.invisibles .ProseMirror br::after { content: '↵'; }

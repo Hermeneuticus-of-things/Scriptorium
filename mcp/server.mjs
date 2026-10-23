@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { findNode, findParent, flatten, insertNear, moveNode, moveToTrash, updateNode } from '../src/lib/tree.js';
 import { buildRegex, findInHtml, replaceInHtml } from '../src/lib/search.js';
 import { htmlToManuscript, lint, manuscriptToHtml, profileFor, reattach, summarize } from '../src/lib/editorial.js';
+import { styleCss, stylesOf } from '../src/lib/styles.js';
 
 const require = createRequire(import.meta.url);
 const store = require('../lib/store.cjs');
@@ -409,7 +410,9 @@ tool(
   async (dir, { format, output_path }) => {
     const p = load(dir);
     const read = (id) => store.readDoc(dir, id);
-    const data = format === 'docx' ? await compile.compileDocx(p, read) : format === 'epub' ? await compile.compileEpub(p, read) : compile.compileHtml(p, read);
+    const styles = stylesOf(p);
+    const opts = { styles, styleCss: styleCss(styles, 'body') };
+    const data = format === 'docx' ? await compile.compileDocx(p, read, opts) : format === 'epub' ? await compile.compileEpub(p, read, opts) : compile.compileHtml(p, read, opts);
     const out = output_path ? path.resolve(output_path) : path.join(path.dirname(dir), `${p.title.replace(/[<>:"/\\|?*]/g, '_')}.${format}`);
     fs.writeFileSync(out, data);
     return `Compilat: ${out}`;

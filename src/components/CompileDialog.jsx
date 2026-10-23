@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { styleCss, stylesOf } from '../lib/styles.js';
 
 const FORMATS = [
   ['docx', 'Word (.docx) — pentru editor'],
@@ -20,7 +21,8 @@ export default function CompileDialog({ api, dir, project, onProjectChange, onCl
     try {
       const next = author !== project.author ? { ...project, author } : project;
       if (next !== project) onProjectChange(next);
-      const file = await api.exportCompiled(dir, next, format, opts);
+      const styles = stylesOf(next);
+      const file = await api.exportCompiled(dir, next, format, { ...opts, styles, styleCss: styleCss(styles, 'body') });
       if (file) setDone(file);
     } catch (e) {
       onError(e);

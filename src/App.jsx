@@ -13,6 +13,8 @@ import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
+import { projectWords } from './editor/writing.js';
+import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import SettingsDialog from './components/SettingsDialog.jsx';
 import FindDialog from './components/FindDialog.jsx';
@@ -70,6 +72,21 @@ export default function App({ api }) {
   const [showAi, setShowAi] = useState(false);
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
+  const [editorView, setEditorViewState] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('scribner-editor-view')) || {};
+    } catch {
+      return {};
+    }
+  });
+  const setEditorView = (v) => {
+    setEditorViewState(v);
+    try {
+      localStorage.setItem('scribner-editor-view', JSON.stringify(v));
+    } catch {
+      /* not critical */
+    }
+  };
   const [splitId, setSplitId] = useState(null);
   const [dialog, setDialog] = useState(null);
   const [composition, setComposition] = useState(false);
@@ -428,6 +445,9 @@ export default function App({ api }) {
     if (created.length) go(created[0][0]);
   };
 
+  const words = useMemo(() => (project ? projectWords(project, docs) : []), [project, docs]);
+  const projectStyles = stylesOf(project);
+
   const allKeywords = useMemo(() => {
     const set = new Set();
     if (project) for (const n of flatten(project.tree)) (n.keywords || []).forEach((k) => set.add(k));
@@ -575,6 +595,7 @@ export default function App({ api }) {
 
   return (
     <div className={`app ${composition ? 'composition' : ''}`}>
+      <style>{styleCss(projectStyles)}</style>
       <header className="toolbar">
         <button onClick={closeProject} title="Închide proiectul">⌂</button>
         <button onClick={back} disabled={nav.index <= 0} title="Înapoi (Alt+←)">←</button>
@@ -635,6 +656,10 @@ export default function App({ api }) {
                 onChange={(html) => writeDocNow(selected.id, html)}
                 linkTargets={linkTargets}
                 onOpenLink={openLink}
+                words={words}
+                styles={projectStyles}
+                view={editorView}
+                onViewChange={setEditorView}
               />
             )}
             {isFolderView && (
@@ -698,6 +723,10 @@ export default function App({ api }) {
                   onChange={(html) => writeDocNow(splitNode.id, html)}
                   linkTargets={linkTargets}
                   onOpenLink={openLink}
+                  words={words}
+                  styles={projectStyles}
+                  view={editorView}
+                  onViewChange={setEditorView}
                 />
               )}
             </div>
