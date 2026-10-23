@@ -6,6 +6,7 @@ const store = require('../lib/store.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
 const compile = require('../lib/compile.cjs');
 const scriptExport = require('../lib/scriptExport.cjs');
+const editorPackage = require('../lib/editorPackage.cjs');
 const ai = require('../lib/ai.cjs');
 const backup = require('../lib/backup.cjs');
 const history = require('../lib/history.cjs');
@@ -577,6 +578,24 @@ handle('script:export', async (e, format, html, title) => {
   const data = ext === 'fdx' ? scriptExport.htmlToFdx(html, { title }) : scriptExport.htmlToFountain(html, { title });
   fs.writeFileSync(res.filePath, data, 'utf8');
   return res.filePath;
+});
+
+handle('editor:package', async (e, dir, project, options = {}) => {
+  assertOpened(dir);
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Unde creez pachetul PENTRU EDITOR?',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (res.canceled || !res.filePaths[0]) return null;
+  const pkg = await editorPackage.buildEditorPackage(
+    project,
+    (id) => store.readDoc(dir, id),
+    (id) => store.readDoc(dir, id, 'notes'),
+    res.filePaths[0],
+    { ...options, settings: readSettings(), readSnapshots: (id) => store.listSnapshots(dir, id) },
+  );
+  shell.openPath(pkg.dir);
+  return pkg;
 });
 
 handle('compile:preview', (_e, dir, project, options) => {

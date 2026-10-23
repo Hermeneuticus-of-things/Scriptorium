@@ -59,6 +59,23 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [edRules, setEdRules] = useState(project?.editorialProfile?.rules || {});
   const [edLimit, setEdLimit] = useState(project?.editorialProfile?.canvasWordLimit ?? 3000);
   const [mcp, setMcp] = useState(null);
+  // Editorial word lists, per profile (settings.editorialLists[profileId]).
+  const [edLists, setEdLists] = useState(() => {
+    const src = settings.editorialLists || {};
+    const out = {};
+    for (const id of ['karma', 'generic']) {
+      const l = src[id] || (src.forbidden || src.preferred ? src : {});
+      out[id] = {
+        forbidden: (l.forbidden || []).map((e) => `${e.word}${e.replacement ? ` => ${e.replacement}` : ''}${e.note ? ` # ${e.note}` : ''}`).join('\n'),
+        preferred: (l.preferred || []).map((e) => `${e.word}${e.replacement ? ` <= ${e.replacement}` : ''}${e.note ? ` # ${e.note}` : ''}`).join('\n'),
+        disabledWords: (l.disabledWords || []).join(', '),
+        builtins: { ...(l.builtins || {}) },
+      };
+    }
+    return out;
+  });
+  const edL = edLists[edBase] || edLists.karma;
+  const setEdL = (k, v) => setEdLists((all) => ({ ...all, [edBase]: { ...all[edBase], [k]: v } }));
 
   const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' ? Number(v) : d);
   const editRepl = (i, k, v) => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
@@ -83,6 +100,18 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         backupEveryMin: Number(s.backupEveryMin) || 0,
         backupKeep: Math.max(1, Number(s.backupKeep) || 10),
       };
+      const parseList = (txt, sep) =>
+        String(txt || '').split('\n').map((ln) => ln.trim()).filter(Boolean).map((ln) => {
+          const [main, ...note] = ln.split('#');
+          const [word, replacement] = main.split(sep).map((x) => (x || '').trim());
+          return { word, ...(replacement ? { replacement } : {}), ...(note.length ? { note: note.join('#').trim() } : {}) };
+        }).filter((e) => e.word);
+      patch.editorialLists = Object.fromEntries(Object.entries(edLists).map(([id, l]) => [id, {
+        forbidden: parseList(l.forbidden, '=>'),
+        preferred: parseList(l.preferred, '<='),
+        disabledWords: l.disabledWords.split(',').map((x) => x.trim()).filter(Boolean),
+        builtins: l.builtins,
+      }]));
       if (apiKey.trim()) patch.apiKey = apiKey.trim();
       await api.setSettings(patch);
       if (project) {
@@ -316,6 +345,34 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             </label>
           </fieldset>
         )}
+        <fieldset>
+          <legend>Editorial · liste de cuvinte (profil {edBase === 'generic' ? 'Generic' : 'Karma'})</legend>
+          <label>
+            Cuvinte interzise, câte unul pe rând: <code>cuvânt =&gt; înlocuire # notă</code>
+            <textarea rows={4} value={edL.forbidden} onChange={(e) => setEdL('forbidden', e.target.value)} placeholder={'gest => faptă\nurmă => depunere # P3'} />
+          </label>
+          <label>
+            Forme preferate: <code>formă preferată &lt;= variantă evitată, alta # notă</code>
+            <textarea rows={4} value={edL.preferred} onChange={(e) => setEdL('preferred', e.target.value)} placeholder={'rânduiala lumii <= logica internă'} />
+          </label>
+          <p className="muted small">Liste încorporate active:</p>
+          {[
+            ['bannedAcademic', 'Lexic academic'],
+            ['bannedTransitions', 'Tranziții P9'],
+            ['selfReference', 'Autoreferințe R7'],
+            ['llmResidue', 'Reziduuri LLM P3'],
+            ['passive', 'Pasive'],
+            ['teleology', 'Teleologie'],
+          ].map(([k, label]) => (
+            <label key={k} className="check">
+              <input type="checkbox" checked={edL.builtins[k] !== false} onChange={(e) => setEdL('builtins', { ...edL.builtins, [k]: e.target.checked })} /> {label}
+            </label>
+          ))}
+          <label>
+            Cuvinte încorporate dezactivate (separate prin virgulă)
+            <input value={edL.disabledWords} onChange={(e) => setEdL('disabledWords', e.target.value)} placeholder="astfel, mai sus" />
+          </label>
+        </fieldset>
         {api.mcpInfo && dir && (
           <fieldset>
             <legend>{t('set.mcp')}</legend>

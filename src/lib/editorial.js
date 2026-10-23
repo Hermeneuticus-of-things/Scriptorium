@@ -5,6 +5,8 @@
 // P1–P13, ALOGEN, DOOM III). Profiles are plain JSON stored in project.json, so a
 // different book can switch rules off or edit the word lists.
 
+import { canonContext, nodeIdFromTitle } from './canonIndex.js';
+
 export const SEVERITY = { GRAVE: 'GRAVE', MEDIU: 'MEDIU', MINOR: 'MINOR' };
 
 export const ROUNDS = [
@@ -91,11 +93,52 @@ export const GENERIC_PROFILE = {
 
 export const PROFILES = [KARMA_PROFILE, GENERIC_PROFILE];
 
-export function profileFor(project) {
+export function profileFor(project, settings) {
   const p = project && project.editorialProfile;
-  if (!p) return KARMA_PROFILE;
-  const base = PROFILES.find((x) => x.id === p.base) || KARMA_PROFILE;
-  return { ...base, ...p, rules: { ...base.rules, ...(p.rules || {}) } };
+  let out = KARMA_PROFILE;
+  if (p) {
+    const base = PROFILES.find((x) => x.id === p.base) || KARMA_PROFILE;
+    out = { ...base, ...p, id: base.id, rules: { ...base.rules, ...(p.rules || {}) } };
+  }
+  return settings && settings.editorialLists ? applyLists(out, settings.editorialLists) : out;
+}
+
+// ---------------------------------------------------------------------------
+// User word lists (Setări → Editorial). Stored in settings.editorialLists:
+//   { forbidden: [{word, replacement?, note?}], preferred: [{word, replacement?, note?}],
+//     builtins: {bannedAcademic: false, ...}, disabledWords: ['astfel'] }
+// either flat (applies to every profile) or per profile: { karma: {...}, generic: {...} }.
+// forbidden: `word` is flagged; `replacement` is the suggestion.
+// preferred: `word` is the form to use; `replacement` (or `instead`) lists the
+// variants to avoid (comma separated), which are flagged with `word` as suggestion.
+
+export const BUILTIN_LISTS = ['bannedAcademic', 'bannedTransitions', 'selfReference', 'llmResidue', 'passive', 'teleology'];
+
+export function listsFor(editorialLists, profileId) {
+  if (!editorialLists) return null;
+  const per = editorialLists[profileId];
+  if (per && typeof per === 'object' && !Array.isArray(per)) return per;
+  return editorialLists.forbidden || editorialLists.preferred || editorialLists.builtins || editorialLists.disabledWords ? editorialLists : null;
+}
+
+const cleanEntries = (arr) =>
+  (Array.isArray(arr) ? arr : [])
+    .map((e) => (typeof e === 'string' ? { word: e } : e))
+    .filter((e) => e && String(e.word || '').trim())
+    .map((e) => ({ word: String(e.word).trim(), replacement: e.replacement ? String(e.replacement).trim() : e.instead ? [].concat(e.instead).join(', ') : '', note: e.note ? String(e.note) : '' }));
+
+export function applyLists(profile, editorialLists) {
+  const l = listsFor(editorialLists, profile.id);
+  if (!l) return profile;
+  const off = new Set((l.disabledWords || []).map((w) => String(w).toLocaleLowerCase('ro').trim()));
+  const out = { ...profile, rules: { ...profile.rules } };
+  for (const k of BUILTIN_LISTS) {
+    if (l.builtins && l.builtins[k] === false) out[k] = [];
+    else out[k] = (profile[k] || []).filter((w) => !off.has(w.toLocaleLowerCase('ro')));
+  }
+  out.forbidden = cleanEntries(l.forbidden);
+  out.preferred = cleanEntries(l.preferred);
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -222,6 +265,17 @@ export function lint(html, ctx = {}) {
     while ((m = re.exec(p.plain))) add(round, rule, severity, `${msg}: „${m[1]}”`, p.idx, context(p.plain, m.index, m[0].length), { match: m[0] });
   };
 
+  // User lists: forbidden words and avoided variants of preferred words.
+  const userHits = [];
+  for (const e of profile.forbidden || []) userHits.push({ phrase: e.word, rule: 'forbidden', msg: `Cuvânt interzis${e.note ? ` (${e.note})` : ''}`, suggestion: e.replacement });
+  for (const e of profile.preferred || []) {
+    for (const v of (e.replacement || '').split(/[,;]/).map((x) => x.trim()).filter(Boolean)) {
+      userHits.push({ phrase: v, rule: 'preferred', msg: `Formă evitată, preferat „${e.word}”${e.note ? ` (${e.note})` : ''}`, suggestion: e.word });
+    }
+  }
+  const reUser = phraseRegex(userHits.map((h) => h.phrase));
+  const userMap = new Map(userHits.map((h) => [h.phrase.toLocaleLowerCase('ro').replace(/\s+/g, ' '), h]));
+
   let noiCount = 0;
   for (const p of bodyParas) {
     const t = p.plain;
@@ -253,6 +307,15 @@ export function lint(html, ctx = {}) {
     scan(reLlm, p, 'R9', 'llm', 'GRAVE', 'Reziduu LLM (P3)');
     scan(rePassive, p, 'R2', 'passive', 'MEDIU', 'Construcție pasivă / impersonală interzisă');
     scan(reTeleo, p, 'R3', 'teleology', 'MEDIU', 'Formulare teleologică (karma e cauzală, nu finalistă)');
+    if (reUser) {
+      reUser.lastIndex = 0;
+      let m;
+      while ((m = reUser.exec(t))) {
+        const h = userMap.get(m[1].toLocaleLowerCase('ro').replace(/\s+/g, ' '));
+        if (!h) continue;
+        add('R1c', h.rule, h.rule === 'forbidden' ? 'MEDIU' : 'MINOR', `${h.msg}: „${m[1]}”${h.suggestion ? ` → „${h.suggestion}”` : ''}`, p.idx, context(t, m.index, m[0].length), { match: m[0], ...(h.suggestion ? { suggestion: h.suggestion } : {}) });
+      }
+    }
     if (r.explicitNoi) {
       for (const m of t.matchAll(/(?<![\p{L}])noi(?![\p{L}])/giu)) {
         noiCount++;
@@ -349,6 +412,13 @@ export function lint(html, ctx = {}) {
     if (!last || !/^¹\s*Cap\.\s*\d+/.test(last.plain)) add('R0', 'canvasFooter', 'MEDIU', 'Ultima linie nu are nota canonică „¹ Cap. N / Subcap. N.N · Seg. … · ← anterior · → următor”', paras.length - 1, last ? last.plain.slice(0, 60) : '');
   }
 
+  // Canonical index (Index_de_Lucru): the document must have a node (R0/R1).
+  if (ctx.canon && ctx.canon.nodes && ctx.canon.nodes.length) {
+    const nid = ctx.canon.nodeId || nodeIdFromTitle(ctx.title);
+    if (!nid) add('R0', 'canonMissing', 'MINOR', 'Documentul nu are număr de nod (N.N.N) în titlu; nu poate fi poziționat în Index_de_Lucru', 0, ctx.title || '');
+    else if (!ctx.canon.nodes.some((x) => x.id === nid)) add('R0', 'canonMissing', 'MEDIU', `Nodul ${nid} nu există în Index_de_Lucru`, 0, ctx.title || '');
+  }
+
   // Attention decay: density of issues at the end vs the beginning
   if (r.attentionDecay && bodyParas.length >= 6) {
     const firstIdx = new Set(bodyParas.slice(0, 3).map((p) => p.idx));
@@ -408,7 +478,9 @@ export function systemPrompt(profile) {
     'Formatul textului: paragrafe separate prin rând gol; ***italic+bold*** exclusiv pentru sensul românesc ALOGEN; *italic* + „…” pentru ilustrații; [^text] pentru note de subsol. Păstrezi exact aceste marcaje și notele de subsol existente.',
     'Reguli permanente: fără em-dash, paranteze, două puncte structurale, bold stilistic, liste sau numerotare în corpul textului; fiecare paragraf începe cu majusculă; ghilimele „…”; fără construcții binare (negație urmată de „ci”/„dar”), rescrise afirmativ; fără pasive de tip „se observă”; maxim un „noi” explicit; tranziții de fond, nu de formă; fără autoreferințe la structură; mecanismul karmic este cauzal, nu finalist.',
     'Attention decay activ: ultimele paragrafe au aceeași calitate ca primele. P3 (sterilizator stil LLM) se aplică la final ca ultimă vamă.',
-  ].join('\n');
+    (profile.forbidden || []).length ? `Cuvinte interzise de autor: ${profile.forbidden.map((e) => (e.replacement ? `„${e.word}” → „${e.replacement}”` : `„${e.word}”`)).join('; ')}.` : '',
+    (profile.preferred || []).length ? `Forme preferate de autor: ${profile.preferred.map((e) => (e.replacement ? `„${e.word}” în loc de „${e.replacement}”` : `„${e.word}”`)).join('; ')}.` : '',
+  ].filter(Boolean).join('\n');
 }
 
 export function repairPrompt(manuscript, issues, level) {
@@ -440,6 +512,19 @@ export function roundPrompt(round, manuscript, context) {
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+/**
+ * Context for a round: R1 and R6 get the canonical index (Index_de_Lucru) for the
+ * document's node plus the chapter text (macro). Other rounds get nothing.
+ * opts: { chapterContext, canonNodes, nodeId, title }
+ */
+export function roundContext(round, opts = {}) {
+  const id = typeof round === 'string' ? round : round.id;
+  if (id !== 'R1' && id !== 'R6') return '';
+  const nid = opts.nodeId || nodeIdFromTitle(opts.title);
+  const canon = canonContext(opts.canonNodes, nid, id);
+  return [canon ? `<index_de_lucru>\n${canon}\n</index_de_lucru>` : '', opts.chapterContext || ''].filter(Boolean).join('\n\n');
 }
 
 // Strip accidental wrappers the model may add (<text>…</text>, ``` fences).
