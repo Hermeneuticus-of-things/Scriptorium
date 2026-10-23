@@ -68,4 +68,16 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('ai:progress', listener);
   },
   runAi: (payload) => call('ai:run', payload),
+  newWindow: () => call('window:new'),
+  releaseProject: () => call('project:release'),
+  exportBundle: (dir) => call('project:exportBundle', dir),
+  importBundle: () => call('project:importBundle'),
+  ragBuild: (dir) => call('rag:build', dir),
+  ragQuery: (dir, q, opts) => call('rag:query', dir, q, opts),
+  ragAsk: (dir, q, opts) => call('rag:ask', dir, q, opts),
+  onRagProgress: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('rag:progress', listener);
+    return () => ipcRenderer.removeListener('rag:progress', listener);
+  },
 });

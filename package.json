@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:web": "vite build --outDir dist-web",
     "start": "vite build && electron .",
     "test": "vitest run",
     "mcp": "node mcp/server.mjs",
