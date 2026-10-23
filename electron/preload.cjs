@@ -25,6 +25,12 @@ contextBridge.exposeInMainWorld('api', {
   mcpInfo: (dir) => call('mcp:info', dir),
   readStylesFromProject: () => call('styles:readFromProject'),
   addMediaFiles: (dir) => call('media:add', dir),
+  setAppMenu: (spec) => call('menu:set', spec),
+  onMenuCommand: (fn) => {
+    const listener = (_e, id) => fn(id);
+    ipcRenderer.on('menu:command', listener);
+    return () => ipcRenderer.removeListener('menu:command', listener);
+  },
   watchProject: (dir) => call('project:watch', dir),
   onProjectChanged: (fn) => {
     const listener = (_e, info) => fn(info);

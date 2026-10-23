@@ -177,6 +177,8 @@ handle('settings:get', () => {
     spellLanguages: s.spellLanguages || ['ro', 'en-US'],
     smartQuotes: s.smartQuotes !== false,
     aiEnabled: s.aiEnabled !== false,
+    shortcuts: s.shortcuts || {},
+    layouts: s.layouts || [],
     backupOnClose: b.backupOnClose,
     backupEveryMin: b.backupEveryMin,
     backupKeep: b.backupKeep,
@@ -313,6 +315,40 @@ handle('media:add', async (e, dir) => {
     const file = store.writeMedia(dir, id, ext, fs.readFileSync(src));
     return { id, title: path.basename(src).replace(/\.[^.]+$/, ''), media: { file, mime: store.mimeFor(file), name: path.basename(src) } };
   });
+});
+
+// Native application menu built from the renderer's command registry. Accelerators
+// are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
+handle('menu:set', (e, spec) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  const template = spec.map((menu) => ({
+    label: menu.label,
+    submenu: menu.items.map((it) =>
+      it === '-'
+        ? { type: 'separator' }
+        : {
+            label: it.label,
+            enabled: !it.disabled,
+            accelerator: it.key ? it.key.replace('↑', 'Up').replace('↓', 'Down').replace('←', 'Left').replace('→', 'Right').replace('Ctrl', 'CmdOrCtrl') : undefined,
+            registerAccelerator: false,
+            click: () => win && !win.isDestroyed() && win.webContents.send('menu:command', it.id),
+          },
+    ),
+  }));
+  template.push({
+    label: 'Ajutor',
+    submenu: [
+      { label: 'Despre Scribner', click: () => dialog.showMessageBox(win, { message: `Scribner ${app.getVersion()}`, detail: 'Program de scris pentru cărți lungi, inspirat de Scrivener 3.' }) },
+      { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools' },
+    ],
+  });
+  const menu = Menu.buildFromTemplate(template);
+  if (win) {
+    win.setMenu(menu);
+    win.setMenuBarVisibility(true);
+    win.autoHideMenuBar = false;
+  }
+  return true;
 });
 
 // Stylesheet import: read only the "styles" list of another project.
