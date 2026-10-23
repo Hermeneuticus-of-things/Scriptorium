@@ -534,10 +534,14 @@ export function roundContext(round, opts = {}) {
 
 // Strip accidental wrappers the model may add (<text>…</text>, ``` fences).
 export function cleanModelText(s) {
-  return String(s || '')
-    .replace(/^```[a-z]*\n?|```$/g, '')
-    .replace(/^\s*<text>\s*|\s*<\/text>\s*$/g, '')
-    .trim();
+  // Trim first, then anchor on the ends: /\s*<\/text>\s*$/ tried at every whitespace
+  // position is quadratic on long whitespace runs.
+  let t = String(s || '').trim().replace(/^```[a-z]*\n?/, '');
+  if (t.endsWith('```')) t = t.slice(0, -3);
+  t = t.trim().replace(/^<text>/, '');
+  t = t.trim();
+  if (t.endsWith('</text>')) t = t.slice(0, -7);
+  return t.trim();
 }
 
 // After an AI pass the text comes back as manuscript markdown, which cannot carry

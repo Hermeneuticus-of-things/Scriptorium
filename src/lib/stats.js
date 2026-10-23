@@ -70,7 +70,13 @@ export function htmlToPlain(html) {
   s = s.replace(/<\/?(p|div|h[1-6]|li|ul|ol|blockquote|pre|tr|table|section|article|hr)\b[^>]*>/gi, '\n');
   s = s.replace(/<[^>]+>/g, '');
   s = decodeEntities(s);
-  return s.replace(/[ \t ]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  // Trailing blanks per line, trimmed without a regex: /[ \t\u00a0]+\n/ is quadratic on long runs.
+  const lines = s.split('\n').map((l) => {
+    let e = l.length;
+    while (e > 0 && (l[e - 1] === ' ' || l[e - 1] === '\t' || l[e - 1] === '\u00a0')) e--;
+    return l.slice(0, e);
+  });
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 /**
