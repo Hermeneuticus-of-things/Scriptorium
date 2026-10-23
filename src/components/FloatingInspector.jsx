@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Notes } from './Inspector.jsx';
+import { t } from '../lib/i18n.js';
 
 // Floating Inspector for composition (full-screen) mode: a small draggable panel
 // with synopsis, document notes, label and status of the current document.
@@ -35,16 +36,16 @@ export default function FloatingInspector({ node, project, notesHtml = '', onPat
       <div className="fi-head" onMouseDown={down}>
         <strong>{node.title}</strong>
         <span className="spacer" />
-        <button onMouseDown={(e) => e.stopPropagation()} onClick={onClose} aria-label="Închide">×</button>
+        <button onMouseDown={(e) => e.stopPropagation()} onClick={onClose} aria-label={t('btn.close')}>×</button>
       </div>
       <div className="fields">
         <label>
-          Sinopsis
+          {t('ui.advancedSearchDialog.sinopsis')}
           <textarea key={`s-${node.id}`} rows={4} defaultValue={node.synopsis || ''} onBlur={(e) => e.target.value !== (node.synopsis || '') && onPatch({ synopsis: e.target.value })} />
         </label>
         <div className="row">
           <label>
-            Etichetă
+            {t('ui.binder.eticheta')}
             <select value={node.label || ''} onChange={(e) => onPatch({ label: e.target.value })}>
               {(project?.labels || []).map((l) => (
                 <option key={l.name}>{l.name}</option>
@@ -61,9 +62,9 @@ export default function FloatingInspector({ node, project, notesHtml = '', onPat
           </label>
         </div>
         <div className="fi-notes">
-          <span>Note document</span>
+          <span>{t('ui.floatingInspector.note_document')}</span>
           {onNotesChange ? (
-            <Notes key={`n-${node.id}`} initial={notesHtml} onChange={onNotesChange} placeholder="Note pentru document…" />
+            <Notes key={`n-${node.id}`} initial={notesHtml} onChange={onNotesChange} placeholder={t('ui.floatingInspector.note_pentru_document')} />
           ) : (
             <div className="notes prose" dangerouslySetInnerHTML={{ __html: notesHtml }} />
           )}

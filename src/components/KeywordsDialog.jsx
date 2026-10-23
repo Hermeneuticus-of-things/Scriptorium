@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { listKeywords, addKeyword, renameKeyword, deleteKeyword, setKeywordColor, setKeywordParent } from '../lib/collections.js';
+import { t } from '../lib/i18n.js';
 
 const CSS = `
 .kw-list { max-height: 55vh; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
@@ -51,7 +52,7 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
     const n = newName.trim();
     if (!n) return;
     if (keywords.some((k) => k.name === n)) {
-      window.alert(`Cuvântul cheie „${n}” există deja.`);
+      window.alert(t('ui.keywordsDialog.cuvantul_cheie_x_exista_deja', { n: n }));
       return;
     }
     setDraft(addKeyword(draft, n));
@@ -59,17 +60,17 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
   };
 
   const rename = (k) => {
-    const next = window.prompt('Nume nou pentru cuvântul cheie:', k.name);
+    const next = window.prompt(t('ui.keywordsDialog.nume_nou_pentru_cuvantul_cheie'), k.name);
     if (!next || !next.trim() || next.trim() === k.name) return;
     const target = next.trim();
-    if (keywords.some((x) => x.name === target) && !window.confirm(`„${target}” există deja. Unești cele două cuvinte cheie?`)) return;
+    if (keywords.some((x) => x.name === target) && !window.confirm(t('ui.keywordsDialog.x_exista_deja_unesti_cele', { target: target }))) return;
     setDraft(renameKeyword(draft, k.name, target));
   };
 
   const remove = (k) => {
     const msg = k.count
-      ? `Ștergi „${k.name}”? Va fi scos din ${k.count} ${k.count === 1 ? 'document' : 'documente'}.`
-      : `Ștergi „${k.name}”?`;
+      ? t('ui.keywordsDialog.stergi_x_va_fi_scos', { name: k.name, count: k.count, v2: k.count === 1 ? 'document' : t('ui.advancedSearchDialog.documente') })
+      : t('ui.keywordsDialog.stergi_x', { name: k.name });
     if (window.confirm(msg)) setDraft(deleteKeyword(draft, k.name));
   };
 
@@ -80,31 +81,31 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label="Cuvinte cheie" onClick={(e) => e.stopPropagation()}>
+      <div className="modal wide" role="dialog" aria-label={t('ui.advancedSearchDialog.cuvinte_cheie')} onClick={(e) => e.stopPropagation()}>
         <style>{CSS}</style>
-        <h2>Cuvinte cheie ale proiectului</h2>
+        <h2>{t('ui.keywordsDialog.cuvinte_cheie_ale_proiectului')}</h2>
         <div className="kw-add">
           <input
-            placeholder="Cuvânt cheie nou"
+            placeholder={t('ui.keywordsDialog.cuvant_cheie_nou')}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && add()}
-            aria-label="Cuvânt cheie nou"
+            aria-label={t('ui.keywordsDialog.cuvant_cheie_nou')}
           />
-          <button onClick={add} disabled={!newName.trim()}>Adaugă</button>
-          <input placeholder="Filtrează" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrează" />
+          <button onClick={add} disabled={!newName.trim()}>{t('btn.add')}</button>
+          <input placeholder={t('ui.keywordsDialog.filtreaza')} value={filter} onChange={(e) => setFilter(e.target.value)} aria-label={t('ui.keywordsDialog.filtreaza')} />
         </div>
         {keywords.length === 0 ? (
-          <p className="muted">Proiectul nu are încă niciun cuvânt cheie.</p>
+          <p className="muted">{t('ui.keywordsDialog.proiectul_nu_are_inca_niciun')}</p>
         ) : (
           <div className="kw-list">
             <table className="kw-table">
               <thead>
                 <tr>
-                  <th>Culoare</th>
-                  <th>Nume</th>
-                  <th>Părinte</th>
-                  <th className="kw-count">Utilizări</th>
+                  <th>{t('ui.collectionsBar.culoare')}</th>
+                  <th>{t('ui.keywordsDialog.nume')}</th>
+                  <th>{t('ui.keywordsDialog.parinte')}</th>
+                  <th className="kw-count">{t('ui.keywordsDialog.utilizari')}</th>
                   <th />
                 </tr>
               </thead>
@@ -116,7 +117,7 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
                         type="color"
                         value={k.color || '#cccccc'}
                         onChange={(e) => setDraft(setKeywordColor(draft, k.name, e.target.value))}
-                        aria-label={`Culoare pentru ${k.name}`}
+                        aria-label={t('ui.keywordsDialog.culoare_pentru_x', { name: k.name })}
                       />
                     </td>
                     <td>
@@ -129,7 +130,7 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
                       <select
                         value={k.parent || ''}
                         onChange={(e) => setDraft(setKeywordParent(draft, k.name, e.target.value || null))}
-                        aria-label={`Părinte pentru ${k.name}`}
+                        aria-label={t('ui.keywordsDialog.parinte_pentru_x', { name: k.name })}
                       >
                         <option value="">(niciunul)</option>
                         {keywords
@@ -144,9 +145,9 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
                     <td className="kw-count">{k.count}</td>
                     <td>
                       <div className="kw-row-actions">
-                        <button onClick={() => search(k.name)} disabled={!onSearchKeyword}>Caută</button>
-                        <button onClick={() => rename(k)}>Redenumește</button>
-                        <button onClick={() => remove(k)}>Șterge</button>
+                        <button onClick={() => search(k.name)} disabled={!onSearchKeyword}>{t('ui.advancedSearchDialog.cauta')}</button>
+                        <button onClick={() => rename(k)}>{t('set.binderDbl.rename')}</button>
+                        <button onClick={() => remove(k)}>{t('btn.delete')}</button>
                       </div>
                     </td>
                   </tr>
@@ -155,9 +156,9 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
             </table>
           </div>
         )}
-        <p className="muted">Redenumirea și ștergerea se aplică în toate documentele după ce salvezi.</p>
+        <p className="muted">{t('ui.keywordsDialog.redenumirea_si_stergerea_se_aplica')}</p>
         <div className="actions">
-          <button onClick={onClose}>Anulează</button>
+          <button onClick={onClose}>{t('btn.cancel')}</button>
           <button
             className="primary"
             disabled={!dirty}
@@ -166,7 +167,7 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
               onClose();
             }}
           >
-            Salvează
+            {t('btn.save')}
           </button>
         </div>
       </div>

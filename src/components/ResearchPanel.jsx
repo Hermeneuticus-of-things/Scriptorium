@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { citationParts } from '../lib/aiSession.js';
 import '../ai.css';
+import { t } from '../lib/i18n.js';
 
-const KINDS = [
-  ['', 'Tot proiectul'],
+const KINDS = () => ([
+  ['', t('ui.advancedSearchDialog.tot_proiectul')],
   ['docs', 'Manuscris'],
-  ['research', 'Cercetare'],
-  ['notes', 'Note'],
-];
+  ['research', t('ui.advancedSearchDialog.cercetare')],
+  ['notes', t('ui.advancedSearchDialog.note')],
+]);
 
 // NotebookLM-style research panel: local BM25 retrieval over the project (no AI),
 // optional answer from the chosen AI provider built only from the retrieved passages.
@@ -49,7 +50,7 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
     setAnswer('');
     setResults(await api.ragQuery(dir, q, { k: 10, kinds: kind ? [kind] : undefined }));
   });
-  const ask = wrap(`${aiLabel || 'Modelul AI'} formulează răspunsul…`, async () => {
+  const ask = wrap(t('ui.researchPanel.x_formuleaza_raspunsul', { v0: aiLabel || 'Modelul AI' }), async () => {
     if (!q.trim()) return;
     setAnswer('');
     const res = await api.ragAsk(dir, q, { k: 6 });
@@ -75,17 +76,17 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
   if (!supported) {
     return (
       <aside className="ai-panel research-panel">
-        <h3>Cercetare (RAG)</h3>
-        <p className="muted">Căutarea în proiect cu index local funcționează în aplicația desktop.</p>
-        {onClose && <button onClick={onClose}>Închide</button>}
+        <h3>{t('ui.researchPanel.cercetare_rag')}</h3>
+        <p className="muted">{t('ui.researchPanel.cautarea_in_proiect_cu_index')}</p>
+        {onClose && <button onClick={onClose}>{t('btn.close')}</button>}
       </aside>
     );
   }
 
   return (
     <aside className="ai-panel research-panel">
-      <h3>Cercetare în proiect</h3>
-      <p className="muted">Caută pasaje în manuscris, note și cercetare. Indexul e local; AI-ul e opțional.</p>
+      <h3>{t('ui.researchPanel.cercetare_in_proiect')}</h3>
+      <p className="muted">{t('ui.researchPanel.cauta_pasaje_in_manuscris_note')}</p>
       <form
         onKeyDown={(e) => {
           if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && aiEnabled && api.ragAsk) {
@@ -100,7 +101,7 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
       >
         <input type="search" value={q} placeholder="Ex.: culoarea ochilor lui Andrei" onChange={(e) => setQ(e.target.value)} autoFocus />
         <select value={kind} onChange={(e) => setKind(e.target.value)}>
-          {KINDS.map(([v, l]) => (
+          {KINDS().map(([v, l]) => (
             <option key={v} value={v}>
               {l}
             </option>
@@ -109,22 +110,22 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
       </form>
       <div className="ai-actions">
         <button onClick={search} disabled={Boolean(busy) || !q.trim()}>
-          Caută
+          {t('ui.advancedSearchDialog.cauta')}
         </button>
         {aiEnabled && api.ragAsk && (
           <button onClick={ask} disabled={Boolean(busy) || !q.trim()}>
-            Întreabă AI-ul
+            {t('ui.researchPanel.intreaba_ai_ul')}
           </button>
         )}
-        <button onClick={rebuild} disabled={Boolean(busy)} title="Reconstruiește indexul după modificări mari">
-          Reindexează
+        <button onClick={rebuild} disabled={Boolean(busy)} title={t('ui.researchPanel.reconstruieste_indexul_dupa_modificari_mari')}>
+          {t('ui.researchPanel.reindexeaza')}
         </button>
-        {onClose && <button onClick={onClose}>Închide</button>}
+        {onClose && <button onClick={onClose}>{t('btn.close')}</button>}
       </div>
       {busy && (
         <p className="muted">
           {busy}{' '}
-          {asking && api.cancelAi && <button className="link" onClick={() => api.cancelAi().catch(() => {})}>Anulează (Esc)</button>}
+          {asking && api.cancelAi && <button className="link" onClick={() => api.cancelAi().catch(() => {})}>{t('ui.aiPanel.anuleaza_esc')}</button>}
         </p>
       )}
       {progress && !progress.done && progress.total > 0 && <progress max={progress.total} value={progress.done} />}
@@ -132,12 +133,12 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
       {error && (
         <div className="ai-error" role="alert">
           <span>{error.message}</span>
-          {error.retry && <button className="link" onClick={error.retry}>Reîncearcă</button>}
+          {error.retry && <button className="link" onClick={error.retry}>{t('ui.aiPanel.reincearca')}</button>}
         </div>
       )}
       {answer && (
         <div className="ai-result">
-          <h4>Răspuns{aiLabel ? <span className="muted small"> · {aiLabel}</span> : null}</h4>
+          <h4>{t('ui.researchPanel.raspuns')}{aiLabel ? <span className="muted small"> · {aiLabel}</span> : null}</h4>
           <div style={{ whiteSpace: 'pre-wrap' }}>
             {citationParts(answer, results.length).map((p, i) =>
               p.cite ? (
@@ -154,7 +155,7 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
           {results.map((r, i) => (
             <li key={`${r.kind}:${r.docId}:${r.chunk}:${i}`}>
               <button className="link" onClick={() => onOpen && onOpen(r.docId, r)}>
-                [{i + 1}] {r.title || 'Fără titlu'}
+                [{i + 1}] {r.title || t('ui.app.fara_titlu')}
               </button>{' '}
               <span className="muted">
                 {r.kind === 'notes' ? 'note' : r.kind === 'research' ? 'cercetare' : 'manuscris'} · {r.score}
@@ -164,7 +165,7 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
           ))}
         </ol>
       )}
-      {!busy && q && results.length === 0 && !error && <p className="muted">Niciun rezultat încă. Apasă Caută.</p>}
+      {!busy && q && results.length === 0 && !error && <p className="muted">{t('ui.researchPanel.niciun_rezultat_inca_apasa_cauta')}</p>}
     </aside>
   );
 }

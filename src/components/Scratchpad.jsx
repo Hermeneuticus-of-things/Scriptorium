@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { noteToDocument } from '../lib/panelsExtra.js';
+import { t } from '../lib/i18n.js';
 
 /**
  * Floating scratchpad (notes independent of the project).
@@ -30,7 +31,7 @@ export default function Scratchpad({ load, save, onClose, onSendToProject }) {
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const add = () => {
-    const n = { id: `n${Date.now().toString(36)}`, title: 'Notă nouă', text: '', updated: Date.now() };
+    const n = { id: `n${Date.now().toString(36)}`, title: t('ui.scratchpad.nota_noua'), text: '', updated: Date.now() };
     persist([n, ...notes]);
     setSel(n.id);
   };
@@ -59,30 +60,30 @@ export default function Scratchpad({ load, save, onClose, onSendToProject }) {
       <div onMouseDown={onDown} style={{ cursor: 'move', padding: '4px 8px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border, #ccc)' }}>
         <strong>Ciorne (Scratchpad)</strong>
         <span>
-          <button onClick={add} title="Notă nouă">+</button>
+          <button onClick={add} title={t('ui.scratchpad.nota_noua')}>+</button>
           {onSendToProject && (
-            <button disabled={!cur} onClick={() => cur && onSendToProject(noteToDocument(cur), cur)} title="Trimite nota în proiect ca document nou">⇪ În proiect</button>
+            <button disabled={!cur} onClick={() => cur && onSendToProject(noteToDocument(cur), cur)} title={t('ui.scratchpad.trimite_nota_in_proiect_ca')}>{t('ui.scratchpad.in_proiect')}</button>
           )}
-          <button onClick={onClose} title="Închide">×</button>
+          <button onClick={onClose} title={t('btn.close')}>×</button>
         </span>
       </div>
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <ul style={{ width: 160, margin: 0, padding: 0, listStyle: 'none', overflow: 'auto', borderRight: '1px solid var(--border, #ccc)' }}>
           {notes.map((n) => (
             <li key={n.id} onClick={() => setSel(n.id)} style={{ padding: '4px 6px', cursor: 'pointer', background: n.id === sel ? 'var(--selection, #dde8ff)' : undefined, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title || 'Fără titlu'}</span>
-              <button onClick={(e) => { e.stopPropagation(); if (confirm('Ștergi nota?')) remove(n.id); }} title="Șterge">🗑</button>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title || t('ui.app.fara_titlu')}</span>
+              <button onClick={(e) => { e.stopPropagation(); if (confirm(t('ui.scratchpad.stergi_nota'))) remove(n.id); }} title={t('btn.delete')}>🗑</button>
             </li>
           ))}
-          {!notes.length && <li style={{ padding: 6, opacity: 0.6 }}>Nicio notă</li>}
+          {!notes.length && <li style={{ padding: 6, opacity: 0.6 }}>{t('ui.scratchpad.nicio_nota')}</li>}
         </ul>
         {cur ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <input value={cur.title} onChange={(e) => edit({ title: e.target.value })} placeholder="Titlu" style={{ border: 0, padding: 6, fontWeight: 'bold' }} />
-            <textarea value={cur.text} onChange={(e) => edit({ text: e.target.value })} placeholder="Scrie aici…" style={{ flex: 1, border: 0, padding: 6, resize: 'none' }} />
+            <input value={cur.title} onChange={(e) => edit({ title: e.target.value })} placeholder={t('ui.advancedSearchDialog.titlu')} style={{ border: 0, padding: 6, fontWeight: 'bold' }} />
+            <textarea value={cur.text} onChange={(e) => edit({ text: e.target.value })} placeholder={t('ui.scratchpad.scrie_aici')} style={{ flex: 1, border: 0, padding: 6, resize: 'none' }} />
           </div>
         ) : (
-          <div style={{ flex: 1, display: 'grid', placeItems: 'center' }}><button onClick={add}>Notă nouă</button></div>
+          <div style={{ flex: 1, display: 'grid', placeItems: 'center' }}><button onClick={add}>{t('ui.scratchpad.nota_noua')}</button></div>
         )}
       </div>
     </div>

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { NONE, FIELD_TYPES, makeDraft, applyProjectSettings, validateDraft, moveItem } from '../lib/projectSettings.js';
+import { t as tr } from '../lib/i18n.js';
 
-const TABS = [
-  ['proiect', 'Proiect'],
-  ['etichete', 'Etichete'],
-  ['statusuri', 'Statusuri'],
+const TABS = () => ([
+  ['proiect', tr('group.project')],
+  ['etichete', tr('ui.advancedSearchDialog.etichete')],
+  ['statusuri', tr('ui.projectSettingsDialog.statusuri')],
   ['metadate', 'Metadate'],
-  ['sectiuni', 'Tipuri de secțiune'],
-  ['formatare', 'Formatare implicită'],
+  ['sectiuni', tr('ui.projectSettingsDialog.tipuri_de_sectiune')],
+  ['formatare', tr('ui.projectSettingsDialog.formatare_implicita')],
   ['autocomplete', 'Auto-completare'],
   ['backup', 'Backup'],
   ['foldere', 'Foldere speciale'],
-];
+]);
 const FONTS = ['', 'Georgia, serif', "'Times New Roman', serif", "'Palatino Linotype', Palatino, serif", 'Garamond, serif', 'Arial, sans-serif', "'Courier New', monospace"];
 
 // Extra project settings kept outside lib/projectSettings.js (merged on save).
@@ -28,12 +29,12 @@ function makeExtras(project) {
 }
 const numOrNull = (v) => (v === '' || v == null || !Number.isFinite(Number(v)) ? null : Number(v));
 
-const TYPE_NAMES = { text: 'Text', checkbox: 'Bifă', list: 'Listă', date: 'Dată' };
-const LEVELS = [
-  ['folders', 'Dosare'],
-  ['containers', 'Documente cu subdocumente'],
-  ['files', 'Documente text'],
-];
+const TYPE_NAMES = () => ({ text: 'Text', checkbox: tr('ui.projectSettingsDialog.bifa'), list: tr('ui.projectSettingsDialog.lista'), date: tr('ui.projectSettingsDialog.data') });
+const LEVELS = () => ([
+  ['folders', tr('ui.compileDialog.dosare')],
+  ['containers', tr('ui.compileDialog.documente_cu_subdocumente')],
+  ['files', tr('ui.projectSettingsDialog.documente_text')],
+]);
 
 const CSS = `
 .ps-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid rgba(128,128,128,.3); padding-bottom: 6px; }
@@ -51,8 +52,8 @@ function Reorder({ i, n, pinFirst, onMove }) {
   const lo = pinFirst ? 1 : 0;
   return (
     <>
-      <button type="button" title="Mută în sus" disabled={i <= lo} onClick={() => onMove(i, -1)}>↑</button>
-      <button type="button" title="Mută în jos" disabled={i < lo || i >= n - 1} onClick={() => onMove(i, 1)}>↓</button>
+      <button type="button" title={tr('ui.projectSettingsDialog.muta_in_sus')} disabled={i <= lo} onClick={() => onMove(i, -1)}>↑</button>
+      <button type="button" title={tr('ui.projectSettingsDialog.muta_in_jos')} disabled={i < lo || i >= n - 1} onClick={() => onMove(i, 1)}>↓</button>
     </>
   );
 }
@@ -99,22 +100,22 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
           <input
             value={it.name}
             disabled={i === 0 && it.name === NONE}
-            aria-label="Nume"
+            aria-label={tr('ui.keywordsDialog.nume')}
             onChange={(e) => patchAt(key, i, { name: e.target.value })}
           />
           {withColor && (
             <>
-              <input type="color" value={it.color || '#000000'} disabled={i === 0} aria-label="Culoare" onChange={(e) => patchAt(key, i, { color: e.target.value })} />
-              <button type="button" title="Fără culoare" disabled={i === 0 || !it.color} onClick={() => patchAt(key, i, { color: '' })}>∅</button>
+              <input type="color" value={it.color || '#000000'} disabled={i === 0} aria-label={tr('ui.collectionsBar.culoare')} onChange={(e) => patchAt(key, i, { color: e.target.value })} />
+              <button type="button" title={tr('ui.collectionsBar.fara_culoare')} disabled={i === 0 || !it.color} onClick={() => patchAt(key, i, { color: '' })}>∅</button>
             </>
           )}
           <Reorder i={i} n={d[key].length} pinFirst onMove={move(key, true)} />
           <button
             type="button"
-            title="Șterge"
+            title={tr('btn.delete')}
             disabled={i === 0}
             onClick={() => {
-              if (it.orig && !window.confirm(`Ștergi „${it.name}”? Documentele care îl folosesc vor primi „${NONE}”.`)) return;
+              if (it.orig && !window.confirm(tr('ui.projectSettingsDialog.stergi_x_documentele_care_il', { name: it.name, NONE: NONE }))) return;
               removeAt(key, i);
             }}
           >
@@ -137,26 +138,26 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
   const addField = () =>
     setList('customFields', (arr) => {
       const titles = new Set(arr.map((x) => x.title));
-      let title = 'Câmp nou';
-      for (let k = 2; titles.has(title); k++) title = `Câmp nou ${k}`;
+      let title = tr('ui.projectSettingsDialog.camp_nou');
+      for (let k = 2; titles.has(title); k++) title = tr('ui.projectSettingsDialog.camp_nou_x', { k: k });
       return [...arr, { id: '', title, type: 'text', options: [], default: '', wraps: false, orig: null }];
     });
 
   const addSectionType = () =>
     setList('sectionTypes', (arr) => {
       const titles = new Set(arr.map((x) => x.title));
-      let title = 'Tip nou';
-      for (let k = 2; titles.has(title); k++) title = `Tip nou ${k}`;
+      let title = tr('ui.projectSettingsDialog.tip_nou');
+      for (let k = 2; titles.has(title); k++) title = tr('ui.projectSettingsDialog.tip_nou_x', { k: k });
       return [...arr, { id: '', title, orig: null }];
     });
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide ps-dialog" role="dialog" aria-label="Setările proiectului" onClick={(e) => e.stopPropagation()}>
+      <div className="modal wide ps-dialog" role="dialog" aria-label={tr('ui.projectSettingsDialog.setarile_proiectului')} onClick={(e) => e.stopPropagation()}>
         <style>{CSS}</style>
-        <h2>Setările proiectului</h2>
+        <h2>{tr('ui.projectSettingsDialog.setarile_proiectului')}</h2>
         <div className="ps-tabs" role="tablist">
-          {TABS.map(([id, label]) => (
+          {TABS().map(([id, label]) => (
             <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>
               {label}
             </button>
@@ -166,11 +167,11 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         {tab === 'proiect' && (
           <div className="fields">
             <label>
-              Titlu
+              {tr('ui.advancedSearchDialog.titlu')}
               <input value={d.title} onChange={(e) => set({ title: e.target.value })} />
             </label>
             <label>
-              Titlu prescurtat
+              {tr('ui.projectSettingsDialog.titlu_prescurtat')}
               <input value={d.titleAbbreviation} onChange={(e) => set({ titleAbbreviation: e.target.value })} />
             </label>
             <div className="row">
@@ -179,16 +180,16 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                 <input value={d.authorFirst} onChange={(e) => set({ authorFirst: e.target.value })} />
               </label>
               <label>
-                Nume autor
+                {tr('ui.projectSettingsDialog.nume_autor')}
                 <input value={d.authorLast} onChange={(e) => set({ authorLast: e.target.value })} />
               </label>
             </div>
             <label>
-              Nume complet autor
+              {tr('ui.projectSettingsDialog.nume_complet_autor')}
               <input value={d.author} onChange={(e) => set({ author: e.target.value })} />
             </label>
             <div>
-              <button type="button" onClick={fullFromParts}>Completează din prenume și nume</button>
+              <button type="button" onClick={fullFromParts}>{tr('ui.projectSettingsDialog.completeaza_din_prenume_si_nume')}</button>
             </div>
           </div>
         )}
@@ -196,56 +197,56 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         {tab === 'etichete' && (
           <div className="fields">
             <label>
-              Titlul coloanei
+              {tr('ui.projectSettingsDialog.titlul_coloanei')}
               <input value={d.labelTitle} onChange={(e) => set({ labelTitle: e.target.value })} />
             </label>
             {renderSimpleList('labels', true)}
             <div>
-              <button type="button" onClick={() => addNamed('labels', 'Etichetă nouă', { color: '#888888' })}>Adaugă etichetă</button>
+              <button type="button" onClick={() => addNamed('labels', tr('ui.projectSettingsDialog.eticheta_noua'), { color: '#888888' })}>{tr('ui.projectSettingsDialog.adauga_eticheta')}</button>
             </div>
-            <p className="muted">Eticheta „{NONE}” rămâne prima și nu poate fi ștearsă.</p>
+            <p className="muted">{tr('ui.projectSettingsDialog.eticheta')}{NONE}{tr('ui.projectSettingsDialog.ramane_prima_si_nu_poate')}</p>
           </div>
         )}
 
         {tab === 'statusuri' && (
           <div className="fields">
             <label>
-              Titlul coloanei
+              {tr('ui.projectSettingsDialog.titlul_coloanei')}
               <input value={d.statusTitle} onChange={(e) => set({ statusTitle: e.target.value })} />
             </label>
             {renderSimpleList('statuses', false)}
             <div>
-              <button type="button" onClick={() => addNamed('statuses', 'Status nou')}>Adaugă status</button>
+              <button type="button" onClick={() => addNamed('statuses', tr('ui.projectSettingsDialog.status_nou'))}>{tr('ui.projectSettingsDialog.adauga_status')}</button>
             </div>
-            <p className="muted">Statusul „{NONE}” rămâne primul și nu poate fi șters.</p>
+            <p className="muted">Statusul „{NONE}{tr('ui.projectSettingsDialog.ramane_primul_si_nu_poate')}</p>
           </div>
         )}
 
         {tab === 'metadate' && (
           <div className="fields">
-            {d.customFields.length === 0 && <p className="muted">Nu există câmpuri de metadate personalizate.</p>}
+            {d.customFields.length === 0 && <p className="muted">{tr('ui.projectSettingsDialog.nu_exista_campuri_de_metadate')}</p>}
             {d.customFields.map((f, i) => (
               <div key={i} className="ps-field">
                 <div className="row">
                   <label>
-                    Titlu
+                    {tr('ui.advancedSearchDialog.titlu')}
                     <input value={f.title} onChange={(e) => fieldPatch(i, { title: e.target.value })} />
                   </label>
                   <label>
-                    Tip
+                    {tr('ui.projectSettingsDialog.tip')}
                     <select
                       value={f.type}
                       onChange={(e) => fieldPatch(i, { type: e.target.value, default: e.target.value === 'checkbox' ? false : '' })}
                     >
                       {FIELD_TYPES.map((t) => (
-                        <option key={t} value={t}>{TYPE_NAMES[t]}</option>
+                        <option key={t} value={t}>{TYPE_NAMES()[t]}</option>
                       ))}
                     </select>
                   </label>
                 </div>
                 <div className="row">
                   <label>
-                    Valoare implicită
+                    {tr('ui.projectSettingsDialog.valoare_implicita')}
                     {f.type === 'checkbox' ? (
                       <input type="checkbox" checked={f.default === true} onChange={(e) => fieldPatch(i, { default: e.target.checked })} />
                     ) : f.type === 'list' ? (
@@ -262,26 +263,26 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                 </div>
                 {f.type === 'text' && (
                   <label className="check">
-                    <input type="checkbox" checked={Boolean(f.wraps)} onChange={(e) => fieldPatch(i, { wraps: e.target.checked })} /> Text pe mai multe rânduri
+                    <input type="checkbox" checked={Boolean(f.wraps)} onChange={(e) => fieldPatch(i, { wraps: e.target.checked })} /> {tr('ui.projectSettingsDialog.text_pe_mai_multe_randuri')}
                   </label>
                 )}
                 {f.type === 'list' && (
                   <div className="ps-opts">
-                    <span className="muted">Opțiuni</span>
+                    <span className="muted">{tr('ui.projectSettingsDialog.optiuni')}</span>
                     <ul className="ps-list">
                       {f.options.map((o, k) => (
                         <li key={k} className="ps-item">
                           <input
                             value={o.title}
-                            aria-label="Opțiune"
+                            aria-label={tr('ui.projectSettingsDialog.optiune')}
                             onChange={(e) => fieldPatch(i, { options: f.options.map((x, j) => (j === k ? { ...x, title: e.target.value } : x)) })}
                           />
                           <Reorder i={k} n={f.options.length} onMove={(k2, dl) => fieldPatch(i, { options: moveItem(f.options, k2, dl) })} />
-                          <button type="button" title="Șterge opțiunea" onClick={() => fieldPatch(i, { options: f.options.filter((_, j) => j !== k) })}>✕</button>
+                          <button type="button" title={tr('ui.projectSettingsDialog.sterge_optiunea')} onClick={() => fieldPatch(i, { options: f.options.filter((_, j) => j !== k) })}>✕</button>
                         </li>
                       ))}
                     </ul>
-                    <button type="button" onClick={() => fieldPatch(i, { options: [...f.options, { id: '', title: 'Opțiune nouă' }] })}>Adaugă opțiune</button>
+                    <button type="button" onClick={() => fieldPatch(i, { options: [...f.options, { id: '', title: tr('ui.projectSettingsDialog.optiune_noua') }] })}>{tr('ui.projectSettingsDialog.adauga_optiune')}</button>
                   </div>
                 )}
                 <div className="ps-item">
@@ -289,17 +290,17 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                   <button
                     type="button"
                     onClick={() => {
-                      if (f.orig && !window.confirm(`Ștergi câmpul „${f.title}”? Valorile lui din toate documentele se vor pierde.`)) return;
+                      if (f.orig && !window.confirm(tr('ui.projectSettingsDialog.stergi_campul_x_valorile_lui', { title: f.title }))) return;
                       removeAt('customFields', i);
                     }}
                   >
-                    Șterge câmpul
+                    {tr('ui.projectSettingsDialog.sterge_campul')}
                   </button>
                 </div>
               </div>
             ))}
             <div>
-              <button type="button" onClick={addField}>Adaugă câmp</button>
+              <button type="button" onClick={addField}>{tr('ui.projectSettingsDialog.adauga_camp')}</button>
             </div>
           </div>
         )}
@@ -309,13 +310,13 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             <ul className="ps-list">
               {d.sectionTypes.map((t, i) => (
                 <li key={i} className="ps-item">
-                  <input value={t.title} aria-label="Titlu" onChange={(e) => patchAt('sectionTypes', i, { title: e.target.value })} />
+                  <input value={t.title} aria-label={tr('ui.advancedSearchDialog.titlu')} onChange={(e) => patchAt('sectionTypes', i, { title: e.target.value })} />
                   <Reorder i={i} n={d.sectionTypes.length} onMove={move('sectionTypes', false)} />
                   <button
                     type="button"
-                    title="Șterge"
+                    title={tr('btn.delete')}
                     onClick={() => {
-                      if (t.orig && !window.confirm(`Ștergi tipul de secțiune „${t.title}”?`)) return;
+                      if (t.orig && !window.confirm(tr('ui.projectSettingsDialog.stergi_tipul_de_sectiune_x', { title: t.title }))) return;
                       const removedId = t.id;
                       setD((x) => ({
                         ...x,
@@ -332,11 +333,11 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               ))}
             </ul>
             <div>
-              <button type="button" onClick={addSectionType}>Adaugă tip de secțiune</button>
+              <button type="button" onClick={addSectionType}>{tr('ui.projectSettingsDialog.adauga_tip_de_sectiune')}</button>
             </div>
-            <h3>Tip implicit după nivel</h3>
-            {d.sectionTypes.some((t) => !t.id) && <p className="muted">Tipurile noi pot fi alese ca implicite după salvare.</p>}
-            {LEVELS.map(([k, label]) => (
+            <h3>{tr('ui.projectSettingsDialog.tip_implicit_dupa_nivel')}</h3>
+            {d.sectionTypes.some((t) => !t.id) && <p className="muted">{tr('ui.projectSettingsDialog.tipurile_noi_pot_fi_alese')}</p>}
+            {LEVELS().map(([k, label]) => (
               <label key={k}>
                 {label}
                 <select
@@ -356,7 +357,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         {tab === 'foldere' && (
           <div className="fields">
             <label>
-              Dosar cu șabloane de documente
+              {tr('ui.projectSettingsDialog.dosar_cu_sabloane_de_documente')}
               <select value={d.templateFolder || ''} onChange={(e) => set({ templateFolder: e.target.value || null })}>
                 <option value="">(niciunul)</option>
                 {(folders || []).map((f) => (
@@ -364,16 +365,16 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                 ))}
               </select>
             </label>
-            <p className="muted">Documentele din acest dosar apar ca modele la crearea unui document nou.</p>
+            <p className="muted">{tr('ui.projectSettingsDialog.documentele_din_acest_dosar_apar')}</p>
             <label>
-              Dosar pentru importuri
+              {tr('ui.projectSettingsDialog.dosar_pentru_importuri')}
               <select value={x.importFolder || ''} onChange={(e) => setX((o) => ({ ...o, importFolder: e.target.value || null }))}>
                 <option value="">(Cercetare)</option>
                 {(folders || []).map((f) => <option key={f.id} value={f.id}>{f.path || f.title}</option>)}
               </select>
             </label>
             <label>
-              Dosar pentru notele trimise din Ciorne
+              {tr('ui.projectSettingsDialog.dosar_pentru_notele_trimise_din')}
               <select value={x.inboxFolder || ''} onChange={(e) => setX((o) => ({ ...o, inboxFolder: e.target.value || null }))}>
                 <option value="">(Cercetare)</option>
                 {(folders || []).map((f) => <option key={f.id} value={f.id}>{f.path || f.title}</option>)}
@@ -384,23 +385,23 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
 
         {tab === 'formatare' && (
           <div className="fields">
-            <p className="muted">Formatarea folosită pentru documentele noi din acest proiect (gol = setările aplicației).</p>
+            <p className="muted">{tr('ui.projectSettingsDialog.formatarea_folosita_pentru_documentele_noi')}</p>
             <label>
               Font
               <select value={x.defaultFormatting.font} onChange={(e) => setFmt({ font: e.target.value })}>
-                {FONTS.map((f) => <option key={f} value={f}>{f ? f.split(',')[0].replace(/'/g, '') : '(din Opțiuni)'}</option>)}
+                {FONTS.map((f) => <option key={f} value={f}>{f ? f.split(',')[0].replace(/'/g, '') : tr('ui.projectSettingsDialog.din_optiuni')}</option>)}
               </select>
             </label>
             <div className="row">
-              <label>Mărime (px)<input type="number" min="8" max="48" value={x.defaultFormatting.size} onChange={(e) => setFmt({ size: e.target.value })} /></label>
-              <label>Spațiere rânduri<input type="number" min="1" max="3" step="0.1" value={x.defaultFormatting.lineHeight} onChange={(e) => setFmt({ lineHeight: e.target.value })} /></label>
+              <label>{tr('ui.projectSettingsDialog.marime_px')}<input type="number" min="8" max="48" value={x.defaultFormatting.size} onChange={(e) => setFmt({ size: e.target.value })} /></label>
+              <label>{tr('ui.compileDialog.spatiere_randuri')}<input type="number" min="1" max="3" step="0.1" value={x.defaultFormatting.lineHeight} onChange={(e) => setFmt({ lineHeight: e.target.value })} /></label>
             </div>
             <div className="row">
               <label>Indent prima linie (em)<input type="number" min="0" max="5" step="0.5" value={x.defaultFormatting.firstIndent} onChange={(e) => setFmt({ firstIndent: e.target.value })} /></label>
-              <label>Spațiu după paragraf (em)<input type="number" min="0" max="3" step="0.1" value={x.defaultFormatting.spacing} onChange={(e) => setFmt({ spacing: e.target.value })} /></label>
+              <label>{tr('set.paraSpacing')}<input type="number" min="0" max="3" step="0.1" value={x.defaultFormatting.spacing} onChange={(e) => setFmt({ spacing: e.target.value })} /></label>
             </div>
             <p className="pdx-format-sample" style={{ fontFamily: x.defaultFormatting.font || undefined, fontSize: numOrNull(x.defaultFormatting.size) || undefined, lineHeight: numOrNull(x.defaultFormatting.lineHeight) || undefined, textIndent: `${numOrNull(x.defaultFormatting.firstIndent) || 0}em` }}>
-              Așa va arăta textul documentelor noi. Cuvintele curg pe pagină în ritmul ales.
+              {tr('ui.projectSettingsDialog.asa_va_arata_textul_documentelor')}
             </p>
           </div>
         )}
@@ -408,29 +409,29 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         {tab === 'autocomplete' && (
           <div className="fields">
             <label>
-              Listă de auto-completare (câte un termen pe rând)
-              <textarea rows={10} value={x.autoComplete} onChange={(e) => setX((o) => ({ ...o, autoComplete: e.target.value }))} placeholder={'Nume de personaje\nLocuri\nTermeni'} />
+              {tr('ui.projectSettingsDialog.lista_de_auto_completare_cate')}
+              <textarea rows={10} value={x.autoComplete} onChange={(e) => setX((o) => ({ ...o, autoComplete: e.target.value }))} placeholder={tr('ui.projectSettingsDialog.nume_de_personaje_locuri_termeni')} />
             </label>
-            <p className="muted">Termenii sunt propuși în timpul scrierii (și în formatele de scenariu).</p>
+            <p className="muted">{tr('ui.projectSettingsDialog.termenii_sunt_propusi_in_timpul')}</p>
           </div>
         )}
 
         {tab === 'backup' && (
           <div className="fields">
             <label className="check">
-              <input type="checkbox" checked={x.backup.exclude} onChange={(e) => setBk({ exclude: e.target.checked })} /> Exclude acest proiect din backup-urile automate
+              <input type="checkbox" checked={x.backup.exclude} onChange={(e) => setBk({ exclude: e.target.checked })} /> {tr('ui.projectSettingsDialog.exclude_acest_proiect_din_backup')}
             </label>
             <label className="check">
-              <input type="checkbox" checked={x.backup.override} disabled={x.backup.exclude} onChange={(e) => setBk({ override: e.target.checked })} /> Setări proprii de backup pentru acest proiect
+              <input type="checkbox" checked={x.backup.override} disabled={x.backup.exclude} onChange={(e) => setBk({ override: e.target.checked })} /> {tr('ui.projectSettingsDialog.setari_proprii_de_backup_pentru')}
             </label>
             {x.backup.override && !x.backup.exclude && (
               <>
                 <label className="check">
-                  <input type="checkbox" checked={x.backup.onClose} onChange={(e) => setBk({ onClose: e.target.checked })} /> Backup la închidere
+                  <input type="checkbox" checked={x.backup.onClose} onChange={(e) => setBk({ onClose: e.target.checked })} /> {tr('ui.projectSettingsDialog.backup_la_inchidere')}
                 </label>
                 <div className="row">
-                  <label>La fiecare (minute, 0 = niciodată)<input type="number" min="0" step="5" value={x.backup.everyMin} onChange={(e) => setBk({ everyMin: e.target.value })} /></label>
-                  <label>Păstrează ultimele<input type="number" min="1" max="100" value={x.backup.keep} onChange={(e) => setBk({ keep: e.target.value })} /></label>
+                  <label>{tr('ui.projectSettingsDialog.la_fiecare_minute_0_niciodata')}<input type="number" min="0" step="5" value={x.backup.everyMin} onChange={(e) => setBk({ everyMin: e.target.value })} /></label>
+                  <label>{tr('set.backupKeep')}<input type="number" min="1" max="100" value={x.backup.keep} onChange={(e) => setBk({ keep: e.target.value })} /></label>
                 </div>
               </>
             )}
@@ -446,8 +447,8 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         )}
 
         <div className="actions">
-          <button type="button" onClick={onClose}>Anulează</button>
-          <button type="button" className="primary" onClick={save}>Salvează</button>
+          <button type="button" onClick={onClose}>{tr('btn.cancel')}</button>
+          <button type="button" className="primary" onClick={save}>{tr('btn.save')}</button>
         </div>
       </div>
     </div>

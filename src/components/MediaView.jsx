@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { t } from '../lib/i18n.js';
 
 // Shows a media item from the Research folder (image, PDF, audio, video).
 export default function MediaView({ api, dir, node, onError }) {
@@ -11,8 +12,8 @@ export default function MediaView({ api, dir, node, onError }) {
     api.readMedia(dir, media.file).then(setUrl).catch(onError);
   }, [api, dir, media, onError]);
 
-  if (!media) return <p className="hint">Acest element nu are conținut.</p>;
-  if (!api.readMedia) return <p className="hint">Fișierele media se văd în aplicația desktop.</p>;
+  if (!media) return <p className="hint">{t('ui.mediaView.acest_element_nu_are_continut')}</p>;
+  if (!api.readMedia) return <p className="hint">{t('ui.mediaView.fisierele_media_se_vad_in')}</p>;
 
   const mime = media.mime || '';
   return (
@@ -22,17 +23,17 @@ export default function MediaView({ api, dir, node, onError }) {
         <span className="muted">{media.name} · {mime}</span>
         {url && (
           <a className="link" href={url} download={media.name}>
-            Salvează o copie
+            {t('ui.mediaView.salveaza_o_copie')}
           </a>
         )}
       </div>
-      {!url && <p className="muted">Se încarcă…</p>}
+      {!url && <p className="muted">{t('ui.app.se_incarca')}</p>}
       {url && mime.startsWith('image/') && <img src={url} alt={node.title} />}
       {url && mime === 'application/pdf' && <iframe title={node.title} src={url} />}
       {url && mime.startsWith('audio/') && <audio controls src={url} />}
       {url && mime.startsWith('video/') && <video controls src={url} />}
       {url && !/^(image|audio|video)\/|^application\/pdf$/.test(mime) && (
-        <p className="muted">Formatul nu poate fi afișat aici. Folosește „Salvează o copie” ca să-l deschizi cu alt program.</p>
+        <p className="muted">{t('ui.mediaView.formatul_nu_poate_fi_afisat')}</p>
       )}
     </div>
   );

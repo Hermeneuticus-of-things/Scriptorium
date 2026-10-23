@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { t as tr } from '../lib/i18n.js';
 
 const CATEGORIES = ['Ale mele', 'Ficțiune', 'Non-ficțiune', 'Scenariu', 'Poezie', 'Generale'];
 const ICONS = ['📄', '📘', '📖', '✒️', '🎬', '🎭', '📝', '🍲', '🎓', '📜'];
@@ -26,11 +27,11 @@ export default function SaveTemplateDialog({ api, dir, project, onSaved, onClose
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label="Salvează ca șablon" onClick={(e) => e.stopPropagation()}>
-        <h2>Salvează proiectul ca șablon</h2>
-        <p className="muted">Structura, textele și setările proiectului devin un șablon pentru proiecte noi (Acasă → Proiect nou).</p>
+      <div className="modal" role="dialog" aria-label={tr('ui.saveTemplateDialog.salveaza_ca_sablon')} onClick={(e) => e.stopPropagation()}>
+        <h2>{tr('ui.saveTemplateDialog.salveaza_proiectul_ca_sablon')}</h2>
+        <p className="muted">{tr('ui.saveTemplateDialog.structura_textele_si_setarile_proiectului')}</p>
         <label>
-          Titlu
+          {tr('ui.advancedSearchDialog.titlu')}
           <input value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
         </label>
         <label>
@@ -46,7 +47,7 @@ export default function SaveTemplateDialog({ api, dir, project, onSaved, onClose
           Descriere
           <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
-        <div className="row" role="radiogroup" aria-label="Icoană">
+        <div className="row" role="radiogroup" aria-label={tr('ui.inspector.icoana')}>
           {ICONS.map((i) => (
             <button key={i} type="button" role="radio" aria-checked={icon === i} className={icon === i ? 'primary' : ''} onClick={() => setIcon(i)}>
               {i}
@@ -54,8 +55,8 @@ export default function SaveTemplateDialog({ api, dir, project, onSaved, onClose
           ))}
         </div>
         <div className="actions">
-          <button onClick={onClose}>Anulează</button>
-          <button className="primary" disabled={busy || !title.trim()} onClick={save}>{busy ? 'Se salvează…' : 'Salvează șablonul'}</button>
+          <button onClick={onClose}>{tr('btn.cancel')}</button>
+          <button className="primary" disabled={busy || !title.trim()} onClick={save}>{busy ? tr('ui.saveTemplateDialog.se_salveaza') : tr('ui.saveTemplateDialog.salveaza_sablonul')}</button>
         </div>
       </div>
     </div>

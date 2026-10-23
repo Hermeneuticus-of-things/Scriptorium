@@ -39,6 +39,8 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('menu:command', listener);
   },
   watchProject: (dir) => call('project:watch', dir),
+  // Re-read project.json after an external change (no backup / recent-list side effects).
+  reloadProject: (dir) => call('project:reload', dir),
   onProjectChanged: (fn) => {
     const listener = (_e, info) => fn(info);
     ipcRenderer.on('project:changed', listener);
@@ -94,6 +96,7 @@ contextBridge.exposeInMainWorld('api', {
   testAi: (override) => call('ai:test', override),
   nlmExport: (dir, options) => call('nlm:export', dir, options),
   nlmOpen: () => call('nlm:open'),
+  openLink: (url) => call('app:openLink', url),
   newWindow: () => call('window:new'),
   toggleFullScreen: (on) => call('window:fullScreen', on),
   recheckSpelling: () => call('spell:recheck'),

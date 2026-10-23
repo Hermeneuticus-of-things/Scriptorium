@@ -1,5 +1,6 @@
 import React from 'react';
 import Editor from './Editor.jsx';
+import { t } from '../lib/i18n.js';
 
 // Several documents edited as one continuous text; each section saves to its own document.
 // `title` names the set (a folder, a multiple selection, a collection, search results).
@@ -7,15 +8,15 @@ import Editor from './Editor.jsx';
 export default function Scrivenings({ title, folder, sections, docs, settings, readOnlyIds, onChange, onFocusSection, registerRef, onOpen, showTitles = true, showSeparators = true, onClose }) {
   const name = title ?? folder?.title ?? '';
   if (sections.length === 0) {
-    return <p className="hint">„{name}” nu are documente text. Apasă Ctrl+N pentru unul nou.</p>;
+    return <p className="hint">„{name}{t('ui.scrivenings.nu_are_documente_text_apasa')}</p>;
   }
   return (
     <div className={`scrivenings ${showTitles ? '' : 'no-titles'} ${showSeparators ? '' : 'no-separators'}`}>
       <div className="scriv-head">
-        <strong>{name}</strong> <span className="muted">· {sections.length} documente editate împreună (Scrivenings)</span>
+        <strong>{name}</strong> <span className="muted">· {sections.length} {t('ui.scrivenings.documente_editate_impreuna_scrivenings')}</span>
         {onClose && (
           <button className="link" onClick={onClose}>
-            Închide
+            {t('btn.close')}
           </button>
         )}
       </div>

@@ -1,3 +1,5 @@
+import { uiRo, uiEn } from './i18n-ui.js';
+
 // Minimal i18n: t(key, vars), setLanguage/getLanguage, cmdLabel(id, fallback). Romanian is default.
 const ro = {
   // menu groups
@@ -49,6 +51,20 @@ const ro = {
   'cmd.about': 'Despre Scribner',
   'cmd.nlmExport': 'Exportă pentru NotebookLM…',
   'cmd.nlmOpen': 'Deschide NotebookLM',
+  'cmd.selectWord': 'Selectează cuvântul',
+  'cmd.selectSentence': 'Selectează fraza',
+  'cmd.selectParagraph': 'Selectează paragraful',
+  'cmd.selDeepl': 'Traduce selecția cu DeepL',
+  'cmd.selGoogleTranslate': 'Traduce selecția cu Google Translate',
+  'cmd.selLinguee': 'Caută în Linguee',
+  'cmd.selIate': 'Caută în IATE (terminologie)',
+  'cmd.selWiktionary': 'Caută în Wiktionary',
+  'cmd.selScholar': 'Caută în Google Scholar',
+  'cmd.aiResearchSel': 'AI: cercetare pe selecție',
+  'cmd.aiDefineSel': 'AI: explică termenul selectat',
+  'cmd.aiTranslateSel': 'AI: traduce selecția',
+  'cmd.aiProofreadSel': 'AI: corectează selecția',
+  'cmd.nlmAskSel': 'Întreabă NotebookLM despre selecție',
   'cmd.print': 'Tipărește documentul…', 'cmd.backups': 'Backup-uri…', 'cmd.closeProject': 'Închide proiectul',
   'cmd.findDoc': 'Caută în document', 'cmd.findProject': 'Caută și înlocuiește în proiect…', 'cmd.advSearch': 'Căutare avansată…',
   'cmd.viewEditor': 'Editor', 'cmd.viewCorkboard': 'Corkboard', 'cmd.viewOutline': 'Outline', 'cmd.composition': 'Mod compunere',
@@ -122,6 +138,33 @@ const ro = {
   'cmd.lookupWiki': 'Caută pe Wikipedia',
   'cmd.lookupGoogle': 'Caută cu Google',
   'cmd.checkSpelling': 'Verifică ortografia acum',
+  'ui.app.anulat': 'Anulat. ', 'ui.app.x_erori': ', {n} erori',
+  'ui.app.anulata_fise_partiale': ' (anulată: fișele parțiale sunt salvate)', 'ui.app.anulata_rezultate_partiale': ' (anulată, rezultate parțiale)',
+  'ui.aiPanel.feedback_editorial': 'Feedback editorial: ritm, claritate, dialog',
+  // template categories (data values stay Romanian; only the displayed name is translated)
+  'tplcat.Generale': 'Generale', 'tplcat.Ficțiune': 'Ficțiune', 'tplcat.Non-ficțiune': 'Non-ficțiune', 'tplcat.Scenariu': 'Scenariu', 'tplcat.Poezie': 'Poezie', 'tplcat.Ale mele': 'Ale mele',
+  // a11y + late additions
+  "culture.ro": "Română",
+  "culture.en": "Engleză",
+  "culture.fr": "Franceză",
+  "culture.it": "Italiană",
+  "culture.de": "Germană",
+  "culture.es": "Spaniolă",
+  "culture.hu": "Maghiară",
+  "culture.ru": "Rusă",
+  "culture.jp": "Japoneză",
+  "ui.nameGeneratorDialog.amestec": "Amestec",
+  "ui.nameGeneratorDialog.gen": "Gen",
+  "ui.nameGeneratorDialog.oricare": "Oricare",
+  "ui.nameGeneratorDialog.feminin": "Feminin",
+  "ui.nameGeneratorDialog.masculin": "Masculin",
+  "ui.corkboard.sinopsis_x": "Sinopsis: {title}",
+  "ui.outliner.outline_x": "Outline: {title}",
+  "ui.outliner.extinde": "Extinde",
+  "ui.outliner.restrange": "Restrânge",
+  "ui.corkboard.panou_x": "Corkboard: {title}",
+  "ui.binder.favorit": "Favorit",
+  "ui.binder.binder": "Binder",
 };
 
 const en = {
@@ -172,6 +215,20 @@ const en = {
   'cmd.about': 'About Scribner',
   'cmd.nlmExport': 'Export for NotebookLM…',
   'cmd.nlmOpen': 'Open NotebookLM',
+  'cmd.selectWord': 'Select word',
+  'cmd.selectSentence': 'Select sentence',
+  'cmd.selectParagraph': 'Select paragraph',
+  'cmd.selDeepl': 'Translate selection with DeepL',
+  'cmd.selGoogleTranslate': 'Translate selection with Google Translate',
+  'cmd.selLinguee': 'Look up in Linguee',
+  'cmd.selIate': 'Look up in IATE (terminology)',
+  'cmd.selWiktionary': 'Look up in Wiktionary',
+  'cmd.selScholar': 'Search Google Scholar',
+  'cmd.aiResearchSel': 'AI: research the selection',
+  'cmd.aiDefineSel': 'AI: explain the selected term',
+  'cmd.aiTranslateSel': 'AI: translate the selection',
+  'cmd.aiProofreadSel': 'AI: proofread the selection',
+  'cmd.nlmAskSel': 'Ask NotebookLM about the selection',
   'cmd.print': 'Print document…', 'cmd.backups': 'Backups…', 'cmd.closeProject': 'Close project',
   'cmd.findDoc': 'Find in document', 'cmd.findProject': 'Project find and replace…', 'cmd.advSearch': 'Advanced search…',
   'cmd.viewEditor': 'Editor', 'cmd.viewCorkboard': 'Corkboard', 'cmd.viewOutline': 'Outline', 'cmd.composition': 'Composition mode',
@@ -243,7 +300,36 @@ const en = {
   'cmd.lookupWiki': 'Search Wikipedia',
   'cmd.lookupGoogle': 'Search with Google',
   'cmd.checkSpelling': 'Check spelling now',
+  'ui.app.anulat': 'Cancelled. ', 'ui.app.x_erori': ', {n} errors',
+  'ui.app.anulata_fise_partiale': ' (cancelled: partial sheets are saved)', 'ui.app.anulata_rezultate_partiale': ' (cancelled, partial results)',
+  'ui.aiPanel.feedback_editorial': 'Editorial feedback: pacing, clarity, dialogue',
+  'tplcat.Generale': 'General', 'tplcat.Ficțiune': 'Fiction', 'tplcat.Non-ficțiune': 'Non-fiction', 'tplcat.Scenariu': 'Screenplay', 'tplcat.Poezie': 'Poetry', 'tplcat.Ale mele': 'My templates',
+  // a11y + late additions
+  "culture.ro": "Romanian",
+  "culture.en": "English",
+  "culture.fr": "French",
+  "culture.it": "Italian",
+  "culture.de": "German",
+  "culture.es": "Spanish",
+  "culture.hu": "Hungarian",
+  "culture.ru": "Russian",
+  "culture.jp": "Japanese",
+  "ui.nameGeneratorDialog.amestec": "Mix",
+  "ui.nameGeneratorDialog.gen": "Gender",
+  "ui.nameGeneratorDialog.oricare": "Any",
+  "ui.nameGeneratorDialog.feminin": "Female",
+  "ui.nameGeneratorDialog.masculin": "Male",
+  "ui.corkboard.sinopsis_x": "Synopsis: {title}",
+  "ui.outliner.outline_x": "Outline: {title}",
+  "ui.outliner.extinde": "Expand",
+  "ui.outliner.restrange": "Collapse",
+  "ui.corkboard.panou_x": "Corkboard: {title}",
+  "ui.binder.favorit": "Favorite",
+  "ui.binder.binder": "Binder",
 };
+
+Object.assign(ro, uiRo);
+Object.assign(en, uiEn);
 
 export const dictionaries = { ro, en };
 export const LANGUAGES = [{ id: 'ro', label: 'Română' }, { id: 'en', label: 'English' }];
@@ -257,6 +343,8 @@ export function setLanguage(lang) {
   listeners.forEach((fn) => fn(current));
 }
 export const getLanguage = () => current;
+/** BCP 47 locale for numbers and dates shown in the UI. */
+export const uiLocale = () => (current === 'en' ? 'en-GB' : 'ro-RO');
 export const onLanguageChange = (fn) => (listeners.add(fn), () => listeners.delete(fn));
 
 export function t(key, vars) {
@@ -271,4 +359,6 @@ export function cmdLabel(id, fallback) {
   const key = `cmd.${id}`;
   return has(key) ? t(key) : fallback ?? id;
 }
+/** Displayed name of a template category (stored values stay as they are). */
+export const categoryLabel = (c) => (has(`tplcat.${c}`) ? t(`tplcat.${c}`) : c);
 export const groupLabel = (group) => (has(`group.${group}`) ? t(`group.${group}`) : group);

@@ -1,4 +1,11 @@
+import { TextSelection } from '@tiptap/pm/state';
+import { sentenceAt, wordAt } from '../lib/textRange.js';
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+
+// Serializing the whole document (getHTML) costs ~7 ms per keystroke on 50k words, so the
+// HTML is produced and handed to onChange once typing pauses. Every path that needs the
+// newest text (blur, unmount, getHtml/setHtml, window unload, App flush) flushes first.
+export const SERIALIZE_DELAY = 300;
 import { EditorContent, useEditor } from '@tiptap/react';
 import { createDocument, getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
@@ -45,20 +52,38 @@ const Editor = forwardRef(function Editor(
   const charsRef = useRef([]);
   const plainPaste = useRef(false);
   const imageInput = useRef(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  // Pending edit: the newest doc node not yet passed to onChange (null = nothing pending).
+  // The node is kept rather than the editor so a flush still works after the editor is destroyed.
+  const dirty = useRef(null);
+  const dirtyTimer = useRef(null);
+  const flushRef = useRef(() => {});
+  flushRef.current = () => {
+    clearTimeout(dirtyTimer.current);
+    const pend = dirty.current;
+    if (!pend) return;
+    dirty.current = null;
+    const out = getHTMLFromFragment(pend.doc.content, pend.schema);
+    if (scriptRef.current) {
+      charsRef.current = collectCharacters(out);
+      scenesRef.current = collectSceneHeadings(out);
+    }
+    onChangeRef.current?.(out);
+  };
   const editor = useEditor(
     {
       extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current }),
       content: html || '<p></p>',
       editable: !readOnly,
       onUpdate: ({ editor: ed }) => {
-        const out = ed.getHTML();
-        if (scriptRef.current) {
-          charsRef.current = collectCharacters(out);
-          scenesRef.current = collectSceneHeadings(out);
-        }
-        onChange(out);
+        dirty.current = { doc: ed.state.doc, schema: ed.schema };
+        clearTimeout(dirtyTimer.current);
+        dirtyTimer.current = setTimeout(() => flushRef.current(), SERIALIZE_DELAY);
       },
       onFocus: () => onFocus?.(),
+      onBlur: () => flushRef.current(),
+      onDestroy: () => flushRef.current(),
       onSelectionUpdate: ({ editor: ed }) => {
         if (!typewriter) return;
         const { node } = ed.view.domAtPos(ed.state.selection.from);
@@ -66,6 +91,16 @@ const Editor = forwardRef(function Editor(
         el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       },
       editorProps: {
+        // Right-click on unselected text selects the word under the pointer, so the context
+        // menu (translate, dictionaries, AI, NotebookLM) acts on it like on a selection.
+        handleDOMEvents: {
+          contextmenu: (view, event) => {
+            if (!view.state.selection.empty) return false;
+            const hit = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            if (hit) selectAround(view, hit.pos, 'word');
+            return false;
+          },
+        },
         handleKeyDown: (_view, e) => {
           const mod = e.ctrlKey || e.metaKey;
           if (mod && !e.shiftKey && e.key.toLowerCase() === 'f') {
@@ -115,19 +150,40 @@ const Editor = forwardRef(function Editor(
     [smartQuotes, JSON.stringify(corrections)],
   );
 
+  // Selects the word, sentence or paragraph around `pos` (default: the cursor).
+  function selectAround(view, pos, kind) {
+    const $p = view.state.doc.resolve(pos ?? view.state.selection.head);
+    if (!$p.parent.isTextblock) return false;
+    const start = $p.start();
+    const text = $p.parent.textBetween(0, $p.parent.content.size, null, '\ufffc');
+    const r = kind === 'paragraph' ? [0, text.length] : kind === 'sentence' ? sentenceAt(text, $p.parentOffset) : wordAt(text, $p.parentOffset);
+    if (!r || r[1] <= r[0]) return false;
+    // Focus first: an unfocused view does not sync the DOM selection, and focusing later would
+    // read the old DOM selection back into the editor.
+    if (!view.hasFocus()) view.focus();
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start + r[0], start + r[1])));
+    return true;
+  }
+
   useImperativeHandle(
     ref,
     () => ({
       editor,
       setScriptElement: (el) => editor?.chain().focus().setScriptElement(el).run(),
-      getHtml: () => editor?.getHTML() || '',
+      flush: () => flushRef.current(),
+      getHtml: () => {
+        flushRef.current();
+        return editor && !editor.isDestroyed ? editor.getHTML() : '';
+      },
       getText: () => editor?.getText() || '',
       // External update (other split pane, Inspector): replace only what changed so the caret stays put.
       setHtml: (h) => {
+        flushRef.current();
         if (!editor || editor.isDestroyed) return;
         const tr = editor.state.tr;
         if (replaceChangedRange(tr, createDocument(h || '<p></p>', editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true));
       },
+      selectAround: (kind) => Boolean(editor && !editor.isDestroyed && selectAround(editor.view, undefined, kind)),
       getSelectionText: () => {
         if (!editor) return '';
         const { from, to } = editor.state.selection;
@@ -190,6 +246,18 @@ const Editor = forwardRef(function Editor(
     }),
     [editor],
   );
+
+  // Unmount (document switch, pane closed) and window close must not drop pending typing.
+  useEffect(() => {
+    const onUnload = () => flushRef.current();
+    window.addEventListener('beforeunload', onUnload);
+    window.addEventListener('pagehide', onUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onUnload);
+      window.removeEventListener('pagehide', onUnload);
+      flushRef.current();
+    };
+  }, []);
 
   // Invisibles: Options setting or the per-view toggle (Format → paragraph marks).
   useEffect(() => {

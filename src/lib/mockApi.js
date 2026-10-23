@@ -3,20 +3,41 @@
 import { newNode } from './text.js';
 
 function demoProject() {
+  // A short story with dates, points of view and several characters, so every view
+  // (corkboard, outline, timeline, relationship map, pacing) has something to show.
+  const scene = (title, synopsis, custom, status, label) => {
+    const n = newNode('text', title);
+    n.synopsis = synopsis;
+    n.custom = custom;
+    if (status) n.status = status;
+    if (label) n.label = label;
+    return n;
+  };
   const ch1 = newNode('folder', 'Partea întâi');
-  const s1 = newNode('text', 'Începutul');
-  s1.synopsis = 'Eroul pleacă de acasă într-o dimineață de toamnă.';
-  s1.status = 'Prima ciornă';
-  const s2 = newNode('text', 'Drumul');
-  s2.synopsis = 'Pe drum întâlnește un bătrân care îi dă o hartă.';
-  ch1.children.push(s1, s2);
-  const person = newNode('text', 'Personaj: Andrei');
-  person.label = 'Personaj';
+  const s1 = scene('Începutul', 'Andrei pleacă de acasă într-o dimineață de toamnă.', { Data: '1998-10-03', POV: 'Andrei', Loc: 'Cluj' }, 'Revizuit');
+  const s2 = scene('Drumul', 'Pe drum îl întâlnește pe bătrânul Matei, care îi dă o hartă.', { Data: '1998-10-04', POV: 'Andrei', Loc: 'Apuseni' }, 'Prima ciornă');
+  const s3 = scene('Scrisoarea', 'Ilinca găsește scrisoarea lăsată de Andrei pe masă.', { Data: '1998-10-04', POV: 'Ilinca', Loc: 'Cluj' }, 'Prima ciornă');
+  ch1.children.push(s1, s2, s3);
+  const ch2 = newNode('folder', 'Partea a doua');
+  const s4 = scene('Cabana', 'Andrei și Matei se adăpostesc de furtună într-o cabană părăsită.', { Data: '1998-10-06', POV: 'Andrei', Loc: 'Apuseni' }, 'De făcut');
+  const s5 = scene('Căutarea', 'Ilinca pornește pe urmele lui Andrei, cu harta copiată.', { Data: '1998-10-07', POV: 'Ilinca', Loc: 'Apuseni' }, 'De făcut');
+  const s6 = scene('Întoarcerea', 'Andrei și Ilinca se întâlnesc la marginea satului; Matei rămâne la munte.', { Data: '1998-10-09', POV: 'Ilinca', Loc: 'Sat' }, 'De făcut');
+  ch2.children.push(s4, s5, s6);
+  const chars = newNode('folder', 'Personaje');
+  const pA = newNode('text', 'Andrei');
+  const pI = newNode('text', 'Ilinca');
+  const pM = newNode('text', 'Matei');
+  for (const p of [pA, pI, pM]) p.label = 'Personaj';
+  chars.children.push(pA, pI, pM);
+  const place = newNode('text', 'Loc: Munții Apuseni');
+  place.label = 'Loc';
+  const glossary = newNode('text', 'Glosar de termeni');
+  glossary.label = 'Idee';
   return {
     project: {
       format: 1,
       title: 'Proiect demo',
-      author: '',
+      author: 'Autor demo',
       targets: { draft: 80000, session: 1000 },
       labels: [
         { name: 'Fără', color: '' },
@@ -25,16 +46,29 @@ function demoProject() {
         { name: 'Loc', color: '#70ad47' },
       ],
       statuses: ['Fără', 'De făcut', 'Prima ciornă', 'Revizuit', 'Final'],
+      customFields: [
+        { id: 'f-data', title: 'Data', type: 'date', options: [] },
+        { id: 'f-pov', title: 'POV', type: 'text', options: [] },
+        { id: 'f-loc', title: 'Loc', type: 'text', options: [] },
+      ],
       tree: [
-        { id: 'draft', title: 'Manuscris', type: 'folder', root: 'draft', children: [ch1] },
-        { id: 'research', title: 'Cercetare', type: 'folder', root: 'research', children: [person] },
+        { id: 'draft', title: 'Manuscris', type: 'folder', root: 'draft', children: [ch1, ch2] },
+        { id: 'research', title: 'Cercetare', type: 'folder', root: 'research', children: [chars, place, glossary] },
         { id: 'trash', title: 'Coș', type: 'folder', root: 'trash', children: [] },
       ],
     },
     docs: {
-      [s1.id]: '<p>Era o dimineață rece de octombrie când Andrei și-a închis ușa în urma lui.</p><p>Nu știa încă unde va ajunge.</p>',
-      [s2.id]: '<p>Drumul spre munte era plin de frunze.</p>',
-      [person.id]: '<p>Andrei, 27 de ani, ochi verzi, fost profesor de istorie.</p>',
+      [s1.id]: '<p>Era o dimineață rece de octombrie când Andrei și-a închis ușa în urma lui. Pe masă rămăsese scrisoarea pentru Ilinca, sprijinită de cana de ceai.</p><p>Nu știa încă unde va ajunge. Știa doar că nu mai poate rămâne.</p>',
+      [s2.id]: '<p>Drumul spre munte era plin de frunze ude. La o cotitură, un bătrân stătea pe o piatră, ca și cum l-ar fi așteptat.</p><p>„Mă cheamă Matei”, a spus bătrânul, și i-a întins o hartă îngălbenită. „O să ai nevoie de ea mai mult decât crezi.”</p>',
+      [s3.id]: '<p>Ilinca a găsit scrisoarea abia seara. A citit-o de două ori, apoi a mai citit-o o dată, cu voce tare, ca să fie sigură că a înțeles.</p><p>Andrei nu scria unde pleacă. Scria doar că o să se întoarcă.</p>',
+      [s4.id]: '<p>Furtuna i-a prins pe creastă. Matei a găsit cabana fără să se uite pe hartă, ca și cum ar fi știut-o de-o viață.</p><p>Andrei a aprins focul. Matei a tăcut mult, apoi a început să povestească despre fiul lui.</p>',
+      [s5.id]: '<p>Era o dimineata rece si Ilinca a pornit spre munte , cu harta copiata pe un caiet de scoala.</p><p>La prima cotitura a gasit urmele unui foc stins.</p>',
+      [s6.id]: '<p>S-au văzut de departe, la marginea satului. Niciunul n-a alergat.</p><p>Matei rămăsese sus, la cabană. „Cineva trebuie să păzească drumul”, spusese.</p>',
+      [pA.id]: '<p>Andrei, 27 de ani, ochi verzi, fost profesor de istorie. Pleacă fără să explice de ce.</p>',
+      [pI.id]: '<p>Ilinca, 25 de ani, restauratoare de cărți vechi. Încăpățânată și răbdătoare.</p>',
+      [pM.id]: '<p>Matei, 70 de ani, fost pădurar. Știe fiecare potecă din Apuseni.</p>',
+      [place.id]: '<p>Creste înalte, cabane părăsite, ceață dimineața. Toamna devreme vin furtunile.</p>',
+      [glossary.id]: '<p><strong>cotitură</strong> — EN: bend, turn of the road</p><p><strong>creastă</strong> — EN: ridge</p><p><strong>pădurar</strong> — EN: forester</p>',
     },
   };
 }
@@ -64,11 +98,11 @@ export function createMockApi() {
       live.delete(flag);
     }
   };
-  const fakeAnswer = ({ action, text = '', question = '', context = '' }) => {
+  const fakeAnswer = ({ action, text = '', question = '', context = '', lang: payload_lang = '' }) => {
     const t = String(text).trim();
     switch (action) {
       case 'proofread':
-        return t.replace(/\bdimineata\b/g, 'dimineață').replace(/\bsi\b/g, 'și').replace(/ ,/g, ',').replace(/\s+\./g, '.').replace(/\bocttombrie\b/g, 'octombrie');
+        return t.replace(/\bdimineata\b/g, 'dimineață').replace(/\bsi\b/g, 'și').replace(/ ,/g, ',').replace(/\s+\./g, '.').replace(/\bocttombrie\b/g, 'octombrie').replace(/\bcopiata\b/g, 'copiată').replace(/\bscoala\b/g, 'școală').replace(/\bcotitura\b/g, 'cotitură').replace(/\bgasit\b/g, 'găsit');
       case 'summarize':
         return `Sinopsis (demo): ${t.split(/(?<=[.!?])\s/)[0].slice(0, 160)}`;
       case 'continue':
@@ -77,6 +111,12 @@ export function createMockApi() {
         return '1. Ritm: prima frază e bună, a doua încetinește.\n2. Claritate: „unde va ajunge” — concretizează.\n3. Tensiune: lipsește un obstacol în prima scenă.';
       case 'consistency':
         return /ochi verzi/.test(context) && /ochi albaștri/.test(t) ? 'Contradicție: în note Andrei are ochi verzi, aici „ochi albaștri”.' : 'Nicio contradicție față de notele proiectului.';
+      case 'research':
+        return `Cercetare (demo) despre „${t.slice(0, 60)}”: sens, context și fapte de verificat. De verificat în: dexonline, Wikipedia, surse de specialitate.`;
+      case 'define':
+        return `„${t.slice(0, 40)}” (demo): sens principal, registru neutru. Sinonime: …. Exemplu: …`;
+      case 'translate':
+        return `[${payload_lang || 'română'}] ${t}`;
       case 'ask':
         return `Răspuns demo la „${question.slice(0, 80)}”: textul are ${t.split(/\s+/).filter(Boolean).length} cuvinte.`;
       default:

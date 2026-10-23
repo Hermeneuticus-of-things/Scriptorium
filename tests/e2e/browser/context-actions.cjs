@@ -1,0 +1,43 @@
+// Right-click on a word, a sentence or a paragraph: the word under the pointer is selected and the
+// menu offers translation, dictionaries, web research, AI and selection extension.
+const { open, ed, check, done } = require('./_helpers.cjs');
+(async () => {
+  const { browser, page, errors } = await open();
+  await page.locator('.binder-row', { hasText: 'Căutarea' }).first().click();
+  await page.waitForTimeout(300);
+  const box = await page.evaluate(() => {
+    const p = document.querySelector('.pane .ProseMirror p');
+    const w = p.firstChild.textContent.indexOf('rece');
+    const r = document.createRange(); r.setStart(p.firstChild, w + 1); r.setEnd(p.firstChild, w + 2);
+    const b = r.getBoundingClientRect(); return { x: b.x + 1, y: b.y + b.height / 2 };
+  });
+  await ed(page).click({ position: { x: 5, y: 5 } });
+  await page.mouse.click(box.x, box.y, { button: 'right' });
+  await page.waitForTimeout(200);
+  const sel = () => page.evaluate(() => String(getSelection()));
+  check('right-click selects the word', (await sel()) === 'rece', await sel());
+  const labels = await page.locator('[role="menuitem"]').allInnerTexts();
+  for (const l of ['Traduce', 'Dicționare', 'Cercetare pe web', 'Asistent AI', 'Extinde selecția']) check(`menu has ${l}`, labels.some((x) => x.startsWith(l)));
+  await page.context().route('https://www.deepl.com/**', (r) => r.fulfill({ status: 200, body: 'ok' }));
+  const popup = page.waitForEvent('popup', { timeout: 3000 }).catch(() => null);
+  await page.locator('[role="menuitem"]', { hasText: 'Traduce' }).first().click();
+  await page.locator('[role="menuitem"]', { hasText: 'DeepL' }).first().click();
+  const pop = await popup;
+  if (pop) await pop.waitForLoadState().catch(() => {});
+  check('DeepL opens with the word', Boolean(pop && /deepl\.com\/translator#auto\/ro\/rece$/.test(pop.url())), pop && pop.url());
+  if (pop) await pop.close();
+  await page.mouse.click(box.x, box.y, { button: 'right' });
+  await page.locator('[role="menuitem"]', { hasText: 'Extinde selecția' }).first().click();
+  await page.locator('[role="menuitem"]', { hasText: 'Selectează fraza' }).first().click();
+  await page.waitForTimeout(150);
+  check('extend to sentence', /^Era o dimineata rece/.test(await sel()) && !/La prima/.test(await sel()), await sel());
+  await page.mouse.click(box.x, box.y, { button: 'right' });
+  await page.locator('[role="menuitem"]', { hasText: 'Asistent AI' }).first().click();
+  await page.locator('[role="menuitem"]', { hasText: 'Cercetare' }).last().click();
+  await page.waitForTimeout(2500);
+  const ai = await page.locator('.ai-panel').innerText().catch(() => '');
+  check('AI research runs on the selection', /Cercetare \(demo\)/.test(ai), ai.slice(-200));
+  check('no page errors', !errors.length, errors.join(' | '));
+  await browser.close();
+  done();
+})();

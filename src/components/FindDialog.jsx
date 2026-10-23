@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { buildRegex, findInHtml } from '../lib/search.js';
 import { flatten } from '../lib/tree.js';
+import { t } from '../lib/i18n.js';
 
 export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClose }) {
   const [query, setQuery] = useState('');
@@ -35,11 +36,11 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
   const replaceAll = async () => {
     const ids = results.filter((r) => r.hits.length).map((r) => r.node.id);
     if (!ids.length) return;
-    if (!window.confirm(`Înlocuiești ${total} apariții în ${ids.length} documente? Se face snapshot automat al fiecărui document înainte.`)) return;
+    if (!window.confirm(t('ui.findDialog.inlocuiesti_x_aparitii_in_x', { total: total, length: ids.length }))) return;
     setBusy(true);
     try {
       const n = await onReplaceAll(ids, re, replacement);
-      setMessage(`Înlocuite: ${n}.`);
+      setMessage(t('ui.advancedSearchDialog.inlocuite_x', { n: n }));
     } finally {
       setBusy(false);
     }
@@ -47,26 +48,26 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label="Caută în proiect" onClick={(e) => e.stopPropagation()}>
-        <h2>Caută și înlocuiește în proiect</h2>
+      <div className="modal wide" role="dialog" aria-label={t('ui.findDialog.cauta_in_proiect')} onClick={(e) => e.stopPropagation()}>
+        <h2>{t('ui.findDialog.cauta_si_inlocuieste_in_proiect')}</h2>
         <div className="row">
           <label>
-            Caută
+            {t('ui.advancedSearchDialog.cauta')}
             <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} className={invalid ? 'invalid' : ''} />
           </label>
           <label>
-            Înlocuiește cu
-            <input value={replacement} onChange={(e) => setReplacement(e.target.value)} placeholder={opts.regex ? '$1 pentru grupuri' : ''} />
+            {t('ui.advancedSearchDialog.inlocuieste_cu')}
+            <input value={replacement} onChange={(e) => setReplacement(e.target.value)} placeholder={opts.regex ? t('ui.advancedSearchDialog.1_pentru_grupuri') : ''} />
           </label>
         </div>
         <div className="checks">
           <label className="check"><input type="checkbox" checked={opts.caseSensitive} onChange={toggle('caseSensitive')} /> Majuscule exacte</label>
-          <label className="check"><input type="checkbox" checked={opts.wholeWord} onChange={toggle('wholeWord')} /> Cuvinte întregi</label>
-          <label className="check"><input type="checkbox" checked={opts.regex} onChange={toggle('regex')} /> Expresie regulată</label>
-          <label className="check"><input type="checkbox" checked={opts.includeTrash} onChange={toggle('includeTrash')} /> Include coșul</label>
+          <label className="check"><input type="checkbox" checked={opts.wholeWord} onChange={toggle('wholeWord')} /> {t('ui.advancedSearchDialog.cuvinte_intregi')}</label>
+          <label className="check"><input type="checkbox" checked={opts.regex} onChange={toggle('regex')} /> {t('ui.advancedSearchDialog.expresie_regulata')}</label>
+          <label className="check"><input type="checkbox" checked={opts.includeTrash} onChange={toggle('includeTrash')} /> {t('ui.advancedSearchDialog.include_cosul')}</label>
         </div>
-        {invalid && <p className="warn">Expresie regulată invalidă.</p>}
-        {re && <p className="muted">{total} apariții în text, {results.length} documente (inclusiv titluri și sinopsis).</p>}
+        {invalid && <p className="warn">{t('ui.advancedSearchDialog.expresie_regulata_invalida')}</p>}
+        {re && <p className="muted">{total} {t('ui.findDialog.aparitii_in_text')} {results.length} {t('ui.findDialog.documente_inclusiv_titluri_si_sinopsis')}</p>}
         <div className="results">
           {results.map(({ node, hits, inTitle, inSyn }) => (
             <div key={node.id} className="result">
@@ -74,7 +75,7 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
                 <strong>{node.title}</strong>
               </button>{' '}
               <small className="muted">
-                {hits.length} în text{inTitle ? ' · titlu' : ''}{inSyn ? ' · sinopsis' : ''}
+                {hits.length} {t('ui.findDialog.in_text')}{inTitle ? t('ui.findDialog.titlu') : ''}{inSyn ? t('ui.findDialog.sinopsis') : ''}
               </small>
               {hits.slice(0, 5).map((h, i) => (
                 <div key={i} className="snippet">
@@ -83,15 +84,15 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
                   {h.after}
                 </div>
               ))}
-              {hits.length > 5 && <small className="muted">+ încă {hits.length - 5}</small>}
+              {hits.length > 5 && <small className="muted">{t('ui.findDialog.inca')} {hits.length - 5}</small>}
             </div>
           ))}
         </div>
         {message && <p className="ok">{message}</p>}
         <div className="actions">
-          <button onClick={onClose}>Închide</button>
+          <button onClick={onClose}>{t('btn.close')}</button>
           <button className="primary" disabled={!re || !total || busy} onClick={replaceAll}>
-            Înlocuiește tot
+            {t('ui.advancedSearchDialog.inlocuieste_tot')}
           </button>
         </div>
       </div>
