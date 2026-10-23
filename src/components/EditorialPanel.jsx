@@ -25,7 +25,7 @@ function blocking(issues, strict) {
   return issues.filter((i) => i.severity === 'GRAVE' || (strict && i.severity === 'MEDIU'));
 }
 
-export default function EditorialPanel({ api, hasKey, profile, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings }) {
+export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings }) {
   const [tab, setTab] = useState('rep');
   const [level, setLevel] = useState('mezzo');
   const [maxLoops, setMaxLoops] = useState(3);
@@ -151,7 +151,7 @@ export default function EditorialPanel({ api, hasKey, profile, node, html, chapt
     <aside className="editorial">
       <div className="tabs">
         <button className={tab === 'rep' ? 'on' : ''} onClick={() => setTab('rep')}>I-REP</button>
-        <button className={tab === 'edit' ? 'on' : ''} onClick={() => setTab('edit')}>I-EDIT</button>
+        {aiEnabled && <button className={tab === 'edit' ? 'on' : ''} onClick={() => setTab('edit')}>I-EDIT</button>}
       </div>
       <p className="muted small">Profil: {profile.name}</p>
 
@@ -184,14 +184,16 @@ export default function EditorialPanel({ api, hasKey, profile, node, html, chapt
             <button onClick={() => onApply({ id: node.id, title: node.title, before: html, after: autofix(html), safe: true })} disabled={busy}>
               Reparații sigure (fără AI)
             </button>
-            <button className="primary" onClick={runRep} disabled={busy || !hasKey}>
-              {busy ? 'Lucrez…' : 'I-REP: repară + reverifică'}
-            </button>
+            {aiEnabled && (
+              <button className="primary" onClick={runRep} disabled={busy || !hasKey}>
+                {busy ? 'Lucrez…' : 'I-REP: repară + reverifică'}
+              </button>
+            )}
           </div>
         </>
       )}
 
-      {tab === 'edit' && (
+      {tab === 'edit' && aiEnabled && (
         <>
           <div className="rounds">
             {ROUNDS.map((r) => (
@@ -228,7 +230,7 @@ export default function EditorialPanel({ api, hasKey, profile, node, html, chapt
         </>
       )}
 
-      {!hasKey && (
+      {aiEnabled && !hasKey && (
         <p className="warn">
           Bucla AI cere cheia API. <button className="link" onClick={onOpenSettings}>Setări</button>
         </p>

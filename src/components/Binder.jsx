@@ -25,7 +25,7 @@ function matches(node, query, docs) {
   return (docs[node.id] || '').replace(/<[^>]+>/g, ' ').toLocaleLowerCase('ro').includes(q);
 }
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, width }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '' }) {
   const [collapsed, setCollapsed] = useState({});
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState('');
@@ -128,7 +128,6 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   return (
     <aside
       className="binder"
-      style={{ width }}
       onKeyDown={(e) => {
         if (editing || e.target.tagName === 'INPUT') return;
         const mod = e.ctrlKey || e.metaKey;
@@ -150,7 +149,34 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
       </div>
       <input className="search" type="search" placeholder="Caută în proiect…" value={query} onChange={(e) => setQuery(e.target.value)} />
       <p className="tip">Ctrl/Shift+clic: selecție multiplă · Alt+clic: deschide în panoul 2 · Ctrl+săgeți: mută</p>
-      <ul className="tree">{project.tree.map((n) => renderNode(n, 0))}</ul>
+      {filterIds ? (
+        <ul className="tree collection-list" aria-label={`Colecția ${filterTitle}`}>
+          {filterIds.length === 0 && <li className="muted">Colecția e goală.</li>}
+          {filterIds.map((id) => {
+            let node = null;
+            const find = (ns) => ns.forEach((n) => {
+              if (n.id === id) node = n;
+              if (n.children) find(n.children);
+            });
+            find(project.tree);
+            if (!node) return null;
+            return (
+              <li key={id}>
+                <div
+                  className={`binder-row ${selectedId === id ? 'selected' : selectedIds.has(id) ? 'multi' : ''}`}
+                  onClick={(e) => onSelect(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
+                >
+                  <span className="icon">{iconFor(node)}</span>
+                  {labelColor[node.label] && <span className="label-dot" style={{ background: labelColor[node.label] }} />}
+                  <span className="title">{node.title}</span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <ul className="tree">{project.tree.map((n) => renderNode(n, 0))}</ul>
+      )}
       <button className="link" onClick={onEmptyTrash}>Golește coșul</button>
     </aside>
   );
