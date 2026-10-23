@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { t } from '../lib/i18n.js';
 import {
   createCollection, renameCollection, recolorCollection, deleteCollection, addToCollection, removeFromCollection,
 } from '../lib/collections.js';
@@ -51,7 +52,7 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
 
   const create = (ids) => {
     close();
-    const title = window.prompt('Numele colecției:', 'Colecție nouă');
+    const title = window.prompt(t('ui.advancedSearchDialog.numele_colectiei'), t('ui.collectionsBar.colectie_noua'));
     if (!title || !title.trim()) return;
     const { project: next, id } = createCollection(project, { title: title.trim(), type: 'manual', ids });
     onChange(next);
@@ -60,7 +61,7 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
 
   const rename = (c) => {
     close();
-    const title = window.prompt('Nume nou pentru colecție:', c.title);
+    const title = window.prompt(t('ui.collectionsBar.nume_nou_pentru_colectie'), c.title);
     if (title && title.trim() && title.trim() !== c.title) onChange(renameCollection(project, c.id, title.trim()));
   };
 
@@ -75,7 +76,7 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
 
   const remove = (c) => {
     close();
-    if (!window.confirm(`Ștergi colecția „${c.title}”? Documentele nu sunt afectate.`)) return;
+    if (!window.confirm(t('ui.collectionsBar.stergi_colectia_x_documentele_nu', { title: c.title }))) return;
     onChange(deleteCollection(project, c.id));
     if (active === c.id) onSelect(null);
   };
@@ -87,11 +88,12 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
         ref={colorRef}
         type="color"
         className="cb-color"
+        aria-label={t('ui.collectionsBar.culoare')}
         tabIndex={-1}
         aria-hidden="true"
         onChange={(e) => colorTarget && onChange(recolorCollection(project, colorTarget, e.target.value))}
       />
-      <div className="cb-tabs" role="tablist" aria-label="Colecții">
+      <div className="cb-tabs" role="tablist" aria-label={t('ui.collectionsBar.colectii')}>
         <button role="tab" aria-selected={active === null} className={`cb-tab ${active === null ? 'on' : ''}`} onClick={() => onSelect(null)}>
           <span className="cb-name">Binder</span>
         </button>
@@ -101,7 +103,7 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
               role="tab"
               aria-selected={active === c.id}
               className={`cb-tab ${active === c.id ? 'on' : ''}`}
-              title={c.type === 'search' ? `${c.title} (căutare salvată)` : c.title}
+              title={c.type === 'search' ? t('ui.collectionsBar.x_cautare_salvata', { title: c.title }) : c.title}
               onClick={() => onSelect(c.id)}
               onContextMenu={(e) => {
                 e.preventDefault();
@@ -113,7 +115,7 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
               <span
                 className="cb-more"
                 role="button"
-                aria-label={`Opțiuni pentru ${c.title}`}
+                aria-label={t('ui.collectionsBar.optiuni_pentru_x', { title: c.title })}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuFor(menuFor === c.id ? null : c.id);
@@ -124,28 +126,28 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
             </button>
             {menuFor === c.id && (
               <Popup onClose={close}>
-                <button role="menuitem" onClick={() => rename(c)}>Redenumește</button>
-                <button role="menuitem" onClick={() => pickColor(c)}>Culoare</button>
+                <button role="menuitem" onClick={() => rename(c)}>{t('set.binderDbl.rename')}</button>
+                <button role="menuitem" onClick={() => pickColor(c)}>{t('ui.collectionsBar.culoare')}</button>
                 {c.color && (
                   <button role="menuitem" onClick={() => { close(); onChange(recolorCollection(project, c.id, '')); }}>
-                    Fără culoare
+                    {t('ui.collectionsBar.fara_culoare')}
                   </button>
                 )}
-                <button role="menuitem" onClick={() => remove(c)}>Șterge</button>
+                <button role="menuitem" onClick={() => remove(c)}>{t('btn.delete')}</button>
               </Popup>
             )}
           </div>
         ))}
         <div className="cb-wrap">
-          <button className="cb-tab" title="Colecție nouă" aria-label="Colecție nouă" onClick={() => setMenuFor(menuFor === '+' ? null : '+')}>
+          <button className="cb-tab" title={t('ui.collectionsBar.colectie_noua')} aria-label={t('ui.collectionsBar.colectie_noua')} onClick={() => setMenuFor(menuFor === '+' ? null : '+')}>
             +
           </button>
           {menuFor === '+' && (
             <Popup onClose={close}>
               <button role="menuitem" disabled={!selectedIds.length} onClick={() => create(selectedIds)}>
-                Colecție nouă din selecție
+                {t('ui.collectionsBar.colectie_noua_din_selectie')}
               </button>
-              <button role="menuitem" onClick={() => create([])}>Colecție goală</button>
+              <button role="menuitem" onClick={() => create([])}>{t('ui.collectionsBar.colectie_goala')}</button>
             </Popup>
           )}
         </div>
@@ -153,13 +155,13 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
       {current && current.type !== 'search' && (
         <div className="cb-actions">
           <button disabled={!selectedIds.length} onClick={() => onChange(addToCollection(project, current.id, selectedIds))}>
-            Adaugă selecția
+            {t('ui.collectionsBar.adauga_selectia')}
           </button>
           <button
             disabled={!selectedIds.some((id) => (current.ids || []).includes(id))}
             onClick={() => onChange(removeFromCollection(project, current.id, selectedIds))}
           >
-            Scoate selecția
+            {t('ui.collectionsBar.scoate_selectia')}
           </button>
         </div>
       )}

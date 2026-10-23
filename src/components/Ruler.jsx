@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useEditorState } from '@tiptap/react';
 import { parseTabStops, serializeTabStops } from '../editor/formatting.js';
+import { t as tr } from '../lib/i18n.js';
 
 // Ruler (Format → Show Ruler): first-line / left / right indent handles and tab
 // stops for the current paragraph. Units are cm (1cm = 37.8 CSS px at zoom 100%).
@@ -56,13 +57,13 @@ export default function Ruler({ editor, zoom = 1 }) {
     ticks.push(<span key={i} className={`ruler-tick ${i % 2 ? 'half' : ''}`} style={{ left: (i / 2) * scale }}>{i % 2 || !i ? '' : i / 2}</span>);
   }
   return (
-    <div className="ruler" ref={ref} onDoubleClick={addTab} title="Dublu-clic: adaugă tab · trage un tab în afara riglei: șterge-l">
+    <div className="ruler" ref={ref} onDoubleClick={addTab} title={tr('ui.ruler.dublu_clic_adauga_tab_trage')}>
       {ticks}
       <span className="ruler-handle first" style={{ left: (pos('first', a.left + a.first) ) * scale }} onPointerDown={startDrag('first')} title={`Indent prima linie: ${a.first} cm`} />
-      <span className="ruler-handle left" style={{ left: pos('left', a.left) * scale }} onPointerDown={startDrag('left')} title={`Indent stânga: ${a.left} cm`} />
-      <span className="ruler-handle right" style={{ left: pos('right', widthCm - a.right) * scale }} onPointerDown={startDrag('right')} title={`Indent dreapta: ${a.right} cm`} />
+      <span className="ruler-handle left" style={{ left: pos('left', a.left) * scale }} onPointerDown={startDrag('left')} title={tr('ui.ruler.indent_stanga_x_cm', { left: a.left })} />
+      <span className="ruler-handle right" style={{ left: pos('right', widthCm - a.right) * scale }} onPointerDown={startDrag('right')} title={tr('ui.ruler.indent_dreapta_x_cm', { right: a.right })} />
       {a.tabs.map((t, i) => (
-        <span key={i} className={`ruler-tab ${drag && drag.kind === 'tab' && drag.index === i && drag.off ? 'removing' : ''}`} style={{ left: pos('tab', t, i) * scale }} onPointerDown={startDrag('tab', i)} title={`Tab la ${t} cm`} />
+        <span key={i} className={`ruler-tab ${drag && drag.kind === 'tab' && drag.index === i && drag.off ? 'removing' : ''}`} style={{ left: pos('tab', t, i) * scale }} onPointerDown={startDrag('tab', i)} title={tr('ui.ruler.tab_la_x_cm', { t: t })} />
       ))}
     </div>
   );

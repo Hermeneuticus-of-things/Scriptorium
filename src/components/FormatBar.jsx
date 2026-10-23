@@ -58,10 +58,9 @@ function CustomColor({ onPick, label }) {
 
 function Pop({ label, title, children }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
   return (
-    <div className="menu" ref={ref} onMouseLeave={() => setOpen(false)}>
-      <button title={title} onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((o) => !o)}>{label}</button>
+    <div className="menu" onMouseLeave={() => setOpen(false)}>
+      <button title={title} aria-label={title} aria-haspopup="true" aria-expanded={open} className={open ? 'on' : ''} onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((o) => !o)}>{label}</button>
       {open && (
         <div className="menu-pop narrow" onClick={() => setOpen(false)}>
           {children}
@@ -71,15 +70,28 @@ function Pop({ label, title, children }) {
   );
 }
 
-// Scrivener keeps the format bar on one row; whatever does not fit goes into a
-// trailing "»" menu. Group widths are measured while they sit in the bar and cached,
-// so groups already in the overflow can be brought back when the pane grows.
+// Controls of one toolbar level (the bar itself, or the overflow popup), excluding the
+// contents of open dropdowns.
+const CONTROLS = 'button, select, input';
+const levelControls = (root) =>
+  root ? [...root.querySelectorAll(CONTROLS)].filter((el) => !el.disabled && el.closest('.menu-pop, .fb-overflow-pop, .format-bar') === root) : [];
+const popItems = (pop) => [...pop.querySelectorAll(CONTROLS)].filter((el) => !el.disabled && el.closest('.menu-pop') === pop);
+const triggerOf = (pop) => pop.parentElement?.querySelector(':scope > button');
+
+// Scrivener keeps the format bar on one row; whatever does not fit goes into a trailing
+// "»" menu. Groups carry a priority (0 = always wanted: style, B/I/U, comment, footnote,
+// link, highlight); when space runs out the lowest-priority groups go first, whatever
+// their position, and visible groups stay in bar order. Group widths are measured while
+// they sit in the bar and cached, so hidden groups can come back when the pane grows.
 const MORE_WIDTH = 30;
 function OverflowBar({ groups }) {
-  const items = groups.map((g) => (Array.isArray(g) ? { el: g[0], sep: false } : { el: g, sep: true }));
+  const items = groups;
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
   const barRef = useRef(null);
   const widths = useRef([]);
-  const [count, setCount] = useState(items.length);
+  const [hiddenKey, setHiddenKey] = useState(''); // sorted indexes of overflowed groups
+  const hiddenSet = new Set(hiddenKey ? hiddenKey.split(',').map(Number) : []);
   const [open, setOpen] = useState(false);
   const fit = useCallback(() => {
     const bar = barRef.current;
@@ -90,17 +102,23 @@ function OverflowBar({ groups }) {
     const cs = getComputedStyle(bar);
     const gap = parseFloat(cs.columnGap) || 0;
     const avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    const used = (n) => {
-      let w = 0;
-      for (let i = 0; i < n; i++) if (widths.current[i]) w += widths.current[i] + gap;
-      return w;
-    };
-    let n = items.length;
-    if (used(n) - gap > avail + 0.5) {
-      while (n > 1 && used(n) + MORE_WIDTH > avail) n--;
+    const items = itemsRef.current;
+    const live = items.map((it, i) => i).filter((i) => items[i].el != null);
+    // never measured (e.g. a group that just appeared): show it once so it gets measured
+    const w = (i) => (widths.current[i] ?? 0) + gap;
+    const total = live.reduce((t, i) => t + w(i), 0) - gap;
+    const hidden = [];
+    if (total > avail + 0.5) {
+      let budget = avail - MORE_WIDTH;
+      const byPri = [...live].sort((x, y) => (items[x].pri - items[y].pri) || (x - y));
+      for (const i of byPri) {
+        if (w(i) <= budget) budget -= w(i);
+        else hidden.push(i);
+      }
     }
-    setCount((c) => (c === n ? c : n));
-  }, [items.length]);
+    const key = hidden.sort((x, y) => x - y).join(',');
+    setHiddenKey((k) => (k === key ? k : key));
+  }, []);
   useLayoutEffect(fit);
   useEffect(() => {
     const bar = barRef.current;
@@ -109,6 +127,10 @@ function OverflowBar({ groups }) {
     ro.observe(bar);
     return () => ro.disconnect();
   }, [fit]);
+  const closeOverflow = (refocus) => {
+    setOpen(false);
+    if (refocus) barRef.current?.querySelector('.fb-more > button')?.focus();
+  };
   useEffect(() => {
     if (!open) return undefined;
     const onDown = (e) => { if (!barRef.current?.querySelector('.fb-more')?.contains(e.target)) setOpen(false); };
@@ -116,8 +138,7 @@ function OverflowBar({ groups }) {
       if (e.key !== 'Escape') return;
       // Esc closes an open dropdown inside the overflow first, then the overflow itself.
       if (barRef.current?.querySelector('.fb-overflow-pop .menu-pop')) return;
-      setOpen(false);
-      barRef.current?.querySelector('.fb-more > button')?.focus();
+      closeOverflow(true);
     };
     // a fixed popup would drift away from its button: scrolling the editor closes it
     const onScroll = (e) => { if (!barRef.current?.querySelector('.fb-overflow-pop')?.contains(e.target)) setOpen(false); };
@@ -132,7 +153,7 @@ function OverflowBar({ groups }) {
       window.removeEventListener('keydown', onKey);
     };
   }, [open]);
-  useEffect(() => { if (count >= items.length) setOpen(false); }, [count, items.length]);
+  useEffect(() => { if (!hiddenKey) setOpen(false); }, [hiddenKey]);
   // The popup is position:fixed so the editor pane's overflow cannot clip it; it is
   // right-aligned under the » button and kept inside the window. Dropdowns opened inside
   // it open towards whichever side has room.
@@ -158,25 +179,122 @@ function OverflowBar({ groups }) {
     mo.observe(pop, { childList: true, subtree: true });
     return () => mo.disconnect();
   }, [open]);
-  const render = (it, i) =>
+
+  // WAI-ARIA toolbar: one Tab stop (roving tabindex), arrows move between controls.
+  const active = useRef(null);
+  const wantPopFocus = useRef(false); // overflow opened from the keyboard: focus its first control
+  useLayoutEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const ctrls = levelControls(bar);
+    if (!ctrls.includes(active.current)) active.current = ctrls[0] || null;
+    // Menu buttons with symbol labels get their accessible name from the wrapping group.
+    bar.querySelectorAll('[data-label] > .menu > button').forEach((b) => {
+      const l = b.parentElement.parentElement.dataset.label;
+      if (b.getAttribute('aria-label') !== l) b.setAttribute('aria-label', l);
+    });
+    bar.querySelectorAll(CONTROLS).forEach((el) => {
+      const v = el === active.current ? '0' : '-1';
+      if (el.getAttribute('tabindex') !== v) el.setAttribute('tabindex', v);
+    });
+    if (open && wantPopFocus.current) {
+      wantPopFocus.current = false;
+      levelControls(popRef.current)[0]?.focus();
+    }
+  });
+  const onFocus = (e) => {
+    const t = e.target;
+    if (t.closest('.format-bar') !== barRef.current || t.closest('.menu-pop, .fb-overflow-pop')) return;
+    if (active.current === t) return;
+    if (active.current) active.current.setAttribute('tabindex', '-1');
+    active.current = t;
+    t.setAttribute('tabindex', '0');
+  };
+  const onKeyDown = (e) => {
+    const t = e.target;
+    if (!t.matches?.(CONTROLS)) return;
+    const menuPop = t.closest('.menu-pop');
+    const level = menuPop ? null : t.closest('.fb-overflow-pop') || barRef.current;
+    const move = (list, d) => {
+      if (!list.length) return;
+      const i = list.indexOf(t);
+      const n = d === 'first' ? 0 : d === 'last' ? list.length - 1 : (i + d + list.length) % list.length;
+      list[n].focus();
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    if (menuPop) {
+      const list = popItems(menuPop);
+      if (e.key === 'ArrowDown' || (e.key === 'ArrowRight' && menuPop.classList.contains('narrow'))) move(list, 1);
+      else if (e.key === 'ArrowUp' || (e.key === 'ArrowLeft' && menuPop.classList.contains('narrow'))) move(list, -1);
+      else if (e.key === 'Home') move(list, 'first');
+      else if (e.key === 'End') move(list, 'last');
+      else if (e.key === 'Escape' || e.key === 'Tab') {
+        const trig = triggerOf(menuPop);
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); }
+        trig?.click(); // Menu/Pop toggle closed on their own button
+        trig?.focus();
+        if (e.key === 'Tab') e.preventDefault();
+      }
+      return;
+    }
+    const isSelect = t.tagName === 'SELECT' || t.tagName === 'INPUT';
+    const ctrls = levelControls(level);
+    if (e.key === 'ArrowRight' && !isSelect) move(ctrls, 1);
+    else if (e.key === 'ArrowLeft' && !isSelect) move(ctrls, -1);
+    else if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && t.tagName === 'SELECT') move(ctrls, e.key === 'ArrowRight' ? 1 : -1);
+    else if (e.key === 'Home' && !isSelect) move(ctrls, 'first');
+    else if (e.key === 'End' && !isSelect) move(ctrls, 'last');
+    else if (e.key === 'ArrowDown' && t.getAttribute('aria-haspopup')) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (t.parentElement.classList.contains('fb-more')) {
+        wantPopFocus.current = true;
+        if (!open) setOpen(true);
+        else levelControls(popRef.current)[0]?.focus();
+        return;
+      }
+      if (t.getAttribute('aria-expanded') !== 'true') t.click();
+      // the dropdown renders on the next commit
+      requestAnimationFrame(() => { const pop = t.parentElement.querySelector(':scope > .menu-pop'); if (pop) popItems(pop)[0]?.focus(); });
+    } else if (e.key === 'Escape' && t.getAttribute('aria-expanded') === 'true' && !t.parentElement.classList.contains('fb-more')) {
+      // dropdown open but focus still on its button (opened by mouse): close just the dropdown
+      e.preventDefault();
+      e.stopPropagation();
+      t.click();
+    } else if (e.key === 'Escape' && level !== barRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeOverflow(true);
+    }
+  };
+  // Enter/Space on a dropdown button (a click with detail 0) moves focus into the dropdown.
+  const onClick = (e) => {
+    const t = e.target.closest?.('button[aria-haspopup]');
+    if (e.detail !== 0 || !t || t.parentElement.classList.contains('fb-more')) return;
+    requestAnimationFrame(() => { const pop = t.parentElement.querySelector(':scope > .menu-pop'); if (pop) popItems(pop)[0]?.focus(); });
+  };
+
+  const render = (it, i, first) =>
     it.el == null ? null : (
-      <div key={i} data-i={i} className={`fb-group${it.sep && i > 0 ? ' fb-sep' : ''}`}>
+      <div key={i} data-i={i} data-label={it.label} className={`fb-group${it.sep && !first ? ' fb-sep' : ''}`}>
         {it.el}
       </div>
     );
-  const hidden = items.slice(count);
+  const shown = items.map((it, i) => [it, i]).filter(([it, i]) => it.el != null && !hiddenSet.has(i));
+  const hidden = items.map((it, i) => [it, i]).filter(([it, i]) => it.el != null && hiddenSet.has(i));
   return (
-    <div className="format-bar" ref={barRef} role="toolbar" aria-label="Formatare">
-      {items.slice(0, count).map(render)}
-      {hidden.some((it) => it.el != null) && (
+    <div className="format-bar" ref={barRef} role="toolbar" aria-label="Formatare" aria-orientation="horizontal" onKeyDown={onKeyDown} onFocus={onFocus} onClick={onClick}>
+      {shown.map(([it, i], k) => render(it, i, k === 0))}
+      {hidden.length > 0 && (
         <div className="fb-more menu">
-          <button className={open ? 'on' : ''} title="Mai multe comenzi de formatare" aria-haspopup="true" aria-expanded={open} onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((o) => !o)}>
+          <button className={open ? 'on' : ''} title="Mai multe comenzi de formatare" aria-label="Mai multe comenzi de formatare" aria-haspopup="true" aria-expanded={open} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { if (e.detail === 0) wantPopFocus.current = !open; setOpen((o) => !o); }}>
             »
           </button>
           {open && (
             // A chosen menu item closes the overflow as well.
-            <div className="fb-overflow-pop" ref={popRef} onClick={(e) => e.target.closest?.('[role="menuitem"]') && setOpen(false)}>
-              {hidden.map((it, k) => render(it, count + k))}
+            <div className="fb-overflow-pop" ref={popRef} role="group" aria-label="Mai multe comenzi de formatare" onClick={(e) => e.target.closest?.('[role="menuitem"]') && setOpen(false)}>
+              {hidden.map(([it, i], k) => render(it, i, k === 0))}
             </div>
           )}
         </div>
@@ -238,8 +356,9 @@ export default function FormatBar({
     }),
   });
   const chain = () => editor.chain().focus();
+  // `on` is a boolean for toggles (exposed as aria-pressed), null for plain commands.
   const btn = (label, on, action, title, disabled = false) => (
-    <button className={on ? 'on' : ''} disabled={disabled} onMouseDown={(e) => e.preventDefault()} onClick={action} title={title}>
+    <button className={on ? 'on' : ''} aria-pressed={on == null ? undefined : Boolean(on)} disabled={disabled} onMouseDown={(e) => e.preventDefault()} onClick={action} title={title} aria-label={title}>
       {label}
     </button>
   );
@@ -444,90 +563,91 @@ export default function FormatBar({
     { label: 'Ca HTML fără comentarii, adnotări și note', action: () => copySpecial('clean') },
   ];
 
-  // One entry per overflow unit, in bar order. A fragment starts a new separated
-  // section; a one-element array continues the previous section (the menu buttons).
+  // One entry per overflow unit, in bar order. sep: starts a separated section.
+  // pri: overflow order (higher goes into » first); 0 = frequent, kept visible.
+  const g = (pri, el, sep = true, label) => ({ pri, el, sep, label });
   const groups = [
-    <>
-        <select className="block-select" value={s.block} onChange={(e) => setBlock(e.target.value)} title="Stilul paragrafului">
+    g(0, <select className="block-select" value={s.block} onChange={(e) => setBlock(e.target.value)} title="Stilul paragrafului" aria-label="Stilul paragrafului">
           <option value="p">Normal</option>
           <option value="h1">Titlu 1</option>
           <option value="h2">Titlu 2</option>
           <option value="h3">Titlu 3</option>
           <option value="quote">Citat</option>
           <option value="code">Cod</option>
-        </select>
-        <select className="font-select" value={s.fontFamily} onChange={(e) => (e.target.value ? chain().setFontFamily(e.target.value).run() : chain().unsetFontFamily().run())} title="Fontul textului selectat">
+        </select>),
+    g(3, <>
+        <select className="font-select" value={s.fontFamily} onChange={(e) => (e.target.value ? chain().setFontFamily(e.target.value).run() : chain().unsetFontFamily().run())} title="Fontul textului selectat" aria-label="Fontul textului selectat">
           <option value="">Font implicit</option>
           {s.fontFamily && !FONTS.includes(s.fontFamily) && <option value={s.fontFamily}>{s.fontFamily}</option>}
           {FONTS.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
         </select>
-        <select className="size-select" value={s.fontSize} onChange={(e) => (e.target.value ? chain().setFontSize(e.target.value).run() : chain().unsetFontSize().run())} title="Mărimea fontului">
+        <select className="size-select" value={s.fontSize} onChange={(e) => (e.target.value ? chain().setFontSize(e.target.value).run() : chain().unsetFontSize().run())} title="Mărimea fontului" aria-label="Mărimea fontului">
           <option value="">–</option>
           {s.fontSize && !SIZES.includes(parseFloat(s.fontSize)) && <option value={s.fontSize}>{s.fontSize}</option>}
           {SIZES.map((z) => <option key={z} value={`${z}pt`}>{z}</option>)}
         </select>
-    </>,
-    <>
+    </>, false),
+    g(0, <>
         {btn(<b>B</b>, s.bold, () => chain().toggleBold().run(), 'Bold (Ctrl+B)')}
         {btn(<i>I</i>, s.italic, () => chain().toggleItalic().run(), 'Italic (Ctrl+I)')}
         {btn(<u>U</u>, s.underline, () => chain().toggleUnderline().run(), 'Subliniat (Ctrl+U)')}
+    </>),
+    g(6, <>
         {btn(<s>S</s>, s.strike, () => chain().toggleStrike().run(), 'Tăiat')}
         {btn(<span>x<sup>2</sup></span>, s.sup, () => chain().toggleSuperscript().run(), 'Superscript')}
         {btn(<span>x<sub>2</sub></span>, s.sub, () => chain().toggleSubscript().run(), 'Subscript')}
         {btn(<span style={{ fontVariant: 'small-caps' }}>Aa</span>, s.smallCaps, () => chain().toggleSmallCaps().run(), 'Majuscule mici (small caps)')}
         {btn('AA', s.allCaps, () => chain().toggleAllCaps().run(), 'Toate majuscule (fără a schimba textul)')}
-        <Pop label={<span className="color-a">A</span>} title="Culoarea textului">
+    </>, false),
+    g(1, <Pop label={<span className="color-a">A</span>} title="Culoarea textului">
           <Swatches colors={TEXT_COLORS} onPick={(c) => chain().setColor(c).run()} onClear={() => chain().unsetColor().run()} clearLabel="Automat" />
           <CustomColor label="Altă culoare" onPick={(c) => chain().setColor(c).run()} />
-        </Pop>
-        <Pop label={<span className="hl-a">H</span>} title="Highlight">
+        </Pop>, false),
+    g(0, <Pop label={<span className="hl-a">H</span>} title="Highlight">
           <Swatches colors={HIGHLIGHTS} onPick={(c) => chain().toggleHighlight({ color: c }).run()} onClear={() => chain().unsetHighlight().run()} clearLabel="Fără" />
           <CustomColor label="Altă culoare" onPick={(c) => chain().setHighlight({ color: c }).run()} />
-        </Pop>
-    </>,
-    <>
+        </Pop>, false),
+    g(4, <>
         {btn('⯇', s.align === 'left', () => chain().unsetTextAlign().run(), 'Aliniere stânga')}
         {btn('≡', s.align === 'center', () => chain().setTextAlign('center').run(), 'Centrat')}
         {btn('⯈', s.align === 'right', () => chain().setTextAlign('right').run(), 'Aliniere dreapta')}
         {btn('☰', s.align === 'justify', () => chain().setTextAlign('justify').run(), 'Justify')}
-    </>,
-    <>
+    </>),
+    g(5, <>
         {btn('•', s.bullet, () => chain().toggleBulletList().run(), 'Listă cu buline')}
         {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), 'Listă numerotată')}
-        <Menu label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} />
-        {btn('⇥', false, () => chain().sinkListItem('listItem').run(), 'Indentează elementul de listă', !s.inList)}
-        {btn('⇤', false, () => chain().liftListItem('listItem').run(), 'Scoate din indentare', !s.inList)}
-        {btn('— ', false, () => chain().insertContent('— ').run(), 'Linie de dialog')}
-    </>,
-    <>
+        <span data-label="Tipul numerotării" style={{ display: 'contents' }}><Menu label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} /></span>
+        {btn('⇥', null, () => chain().sinkListItem('listItem').run(), 'Indentează elementul de listă', !s.inList)}
+        {btn('⇤', null, () => chain().liftListItem('listItem').run(), 'Scoate din indentare', !s.inList)}
+    </>),
+    g(2, btn('— ', null, () => chain().insertContent('— ').run(), 'Linie de dialog'), false),
+    g(0, <>
         {s.comment
-          ? btn('💬✕', true, () => chain().unsetComment().run(), 'Șterge comentariul')
-          : btn('💬', false, onAddComment, 'Comentariu pe textul selectat', !s.hasSelection)}
-        {btn('¹', false, onAddFootnote, 'Notă de subsol (dublu-clic pe număr pentru editare)')}
-        {btn('✎', false, onAddAnnotation, 'Adnotare inline (nu intră în Compile)')}
+          ? btn('💬✕', null, () => chain().unsetComment().run(), 'Șterge comentariul')
+          : btn('💬', null, onAddComment, 'Comentariu pe textul selectat', !s.hasSelection)}
+        {btn('¹', null, onAddFootnote, 'Notă de subsol (dublu-clic pe număr pentru editare)')}
+        {btn('✎', null, onAddAnnotation, 'Adnotare inline (nu intră în Compile)')}
         {btn('🔗', s.link, insertLinkExternal, 'Link extern (Ctrl+L)')}
-        <Menu
+    </>),
+    g(3, <Menu
           label="[[ ]]"
           items={linkTargets.length ? linkTargets.slice(0, 60).map((t) => ({ label: t.title, action: () => insertLinkInternal(t) })) : [{ label: 'Niciun document', action: () => {}, disabled: true }]}
-        />
-    </>,
-    <>
-        <Menu label="Inserează" items={insertItems} />
-    </>,
-    [<Menu label="Paragraf" items={paraItems} />],
-    [<Menu label="Semne de carte" items={bookmarkItems} />],
-    [s.image ? <Menu label="Imagine" items={imageItems} /> : null],
-    [<Menu label="Tabel" items={tableItems} />],
-    [<Menu label="Caractere" items={SPECIAL.map((c) => ({ label: c, action: () => chain().insertContent(c).run() }))} />],
-    [<Menu label="Transformă" items={transformItems} />],
-    [<Menu label="Stil" items={styleItems} />],
-    [<Menu label={view.revision ? `Revizie ${view.revision}` : 'Revizie'} items={revisionItems} />],
-    [<Menu label="Vizualizare" items={viewItems} />],
-    [<Menu label="Copiază special" items={copyItems} />],
-    <>
-        {btn('↶', false, () => chain().undo().run(), 'Anulează (Ctrl+Z)')}
-        {btn('↷', false, () => chain().redo().run(), 'Refă (Ctrl+Y)')}
-    </>,
+        />, false, 'Link intern către document'),
+    g(2, <Menu label="Inserează" items={insertItems} />),
+    g(4, <Menu label="Paragraf" items={paraItems} />, false),
+    g(7, <Menu label="Semne de carte" items={bookmarkItems} />, false),
+    g(2, s.image ? <Menu label="Imagine" items={imageItems} /> : null, false),
+    g(7, <Menu label="Tabel" items={tableItems} />, false),
+    g(6, <Menu label="Caractere" items={SPECIAL.map((c) => ({ label: c, action: () => chain().insertContent(c).run() }))} />, false),
+    g(6, <Menu label="Transformă" items={transformItems} />, false),
+    g(3, <Menu label="Stil" items={styleItems} />, false),
+    g(5, <Menu label={view.revision ? `Revizie ${view.revision}` : 'Revizie'} items={revisionItems} />, false),
+    g(5, <Menu label="Vizualizare" items={viewItems} />, false),
+    g(8, <Menu label="Copiază special" items={copyItems} />, false),
+    g(1, <>
+        {btn('↶', null, () => chain().undo().run(), 'Anulează (Ctrl+Z)')}
+        {btn('↷', null, () => chain().redo().run(), 'Refă (Ctrl+Y)')}
+    </>),
   ];
 
   return <OverflowBar groups={groups} />;

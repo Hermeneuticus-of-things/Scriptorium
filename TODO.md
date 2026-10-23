@@ -62,3 +62,10 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 - [x] Aspect Scrivener 3 pe toate paginile
 - [x] Profil generic implicit; profilul cărții = „Română”
 - [ ] Verificare pe Windows în Electron real; proiect Karma real; Claude real
+
+### Request: clic dreapta pe cuvânt/frază → DeepL, dicționare, AI, NotebookLM; README nou
+- [x] Meniu contextual (Electron nativ + web) cu traducere, dicționare, cercetare web, AI, NotebookLM, extindere selecție
+- [x] Acțiuni AI research / define / translate + limba în Setări
+- [x] Bug-uri: `tr` ascuns în CompileDialog, cronologie tăiată, câmpuri demo, selecție fără focus
+- [x] README pentru cititori obișnuiți + 8 capturi prezentate
+- [~] Re-audit interfață engleză / accesibilitate (agent în lucru)

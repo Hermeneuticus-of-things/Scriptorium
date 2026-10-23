@@ -2,16 +2,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { searchProject, buildTerms } from '../lib/projectSearch.js';
 import { listKeywords } from '../lib/collections.js';
 import { flatten } from '../lib/tree.js';
+import { t as tr } from '../lib/i18n.js';
 
-const FIELD_LABELS = {
-  title: 'Titlu',
+const FIELD_LABELS = () => ({
+  title: tr('ui.advancedSearchDialog.titlu'),
   text: 'Text',
-  notes: 'Note',
-  synopsis: 'Sinopsis',
-  keywords: 'Cuvinte cheie',
+  notes: tr('ui.advancedSearchDialog.note'),
+  synopsis: tr('ui.advancedSearchDialog.sinopsis'),
+  keywords: tr('ui.advancedSearchDialog.cuvinte_cheie'),
   custom: 'Metadate',
-};
-const FIELDS = Object.keys(FIELD_LABELS);
+});
+const FIELDS = Object.keys(FIELD_LABELS());
 
 const CSS = `
 .as-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 8px 0; }
@@ -76,11 +77,11 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
 
   const replaceAll = async () => {
     if (!query || !replaceable.length || !onReplace) return;
-    if (!window.confirm(`Înlocuiești aparițiile din ${replaceable.length} documente (titlu, sinopsis, text și note, după câmpurile bifate)? Se face snapshot automat înainte.`)) return;
+    if (!window.confirm(tr('ui.advancedSearchDialog.inlocuiesti_aparitiile_din_x_documente', { length: replaceable.length }))) return;
     setBusy(true);
     try {
       const n = await onReplace(criteria, replacement);
-      setMessage(typeof n === 'number' ? `Înlocuite: ${n}.` : 'Înlocuire efectuată.');
+      setMessage(typeof n === 'number' ? tr('ui.advancedSearchDialog.inlocuite_x', { n: n }) : tr('ui.advancedSearchDialog.inlocuire_efectuata'));
       if (notesOn) setNotesById({});
     } finally {
       setBusy(false);
@@ -88,7 +89,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
   };
 
   const saveAsCollection = () => {
-    const title = window.prompt('Numele colecției:', query || 'Căutare salvată');
+    const title = window.prompt(tr('ui.advancedSearchDialog.numele_colectiei'), query || tr('ui.advancedSearchDialog.cautare_salvata'));
     if (title && title.trim()) onSaveAsCollection?.(title.trim(), criteria);
   };
 
@@ -102,7 +103,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
         ))}
       </div>
     ) : (
-      <small className="muted">Niciuna definită.</small>
+      <small className="muted">{tr('ui.advancedSearchDialog.niciuna_definita')}</small>
     );
 
   const hasQuery = Boolean(query) && !invalid;
@@ -110,90 +111,90 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label="Căutare avansată" onClick={(e) => e.stopPropagation()}>
+      <div className="modal wide" role="dialog" aria-label={tr('ui.advancedSearchDialog.cautare_avansata')} onClick={(e) => e.stopPropagation()}>
         <style>{CSS}</style>
-        <h2>Căutare avansată în proiect</h2>
+        <h2>{tr('ui.advancedSearchDialog.cautare_avansata_in_proiect')}</h2>
         <div className="row">
           <label>
-            Caută
+            {tr('ui.advancedSearchDialog.cauta')}
             <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} className={invalid ? 'invalid' : ''} />
           </label>
           <label>
-            Înlocuiește cu
-            <input value={replacement} onChange={(e) => setReplacement(e.target.value)} placeholder={opts.regex ? '$1 pentru grupuri' : ''} />
+            {tr('ui.advancedSearchDialog.inlocuieste_cu')}
+            <input value={replacement} onChange={(e) => setReplacement(e.target.value)} placeholder={opts.regex ? tr('ui.advancedSearchDialog.1_pentru_grupuri') : ''} />
           </label>
         </div>
         <div className="as-ops">
           <label className="check"><input type="checkbox" checked={opts.caseSensitive} onChange={toggleOpt('caseSensitive')} /> Majuscule exacte</label>
-          <label className="check"><input type="checkbox" checked={opts.wholeWord} onChange={toggleOpt('wholeWord')} /> Cuvinte întregi</label>
-          <label className="check"><input type="checkbox" checked={opts.regex} onChange={toggleOpt('regex')} /> Expresie regulată</label>
+          <label className="check"><input type="checkbox" checked={opts.wholeWord} onChange={toggleOpt('wholeWord')} /> {tr('ui.advancedSearchDialog.cuvinte_intregi')}</label>
+          <label className="check"><input type="checkbox" checked={opts.regex} onChange={toggleOpt('regex')} /> {tr('ui.advancedSearchDialog.expresie_regulata')}</label>
           <label className="check">
             Potrivire
             <select value={opts.operator} disabled={opts.regex} onChange={(e) => setOpts((o) => ({ ...o, operator: e.target.value }))}>
-              <option value="any">Oricare cuvânt</option>
-              <option value="all">Toate cuvintele</option>
-              <option value="exact">Expresia exactă</option>
+              <option value="any">{tr('ui.advancedSearchDialog.oricare_cuvant')}</option>
+              <option value="all">{tr('ui.advancedSearchDialog.toate_cuvintele')}</option>
+              <option value="exact">{tr('ui.advancedSearchDialog.expresia_exacta')}</option>
             </select>
           </label>
         </div>
         <div className="checks">
-          <strong className="muted">Caută în:</strong>
+          <strong className="muted">{tr('ui.advancedSearchDialog.cauta_in')}</strong>
           {FIELDS.map((f) => (
             <label key={f} className="check">
-              <input type="checkbox" checked={fields.includes(f)} onChange={() => setFields((fs) => toggleIn(fs, f))} /> {FIELD_LABELS[f]}
+              <input type="checkbox" checked={fields.includes(f)} onChange={() => setFields((fs) => toggleIn(fs, f))} /> {FIELD_LABELS()[f]}
             </label>
           ))}
-          {loadingNotes && <small className="muted">Se încarcă notele…</small>}
+          {loadingNotes && <small className="muted">{tr('ui.advancedSearchDialog.se_incarca_notele')}</small>}
         </div>
         <div className="as-grid">
           <div className="as-box">
-            <strong>Etichete</strong>
+            <strong>{tr('ui.advancedSearchDialog.etichete')}</strong>
             {checkList('labels', labels.map((l) => l.name))}
           </div>
           <div className="as-box">
-            <strong>Stări</strong>
+            <strong>{tr('ui.advancedSearchDialog.stari')}</strong>
             {checkList('statuses', statuses)}
           </div>
           <div className="as-box">
-            <strong>Cuvinte cheie (toate)</strong>
+            <strong>{tr('ui.advancedSearchDialog.cuvinte_cheie_toate')}</strong>
             {checkList('keywords', keywordNames)}
           </div>
           <div className="as-box">
             <strong>Domeniu</strong>
             <select value={filters.scope} onChange={(e) => setFilters((f) => ({ ...f, scope: e.target.value }))} aria-label="Domeniu">
-              <option value="all">Tot proiectul</option>
+              <option value="all">{tr('ui.advancedSearchDialog.tot_proiectul')}</option>
               <option value="draft">Manuscris</option>
-              <option value="research">Cercetare</option>
+              <option value="research">{tr('ui.advancedSearchDialog.cercetare')}</option>
             </select>
             <label className="check">
-              <input type="checkbox" checked={filters.includeTrash} onChange={() => setFilters((f) => ({ ...f, includeTrash: !f.includeTrash }))} /> Include coșul
+              <input type="checkbox" checked={filters.includeTrash} onChange={() => setFilters((f) => ({ ...f, includeTrash: !f.includeTrash }))} /> {tr('ui.advancedSearchDialog.include_cosul')}
             </label>
             <label className="check">
-              <input type="checkbox" checked={filters.onlyCompile} onChange={() => setFilters((f) => ({ ...f, onlyCompile: !f.onlyCompile }))} /> Doar incluse în compilare
+              <input type="checkbox" checked={filters.onlyCompile} onChange={() => setFilters((f) => ({ ...f, onlyCompile: !f.onlyCompile }))} /> {tr('ui.advancedSearchDialog.doar_incluse_in_compilare')}
             </label>
           </div>
         </div>
-        {invalid && <p className="warn">Expresie regulată invalidă.</p>}
+        {invalid && <p className="warn">{tr('ui.advancedSearchDialog.expresie_regulata_invalida')}</p>}
         {(hasQuery || hasFilter) && (
           <p className="muted">
-            {hasQuery ? `${total} apariții în ` : ''}
-            {results.length} {results.length === 1 ? 'document' : 'documente'}.
+            {hasQuery ? tr('ui.advancedSearchDialog.x_aparitii_in', { total: total }) : ''}
+            {results.length} {results.length === 1 ? 'document' : tr('ui.advancedSearchDialog.documente')}.
           </p>
         )}
         <div className="results">
           {results.map(({ node, fields: counts, snippets }) => (
             <div key={node.id} className="result">
               <button className="link" onClick={() => onOpen(node.id)}>
-                <strong>{node.title || '(fără titlu)'}</strong>
+                <strong>{node.title || tr('ui.advancedSearchDialog.fara_titlu')}</strong>
               </button>
               {FIELDS.filter((f) => counts[f]).map((f) => (
                 <span key={f} className="as-badge">
-                  {FIELD_LABELS[f]}: {counts[f]}
+                  {FIELD_LABELS()[f]}: {counts[f]}
                 </span>
               ))}
               {snippets.map((h, i) => (
                 <div key={i} className="snippet">
-                  <span className="as-field">{FIELD_LABELS[h.field]}:</span>
+                  <span className="as-field">{FIELD_LABELS()[h.field]}:</span>
                   {h.before}
                   <mark>{h.match}</mark>
                   {h.after}
@@ -204,12 +205,12 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
         </div>
         {message && <p className="ok">{message}</p>}
         <div className="actions">
-          <button onClick={onClose}>Închide</button>
+          <button onClick={onClose}>{tr('btn.close')}</button>
           <button disabled={(!hasQuery && !hasFilter) || !onSaveAsCollection} onClick={saveAsCollection}>
-            Salvează ca colecție
+            {tr('ui.advancedSearchDialog.salveaza_ca_colectie')}
           </button>
           <button className="primary" disabled={!hasQuery || !replaceable.length || busy || !onReplace} onClick={replaceAll}>
-            Înlocuiește tot
+            {tr('ui.advancedSearchDialog.inlocuieste_tot')}
           </button>
         </div>
       </div>

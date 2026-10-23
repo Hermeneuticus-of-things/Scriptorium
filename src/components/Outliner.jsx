@@ -2,23 +2,24 @@ import React, { useMemo, useRef, useState } from 'react';
 import { binderNav } from '../lib/tree.js';
 import { htmlToText } from '../lib/text.js';
 import { DocumentIcon, FolderIcon } from './Icons.jsx';
+import { t, uiLocale } from '../lib/i18n.js';
 
 // Columns the outline can show (Scrivener: Outliner > Columns).
-const BASE_COLUMNS = [
-  { id: 'synopsis', label: 'Sinopsis' },
-  { id: 'label', label: 'Etichetă' },
+const BASE_COLUMNS = () => ([
+  { id: 'synopsis', label: t('ui.advancedSearchDialog.sinopsis') },
+  { id: 'label', label: t('ui.binder.eticheta') },
   { id: 'status', label: 'Status' },
-  { id: 'keywords', label: 'Cuvinte cheie' },
-  { id: 'sectionType', label: 'Tip secțiune' },
-  { id: 'include', label: 'În Compile' },
-  { id: 'words', label: 'Cuvinte', num: true },
-  { id: 'total', label: 'Total cuvinte', num: true },
-  { id: 'chars', label: 'Caractere', num: true },
-  { id: 'target', label: 'Țintă', num: true },
+  { id: 'keywords', label: t('ui.advancedSearchDialog.cuvinte_cheie') },
+  { id: 'sectionType', label: t('ui.inspector.tip_sectiune') },
+  { id: 'include', label: t('ui.outliner.in_compile') },
+  { id: 'words', label: t('ui.outliner.cuvinte'), num: true },
+  { id: 'total', label: t('ui.outliner.total_cuvinte'), num: true },
+  { id: 'chars', label: t('ui.historyDialog.caractere'), num: true },
+  { id: 'target', label: t('ui.inspector.tinta'), num: true },
   { id: 'progress', label: 'Progres' },
   { id: 'created', label: 'Creat' },
   { id: 'modified', label: 'Modificat' },
-];
+]);
 const DEFAULT_COLUMNS = ['synopsis', 'label', 'status', 'include', 'words'];
 
 function loadColumns() {
@@ -41,7 +42,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   const [dropHint, setDropHint] = useState(null);
   const bodyRef = useRef(null);
   const fields = project.customFields || [];
-  const allColumns = [...BASE_COLUMNS, ...fields.map((f) => ({ id: `custom:${f.title}`, label: f.title }))];
+  const allColumns = [...BASE_COLUMNS(), ...fields.map((f) => ({ id: `custom:${f.title}`, label: f.title }))];
 
   const saveColumns = (next) => {
     setColumns(next);
@@ -123,7 +124,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     }
   };
 
-  const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('ro-RO') : '');
+  const fmtDate = (d) => (d ? new Date(d).toLocaleDateString(uiLocale()) : '');
   const setAll = (open) => {
     const next = {};
     const walk = (nodes) => nodes.forEach((n) => {
@@ -143,13 +144,14 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
           <textarea
             className="cell-edit"
             rows={1}
+            aria-label={cellLabel(n, col)}
             defaultValue={n.synopsis || ''}
             onBlur={(e) => e.target.value !== (n.synopsis || '') && onPatch(n.id, { synopsis: e.target.value })}
           />
         );
       case 'label':
         return (
-          <select value={n.label} onChange={(e) => onPatch(n.id, { label: e.target.value })}>
+          <select aria-label={cellLabel(n, col)} value={n.label} onChange={(e) => onPatch(n.id, { label: e.target.value })}>
             {project.labels.map((l) => (
               <option key={l.name}>{l.name}</option>
             ))}
@@ -157,22 +159,23 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
         );
       case 'status':
         return (
-          <select value={n.status} onChange={(e) => onPatch(n.id, { status: e.target.value })}>
+          <select aria-label={cellLabel(n, col)} value={n.status} onChange={(e) => onPatch(n.id, { status: e.target.value })}>
             {project.statuses.map((s) => (
               <option key={s}>{s}</option>
             ))}
           </select>
         );
       case 'include':
-        return <input type="checkbox" checked={n.includeInCompile !== false} onChange={(e) => onPatch(n.id, { includeInCompile: e.target.checked })} />;
+        return <input type="checkbox" aria-label={cellLabel(n, col)} checked={n.includeInCompile !== false} onChange={(e) => onPatch(n.id, { includeInCompile: e.target.checked })} />;
       case 'words':
       case 'total':
       case 'chars':
-        return value(n, col).toLocaleString('ro-RO');
+        return value(n, col).toLocaleString(uiLocale());
       case 'target':
         return (
           <input
             className="cell-num"
+            aria-label={cellLabel(n, col)}
             type="number"
             min="0"
             step="100"
@@ -192,6 +195,22 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     }
   };
 
+  // Sortable column header: clickable and keyboard operable, exposes the sort to assistive tech.
+  const sortHeader = (col) => {
+    const toggle = () => setSort(sort && sort.col === col && sort.dir === 'asc' ? { col, dir: 'desc' } : { col, dir: 'asc' });
+    return {
+      tabIndex: 0,
+      'aria-sort': sort?.col === col ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none',
+      onClick: toggle,
+      onKeyDown: (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      },
+    };
+  };
+  const cellLabel = (n, col) => `${(allColumns.find((c) => c.id === col) || {}).label || col}: ${n.title || ''}`;
   const shown = allColumns.filter((c) => columns.includes(c.id));
   const sumTotal = (root.children || []).reduce((s, c) => s + total(c), 0);
 
@@ -199,11 +218,11 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     <div className="outliner">
       <div className="outline-head">
         <h2>{root.title}</h2>
-        <span className="muted">{sumTotal.toLocaleString('ro-RO')} cuvinte</span>
+        <span className="muted">{sumTotal.toLocaleString(uiLocale())} {t('ui.inspector.cuvinte')}</span>
         <span className="spacer" />
-        <button onClick={() => setAll(true)}>Extinde tot</button>
-        <button onClick={() => setAll(false)}>Restrânge tot</button>
-        {sort && <button onClick={() => setSort(null)} title="Revino la ordinea din binder">Ordinea din binder</button>}
+        <button onClick={() => setAll(true)}>{t('ui.binder.extinde_tot')}</button>
+        <button onClick={() => setAll(false)}>{t('ui.binder.restrange_tot')}</button>
+        {sort && <button onClick={() => setSort(null)} title={t('ui.outliner.revino_la_ordinea_din_binder')}>{t('ui.outliner.ordinea_din_binder')}</button>}
         <details className="col-chooser">
           <summary>Coloane</summary>
           <div className="col-list">
@@ -220,14 +239,14 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
           </div>
         </details>
       </div>
-      <table>
+      <table role="treegrid" aria-label={t('ui.outliner.outline_x', { title: root.title || '' })} aria-rowcount={rows.length + 1}>
         <thead>
           <tr>
-            <th onClick={() => setSort(sort && sort.col === 'title' && sort.dir === 'asc' ? { col: 'title', dir: 'desc' } : { col: 'title', dir: 'asc' })}>
-              Titlu {sort?.col === 'title' ? (sort.dir === 'asc' ? '▲' : '▼') : ''}
+            <th scope="col" {...sortHeader('title')}>
+              {t('ui.advancedSearchDialog.titlu')} {sort?.col === 'title' ? (sort.dir === 'asc' ? '▲' : '▼') : ''}
             </th>
             {shown.map((c) => (
-              <th key={c.id} className={c.num ? 'num' : ''} onClick={() => setSort(sort && sort.col === c.id && sort.dir === 'asc' ? { col: c.id, dir: 'desc' } : { col: c.id, dir: 'asc' })}>
+              <th key={c.id} scope="col" className={c.num ? 'num' : ''} {...sortHeader(c.id)}>
                 {c.label} {sort?.col === c.id ? (sort.dir === 'asc' ? '▲' : '▼') : ''}
               </th>
             ))}
@@ -236,7 +255,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
         <tbody ref={bodyRef}>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={shown.length + 1} className="muted">„{root.title}” nu are sub-documente. Selectează un dosar în binder sau adaugă documente cu Ctrl+N.</td>
+              <td colSpan={shown.length + 1} className="muted">„{root.title}{t('ui.outliner.nu_are_sub_documente_selecteaza')}</td>
             </tr>
           )}
           {rows.map(({ n, depth }) => (
@@ -246,6 +265,8 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
               data-row-id={n.id}
               tabIndex={0}
               aria-selected={sel === n.id}
+              aria-level={depth + 1}
+              aria-expanded={n.children ? !collapsed[n.id] : undefined}
               onFocus={(e) => e.target === e.currentTarget && setSel(n.id)}
               onMouseDown={(e) => !e.target.closest('input, textarea, select') && setSel(n.id)}
               onKeyDown={(e) => onRowKey(e, n)}
@@ -281,7 +302,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
             >
               <td style={{ paddingLeft: 8 + depth * 16 }} className="title-cell">
                 {n.children ? (
-                  <button className="twisty" onClick={() => setCollapsed((c) => ({ ...c, [n.id]: !c[n.id] }))}>
+                  <button className="twisty" tabIndex={-1} aria-label={collapsed[n.id] ? t('ui.outliner.extinde') : t('ui.outliner.restrange')} onClick={() => setCollapsed((c) => ({ ...c, [n.id]: !c[n.id] }))}>
                     {collapsed[n.id] ? '▸' : '▾'}
                   </button>
                 ) : (
@@ -307,7 +328,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
                     }}
                   />
                 ) : (
-                  <button className="link" tabIndex={-1} onClick={() => { setSel(n.id); focusRow(n.id); }} onDoubleClick={(e) => { e.stopPropagation(); onOpen(n.id); }} title="Clic: selectează · Dublu-clic: deschide · Enter: redenumește">
+                  <button className="link" tabIndex={-1} onClick={() => { setSel(n.id); focusRow(n.id); }} onDoubleClick={(e) => { e.stopPropagation(); onOpen(n.id); }} title={t('ui.outliner.clic_selecteaza_dublu_clic_deschide')}>
                     {n.children ? <FolderIcon /> : <DocumentIcon />}
                     {n.title}
                   </button>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { t } from '../lib/i18n.js';
 
 export default function BackupDialog({ api, dir, onOpenProject, onClose, onError }) {
   const [list, setList] = useState([]);
@@ -21,7 +22,7 @@ export default function BackupDialog({ api, dir, onOpenProject, onClose, onError
   };
 
   const restore = async (file) => {
-    if (!window.confirm('Restaurarea creează o copie separată a proiectului din acest backup și o deschide. Proiectul curent rămâne neatins. Continui?')) return;
+    if (!window.confirm(t('ui.backupDialog.restaurarea_creeaza_o_copie_separata'))) return;
     try {
       onOpenProject(await api.restoreBackup(dir, file));
       onClose();
@@ -34,20 +35,20 @@ export default function BackupDialog({ api, dir, onOpenProject, onClose, onError
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal backup-dialog" role="dialog" aria-label="Backup-uri" onClick={(e) => e.stopPropagation()}>
         <h2>Backup-uri</h2>
-        <p className="muted">Backup automat la închidere și la intervalul din Setări. Se păstrează ultimele copii, cele vechi se șterg.</p>
-        <button className="primary" disabled={busy} onClick={now}>{busy ? 'Se face backup…' : 'Fă backup acum'}</button>
-        {list.length === 0 && <p className="muted">Niciun backup încă.</p>}
+        <p className="muted">{t('ui.backupDialog.backup_automat_la_inchidere_si')}</p>
+        <button className="primary" disabled={busy} onClick={now}>{busy ? 'Se face backup…' : t('ui.backupDialog.fa_backup_acum')}</button>
+        {list.length === 0 && <p className="muted">{t('ui.backupDialog.niciun_backup_inca')}</p>}
         <ul className="backup-list">
           {list.map((b) => (
             <li key={b.file}>
               <span title={b.file}>{b.name}</span>
               <small className="muted">{Math.round(b.size / 1024)} KB</small>
-              <button className="link" onClick={() => restore(b.file)}>Restaurează</button>
+              <button className="link" onClick={() => restore(b.file)}>{t('ui.backupDialog.restaureaza')}</button>
             </li>
           ))}
         </ul>
         <div className="actions">
-          <button onClick={onClose}>Închide</button>
+          <button onClick={onClose}>{t('btn.close')}</button>
         </div>
       </div>
     </div>
