@@ -231,7 +231,7 @@ const words = (s) => s.match(WORD) || [];
 function phraseRegex(list) {
   const alts = list
     .filter(Boolean)
-    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'))
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+').replace(/[șş]/g, '[șş]').replace(/[ȘŞ]/g, '[ȘŞ]').replace(/[țţ]/g, '[țţ]').replace(/[ȚŢ]/g, '[ȚŢ]'))
     .sort((a, b) => b.length - a.length);
   return alts.length ? new RegExp(`(?<![\\p{L}\\p{N}])(${alts.join('|')})(?![\\p{L}\\p{N}])`, 'giu') : null;
 }
@@ -534,10 +534,14 @@ export function roundContext(round, opts = {}) {
 
 // Strip accidental wrappers the model may add (<text>…</text>, ``` fences).
 export function cleanModelText(s) {
-  return String(s || '')
-    .replace(/^```[a-z]*\n?|```$/g, '')
-    .replace(/^\s*<text>\s*|\s*<\/text>\s*$/g, '')
-    .trim();
+  // Trim first, then anchor on the ends: /\s*<\/text>\s*$/ tried at every whitespace
+  // position is quadratic on long whitespace runs.
+  let t = String(s || '').trim().replace(/^```[a-z]*\n?/, '');
+  if (t.endsWith('```')) t = t.slice(0, -3);
+  t = t.trim().replace(/^<text>/, '');
+  t = t.trim();
+  if (t.endsWith('</text>')) t = t.slice(0, -7);
+  return t.trim();
 }
 
 // After an AI pass the text comes back as manuscript markdown, which cannot carry
@@ -573,4 +577,14 @@ export function reattach(oldHtml, newHtml) {
   for (let k = i + 1; k < annotations.length; k++) if (annotations[k].length) lost.push(...annotations[k]);
   if (lost.length) html += `<p>${lost.map((x) => (x.includes('data-comment') ? x : x)).join(' ')}</p>`;
   return html;
+}
+
+/**
+ * True when an AI proposal no longer matches the document it was computed from
+ * (the user edited the document, or moved the selection, while the model was working).
+ * Applying it would silently overwrite those edits.
+ */
+export function proposalIsStale(p, currentHtml, currentSelText) {
+  if (p.selection) return (p.base !== undefined && p.base !== currentHtml) || (p.selText !== undefined && p.selText !== currentSelText);
+  return p.before !== currentHtml;
 }

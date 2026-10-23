@@ -32,7 +32,7 @@ export default function BackupDialog({ api, dir, onOpenProject, onClose, onError
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label="Backup-uri" onClick={(e) => e.stopPropagation()}>
+      <div className="modal backup-dialog" role="dialog" aria-label="Backup-uri" onClick={(e) => e.stopPropagation()}>
         <h2>Backup-uri</h2>
         <p className="muted">Backup automat la închidere și la intervalul din Setări. Se păstrează ultimele copii, cele vechi se șterg.</p>
         <button className="primary" disabled={busy} onClick={now}>{busy ? 'Se face backup…' : 'Fă backup acum'}</button>

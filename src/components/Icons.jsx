@@ -32,6 +32,7 @@ const paths = {
   forward: (<path d="m6 3 5 5-5 5" {...S} strokeWidth="1.6" />),
   split: (<><rect x="1.5" y="2.5" width="13" height="11" rx="1" {...S} /><path d="M8 2.5v11" {...S} /></>),
   splitH: (<><rect x="1.5" y="2.5" width="13" height="11" rx="1" {...S} /><path d="M1.5 8h13" {...S} /></>),
+  unlock: (<><rect x="3" y="7" width="10" height="7" rx="1" {...S} /><path d="M5.5 7V5a2.5 2.5 0 0 1 4.9-.7" {...S} /></>),
   lock: (<><rect x="3" y="7" width="10" height="7" rx="1" {...S} /><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" {...S} /></>),
   notes: (<><path d="M3 1.5h10v13H3z" {...S} /><path d="M5 4.5h6M5 7h6M5 9.5h6M5 12h3" {...S} /></>),
   bookmark: (<path d="M4 1.5h8v13L8 11l-4 3.5z" {...S} />),
@@ -71,6 +72,7 @@ export const ForwardIcon = make('forward');
 export const SplitIcon = make('split');
 export const SplitHIcon = make('splitH');
 export const LockIcon = make('lock');
+export const UnlockIcon = make('unlock');
 export const NotesIcon = make('notes');
 export const BookmarkIcon = make('bookmark');
 export const MetaIcon = make('meta');

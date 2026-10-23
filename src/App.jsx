@@ -37,6 +37,7 @@ import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
 import HelpWindow from './components/HelpWindow.jsx';
 import ResearchPanel from './components/ResearchPanel.jsx';
+import AiJobBar from './components/AiJobBar.jsx';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
 import ProjectNotesTabs from './components/ProjectNotesTabs.jsx';
@@ -81,6 +82,12 @@ import {
   ancestorIds,
   scriveningsList,
   appendHtml,
+  keyMoveMany,
+  selectionAfterRemoval,
+  emptyHistory,
+  historyPush,
+  historyUndo,
+  historyRedo,
 } from './lib/tree.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
@@ -88,6 +95,7 @@ import { replaceInHtml } from './lib/search.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 
 const SAVE_DELAY = 700;
+const TYPED_COMMIT_DELAY = 400;
 const HISTORY_DELAY = 5000;
 
 // Per-machine UI state (open document, view, panel widths) kept in localStorage.
@@ -117,7 +125,39 @@ export default function App({ api }) {
   }, [settings]);
   const [dir, setDir] = useState(null);
   const [project, setProject] = useState(null);
-  const [docs, setDocs] = useState({}); // id -> html cache (main text)
+  const [docsState, setDocs] = useState({}); // id -> html cache (main text)
+  // Typing does not go through React state on every keystroke: re-rendering App (and every
+  // project-wide derived value: word counts, auto-complete words, target checks, binder,
+  // inspector) cost ~30 ms per key on a 50k-word document. The newest text of each edited
+  // document waits here and is committed to `docsState` once typing pauses (or on flush).
+  const typed = useRef(new Map());
+  const typedTimer = useRef(null);
+  const docsStateRef = useRef(docsState);
+  docsStateRef.current = docsState;
+  const commitTyped = useCallback(() => {
+    clearTimeout(typedTimer.current);
+    if (!typed.current.size) return;
+    const t = Object.fromEntries(typed.current);
+    typed.current.clear();
+    setDocs((d) => ({ ...d, ...t }));
+  }, []);
+  const dropTyped = () => {
+    clearTimeout(typedTimer.current);
+    typed.current.clear();
+  };
+  // Every document's newest text, for handlers (the render-time `docs` can be a few keys behind).
+  const docsNow = () => (typed.current.size ? { ...docsStateRef.current, ...Object.fromEntries(typed.current) } : docsStateRef.current);
+  // Render-time view: state plus pending typing, with a stable identity while neither changes
+  // so the memos below are not recomputed by unrelated re-renders.
+  const mergedDocs = useRef({ base: null, out: null });
+  const docs = (() => {
+    const m = mergedDocs.current;
+    if (!typed.current.size) return docsState;
+    if (m.base === docsState && [...typed.current].every(([id, h]) => m.out[id] === h)) return m.out;
+    mergedDocs.current = { base: docsState, out: docsNow() };
+    return mergedDocs.current.out;
+  })();
+  useEffect(() => () => clearTimeout(typedTimer.current), []);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [view, setView] = useState('editor');
@@ -129,6 +169,8 @@ export default function App({ api }) {
   const [help, setHelp] = useState(null);
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
+  const [settingsTab, setSettingsTab] = useState('');
+  const openSettings = (tab = '') => { setSettingsTab(typeof tab === 'string' ? tab : ''); setDialog('settings'); };
   const [revealId, setRevealId] = useState(null);
   const [showFloatInspector, setShowFloatInspector] = useState(false);
   const [floatNotes, setFloatNotes] = useState(null);
@@ -160,7 +202,14 @@ export default function App({ api }) {
   const [dialog, setDialog] = useState(null);
   const [composition, setComposition] = useState(false);
   const [error, setError] = useState('');
-  const [saveState, setSaveState] = useState('salvat');
+  const [saveState, setSaveStateRaw] = useState('salvat');
+  // Called on every keystroke: setting the same value still made React re-render App each time.
+  const saveStateRef = useRef('salvat');
+  const setSaveState = useCallback((v) => {
+    if (saveStateRef.current === v) return;
+    saveStateRef.current = v;
+    setSaveStateRaw(v);
+  }, []);
   const [sessionStart, setSessionStart] = useState(0);
   const [widths, setWidths] = useState({ binder: 260, side: 320 });
   const [nav, setNav] = useState({ stack: [], index: -1 });
@@ -212,9 +261,18 @@ export default function App({ api }) {
     return () => { off(); clearTimeout(timer); };
   }, []);
 
+  // Word counts per document; only documents whose HTML changed are counted again.
+  const countCache = useRef(new Map());
   const counts = useMemo(() => {
     const map = {};
-    for (const [id, html] of Object.entries(docs)) map[id] = wordCount(html);
+    for (const [id, html] of Object.entries(docs)) {
+      const hit = countCache.current.get(id);
+      if (hit && hit.html === html) map[id] = hit.n;
+      else {
+        map[id] = wordCount(html);
+        countCache.current.set(id, { html, n: map[id] });
+      }
+    }
     return map;
   }, [docs]);
 
@@ -243,15 +301,13 @@ export default function App({ api }) {
   totalsRef.current = totals;
   const projectRef = useRef(project);
   projectRef.current = project;
-  const docsRef = useRef(docs);
-  docsRef.current = docs;
 
   const recordHistory = useCallback(() => {
     clearTimeout(historyTimer.current);
     historyTimer.current = setTimeout(() => {
       if (!dir || !api.recordHistory) return;
       const pj = projectRef.current;
-      const ds = docsRef.current;
+      const ds = docsNow();
       const chars = (ids) => ids.reduce((n, id) => n + htmlToText(ds[id] || '').length, 0);
       let extra = {};
       if (pj) {
@@ -263,22 +319,26 @@ export default function App({ api }) {
   }, [api, dir]);
 
   const flush = useCallback(async () => {
+    commitTyped();
     clearTimeout(timer.current);
     const items = [...pending.current.entries()];
     pending.current.clear();
     if (!items.length) return;
+    let i = 0;
     try {
-      for (const [k, html] of items) {
-        const [id, kind] = k.split('|');
-        await api.writeDoc(dir, id, kind, html);
+      for (; i < items.length; i += 1) {
+        const [id, kind] = items[i][0].split('|');
+        await api.writeDoc(dir, id, kind, items[i][1]);
       }
       setSaveState('salvat');
       recordHistory();
     } catch (e) {
+      // Keep the unwritten edits queued (unless newer text replaced them) so the next save retries them.
+      for (const [k, html] of items.slice(i)) if (!pending.current.has(k)) pending.current.set(k, html);
       setSaveState('eroare la salvare');
       report(e);
     }
-  }, [api, dir, report, recordHistory]);
+  }, [api, dir, report, recordHistory, commitTyped]);
 
   const queueWrite = useCallback(
     (id, kind, html) => {
@@ -356,6 +416,35 @@ export default function App({ api }) {
   );
 
   const setTree = useCallback((tree) => saveProject({ ...project, tree }), [project, saveProject]);
+  // Binder structure changes (add, move, trash, restore) are undoable with Ctrl+Z while the
+  // binder has focus, as in Scrivener. Metadata edits made in between are preserved.
+  const binderHistory = useRef(emptyHistory());
+  const [renameId, setRenameId] = useState(null);
+  const setTreeU = (tree) => {
+    if (tree === project.tree) return;
+    binderHistory.current = historyPush(binderHistory.current, project.tree, tree);
+    setTree(tree);
+  };
+  const undoBinder = (redo = false) => {
+    const res = (redo ? historyRedo : historyUndo)(binderHistory.current, project.tree);
+    if (!res) {
+      if ((redo ? binderHistory.current.future : binderHistory.current.past).length) {
+        binderHistory.current = emptyHistory();
+        setToast('Nu se mai poate anula: structura proiectului s-a schimbat între timp (împărțire, unire sau golirea coșului).');
+      }
+      return;
+    }
+    binderHistory.current = res.history;
+    setTree(res.tree);
+    if (selectedId && !findNode(res.tree, selectedId)) {
+      const first = res.tree[0];
+      setSelectedId(first.id);
+      setSelectedIds(new Set([first.id]));
+    }
+  };
+  useEffect(() => {
+    binderHistory.current = emptyHistory();
+  }, [dir]);
 
   const openResult = useCallback(
     async (res) => {
@@ -368,6 +457,7 @@ export default function App({ api }) {
       const entries = await Promise.all(all.map(async (n) => [n.id, await api.readDoc(res.dir, n.id, 'docs')]));
       const cache = Object.fromEntries(entries);
       const ui = loadUi(res.dir);
+      dropTyped();
       setDocs(cache);
       setDir(res.dir);
       setProject(res.project);
@@ -403,6 +493,7 @@ export default function App({ api }) {
     api.releaseProject?.().catch(() => {});
     setProject(null);
     setDir(null);
+    dropTyped();
     setDocs({});
     setSelectedId(null);
     setSplitId(null);
@@ -463,8 +554,10 @@ export default function App({ api }) {
   };
 
   const writeDocNow = (id, html) => {
-    setDocs((d) => ({ ...d, [id]: html }));
+    typed.current.set(id, html);
     queueWrite(id, 'docs', html);
+    clearTimeout(typedTimer.current);
+    typedTimer.current = setTimeout(commitTyped, TYPED_COMMIT_DELAY);
   };
   // Same document open in both panes: an edit in one is pushed into the other editor.
   const writeSynced = (id, html, from) => {
@@ -474,9 +567,12 @@ export default function App({ api }) {
     if (other && other.getHtml() !== html) other.setHtml(html);
   };
 
-  const addItem = (type, title, html) => {
+  // New items go after the selection (inside it when it is a folder), are selected and put in
+  // rename mode in the binder (Scrivener); Enter on the title then moves the cursor to the editor.
+  const addItem = (type, title, html, anchorId = selectedId) => {
     const node = newNode(type, title);
-    setTree(insertNear(project.tree, selectedId, node));
+    setTreeU(insertNear(project.tree, anchorId, node));
+    if (!title && !hideBinder) setRenameId(node.id);
     const content = html ?? (type === 'text' ? '<p></p>' : '');
     setDocs((d) => ({ ...d, [node.id]: content }));
     if (content) api.writeDoc(dir, node.id, 'docs', content).catch(report);
@@ -485,15 +581,31 @@ export default function App({ api }) {
     return node;
   };
 
+  // Puts the cursor in the editor of a document once it is mounted (after go()).
+  const focusEditor = (id, tries = 10) => {
+    const h = id && editorRefs.current.get(id);
+    if (h?.focus) h.focus();
+    else if (tries > 0) setTimeout(() => focusEditor(id, tries - 1), 50);
+  };
   const patchNode = (id, patch) => setTree(updateNode(project.tree, id, patch));
 
   const trashSelection = () => {
     let tree = project.tree;
-    for (const id of selectedIds.size ? selectedIds : [selectedId]) {
+    const ids = [...(selectedIds.size ? selectedIds : [selectedId])].filter((id) => {
       const n = findNode(tree, id);
-      if (n && !n.root) tree = moveToTrash(tree, id);
+      return n && !n.root && !inTrash(id);
+    });
+    if (!ids.length) {
+      if (selectedId && inTrash(selectedId)) setToast('Elementul e deja în coș. Folosește „Golește coșul” pentru ștergerea definitivă sau „Restaurează din coș”.');
+      return;
     }
-    setTree(tree);
+    const nextSel = selectionAfterRemoval(tree, ids);
+    for (const id of ids) tree = moveToTrash(tree, id);
+    setTreeU(tree);
+    // like Scrivener: the selection moves to the neighbour, not into the trash
+    const sel = nextSel && findNode(tree, nextSel) ? nextSel : tree[0].id;
+    setSelectedId(sel);
+    setSelectedIds(new Set([sel]));
   };
 
   // --- Batch A: binder and document commands ---
@@ -504,10 +616,10 @@ export default function App({ api }) {
   const restoreSelection = () => {
     let tree = project.tree;
     for (const id of selectionList()) tree = restoreFromTrash(tree, id);
-    if (tree !== project.tree) setTree(tree);
+    if (tree !== project.tree) setTreeU(tree);
     else setToast('Selecția nu e în coș.');
   };
-  const moveSelectionTo = (targetId) => setTree(moveManyInto(project.tree, selectionList(), targetId));
+  const moveSelectionTo = (targetId) => setTreeU(moveManyInto(project.tree, selectionList(), targetId));
   const toggleSeparator = () => {
     let tree = project.tree;
     for (const id of selectionList()) tree = updateNode(tree, id, { separator: !findNode(tree, id).separator });
@@ -539,7 +651,7 @@ export default function App({ api }) {
     const html = selectionHtml();
     if (!html) return setToast('Selectează mai întâi un text.');
     await flush();
-    const current = docs[targetId] ?? (await api.readDoc(dir, targetId, 'docs'));
+    const current = docsNow()[targetId] ?? (await api.readDoc(dir, targetId, 'docs'));
     const next = appendHtml(current, html);
     writeDocNow(targetId, next);
     editorRefs.current.get(targetId)?.setHtml(next);
@@ -567,7 +679,7 @@ export default function App({ api }) {
     for (const id of selectionList()) {
       const node = findNode(tree, id);
       if (node.type !== 'text') continue;
-      const html = docs[id] ?? (await api.readDoc(dir, id, 'docs'));
+      const html = docsNow()[id] ?? (await api.readDoc(dir, id, 'docs'));
       const syn = autoSynopsis(htmlToText(html || ''));
       if (syn) {
         tree = updateNode(tree, id, { synopsis: syn });
@@ -639,7 +751,7 @@ export default function App({ api }) {
       includeInCompile: true,
     });
     setTree(insertNear(project.tree, selectedId, node));
-    const html = docs[tpl.id] ?? (await api.readDoc(dir, tpl.id, 'docs'));
+    const html = docsNow()[tpl.id] ?? (await api.readDoc(dir, tpl.id, 'docs'));
     const notes = await api.readDoc(dir, tpl.id, 'notes');
     if (html) await api.writeDoc(dir, node.id, 'docs', html);
     if (notes) await api.writeDoc(dir, node.id, 'notes', notes);
@@ -671,14 +783,14 @@ export default function App({ api }) {
   // Alt-drag in the binder: copies the items (with children, text and notes) next to the target.
   const copyItems = async (ids, targetId, pos) => {
     await flush();
-    let tree = project.tree;
+    let tree = projectRef.current.tree;
     const copies = {};
     for (const id of ids) {
       const res = duplicateNode(tree, id, { withChildren: true });
       if (!res.id) continue;
       tree = moveNode(res.tree, res.id, targetId, pos);
       for (const [from, to] of res.pairs) {
-        const html = docs[from] ?? (await api.readDoc(dir, from, 'docs'));
+        const html = docsNow()[from] ?? (await api.readDoc(dir, from, 'docs'));
         const notes = await api.readDoc(dir, from, 'notes');
         if (html) {
           copies[to] = html;
@@ -687,7 +799,8 @@ export default function App({ api }) {
         if (notes) await api.writeDoc(dir, to, 'notes', notes);
       }
     }
-    saveProject({ ...project, tree });
+    binderHistory.current = historyPush(binderHistory.current, projectRef.current.tree, tree);
+    saveProject({ ...projectRef.current, tree });
     setDocs((d) => ({ ...d, ...copies }));
   };
 
@@ -696,12 +809,12 @@ export default function App({ api }) {
     const node = selectedId && findNode(project.tree, selectedId);
     if (!node || node.root) return;
     await flush();
-    const { tree, pairs, id } = duplicateNode(project.tree, node.id, { withChildren });
+    const { tree, pairs, id } = duplicateNode(projectRef.current.tree, node.id, { withChildren });
     if (!id) return;
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     const copies = {};
     for (const [from, to] of pairs) {
-      const html = docs[from] ?? (await api.readDoc(dir, from, 'docs'));
+      const html = docsNow()[from] ?? (await api.readDoc(dir, from, 'docs'));
       const notes = await api.readDoc(dir, from, 'notes');
       if (html) {
         copies[to] = html;
@@ -725,17 +838,18 @@ export default function App({ api }) {
     const second = newNode('text', parts.title || `${node.title} (continuare)`);
     second.label = node.label;
     second.status = node.status;
-    const tree = produce(project.tree, (t) => {
+    const tree = produce(projectRef.current.tree, (t) => {
       const parent = findParent(t, id);
       const list = parent ? parent.children : t;
       list.splice(list.findIndex((n) => n.id === id) + 1, 0, second);
     });
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     handle.setHtml(parts.before);
     writeDocNow(id, parts.before);
     setDocs((d) => ({ ...d, [second.id]: parts.after }));
     await api.writeDoc(dir, second.id, 'docs', parts.after).catch(report);
     go(second.id);
+    focusEditor(second.id); // Scrivener: the cursor continues in the new part
   };
 
   const mergeSelection = async () => {
@@ -748,12 +862,12 @@ export default function App({ api }) {
     await flush();
     const [first, ...rest] = nodes;
     await api.takeSnapshot(dir, first.id, 'Automat înainte de unire').catch(report);
-    const html = nodes.map((n) => docs[n.id] || '').join('<p>* * *</p>');
+    const html = nodes.map((n) => docsNow()[n.id] || '').join('<p>* * *</p>');
     const notes = await Promise.all(nodes.map((n) => api.readDoc(dir, n.id, 'notes')));
     const synopsis = nodes.map((n) => n.synopsis).filter(Boolean).join('\n');
-    let tree = updateNode(project.tree, first.id, { synopsis });
+    let tree = updateNode(projectRef.current.tree, first.id, { synopsis });
     for (const n of rest) tree = moveToTrash(tree, n.id);
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     writeDocNow(first.id, html);
     const mergedNotes = notes.filter((h) => htmlToText(h).trim()).join('<hr>');
     if (mergedNotes) queueWrite(first.id, 'notes', mergedNotes);
@@ -769,8 +883,9 @@ export default function App({ api }) {
     if (fields.includes('notes')) for (const n of flatten(project.tree)) if (!n.root) notesById[n.id] = await api.readDoc(dir, n.id, 'notes');
     const terms = buildTerms(criteria);
     if (!terms || !terms.length) return 0;
+    const docs = docsNow();
     const results = searchProject(project, docs, notesById, criteria);
-    let tree = project.tree;
+    const nodeUpdates = [];
     const nextDocs = {};
     let total = 0;
     for (const { node } of results) {
@@ -792,10 +907,11 @@ export default function App({ api }) {
         nextDocs[node.id] = docHtml;
       }
       if (fields.includes('notes') && notesHtml !== (notesById[node.id] || '')) await api.writeDoc(dir, node.id, 'notes', notesHtml);
-      tree = updateNode(tree, node.id, { title: current.title, synopsis: current.synopsis });
+      nodeUpdates.push([node.id, { title: current.title, synopsis: current.synopsis }]);
       total += count;
     }
-    saveProject({ ...project, tree });
+    // Snapshots and writes above are awaited: build on the project as it is now, not as it was at the start.
+    if (nodeUpdates.length) saveProject({ ...projectRef.current, tree: nodeUpdates.reduce((t, [id, patch]) => updateNode(t, id, patch), projectRef.current.tree) });
     setDocs((d) => ({ ...d, ...nextDocs }));
     for (const [id, html] of Object.entries(nextDocs)) editorRefs.current.get(id)?.setHtml(html);
     recordHistory();
@@ -804,6 +920,7 @@ export default function App({ api }) {
 
   const replaceAllInProject = async (ids, re, replacement) => {
     await flush();
+    const docs = docsNow();
     let total = 0;
     const next = {};
     for (const id of ids) {
@@ -820,8 +937,9 @@ export default function App({ api }) {
     return total;
   };
 
-  const importParts = (parts) => {
-    let tree = project.tree;
+  // baseTree: lets a caller that also adds other nodes save everything in one project write.
+  const importParts = (parts, baseTree = projectRef.current.tree) => {
+    let tree = baseTree;
     let anchor = selectedId;
     const created = [];
     for (const p of parts) {
@@ -830,7 +948,7 @@ export default function App({ api }) {
       if (findNode(tree, anchor)?.children === undefined) anchor = node.id;
       created.push([node.id, p.html || '<p></p>']);
     }
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     setDocs((d) => ({ ...d, ...Object.fromEntries(created) }));
     Promise.all(created.map(([id, html]) => api.writeDoc(dir, id, 'docs', html))).catch(report);
     if (created.length) go(created[0][0]);
@@ -868,9 +986,11 @@ export default function App({ api }) {
     const page = await api.importWebPage(url, dir);
     // The page and its images (saved offline in media/) go in with a single project save.
     const node = newNode('text', page.title || url);
-    let tree = insertNear(project.tree, selectedId, node);
+    // The download can take seconds; the binder may have changed meanwhile.
+    const pj = projectRef.current;
+    let tree = insertNear(pj.tree, selectedId, node);
     for (const m of page.media || []) tree = insertNear(tree, node.id, { ...newNode('media', m.title), id: m.id, media: m.media });
-    saveProject({ ...project, tree });
+    saveProject({ ...pj, tree });
     setDocs((d) => ({ ...d, [node.id]: page.html }));
     await api.writeDoc(dir, node.id, 'docs', page.html);
     go(node.id);
@@ -878,15 +998,16 @@ export default function App({ api }) {
   const importFilesCmd = async (mode = 'none', separator = '#') => {
     const res = await api.importFiles(dir, mode, separator);
     if (!res) return;
-    if (res.texts.length) importParts(res.texts);
-    if (res.media.length) {
-      let tree = project.tree;
-      for (const m of res.media) {
-        const node = { ...newNode('media', m.title), id: m.id, media: m.media };
-        tree = insertNear(tree, selectedId, node);
-      }
-      saveProject({ ...project, tree });
+    // Media first, then the texts on top of that tree: two separate saves from the same
+    // `project` snapshot made the second one drop the first one's items.
+    const pj = projectRef.current;
+    let tree = pj.tree;
+    for (const m of res.media) {
+      const node = { ...newNode('media', m.title), id: m.id, media: m.media };
+      tree = insertNear(tree, selectedId, node);
     }
+    if (res.texts.length) importParts(res.texts, tree);
+    else if (res.media.length) saveProject({ ...pj, tree });
   };
   const saveAs = async () => {
     const title = window.prompt('Titlul copiei:', `${project.title} (copie)`);
@@ -896,12 +1017,16 @@ export default function App({ api }) {
     if (copy) await openResult(copy);
   };
   const printCurrent = () => {
-    const html = docs[selectedId];
+    const html = docsNow()[selectedId];
     if (html == null) return;
     api.printDocument(`<h1>${(selected?.title || '').replace(/</g, '&lt;')}</h1>${html}`, selected?.title).catch(report);
   };
 
   const words = useMemo(() => (project ? projectWords(project, docs) : []), [project, docs]);
+  // Character count for the status bar: htmlToText parses the whole document, so only redo it
+  // when that document's text changes.
+  const selectedHtml = selectedId ? docs[selectedId] || '' : '';
+  const statusChars = useMemo(() => htmlToText(selectedHtml).replace(/\s+/g, ' ').trim().length, [selectedHtml]);
   const projectStyles = stylesOf(project);
 
   const allKeywords = useMemo(() => {
@@ -915,7 +1040,7 @@ export default function App({ api }) {
     const parts = [];
     for (const n of flatten(research.children)) {
       if (n.type !== 'text') continue;
-      const text = htmlToText(docs[n.id]);
+      const text = htmlToText(docsNow()[n.id]);
       if (text.trim()) parts.push(`## ${n.title}\n${text.slice(0, 4000)}`);
     }
     return parts.join('\n\n').slice(0, 60000);
@@ -1011,12 +1136,14 @@ export default function App({ api }) {
         )}
         {dialog === 'settings' && (
           <SettingsDialog
+            initialTab={settingsTab}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
             api={api}
             settings={settings}
             project={null}
             onClose={async () => {
               setDialog(null);
+              setSettingsTab('');
               setSettings(await api.getSettings());
             }}
             onError={report}
@@ -1058,12 +1185,14 @@ export default function App({ api }) {
   const aiEnabled = settings.aiEnabled !== false;
   // Loads every text document of the project into memory (views and AI jobs over the whole book).
   const loadAllDocs = async () => {
-    const out = { ...docs };
+    const loaded = {};
+    const have = docsNow();
     for (const n of flatten(project.tree)) {
-      if (n.type === 'text' && out[n.id] === undefined) out[n.id] = await api.readDoc(dir, n.id, 'docs');
+      if (n.type === 'text' && have[n.id] === undefined) loaded[n.id] = await api.readDoc(dir, n.id, 'docs');
     }
-    setDocs(out);
-    return out;
+    // Merge, not replace: text typed while the documents were being read must not be lost.
+    if (Object.keys(loaded).length) setDocs((d) => ({ ...loaded, ...d }));
+    return { ...loaded, ...docsNow() };
   };
   const showWholeBook = (v) => loadAllDocs().then(() => setView(v)).catch(report);
   const manuscriptDocs = async () => {
@@ -1086,16 +1215,16 @@ export default function App({ api }) {
     let tree = project.tree;
     for (const [id, syn] of Object.entries(res.results)) tree = updateNode(tree, id, { synopsis: String(syn).trim() });
     saveProject({ ...project, tree });
-    setToast(`Sinopsis scris pentru ${Object.keys(res.results).length} documente${Object.keys(res.errors).length ? `, ${Object.keys(res.errors).length} erori` : ''}.`);
+    setToast(`${res.cancelled ? 'Anulat. ' : ''}Sinopsis scris pentru ${Object.keys(res.results).length} documente${Object.keys(res.errors).length ? `, ${Object.keys(res.errors).length} erori` : ''}.`);
   };
   const runConsistency = async () => {
     const res = await api.aiConsistency(dir, await manuscriptDocs(), project.livingSheets || null, '');
     saveProject({ ...project, livingSheets: res.sheets });
-    setAiReport({ title: 'Consistență pe toată cartea', findings: res.findings });
+    setAiReport({ title: `Consistență pe toată cartea${res.cancelled ? ' (anulată: fișele parțiale sunt salvate)' : ''}`, findings: res.findings });
   };
   const runZoomReview = async (levels) => {
     const res = await api.aiZoomReview(dir, await manuscriptDocs(), levels, '');
-    setAiReport({ title: 'Revizie pe niveluri de zoom', findings: res.findings });
+    setAiReport({ title: `Revizie pe niveluri de zoom${res.cancelled ? ' (anulată, rezultate parțiale)' : ''}`, findings: res.findings });
   };
   const exportScrivCmd = async () => {
     await flush();
@@ -1138,7 +1267,7 @@ export default function App({ api }) {
   // Glossaries and print TOC as documents in Research (replaced when generated again).
   const generateGlossaries = async () => {
     await flush();
-    const book = await collectBookDocs(project, (id) => docs[id] ?? api.readDoc(dir, id, 'docs'));
+    const book = await collectBookDocs(project, (id) => docsNow()[id] ?? api.readDoc(dir, id, 'docs'));
     const names = profileFor(project, settings).names;
     const alogen = buildAlogenGlossary(book, { title: names.foreign });
     const reading = buildReadingGlossary(book, { title: names.reading, exclude: alogen.terms.map((t) => t.term) });
@@ -1312,7 +1441,7 @@ export default function App({ api }) {
       setToast('Snapshot salvat.');
     }],
     ['format', 'styles', 'Stiluri…', () => setDialog('styles')],
-    ['tools', 'irep', 'I-REP / I-EDIT', () => setShowEditorial((v) => !v)],
+    ['tools', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['tools', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
     ['view', 'floatInspector', 'Inspector plutitor (compoziție)', () => setShowFloatInspector((v) => !v), !composition],
     ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
@@ -1334,6 +1463,8 @@ export default function App({ api }) {
     ['tools', 'aiBulkSynopsis', 'Sinopsis AI în bloc', () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
     ['tools', 'aiConsistency', 'Consistență pe toată cartea (fișe vii)', () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
     ['tools', 'aiZoomReview', 'Revizie pe niveluri de zoom', () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
+    ['tools', 'nlmExport', 'Exportă pentru NotebookLM…', () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(`NotebookLM: ${r.files.length} surse în „${r.dir}”.${r.warnings.length ? ` ${r.warnings.join(' ')}` : ''}`)).catch(report), !dir || !api.nlmExport],
+    ['tools', 'nlmOpen', 'Deschide NotebookLM', () => api.nlmOpen().catch(report), !api.nlmOpen],
     ['file', 'newWindow', 'Fereastră nouă', () => api.newWindow().catch(report), !api.newWindow],
     ['file', 'exportBundle', 'Exportă pachet pentru web / mobil…', () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', 'Importă pachet de proiect…', () => api.importBundle().then(openResult).catch(report), !api.importBundle],
@@ -1470,6 +1601,8 @@ export default function App({ api }) {
           project={binderProject}
           revealId={revealId}
           onCopy={(ids, targetId, pos) => copyItems(ids, targetId, pos).catch(report)}
+          onPatchItems={(ids, patch) => setTree(ids.reduce((t, id) => updateNode(t, id, patch), project.tree))}
+          onSetTemplateFolder={(id) => saveProject({ ...project, templateFolder: id || null })}
           filterIds={collectionIds}
           filterTitle={activeCollection?.title}
           docs={docs}
@@ -1479,8 +1612,24 @@ export default function App({ api }) {
           onSelect={onBinderSelect}
           onAdd={addItem}
           onRename={(id, title) => patchNode(id, { title })}
-          onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
-          onKeyMove={(dir2) => selectedId && setTree(keyMove(project.tree, selectedId, dir2))}
+          onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
+          onMoveMany={(ids, targetId, pos) => {
+            let t = project.tree;
+            (pos === 'after' ? [...ids].reverse() : ids).forEach((id) => (t = moveNode(t, id, targetId, pos)));
+            setTreeU(t);
+          }}
+          onKeyMove={(dir2) => selectedId && setTreeU(keyMoveMany(project.tree, selectedIds.size ? [...selectedIds] : [selectedId], dir2))}
+          onUndo={undoBinder}
+          renameId={renameId}
+          onRenameDone={(id, committed) => {
+            setRenameId(null);
+            if (committed && findNode(project.tree, id)?.type === 'text') focusEditor(id);
+          }}
+          onFocusEditor={() => focusEditor(selectedId)}
+          onRangeSelect={(ids, id) => {
+            setSelectedIds(new Set(ids));
+            if (id) setSelectedId(id);
+          }}
           onTrash={trashSelection}
           onEmptyTrash={() => {
             if (window.confirm('Golești coșul? Documentele din coș vor fi scoase din proiect.')) setTree(emptyTrash(project.tree));
@@ -1564,10 +1713,16 @@ export default function App({ api }) {
                 onOpen={(id) => {
                   go(id);
                   setView('editor');
+                  focusEditor(id);
                 }}
                 onPatch={patchNode}
-                onAdd={() => addItem('text')}
-                onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
+                onAdd={(afterId) => {
+                  const node = addItem('text', undefined, undefined, typeof afterId === 'string' ? afterId : selectedId);
+                  setRenameId(null); // the card's own title goes into edit mode instead
+                  return node;
+                }}
+                onRename={(id, title) => patchNode(id, { title })}
+                onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
                 onReorder={(folderId, ids) =>
                   setTree(
                     produce(project.tree, (t) => {
@@ -1588,16 +1743,17 @@ export default function App({ api }) {
                 onOpen={(id) => {
                   go(id);
                   setView('editor');
+                  focusEditor(id);
                 }}
                 onPatch={patchNode}
-                onMove={(id, targetId, pos) => setTree(moveNode(project.tree, id, targetId, pos))}
+                onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
               />
             )}
           </div>
           {splitNode && view === 'editor' && (
             <div className={`pane second ${editorAreaClass}`}>
               <div className="pane-head">
-                <span>Panoul 2 · blocat pe „{splitNode.title}”</span>
+                <span title={`Panoul 2 · blocat pe „${splitNode.title}”`}>Panoul 2 · blocat pe „{splitNode.title}”</span>
                 <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? 'Split vertical' : 'Split orizontal'}</button>
                 <button className="link" onClick={swapPanes}>Inversează</button>
                 <button className="link" onClick={() => go(splitNode.id)}>Deschide în principal</button>
@@ -1611,7 +1767,6 @@ export default function App({ api }) {
                   key={`split-${splitNode.id}-${smartQuotes}-${corrKey}`}
                   corrections={corrections}
                   defaultFormatting={project.defaultFormatting}
-                defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
@@ -1633,7 +1788,8 @@ export default function App({ api }) {
           )}
         </section>
 
-        {(showInspector || showAi || showEditorial) && selected && !composition && (
+        {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
+        {(showInspector || (showAi && aiEnabled) || (showEditorial && editorialNode) || (showResearch && dir)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label="Lățime panou lateral" />
             <div className="side" style={{ width: widths.side }}>
@@ -1674,14 +1830,17 @@ export default function App({ api }) {
                 />
               )}
               {showResearch && dir && (
-                <ResearchPanel api={api} dir={dir} aiEnabled={aiEnabled} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
+                <ResearchPanel api={api} dir={dir} aiEnabled={aiEnabled} aiLabel={settings.aiLabel} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
               )}
               {showAi && aiEnabled && (
                 <AiPanel
                   api={api}
                   hasKey={settings.hasApiKey}
+                  aiLabel={settings.aiLabel}
+                  aiModel={settings.aiModel}
+                  getHandle={activeHandle}
                   node={aiNode}
-                  getText={() => activeHandle()?.getSelectionText() || htmlToText(docs[aiNode.id])}
+                  getText={() => activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id])}
                   hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
                   getContext={contextForAi}
                   onInsert={(text) => activeHandle()?.insertText(text)}
@@ -1692,7 +1851,7 @@ export default function App({ api }) {
                     writeDocNow(aiNode.id, html);
                   }}
                   onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
-                  onOpenSettings={() => setDialog('settings')}
+                  onOpenSettings={openSettings}
                 />
               )}
               {showEditorial && editorialNode && (
@@ -1703,6 +1862,8 @@ export default function App({ api }) {
                   key={`ed-${editorialNode.id}`}
                   api={api}
                   hasKey={settings.hasApiKey}
+                  aiLabel={settings.aiLabel}
+                  aiModel={settings.aiModel}
                   profile={profileFor(project)}
                   node={editorialNode}
                   html={docs[editorialNode.id] || ''}
@@ -1734,7 +1895,7 @@ export default function App({ api }) {
                     if (p.rounds) editorial.rounds = { ...(editorial.rounds || {}), ...Object.fromEntries(p.rounds.map((r) => [r, stamp])) };
                     patchNode(p.id, { editorial });
                   }}
-                  onOpenSettings={() => setDialog('settings')}
+                  onOpenSettings={openSettings}
                 />
               )}
             </div>
@@ -1745,7 +1906,7 @@ export default function App({ api }) {
       <StatusBar
         node={selected}
         words={selected ? (isFolderView ? scrivSections.reduce((s, n) => s + (counts[n.id] || 0), 0) : counts[selected.id] || 0) : 0}
-        chars={selected && !isFolderView ? htmlToText(docs[selected.id] || '').replace(/\s+/g, ' ').trim().length : 0}
+        chars={selected && !isFolderView ? statusChars : 0}
         selectionCount={selectedIds.size}
         totalDraft={totals.draft}
         draftTarget={project.targets?.draft || 0}
@@ -1802,7 +1963,7 @@ export default function App({ api }) {
           </div>
         </div>
       )}
-      {aiProgress && <div className="toast">{aiProgress}</div>}
+      {aiEnabled && <AiJobBar api={api} />}
       {aiReport && (
         <div className="modal-backdrop" onClick={() => setAiReport(null)}>
           <div className="modal wide" role="dialog" aria-label={aiReport.title} onClick={(e) => e.stopPropagation()}>
@@ -1833,6 +1994,7 @@ export default function App({ api }) {
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (
         <SettingsDialog
+            initialTab={settingsTab}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
           api={api}
           settings={settings}
@@ -1841,6 +2003,7 @@ export default function App({ api }) {
           onProjectChange={saveProject}
           onClose={async () => {
             setDialog(null);
+            setSettingsTab('');
             setSettings(await api.getSettings());
           }}
           onError={report}

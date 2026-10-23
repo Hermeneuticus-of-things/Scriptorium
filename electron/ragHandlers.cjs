@@ -1,8 +1,9 @@
 'use strict';
 // Research panel (RAG) IPC handlers. Registered from main.cjs:
-//   require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, ai });
+//   require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai });
 // Indexes live in memory per project dir; progress goes to the sender as 'rag:progress'.
 const rag = require('../lib/rag.cjs');
+const aiRuns = require('../lib/aiRuns.cjs');
 
 function collectSources(store, dir) {
   const project = store.loadProject(dir);
@@ -22,7 +23,7 @@ function collectSources(store, dir) {
   return sources;
 }
 
-module.exports = function register({ handle, store, assertOpened, getSettings, getApiKey, ai, makeRun }) {
+module.exports = function register({ handle, store, assertOpened, getSettings, getApiKey, getAiConfig, ai, makeRun }) {
   const indexes = new Map(); // dir -> index
   const send = (e) => (p) => {
     try {
@@ -60,10 +61,18 @@ module.exports = function register({ handle, store, assertOpened, getSettings, g
     assertOpened(dir);
     if (getSettings().aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
     if (!indexes.has(dir)) await build(e, dir);
-    const run =
-      (makeRun && makeRun(getApiKey())) ||
-      (({ text, question }) => ai.runAction({ action: 'ask', apiKey: getApiKey(), text, question }));
-    return queue.push('ask', () => rag.ask(indexFor(dir), String(q || ''), run, { k: Math.min(Number(opts.k) || 6, 20) }));
+    // The ask step goes through lib/ai.cjs runAction -> lib/aiProviders complete() with the chosen provider.
+    const cfg = getAiConfig ? getAiConfig() : { apiKey: getApiKey() };
+    // Registered with aiRuns so "Anulează" (ai:cancel) and the AI timeout also stop the research answer.
+    const timeoutMs = (Number(getSettings().aiTimeoutSec) || 300) * 1000;
+    return queue.push('ask', () =>
+      aiRuns.track(e.sender.id, (signal) => {
+        const run =
+          (makeRun && makeRun({ ...cfg, signal })) ||
+          (({ text, question }) => ai.runAction({ action: 'ask', ...cfg, text, question, signal }));
+        return rag.ask(indexFor(dir), String(q || ''), run, { k: Math.min(Number(opts.k) || 6, 20) });
+      }, timeoutMs),
+    );
   });
   return { indexes, collectSources: (dir) => collectSources(store, dir) };
 };

@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
+import AI_PRESETS from '../../lib/aiPresets.json';
+
+// Base URL is editable only for local / custom servers; cloud presets use their fixed URL.
+const EDITABLE_URL = new Set(['ollama', 'lmstudio', 'custom']);
 
 const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'language'];
 const TAB_FALLBACK = { sharing: 'Partajare' };
@@ -18,9 +22,9 @@ const FONTS = [
   ["'Courier New', monospace", 'Courier New'],
 ];
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts }) {
+export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, initialTab }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
-  const [tab, setTab] = useState('general');
+  const [tab, setTab] = useState(() => (TABS.includes(initialTab) ? initialTab : 'general'));
   const [s, setS] = useState({
     language: init.language,
     reopenLastProject: init.reopenLastProject !== false,
@@ -60,7 +64,58 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     const v = e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e;
     setS((p) => ({ ...p, [k]: v }));
   };
-  const [apiKey, setApiKey] = useState('');
+  const [ai, setAi] = useState(() => {
+    const provider = AI_PRESETS[init.aiProvider] ? init.aiProvider : 'anthropic';
+    return { provider, model: init.aiModel || '', baseUrl: init.aiBaseUrl || '', notebookLmUrl: init.notebookLmUrl || '' };
+  });
+  const [aiKeys, setAiKeys] = useState({}); // provider -> key typed in this session (never read back)
+  const [hasKeys, setHasKeys] = useState(() => ({ ...(init.hasKeys || {}), ...(init.hasKeys ? {} : { anthropic: Boolean(init.hasApiKey) }) }));
+  const [aiTest, setAiTest] = useState(null); // {busy} | {ok, text}
+  const aiPreset = AI_PRESETS[ai.provider] || AI_PRESETS.custom;
+  const setAiProvider = (provider) => {
+    const same = provider === (AI_PRESETS[init.aiProvider] ? init.aiProvider : 'anthropic');
+    setAi((p) => ({ ...p, provider, model: same ? init.aiModel || '' : '', baseUrl: same ? init.aiBaseUrl || '' : '' }));
+    setAiTest(null);
+  };
+  const aiPatch = () => {
+    const patch = {
+      aiProvider: ai.provider,
+      aiModel: ai.model.trim(),
+      aiBaseUrl: EDITABLE_URL.has(ai.provider) ? ai.baseUrl.trim() : '',
+      notebookLmUrl: ai.notebookLmUrl.trim(),
+    };
+    const typed = Object.fromEntries(Object.entries(aiKeys).filter(([, k]) => k.trim()).map(([p, k]) => [p, k.trim()]));
+    if (Object.keys(typed).length) patch.apiKeys = typed;
+    return patch;
+  };
+  const deleteAiKey = async () => {
+    try {
+      await api.setSettings({ apiKeys: { [ai.provider]: '' } });
+      setHasKeys((h) => ({ ...h, [ai.provider]: false }));
+      setAiKeys((k) => ({ ...k, [ai.provider]: '' }));
+    } catch (e) {
+      onError(e);
+    }
+  };
+  const testAi = async () => {
+    if (!api.testAi) {
+      setAiTest({ ok: false, text: 'Testul cere aplicația desktop.' });
+      return;
+    }
+    setAiTest({ busy: true });
+    try {
+      const typed = (aiKeys[ai.provider] || '').trim();
+      if (typed) {
+        await api.setSettings({ apiKeys: { [ai.provider]: typed } });
+        setHasKeys((h) => ({ ...h, [ai.provider]: true }));
+        setAiKeys((k) => ({ ...k, [ai.provider]: '' }));
+      }
+      const r = await api.testAi({ provider: ai.provider, model: ai.model.trim(), baseUrl: EDITABLE_URL.has(ai.provider) ? ai.baseUrl.trim() : '' });
+      setAiTest({ ok: true, text: `Conexiune reușită: ${r.label}, model ${r.model} (${r.ms} ms). Răspuns: „${r.reply}”` });
+    } catch (e) {
+      setAiTest({ ok: false, text: e.message });
+    }
+  };
   const [comp, setComp] = useState({
     bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100,
     bgImage: settings.compBgImage || '', bgImageFit: settings.compBgImageFit || 'cover', showTargets: Boolean(settings.compShowTargets),
@@ -146,7 +201,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         disabledWords: l.disabledWords.split(',').map((x) => x.trim()).filter(Boolean),
         builtins: l.builtins,
       }]));
-      if (apiKey.trim()) patch.apiKey = apiKey.trim();
+      Object.assign(patch, aiPatch());
       await api.setSettings(patch);
       if (project) {
         onProjectChange({
@@ -382,13 +437,66 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     ai: (
       <>
         {check('aiEnabled', t('set.aiEnabled'))}
-        <label>
-          {t('set.apiKey')} {settings.hasApiKey ? t('set.apiKeySet') : ''}
-          <input type="password" autoComplete="off" placeholder="sk-ant-…" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
-        </label>
-        {settings.hasApiKey && (
-          <button className="link" onClick={() => api.setSettings({ apiKey: '' }).then(onClose).catch(onError)}>{t('set.apiKeyDelete')}</button>
-        )}
+        <fieldset>
+          <legend>Furnizor AI</legend>
+          <label>
+            Furnizor
+            <select value={ai.provider} onChange={(e) => setAiProvider(e.target.value)}>
+              {Object.entries(AI_PRESETS).map(([id, p]) => (
+                <option key={id} value={id}>{p.label}{hasKeys[id] ? ' ✓' : ''}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Model
+            <input value={ai.model} placeholder={aiPreset.defaultModel || aiPreset.modelHint} onChange={(e) => setAi((p) => ({ ...p, model: e.target.value }))} />
+          </label>
+          <p className="muted small">
+            {aiPreset.defaultModel ? `Gol = ${aiPreset.defaultModel}. ` : 'Scrie id-ul exact al modelului, așa cum apare la furnizor. '}
+          </p>
+          {aiPreset.kind !== 'anthropic' && (
+            <label>
+              URL de bază
+              <input
+                value={EDITABLE_URL.has(ai.provider) ? ai.baseUrl : aiPreset.baseUrl}
+                placeholder={aiPreset.baseUrl || 'https://server/v1'}
+                readOnly={!EDITABLE_URL.has(ai.provider)}
+                onChange={(e) => setAi((p) => ({ ...p, baseUrl: e.target.value }))}
+              />
+            </label>
+          )}
+          <label>
+            Cheie API {aiPreset.label} {hasKeys[ai.provider] ? '(setată, lasă gol ca s-o păstrezi)' : aiPreset.needsKey ? '' : '(opțională)'}
+            <input
+              type="password"
+              autoComplete="off"
+              placeholder={aiPreset.keyHint || ''}
+              value={aiKeys[ai.provider] || ''}
+              onChange={(e) => setAiKeys((k) => ({ ...k, [ai.provider]: e.target.value }))}
+            />
+          </label>
+          <p className="muted small">Cheia e criptată de sistemul de operare și rămâne în procesul principal; interfața nu o mai vede după salvare. Fiecare furnizor are cheia lui.</p>
+          <div className="row">
+            <button onClick={testAi} disabled={aiTest?.busy}>{aiTest?.busy ? 'Se testează…' : 'Testează conexiunea'}</button>
+            {hasKeys[ai.provider] && (
+              <button className="link" onClick={deleteAiKey}>Șterge cheia {aiPreset.label}</button>
+            )}
+          </div>
+          {aiTest && !aiTest.busy && <p className={aiTest.ok ? 'muted small' : 'warn'} role="status">{aiTest.text}</p>}
+        </fieldset>
+        <fieldset>
+          <legend>NotebookLM</legend>
+          <label>
+            Link notebook NotebookLM (opțional)
+            <input
+              type="url"
+              value={ai.notebookLmUrl}
+              placeholder="https://notebooklm.google.com/notebook/…"
+              onChange={(e) => setAi((p) => ({ ...p, notebookLmUrl: e.target.value }))}
+            />
+          </label>
+          <p className="muted small">NotebookLM nu are API public pentru conturile personale. Exportă proiectul ca surse (Unelte → Exportă pentru NotebookLM…) și încarcă fișierele în notebook. „Deschide NotebookLM” deschide linkul de aici sau pagina principală.</p>
+        </fieldset>
         {project && (
           <fieldset>
             <legend>{t('set.editorial')}</legend>

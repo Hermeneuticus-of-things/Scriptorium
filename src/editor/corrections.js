@@ -44,7 +44,11 @@ export function correctionFor(before, ch, opts = {}) {
 
 /** True when a letter typed after `before` starts a sentence. */
 export function isSentenceStart(before) {
-  const t = String(before ?? '').replace(/[„"«(\[]+$/u, '');
+  // Strip trailing opening quotes/brackets with a loop: /[…]+$/ is quadratic on long runs.
+  let t = String(before ?? '');
+  let end = t.length;
+  while (end > 0 && '„"«(['.includes(t[end - 1])) end--;
+  t = t.slice(0, end);
   if (t === '' || /^\s*$/.test(t)) return true;
   return /[.!?…]\s+$/u.test(t) && !/\b(?:etc|nr|dl|dna|ex|pag|vol|cap|art)\.\s+$/iu.test(t);
 }

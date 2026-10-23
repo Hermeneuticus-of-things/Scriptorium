@@ -322,6 +322,19 @@ export const AutoComplete = Extension.create({
 
 // Words for auto-complete: titles from the Research folder, keywords and
 // capitalised words that appear at least 3 times in the project.
+// Capitalised-word counts per document, recomputed only when that document's HTML changes,
+// so typing in one document does not rescan the whole project on every keystroke.
+const capsCache = new Map(); // doc id -> { html, caps: Map<word, count> }
+function capsOf(id, html) {
+  const hit = capsCache.get(id);
+  if (hit && hit.html === html) return hit.caps;
+  const caps = new Map();
+  // capitalised words inside a sentence (after a letter or comma), so sentence starts don't count
+  for (const m of (html || '').replace(/<[^>]+>/g, ' ').matchAll(/(?<=[\p{L},;]\s)(\p{Lu}[\p{Ll}\p{M}]{3,})/gu)) caps.set(m[1], (caps.get(m[1]) || 0) + 1);
+  capsCache.set(id, { html, caps });
+  return caps;
+}
+
 export function projectWords(project, docs) {
   const words = new Map();
   const add = (w, weight) => {
@@ -339,10 +352,7 @@ export function projectWords(project, docs) {
   walk(project.tree, false);
   for (const k of project.keywordDefs || []) add(k.name, 10);
   const counts = new Map();
-  for (const html of Object.values(docs)) {
-    // capitalised words inside a sentence (after a letter or comma), so sentence starts don't count
-    for (const m of (html || '').replace(/<[^>]+>/g, ' ').matchAll(/(?<=[\p{L},;]\s)(\p{Lu}[\p{Ll}\p{M}]{3,})/gu)) counts.set(m[1], (counts.get(m[1]) || 0) + 1);
-  }
+  for (const [id, html] of Object.entries(docs)) for (const [w, c] of capsOf(id, html)) counts.set(w, (counts.get(w) || 0) + c);
   for (const [w, c] of counts) if (c >= 3) add(w, c);
   return [...words.entries()].sort((a, b) => b[1] - a[1]).map(([w]) => w);
 }

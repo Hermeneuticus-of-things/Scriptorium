@@ -21,9 +21,9 @@ export const MANUAL_RO = [
         title: 'Fereastra principală',
         html: `<p>Fereastra unui proiect are trei zone:</p>
 <ul>
-<li><strong>Binderul</strong> (stânga): arborele proiectului, cu dosarele rădăcină <em>Manuscris</em>, <em>Cercetare</em> și <em>Coș</em>. Se ascunde cu ${k('Ctrl+Alt+B')}.</li>
+<li><strong>Binderul</strong> (stânga): arborele proiectului, cu dosarele rădăcină <em>Manuscris</em>, <em>Cercetare</em> și <em>Coș</em>. Se ascunde cu ${k('Ctrl+Shift+B')}.</li>
 <li><strong>Zona de lucru</strong> (centru): editorul, corkboard-ul sau outline-ul pentru elementul selectat. Comuți cu ${k('Ctrl+1')}, ${k('Ctrl+2')}, ${k('Ctrl+3')} sau cu butoanele <em>Editor / Corkboard / Outline</em> din bara de sus.</li>
-<li><strong>Inspectorul</strong> (dreapta): sinopsis, metadate, note, snapshot-uri, comentarii. Se arată și se ascunde cu ${k('Ctrl+Alt+I')}.</li>
+<li><strong>Inspectorul</strong> (dreapta): sinopsis, metadate, note, snapshot-uri, comentarii. Se arată și se ascunde cu ${k('Ctrl+Shift+I')}.</li>
 </ul>
 <p>Bara de sus mai are: ⌂ (închide proiectul), Înapoi/Înainte, <em>Split</em>, <em>Compunere</em>, <em>Compile</em>, <em>Inspector</em>, <em>I-REP</em> și meniurile <em>Document</em>, <em>Navigare</em>, <em>Proiect</em>. În aplicația desktop, comenzile sunt și în meniul nativ (Fișier, Editare, Vizualizare, Navigare, Proiect, Document, Format, Unelte, Fereastră, Ajutor).</p>
 <p>Lățimea panourilor se schimbă trăgând de marginea lor; programul ține minte layout-ul pentru fiecare proiect.</p>`,
@@ -116,10 +116,14 @@ media/                 imagini, PDF, audio, video</pre>
         id: 'binder-organize',
         title: 'Organizare: creare, mutare, redenumire',
         html: `<ul>
-<li>Document nou: ${k('Ctrl+N')}. Dosar nou: ${k('Ctrl+Shift+N')}. Elementul nou apare după cel selectat.</li>
+<li>Document nou: ${k('Ctrl+N')}. Dosar nou: ${k('Ctrl+Shift+N')}. Elementul nou apare după cel selectat (în interior, dacă e dosar) și intră direct în redenumire: scrie titlul și apasă ${k('Enter')} pentru a trece cu cursorul în editor (${k('Esc')} rămâne în binder).</li>
 <li>Redenumire: ${k('F2')} sau dublu-clic (comportamentul dublu-clicului se alege în <em>Setări → Comportament</em>).</li>
 <li>Mutare: drag &amp; drop, inclusiv pentru o selecție multiplă; <kbd>Alt</kbd> în timpul tragerii copiază. Cu tastatura: ${k('Ctrl+↑')} / ${k('Ctrl+↓')} mută în sus/jos, ${k('Ctrl+→')} / ${k('Ctrl+←')} schimbă nivelul.</li>
-<li>Selecție multiplă: ${k('Ctrl')}+clic și ${k('Shift')}+clic.</li>
+<li>Selecție multiplă: ${k('Ctrl')}+clic și ${k('Shift')}+clic (sau ${k('Shift+↑')} / ${k('Shift+↓')}); ${k('Ctrl+săgeți')} mută toată selecția.</li>
+<li>Navigare cu tastatura: ${k('↑')} / ${k('↓')} (și ${k('Home')} / ${k('End')}) trec la elementul anterior / următor; ${k('←')} restrânge dosarul sau urcă la părinte, ${k('→')} îl extinde sau coboară la primul copil. Tastarea primelor litere sare la elementul cu titlul respectiv. ${k('Enter')} trece în editor (sau creează un document, după <em>Setări → Comportament</em>), ${k('Esc')} întoarce cursorul în editor.</li>
+<li>${k('Delete')} (sau ${k('Ctrl+Delete')}) mută selecția în coș, fără confirmare, iar selecția trece la elementul vecin. Ștergerea definitivă se face doar cu <em>Golește coșul</em>, care cere confirmare; <em>Document → Restaurează din coș</em> pune elementul înapoi la locul lui.</li>
+<li>Anulare: cu binderul activ, ${k('Ctrl+Z')} anulează ultima adăugare, mutare, ștergere în coș sau restaurare; ${k('Ctrl+Y')} (sau ${k('Ctrl+Shift+Z')}) o reface. Modificările de metadate făcute între timp se păstrează. După o împărțire, unire sau golirea coșului istoricul se resetează.</li>
+<li>La tragere, linia de deasupra / de dedesubt arată inserarea înainte / după, iar conturul arată inserarea în interior; un dosar restrâns se deschide singur dacă ții cursorul deasupra lui.</li>
 <li><em>Document → Mută în…</em> mută selecția într-un dosar ales din listă.</li>
 <li><em>Duplică</em> (${k('Ctrl+D')}) copiază documentul cu sub-documente; <em>Duplică doar elementul</em> îl copiază singur.</li>
 <li><em>Convertește în dosar / în document text</em>, <em>Sortează conținutul</em> (A→Z, Z→A, după data creării) sunt în meniul <em>Document</em>.</li>
@@ -292,7 +296,8 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'corkboard-basics',
         title: 'Fișe pe panou',
-        html: `<p>${k('Ctrl+2')} arată conținutul dosarului selectat ca fișe: titlu și sinopsis (sau imaginea de sinopsis). Trage fișele pentru a schimba ordinea; ordinea se aplică imediat în binder. Dublu-clic pe titlu sau pe sinopsis le editează.</p>
+        html: `<p>${k('Ctrl+2')} arată conținutul dosarului selectat ca fișe: titlu și sinopsis (sau imaginea de sinopsis). Trage fișele pentru a schimba ordinea; ordinea se aplică imediat în binder. Dublu-clic pe titlu deschide documentul în editor; clic în sinopsis îl editează.</p>
+<p>Tastatura: clic pe o fișă o selectează; săgețile trec de la o fișă la alta, ${k('Enter')} (sau ${k('F2')}) editează titlul, ${k('Ctrl+Enter')} deschide documentul, ${k('Ctrl+←')} / ${k('Ctrl+→')} mută fișa. <em>+ Fișă</em> adaugă o fișă după cea selectată, direct cu titlul în editare.</p>
 <p>Fișele arată culoarea etichetei, ștampila de status, cuvintele cheie și pionezele, după opțiuni.</p>`,
       },
       {
@@ -315,7 +320,7 @@ media/                 imagini, PDF, audio, video</pre>
         id: 'outline-basics',
         title: 'Vederea de tip tabel',
         html: `<p>${k('Ctrl+3')} arată conținutul dosarului ca listă ierarhică, cu coloane: titlu și sinopsis, etichetă, status, Include în Compile, cuvinte, caractere, țintă și progres, date create/modificat, cuvinte cheie, tip de secțiune, metadate personalizate, total cuvinte.</p>
-<p>Coloanele vizibile se aleg din meniul coloanelor. Sortezi cu clic pe capul coloanei, editezi titlul pe loc, muți rânduri prin drag &amp; drop, extinzi sau restrângi tot.</p>`,
+<p>Coloanele vizibile se aleg din meniul coloanelor. Sortezi cu clic pe capul coloanei, muți rânduri prin drag &amp; drop, extinzi sau restrângi tot. Clic selectează un rând, dublu-clic îl deschide în editor; ${k('↑')} / ${k('↓')} navighează, ${k('←')} / ${k('→')} restrâng / extind, ${k('Enter')} (sau ${k('F2')}) editează titlul pe loc, ${k('Ctrl+Enter')} deschide documentul.</p>`,
       },
     ],
   },
@@ -404,7 +409,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'targets-stats',
         title: 'Statistici și istoricul scrisului',
-        html: `<p><em>Proiect → Statistici…</em> (${k('Ctrl+Shift+I')}): cuvinte, caractere, pagini estimate pentru tot proiectul, pentru Compile sau pentru selecție; frecvența cuvintelor, lungimea frazelor, distribuția părților de vorbire (euristic).</p>
+        html: `<p><em>Proiect → Statistici…</em> (${k('Ctrl+Alt+Shift+I')}): cuvinte, caractere, pagini estimate pentru tot proiectul, pentru Compile sau pentru selecție; frecvența cuvintelor, lungimea frazelor, distribuția părților de vorbire (euristic).</p>
 <p><em>Proiect → Istoricul scrisului…</em>: grafic zilnic și lunar, serie de zile, export CSV. Istoricul importat din Scrivener este marcat separat.</p>`,
       },
     ],

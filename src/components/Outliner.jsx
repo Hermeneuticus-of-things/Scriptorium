@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+import { binderNav } from '../lib/tree.js';
 import { htmlToText } from '../lib/text.js';
+import { DocumentIcon, FolderIcon } from './Icons.jsx';
 
 // Columns the outline can show (Scrivener: Outliner > Columns).
 const BASE_COLUMNS = [
@@ -35,6 +37,9 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   const [sort, setSort] = useState(null); // {col, dir}
   const [drag, setDrag] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [sel, setSel] = useState(null);
+  const [dropHint, setDropHint] = useState(null);
+  const bodyRef = useRef(null);
   const fields = project.customFields || [];
   const allColumns = [...BASE_COLUMNS, ...fields.map((f) => ({ id: `custom:${f.title}`, label: f.title }))];
 
@@ -81,6 +86,42 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [root, collapsed, sort, counts, charCounts, docs]);
+
+  const focusRow = (id) => setTimeout(() => bodyRef.current?.querySelector(`tr[data-row-id="${CSS.escape(id)}"]`)?.focus(), 0);
+  // Keyboard on a focused row: ↑/↓/Home/End move, ←/→ collapse/expand, Enter / F2 edit the
+  // title, Ctrl+Enter opens the document (Scrivener outliner).
+  const onRowKey = (e, n) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      onOpen(n.id);
+      return;
+    }
+    if (e.key === 'Enter' || e.key === 'F2') {
+      e.preventDefault();
+      setEditing(n.id);
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const list = rows.map(({ n: x }) => ({ id: x.id, parentId: null, container: Boolean(x.children && x.children.length), open: Boolean(x.children) && !collapsed[x.id] }));
+    // parent ids for ← on a closed row
+    const parents = {};
+    const stack = [];
+    rows.forEach(({ n: x, depth }) => {
+      stack[depth] = x.id;
+      parents[x.id] = depth ? stack[depth - 1] : null;
+    });
+    list.forEach((r) => (r.parentId = parents[r.id]));
+    const r = binderNav(list, n.id, e.key);
+    if (!r.select && !r.expand && !r.collapse) return;
+    e.preventDefault();
+    if (r.expand) setCollapsed((c) => ({ ...c, [r.expand]: false }));
+    if (r.collapse) setCollapsed((c) => ({ ...c, [r.collapse]: true }));
+    if (r.select) {
+      setSel(r.select);
+      focusRow(r.select);
+    }
+  };
 
   const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('ro-RO') : '');
   const setAll = (open) => {
@@ -192,13 +233,38 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={bodyRef}>
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={shown.length + 1} className="muted">„{root.title}” nu are sub-documente. Selectează un dosar în binder sau adaugă documente cu Ctrl+N.</td>
+            </tr>
+          )}
           {rows.map(({ n, depth }) => (
             <tr
               key={n.id}
               draggable={!sort}
-              onDragStart={() => setDrag(n.id)}
-              onDragOver={(e) => drag && drag !== n.id && e.preventDefault()}
+              data-row-id={n.id}
+              tabIndex={0}
+              aria-selected={sel === n.id}
+              onFocus={(e) => e.target === e.currentTarget && setSel(n.id)}
+              onMouseDown={(e) => !e.target.closest('input, textarea, select') && setSel(n.id)}
+              onKeyDown={(e) => onRowKey(e, n)}
+              onDoubleClick={(e) => !e.target.closest('input, textarea, select, .twisty') && onOpen(n.id)}
+              onDragStart={(e) => {
+                setDrag(n.id);
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onDragEnd={() => {
+                setDrag(null);
+                setDropHint(null);
+              }}
+              onDragOver={(e) => {
+                if (!drag || drag === n.id) return;
+                e.preventDefault();
+                const r = e.currentTarget.getBoundingClientRect();
+                const pos = e.clientY - r.top < r.height / 2 ? 'before' : 'after';
+                if (!dropHint || dropHint.id !== n.id || dropHint.pos !== pos) setDropHint({ id: n.id, pos });
+              }}
               onDrop={(e) => {
                 e.preventDefault();
                 if (drag && drag !== n.id) {
@@ -206,8 +272,12 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
                   onMove(drag, n.id, e.clientY - r.top < r.height / 2 ? 'before' : 'after');
                 }
                 setDrag(null);
+                setDropHint(null);
               }}
-              className={drag === n.id ? 'dragging' : ''}
+              className={`${drag === n.id ? 'dragging' : ''} ${sel === n.id ? 'selected' : ''} ${dropHint && dropHint.id === n.id ? `drop-${dropHint.pos}` : ''}`}
+              style={{
+                ...(dropHint && dropHint.id === n.id ? { boxShadow: `inset 0 ${dropHint.pos === 'before' ? 2 : -2}px 0 var(--accent, #3b82f6)` } : null),
+              }}
             >
               <td style={{ paddingLeft: 8 + depth * 16 }} className="title-cell">
                 {n.children ? (
@@ -221,18 +291,24 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
                   <input
                     autoFocus
                     defaultValue={n.title}
+                    onFocus={(e) => e.target.select()}
                     onBlur={(e) => {
                       if (e.target.value.trim() && e.target.value !== n.title) onPatch(n.id, { title: e.target.value.trim() });
                       setEditing(null);
+                      focusRow(n.id);
                     }}
                     onKeyDown={(e) => {
+                      e.stopPropagation();
                       if (e.key === 'Enter') e.target.blur();
-                      if (e.key === 'Escape') setEditing(null);
+                      if (e.key === 'Escape') {
+                        e.target.value = n.title;
+                        e.target.blur();
+                      }
                     }}
                   />
                 ) : (
-                  <button className="link" onClick={() => onOpen(n.id)} onDoubleClick={() => setEditing(n.id)} title="Clic: deschide · Dublu-clic: redenumește">
-                    {n.children ? '📁 ' : ''}
+                  <button className="link" tabIndex={-1} onClick={() => { setSel(n.id); focusRow(n.id); }} onDoubleClick={(e) => { e.stopPropagation(); onOpen(n.id); }} title="Clic: selectează · Dublu-clic: deschide · Enter: redenumește">
+                    {n.children ? <FolderIcon /> : <DocumentIcon />}
                     {n.title}
                   </button>
                 )}

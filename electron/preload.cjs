@@ -83,7 +83,17 @@ contextBridge.exposeInMainWorld('api', {
   syncAuto: (dir, project, event) => call('v04:syncAuto', dir, project, event),
   listDictionaryWords: () => call('spell:listWords'),
   removeDictionaryWord: (word) => call('spell:removeWord', word),
+  cancelAi: () => call('ai:cancel'),
   runAi: (payload) => call('ai:run', payload),
+  // Streamed answer text of runAi({ runId }): fn({ runId, delta }).
+  onAiDelta: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('ai:delta', listener);
+    return () => ipcRenderer.removeListener('ai:delta', listener);
+  },
+  testAi: (override) => call('ai:test', override),
+  nlmExport: (dir, options) => call('nlm:export', dir, options),
+  nlmOpen: () => call('nlm:open'),
   newWindow: () => call('window:new'),
   toggleFullScreen: (on) => call('window:fullScreen', on),
   recheckSpelling: () => call('spell:recheck'),

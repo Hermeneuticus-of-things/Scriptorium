@@ -14,14 +14,12 @@
   pointer-events: none;
 }
 [data-invisibles="on"] .ProseMirror br::after { content: '↵'; color: var(--muted, #999); opacity: 0.6; }
-.inv-space { position: relative; }
-.inv-space::after {
-  content: '·';
-  position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translateX(-50%);
-  color: var(--muted, #999);
-  opacity: 0.7;
-  pointer-events: none;
+.inv-space {
+  /* A centred dot painted as a background: no extra positioned box per space, so long
+     documents stay fast to lay out with invisibles on. */
+  background-image: radial-gradient(circle, var(--muted, #999) 0.09em, transparent 0.1em);
+  background-repeat: no-repeat;
+  background-position: center 58%;
+  background-size: 100% 100%;
+  opacity: 0.85;
 }

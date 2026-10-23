@@ -16,7 +16,7 @@
     "test": "vitest run",
     "mcp": "node mcp/server.mjs",
     "dist:win": "vite build && electron-builder --win portable",
-    "test:e2e": "vite build && node tests/e2e/electron.e2e.cjs"
+    "test:e2e": "vite build && node tests/e2e/electron.e2e.cjs && node tests/e2e/flows.e2e.cjs"
   },
   "build": {
     "appId": "ro.scribner.app",
@@ -66,7 +66,7 @@
     "electron": "^45.0.0",
     "electron-builder": "^26.15.3",
     "jsdom": "^29.1.1",
-    "vite": "^5.4.11",
-    "vitest": "^2.1.8"
+    "vite": "^6.4.5",
+    "vitest": "^4.1.12"
   }
 }

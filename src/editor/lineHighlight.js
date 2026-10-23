@@ -46,9 +46,16 @@ export const LineHighlight = Extension.create({
           bar.style.display = 'none';
           const host = view.dom.parentElement;
           if (host) host.insertBefore(bar, view.dom);
+          let lastFade = null;
           const update = () => {
             const { enabled, fade } = ext.storage;
-            view.dom.style.setProperty('--fade-opacity', String(fade));
+            // Only touch the inline style when the value changes: rewriting an inherited custom
+            // property on the editor root restyles every descendant (hundreds of ms per key on
+            // large documents with many decorations).
+            if (fade !== lastFade) {
+              view.dom.style.setProperty('--fade-opacity', String(fade));
+              lastFade = fade;
+            }
             if (!enabled || !host || !view.hasFocus?.() || typeof view.coordsAtPos !== 'function') {
               bar.style.display = 'none';
               return;

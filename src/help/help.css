@@ -85,3 +85,14 @@
   .help-toc { width: 200px; }
   .help-content { padding: 12px 14px; }
 }
+
+/* The classic theme's generic `[data-ui='classic'] button` rule (higher specificity)
+   re-added a border and min-height to these flat list items, turning the table of
+   contents into a stack of boxed buttons. Re-assert the flat look at equal weight. */
+[data-ui='classic'] .help-chapter, [data-ui='classic'] .help-section, [data-ui='classic'] .help-result {
+  border: 0; border-radius: 0; min-height: 0; background: transparent; line-height: 1.35;
+}
+[data-ui='classic'] .help-result { border-bottom: 1px solid var(--line); }
+[data-ui='classic'] .help-section.on { background: var(--sc-sel); color: var(--sc-sel-text, #fff); }
+[data-ui='classic'] .help-chapter:hover, [data-ui='classic'] .help-section:not(.on):hover, [data-ui='classic'] .help-result:hover { background: var(--sc-hover); border-color: var(--line); }
+[data-ui='classic'] .help-chapters li.open > .help-chapter { color: var(--sc-link, var(--accent)); }

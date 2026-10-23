@@ -204,10 +204,18 @@ tool(
     const p = load(dir);
     const node = store.newNode(type, title);
     if (synopsis) node.synopsis = synopsis;
-    const anchor = after_id || parent_id || p.tree[0].id;
-    const anchorNode = nodeOrThrow(p, anchor);
-    if (parent_id && !anchorNode.children) throw new Error('parent_id trebuie să fie un dosar.');
-    p.tree = insertNear(p.tree, anchor, node);
+    if (after_id) {
+      // "after" means sibling: insertNear would nest the item inside a folder anchor.
+      const after = nodeOrThrow(p, after_id);
+      if (after.root) throw new Error('after_id nu poate fi o rădăcină; folosește parent_id.');
+      const list = findParent(p.tree, after_id).children;
+      list.splice(list.findIndex((n) => n.id === after_id) + 1, 0, node);
+    } else {
+      const anchor = parent_id || p.tree[0].id;
+      const anchorNode = nodeOrThrow(p, anchor);
+      if (!anchorNode.children) throw new Error('parent_id trebuie să fie un dosar.');
+      p.tree = insertNear(p.tree, anchor, node);
+    }
     save(dir, p);
     if (type === 'text') store.writeDoc(dir, node.id, 'docs', content ? manuscriptToHtml(content) : '<p></p>');
     return { id: node.id, path: pathOf(p, node.id) };
