@@ -85,9 +85,11 @@ textarea { resize: vertical; width: 100%; }
 .format-bar { position: sticky; top: 0; z-index: 2; display: flex; gap: 4px; padding: 6px 10px; background: var(--bg); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .format-bar .sep { width: 1px; background: var(--line); margin: 0 4px; }
 .format-bar button { min-width: 32px; }
-.page { max-width: 46em; width: 100%; margin: 24px auto 40vh; padding: 40px 56px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+.page { max-width: var(--editor-page-width, 46em); width: 100%; margin: 24px auto 40vh; padding: 40px 56px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
 .doc-title { margin: 0 0 1em; font-weight: 500; color: var(--muted); font-size: 15px; }
-.prose .ProseMirror { outline: none; min-height: 50vh; font-family: Georgia, 'Times New Roman', serif; font-size: var(--editor-font-size); line-height: 1.7; }
+.prose .ProseMirror { outline: none; min-height: 50vh; font-family: var(--editor-font, Georgia, 'Times New Roman', serif); font-size: var(--editor-font-size); line-height: var(--editor-line-height, 1.7); }
+.prose .ProseMirror p { text-indent: var(--para-indent, 0); margin-bottom: var(--para-spacing, .6em); }
+.binder { font-size: var(--binder-font-size, inherit); }
 .prose p { margin: 0 0 .6em; }
 .prose blockquote { border-left: 3px solid var(--line); margin-left: 0; padding-left: 1em; color: var(--muted); }
 .prose p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--muted); float: left; height: 0; pointer-events: none; }
