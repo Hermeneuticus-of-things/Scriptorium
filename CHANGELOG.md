@@ -48,3 +48,22 @@ Roadmap extins cu funcțiile Scrivener 3 (12 secțiuni, P1/P2/P3) și ordinea v0
 - I-REP / I-EDIT după `karma-book-engine`: `src/lib/editorial.js` (reguli R0–R11, ALOGEN, DOOM III, bucle micro/mezzo/macro, reattach), `src/components/EditorialPanel.jsx`, profil editorial în Setări.
 - `FEATURES-SCRIVENER3.md` (inventar complet) și `ROADMAP.md` extins.
 - Teste: 44/44. UI verificat în Chromium cu simulator de AI.
+
+## 2026-10-23 — v0.2.1 — Roadmap 1.4
+
+### Cerința user
+> "să da 1.4"
+
+### Decizii
+- Paste and Match Style (Ctrl+Shift+V): text simplu, paragrafe păstrate.
+- Ctrl+F: bară de căutare în document cu următor/anterior, înlocuire una/toate, aceleași opțiuni ca în proiect.
+- Split: Ctrl+K la cursor, Ctrl+Shift+K cu selecția ca titlu (ca în Scrivener).
+- Duplicare document/dosar (Ctrl+D), cu sau fără copii, cu note.
+- Spelling: limbi ro + en-US în Electron, meniu contextual cu sugestii și „Adaugă în dicționar”.
+
+### Fișiere vizate
+`src/components/Editor.jsx`, `src/components/FindBar.jsx`, `src/App.jsx`, `src/lib/tree.js`, `electron/main.cjs`, `tests/*`
+
+### Rezultat (v0.2.1)
+- Ctrl+F în document (`src/components/FindBar.jsx`, `src/editor/docSearch.js`), Paste and Match Style, Split cu selecția ca titlu (Ctrl+Shift+K), duplicare (Ctrl+D, `duplicateNode` în `src/lib/tree.js`), spelling ro/en-US cu meniu contextual (`electron/main.cjs`).
+- Teste: 48/48; funcțiile verificate în Chromium.

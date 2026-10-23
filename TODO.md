@@ -39,3 +39,11 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 - [ ] 1.3 Server MCP pentru agenți AI
 - [ ] 1.4 Paste and Match Style, Ctrl+F, Split with title, Duplicare, spelling ro
 - [~] Salvare cod: repo GitHub privat hermeneuticus-of-things/Scriptorium
+
+## Session 2026-10-23 (4)
+### Request: roadmap 1.4
+- [x] Paste and Match Style
+- [x] Ctrl+F în document
+- [x] Split with Selection as Title
+- [x] Duplicare
+- [x] Spelling ro + meniu contextual (netestat pe Windows)

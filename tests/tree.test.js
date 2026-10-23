@@ -67,3 +67,21 @@ describe('keyMove', () => {
     expect(t[0].children.map((n) => n.id)).toEqual(['f', 'a']);
   });
 });
+
+import { duplicateNode } from '../src/lib/tree.js';
+describe('duplicateNode', () => {
+  it('copies after the original with new ids, with or without children', () => {
+    let n = 0;
+    const newId = () => `n${n++}`;
+    const t = make();
+    t[0].children[0].title = 'Cap';
+    const r = duplicateNode(t, 'f', { newId });
+    expect(r.tree[0].children.map((x) => x.id)).toEqual(['f', 'n0', 'c']);
+    expect(r.tree[0].children[1].title).toBe('Cap (copie)');
+    expect(r.tree[0].children[1].children.map((x) => x.id)).toEqual(['n1', 'n2']);
+    expect(r.pairs).toEqual([['f', 'n0'], ['a', 'n1'], ['b', 'n2']]);
+    const flat = duplicateNode(t, 'f', { withChildren: false, newId });
+    expect(flat.tree[0].children[1].children).toEqual([]);
+    expect(duplicateNode(t, 'draft').id).toBe(null);
+  });
+});

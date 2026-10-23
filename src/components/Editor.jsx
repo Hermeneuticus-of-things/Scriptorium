@@ -1,13 +1,16 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
 import { textToHtml } from '../lib/text.js';
+import FindBar from './FindBar.jsx';
 
 const Editor = forwardRef(function Editor(
   { html, title, readOnly, typewriter, smartQuotes = true, compact = false, onChange, onFocus, onTitleClick },
   ref,
 ) {
+  const [showFind, setShowFind] = useState(false);
+  const plainPaste = useRef(false);
   const editor = useEditor(
     {
       extensions: buildExtensions({ smartQuotes }),
@@ -22,6 +25,25 @@ const Editor = forwardRef(function Editor(
         el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       },
       editorProps: {
+        handleKeyDown: (_view, e) => {
+          const mod = e.ctrlKey || e.metaKey;
+          if (mod && !e.shiftKey && e.key.toLowerCase() === 'f') {
+            e.preventDefault();
+            setShowFind(true);
+            return true;
+          }
+          // Paste and Match Style: the next paste keeps only the text.
+          if (mod && e.shiftKey && e.key.toLowerCase() === 'v') plainPaste.current = true;
+          return false;
+        },
+        handlePaste: (view, event) => {
+          if (!plainPaste.current) return false;
+          plainPaste.current = false;
+          const text = event.clipboardData?.getData('text/plain') || '';
+          if (!text) return false;
+          editor?.chain().focus().insertContent(text.includes('\n') ? textToHtml(text) : text).run();
+          return true;
+        },
         handleDoubleClickOn: (_view, _pos, node, nodePos) => {
           if (node.type.name !== 'footnote' || readOnly) return false;
           const text = window.prompt('Nota de subsol:', node.attrs.text);
@@ -99,11 +121,13 @@ const Editor = forwardRef(function Editor(
       },
       // Splits the document at the cursor. Returns {before, after, title} as HTML;
       // the title is the selected text, if any.
-      splitAtCursor: () => {
+      openFind: () => setShowFind(true),
+      // useSelectionAsTitle=false: plain split at the cursor (Scrivener "Split at Selection").
+      splitAtCursor: (useSelectionAsTitle = true) => {
         if (!editor) return null;
         const { state } = editor;
         const { from, to } = state.selection;
-        const title = from === to ? '' : state.doc.textBetween(from, to, ' ').trim().slice(0, 80);
+        const title = from === to || !useSelectionAsTitle ? '' : state.doc.textBetween(from, to, ' ').trim().slice(0, 80);
         const before = state.doc.cut(0, from);
         const after = state.doc.cut(from);
         return {
@@ -163,6 +187,7 @@ const Editor = forwardRef(function Editor(
           {title}
         </h2>
         {readOnly && <p className="hint">Doar citire.</p>}
+        {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}
         <EditorContent editor={editor} className="prose" />
       </div>
     </div>

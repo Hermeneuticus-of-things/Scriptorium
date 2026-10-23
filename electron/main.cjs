@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, ipcMain, dialog, safeStorage, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
@@ -93,6 +93,41 @@ function assertOpened(dir) {
   if (!openedDirs.has(path.resolve(dir))) throw new Error('Proiectul nu a fost deschis în această sesiune.');
 }
 
+// Spell checking in Romanian (+ English) with a context menu of suggestions.
+// On Windows and macOS Chromium uses the system spellchecker, so the Romanian
+// language pack must be installed in the OS; on Linux the dictionaries download on demand.
+function setupSpelling(win) {
+  const ses = win.webContents.session;
+  const langs = (readSettings().spellLanguages || ['ro', 'en-US']).filter((l) => ses.availableSpellCheckerLanguages.length === 0 || ses.availableSpellCheckerLanguages.includes(l));
+  try {
+    if (langs.length) ses.setSpellCheckerLanguages(langs);
+  } catch {
+    /* system spellchecker (Windows/macOS) decides the languages */
+  }
+  win.webContents.on('context-menu', (_e, params) => {
+    const items = [];
+    if (params.misspelledWord) {
+      for (const s of params.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => win.webContents.replaceMisspelling(s) });
+      if (!params.dictionarySuggestions.length) items.push({ label: 'Nicio sugestie', enabled: false });
+      items.push({ label: `Adaugă „${params.misspelledWord}” în dicționar`, click: () => ses.addWordToSpellCheckerDictionary(params.misspelledWord) });
+      items.push({ type: 'separator' });
+    }
+    if (params.isEditable) {
+      items.push(
+        { label: 'Taie', role: 'cut', enabled: params.editFlags.canCut },
+        { label: 'Copiază', role: 'copy', enabled: params.editFlags.canCopy },
+        { label: 'Lipește', role: 'paste', enabled: params.editFlags.canPaste },
+        { label: 'Lipește fără formatare', role: 'pasteAndMatchStyle', enabled: params.editFlags.canPaste },
+        { type: 'separator' },
+        { label: 'Selectează tot', role: 'selectAll' },
+      );
+    } else if (params.selectionText) {
+      items.push({ label: 'Copiază', role: 'copy' });
+    }
+    if (items.length) Menu.buildFromTemplate(items).popup({ window: win });
+  });
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1400,
@@ -108,6 +143,7 @@ function createWindow() {
     },
   });
   win.setMenuBarVisibility(false);
+  setupSpelling(win);
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
     return { action: 'deny' };
