@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { containerIds, dragIds, iconTint } from '../lib/panelsExtra.js';
 import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TrashIcon } from './Icons.jsx';
 
 function iconFor(node) {
@@ -28,7 +29,8 @@ function matches(node, query, docs) {
   return (docs[node.id] || '').replace(/<[^>]+>/g, ' ').toLocaleLowerCase('ro').includes(q);
 }
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null }) {
+  const tintIcons = labelTintIcons ?? Boolean(project.labelTintIcons);
   // Behaviours from Options: Enter = 'rename' | 'newDoc' | 'open' ('edit' = 'open');
   // double-click = 'rename' | 'quickRef' | 'open' ('openQuickRef' = 'quickRef').
   const enterMode = binderEnter === 'edit' ? 'open' : binderEnter;
@@ -51,7 +53,43 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const [collapsed, setCollapsed] = useState({});
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState('');
-  const [drag, setDrag] = useState(null);
+  const [drag, setDrag] = useState(null); // array of dragged ids
+  const [copying, setCopying] = useState(false);
+  const rootRef = useRef(null);
+  // Reveal in Binder: open every ancestor of revealId, then scroll its row into view.
+  useEffect(() => {
+    if (!revealId) return;
+    const path = [];
+    const find = (ns, trail) => (ns || []).some((n) => {
+      if (n.id === revealId) return path.push(...trail), true;
+      return n.children ? find(n.children, [...trail, n.id]) : false;
+    });
+    if (!find(project.tree, [])) return;
+    if (path.length) setCollapsed((c) => ({ ...c, ...Object.fromEntries(path.map((id) => [id, false])) }));
+    const t = setTimeout(() => {
+      const el = rootRef.current?.querySelector(`[data-node-id="${CSS.escape(revealId)}"]`);
+      el?.scrollIntoView?.({ block: 'nearest' });
+    }, 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealId]);
+  const setAllCollapsed = (value) => setCollapsed(value ? Object.fromEntries(containerIds(project.tree).filter((id) => !project.tree.some((r) => r.id === id)).map((id) => [id, true])) : {});
+  const doDrop = (ids, targetId, pos, copy) => {
+    const list = ids.filter((id) => id !== targetId);
+    if (!list.length) return;
+    if (copy && onCopy) return onCopy(list, targetId, pos);
+    if (list.length > 1 && onMoveMany) return onMoveMany(list, targetId, pos);
+    // 'after' keeps the original order by inserting in reverse.
+    (pos === 'after' ? [...list].reverse() : list).forEach((id) => onMove(id, targetId, pos));
+  };
+  const renderIcon = (node) => {
+    const tint = iconTint(node.iconColor, labelColor[node.label], tintIcons);
+    return (
+      <span className={`icon ${tint ? 'tinted' : ''}`} style={tint ? { color: tint, '--icon-tint': tint } : undefined}>
+        {iconFor(node)}
+      </span>
+    );
+  };
   const [dropHint, setDropHint] = useState(null);
 
   const labelColor = useMemo(() => Object.fromEntries(project.labels.map((l) => [l.name, l.color])), [project.labels]);
@@ -77,27 +115,33 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     return (
       <li key={node.id}>
         <div
-          className={`binder-row ${selectedId === node.id ? 'selected' : selectedIds.has(node.id) ? 'multi' : ''} ${hint ? `drop-${hint}` : ''} ${node.root ? 'root' : ''}`}
+          className={`binder-row ${selectedId === node.id ? 'selected' : selectedIds.has(node.id) ? 'multi' : ''} ${hint ? `drop-${hint}` : ''} ${node.root ? 'root' : ''} ${hint && copying ? 'drop-copy' : ''} ${node.separator ? 'separator' : ''}`}
+          data-node-id={node.id}
           style={{ paddingLeft: 8 + depth * 14 }}
           draggable={!node.root}
           onDragStart={(e) => {
-            setDrag(node.id);
-            e.dataTransfer.effectAllowed = 'move';
+            setDrag(dragIds(node.id, selectedIds));
+            e.dataTransfer.effectAllowed = onCopy ? 'copyMove' : 'move';
           }}
           onDragEnd={() => {
             setDrag(null);
             setDropHint(null);
+            setCopying(false);
           }}
           onDragOver={(e) => {
-            if (!drag || drag === node.id) return;
+            if (!drag || drag.includes(node.id)) return;
             e.preventDefault();
+            const copy = Boolean(e.altKey && onCopy);
+            e.dataTransfer.dropEffect = copy ? 'copy' : 'move';
+            setCopying(copy);
             setDropHint({ id: node.id, pos: dropPosition(e, node) });
           }}
           onDrop={(e) => {
             e.preventDefault();
-            if (drag) onMove(drag, node.id, dropPosition(e, node));
+            if (drag) doDrop(drag, node.id, dropPosition(e, node), e.altKey);
             setDrag(null);
             setDropHint(null);
+            setCopying(false);
           }}
           onClick={(e) => onSelect(node.id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
           onDoubleClick={() => runBehaviour(dblMode, node.id, Boolean(node.root))}
@@ -115,7 +159,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           ) : (
             <span className="twisty" />
           )}
-          <span className="icon">{iconFor(node)}</span>
+          {renderIcon(node)}
           {labelColor[node.label] && <span className="label-dot" style={{ background: labelColor[node.label] }} />}
           {editing === node.id ? (
             <input
@@ -132,7 +176,13 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
               }}
             />
           ) : (
-            <span className={`title ${node.includeInCompile === false ? 'excluded' : ''}`}>
+            node.separator ? (
+              <span className="title separator-title" title={node.title}>
+                <span className="separator-rule" aria-hidden="true" />
+                {node.title && <span className="separator-label">{node.title.replace(/^[─—-]+\s*/, '')}</span>}
+                <span className="separator-rule" aria-hidden="true" />
+              </span>
+            ) : <span className={`title ${node.includeInCompile === false ? 'excluded' : ''}`}>
               {node.title}
               {node.locked && <span className="badge" title="Blocat (doar citire)"> 🔒</span>}
               {node.favorite && <span className="badge" title="Favorit"> ★</span>}
@@ -149,6 +199,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
 
   return (
     <aside
+      ref={rootRef}
       className="binder"
       onKeyDown={(e) => {
         if (editing || e.target.tagName === 'INPUT') return;
@@ -170,9 +221,11 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         <button onClick={() => onAdd('folder')} title="Dosar nou (Ctrl+Shift+N)">+ Dosar</button>
         <button disabled={!selected || isRoot} onClick={() => setEditing(selected)} title="Redenumește (F2 / dublu-clic)">✎</button>
         <button disabled={!selected || isRoot} onClick={() => onTrash()} title="Mută în coș (selecția)">🗑</button>
+        <button onClick={() => setAllCollapsed(false)} title="Extinde tot">⊞</button>
+        <button onClick={() => setAllCollapsed(true)} title="Restrânge tot">⊟</button>
       </div>
       <input className="search" type="search" placeholder="Caută în proiect…" value={query} onChange={(e) => setQuery(e.target.value)} />
-      <p className="tip">Ctrl/Shift+clic: selecție multiplă · Alt+clic: deschide în panoul 2 · Ctrl+săgeți: mută</p>
+      <p className="tip">Ctrl/Shift+clic: selecție multiplă · Alt+clic: deschide în panoul 2 · Ctrl+săgeți: mută · Alt+tragere: copiază</p>
       {filterIds ? (
         <ul className="tree collection-list" aria-label={`Colecția ${filterTitle}`}>
           {filterIds.length === 0 && <li className="muted">Colecția e goală.</li>}
@@ -190,7 +243,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
                   className={`binder-row ${selectedId === id ? 'selected' : selectedIds.has(id) ? 'multi' : ''}`}
                   onClick={(e) => onSelect(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
                 >
-                  <span className="icon">{iconFor(node)}</span>
+                  {renderIcon(node)}
                   {labelColor[node.label] && <span className="label-dot" style={{ background: labelColor[node.label] }} />}
                   <span className="title">{node.title}</span>
                 </div>

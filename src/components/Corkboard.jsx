@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { cardHeight } from '../lib/panelsExtra.js';
 
 const SIZES = { mic: 180, mediu: 230, mare: 300 };
 
@@ -14,9 +15,10 @@ function SynopsisImage({ file, readMedia }) {
   return url ? <img className="card-image" src={url} alt="" /> : null;
 }
 
-function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '' }) {
+function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins }) {
   return (
-    <article className={`card ${className}`} style={{ borderTopColor: colors[n.label] || 'transparent', ...style }} {...dragProps}>
+    <article className={`card ${className} ${pins ? 'pinned' : ''}`} style={{ borderTopColor: colors[n.label] || 'transparent', ...style }} {...dragProps}>
+      {pins && <span className="card-pin" style={{ background: colors[n.label] || undefined }} aria-hidden="true" />}
       {n.label && n.label !== 'Fără' && colors[n.label] && <span className="card-tint" style={{ background: colors[n.label] }} />}
       <header onDoubleClick={() => onOpen(n.id)} title="Dublu-clic pentru a deschide">
         <span>
@@ -47,12 +49,29 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
 }
 
 // Corkboard with grid, lines (arrange by label/status/keyword) and freeform modes.
-// Board settings live on the folder: folder.cork = {mode, size, by}.
-export default function Corkboard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia }) {
+// Board settings live on the folder: folder.cork = {mode, size, by, ratio, spacing, columns, pins}.
+// Pass `folders` (array of folder nodes) to stack several boards, one section per folder.
+export default function Corkboard(props) {
+  const { folders } = props;
+  if (Array.isArray(folders) && folders.length > 1) {
+    return (
+      <div className="corkboard-stack">
+        {folders.map((f) => (
+          <section key={f.id} className="cork-stacked">
+            <CorkboardBoard {...props} folder={f} onAdd={props.onAddTo ? () => props.onAddTo(f.id) : props.onAdd} />
+          </section>
+        ))}
+      </div>
+    );
+  }
+  return <CorkboardBoard {...props} folder={Array.isArray(folders) && folders.length === 1 ? folders[0] : props.folder} />;
+}
+
+function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia }) {
   const [drag, setDrag] = useState(null);
   const [hint, setHint] = useState(null);
   const freeRef = useRef(null);
-  const cork = { mode: 'grid', size: 'mediu', by: 'label', ...(folder?.cork || {}) };
+  const cork = { mode: 'grid', size: 'mediu', by: 'label', ratio: '3:5', spacing: 16, columns: 0, pins: false, ...(folder?.cork || {}) };
   const setCork = (patch) => folder && onPatch(folder.id, { cork: { ...cork, ...patch } });
   const colors = Object.fromEntries(project.labels.map((l) => [l.name, l.color]));
   const keywordColors = Object.fromEntries((project.keywordDefs || []).map((k) => [k.name, k.color]));
@@ -84,7 +103,7 @@ export default function Corkboard({ project, folder, onOpen, onPatch, onAdd, onM
     },
   });
   const cardClass = (n) => `${drag === n.id ? 'dragging' : ''} ${hint && hint.id === n.id ? `drop-${hint.pos}` : ''}`;
-  const common = { colors, keywordColors, onOpen, onPatch, readMedia };
+  const common = { colors, keywordColors, onOpen, onPatch, readMedia, pins: Boolean(cork.pins) };
 
   // Freeform: cards keep {x, y} in node.corkPos; "Fixează ordinea" writes the visual
   // order (top-to-bottom, left-to-right) back to the binder.
@@ -108,7 +127,11 @@ export default function Corkboard({ project, folder, onOpen, onPatch, onAdd, onM
     window.addEventListener('mouseup', up);
   };
   const width = SIZES[cork.size] || SIZES.mediu;
-  const autoPos = (i) => ({ x: 20 + (i % 4) * (width + 24), y: 20 + Math.floor(i / 4) * 230 });
+  const height = cardHeight(width, cork.ratio);
+  const gap = Math.max(0, Number(cork.spacing) || 0);
+  const perRow = Number(cork.columns) || 4;
+  const autoPos = (i) => ({ x: 20 + (i % perRow) * (width + gap + 8), y: 20 + Math.floor(i / perRow) * (height + gap + 30) });
+  const gridStyle = Number(cork.columns) > 0 ? { gridTemplateColumns: `repeat(${cork.columns}, var(--card-w))`, gap } : { gap };
   const commitOrder = () => {
     const ordered = items
       .map((n, i) => ({ id: n.id, ...(n.corkPos || autoPos(i)) }))
@@ -133,7 +156,7 @@ export default function Corkboard({ project, folder, onOpen, onPatch, onAdd, onM
   }
 
   return (
-    <div className="corkboard" style={{ '--card-w': `${width}px` }}>
+    <div className="corkboard" style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
       <div className="cork-head">
         <h2>{folder?.title}</h2>
         <button onClick={onAdd}>+ Fișă</button>
@@ -156,11 +179,36 @@ export default function Corkboard({ project, folder, onOpen, onPatch, onAdd, onM
           <option value="mediu">Fișe medii</option>
           <option value="mare">Fișe mari</option>
         </select>
+        <details className="cork-options">
+          <summary>Aspect</summary>
+          <div className="cork-options-body">
+            <label>
+              Proporție
+              <select value={cork.ratio} onChange={(e) => setCork({ ratio: e.target.value })}>
+                <option value="3:5">3 × 5 (fișă)</option>
+                <option value="4:6">4 × 6</option>
+                <option value="1:1">Pătrat</option>
+                <option value="4:3">Înalt</option>
+              </select>
+            </label>
+            <label>
+              Spațiere
+              <input type="number" min="0" max="80" step="4" value={cork.spacing} onChange={(e) => setCork({ spacing: Number(e.target.value) || 0 })} />
+            </label>
+            <label>
+              Coloane
+              <input type="number" min="0" max="12" value={cork.columns} onChange={(e) => setCork({ columns: Number(e.target.value) || 0 })} title="0 = automat" />
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={Boolean(cork.pins)} onChange={(e) => setCork({ pins: e.target.checked })} /> Pioneze
+            </label>
+          </div>
+        </details>
       </div>
       {items.length === 0 && <p className="hint">Nicio fișă. Adaugă un document în acest dosar.</p>}
 
       {cork.mode === 'grid' && (
-        <div className="cards">
+        <div className="cards" style={gridStyle}>
           {items.map((n) => (
             <Card key={n.id} n={n} {...common} dragProps={gridDrag(n)} className={cardClass(n)} />
           ))}
@@ -173,7 +221,7 @@ export default function Corkboard({ project, folder, onOpen, onPatch, onAdd, onM
             <h3>
               {cork.by === 'label' && colors[g.key] && <span className="label-dot" style={{ background: colors[g.key] }} />} {g.key} <small className="muted">({g.items.length})</small>
             </h3>
-            <div className="cards row-cards">
+            <div className="cards row-cards" style={{ gap }}>
               {g.items.map((n) => (
                 <Card key={n.id} n={n} {...common} dragProps={gridDrag(n)} className={cardClass(n)} />
               ))}

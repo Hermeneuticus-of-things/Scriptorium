@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { htmlToText } from '../lib/text.js';
 
 // Columns the outline can show (Scrivener: Outliner > Columns).
 const BASE_COLUMNS = [
@@ -10,6 +11,7 @@ const BASE_COLUMNS = [
   { id: 'include', label: 'În Compile' },
   { id: 'words', label: 'Cuvinte', num: true },
   { id: 'total', label: 'Total cuvinte', num: true },
+  { id: 'chars', label: 'Caractere', num: true },
   { id: 'target', label: 'Țintă', num: true },
   { id: 'progress', label: 'Progres' },
   { id: 'created', label: 'Creat' },
@@ -25,7 +27,9 @@ function loadColumns() {
   }
 }
 
-export default function Outliner({ project, root, counts, onOpen, onPatch, onMove }) {
+// charCounts {id: n} or docs {id: html} (optional) feed the Characters column.
+export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null }) {
+  const charsOf = (n) => (charCounts ? charCounts[n.id] || 0 : docs && docs[n.id] ? htmlToText(docs[n.id]).length : 0);
   const [columns, setColumns] = useState(loadColumns);
   const [collapsed, setCollapsed] = useState({});
   const [sort, setSort] = useState(null); // {col, dir}
@@ -47,6 +51,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   const value = (n, col) => {
     if (col === 'words') return counts[n.id] || 0;
     if (col === 'total') return total(n);
+    if (col === 'chars') return charsOf(n);
     if (col === 'target') return n.target || 0;
     if (col === 'progress') return n.target ? Math.min(1, (counts[n.id] || 0) / n.target) : -1;
     if (col === 'keywords') return (n.keywords || []).join(', ');
@@ -75,7 +80,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     visit(root.children || [], 0);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [root, collapsed, sort, counts]);
+  }, [root, collapsed, sort, counts, charCounts, docs]);
 
   const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('ro-RO') : '');
   const setAll = (open) => {
@@ -121,6 +126,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
         return <input type="checkbox" checked={n.includeInCompile !== false} onChange={(e) => onPatch(n.id, { includeInCompile: e.target.checked })} />;
       case 'words':
       case 'total':
+      case 'chars':
         return value(n, col).toLocaleString('ro-RO');
       case 'target':
         return (

@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { posDistribution } from '../lib/panelsExtra.js';
+import { guessLang } from '../lib/pos.js';
 import { projectStats, projectText, wordFrequency, sentenceLengths } from '../lib/stats.js';
 
 const SCOPES = [
@@ -28,6 +30,7 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
     [tab, text, minLength, withStopwords],
   );
   const sent = useMemo(() => (tab === 'sentences' ? sentenceLengths(text) : null), [tab, text]);
+  const pos = useMemo(() => (tab === 'pos' ? posDistribution(text, project.language === 'en' || (!project.language && guessLang(text) === 'en') ? 'en' : 'ro') : []), [tab, text, project.language]);
   const maxBucket = sent ? Math.max(1, ...sent.histogram.map((h) => h.count)) : 1;
 
   return (
@@ -35,7 +38,7 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
       <div className="modal wide" role="dialog" aria-label="Statistici" onClick={(e) => e.stopPropagation()}>
         <h2>Statistici</h2>
         <div className="tabs" role="tablist">
-          {[['project', 'Proiect'], ['words', 'Frecvența cuvintelor'], ['sentences', 'Fraze']].map(([k, l]) => (
+          {[['project', 'Proiect'], ['words', 'Frecvența cuvintelor'], ['sentences', 'Fraze'], ['pos', 'Părți de vorbire']].map(([k, l]) => (
             <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
@@ -108,6 +111,29 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
                 </div>
               ))}
             </div>
+          </>
+        )}
+
+        {tab === 'pos' && (
+          <>
+            {pos.length === 0 ? (
+              <p className="muted">Nu există text în domeniul ales.</p>
+            ) : (
+              <table className="history-table pos-table">
+                <thead><tr><th>Parte de vorbire</th><th className="num">Cuvinte</th><th className="num">Procent</th><th /></tr></thead>
+                <tbody>
+                  {pos.map((p) => (
+                    <tr key={p.tag}>
+                      <td>{p.label}</td>
+                      <td className="num">{fmt(p.count)}</td>
+                      <td className="num">{p.percent.toLocaleString('ro-RO')}%</td>
+                      <td className="pos-bar-cell"><span className={`pos-bar pos-${p.tag}`} style={{ width: `${p.percent}%` }} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <p className="muted small">Estimare euristică (aprox. 60–75% precizie), nu o analiză gramaticală completă.</p>
           </>
         )}
 
