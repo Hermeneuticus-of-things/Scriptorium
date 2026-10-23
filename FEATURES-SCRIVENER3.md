@@ -1,4 +1,4 @@
-# Inventarul complet al funcțiilor Scrivener 3 → Scriptorium
+# Inventarul complet al funcțiilor Scrivener 3 → Scribner
 
 Lista de control după care construim. Structura urmează meniurile și panourile din Scrivener 3 (Windows 3.x și macOS 3.x), plus Compile, sincronizare și formatul de fișier.
 
@@ -313,7 +313,7 @@ Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și docu
 
 ## Q. Import Scrivener 3 fără pierderi
 
-Ce conține un proiect `.scriv` și unde ajunge în Scriptorium:
+Ce conține un proiect `.scriv` și unde ajunge în Scribner:
 
 | Stare | Element Scrivener | Ajunge în |
 |---|---|---|
@@ -368,7 +368,7 @@ Ce conține un proiect `.scriv` și unde ajunge în Scriptorium:
 | MathType | Program comercial extern; înlocuit de editor de formule MathML (v1.0) |
 | Bibliografie EndNote/Bookends | Integrare Zotero (deschis) în schimb |
 
-## S. Peste Scrivener (Scriptorium)
+## S. Peste Scrivener (Scribner)
 
 | Stare | Ver. | Funcție |
 |---|---|---|

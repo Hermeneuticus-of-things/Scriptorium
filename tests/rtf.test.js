@@ -45,8 +45,8 @@ describe('rtfToHtml v2', () => {
 
   it('Scrivener links and external links', () => {
     const rtf = H + String.raw`{\field{\*\fldinst{HYPERLINK "scrivlnk://1A2B3C4D-1111-2222-3333-444455556666"}}{\fldrslt Capitolul 2}} și {\field{\*\fldinst{HYPERLINK "https://ex.ro/a"}}{\fldrslt site}}}`;
-    const html = rtfToHtml(rtf, { linkFor: (u) => (u.startsWith('1A2B') ? 'scriptorium://doc/NEW' : null) });
-    expect(html).toContain('<a href="scriptorium://doc/NEW" class="internal-link">Capitolul 2</a>');
+    const html = rtfToHtml(rtf, { linkFor: (u) => (u.startsWith('1A2B') ? 'scribner://doc/NEW' : null) });
+    expect(html).toContain('<a href="scribner://doc/NEW" class="internal-link">Capitolul 2</a>');
     expect(html).toContain('<a href="https://ex.ro/a">site</a>');
   });
 

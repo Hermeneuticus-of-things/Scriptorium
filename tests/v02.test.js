@@ -13,7 +13,7 @@ const compile = require('../lib/compile.cjs');
 
 let tmp;
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scriptorium-v02-'));
+  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-v02-'));
 });
 
 describe('templates', () => {

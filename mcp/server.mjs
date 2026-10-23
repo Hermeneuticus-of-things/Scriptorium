@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Scriptorium MCP server: lets AI agents (Claude Code, Claude Desktop, any MCP
-// client) read and edit Scriptorium projects.
+// Scribner MCP server: lets AI agents (Claude Code, Claude Desktop, any MCP
+// client) read and edit Scribner projects.
 //
-//   node mcp/server.mjs --project "D:\Carti\Karma.scriptorium" [--project …] [--read-only]
+//   node mcp/server.mjs --project "D:\Carti\Karma.scribner" [--project …] [--read-only]
 //
 // Safety: only the projects passed on the command line are reachable; every write
 // takes a snapshot first and is appended to <project>/agent-log.jsonl.
@@ -31,14 +31,14 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === '--project' && args[i + 1]) projects.push(path.resolve(args[++i]));
   else if (args[i] === '--read-only') readOnly = true;
 }
-for (const p of (process.env.SCRIPTORIUM_PROJECTS || '').split(path.delimiter).filter(Boolean)) projects.push(path.resolve(p));
+for (const p of (process.env.SCRIBNER_PROJECTS || '').split(path.delimiter).filter(Boolean)) projects.push(path.resolve(p));
 if (!projects.length) {
-  process.stderr.write('Folosire: scriptorium-mcp --project <cale către proiect.scriptorium> [--project …] [--read-only]\n');
+  process.stderr.write('Folosire: scribner-mcp --project <cale către proiect.scribner> [--project …] [--read-only]\n');
   process.exit(2);
 }
 for (const p of projects) {
   if (!fs.existsSync(path.join(p, 'project.json'))) {
-    process.stderr.write(`Nu e un proiect Scriptorium: ${p}\n`);
+    process.stderr.write(`Nu e un proiect Scribner: ${p}\n`);
     process.exit(2);
   }
 }
@@ -48,7 +48,7 @@ for (const p of projects) {
 
 function projectDir(project) {
   if (!project) return projects[0];
-  const hit = projects.find((p) => p === path.resolve(project) || path.basename(p).replace(/\.scriptorium$/i, '') === project);
+  const hit = projects.find((p) => p === path.resolve(project) || path.basename(p).replace(/\.(scribner|scriptorium)$/i, '') === project);
   if (!hit) throw new Error(`Proiect necunoscut: ${project}. Disponibile: ${projects.map((p) => path.basename(p)).join(', ')}`);
   return hit;
 }
@@ -96,7 +96,7 @@ const project = z.string().optional().describe('Numele sau calea proiectului (im
 // ---------------------------------------------------------------------------
 // Server
 
-const server = new McpServer({ name: 'scriptorium', version: '0.2.0' });
+const server = new McpServer({ name: 'scribner', version: '0.2.0' });
 
 tool('project_info', 'Titlul, autorul, țintele, etichetele, statusurile, profilul editorial și numărul de cuvinte al proiectului.', { project }, (dir) => {
   const p = load(dir);
@@ -420,7 +420,7 @@ tool(
 tool('writing_history', 'Istoricul scrisului pe zile (cuvinte în manuscris și în tot proiectul).', { project }, (dir) => history.summarize(history.readHistory(dir)));
 
 // Resources: the binder and each document as manuscript text.
-server.registerResource('binder', 'scriptorium://binder', { title: 'Binder', description: 'Structura proiectului principal', mimeType: 'application/json' }, async (uri) => {
+server.registerResource('binder', 'scribner://binder', { title: 'Binder', description: 'Structura proiectului principal', mimeType: 'application/json' }, async (uri) => {
   const p = load(projects[0]);
   const slim = (n) => ({ id: n.id, title: n.title, type: n.root ? `root:${n.root}` : n.type, children: n.children ? n.children.map(slim) : undefined });
   return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(p.tree.map(slim), null, 2) }] };
@@ -428,10 +428,10 @@ server.registerResource('binder', 'scriptorium://binder', { title: 'Binder', des
 
 server.registerResource(
   'document',
-  new ResourceTemplate('scriptorium://doc/{id}', {
+  new ResourceTemplate('scribner://doc/{id}', {
     list: async () => {
       const p = load(projects[0]);
-      return { resources: flatten(p.tree).filter((n) => n.type === 'text').map((n) => ({ uri: `scriptorium://doc/${n.id}`, name: n.title, mimeType: 'text/markdown' })) };
+      return { resources: flatten(p.tree).filter((n) => n.type === 'text').map((n) => ({ uri: `scribner://doc/${n.id}`, name: n.title, mimeType: 'text/markdown' })) };
     },
   }),
   { title: 'Document', description: 'Textul unui document în format manuscript', mimeType: 'text/markdown' },
@@ -439,4 +439,4 @@ server.registerResource(
 );
 
 await server.connect(new StdioServerTransport());
-process.stderr.write(`Scriptorium MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);
+process.stderr.write(`Scribner MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);

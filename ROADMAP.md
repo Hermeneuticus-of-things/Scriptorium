@@ -1,4 +1,4 @@
-# Roadmap Scriptorium: toate funcțiile Scrivener 3 (extins)
+# Roadmap Scribner: toate funcțiile Scrivener 3 (extins)
 
 Starea reală la 2026-10-23. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
 Versiuni: **v0.2** în lucru · **v0.3** revizie și publicare · **v0.4** paritate avansată · **v1.0** paritate completă + extra.
@@ -75,9 +75,9 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [ ] „VKB2” și definițiile tale exacte pentru I-REP / I-EDIT (nu le am; aștept fișierele)
 
 ### 1.3 Conexiune MCP pentru agenți AI
-- [x] Server MCP `scriptorium-mcp` (stdio), pornit de Claude Code / Claude Desktop / alți agenți, mod `--read-only`
+- [x] Server MCP `scribner-mcp` (stdio), pornit de Claude Code / Claude Desktop / alți agenți, mod `--read-only`
 - [x] 20 de unelte: `project_info`, `list_binder`, `read_document`, `write_document`, `create_document`, `move_item`, `set_metadata`, `trash_item`, `search`, `replace`, `get_notes`, `set_notes`, `add_comment`, `add_footnote`, `lint`, `list_snapshots`, `take_snapshot`, `restore_snapshot`, `compile`, `writing_history`
-- [x] Resurse: binderul și fiecare document (`scriptorium://doc/{id}`)
+- [x] Resurse: binderul și fiecare document (`scribner://doc/{id}`)
 - [x] Aplicația se reîncarcă automat când un agent modifică fișierele
 - [x] Setări: comanda gata de copiat pentru Claude Code și Claude Desktop
 - [x] Jurnal al acțiunilor agenților (`agent-log.jsonl`), snapshot înainte de fiecare scriere

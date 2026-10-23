@@ -1,12 +1,12 @@
 {
-  "name": "scriptorium",
-  "productName": "Scriptorium",
+  "name": "scribner",
+  "productName": "Scribner",
   "version": "0.2.0",
   "description": "Program de scris cărți lungi, inspirat de Scrivener 3: import .scriv fără pierderi, Compile, I-REP / I-EDIT, asistent Claude, server MCP pentru agenți AI",
   "main": "electron/main.cjs",
   "private": true,
   "bin": {
-    "scriptorium-mcp": "mcp/server.mjs"
+    "scribner-mcp": "mcp/server.mjs"
   },
   "scripts": {
     "dev": "vite",
@@ -17,7 +17,7 @@
     "dist:win": "vite build && electron-builder --win portable"
   },
   "build": {
-    "appId": "ro.scriptorium.app",
+    "appId": "ro.scribner.app",
     "asar": false,
     "files": [
       "dist/**",

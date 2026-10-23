@@ -137,7 +137,7 @@ export const UnsupportedImage = Node.create({
 
 export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true } = {}) {
   const ext = [
-    StarterKit.configure({ link: { openOnClick: false, protocols: ['scriptorium'] } }),
+    StarterKit.configure({ link: { openOnClick: false, protocols: ['scribner', 'scriptorium'] } }),
     Placeholder.configure({ placeholder }),
     Comment,
     Footnote,

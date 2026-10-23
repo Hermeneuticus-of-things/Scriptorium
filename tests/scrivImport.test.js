@@ -165,7 +165,7 @@ describe('lossless Scrivener 3 import', () => {
     expect(html).toContain('data-comment="Verifică sursa"');
     expect(html).toContain('data-author="Editor"');
     expect(html).toContain('data-footnote="Tattvārtha Sūtra 8.1"');
-    expect(html).toContain(`<a href="scriptorium://doc/${s2.id}" class="internal-link">Sub 1.2</a>`);
+    expect(html).toContain(`<a href="scribner://doc/${s2.id}" class="internal-link">Sub 1.2</a>`);
     expect(html).toContain('data-footnote="nota inline"');
     expect(html).toContain('data-annotation="de rescris"');
     expect(html).toContain('data-annotation="Comentariu fără ancoră"');

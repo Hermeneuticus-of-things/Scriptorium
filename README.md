@@ -1,4 +1,4 @@
-# Scriptorium
+# Scribner
 
 Program de scris pentru cărți lungi, inspirat de Scrivener și scris de la zero (Electron + React). Deschide proiectele tale Scrivener 3 și adaugă un asistent AI.
 
@@ -21,13 +21,13 @@ Scurtături: Ctrl+N document nou, Ctrl+Shift+N dosar nou, Ctrl+S salvare imediat
 Ai nevoie de Node.js 22+.
 
 ```
-cd "PROJECTS\Scriptorium"
+cd "PROJECTS\Scribner"
 npm install
 npm start          # construiește și pornește aplicația
-npm run dist:win   # creează Scriptorium.exe portabil în release\
+npm run dist:win   # creează Scribner.exe portabil în release\
 ```
 
-Versiunea portabilă își ține setările lângă .exe, în `Scriptorium-data\`, deci merge de pe stick sau de pe `D:`.
+Versiunea portabilă își ține setările lângă .exe, în `Scribner-data\`, deci merge de pe stick sau de pe `D:`.
 
 `npm run dev` deschide interfața în browser, cu un proiect demo în memorie (fără salvare pe disc, import sau AI).
 
@@ -50,7 +50,7 @@ Serverul `mcp/server.mjs` dă acces agenților (Claude Code, Claude Desktop, ori
 Comanda exactă de conectare apare în Setări → Conexiune MCP. Manual:
 
 ```
-claude mcp add scriptorium -- node "C:\...\Scriptorium\mcp\server.mjs" --project "D:\Carti\Karma.scriptorium"
+claude mcp add scribner -- node "C:\...\Scribner\mcp\server.mjs" --project "D:\Carti\Karma.scribner"
 ```
 
 `--read-only` permite doar citirea.
@@ -58,7 +58,7 @@ claude mcp add scriptorium -- node "C:\...\Scriptorium\mcp\server.mjs" --project
 ## Formatul proiectului
 
 ```
-Cartea mea.scriptorium/
+Cartea mea.scribner/
   project.json          binder, etichete, statusuri, ținte
   docs/<id>.html        textul fiecărui document
   notes/<id>.html       notele

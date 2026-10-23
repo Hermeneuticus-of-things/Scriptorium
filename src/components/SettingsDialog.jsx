@@ -130,7 +130,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         {api.mcpInfo && dir && (
           <fieldset>
             <legend>Conexiune MCP pentru agenți AI</legend>
-            <p className="muted small">Agenții (Claude Code, Claude Desktop, alți clienți MCP) pot citi și edita proiectele prin serverul MCP Scriptorium. Fiecare scriere face snapshot înainte.</p>
+            <p className="muted small">Agenții (Claude Code, Claude Desktop, alți clienți MCP) pot citi și edita proiectele prin serverul MCP Scribner. Fiecare scriere face snapshot înainte.</p>
             <button onClick={async () => setMcp(await api.mcpInfo(dir))}>Arată comanda de conectare</button>
             {mcp && (
               <>

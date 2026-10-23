@@ -43,7 +43,7 @@ export default function ImportReport({ report, onClose }) {
         </table>
         {report.originalCopy && (
           <p>
-            Copia completă a proiectului original e păstrată în <code>scrivener-original/</code>. Tot ce nu are încă echivalent în Scriptorium
+            Copia completă a proiectului original e păstrată în <code>scrivener-original/</code>. Tot ce nu are încă echivalent în Scribner
             (setările de Compile, pozițiile de pe corkboard-ul liber, stilurile) rămâne acolo neatins.
           </p>
         )}
