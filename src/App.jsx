@@ -267,14 +267,17 @@ export default function App({ api }) {
     const items = [...pending.current.entries()];
     pending.current.clear();
     if (!items.length) return;
+    let i = 0;
     try {
-      for (const [k, html] of items) {
-        const [id, kind] = k.split('|');
-        await api.writeDoc(dir, id, kind, html);
+      for (; i < items.length; i += 1) {
+        const [id, kind] = items[i][0].split('|');
+        await api.writeDoc(dir, id, kind, items[i][1]);
       }
       setSaveState('salvat');
       recordHistory();
     } catch (e) {
+      // Keep the unwritten edits queued (unless newer text replaced them) so the next save retries them.
+      for (const [k, html] of items.slice(i)) if (!pending.current.has(k)) pending.current.set(k, html);
       setSaveState('eroare la salvare');
       report(e);
     }
@@ -671,7 +674,7 @@ export default function App({ api }) {
   // Alt-drag in the binder: copies the items (with children, text and notes) next to the target.
   const copyItems = async (ids, targetId, pos) => {
     await flush();
-    let tree = project.tree;
+    let tree = projectRef.current.tree;
     const copies = {};
     for (const id of ids) {
       const res = duplicateNode(tree, id, { withChildren: true });
@@ -687,7 +690,7 @@ export default function App({ api }) {
         if (notes) await api.writeDoc(dir, to, 'notes', notes);
       }
     }
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     setDocs((d) => ({ ...d, ...copies }));
   };
 
@@ -696,9 +699,9 @@ export default function App({ api }) {
     const node = selectedId && findNode(project.tree, selectedId);
     if (!node || node.root) return;
     await flush();
-    const { tree, pairs, id } = duplicateNode(project.tree, node.id, { withChildren });
+    const { tree, pairs, id } = duplicateNode(projectRef.current.tree, node.id, { withChildren });
     if (!id) return;
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     const copies = {};
     for (const [from, to] of pairs) {
       const html = docs[from] ?? (await api.readDoc(dir, from, 'docs'));
@@ -725,12 +728,12 @@ export default function App({ api }) {
     const second = newNode('text', parts.title || `${node.title} (continuare)`);
     second.label = node.label;
     second.status = node.status;
-    const tree = produce(project.tree, (t) => {
+    const tree = produce(projectRef.current.tree, (t) => {
       const parent = findParent(t, id);
       const list = parent ? parent.children : t;
       list.splice(list.findIndex((n) => n.id === id) + 1, 0, second);
     });
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     handle.setHtml(parts.before);
     writeDocNow(id, parts.before);
     setDocs((d) => ({ ...d, [second.id]: parts.after }));
@@ -751,9 +754,9 @@ export default function App({ api }) {
     const html = nodes.map((n) => docs[n.id] || '').join('<p>* * *</p>');
     const notes = await Promise.all(nodes.map((n) => api.readDoc(dir, n.id, 'notes')));
     const synopsis = nodes.map((n) => n.synopsis).filter(Boolean).join('\n');
-    let tree = updateNode(project.tree, first.id, { synopsis });
+    let tree = updateNode(projectRef.current.tree, first.id, { synopsis });
     for (const n of rest) tree = moveToTrash(tree, n.id);
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     writeDocNow(first.id, html);
     const mergedNotes = notes.filter((h) => htmlToText(h).trim()).join('<hr>');
     if (mergedNotes) queueWrite(first.id, 'notes', mergedNotes);
@@ -770,7 +773,7 @@ export default function App({ api }) {
     const terms = buildTerms(criteria);
     if (!terms || !terms.length) return 0;
     const results = searchProject(project, docs, notesById, criteria);
-    let tree = project.tree;
+    const nodeUpdates = [];
     const nextDocs = {};
     let total = 0;
     for (const { node } of results) {
@@ -792,10 +795,11 @@ export default function App({ api }) {
         nextDocs[node.id] = docHtml;
       }
       if (fields.includes('notes') && notesHtml !== (notesById[node.id] || '')) await api.writeDoc(dir, node.id, 'notes', notesHtml);
-      tree = updateNode(tree, node.id, { title: current.title, synopsis: current.synopsis });
+      nodeUpdates.push([node.id, { title: current.title, synopsis: current.synopsis }]);
       total += count;
     }
-    saveProject({ ...project, tree });
+    // Snapshots and writes above are awaited: build on the project as it is now, not as it was at the start.
+    if (nodeUpdates.length) saveProject({ ...projectRef.current, tree: nodeUpdates.reduce((t, [id, patch]) => updateNode(t, id, patch), projectRef.current.tree) });
     setDocs((d) => ({ ...d, ...nextDocs }));
     for (const [id, html] of Object.entries(nextDocs)) editorRefs.current.get(id)?.setHtml(html);
     recordHistory();
@@ -820,8 +824,9 @@ export default function App({ api }) {
     return total;
   };
 
-  const importParts = (parts) => {
-    let tree = project.tree;
+  // baseTree: lets a caller that also adds other nodes save everything in one project write.
+  const importParts = (parts, baseTree = projectRef.current.tree) => {
+    let tree = baseTree;
     let anchor = selectedId;
     const created = [];
     for (const p of parts) {
@@ -830,7 +835,7 @@ export default function App({ api }) {
       if (findNode(tree, anchor)?.children === undefined) anchor = node.id;
       created.push([node.id, p.html || '<p></p>']);
     }
-    saveProject({ ...project, tree });
+    saveProject({ ...projectRef.current, tree });
     setDocs((d) => ({ ...d, ...Object.fromEntries(created) }));
     Promise.all(created.map(([id, html]) => api.writeDoc(dir, id, 'docs', html))).catch(report);
     if (created.length) go(created[0][0]);
@@ -868,9 +873,11 @@ export default function App({ api }) {
     const page = await api.importWebPage(url, dir);
     // The page and its images (saved offline in media/) go in with a single project save.
     const node = newNode('text', page.title || url);
-    let tree = insertNear(project.tree, selectedId, node);
+    // The download can take seconds; the binder may have changed meanwhile.
+    const pj = projectRef.current;
+    let tree = insertNear(pj.tree, selectedId, node);
     for (const m of page.media || []) tree = insertNear(tree, node.id, { ...newNode('media', m.title), id: m.id, media: m.media });
-    saveProject({ ...project, tree });
+    saveProject({ ...pj, tree });
     setDocs((d) => ({ ...d, [node.id]: page.html }));
     await api.writeDoc(dir, node.id, 'docs', page.html);
     go(node.id);
@@ -878,15 +885,16 @@ export default function App({ api }) {
   const importFilesCmd = async (mode = 'none', separator = '#') => {
     const res = await api.importFiles(dir, mode, separator);
     if (!res) return;
-    if (res.texts.length) importParts(res.texts);
-    if (res.media.length) {
-      let tree = project.tree;
-      for (const m of res.media) {
-        const node = { ...newNode('media', m.title), id: m.id, media: m.media };
-        tree = insertNear(tree, selectedId, node);
-      }
-      saveProject({ ...project, tree });
+    // Media first, then the texts on top of that tree: two separate saves from the same
+    // `project` snapshot made the second one drop the first one's items.
+    const pj = projectRef.current;
+    let tree = pj.tree;
+    for (const m of res.media) {
+      const node = { ...newNode('media', m.title), id: m.id, media: m.media };
+      tree = insertNear(tree, selectedId, node);
     }
+    if (res.texts.length) importParts(res.texts, tree);
+    else if (res.media.length) saveProject({ ...pj, tree });
   };
   const saveAs = async () => {
     const title = window.prompt('Titlul copiei:', `${project.title} (copie)`);
