@@ -219,11 +219,28 @@ export const RomanianQuotes = Extension.create({
   },
 });
 
+// Redo keys always consume the event. prosemirror-keymap retries a shifted letter without
+// Shift when the handler returns false, so Mod-Shift-z with an empty redo stack fell back to
+// Mod-z and UNDID the last edit whenever the key arrived as lowercase "z" (Caps Lock on, or
+// Cmd+Shift+Z on macOS).
+export const RedoKeys = Extension.create({
+  name: 'redoKeys',
+  priority: 1000,
+  addKeyboardShortcuts() {
+    const redo = () => {
+      this.editor.commands.redo();
+      return true;
+    };
+    return { 'Shift-Mod-z': redo, 'Mod-y': redo };
+  },
+});
+
 export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], corrections = null, showInvisibles = false } = {}) {
   // corrections: {smartDashes, smartEllipsis, autoCapitalize, replacements}; null keeps the
   // historical behaviour (dashes/ellipsis only through Typography when smartQuotes is on).
   const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [], ...corrections } : null;
   const ext = [
+    RedoKeys,
     ParagraphStyle,
     CharStyle,
     Revision,

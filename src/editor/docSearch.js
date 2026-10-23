@@ -36,13 +36,28 @@ export function findRanges(doc, re) {
   return ranges;
 }
 
+/**
+ * Replacement text for one match. Groups ($1..$9, $&, $$) are expanded only in regex mode,
+ * so a literal search can insert "$5"; a group the pattern does not have stays literal
+ * (as in String.prototype.replace).
+ */
+export function expandReplacement(replacement, match, regex) {
+  if (!regex || !match) return replacement;
+  return replacement.replace(/\$(\$|&|\d)/g, (all, g) => {
+    if (g === '$') return '$';
+    if (g === '&') return match[0];
+    const n = Number(g);
+    return n >= 1 && n < match.length ? match[n] ?? '' : all;
+  });
+}
+
 // Replaces the given ranges (from last to first so positions stay valid).
-// `replacement` supports $1..$9 groups like the project-wide replace.
-export function replaceRanges(editor, ranges, replacement) {
+// With regex: true, `replacement` supports $1..$9 groups like the project-wide replace.
+export function replaceRanges(editor, ranges, replacement, { regex = false } = {}) {
   if (!ranges.length) return 0;
   const { tr } = editor.state;
   for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
-    const text = replacement.replace(/\$(\d)/g, (_, d) => r.match[Number(d)] ?? '');
+    const text = expandReplacement(replacement, r.match, regex);
     const marks = editor.state.doc.resolve(r.from).marks();
     if (text) tr.replaceWith(r.from, r.to, editor.schema.text(text, marks));
     else tr.delete(r.from, r.to);
