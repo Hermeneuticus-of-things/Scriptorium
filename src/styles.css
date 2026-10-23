@@ -285,3 +285,15 @@ legend { color: var(--muted); padding: 0 4px; }
 .find-bar input.invalid { border-color: var(--danger); }
 .find-bar .count { font-size: 12px; color: var(--muted); min-width: 40px; text-align: center; }
 .find-bar button { padding: 3px 8px; }
+.format-bar .menu > button, .format-bar select { padding: 3px 8px; }
+.block-select { min-width: 96px; }
+.menu-pop.narrow { min-width: 0; right: auto; left: 0; }
+.swatches { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; width: 180px; }
+.swatch { width: 22px; height: 22px; padding: 0; border-radius: 4px; }
+.color-a { color: #b3261e; font-weight: 700; text-decoration: underline; }
+.hl-a { background: #fff176; color: #2a2723; padding: 0 3px; font-weight: 700; }
+.format-bar .menu-pop { left: 0; right: auto; max-height: 60vh; overflow: auto; }
+.prose mark { border-radius: 2px; padding: 0 1px; }
+.prose ol, .prose ul { padding-left: 1.6em; }
+.prose pre { background: var(--panel); padding: 8px 12px; border-radius: 6px; font-size: .85em; white-space: pre-wrap; }
+.prose .selectedCell { background: var(--accent-soft); }
