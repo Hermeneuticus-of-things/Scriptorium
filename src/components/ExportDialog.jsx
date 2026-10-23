@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 const FORMATS = [
   ['docx', 'Word (.docx)'],
+  ['odt', 'OpenDocument (.odt)'],
   ['rtf', 'RTF (.rtf)'],
   ['md', 'Markdown (.md)'],
   ['txt', 'Text simplu (.txt)'],
@@ -27,6 +28,7 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
   const [withNotes, setWithNotes] = useState(true);
   const [withSynopsis, setWithSynopsis] = useState(true);
   const [withMeta, setWithMeta] = useState(false);
+  const [trackChanges, setTrackChanges] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState('');
 
@@ -38,7 +40,7 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
     try {
       if (tab === 'docs') {
         const ids = scope === 'selection' ? selectionIds : scope === 'folder' && folder ? [folder.id] : null;
-        const res = await api.exportDocuments(dir, project, ids, { format, withNotes, withSynopsis, withMeta });
+        const res = await api.exportDocuments(dir, project, ids, { format, withNotes, withSynopsis, withMeta, trackChanges: format === 'docx' && trackChanges });
         if (res) setDone(`Au fost exportate ${res.count} documente în ${res.dir}.`);
       } else if (tab === 'opml') {
         const file = await api.exportOpml(dir, project);
@@ -99,6 +101,11 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
               <label className="check">
                 <input type="checkbox" checked={withMeta} onChange={(e) => setWithMeta(e.target.checked)} /> Metadatele: etichetă, stare, cuvinte-cheie (.meta.json)
               </label>
+              {format === 'docx' && (
+                <label className="check">
+                  <input type="checkbox" checked={trackChanges} onChange={(e) => setTrackChanges(e.target.checked)} /> Reviziile ca modificări urmărite Word (Track Changes)
+                </label>
+              )}
             </div>
           </div>
         )}

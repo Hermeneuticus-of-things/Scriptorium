@@ -26,7 +26,7 @@ const openedDirs = new Set();
 const dirtyDirs = new Set();
 let backupTimer = null;
 
-const BACKUP_DEFAULTS = { backupOnClose: true, backupEveryMin: 0, backupKeep: 10, backupDir: '' };
+const BACKUP_DEFAULTS = { backupOnClose: true, backupEveryMin: 0, backupKeep: 10, backupDir: '', backupOnOpen: false, backupZip: true };
 
 function backupSettings() {
   return { ...BACKUP_DEFAULTS, ...readSettings() };
@@ -36,7 +36,7 @@ async function backupAll() {
   const s = backupSettings();
   for (const dir of dirtyDirs) {
     try {
-      await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep);
+      await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, { zip: s.backupZip !== false });
     } catch (err) {
       console.error('Backup eșuat pentru', dir, err);
     }
@@ -281,6 +281,8 @@ handle('settings:get', () => {
     shortcuts: s.shortcuts || {},
     layouts: s.layouts || [],
     backupOnClose: b.backupOnClose,
+    backupOnOpen: Boolean(b.backupOnOpen),
+    backupZip: b.backupZip !== false,
     backupEveryMin: b.backupEveryMin,
     backupKeep: b.backupKeep,
     backupDir: b.backupDir,
@@ -330,6 +332,7 @@ handle('project:open', async (e, dirArg) => {
   if (!claimDir(e.sender, dir)) return null;
   const project = store.loadProject(dir);
   rememberRecent(dir, project.title);
+  backup.backupOnOpen(dir, backupSettings());
   return { dir, project };
 });
 
@@ -535,7 +538,7 @@ handle('media:openExternal', async (_e, dir, file) => {
 handle('backup:now', async (_e, dir) => {
   assertOpened(dir);
   const s = backupSettings();
-  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep);
+  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, { zip: s.backupZip !== false });
 });
 handle('backup:list', (_e, dir) => {
   assertOpened(dir);
