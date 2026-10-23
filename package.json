@@ -15,7 +15,8 @@
     "start": "vite build && electron .",
     "test": "vitest run",
     "mcp": "node mcp/server.mjs",
-    "dist:win": "vite build && electron-builder --win portable"
+    "dist:win": "vite build && electron-builder --win portable",
+    "test:e2e": "vite build && node tests/e2e/electron.e2e.cjs"
   },
   "build": {
     "appId": "ro.scribner.app",
