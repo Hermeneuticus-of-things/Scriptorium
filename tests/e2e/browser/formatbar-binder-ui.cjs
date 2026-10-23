@@ -53,7 +53,10 @@ const barInfo = (page, sel = '.pane .format-bar') => page.evaluate((sel) => {
     check(`${theme} overflow popup not clipped`, await page.evaluate(() => { const p = document.querySelector('.fb-overflow-pop'); const r = p.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + 6, r.top + 6); return p.contains(hit); }), JSON.stringify(popBox));
     check(`${theme} dropdown works inside overflow`, ok && box.x >= 0 && box.x + box.width <= 1000 + 1 && await page.evaluate(() => { const m = document.querySelector('.fb-overflow-pop .menu-pop'); const r = m.getBoundingClientRect(); return m.contains(document.elementFromPoint(r.left + 8, r.top + 8)) && m.contains(document.elementFromPoint(r.right - 8, r.bottom - 8)); }), JSON.stringify(box));
     await page.screenshot({ path: `${OUT}/formatbar-overflow-${theme}.png` });
+    // Esc closes only the inner dropdown (focus back on its button); the overflow stays open.
     await page.keyboard.press('Escape');
+    check(`${theme} Esc closes inner dropdown, keeps overflow`, (await pop.locator('.menu-pop').count()) === 0 && await pop.isVisible() && await page.evaluate(() => document.activeElement?.textContent.includes('Tabel')));
+    await menuBtn.click();
     await inner.locator('[role="menuitem"]').first().click();
     check(`${theme} menu item closes overflow`, (await page.locator('.fb-overflow-pop').count()) === 0);
     await page.locator('.pane .format-bar .fb-more > button').first().click();

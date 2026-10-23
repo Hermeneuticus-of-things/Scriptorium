@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
+import { t } from '../lib/i18n.js';
 
-const FORMATS = [
+const FORMATS = () => ([
   ['docx', 'Word (.docx)'],
   ['odt', 'OpenDocument (.odt)'],
   ['rtf', 'RTF (.rtf)'],
   ['md', 'Markdown (.md)'],
-  ['txt', 'Text simplu (.txt)'],
-  ['html', 'Pagină web (.html)'],
-];
+  ['txt', t('ui.exportDialog.text_simplu_txt')],
+  ['html', t('ui.exportDialog.pagina_web_html')],
+]);
 
 function findParentFolder(tree, id) {
   let found = null;
@@ -41,13 +42,13 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
       if (tab === 'docs') {
         const ids = scope === 'selection' ? selectionIds : scope === 'folder' && folder ? [folder.id] : null;
         const res = await api.exportDocuments(dir, project, ids, { format, withNotes, withSynopsis, withMeta, trackChanges: format === 'docx' && trackChanges });
-        if (res) setDone(`Au fost exportate ${res.count} documente în ${res.dir}.`);
+        if (res) setDone(t('ui.exportDialog.au_fost_exportate_x_documente', { count: res.count, dir: res.dir }));
       } else if (tab === 'opml') {
         const file = await api.exportOpml(dir, project);
-        if (file) setDone(`Schița a fost salvată în ${file}.`);
+        if (file) setDone(t('ui.exportDialog.schita_a_fost_salvata_in', { file: file }));
       } else {
         const file = await api.exportCsv(dir, project);
-        if (file) setDone(`Metadatele au fost salvate în ${file}.`);
+        if (file) setDone(t('ui.exportDialog.metadatele_au_fost_salvate_in', { file: file }));
       }
     } catch (e) {
       onError(e);
@@ -64,29 +65,29 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label="Exportă" onClick={(e) => e.stopPropagation()}>
-        <h2>Exportă</h2>
+      <div className="modal wide" role="dialog" aria-label={t('ui.exportDialog.exporta')} onClick={(e) => e.stopPropagation()}>
+        <h2>{t('ui.exportDialog.exporta')}</h2>
         <div className="row">
-          {tabBtn('docs', 'Documente')}
+          {tabBtn('docs', t('group.document'))}
           {tabBtn('opml', 'OPML')}
           {tabBtn('csv', 'Metadate CSV')}
         </div>
 
         {tab === 'docs' && (
           <div className="fields">
-            <p className="muted">Fiecare document devine un fișier separat; dosarele din Binder devin foldere.</p>
+            <p className="muted">{t('ui.exportDialog.fiecare_document_devine_un_fisier')}</p>
             <label>
-              Ce se exportă
+              {t('ui.exportDialog.ce_se_exporta')}
               <select value={scope} onChange={(e) => setScope(e.target.value)}>
-                <option value="selection" disabled={!selectionIds.length}>Selecția ({selectionIds.length})</option>
-                <option value="folder" disabled={!folder}>Dosarul curent{folder ? ` („${folder.title}”)` : ''}</option>
-                <option value="all">Tot proiectul</option>
+                <option value="selection" disabled={!selectionIds.length}>{t('ui.exportDialog.selectia')}{selectionIds.length})</option>
+                <option value="folder" disabled={!folder}>{t('ui.exportDialog.dosarul_curent')}{folder ? ` („${folder.title}”)` : ''}</option>
+                <option value="all">{t('ui.advancedSearchDialog.tot_proiectul')}</option>
               </select>
             </label>
             <label>
               Format
               <select value={format} onChange={(e) => setFormat(e.target.value)}>
-                {FORMATS.map(([v, l]) => (
+                {FORMATS().map(([v, l]) => (
                   <option key={v} value={v}>{l}</option>
                 ))}
               </select>
@@ -99,27 +100,27 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
                 <input type="checkbox" checked={withSynopsis} onChange={(e) => setWithSynopsis(e.target.checked)} /> Sinopsisul (.synopsis.txt)
               </label>
               <label className="check">
-                <input type="checkbox" checked={withMeta} onChange={(e) => setWithMeta(e.target.checked)} /> Metadatele: etichetă, stare, cuvinte-cheie (.meta.json)
+                <input type="checkbox" checked={withMeta} onChange={(e) => setWithMeta(e.target.checked)} /> {t('ui.exportDialog.metadatele_eticheta_stare_cuvinte_cheie')}
               </label>
               {format === 'docx' && (
                 <label className="check">
-                  <input type="checkbox" checked={trackChanges} onChange={(e) => setTrackChanges(e.target.checked)} /> Reviziile ca modificări urmărite Word (Track Changes)
+                  <input type="checkbox" checked={trackChanges} onChange={(e) => setTrackChanges(e.target.checked)} /> {t('ui.compileDialog.reviziile_ca_modificari_urmarite_word')}
                 </label>
               )}
             </div>
           </div>
         )}
         {tab === 'opml' && (
-          <p className="muted">Exportă structura Binder-ului ca schiță OPML 2.0 (titluri, sinopsisuri, etichete și stări), pentru aplicații de outlining sau mind-mapping.</p>
+          <p className="muted">{t('ui.exportDialog.exporta_structura_binder_ului_ca')}</p>
         )}
         {tab === 'csv' && (
-          <p className="muted">Exportă un tabel cu metadatele fiecărui element (etichetă, stare, cuvinte-cheie, număr de cuvinte, date și câmpuri personalizate), deschis direct în Excel sau LibreOffice.</p>
+          <p className="muted">{t('ui.exportDialog.exporta_un_tabel_cu_metadatele')}</p>
         )}
 
         {done && <p className="muted" role="status">{done}</p>}
         <div className="actions">
-          <button onClick={onClose}>Închide</button>
-          <button className="primary" disabled={busy} onClick={run}>{busy ? 'Se exportă…' : 'Exportă…'}</button>
+          <button onClick={onClose}>{t('btn.close')}</button>
+          <button className="primary" disabled={busy} onClick={run}>{busy ? t('ui.exportDialog.se_exporta') : t('ui.exportDialog.exporta_2')}</button>
         </div>
       </div>
     </div>

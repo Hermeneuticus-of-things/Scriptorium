@@ -1,5 +1,19 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-23 — v0.7.0 — Clic dreapta pe cuvânt sau frază: traducere, dicționare, cercetare, AI, NotebookLM
+
+### Cerința user
+> "la edit text ... trimitere la DeepL și la dicționare online și trimitere la AI pentru cercetare, corecții sau căutare în NotebookLM, pe cuvânt sau pe frază" · "README pentru un om obișnuit, fără Scrivener" · "repare bug cu root cause"
+
+### Rezultat
+- Clic dreapta în editor: fără selecție se selectează cuvântul de sub cursor; meniul are Traduce (DeepL, Google Translate), Dicționare (dexonline, sinonime, Wiktionary, Cambridge, Merriam-Webster, Linguee, IATE), Cercetare pe web (Wikipedia, Google Scholar, Google), Asistent AI (Cercetare, Explică termenul, Corectează, Traduce), Întreabă NotebookLM și Extinde selecția la frază/paragraf. Același meniu în versiunea web.
+- AI: acțiuni noi research / define / translate; limba de traducere din Setări → Traducere și dicționare.
+- Bug-uri la cauză: variabila locală `tr` din CompileDialog ascundea funcția de traducere și bloca fereastra Compile (test de gardă nou pentru toate fișierele); cronologia tăia titlul ultimei scene; câmpurile personalizate din demo fără nume; selecția programatică pierdută când editorul nu avea focus.
+- Compile validat cu consumatori reali (Word schema, LibreOffice, epubcheck, pandoc): tabele, imagini, liste imbricate, linkuri, note de final, numerotarea capitolelor.
+- MCP și editări externe: --read-only nu mai scrie, lock pe project.json, îmbinare în trei căi, ferestre multiple fără proiecte blocate, web cu mai multe taburi.
+- README nou, pe limba unui om obișnuit, cu 8 capturi prezentate din proiectul demo îmbogățit.
+- Teste: 546 unitare, E2E Electron și browser trec.
+
 ## 2026-10-23 — v0.6.0 — Bug-uri reparate la cauză, AI cu orice furnizor, UI/UX ca Scrivener 3
 
 ### Cerința user

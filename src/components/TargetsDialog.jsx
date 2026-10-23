@@ -1,18 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import { deadlinePlan } from '../lib/stats.js';
 import { measure } from '../lib/panelsExtra.js';
+import { t as tr, uiLocale } from '../lib/i18n.js';
 
 // Display order Monday..Sunday; values follow Date#getDay (0 = Sunday).
-const DAYS = [[1, 'Lu'], [2, 'Ma'], [3, 'Mi'], [4, 'Jo'], [5, 'Vi'], [6, 'Sâ'], [0, 'Du']];
+const DAYS = () => ([[1, 'Lu'], [2, 'Ma'], [3, 'Mi'], [4, 'Jo'], [5, 'Vi'], [6, tr('ui.targetsDialog.sa')], [0, 'Du']]);
 
-const fmt = (n) => Number(n || 0).toLocaleString('ro-RO');
+const fmt = (n) => Number(n || 0).toLocaleString(uiLocale());
 
 function TypeSelect({ value, onChange }) {
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="Words">cuvinte</option>
-      <option value="Characters">caractere</option>
-      <option value="Pages">pagini</option>
+      <option value="Words">{tr('ui.inspector.cuvinte')}</option>
+      <option value="Characters">{tr('ui.inspector.caractere')}</option>
+      <option value="Pages">{tr('ui.targetsDialog.pagini')}</option>
     </select>
   );
 }
@@ -38,7 +39,7 @@ export default function TargetsDialog({ project, draftWords, draftChars, onSave,
     () => deadlinePlan({ draft: Number(draft) || 0, deadline, writingDays }, current),
     [draft, deadline, writingDays, current],
   );
-  const unit = draftType === 'Characters' ? 'caractere' : draftType === 'Pages' ? 'pagini' : 'cuvinte';
+  const unit = draftType === 'Characters' ? tr('ui.inspector.caractere') : draftType === 'Pages' ? tr('ui.targetsDialog.pagini') : tr('ui.inspector.cuvinte');
 
   const save = () => {
     onSave({
@@ -59,31 +60,31 @@ export default function TargetsDialog({ project, draftWords, draftChars, onSave,
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label="Ținte" onClick={(e) => e.stopPropagation()}>
-        <h2>Ținte de scris</h2>
+      <div className="modal" role="dialog" aria-label={tr('ui.targetsDialog.tinte')} onClick={(e) => e.stopPropagation()}>
+        <h2>{tr('ui.targetsDialog.tinte_de_scris')}</h2>
         <fieldset>
           <legend>Manuscris</legend>
           <div className="row">
-            <label>Ținta manuscrisului<input type="number" min="0" value={draft} onChange={(e) => setDraft(e.target.value)} /></label>
+            <label>{tr('ui.targetsDialog.tinta_manuscrisului')}<input type="number" min="0" value={draft} onChange={(e) => setDraft(e.target.value)} /></label>
             <label>Unitate<TypeSelect value={draftType} onChange={setDraftType} /></label>
           </div>
           {(draftType === 'Pages' || sessionType === 'Pages') && (
             <label>
-              Cuvinte pe pagină
+              {tr('ui.targetsDialog.cuvinte_pe_pagina')}
               <input type="number" min="50" max="1000" step="10" value={wordsPerPage} onChange={(e) => setWordsPerPage(e.target.value)} />
             </label>
           )}
-          <p className="muted small">Acum: {fmt(current)} {unit}{draftChars == null && draftType === 'Characters' ? ' (estimare)' : ''}</p>
+          <p className="muted small">{tr('ui.targetsDialog.acum')} {fmt(current)} {unit}{draftChars == null && draftType === 'Characters' ? ' (estimare)' : ''}</p>
           <div className="row">
             <label>
-              Termen limită
+              {tr('ui.targetsDialog.termen_limita')}
               <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
             </label>
-            <button type="button" onClick={() => setDeadline('')} disabled={!deadline}>Fără termen</button>
+            <button type="button" onClick={() => setDeadline('')} disabled={!deadline}>{tr('ui.targetsDialog.fara_termen')}</button>
           </div>
           <p className="muted">Zile de scris</p>
           <div className="checks">
-            {DAYS.map(([d, l]) => (
+            {DAYS().map(([d, l]) => (
               <label key={d} className="check">
                 <input type="checkbox" checked={writingDays.includes(d)} onChange={() => toggleDay(d)} /> {l}
               </label>
@@ -91,42 +92,42 @@ export default function TargetsDialog({ project, draftWords, draftChars, onSave,
           </div>
           {plan ? (
             <div className="stats">
-              <div><strong>{fmt(plan.remaining)}</strong><span>{unit} rămase</span></div>
-              <div><strong>{fmt(plan.daysLeft)}</strong><span>zile de scris rămase</span></div>
-              <div><strong>{fmt(plan.perDay)}</strong><span>{unit} pe zi</span></div>
-              <div><strong>{plan.overdue ? 'Depășit' : plan.remaining === 0 ? 'Atinsă' : 'În grafic'}</strong><span>stare</span></div>
+              <div><strong>{fmt(plan.remaining)}</strong><span>{unit} {tr('ui.targetsDialog.ramase')}</span></div>
+              <div><strong>{fmt(plan.daysLeft)}</strong><span>{tr('ui.targetsDialog.zile_de_scris_ramase')}</span></div>
+              <div><strong>{fmt(plan.perDay)}</strong><span>{unit} {tr('ui.targetsDialog.pe_zi')}</span></div>
+              <div><strong>{plan.overdue ? tr('ui.targetsDialog.depasit') : plan.remaining === 0 ? tr('ui.targetsDialog.atinsa') : tr('ui.targetsDialog.in_grafic')}</strong><span>stare</span></div>
             </div>
           ) : (
-            <p className="muted">Alege un termen limită pentru a vedea câte {unit} ai de scris pe zi.</p>
+            <p className="muted">{tr('ui.targetsDialog.alege_un_termen_limita_pentru')} {unit} {tr('ui.targetsDialog.ai_de_scris_pe_zi')}</p>
           )}
         </fieldset>
         <fieldset>
           <legend>Sesiune</legend>
           <div className="row">
-            <label>Ținta sesiunii<input type="number" min="0" value={session} onChange={(e) => setSession(e.target.value)} /></label>
+            <label>{tr('ui.targetsDialog.tinta_sesiunii')}<input type="number" min="0" value={session} onChange={(e) => setSession(e.target.value)} /></label>
             <label>Unitate<TypeSelect value={sessionType} onChange={setSessionType} /></label>
           </div>
           <label>
             Resetarea sesiunii
             <select value={sessionReset} onChange={(e) => setSessionReset(e.target.value)}>
-              <option value="midnight">La miezul nopții</option>
-              <option value="open">La deschiderea proiectului</option>
+              <option value="midnight">{tr('ui.targetsDialog.la_miezul_noptii')}</option>
+              <option value="open">{tr('ui.targetsDialog.la_deschiderea_proiectului')}</option>
               <option value="manual">Manual</option>
             </select>
           </label>
         </fieldset>
         <label className="check">
-          <input type="checkbox" checked={countOnlyCompiled} onChange={(e) => setCountOnlyCompiled(e.target.checked)} /> Numără doar textul inclus în Compile
+          <input type="checkbox" checked={countOnlyCompiled} onChange={(e) => setCountOnlyCompiled(e.target.checked)} /> {tr('ui.targetsDialog.numara_doar_textul_inclus_in')}
         </label>
         <label className="check">
-          <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Notificare când atingi ținta
+          <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> {tr('ui.targetsDialog.notificare_cand_atingi_tinta')}
         </label>
         <label className="check">
-          <input type="checkbox" checked={notifyDocuments} onChange={(e) => setNotifyDocuments(e.target.checked)} /> Notificare și pentru țintele documentelor
+          <input type="checkbox" checked={notifyDocuments} onChange={(e) => setNotifyDocuments(e.target.checked)} /> {tr('ui.targetsDialog.notificare_si_pentru_tintele_documentelor')}
         </label>
         <div className="actions">
-          <button onClick={onClose}>Anulează</button>
-          <button className="primary" onClick={save}>Salvează</button>
+          <button onClick={onClose}>{tr('btn.cancel')}</button>
+          <button className="primary" onClick={save}>{tr('btn.save')}</button>
         </div>
       </div>
     </div>

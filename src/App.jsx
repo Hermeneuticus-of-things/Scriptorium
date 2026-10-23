@@ -51,7 +51,8 @@ import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
 import { applySettingsCss } from './lib/settingsDefaults.js';
-import { setLanguage, cmdLabel, groupLabel } from './lib/i18n.js';
+import DialogA11y from './components/DialogA11y.jsx';
+import { setLanguage, cmdLabel, groupLabel, t as tr, uiLocale } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
 import FindDialog from './components/FindDialog.jsx';
 import HistoryDialog from './components/HistoryDialog.jsx';
@@ -90,6 +91,8 @@ import {
   historyRedo,
 } from './lib/tree.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
+import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
+import ContextMenu from './components/ContextMenu.jsx';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
 import { replaceInHtml } from './lib/search.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
@@ -163,6 +166,8 @@ export default function App({ api }) {
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
+  const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
+  const [aiRequest, setAiRequest] = useState(null); // { action, n } run by AiPanel
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
@@ -283,7 +288,7 @@ export default function App({ api }) {
       if (!n.target || n.targetNotify === false) continue;
       const cur = n.targetType === 'Characters' ? htmlToText(docs[n.id] || '').length : counts[n.id] || 0;
       const prev = prevTargetCounts.current[n.id];
-      if (prev != null && targetCrossed(prev, cur, n.target) && typeof Notification !== 'undefined') new Notification('Țintă atinsă', { body: `„${n.title}”: ${n.target}` });
+      if (prev != null && targetCrossed(prev, cur, n.target) && typeof Notification !== 'undefined') new Notification(tr('ui.app.tinta_atinsa'), { body: `„${n.title}”: ${n.target}` });
       prevTargetCounts.current[n.id] = cur;
     }
   }, [counts]);
@@ -319,6 +324,7 @@ export default function App({ api }) {
   }, [api, dir]);
 
   const flush = useCallback(async () => {
+    for (const h of editorRefs.current.values()) h.flush?.();
     commitTyped();
     clearTimeout(timer.current);
     const items = [...pending.current.entries()];
@@ -335,7 +341,7 @@ export default function App({ api }) {
     } catch (e) {
       // Keep the unwritten edits queued (unless newer text replaced them) so the next save retries them.
       for (const [k, html] of items.slice(i)) if (!pending.current.has(k)) pending.current.set(k, html);
-      setSaveState('eroare la salvare');
+      setSaveState(tr('ui.app.eroare_la_salvare'));
       report(e);
     }
   }, [api, dir, report, recordHistory, commitTyped]);
@@ -343,7 +349,7 @@ export default function App({ api }) {
   const queueWrite = useCallback(
     (id, kind, html) => {
       pending.current.set(`${id}|${kind}`, html);
-      setSaveState('se salvează…');
+      setSaveState(tr('ui.app.se_salveaza'));
       clearTimeout(timer.current);
       timer.current = setTimeout(flush, Math.max(0.2, Number(settingsRef.current?.autosaveSec) || SAVE_DELAY / 1000) * 1000);
     },
@@ -365,8 +371,10 @@ export default function App({ api }) {
       if (changedDir !== dir) return;
       try {
         if (files.some((f) => f === 'project.json')) {
-          const res = await api.openProject(dir);
-          setProject(res.project);
+          const before = projectRef.current;
+          const res = await (api.reloadProject ? api.reloadProject(dir) : api.openProject(dir));
+          // A binder edit made while reading is merged by the next save; keep it on screen.
+          if (projectRef.current === before) setProject(res.project);
         }
         const ids = files.map((f) => /^docs\/([A-Za-z0-9-]+)\.html$/.exec(f)).filter(Boolean).map((m) => m[1]);
         const updated = {};
@@ -377,7 +385,7 @@ export default function App({ api }) {
         if (Object.keys(updated).length) {
           setDocs((d) => ({ ...d, ...updated }));
           for (const [id, html] of Object.entries(updated)) editorRefs.current.get(id)?.setHtml(html);
-          setSaveState('actualizat din exterior');
+          setSaveState(tr('ui.app.actualizat_din_exterior'));
         }
       } catch (e) {
         report(e);
@@ -391,13 +399,13 @@ export default function App({ api }) {
     if (!project || project.targets?.notify === false) return;
     const t = project.targets || {};
     const checks = [
-      ['session', t.session, Math.max(0, totals.draft - sessionStart), 'Ai atins ținta sesiunii'],
-      ['draft', t.draft, totals.draft, 'Ai atins ținta cărții'],
+      ['session', t.session, Math.max(0, totals.draft - sessionStart), tr('ui.app.ai_atins_tinta_sesiunii')],
+      ['draft', t.draft, totals.draft, tr('ui.app.ai_atins_tinta_cartii')],
     ];
     for (const [key, target, value, msg] of checks) {
       if (target > 0 && value >= target && !notified.current[key]) {
         notified.current[key] = true;
-        setToast(`${msg}: ${value.toLocaleString('ro-RO')} cuvinte.`);
+        setToast(tr('ui.app.x_x_cuvinte', { msg: msg, v1: value.toLocaleString(uiLocale()) }));
       }
     }
   }, [project, totals.draft, sessionStart]);
@@ -430,7 +438,7 @@ export default function App({ api }) {
     if (!res) {
       if ((redo ? binderHistory.current.future : binderHistory.current.past).length) {
         binderHistory.current = emptyHistory();
-        setToast('Nu se mai poate anula: structura proiectului s-a schimbat între timp (împărțire, unire sau golirea coșului).');
+        setToast(tr('ui.app.nu_se_mai_poate_anula'));
       }
       return;
     }
@@ -475,7 +483,7 @@ export default function App({ api }) {
       setSessionStart(draftAtOpen);
       const sOpen = settingsRef.current?.sharingSync || {};
       if (res.project.syncFolder && (res.project.syncAuto || sOpen.syncOnOpen) && api.syncAuto) {
-        api.syncAuto(res.dir, { ...res.project, syncAuto: true, syncFormat: res.project.syncFormat || sOpen.format || 'rtf' }, 'open').then((r) => r?.action === 'in' && setToast(`Sincronizare automată: ${r.updated.length} actualizate, ${r.created.length} noi. Folosește „citește modificările” pentru documentele noi.`)).catch(() => {});
+        api.syncAuto(res.dir, { ...res.project, syncAuto: true, syncFormat: res.project.syncFormat || sOpen.format || 'rtf' }, 'open').then((r) => r?.action === 'in' && setToast(tr('ui.app.sincronizare_automata_x_actualizate_x', { length: r.updated.length, length1: r.created.length }))).catch(() => {});
       }
       // Anchor today's history at the counts on open, so the first save of the day is measured from here.
       const trashIds = new Set(flatten(res.project.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
@@ -596,7 +604,7 @@ export default function App({ api }) {
       return n && !n.root && !inTrash(id);
     });
     if (!ids.length) {
-      if (selectedId && inTrash(selectedId)) setToast('Elementul e deja în coș. Folosește „Golește coșul” pentru ștergerea definitivă sau „Restaurează din coș”.');
+      if (selectedId && inTrash(selectedId)) setToast(tr('ui.app.elementul_e_deja_in_cos'));
       return;
     }
     const nextSel = selectionAfterRemoval(tree, ids);
@@ -617,7 +625,7 @@ export default function App({ api }) {
     let tree = project.tree;
     for (const id of selectionList()) tree = restoreFromTrash(tree, id);
     if (tree !== project.tree) setTreeU(tree);
-    else setToast('Selecția nu e în coș.');
+    else setToast(tr('ui.app.selectia_nu_e_in_cos'));
   };
   const moveSelectionTo = (targetId) => setTreeU(moveManyInto(project.tree, selectionList(), targetId));
   const toggleSeparator = () => {
@@ -649,17 +657,17 @@ export default function App({ api }) {
   };
   const appendSelectionTo = async (targetId) => {
     const html = selectionHtml();
-    if (!html) return setToast('Selectează mai întâi un text.');
+    if (!html) return setToast(tr('ui.app.selecteaza_mai_intai_un_text'));
     await flush();
     const current = docsNow()[targetId] ?? (await api.readDoc(dir, targetId, 'docs'));
     const next = appendHtml(current, html);
     writeDocNow(targetId, next);
     editorRefs.current.get(targetId)?.setHtml(next);
     editorRefs.current.get(`split:${targetId}`)?.setHtml(next);
-    setToast(`Selecția a fost adăugată la „${findNode(project.tree, targetId)?.title}”.`);
+    setToast(tr('ui.app.selectia_a_fost_adaugata_la', { v0: findNode(project.tree, targetId)?.title }));
   };
   const openScrivenings = (title, ids) => {
-    if (!ids.length) return setToast('Nimic de afișat în Scrivenings.');
+    if (!ids.length) return setToast(tr('ui.app.nimic_de_afisat_in_scrivenings'));
     loadAllDocs()
       .then(() => {
         setScrivList({ title, ids });
@@ -667,11 +675,34 @@ export default function App({ api }) {
       })
       .catch(report);
   };
+  const selectedText = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.getSelectionText() || '';
+  const openWeb = (url) => (api.openLink ? api.openLink(url).catch(report) : window.open(url, '_blank', 'noopener'));
+  // Word or phrase lookups; translation takes the whole selection, dictionaries a short phrase.
   const lookupWord = (kind) => {
-    const h = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
-    const word = (h?.getSelectionText() || '').trim().split(/\s+/).slice(0, 6).join(' ');
-    if (!word) return setToast('Selectează un cuvânt.');
-    window.open(lookupUrl(kind, word), '_blank');
+    const text = selectedText().trim();
+    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    const url = lookupUrl(kind, text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro' });
+    if (!url) return setToast(tr('ui.app.selectie_prea_lunga'));
+    return openWeb(url);
+  };
+  const aiOnSelection = (action) => {
+    if (!aiEnabled) return setToast(tr('ui.app.ai_oprit'));
+    setShowAi(true);
+    setAiRequest((r) => ({ action, n: (r?.n || 0) + 1 }));
+    return undefined;
+  };
+  // NotebookLM has no search link: the selection goes to the clipboard and the notebook opens.
+  const askNotebookLm = async () => {
+    const text = selectedText().trim();
+    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    try {
+      await navigator.clipboard.writeText(text);
+      await api.nlmOpen();
+      setToast(tr('ui.app.nlm_lipeste'));
+    } catch (e) {
+      report(e);
+    }
+    return undefined;
   };
   const autoSynopsisSelection = async () => {
     let tree = project.tree;
@@ -687,14 +718,14 @@ export default function App({ api }) {
       }
     }
     setTree(tree);
-    setToast(`Sinopsis generat pentru ${n} documente.`);
+    setToast(tr('ui.app.sinopsis_generat_pentru_x_documente', { n: n }));
   };
   const snapshotSelection = async () => {
     await flush();
-    const stamp = `Snapshot ${new Date().toLocaleString('ro-RO')}`;
+    const stamp = `Snapshot ${new Date().toLocaleString(uiLocale())}`;
     const ids = selectionList().filter((id) => findNode(project.tree, id).type === 'text');
     for (const id of ids) await api.takeSnapshot(dir, id, stamp);
-    setToast(`Snapshot salvat pentru ${ids.length} documente.`);
+    setToast(tr('ui.app.snapshot_salvat_pentru_x_documente', { length: ids.length }));
   };
   const swapPanes = () => {
     if (!splitId || !selectedId) return;
@@ -834,7 +865,7 @@ export default function App({ api }) {
     const parts = handle.splitAtCursor(useSelectionAsTitle);
     if (!parts) return;
     await flush();
-    await api.takeSnapshot(dir, id, 'Automat înainte de împărțire').catch(report);
+    await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_impartire')).catch(report);
     const second = newNode('text', parts.title || `${node.title} (continuare)`);
     second.label = node.label;
     second.status = node.status;
@@ -855,13 +886,13 @@ export default function App({ api }) {
   const mergeSelection = async () => {
     const nodes = inOrder(project.tree, [...selectedIds]).filter((n) => n.type === 'text' && !n.root);
     if (nodes.length < 2) {
-      report(new Error('Selectează cel puțin două documente (Ctrl+clic în binder) pentru Merge.'));
+      report(new Error(tr('ui.app.selecteaza_cel_putin_doua_documente')));
       return;
     }
-    if (!window.confirm(`Unești ${nodes.length} documente în „${nodes[0].title}”? Celelalte se mută în coș.`)) return;
+    if (!window.confirm(tr('ui.app.unesti_x_documente_in_x', { length: nodes.length, title: nodes[0].title }))) return;
     await flush();
     const [first, ...rest] = nodes;
-    await api.takeSnapshot(dir, first.id, 'Automat înainte de unire').catch(report);
+    await api.takeSnapshot(dir, first.id, tr('ui.app.automat_inainte_de_unire')).catch(report);
     const html = nodes.map((n) => docsNow()[n.id] || '').join('<p>* * *</p>');
     const notes = await Promise.all(nodes.map((n) => api.readDoc(dir, n.id, 'notes')));
     const synopsis = nodes.map((n) => n.synopsis).filter(Boolean).join('\n');
@@ -901,7 +932,7 @@ export default function App({ api }) {
         count += r.count;
       }
       if (!count) continue;
-      await api.takeSnapshot(dir, node.id, 'Automat înainte de înlocuire').catch(report);
+      await api.takeSnapshot(dir, node.id, tr('ui.app.automat_inainte_de_inlocuire')).catch(report);
       if (docHtml !== (docs[node.id] || '')) {
         await api.writeDoc(dir, node.id, 'docs', docHtml);
         nextDocs[node.id] = docHtml;
@@ -926,7 +957,7 @@ export default function App({ api }) {
     for (const id of ids) {
       const { html, count } = replaceInHtml(docs[id] || '', re, replacement);
       if (!count) continue;
-      await api.takeSnapshot(dir, id, 'Automat înainte de înlocuire').catch(report);
+      await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_inlocuire')).catch(report);
       await api.writeDoc(dir, id, 'docs', html);
       next[id] = html;
       total += count;
@@ -961,7 +992,7 @@ export default function App({ api }) {
     const byName = (list, name) => (name ? (list || []).find((x) => x.name === name)?.id : undefined);
     const build = (it) => {
       const kids = (it.children || []).map(build);
-      const node = newNode(kids.length ? 'folder' : 'text', it.title || 'Fără titlu');
+      const node = newNode(kids.length ? 'folder' : 'text', it.title || tr('ui.app.fara_titlu'));
       if (it.synopsis) node.synopsis = it.synopsis;
       const lab = byName(project.labels, it.label);
       const st = byName(project.statuses, it.status);
@@ -1010,7 +1041,7 @@ export default function App({ api }) {
     else if (res.media.length) saveProject({ ...pj, tree });
   };
   const saveAs = async () => {
-    const title = window.prompt('Titlul copiei:', `${project.title} (copie)`);
+    const title = window.prompt(tr('ui.app.titlul_copiei'), tr('ui.app.x_copie', { title: project.title }));
     if (!title) return;
     await flush();
     const copy = await api.saveProjectAs(dir, title);
@@ -1072,7 +1103,7 @@ export default function App({ api }) {
   const lastMenu = useRef('');
   useEffect(() => {
     if (!api.setAppMenu || !project) return;
-    const titles = { file: 'Fișier', edit: 'Editare', view: 'Vizualizare', nav: 'Navigare', project: 'Proiect', document: 'Document', format: 'Format', tools: 'Unelte', window: 'Fereastră', help: 'Ajutor' };
+    const titles = Object.fromEntries(['file', 'edit', 'view', 'nav', 'project', 'document', 'format', 'tools', 'window', 'help'].map((g) => [g, groupLabel(g)]));
     const spec = Object.entries(titles).map(([g, label]) => ({
       label: groupLabel(g) || label,
       items: Object.values(commandsRef.current)
@@ -1108,11 +1139,12 @@ export default function App({ api }) {
     window.addEventListener('mouseup', up);
   };
 
-  if (!settings) return <div className="loading">Se încarcă…</div>;
+  if (!settings) return <div className="loading">{tr('ui.app.se_incarca')}</div>;
 
   if (!project) {
     return (
       <>
+        <DialogA11y />
         <Home
           api={api}
           settings={settings}
@@ -1149,7 +1181,7 @@ export default function App({ api }) {
             onError={report}
           />
         )}
-        {error && <ErrorToast message={error} onClose={() => setError('')} />}
+        <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
       </>
     );
   }
@@ -1210,26 +1242,26 @@ export default function App({ api }) {
   };
   const runBulkSynopsis = async () => {
     const list = (await manuscriptDocs()).filter((d) => !d.synopsis);
-    if (!list.length) return setToast('Toate documentele au deja sinopsis.');
+    if (!list.length) return setToast(tr('ui.app.toate_documentele_au_deja_sinopsis'));
     const res = await api.aiBulkSynopsis(dir, list);
     let tree = project.tree;
     for (const [id, syn] of Object.entries(res.results)) tree = updateNode(tree, id, { synopsis: String(syn).trim() });
     saveProject({ ...project, tree });
-    setToast(`${res.cancelled ? 'Anulat. ' : ''}Sinopsis scris pentru ${Object.keys(res.results).length} documente${Object.keys(res.errors).length ? `, ${Object.keys(res.errors).length} erori` : ''}.`);
+    setToast(tr('ui.app.xsinopsis_scris_pentru_x_documentex', { v0: res.cancelled ? tr('ui.app.anulat') : '', length: Object.keys(res.results).length, v2: Object.keys(res.errors).length ? tr('ui.app.x_erori', { n: Object.keys(res.errors).length }) : '' }));
   };
   const runConsistency = async () => {
     const res = await api.aiConsistency(dir, await manuscriptDocs(), project.livingSheets || null, '');
     saveProject({ ...project, livingSheets: res.sheets });
-    setAiReport({ title: `Consistență pe toată cartea${res.cancelled ? ' (anulată: fișele parțiale sunt salvate)' : ''}`, findings: res.findings });
+    setAiReport({ title: tr('ui.app.consistenta_pe_toata_carteax', { v0: res.cancelled ? tr('ui.app.anulata_fise_partiale') : '' }), findings: res.findings });
   };
   const runZoomReview = async (levels) => {
     const res = await api.aiZoomReview(dir, await manuscriptDocs(), levels, '');
-    setAiReport({ title: `Revizie pe niveluri de zoom${res.cancelled ? ' (anulată, rezultate parțiale)' : ''}`, findings: res.findings });
+    setAiReport({ title: tr('ui.app.revizie_pe_niveluri_de_zoomx', { v0: res.cancelled ? tr('ui.app.anulata_rezultate_partiale') : '' }), findings: res.findings });
   };
   const exportScrivCmd = async () => {
     await flush();
     const r = await api.exportScriv(dir, project);
-    if (r) setToast(`Exportat ca proiect Scrivener: ${r.dir}`);
+    if (r) setToast(tr('ui.app.exportat_ca_proiect_scrivener_x', { dir: r.dir }));
   };
   // Project sync settings, falling back to Options → Sharing.
   const withSyncDefaults = (pj) => {
@@ -1262,7 +1294,7 @@ export default function App({ api }) {
     const reload = {};
     for (const id of [...r.updated, ...r.created.map((c) => c.id)].map((x) => (typeof x === 'string' ? x : x.id))) reload[id] = await api.readDoc(dir, id, 'docs');
     setDocs((d) => ({ ...d, ...reload }));
-    setToast(`Sincronizare: ${r.updated.length} actualizate, ${r.conflicts.length} conflicte (cu snapshot), ${r.created.length} noi.`);
+    setToast(tr('ui.app.sincronizare_x_actualizate_x_conflicte', { length: r.updated.length, length1: r.conflicts.length, length2: r.created.length }));
   };
   // Glossaries and print TOC as documents in Research (replaced when generated again).
   const generateGlossaries = async () => {
@@ -1279,7 +1311,7 @@ export default function App({ api }) {
       const existing = flatten(research.children || []).find((n) => n.title === g.title && n.type === 'text');
       const id = existing ? existing.id : null;
       if (existing) {
-        await api.takeSnapshot(dir, id, 'Înainte de regenerare');
+        await api.takeSnapshot(dir, id, tr('ui.app.inainte_de_regenerare'));
         written[id] = g.html;
       } else {
         const node = newNode('text', g.title);
@@ -1290,7 +1322,7 @@ export default function App({ api }) {
     saveProject({ ...project, tree });
     for (const [id, html] of Object.entries(written)) await api.writeDoc(dir, id, 'docs', html);
     setDocs((d) => ({ ...d, ...written }));
-    setToast(`Glosare generate în Cercetare: ${alogen.terms.length} termeni alogeni, ${reading.terms?.length ?? 0} termeni de lectură, cuprins cu ${toc.entries.length} intrări.`);
+    setToast(tr('ui.app.glosare_generate_in_cercetare_x', { length: alogen.terms.length, v1: reading.terms?.length ?? 0, length2: toc.entries.length }));
   };
   const helpContext = () => (composition ? 'composition' : view === 'editor' && selected?.children ? 'scrivenings' : dialog || view);
   const startTutorial = () => {
@@ -1331,7 +1363,7 @@ export default function App({ api }) {
     if (findNode(project.tree, id)) {
       go(id);
       setView('editor');
-    } else report(new Error('Documentul legat nu mai există în proiect.'));
+    } else report(new Error(tr('ui.app.documentul_legat_nu_mai_exista')));
   };
   const chapterFolder = selected && selected.children ? selected : findParent(project.tree, selectedId) || project.tree[0];
   const chapterDocs = flatten(chapterFolder.children || [])
@@ -1343,181 +1375,195 @@ export default function App({ api }) {
   const canContain = selected && !selected.root && selected.type !== 'file';
 
   const documentMenu = [
-    { label: 'Caută în document', shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
-    { label: 'Împarte documentul la cursor', shortcut: 'Ctrl+K', action: () => splitDocument(false) },
-    { label: 'Împarte cu selecția ca titlu', shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
-    { label: 'Unește documentele selectate', shortcut: 'Ctrl+Shift+M', action: mergeSelection },
-    { label: 'Duplică (cu sub-documente)', shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
-    { label: 'Duplică doar elementul', action: () => duplicateSelection(false) },
+    { label: tr('cmd.findDoc'), shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
+    { label: tr('cmd.split'), shortcut: 'Ctrl+K', action: () => splitDocument(false) },
+    { label: tr('cmd.splitTitle'), shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
+    { label: tr('cmd.merge'), shortcut: 'Ctrl+Shift+M', action: mergeSelection },
+    { label: tr('ui.app.duplica_cu_sub_documente'), shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
+    { label: tr('ui.app.duplica_doar_elementul'), action: () => duplicateSelection(false) },
     '-',
-    { label: 'Convertește în dosar', action: () => setTree(convertNode(project.tree, selectedId, 'folder')), disabled: !canContain || selected.type === 'folder' },
-    { label: 'Convertește în document text', action: () => setTree(convertNode(project.tree, selectedId, 'text')), disabled: !canContain || selected.type === 'text' },
-    { label: 'Sortează conținutul A → Z', action: () => setTree(sortChildren(project.tree, selectedId, 'title')), disabled: !selected?.children },
-    { label: 'Sortează conținutul Z → A', action: () => setTree(sortChildren(project.tree, selectedId, 'title', true)), disabled: !selected?.children },
-    { label: 'Sortează după data creării', action: () => setTree(sortChildren(project.tree, selectedId, 'created')), disabled: !selected?.children },
+    { label: tr('ui.app.converteste_in_dosar'), action: () => setTree(convertNode(project.tree, selectedId, 'folder')), disabled: !canContain || selected.type === 'folder' },
+    { label: tr('ui.app.converteste_in_document_text'), action: () => setTree(convertNode(project.tree, selectedId, 'text')), disabled: !canContain || selected.type === 'text' },
+    { label: tr('ui.app.sorteaza_continutul_a_z'), action: () => setTree(sortChildren(project.tree, selectedId, 'title')), disabled: !selected?.children },
+    { label: tr('ui.app.sorteaza_continutul_z_a'), action: () => setTree(sortChildren(project.tree, selectedId, 'title', true)), disabled: !selected?.children },
+    { label: tr('ui.app.sorteaza_dupa_data_crearii'), action: () => setTree(sortChildren(project.tree, selectedId, 'created')), disabled: !selected?.children },
     '-',
     ...(templateFolder && templateFolder.children && templateFolder.children.length
-      ? templateFolder.children.map((t) => ({ label: `Nou din șablon: ${t.title}`, action: () => newFromTemplate(t) }))
-      : [{ label: 'Nou din șablon (alege dosarul de șabloane în Setările proiectului)', action: () => {}, disabled: true }]),
-    { label: 'Adaugă fișiere în Cercetare (imagini, PDF, audio, video)…', action: addMediaToResearch, disabled: !api.addMediaFiles },
+      ? templateFolder.children.map((t) => ({ label: tr('ui.app.nou_din_sablon_x', { title: t.title }), action: () => newFromTemplate(t) }))
+      : [{ label: tr('ui.app.nou_din_sablon_alege_dosarul'), action: () => {}, disabled: true }]),
+    { label: tr('ui.app.adauga_fisiere_in_cercetare_imagini'), action: addMediaToResearch, disabled: !api.addMediaFiles },
   ];
 
   const navigateMenu = [
-    { label: 'Mergi la…', shortcut: 'Ctrl+G', action: () => setDialog('goto') },
-    { label: 'Documentul anterior', shortcut: 'Ctrl+Alt+↑', action: () => goSibling(-1) },
-    { label: 'Documentul următor', shortcut: 'Ctrl+Alt+↓', action: () => goSibling(1) },
-    { label: 'Dosarul părinte', action: () => {
+    { label: tr('cmd.goto'), shortcut: 'Ctrl+G', action: () => setDialog('goto') },
+    { label: tr('cmd.prevDoc'), shortcut: 'Ctrl+Alt+↑', action: () => goSibling(-1) },
+    { label: tr('cmd.nextDoc'), shortcut: 'Ctrl+Alt+↓', action: () => goSibling(1) },
+    { label: tr('ui.app.dosarul_parinte'), action: () => {
       const parent = selectedId && findParent(project.tree, selectedId);
       if (parent) go(parent.id);
     } },
-    { label: 'Înapoi', shortcut: 'Alt+←', action: back },
-    { label: 'Înainte', shortcut: 'Alt+→', action: forward },
+    { label: tr('cmd.back'), shortcut: 'Alt+←', action: back },
+    { label: tr('cmd.forward'), shortcut: 'Alt+→', action: forward },
     '-',
-    ...(favorites.length ? favorites.map((f) => ({ label: `★ ${f.title}`, action: () => go(f.id) })) : [{ label: 'Niciun favorit (bifează „Favorit” în Inspector)', action: () => {}, disabled: true }]),
+    ...(favorites.length ? favorites.map((f) => ({ label: `★ ${f.title}`, action: () => go(f.id) })) : [{ label: tr('ui.app.niciun_favorit_bifeaza_favorit_in'), action: () => {}, disabled: true }]),
   ];
 
   const projectMenu = [
-    { label: 'Caută și înlocuiește…', shortcut: 'Ctrl+Shift+F', action: () => setDialog('find') },
-    { label: 'Căutare avansată (câmpuri, filtre, colecții)…', action: () => { setSearchSeed(''); setDialog('advsearch'); } },
-    { label: 'Cuvinte cheie…', action: () => setDialog('keywords') },
-    { label: 'Importă Word / text / Markdown…', action: () => setDialog('import') },
+    { label: tr('ui.app.cauta_si_inlocuieste'), shortcut: 'Ctrl+Shift+F', action: () => setDialog('find') },
+    { label: tr('ui.app.cautare_avansata_campuri_filtre_colectii'), action: () => { setSearchSeed(''); setDialog('advsearch'); } },
+    { label: tr('cmd.keywords'), action: () => setDialog('keywords') },
+    { label: tr('cmd.import'), action: () => setDialog('import') },
     '-',
     { label: 'Istoricul scrisului…', action: () => setDialog('history'), disabled: !api.getHistory },
     { label: 'Backup-uri…', action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
-    { label: 'Setările proiectului (etichete, statusuri, metadate, tipuri de secțiune)…', action: () => setDialog('projectSettings') },
-    { label: 'Ținte și termen limită…', action: () => setDialog('targets') },
+    { label: tr('ui.app.setarile_proiectului_etichete_statusuri_metadate'), action: () => setDialog('projectSettings') },
+    { label: tr('cmd.targets'), action: () => setDialog('targets') },
     { label: 'Statistici…', action: () => setDialog('stats') },
-    { label: 'Stiluri…', action: () => setDialog('styles') },
-    { label: 'Compilează…', action: () => flush().then(() => setDialog('compile')) },
-    { label: 'Setări…', action: () => setDialog('settings') },
+    { label: tr('cmd.styles'), action: () => setDialog('styles') },
+    { label: tr('cmd.compile'), action: () => flush().then(() => setDialog('compile')) },
+    { label: tr('cmd.settings'), action: () => setDialog('settings') },
   ];
 
   // Command registry: every command has an id, a label, a menu group and a
   // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
   const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
   const commandList = [
-    ['file', 'save', 'Salvează acum', () => flush()],
-    ['file', 'compile', 'Compilează…', () => flush().then(() => setDialog('compile'))],
-    ['file', 'import', 'Importă Word / text / Markdown…', () => setDialog('import')],
-    ['file', 'importFiles', 'Importă fișiere (RTF, ODT, HTML, Fountain, media)…', () => setDialog('importSplit'), !api.importFiles],
-    ['file', 'importOpml', 'Importă OPML…', () => importOpmlOutline().catch(report), !api.importOpml],
-    ['file', 'importWeb', 'Importă pagină web…', () => importWeb().catch(report), !api.importWebPage],
-    ['file', 'exportFiles', 'Exportă documente / OPML / CSV…', () => flush().then(() => setDialog('export'))],
-    ['file', 'saveAs', 'Salvează ca…', () => saveAs().catch(report), !api.saveProjectAs],
-    ['file', 'print', 'Tipărește documentul…', printCurrent, !api.printDocument],
+    ['file', 'save', tr('cmd.save'), () => flush()],
+    ['file', 'compile', tr('cmd.compile'), () => flush().then(() => setDialog('compile'))],
+    ['file', 'import', tr('cmd.import'), () => setDialog('import')],
+    ['file', 'importFiles', tr('cmd.importFiles'), () => setDialog('importSplit'), !api.importFiles],
+    ['file', 'importOpml', tr('cmd.importOpml'), () => importOpmlOutline().catch(report), !api.importOpml],
+    ['file', 'importWeb', tr('cmd.importWeb'), () => importWeb().catch(report), !api.importWebPage],
+    ['file', 'exportFiles', tr('cmd.exportFiles'), () => flush().then(() => setDialog('export'))],
+    ['file', 'saveAs', tr('cmd.saveAs'), () => saveAs().catch(report), !api.saveProjectAs],
+    ['file', 'print', tr('cmd.print'), printCurrent, !api.printDocument],
     ['file', 'backups', 'Backup-uri…', () => setDialog('backup'), !api.listBackups],
-    ['file', 'closeProject', 'Închide proiectul', closeProject],
-    ['edit', 'findDoc', 'Caută în document', () => editorHandle()?.openFind()],
-    ['edit', 'findProject', 'Caută și înlocuiește în proiect…', () => setDialog('find')],
-    ['edit', 'advSearch', 'Căutare avansată…', () => { setSearchSeed(''); setDialog('advsearch'); }],
+    ['file', 'closeProject', tr('cmd.closeProject'), closeProject],
+    ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
+    ['edit', 'findProject', tr('cmd.findProject'), () => setDialog('find')],
+    ['edit', 'advSearch', tr('cmd.advSearch'), () => { setSearchSeed(''); setDialog('advsearch'); }],
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
-    ['view', 'composition', 'Mod compunere', () => setComposition((c) => !c)],
-    ['view', 'toggleInspector', 'Arată / ascunde Inspectorul', () => setShowInspector((v) => !v)],
-    ['view', 'toggleBinder', 'Arată / ascunde binderul', () => setHideBinder((v) => !v)],
-    ['view', 'split', 'Împarte documentul la cursor', () => splitDocument(false)],
-    ['view', 'quickRef', 'Quick Reference pentru documentul curent', () => selected && !selected.root && openQuickRef(selected.id)],
-    ['nav', 'goto', 'Mergi la…', () => setDialog('goto')],
-    ['nav', 'prevDoc', 'Documentul anterior', () => goSibling(-1)],
-    ['nav', 'nextDoc', 'Documentul următor', () => goSibling(1)],
-    ['nav', 'back', 'Înapoi', back],
-    ['nav', 'forward', 'Înainte', forward],
-    ['project', 'newText', 'Document nou', () => addItem('text')],
-    ['project', 'newFolder', 'Dosar nou', () => addItem('folder')],
-    ['project', 'projectSettings', 'Setările proiectului…', () => setDialog('projectSettings')],
-    ['project', 'targets', 'Ținte și termen limită…', () => setDialog('targets')],
+    ['view', 'composition', tr('cmd.composition'), () => setComposition((c) => !c)],
+    ['view', 'toggleInspector', tr('cmd.toggleInspector'), () => setShowInspector((v) => !v)],
+    ['view', 'toggleBinder', tr('cmd.toggleBinder'), () => setHideBinder((v) => !v)],
+    ['view', 'split', tr('cmd.split'), () => splitDocument(false)],
+    ['view', 'quickRef', tr('cmd.quickRef'), () => selected && !selected.root && openQuickRef(selected.id)],
+    ['nav', 'goto', tr('cmd.goto'), () => setDialog('goto')],
+    ['nav', 'prevDoc', tr('cmd.prevDoc'), () => goSibling(-1)],
+    ['nav', 'nextDoc', tr('cmd.nextDoc'), () => goSibling(1)],
+    ['nav', 'back', tr('cmd.back'), back],
+    ['nav', 'forward', tr('cmd.forward'), forward],
+    ['project', 'newText', tr('cmd.newText'), () => addItem('text')],
+    ['project', 'newFolder', tr('cmd.newFolder'), () => addItem('folder')],
+    ['project', 'projectSettings', tr('cmd.projectSettings'), () => setDialog('projectSettings')],
+    ['project', 'targets', tr('cmd.targets'), () => setDialog('targets')],
     ['project', 'stats', 'Statistici…', () => setDialog('stats')],
-    ['project', 'keywords', 'Cuvinte cheie…', () => setDialog('keywords')],
+    ['project', 'keywords', tr('cmd.keywords'), () => setDialog('keywords')],
     ['project', 'history', 'Istoricul scrisului…', () => setDialog('history'), !api.getHistory],
-    ['document', 'splitTitle', 'Împarte cu selecția ca titlu', () => splitDocument(true)],
-    ['document', 'merge', 'Unește documentele selectate', mergeSelection],
-    ['document', 'duplicate', 'Duplică', () => duplicateSelection(true)],
-    ['document', 'snapshot', 'Snapshot acum', async () => {
+    ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
+    ['document', 'merge', tr('cmd.merge'), mergeSelection],
+    ['document', 'duplicate', tr('cmd.duplicate'), () => duplicateSelection(true)],
+    ['document', 'snapshot', tr('cmd.snapshot'), async () => {
       if (!selected || selected.root) return;
       await flush();
-      await api.takeSnapshot(dir, selected.id, `Snapshot ${new Date().toLocaleString('ro-RO')}`).catch(report);
+      await api.takeSnapshot(dir, selected.id, `Snapshot ${new Date().toLocaleString(uiLocale())}`).catch(report);
       setToast('Snapshot salvat.');
     }],
-    ['format', 'styles', 'Stiluri…', () => setDialog('styles')],
+    ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['tools', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['tools', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
-    ['view', 'floatInspector', 'Inspector plutitor (compoziție)', () => setShowFloatInspector((v) => !v), !composition],
+    ['view', 'floatInspector', tr('cmd.floatInspector'), () => setShowFloatInspector((v) => !v), !composition],
     ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
-    ['view', 'viewRelations', 'Hartă de relații', () => showWholeBook('relations')],
-    ['view', 'viewPacing', 'Analiză de ritm', () => showWholeBook('pacing')],
+    ['view', 'viewRelations', tr('cmd.viewRelations'), () => showWholeBook('relations')],
+    ['view', 'viewPacing', tr('cmd.viewPacing'), () => showWholeBook('pacing')],
     ['view', 'posNouns', 'Focus lingvistic: substantive', () => setEditorView({ ...editorView, posFocus: editorView.posFocus === 'noun' ? '' : 'noun' })],
     ['view', 'posVerbs', 'Focus lingvistic: verbe', () => setEditorView({ ...editorView, posFocus: editorView.posFocus === 'verb' ? '' : 'verb' })],
     ['view', 'posOff', 'Focus lingvistic: oprit', () => setEditorView({ ...editorView, posFocus: '' })],
-    ['project', 'bookmarks', 'Semne de carte ale proiectului…', () => setDialog('bookmarks')],
-    ['project', 'bookmarkAdd', 'Adaugă documentul la semne de carte', () => !(project.bookmarks || []).some((b) => b.id === selectedId) && saveProject({ ...project, bookmarks: [...(project.bookmarks || []), { id: selectedId, title: selected?.title }] }), !selectedId],
-    ['project', 'projectNotes', 'Note proiect (file)…', () => setDialog('projectNotes')],
-    ['file', 'exportScriv', 'Exportă ca proiect Scrivener (.scriv)…', () => exportScrivCmd().catch(report), !api.exportScriv],
-    ['file', 'syncOut', 'Sincronizează cu folder extern: scrie…', () => syncOutCmd().catch(report), !api.syncOut],
-    ['file', 'syncIn', 'Sincronizează cu folder extern: citește modificările', () => syncInCmd().catch(report), !api.syncIn || !project?.syncFolder],
-    ['file', 'importBib', 'Importă bibliografie (Zotero BibTeX / CSL-JSON)…', () => api.importBibliography().then((r) => r && saveProject({ ...project, bibliography: r.entries })).catch(report), !api.importBibliography],
-    ['file', 'exportLatex', 'Exportă LaTeX…', () => flush().then(() => api.exportLatex(dir, project)).catch(report), !api.exportLatex],
-    ['file', 'exportPandoc', 'Exportă Pandoc Markdown…', () => flush().then(() => api.exportPandoc(dir, project)).catch(report), !api.exportPandoc],
-    ['file', 'exportMmd', 'Exportă MultiMarkdown…', () => flush().then(() => api.exportPandoc(dir, project, { flavor: 'mmd' })).catch(report), !api.exportPandoc],
-    ['tools', 'aiBulkSynopsis', 'Sinopsis AI în bloc', () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
-    ['tools', 'aiConsistency', 'Consistență pe toată cartea (fișe vii)', () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
-    ['tools', 'aiZoomReview', 'Revizie pe niveluri de zoom', () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
-    ['tools', 'nlmExport', 'Exportă pentru NotebookLM…', () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(`NotebookLM: ${r.files.length} surse în „${r.dir}”.${r.warnings.length ? ` ${r.warnings.join(' ')}` : ''}`)).catch(report), !dir || !api.nlmExport],
-    ['tools', 'nlmOpen', 'Deschide NotebookLM', () => api.nlmOpen().catch(report), !api.nlmOpen],
-    ['file', 'newWindow', 'Fereastră nouă', () => api.newWindow().catch(report), !api.newWindow],
-    ['file', 'exportBundle', 'Exportă pachet pentru web / mobil…', () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
-    ['file', 'importBundle', 'Importă pachet de proiect…', () => api.importBundle().then(openResult).catch(report), !api.importBundle],
-    ['tools', 'research', 'Cercetare în proiect (RAG)', () => setShowResearch((v) => !v), !api.ragQuery],
-    ['tools', 'glossaries', 'Generează glosare și cuprins de tipar', () => generateGlossaries().catch(report)],
-    ['file', 'editorPackage', 'Pachet pentru editor…', () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(`Pachet creat în ${r.dir} (${r.files.length} fișiere)`)).catch(report), !api.editorPackage],
-    ['file', 'saveTemplate', 'Salvează ca șablon…', () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
-    ['file', 'pageSetup', 'Configurare pagină…', () => setDialog('pageSetup'), !api.getPageSetup],
-    ['file', 'printPreview', 'Previzualizare tipărire', () => flush().then(() => api.printPreview(dir, project, { ids: selectedId ? [selectedId] : [] })).catch(report), !api.printPreview],
+    ['project', 'bookmarks', tr('cmd.bookmarks'), () => setDialog('bookmarks')],
+    ['project', 'bookmarkAdd', tr('cmd.bookmarkAdd'), () => !(project.bookmarks || []).some((b) => b.id === selectedId) && saveProject({ ...project, bookmarks: [...(project.bookmarks || []), { id: selectedId, title: selected?.title }] }), !selectedId],
+    ['project', 'projectNotes', tr('cmd.projectNotes'), () => setDialog('projectNotes')],
+    ['file', 'exportScriv', tr('cmd.exportScriv'), () => exportScrivCmd().catch(report), !api.exportScriv],
+    ['file', 'syncOut', tr('cmd.syncOut'), () => syncOutCmd().catch(report), !api.syncOut],
+    ['file', 'syncIn', tr('cmd.syncIn'), () => syncInCmd().catch(report), !api.syncIn || !project?.syncFolder],
+    ['file', 'importBib', tr('cmd.importBib'), () => api.importBibliography().then((r) => r && saveProject({ ...project, bibliography: r.entries })).catch(report), !api.importBibliography],
+    ['file', 'exportLatex', tr('cmd.exportLatex'), () => flush().then(() => api.exportLatex(dir, project)).catch(report), !api.exportLatex],
+    ['file', 'exportPandoc', tr('cmd.exportPandoc'), () => flush().then(() => api.exportPandoc(dir, project)).catch(report), !api.exportPandoc],
+    ['file', 'exportMmd', tr('cmd.exportMmd'), () => flush().then(() => api.exportPandoc(dir, project, { flavor: 'mmd' })).catch(report), !api.exportPandoc],
+    ['tools', 'aiBulkSynopsis', tr('cmd.aiBulkSynopsis'), () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
+    ['tools', 'aiConsistency', tr('cmd.aiConsistency'), () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
+    ['tools', 'aiZoomReview', tr('cmd.aiZoomReview'), () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
+    ['tools', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
+    ['tools', 'nlmOpen', tr('cmd.nlmOpen'), () => api.nlmOpen().catch(report), !api.nlmOpen],
+    ['file', 'newWindow', tr('cmd.newWindow'), () => api.newWindow().catch(report), !api.newWindow],
+    ['file', 'exportBundle', tr('cmd.exportBundle'), () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
+    ['file', 'importBundle', tr('cmd.importBundle'), () => api.importBundle().then(openResult).catch(report), !api.importBundle],
+    ['tools', 'research', tr('cmd.research'), () => setShowResearch((v) => !v), !api.ragQuery],
+    ['tools', 'glossaries', tr('cmd.glossaries'), () => generateGlossaries().catch(report)],
+    ['file', 'editorPackage', tr('cmd.editorPackage'), () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(tr('ui.app.pachet_creat_in_x_x', { dir: r.dir, length: r.files.length }))).catch(report), !api.editorPackage],
+    ['file', 'saveTemplate', tr('cmd.saveTemplate'), () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
+    ['file', 'pageSetup', tr('cmd.pageSetup'), () => setDialog('pageSetup'), !api.getPageSetup],
+    ['file', 'printPreview', tr('cmd.printPreview'), () => flush().then(() => api.printPreview(dir, project, { ids: selectedId ? [selectedId] : [] })).catch(report), !api.printPreview],
     ['help', 'help', 'Manualul Scribner', () => setHelp({ topic: null, tab: 'manual' })],
-    ['help', 'helpContext', 'Ajutor pentru vederea curentă', () => setHelp({ topic: helpContext(), tab: 'manual' })],
-    ['help', 'helpShortcuts', 'Lista scurtăturilor', () => setHelp({ topic: null, tab: 'shortcuts' })],
-    ['help', 'helpPlaceholders', 'Placeholders pentru Compile', () => setHelp({ topic: null, tab: 'placeholders' })],
-    ['help', 'helpSyntax', 'Sintaxă Markdown / Fountain / Script Mode', () => setHelp({ topic: null, tab: 'syntax' })],
+    ['help', 'helpContext', tr('cmd.helpContext'), () => setHelp({ topic: helpContext(), tab: 'manual' })],
+    ['help', 'helpShortcuts', tr('cmd.helpShortcuts'), () => setHelp({ topic: null, tab: 'shortcuts' })],
+    ['help', 'helpPlaceholders', tr('cmd.helpPlaceholders'), () => setHelp({ topic: null, tab: 'placeholders' })],
+    ['help', 'helpSyntax', tr('cmd.helpSyntax'), () => setHelp({ topic: null, tab: 'syntax' })],
     ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
-    ['help', 'reportIssue', 'Raportează o problemă…', () => window.open('https://github.com/Hermeneuticus-of-things/Scriptorium/issues', '_blank')],
-    ['help', 'about', 'Despre Scribner', () => window.alert('Scribner: program de scris pentru texte lungi, inspirat de Scrivener 3.'), Boolean(api.setAppMenu)],
-    ['tools', 'nameGen', 'Generator de nume…', () => setDialog('names')],
+    ['help', 'reportIssue', tr('cmd.reportIssue'), () => window.open('https://github.com/Hermeneuticus-of-things/Scriptorium/issues', '_blank')],
+    ['help', 'about', 'Despre Scribner', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
+    ['tools', 'nameGen', tr('cmd.nameGen'), () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
-    ['tools', 'speech', 'Citire cu voce tare / Dictare', () => setShowSpeech((v) => !v)],
-    ['format', 'scriptOff', 'Mod scenariu: dezactivat', () => setScriptFormat(null).catch(report), !scriptFormat],
-    ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, `Mod scenariu: ${f.label}`, () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
-    ['file', 'exportFdx', 'Exportă scenariu Final Draft (.fdx)…', () => flush().then(() => exportScript('fdx')).catch(report), !api.exportScript || !scriptFormat],
-    ['file', 'exportFountain', 'Exportă scenariu Fountain…', () => flush().then(() => exportScript('fountain')).catch(report), !api.exportScript || !scriptFormat],
-    ['tools', 'settings', 'Setări…', () => setDialog('settings')],
-    ['tools', 'shortcuts', 'Scurtături de tastatură…', () => setDialog('shortcuts')],
-    ['window', 'saveLayout', 'Salvează layout-ul curent…', saveLayout],
-    ['window', 'manageLayouts', 'Gestionează layout-urile…', () => setDialog('layouts')],
+    ['tools', 'speech', tr('cmd.speech'), () => setShowSpeech((v) => !v)],
+    ['format', 'scriptOff', tr('cmd.scriptOff'), () => setScriptFormat(null).catch(report), !scriptFormat],
+    ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, tr('ui.app.mod_scenariu_x', { label: f.label }), () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
+    ['file', 'exportFdx', tr('cmd.exportFdx'), () => flush().then(() => exportScript('fdx')).catch(report), !api.exportScript || !scriptFormat],
+    ['file', 'exportFountain', tr('cmd.exportFountain'), () => flush().then(() => exportScript('fountain')).catch(report), !api.exportScript || !scriptFormat],
+    ['tools', 'settings', tr('cmd.settings'), () => setDialog('settings')],
+    ['tools', 'shortcuts', tr('cmd.shortcuts'), () => setDialog('shortcuts')],
+    ['window', 'saveLayout', tr('cmd.saveLayout'), saveLayout],
+    ['window', 'manageLayouts', tr('cmd.manageLayouts'), () => setDialog('layouts')],
     ['window', 'fullScreen', 'Ecran complet', toggleFullScreen],
-    ['document', 'moveTo', 'Mută în…', () => setDialog('moveTo'), !selectionList().length],
-    ['document', 'toggleSeparator', 'Marchează / demarchează ca separator', toggleSeparator, !selectionList().length],
-    ['document', 'restoreTrash', 'Restaurează din coș', restoreSelection, !selectionList().some((id) => inTrash(id))],
-    ['document', 'appendSelection', 'Adaugă selecția la document…', () => setDialog('appendTo')],
-    ['document', 'openExternal', 'Deschide în editor extern', openMediaExternal, !selected?.media?.file || !api.openMediaExternal],
-    ['document', 'autoSynopsis', 'Sinopsis automat din primele fraze', () => autoSynopsisSelection().catch(report), !selectionList().length],
-    ['document', 'snapshotSelection', 'Snapshot pentru documentele selectate', () => snapshotSelection().catch(report), !selectionList().length],
-    ['nav', 'revealBinder', 'Arată în binder', revealInBinder, !selectedId],
-    ['nav', 'hoist', 'Focus pe dosar (hoist)', hoistSelection, !selected],
-    ['nav', 'unhoist', 'Ieși din focus', () => setHoistId(null), !hoistId],
-    ['view', 'scrivSelection', 'Scrivenings pentru selecție', () => openScrivenings(`${selectionList().length} documente selectate`, selectionList())],
-    ['view', 'scrivCollection', 'Scrivenings pentru colecția activă', () => openScrivenings(activeCollection?.title || '', collectionIds || []), !activeCollection],
-    ['view', 'scrivTitles', 'Scrivenings: arată / ascunde titlurile', () => toggleView('scrivHideTitles')],
-    ['view', 'scrivSeparators', 'Scrivenings: arată / ascunde separatoarele', () => toggleView('scrivHideSeparators')],
-    ['view', 'toggleFormatBar', 'Arată / ascunde bara de format', () => toggleView('hideFormatBar')],
-    ['view', 'toggleComments', 'Aspect text: evidențierea comentariilor', () => toggleView('hideComments')],
+    ['document', 'moveTo', tr('cmd.moveTo'), () => setDialog('moveTo'), !selectionList().length],
+    ['document', 'toggleSeparator', tr('cmd.toggleSeparator'), toggleSeparator, !selectionList().length],
+    ['document', 'restoreTrash', tr('cmd.restoreTrash'), restoreSelection, !selectionList().some((id) => inTrash(id))],
+    ['document', 'appendSelection', tr('cmd.appendSelection'), () => setDialog('appendTo')],
+    ['document', 'openExternal', tr('cmd.openExternal'), openMediaExternal, !selected?.media?.file || !api.openMediaExternal],
+    ['document', 'autoSynopsis', tr('cmd.autoSynopsis'), () => autoSynopsisSelection().catch(report), !selectionList().length],
+    ['document', 'snapshotSelection', tr('cmd.snapshotSelection'), () => snapshotSelection().catch(report), !selectionList().length],
+    ['nav', 'revealBinder', tr('cmd.revealBinder'), revealInBinder, !selectedId],
+    ['nav', 'hoist', tr('cmd.hoist'), hoistSelection, !selected],
+    ['nav', 'unhoist', tr('cmd.unhoist'), () => setHoistId(null), !hoistId],
+    ['view', 'scrivSelection', tr('cmd.scrivSelection'), () => openScrivenings(tr('ui.app.x_documente_selectate', { length: selectionList().length }), selectionList())],
+    ['view', 'scrivCollection', tr('cmd.scrivCollection'), () => openScrivenings(activeCollection?.title || '', collectionIds || []), !activeCollection],
+    ['view', 'scrivTitles', tr('cmd.scrivTitles'), () => toggleView('scrivHideTitles')],
+    ['view', 'scrivSeparators', tr('cmd.scrivSeparators'), () => toggleView('scrivHideSeparators')],
+    ['view', 'toggleFormatBar', tr('cmd.toggleFormatBar'), () => toggleView('hideFormatBar')],
+    ['view', 'toggleComments', tr('cmd.toggleComments'), () => toggleView('hideComments')],
     ['view', 'toggleRevisions', 'Aspect text: culorile reviziilor', () => toggleView('hideRevisions')],
     ['view', 'splitHorizontal', 'Split orizontal / vertical', () => toggleView('splitHorizontal')],
-    ['view', 'swapPanes', 'Inversează panourile', swapPanes, !splitId],
-    ['tools', 'lookupDict', 'Caută în dicționar (dexonline)', () => lookupWord('dictionary')],
-    ['tools', 'lookupSyn', 'Găsește sinonime (dexonline)', () => lookupWord('synonyms')],
-    ['tools', 'lookupWiki', 'Caută pe Wikipedia', () => lookupWord('wikipedia')],
-    ['tools', 'lookupGoogle', 'Caută cu Google', () => lookupWord('google')],
-    ['tools', 'checkSpelling', 'Verifică ortografia acum', () => api.recheckSpelling().catch(report), !api.recheckSpelling],
+    ['view', 'swapPanes', tr('cmd.swapPanes'), swapPanes, !splitId],
+    ['tools', 'lookupDict', tr('cmd.lookupDict'), () => lookupWord('dictionary')],
+    ['tools', 'lookupSyn', tr('cmd.lookupSyn'), () => lookupWord('synonyms')],
+    ['tools', 'lookupWiki', tr('cmd.lookupWiki'), () => lookupWord('wikipedia')],
+    ['tools', 'lookupGoogle', tr('cmd.lookupGoogle'), () => lookupWord('google')],
+    ['edit', 'selectWord', tr('cmd.selectWord'), () => activeHandle()?.selectAround('word')],
+    ['edit', 'selectSentence', tr('cmd.selectSentence'), () => activeHandle()?.selectAround('sentence')],
+    ['edit', 'selectParagraph', tr('cmd.selectParagraph'), () => activeHandle()?.selectAround('paragraph')],
+    ['tools', 'selDeepl', tr('cmd.selDeepl'), () => lookupWord('deepl')],
+    ['tools', 'selGoogleTranslate', tr('cmd.selGoogleTranslate'), () => lookupWord('googleTranslate')],
+    ['tools', 'selLinguee', tr('cmd.selLinguee'), () => lookupWord('linguee')],
+    ['tools', 'selIate', tr('cmd.selIate'), () => lookupWord('iate')],
+    ['tools', 'selWiktionary', tr('cmd.selWiktionary'), () => lookupWord('wiktionary')],
+    ['tools', 'selScholar', tr('cmd.selScholar'), () => lookupWord('scholar')],
+    ['tools', 'aiResearchSel', tr('cmd.aiResearchSel'), () => aiOnSelection('research'), !aiEnabled],
+    ['tools', 'aiDefineSel', tr('cmd.aiDefineSel'), () => aiOnSelection('define'), !aiEnabled],
+    ['tools', 'aiTranslateSel', tr('cmd.aiTranslateSel'), () => aiOnSelection('translate'), !aiEnabled],
+    ['tools', 'aiProofreadSel', tr('cmd.aiProofreadSel'), () => aiOnSelection('proofread'), !aiEnabled],
+    ['tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
+    ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];
   const commands = Object.fromEntries(
@@ -1525,10 +1571,46 @@ export default function App({ api }) {
   );
   commandsRef.current = commands;
 
+  // Browser build: the desktop app shows the same actions in the native menu (electron/main.cjs).
+  function onEditorContextMenu(e) {
+    if (window.api || !e.target.closest?.('.ProseMirror')) return;
+    e.preventDefault();
+    setEditorCtx({ x: e.clientX, y: e.clientY });
+  }
+  const editorCtxItems = () => {
+    const text = selectedText().trim();
+    const run = (id) => () => commands[id]?.run();
+    const items = [];
+    if (text) {
+      const g = lookupGroups(text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro' });
+      const links = (list) => list.map((l) => ({ label: l.label, action: () => openWeb(l.url) }));
+      if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: links(g.translate) });
+      if (g.dict.length) items.push({ label: tr('ui.ctx.dictionare'), submenu: links(g.dict) });
+      items.push({ label: tr('ui.ctx.cercetare_web'), submenu: links(g.research) });
+      if (aiEnabled) {
+        items.push({
+          label: tr('ui.ctx.asistent_ai'),
+          submenu: [
+            { label: tr('ui.aiPanel.cercetare'), action: run('aiResearchSel') },
+            { label: tr('ui.aiPanel.explica'), action: run('aiDefineSel') },
+            { label: tr('ui.aiPanel.corectura'), action: run('aiProofreadSel') },
+            { label: tr('ui.aiPanel.traduce'), action: run('aiTranslateSel') },
+          ],
+        });
+      }
+      if (api.nlmOpen) items.push({ label: tr('cmd.nlmAskSel'), action: askNotebookLm });
+      items.push('-');
+    }
+    items.push({ label: tr('ui.ctx.extinde'), submenu: [{ label: tr('cmd.selectSentence'), action: run('selectSentence') }, { label: tr('cmd.selectParagraph'), action: run('selectParagraph') }] });
+    if (text) items.push({ label: tr('ui.ctx.copiaza'), action: () => navigator.clipboard?.writeText(text) });
+    return items;
+  };
+
   return (
     <div
       className={`app ${composition ? 'composition' : ''} ${composition && settings.compPaper !== false ? 'comp-paper' : ''} ${composition && settings.compBgImage ? 'has-bg-image' : ''}`}
       data-fit={settings.compBgImageFit || 'cover'}
+      onContextMenu={onEditorContextMenu}
       style={
         composition
           ? {
@@ -1542,9 +1624,9 @@ export default function App({ api }) {
     >
       <style>{styleCss(projectStyles)}</style>
       <header className="toolbar">
-        <button onClick={closeProject} title="Închide proiectul">⌂</button>
-        <button onClick={back} disabled={nav.index <= 0} title="Înapoi (Alt+←)" aria-label="Înapoi"><BackIcon /></button>
-        <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title="Înainte (Alt+→)" aria-label="Înainte"><ForwardIcon /></button>
+        <button onClick={closeProject} title={tr('cmd.closeProject')}>⌂</button>
+        <button onClick={back} disabled={nav.index <= 0} title={tr('ui.app.inapoi_alt')} aria-label={tr('cmd.back')}><BackIcon /></button>
+        <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title={tr('ui.app.inainte_alt')} aria-label={tr('cmd.forward')}><ForwardIcon /></button>
         <strong className="project-title">{project.title}</strong>
         <div className="seg">
           <button className={view === 'editor' ? 'on' : ''} onClick={() => setView('editor')} title="Editor / Scrivenings"><span className="sc-ico"><ScriveningsIcon />Editor</span></button>
@@ -1552,19 +1634,19 @@ export default function App({ api }) {
           <button className={view === 'outline' ? 'on' : ''} onClick={() => setView('outline')} title="Outline"><span className="sc-ico"><OutlineIcon />Outline</span></button>
         </div>
         <span className="spacer" />
-        <button className={splitId ? 'on' : ''} onClick={() => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)} title="Split editor (Alt+clic în binder alege documentul din dreapta)">
+        <button className={splitId ? 'on' : ''} onClick={() => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)} title={tr('ui.app.split_editor_alt_clic_in')}>
           <span className="sc-ico"><SplitIcon />Split</span>
         </button>
-        <button onClick={() => setComposition(true)} title="Mod compunere (F11)"><span className="sc-ico"><ComposeIcon />Compunere</span></button>
-        <button onClick={() => flush().then(() => setDialog('compile'))} title="Compilează (Ctrl+Shift+E)"><span className="sc-ico"><CompileIcon />Compile</span></button>
+        <button onClick={() => setComposition(true)} title={tr('set.composition')}><span className="sc-ico"><ComposeIcon />Compunere</span></button>
+        <button onClick={() => flush().then(() => setDialog('compile'))} title={tr('ui.app.compileaza_ctrl_shift_e')}><span className="sc-ico"><CompileIcon />Compile</span></button>
         <button className={showInspector ? 'on' : ''} onClick={() => setShowInspector((v) => !v)} title="Inspector"><span className="sc-ico"><InspectorIcon />Inspector</span></button>
-        <button className={showEditorial ? 'on' : ''} onClick={() => setShowEditorial((v) => !v)} title="I-REP (reparare + reverificare) și I-EDIT (runde editoriale)">
+        <button className={showEditorial ? 'on' : ''} onClick={() => setShowEditorial((v) => !v)} title={tr('ui.app.i_rep_reparare_reverificare_si')}>
           {aiEnabled ? 'I-REP / I-EDIT' : 'I-REP'}
         </button>
         {aiEnabled && <button className={showAi ? 'on' : ''} onClick={() => setShowAi((v) => !v)}>Asistent AI</button>}
         <Menu label="Document" items={documentMenu} />
         <Menu label="Navigare" items={navigateMenu} />
-        <Menu label="Proiect" items={projectMenu} />
+        <Menu label={tr('group.project')} items={projectMenu} />
         {!api.setAppMenu &&
           ['file', 'view', 'format', 'tools', 'help'].map((g) => (
             <Menu
@@ -1590,7 +1672,7 @@ export default function App({ api }) {
         {hoistNode && (
           <div className="hoist-bar">
             <span>Focus: {hoistNode.title}</span>
-            <button className="link" onClick={() => setHoistId(null)}>Ieși din focus</button>
+            <button className="link" onClick={() => setHoistId(null)}>{tr('cmd.unhoist')}</button>
           </div>
         )}
         <Binder
@@ -1632,19 +1714,19 @@ export default function App({ api }) {
           }}
           onTrash={trashSelection}
           onEmptyTrash={() => {
-            if (window.confirm('Golești coșul? Documentele din coș vor fi scoase din proiect.')) setTree(emptyTrash(project.tree));
+            if (window.confirm(tr('ui.app.golesti_cosul_documentele_din_cos'))) setTree(emptyTrash(project.tree));
           }}
         />
         </div>
-        <div className="resizer" onMouseDown={startResize('binder')} role="separator" aria-label="Lățime binder" />
+        <div className="resizer" onMouseDown={startResize('binder')} role="separator" aria-label={tr('ui.app.latime_binder')} />
         </>)}
 
         <section className={`workspace ${splitNode && view === 'editor' ? 'split' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
           <div className={`pane ${editorAreaClass}`}>
             {view === 'editor' && selected && !composition && (
               <div className="sc-header-bar">
-                <button onClick={back} disabled={nav.index <= 0} title="Înapoi (Alt+←)" aria-label="Înapoi"><BackIcon /></button>
-                <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title="Înainte (Alt+→)" aria-label="Înainte"><ForwardIcon /></button>
+                <button onClick={back} disabled={nav.index <= 0} title={tr('ui.app.inapoi_alt')} aria-label={tr('cmd.back')}><BackIcon /></button>
+                <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title={tr('ui.app.inainte_alt')} aria-label={tr('cmd.forward')}><ForwardIcon /></button>
                 <DocumentIcon />
                 <strong style={{ flex: 1 }}>{selected.title}</strong>
                 {selected.locked && <LockIcon title="Blocat" />}
@@ -1753,14 +1835,14 @@ export default function App({ api }) {
           {splitNode && view === 'editor' && (
             <div className={`pane second ${editorAreaClass}`}>
               <div className="pane-head">
-                <span title={`Panoul 2 · blocat pe „${splitNode.title}”`}>Panoul 2 · blocat pe „{splitNode.title}”</span>
+                <span title={tr('ui.app.panoul_2_blocat_pe_x', { title: splitNode.title })}>{tr('ui.app.panoul_2_blocat_pe')}{splitNode.title}”</span>
                 <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? 'Split vertical' : 'Split orizontal'}</button>
-                <button className="link" onClick={swapPanes}>Inversează</button>
-                <button className="link" onClick={() => go(splitNode.id)}>Deschide în principal</button>
-                <button className="link" onClick={() => setSplitId(null)}>Închide</button>
+                <button className="link" onClick={swapPanes}>{tr('ui.app.inverseaza')}</button>
+                <button className="link" onClick={() => go(splitNode.id)}>{tr('ui.app.deschide_in_principal')}</button>
+                <button className="link" onClick={() => setSplitId(null)}>{tr('btn.close')}</button>
               </div>
               {splitNode.children ? (
-                <p className="hint">Alege un document cu Alt+clic în binder.</p>
+                <p className="hint">{tr('ui.app.alege_un_document_cu_alt')}</p>
               ) : (
                 <Editor
                   scriptFormat={scriptFormat}
@@ -1791,7 +1873,7 @@ export default function App({ api }) {
         {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
         {(showInspector || (showAi && aiEnabled) || (showEditorial && editorialNode) || (showResearch && dir)) && selected && !composition && (
           <>
-            <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label="Lățime panou lateral" />
+            <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
             <div className="side" style={{ width: widths.side }}>
               {showInspector && (
                 <Inspector
@@ -1852,6 +1934,8 @@ export default function App({ api }) {
                   }}
                   onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
                   onOpenSettings={openSettings}
+                  translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
+                  request={aiRequest}
                 />
               )}
               {showEditorial && editorialNode && (
@@ -1882,7 +1966,7 @@ export default function App({ api }) {
                   }}
                   onApply={async (p) => {
                     await flush();
-                    if (!p.safe) await api.takeSnapshot(dir, p.id, `Înainte de ${p.rounds ? 'I-EDIT' : 'I-REP'}`).catch(report);
+                    if (!p.safe) await api.takeSnapshot(dir, p.id, tr('ui.app.inainte_de_x', { v0: p.rounds ? 'I-EDIT' : 'I-REP' })).catch(report);
                     if (p.selection) {
                       editorRefs.current.get(p.id)?.replaceSelectionHtml(p.after);
                       return;
@@ -1917,7 +2001,7 @@ export default function App({ api }) {
         onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
       />
 
-      {composition && <button className="exit-composition" onClick={() => setComposition(false)}>Ieși (Esc)</button>}
+      {composition && <button className="exit-composition" onClick={() => setComposition(false)}>{tr('ui.app.iesi_esc')}</button>}
       {composition && settings.compShowTargets && selected && (
         <div className="comp-targets">
           <span>Document: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
@@ -1968,7 +2052,7 @@ export default function App({ api }) {
         <div className="modal-backdrop" onClick={() => setAiReport(null)}>
           <div className="modal wide" role="dialog" aria-label={aiReport.title} onClick={(e) => e.stopPropagation()}>
             <h2>{aiReport.title}</h2>
-            {!aiReport.findings.length && <p>Nicio problemă găsită.</p>}
+            {!aiReport.findings.length && <p>{tr('ui.app.nicio_problema_gasita')}</p>}
             <div className="ai-findings">
               {aiReport.findings.map((f, i) => (
                 <div key={i} className={`finding sev-${f.severity}`}>
@@ -1976,19 +2060,20 @@ export default function App({ api }) {
                   {f.quote && <blockquote>{f.quote}</blockquote>}
                   <p>{f.issue}</p>
                   {f.suggestion && <p className="muted">{f.suggestion}</p>}
-                  {f.docId && <button className="link" onClick={() => { go(f.docId); setAiReport(null); }}>Deschide</button>}
+                  {f.docId && <button className="link" onClick={() => { go(f.docId); setAiReport(null); }}>{tr('ui.app.deschide')}</button>}
                 </div>
               ))}
             </div>
-            <div className="actions"><span className="spacer" /><button onClick={() => setAiReport(null)}>Închide</button></div>
+            <div className="actions"><span className="spacer" /><button onClick={() => setAiReport(null)}>{tr('btn.close')}</button></div>
           </div>
         </div>
       )}
       {help && <HelpWindow initialTopic={help.topic} initialTab={help.tab} settings={settings} onClose={() => setHelp(null)} onStartTutorial={startTutorial} />}
-      {dialog === 'saveTemplate' && <SaveTemplateDialog api={api} dir={dir} project={project} onSaved={(t) => setToast(`Șablon salvat: ${t.title}`)} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'saveTemplate' && <SaveTemplateDialog api={api} dir={dir} project={project} onSaved={(t) => setToast(tr('ui.app.sablon_salvat_x', { title: t.title }))} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'pageSetup' && <PageSetupDialog api={api} dir={dir} project={project} previewIds={selectedId ? [selectedId] : []} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
-      {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || 'Din Scratchpad'); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(`Trimis în „${parent.title}”.`); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
+      {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || tr('ui.app.din_scratchpad')); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(tr('ui.app.trimis_in_x', { title: parent.title })); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
+      {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
       {showSpeech && <SpeechBar getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
@@ -2151,7 +2236,7 @@ export default function App({ api }) {
       })}
       {dialog === 'moveTo' && (
         <PickNodeDialog
-          title="Mută selecția în…"
+          title={tr('ui.app.muta_selectia_in')}
           items={moveTargets(project.tree, selectionList())}
           onPick={moveSelectionTo}
           onClose={() => setDialog(null)}
@@ -2159,13 +2244,13 @@ export default function App({ api }) {
       )}
       {dialog === 'appendTo' && (
         <PickNodeDialog
-          title="Adaugă selecția la sfârșitul documentului…"
+          title={tr('ui.app.adauga_selectia_la_sfarsitul_documentului')}
           items={flatten(project.tree)
             .filter((n) => n.type === 'text' && !inTrash(n.id) && !n.locked)
             .map((n) => ({ id: n.id, title: n.title, depth: ancestorIds(project.tree, n.id).length - 1 }))}
           onPick={(id) => appendSelectionTo(id).catch(report)}
           onClose={() => setDialog(null)}
-          emptyText="Niciun document."
+          emptyText={tr('ui.app.niciun_document')}
         />
       )}
       {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep) => importFilesCmd(mode, sep).catch(report)} onClose={() => setDialog(null)} />}
@@ -2184,23 +2269,34 @@ export default function App({ api }) {
           onClose={() => setDialog(null)}
         />
       )}
-      {error && <ErrorToast message={error} onClose={() => setError('')} />}
-      {toast && (
-        <div className="toast ok-toast" role="status">
-          <span>{toast}</span>
-          <button onClick={() => setToast('')} aria-label="Închide">×</button>
-        </div>
-      )}
+      <DialogA11y />
+      <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
     </div>
   );
 }
 
-function ErrorToast({ message, onClose }) {
+// Live regions stay in the DOM all the time so screen readers announce the messages that
+// appear in them (a region inserted together with its text is often not read).
+function Toasts({ error, onCloseError, toast, onCloseToast }) {
   return (
-    <div className="toast" role="alert">
-      <span>{message}</span>
-      <button onClick={onClose} aria-label="Închide">×</button>
-    </div>
+    <>
+      <div className="live-region" role="alert" aria-live="assertive" aria-atomic="true">
+        {error && (
+          <div className="toast">
+            <span>{error}</span>
+            <button onClick={onCloseError} aria-label={tr('btn.close')}>×</button>
+          </div>
+        )}
+      </div>
+      <div className="live-region" role="status" aria-live="polite" aria-atomic="true">
+        {toast && (
+          <div className="toast ok-toast">
+            <span>{toast}</span>
+            <button onClick={onCloseToast} aria-label={tr('btn.close')}>×</button>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

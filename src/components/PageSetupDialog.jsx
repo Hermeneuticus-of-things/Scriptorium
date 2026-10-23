@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { t } from '../lib/i18n.js';
 
 const SIZES = [
   ['A4', 'A4 (210 × 297 mm)'],
@@ -34,11 +35,11 @@ export default function PageSetupDialog({ api, dir, project, previewIds = [], on
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label="Configurare pagină" onClick={(e) => e.stopPropagation()}>
-        <h2>Configurare pagină</h2>
+      <div className="modal" role="dialog" aria-label={t('ui.pageSetupDialog.configurare_pagina')} onClick={(e) => e.stopPropagation()}>
+        <h2>{t('ui.pageSetupDialog.configurare_pagina')}</h2>
         <div className="row">
           <label>
-            Hârtie
+            {t('ui.pageSetupDialog.hartie')}
             <select value={s.size} onChange={(e) => setS({ ...s, size: e.target.value })}>
               {SIZES.map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
@@ -56,7 +57,7 @@ export default function PageSetupDialog({ api, dir, project, previewIds = [], on
         <fieldset>
           <legend>Margini (cm)</legend>
           <div className="row">
-            {[['top', 'Sus'], ['bottom', 'Jos'], ['left', 'Stânga'], ['right', 'Dreapta']].map(([k, l]) => (
+            {[['top', t('ui.compileDialog.sus')], ['bottom', t('ui.compileDialog.jos')], ['left', t('ui.compileDialog.stanga_2')], ['right', t('ui.compileDialog.dreapta')]].map(([k, l]) => (
               <label key={k}>
                 {l}
                 <input type="number" min="0" max="10" step="0.1" value={s.margins[k]} onChange={margin(k)} />
@@ -70,22 +71,22 @@ export default function PageSetupDialog({ api, dir, project, previewIds = [], on
             <input value={s.fontFamily} onChange={(e) => setS({ ...s, fontFamily: e.target.value })} />
           </label>
           <label>
-            Mărime (pt)
+            {t('ui.compileDialog.marime_pt')}
             <input type="number" min="6" max="48" value={s.fontSizePt} onChange={(e) => setS({ ...s, fontSizePt: Number(e.target.value) })} />
           </label>
           <label>
-            Spațiere rânduri
+            {t('ui.compileDialog.spatiere_randuri')}
             <input type="number" min="1" max="3" step="0.1" value={s.lineSpacing} onChange={(e) => setS({ ...s, lineSpacing: Number(e.target.value) })} />
           </label>
         </div>
         <div className="actions">
-          <button onClick={onClose}>Închide</button>
+          <button onClick={onClose}>{t('btn.close')}</button>
           {api.printPreview && dir && (
             <button disabled={busy} onClick={run(async () => { await save(); await api.printPreview(dir, project, { ids: previewIds }); })}>
-              Previzualizare tipărire
+              {t('cmd.printPreview')}
             </button>
           )}
-          <button className="primary" disabled={busy} onClick={run(async () => { await save(); onClose(); })}>Salvează</button>
+          <button className="primary" disabled={busy} onClick={run(async () => { await save(); onClose(); })}>{t('btn.save')}</button>
         </div>
       </div>
     </div>

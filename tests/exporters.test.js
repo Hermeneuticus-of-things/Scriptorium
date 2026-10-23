@@ -35,7 +35,7 @@ describe('exporters', () => {
     const folder = path.join(out, 'Manuscris', 'Partea_ 1_2');
     const files = fs.readdirSync(folder).sort();
     expect(files).toEqual(['Partea_ 1_2.meta.json', 'Scena_ (d2aaaa).md', 'Scena_.md', 'Scena_.meta.json', 'Scena_.notes.md', 'Scena_.synopsis.txt', '_CON.md', '_CON.meta.json', 'Scena_ (d2aaaa).meta.json'].sort());
-    expect(fs.readFileSync(path.join(folder, 'Scena_.md'), 'utf8')).toBe('# Scena?\n\nAna **are** *mere*.[^Notă]\n');
+    expect(fs.readFileSync(path.join(folder, 'Scena_.md'), 'utf8')).toBe('# Scena?\n\nAna **are** *mere*.[^1]\n\n[^1]: Notă\n'); // a defined footnote, not a dangling [^Notă]
     expect(fs.readFileSync(path.join(folder, 'Scena_.notes.md'), 'utf8')).toBe('O notă *mică*\n');
     expect(fs.readFileSync(path.join(folder, 'Scena_.synopsis.txt'), 'utf8')).toBe('Sinopsis 1');
     expect(JSON.parse(fs.readFileSync(path.join(folder, 'Scena_.meta.json'), 'utf8'))).toMatchObject({ label: 'Idee', status: 'Final', keywords: ['noapte'], custom: { pov: 'Ana, "mică"' }, includeInCompile: true });

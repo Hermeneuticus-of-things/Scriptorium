@@ -5,6 +5,7 @@ import { diffWords } from 'diff';
 import { buildExtensions } from '../editor/extensions.js';
 import { htmlToText } from '../lib/text.js';
 import { parseComments, updateComment } from '../lib/panelsExtra.js';
+import { t as tr, uiLocale } from '../lib/i18n.js';
 
 // Survives the remount App does on every selection change (key = selected id),
 // so "Lock Inspector" keeps showing the pinned document while navigating.
@@ -61,13 +62,13 @@ function Keywords({ value, all, onChange }) {
         {value.map((k) => (
           <span key={k} className="chip">
             {k}
-            <button aria-label={`Șterge ${k}`} onClick={() => onChange(value.filter((x) => x !== k))}>×</button>
+            <button aria-label={tr('ui.inspector.sterge_x', { k: k })} onClick={() => onChange(value.filter((x) => x !== k))}>×</button>
           </span>
         ))}
       </div>
       <input
         list="kw-list"
-        placeholder="Adaugă cuvânt cheie…"
+        placeholder={tr('ui.inspector.adauga_cuvant_cheie')}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={(e) => {
@@ -122,7 +123,7 @@ export default function Inspector({
   const notes = useMemo(() => annotations(html), [html]);
 
   const take = async () => {
-    const name = window.prompt('Nume snapshot:', `Înainte de revizie ${new Date().toLocaleDateString('ro-RO')}`);
+    const name = window.prompt(tr('ui.inspector.nume_snapshot'), tr('ui.inspector.inainte_de_revizie_x', { v0: new Date().toLocaleDateString(uiLocale()) }));
     if (name === null) return;
     await flush();
     await api.takeSnapshot(dir, node.id, name).catch(onError);
@@ -133,13 +134,13 @@ export default function Inspector({
   const diff = compare ? diffWords(htmlToText(compare.html), htmlToText(compareB ? compareB.html : html)) : null;
 
   const renameSnap = async (s) => {
-    const name = window.prompt('Titlul snapshot-ului:', s.name);
+    const name = window.prompt(tr('ui.inspector.titlul_snapshot_ului'), s.name);
     if (!name || name === s.name) return;
     await api.renameSnapshot(dir, node.id, s.file, name).catch(onError);
     setSnaps(await api.listSnapshots(dir, node.id));
   };
   const deleteSnap = async (s) => {
-    if (!window.confirm(`Ștergi snapshot-ul „${s.name}”? Nu se poate anula.`)) return;
+    if (!window.confirm(tr('ui.inspector.stergi_snapshot_ul_x_nu', { name: s.name }))) return;
     await api.deleteSnapshot(dir, node.id, s.file).catch(onError);
     if (preview === s) setPreview(null);
     if (compare === s) setCompare(null);
@@ -153,20 +154,20 @@ export default function Inspector({
         <button
           className={`lock-toggle ${lockedId ? 'on' : ''}`}
           onClick={() => setLockedId(lockedId ? null : selectedNode.id)}
-          title={lockedId ? 'Deblochează Inspectorul (urmează selecția)' : 'Blochează Inspectorul pe documentul curent'}
+          title={lockedId ? tr('ui.inspector.deblocheaza_inspectorul_urmeaza_selectia') : tr('ui.inspector.blocheaza_inspectorul_pe_documentul_curent')}
           aria-pressed={Boolean(lockedId)}
-          aria-label={lockedId ? 'Deblochează Inspectorul' : 'Blochează Inspectorul'}
+          aria-label={lockedId ? tr('ui.inspector.deblocheaza_inspectorul') : tr('ui.inspector.blocheaza_inspectorul')}
         >
           {lockedId ? <LockIcon /> : <UnlockIcon />}
         </button>
-        {lockedId && <span className="muted small">Blocat pe: <strong>{node.title}</strong></span>}
-        {pinnedOther && onOpen && <button className="link" onClick={() => onOpen(node.id)}>Deschide</button>}
+        {lockedId && <span className="muted small">{tr('ui.inspector.blocat_pe')} <strong>{node.title}</strong></span>}
+        {pinnedOther && onOpen && <button className="link" onClick={() => onOpen(node.id)}>{tr('ui.app.deschide')}</button>}
       </div>
       <div className="tabs">
         {[
           ['meta', 'Detalii', MetaIcon],
-          ['notes', 'Note', NotesIcon],
-          ['project', 'Proiect', BookmarkIcon],
+          ['notes', tr('ui.advancedSearchDialog.note'), NotesIcon],
+          ['project', tr('group.project'), BookmarkIcon],
           ['annot', `Comentarii${notes.comments.length + notes.footnotes.length ? ` (${notes.comments.length + notes.footnotes.length})` : ''}`, CommentIcon],
           ['snapshots', 'Snapshot-uri', SnapshotIcon],
         ].map(([id, label, Ico]) => (
@@ -179,7 +180,7 @@ export default function Inspector({
       {tab === 'meta' && (
         <div className="fields">
           <label>
-            Sinopsis
+            {tr('ui.advancedSearchDialog.sinopsis')}
             <textarea
               key={node.id}
               rows={6}
@@ -192,7 +193,7 @@ export default function Inspector({
             <>
               <div className="row">
                 <label>
-                  Etichetă
+                  {tr('ui.binder.eticheta')}
                   <select value={node.label} onChange={(e) => onPatch({ label: e.target.value })}>
                     {project.labels.map((l) => (
                       <option key={l.name}>{l.name}</option>
@@ -209,49 +210,49 @@ export default function Inspector({
                 </label>
               </div>
               <label>
-                Cuvinte cheie
+                {tr('ui.advancedSearchDialog.cuvinte_cheie')}
                 <Keywords value={node.keywords || []} all={allKeywords} onChange={(keywords) => onPatch({ keywords })} />
               </label>
               <label className="check">
                 <input type="checkbox" checked={node.includeInCompile !== false} onChange={(e) => onPatch({ includeInCompile: e.target.checked })} />
-                Include în Compile
+                {tr('ui.binder.include_in_compile')}
               </label>
               <div className="row">
                 <label>
-                  Țintă document
+                  {tr('ui.inspector.tinta_document')}
                   <input type="number" min="0" step="100" value={node.target || 0} onChange={(e) => onPatch({ target: Number(e.target.value) || 0 })} />
                 </label>
                 <label>
                   Unitate
                   <select value={node.targetType === 'Characters' ? 'Characters' : 'Words'} onChange={(e) => onPatch({ targetType: e.target.value })}>
-                    <option value="Words">cuvinte</option>
-                    <option value="Characters">caractere</option>
+                    <option value="Words">{tr('ui.inspector.cuvinte')}</option>
+                    <option value="Characters">{tr('ui.inspector.caractere')}</option>
                   </select>
                 </label>
               </div>
               <label className="check">
-                <input type="checkbox" checked={node.targetNotify !== false} onChange={(e) => onPatch({ targetNotify: e.target.checked })} /> Notificare la atingerea țintei
+                <input type="checkbox" checked={node.targetNotify !== false} onChange={(e) => onPatch({ targetNotify: e.target.checked })} /> {tr('ui.inspector.notificare_la_atingerea_tintei')}
               </label>
             </>
           )}
           {!isRoot && <CustomFields project={project} node={node} onPatch={onPatch} />}
           {!isRoot && <DocumentExtras project={project} node={node} onPatch={onPatch} linkTargets={linkTargets} onOpen={onOpen} />}
           <MetaTable project={project} node={node} />
-          <p className="muted">{words.toLocaleString('ro-RO')} cuvinte în acest document</p>
+          <p className="muted">{words.toLocaleString(uiLocale())} {tr('ui.inspector.cuvinte_in_acest_document')}</p>
         </div>
       )}
 
       {tab === 'notes' && (
-        <NotesLoader api={api} dir={dir} id={node.id} onChange={onNotesChange} onError={onError} placeholder="Note pentru acest document…" />
+        <NotesLoader api={api} dir={dir} id={node.id} onChange={onNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_acest_document')} />
       )}
       {tab === 'project' && (
-        <NotesLoader api={api} dir={dir} id="project-notes" onChange={onProjectNotesChange} onError={onError} placeholder="Note pentru tot proiectul…" />
+        <NotesLoader api={api} dir={dir} id="project-notes" onChange={onProjectNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_tot_proiectul')} />
       )}
 
       {tab === 'annot' && (
         <div className="annotations">
           <h4>Comentarii</h4>
-          {notes.comments.length === 0 && <p className="muted">Selectează text și apasă 💬 în bara editorului.</p>}
+          {notes.comments.length === 0 && <p className="muted">{tr('ui.inspector.selecteaza_text_si_apasa_in')}</p>}
           <ul className="comment-list">
             {notes.comments.map((c) => (
               <CommentItem
@@ -261,12 +262,12 @@ export default function Inspector({
                 authorName={authorName}
                 onJump={onJumpToComment ? () => onJumpToComment(c.index, c, node.id) : null}
                 onEdit={(patch) => editComment(c.index, patch)}
-                onDelete={() => window.confirm('Ștergi comentariul? Textul rămâne.') && editComment(c.index, null)}
+                onDelete={() => window.confirm(tr('ui.inspector.stergi_comentariul_textul_ramane')) && editComment(c.index, null)}
               />
             ))}
           </ul>
-          <h4>Note de subsol</h4>
-          {notes.footnotes.length === 0 && <p className="muted">Apasă ¹ în bara editorului. Dublu-clic pe număr pentru editare.</p>}
+          <h4>{tr('ui.compileDialog.note_de_subsol')}</h4>
+          {notes.footnotes.length === 0 && <p className="muted">{tr('ui.inspector.apasa_in_bara_editorului_dublu')}</p>}
           <ol>
             {notes.footnotes.map((f, i) => (
               <li key={i}>{f}</li>
@@ -277,34 +278,34 @@ export default function Inspector({
 
       {tab === 'snapshots' && (
         <div className="snapshots">
-          <button onClick={take}>📸 Snapshot acum</button>
-          {snaps.length === 0 && <p className="muted">Niciun snapshot. Fă unul înainte de o revizie mare.</p>}
+          <button onClick={take}>{tr('ui.inspector.snapshot_acum')}</button>
+          {snaps.length === 0 && <p className="muted">{tr('ui.inspector.niciun_snapshot_fa_unul_inainte')}</p>}
           <ul>
             {snaps.map((s) => (
               <li key={s.file}>
                 <div>
                   <strong>{s.name}</strong>
                   <br />
-                  <small>{new Date(s.date).toLocaleString('ro-RO')}</small>
+                  <small>{new Date(s.date).toLocaleString(uiLocale())}</small>
                 </div>
                 <button className="link" onClick={() => { setCompare(null); setPreview(preview === s ? null : s); }}>{preview === s ? 'Ascunde' : 'Vezi'}</button>
-                <button className="link" onClick={() => { setPreview(null); setCompareB(null); setCompare(compare === s ? null : s); }} title="Compară cu textul curent">{compare === s && !compareB ? 'Ascunde' : 'Compară'}</button>
+                <button className="link" onClick={() => { setPreview(null); setCompareB(null); setCompare(compare === s ? null : s); }} title={tr('ui.inspector.compara_cu_textul_curent')}>{compare === s && !compareB ? 'Ascunde' : tr('ui.inspector.compara')}</button>
                 {compare && compare !== s && (
-                  <button className="link" onClick={() => setCompareB(compareB === s ? null : s)} title="Compară cele două snapshot-uri">{compareB === s ? 'Cu textul curent' : '↔ cu acesta'}</button>
+                  <button className="link" onClick={() => setCompareB(compareB === s ? null : s)} title={tr('ui.inspector.compara_cele_doua_snapshot_uri')}>{compareB === s ? tr('ui.inspector.cu_textul_curent') : tr('ui.inspector.cu_acesta')}</button>
                 )}
-                {api.renameSnapshot && <button className="link" onClick={() => renameSnap(s)} title="Redenumește">✎</button>}
-                {api.deleteSnapshot && <button className="link" onClick={() => deleteSnap(s)} title="Șterge snapshot-ul">🗑</button>}
+                {api.renameSnapshot && <button className="link" onClick={() => renameSnap(s)} title={tr('set.binderDbl.rename')}>✎</button>}
+                {api.deleteSnapshot && <button className="link" onClick={() => deleteSnap(s)} title={tr('ui.inspector.sterge_snapshot_ul')}>🗑</button>}
                 {!pinnedOther && <button
                   className="link"
                   onClick={async () => {
-                    if (!window.confirm('Restaurezi acest snapshot? Textul curent este salvat automat ca snapshot înainte.')) return;
+                    if (!window.confirm(tr('ui.inspector.restaurezi_acest_snapshot_textul_curent'))) return;
                     await flush();
-                    await api.takeSnapshot(dir, node.id, 'Automat înainte de restaurare');
+                    await api.takeSnapshot(dir, node.id, tr('ui.inspector.automat_inainte_de_restaurare'));
                     onRestore(s.html);
                     setSnaps(await api.listSnapshots(dir, node.id));
                   }}
                 >
-                  Restaurează
+                  {tr('ui.backupDialog.restaureaza')}
                 </button>}
               </li>
             ))}
@@ -313,7 +314,7 @@ export default function Inspector({
           {diff && (
             <div className="snap-preview diff">
               <p className="muted">
-                <del>șters</del> față de „{compare.name}” · <ins>adăugat</ins> în {compareB ? `„${compareB.name}”` : 'textul curent'}
+                <del>{tr('ui.inspector.sters')}</del> {tr('ui.inspector.fata_de')}{compare.name}” · <ins>{tr('ui.inspector.adaugat')}</ins> {tr('ui.inspector.in')} {compareB ? `„${compareB.name}”` : tr('ui.inspector.textul_curent')}
               </p>
               {diff.map((part, i) =>
                 part.added ? <ins key={i}>{part.value}</ins> : part.removed ? <del key={i}>{part.value}</del> : <span key={i}>{part.value}</span>,
@@ -333,13 +334,13 @@ function CommentItem({ c, editable, authorName, onJump, onEdit, onDelete }) {
   const stamp = () => ({ author: c.author || authorName || '', date: new Date().toISOString() });
   return (
     <li className="comment-item" style={{ borderLeftColor: c.color || 'var(--accent, #e0b84a)' }}>
-      <q className={onJump ? 'jump' : ''} onClick={onJump || undefined} title={onJump ? 'Salt la text' : undefined}>{c.on}</q>
+      <q className={onJump ? 'jump' : ''} onClick={onJump || undefined} title={onJump ? tr('ui.inspector.salt_la_text') : undefined}>{c.on}</q>
       {editing ? (
         <div className="comment-edit">
           <textarea rows={3} value={text} autoFocus onChange={(e) => setText(e.target.value)} />
           <div className="row">
-            <button onClick={() => { onEdit({ text, ...stamp() }); setEditing(false); }}>Salvează</button>
-            <button onClick={() => { setText(c.text); setEditing(false); }}>Anulează</button>
+            <button onClick={() => { onEdit({ text, ...stamp() }); setEditing(false); }}>{tr('btn.save')}</button>
+            <button onClick={() => { setText(c.text); setEditing(false); }}>{tr('btn.cancel')}</button>
           </div>
         </div>
       ) : (
@@ -347,7 +348,7 @@ function CommentItem({ c, editable, authorName, onJump, onEdit, onDelete }) {
       )}
       <div className="comment-meta muted small">
         {c.author && <span>{c.author}</span>}
-        {c.date && <span> · {new Date(c.date).toLocaleString('ro-RO')}</span>}
+        {c.date && <span> · {new Date(c.date).toLocaleString(uiLocale())}</span>}
       </div>
       <div className="comment-actions">
         {onJump && <button className="link" onClick={onJump}>Salt</button>}
@@ -355,11 +356,11 @@ function CommentItem({ c, editable, authorName, onJump, onEdit, onDelete }) {
           <>
             <span className="comment-colors">
               {COMMENT_COLORS.map((col) => (
-                <button key={col} className={`swatch ${c.color === col ? 'on' : ''}`} style={{ background: col }} aria-label={`Culoare ${col}`} onClick={() => onEdit({ color: c.color === col ? '' : col })} />
+                <button key={col} className={`swatch ${c.color === col ? 'on' : ''}`} style={{ background: col }} aria-label={tr('ui.inspector.culoare_x', { col: col })} onClick={() => onEdit({ color: c.color === col ? '' : col })} />
               ))}
             </span>
-            <button className="link" onClick={() => setEditing(true)}>Editează</button>
-            <button className="link" onClick={onDelete}>Șterge</button>
+            <button className="link" onClick={() => setEditing(true)}>{tr('ui.inspector.editeaza')}</button>
+            <button className="link" onClick={onDelete}>{tr('btn.delete')}</button>
           </>
         )}
       </div>
@@ -390,15 +391,15 @@ function SynopsisImagePicker({ api, dir, node, onPatch, onError }) {
   };
   return (
     <div className="synopsis-image">
-      {url && <img src={url} alt="Imagine sinopsis" />}
+      {url && <img src={url} alt={tr('ui.inspector.imagine_sinopsis')} />}
       <div className="row">
-        {api.addMediaFiles && <button onClick={choose}>{node.synopsisImage ? 'Schimbă imaginea' : 'Imagine sinopsis…'}</button>}
+        {api.addMediaFiles && <button onClick={choose}>{node.synopsisImage ? tr('ui.inspector.schimba_imaginea') : tr('ui.inspector.imagine_sinopsis_2')}</button>}
         {node.synopsisImage && (
           <>
             <label className="check">
-              <input type="checkbox" checked={node.showSynopsisImage !== false} onChange={(e) => onPatch({ showSynopsisImage: e.target.checked })} /> Pe card
+              <input type="checkbox" checked={node.showSynopsisImage !== false} onChange={(e) => onPatch({ showSynopsisImage: e.target.checked })} /> {tr('ui.inspector.pe_card')}
             </label>
-            <button className="link" onClick={() => onPatch({ synopsisImage: null })}>Elimină</button>
+            <button className="link" onClick={() => onPatch({ synopsisImage: null })}>{tr('ui.inspector.elimina')}</button>
           </>
         )}
       </div>
@@ -458,26 +459,26 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen }) {
     <div className="fields">
       <div className="row">
         <label>
-          Icoană
+          {tr('ui.inspector.icoana')}
           <select value={node.icon && /\p{Extended_Pictographic}/u.test(node.icon) ? node.icon : ''} onChange={(e) => onPatch({ icon: e.target.value || null })}>
-            <option value="">Implicită</option>
+            <option value="">{tr('ui.inspector.implicita')}</option>
             {ICONS.map((i) => (
               <option key={i} value={i}>{i}</option>
             ))}
           </select>
         </label>
         <label>
-          Culoare icoană
+          {tr('ui.inspector.culoare_icoana')}
           <span className="row">
             <input type="color" value={node.iconColor || '#888888'} onChange={(e) => onPatch({ iconColor: e.target.value })} />
-            {node.iconColor && <button className="link" onClick={() => onPatch({ iconColor: null })} title="Fără culoare">∅</button>}
+            {node.iconColor && <button className="link" onClick={() => onPatch({ iconColor: null })} title={tr('ui.collectionsBar.fara_culoare')}>∅</button>}
           </span>
         </label>
         {types.length > 0 && (
           <label>
-            Tip secțiune
+            {tr('ui.inspector.tip_sectiune')}
             <select value={node.sectionType || ''} onChange={(e) => onPatch({ sectionType: e.target.value || null })}>
-              <option value="">După nivel</option>
+              <option value="">{tr('ui.inspector.dupa_nivel')}</option>
               {types.map((t) => (
                 <option key={t.id} value={t.title}>{t.title}</option>
               ))}
@@ -487,10 +488,10 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen }) {
       </div>
       <div className="checks">
         <label className="check">
-          <input type="checkbox" checked={Boolean(node.locked)} onChange={(e) => onPatch({ locked: e.target.checked })} /> Blocat (doar citire)
+          <input type="checkbox" checked={Boolean(node.locked)} onChange={(e) => onPatch({ locked: e.target.checked })} /> {tr('ui.binder.blocat_doar_citire')}
         </label>
         <label className="check">
-          <input type="checkbox" checked={Boolean(node.favorite)} onChange={(e) => onPatch({ favorite: e.target.checked })} /> Favorit
+          <input type="checkbox" checked={Boolean(node.favorite)} onChange={(e) => onPatch({ favorite: e.target.checked })} /> {tr('ui.binder.favorit')}
         </label>
       </div>
       <label>
@@ -501,9 +502,9 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen }) {
               {b.url ? (
                 <a href={b.url} target="_blank" rel="noreferrer">{b.url}</a>
               ) : (
-                <button className="link" onClick={() => onOpen?.(b.id)}>{linkTargets.find((t) => t.id === b.id)?.title || 'Document șters'}</button>
+                <button className="link" onClick={() => onOpen?.(b.id)}>{linkTargets.find((t) => t.id === b.id)?.title || tr('ui.inspector.document_sters')}</button>
               )}
-              <button className="link" aria-label="Șterge bookmark" onClick={() => setBookmarks(bookmarks.filter((_, k) => k !== i))}>×</button>
+              <button className="link" aria-label={tr('ui.inspector.sterge_bookmark')} onClick={() => setBookmarks(bookmarks.filter((_, k) => k !== i))}>×</button>
             </li>
           ))}
         </ul>
@@ -530,11 +531,11 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen }) {
 
 // Read-only facts: dates, section type, Scrivener origin, bookmarks.
 function MetaTable({ project, node }) {
-  const fmt = (d) => (d ? new Date(d).toLocaleString('ro-RO') : '');
+  const fmt = (d) => (d ? new Date(d).toLocaleString(uiLocale()) : '');
   const rows = [
     ['Creat', fmt(node.created)],
     ['Modificat', fmt(node.modified)],
-    ['Țintă', node.target ? `${node.target} ${node.targetType === 'Characters' ? 'caractere' : 'cuvinte'}` : ''],
+    [tr('ui.inspector.tinta'), node.target ? `${node.target} ${node.targetType === 'Characters' ? tr('ui.inspector.caractere') : tr('ui.inspector.cuvinte')}` : ''],
     ['Origine Scrivener', node.scrivener ? `${node.scrivener.type} · ${node.scrivener.uuid}` : ''],
   ].filter(([, v]) => v);
   if (!rows.length) return null;

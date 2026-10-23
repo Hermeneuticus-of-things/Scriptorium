@@ -54,21 +54,44 @@ function projectDir(project) {
   return hit;
 }
 
-const load = (dir) => store.loadProject(dir);
-const save = (dir, project) => store.saveProject(dir, project);
+// Reads never touch the disk (no folders created, even in --read-only mode).
+const load = (dir) => store.loadProject(dir, { readOnly: true });
+// Binder writes: read-modify-write of project.json under the lock shared with the app
+// (lib/store.cjs updateProject), so a concurrent app save is never overwritten with a
+// stale copy; the previous project.json is kept in snapshots/_backup/.
+const mutate = (dir, fn) => store.updateProject(dir, fn, { before: (raw) => store.backupFile(dir, 'project.json', raw) });
+const trashIds = (p) => {
+  const trash = p.tree.find((n) => n.root === 'trash');
+  return new Set(trash ? flatten(trash.children || []).map((n) => n.id) : []);
+};
 
 function requireWritable() {
   if (readOnly) throw new Error('Serverul rulează în modul doar-citire (--read-only).');
 }
 
+// Long strings (whole documents) are shortened in the log: it records what an agent
+// did, the text itself is in the documents and their snapshots.
+const MAX_LOG_STRING = 500;
+function shorten(v) {
+  if (typeof v === 'string') return v.length > MAX_LOG_STRING ? `${v.slice(0, MAX_LOG_STRING)}… [${v.length} caractere]` : v;
+  if (Array.isArray(v)) return v.slice(0, 50).map(shorten);
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, shorten(x)]));
+  return v;
+}
 function log(dir, tool, input, result) {
-  const line = JSON.stringify({ date: new Date().toISOString(), tool, input, result }) + '\n';
+  const line = JSON.stringify({ date: new Date().toISOString(), tool, input: shorten(input), result: shorten(result) }) + '\n';
   fs.appendFileSync(path.join(dir, 'agent-log.jsonl'), line);
 }
 
 function nodeOrThrow(project, id) {
   const n = findNode(project.tree, id);
   if (!n) throw new Error(`Element inexistent: ${id}`);
+  return n;
+}
+
+function textNodeOrThrow(dir, id) {
+  const n = nodeOrThrow(load(dir), id);
+  if (n.type !== 'text') throw new Error('Operația se aplică doar documentelor text.');
   return n;
 }
 
@@ -84,7 +107,7 @@ function tool(name, description, shape, handler, { writes = false } = {}) {
       if (writes) requireWritable();
       const dir = projectDir(input.project);
       const result = await handler(dir, input);
-      if (writes) log(dir, name, input, typeof result === 'string' ? result.slice(0, 200) : 'ok');
+      if (writes) log(dir, name, input, result);
       return text(result);
     } catch (err) {
       return { content: [{ type: 'text', text: `Eroare: ${err.message}` }], isError: true };
@@ -201,9 +224,11 @@ tool(
     synopsis: z.string().optional(),
   },
   (dir, { title, type, parent_id, after_id, content, synopsis }) => {
-    const p = load(dir);
     const node = store.newNode(type, title);
     if (synopsis) node.synopsis = synopsis;
+    // The text first: when the app sees the new binder item its document already exists.
+    if (type === 'text') store.writeDoc(dir, node.id, 'docs', content ? manuscriptToHtml(content) : '<p></p>');
+    const p = mutate(dir, (p) => {
     if (after_id) {
       // "after" means sibling: insertNear would nest the item inside a folder anchor.
       const after = nodeOrThrow(p, after_id);
@@ -216,8 +241,7 @@ tool(
       if (!anchorNode.children) throw new Error('parent_id trebuie să fie un dosar.');
       p.tree = insertNear(p.tree, anchor, node);
     }
-    save(dir, p);
-    if (type === 'text') store.writeDoc(dir, node.id, 'docs', content ? manuscriptToHtml(content) : '<p></p>');
+    });
     return { id: node.id, path: pathOf(p, node.id) };
   },
   { writes: true },
@@ -228,13 +252,13 @@ tool(
   'Mută un element: position "before" | "after" | "inside" (în dosar) față de target_id.',
   { project, id: z.string(), target_id: z.string(), position: z.enum(['before', 'after', 'inside']) },
   (dir, { id, target_id, position }) => {
-    const p = load(dir);
-    nodeOrThrow(p, id);
-    nodeOrThrow(p, target_id);
-    const next = moveNode(p.tree, id, target_id, position);
-    if (next === p.tree) throw new Error('Mutare imposibilă (rădăcină sau în propriul copil).');
-    p.tree = next;
-    save(dir, p);
+    const p = mutate(dir, (p) => {
+      nodeOrThrow(p, id);
+      nodeOrThrow(p, target_id);
+      const next = moveNode(p.tree, id, target_id, position);
+      if (next === p.tree) throw new Error('Mutare imposibilă (rădăcină sau în propriul copil).');
+      p.tree = next;
+    });
     return `Mutat la: ${pathOf(p, id)}`;
   },
   { writes: true },
@@ -256,29 +280,34 @@ tool(
     custom: z.record(z.string(), z.union([z.string(), z.boolean()])).optional(),
   },
   (dir, input) => {
-    const p = load(dir);
-    const n = nodeOrThrow(p, input.id);
+    let n;
+    let patch;
+    mutate(dir, (p) => {
+    n = nodeOrThrow(p, input.id);
     if (n.root) throw new Error('Rădăcinile nu au metadate editabile.');
     if (input.label && !p.labels.some((l) => l.name === input.label)) throw new Error(`Etichetă necunoscută. Disponibile: ${p.labels.map((l) => l.name).join(', ')}`);
     if (input.status && !p.statuses.includes(input.status)) throw new Error(`Status necunoscut. Disponibile: ${p.statuses.join(', ')}`);
-    const patch = {};
+    patch = {};
     for (const [k, v] of [['title', input.title], ['synopsis', input.synopsis], ['label', input.label], ['status', input.status], ['keywords', input.keywords], ['includeInCompile', input.include_in_compile], ['target', input.target]]) {
       if (v !== undefined) patch[k] = v;
     }
     if (input.custom) patch.custom = { ...(n.custom || {}), ...input.custom };
     p.tree = updateNode(p.tree, input.id, patch);
-    save(dir, p);
+    });
     return `Actualizat „${patch.title || n.title}”: ${Object.keys(patch).join(', ')}`;
   },
   { writes: true },
 );
 
 tool('trash_item', 'Mută un element în coș (recuperabil).', { project, id: z.string() }, (dir, { id }) => {
-  const p = load(dir);
-  const n = nodeOrThrow(p, id);
-  if (n.root) throw new Error('Rădăcinile nu pot fi mutate în coș.');
-  p.tree = moveToTrash(p.tree, id);
-  save(dir, p);
+  let n;
+  mutate(dir, (p) => {
+    n = nodeOrThrow(p, id);
+    if (n.root) throw new Error('Rădăcinile nu pot fi mutate în coș.');
+    if (!p.tree.some((r) => r.root === 'trash')) throw new Error('Proiectul nu are coș.');
+    if (trashIds(p).has(id)) throw new Error('Elementul este deja în coș.');
+    p.tree = moveToTrash(p.tree, id);
+  });
   return `„${n.title}” mutat în coș.`;
 }, { writes: true });
 
@@ -290,7 +319,7 @@ tool(
     const p = load(dir);
     const re = buildRegex({ query, regex, caseSensitive: case_sensitive, wholeWord: whole_word });
     if (!re) throw new Error('Expresie invalidă.');
-    const trash = new Set(flatten(p.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
+    const trash = trashIds(p);
     const out = [];
     for (const n of flatten(p.tree)) {
       if (n.root || n.type !== 'text' || trash.has(n.id)) continue;
@@ -310,7 +339,7 @@ tool(
     const p = load(dir);
     const re = buildRegex({ query, regex, caseSensitive: case_sensitive, wholeWord: whole_word });
     if (!re) throw new Error('Expresie invalidă.');
-    const trash = new Set(flatten(p.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
+    const trash = trashIds(p);
     const targets = ids ? ids.map((id) => nodeOrThrow(p, id)) : flatten(p.tree).filter((n) => !n.root && n.type === 'text' && !trash.has(n.id));
     let total = 0;
     const changed = [];
@@ -329,12 +358,15 @@ tool(
 
 tool('get_notes', 'Notele unui document, sau ale proiectului cu id "project".', { project, id: z.string() }, (dir, { id }) => {
   const docId = id === 'project' ? 'project-notes' : id;
+  if (docId !== 'project-notes') nodeOrThrow(load(dir), docId);
   return htmlToManuscript(store.readDoc(dir, docId, 'notes'));
 });
 
 tool('set_notes', 'Înlocuiește notele unui document sau ale proiectului (id "project").', { project, id: z.string(), content: z.string() }, (dir, { id, content }) => {
   const docId = id === 'project' ? 'project-notes' : id;
   if (docId !== 'project-notes') nodeOrThrow(load(dir), docId);
+  const old = store.readDoc(dir, docId, 'notes');
+  if (old) store.backupFile(dir, `notes-${docId}.html`, old);
   store.writeDoc(dir, docId, 'notes', manuscriptToHtml(content));
   return 'Note salvate.';
 }, { writes: true });
@@ -344,6 +376,7 @@ tool(
   'Adaugă un comentariu pe prima apariție a fragmentului quote din document (comentariul nu ajunge în Compile).',
   { project, id: z.string(), quote: z.string(), comment: z.string() },
   (dir, { id, quote, comment }) => {
+    textNodeOrThrow(dir, id);
     const html = store.readDoc(dir, id);
     const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const target = esc(quote);
@@ -362,6 +395,7 @@ tool(
   'Adaugă o notă de subsol imediat după fragmentul after_quote.',
   { project, id: z.string(), after_quote: z.string(), note: z.string() },
   (dir, { id, after_quote, note }) => {
+    textNodeOrThrow(dir, id);
     const html = store.readDoc(dir, id);
     const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const target = esc(after_quote);
@@ -404,6 +438,7 @@ tool('take_snapshot', 'Salvează un snapshot al documentului.', { project, id: z
 }, { writes: true });
 
 tool('restore_snapshot', 'Restaurează un snapshot (textul curent e salvat întâi ca snapshot).', { project, id: z.string(), file: z.string() }, (dir, { id, file }) => {
+  textNodeOrThrow(dir, id);
   const snap = store.listSnapshots(dir, id).find((s) => s.file === file);
   if (!snap) throw new Error('Snapshot inexistent.');
   store.takeSnapshot(dir, id, 'Automat înainte de restaurare (agent AI)');
@@ -422,6 +457,7 @@ tool(
     const opts = { styles, styleCss: styleCss(styles, 'body') };
     const data = format === 'docx' ? await compile.compileDocx(p, read, opts) : format === 'epub' ? await compile.compileEpub(p, read, opts) : compile.compileHtml(p, read, opts);
     const out = output_path ? path.resolve(output_path) : path.join(path.dirname(dir), `${p.title.replace(/[<>:"/\\|?*]/g, '_')}.${format}`);
+    if (projects.some((pd) => out === pd || out.startsWith(pd + path.sep))) throw new Error('output_path nu poate fi în interiorul unui proiect.');
     fs.writeFileSync(out, data);
     return `Compilat: ${out}`;
   },

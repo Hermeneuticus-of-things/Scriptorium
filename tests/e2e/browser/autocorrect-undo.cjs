@@ -15,7 +15,7 @@ const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
   for (let i = 0; i < 12; i++) { await page.keyboard.press('Control+z'); steps.push(await last()); }
   steps.forEach((s, i) => console.log(i + 1, JSON.stringify(s)));
   check('no corruption: each undo state is a prefix-ish of typed or raw', steps.every((s) => !/undefined|￼/.test(s)));
-  check('undo eventually removes the new paragraph', steps[steps.length - 1] === 'Nu știa încă unde va ajunge.');
+  check('undo eventually removes the new paragraph', steps[steps.length - 1] === 'Nu știa încă unde va ajunge. Știa doar că nu mai poate rămâne.');
   // Playwright sends key "z" with Shift here, like Caps Lock / macOS Cmd+Shift+Z: extra redos must not undo.
   for (let i = 0; i < 12; i++) await page.keyboard.press('Control+Shift+z');
   check('redo restores typed text', (await last()) === typed, JSON.stringify(await last()));

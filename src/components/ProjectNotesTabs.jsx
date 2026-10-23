@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Notes } from './Inspector.jsx';
 import { LEGACY_NOTES_ID, addNoteTab, projectNoteTabs, removeNoteTab, renameNoteTab } from '../lib/projectNotes.js';
+import { t as tr } from '../lib/i18n.js';
 
 // Project notes with tabs. Props:
 //   tabs           project.projectNotes (may be undefined for old projects)
@@ -26,18 +27,18 @@ export default function ProjectNotesTabs({ tabs: rawTabs, readNote, onNoteChange
   }, [cur.id, readNote, onError]);
 
   const add = () => {
-    const title = window.prompt('Titlul filei de note:', `Note ${tabs.length + 1}`);
+    const title = window.prompt(tr('ui.projectNotesTabs.titlul_filei_de_note'), tr('ui.projectNotesTabs.note_x', { v0: tabs.length + 1 }));
     if (title === null) return;
     const res = addNoteTab(tabs, title);
     onTabsChange(res.tabs);
     setActive(res.tab.id);
   };
   const rename = () => {
-    const title = window.prompt('Titlul filei:', cur.title);
+    const title = window.prompt(tr('ui.projectNotesTabs.titlul_filei'), cur.title);
     if (title) onTabsChange(renameNoteTab(tabs, cur.id, title));
   };
   const remove = () => {
-    if (!window.confirm(`Ștergi fila „${cur.title}” și notele ei?`)) return;
+    if (!window.confirm(tr('ui.projectNotesTabs.stergi_fila_x_si_notele', { title: cur.title }))) return;
     onTabsChange(removeNoteTab(tabs, cur.id));
     onRemoveNote?.(cur.id);
     setActive(tabs[0].id);
@@ -51,12 +52,12 @@ export default function ProjectNotesTabs({ tabs: rawTabs, readNote, onNoteChange
             {t.title}
           </button>
         ))}
-        <button onClick={add} title="Filă nouă de note" aria-label="Filă nouă">+</button>
+        <button onClick={add} title={tr('ui.projectNotesTabs.fila_noua_de_note')} aria-label={tr('ui.projectNotesTabs.fila_noua')}>+</button>
       </div>
-      {html !== null && <Notes key={cur.id} initial={html} onChange={(h) => onNoteChange(cur.id, h)} placeholder="Note pentru tot proiectul…" />}
+      {html !== null && <Notes key={cur.id} initial={html} onChange={(h) => onNoteChange(cur.id, h)} placeholder={tr('ui.inspector.note_pentru_tot_proiectul')} />}
       <div className="row">
-        <button className="link" onClick={rename}>Redenumește</button>
-        <button className="link" onClick={remove} disabled={cur.id === LEGACY_NOTES_ID || tabs.length <= 1}>Șterge fila</button>
+        <button className="link" onClick={rename}>{tr('set.binderDbl.rename')}</button>
+        <button className="link" onClick={remove} disabled={cur.id === LEGACY_NOTES_ID || tabs.length <= 1}>{tr('ui.projectNotesTabs.sterge_fila')}</button>
       </div>
     </div>
   );

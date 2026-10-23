@@ -1,3 +1,4 @@
+import { LANG_NAMES } from '../lib/lookups.js';
 import React, { useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
@@ -66,7 +67,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   };
   const [ai, setAi] = useState(() => {
     const provider = AI_PRESETS[init.aiProvider] ? init.aiProvider : 'anthropic';
-    return { provider, model: init.aiModel || '', baseUrl: init.aiBaseUrl || '', notebookLmUrl: init.notebookLmUrl || '' };
+    return { provider, model: init.aiModel || '', baseUrl: init.aiBaseUrl || '', notebookLmUrl: init.notebookLmUrl || '', translateFrom: init.translateFrom || 'auto', translateTo: init.translateTo || 'ro' };
   });
   const [aiKeys, setAiKeys] = useState({}); // provider -> key typed in this session (never read back)
   const [hasKeys, setHasKeys] = useState(() => ({ ...(init.hasKeys || {}), ...(init.hasKeys ? {} : { anthropic: Boolean(init.hasApiKey) }) }));
@@ -83,6 +84,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       aiModel: ai.model.trim(),
       aiBaseUrl: EDITABLE_URL.has(ai.provider) ? ai.baseUrl.trim() : '',
       notebookLmUrl: ai.notebookLmUrl.trim(),
+      translateFrom: ai.translateFrom,
+      translateTo: ai.translateTo,
     };
     const typed = Object.fromEntries(Object.entries(aiKeys).filter(([, k]) => k.trim()).map(([p, k]) => [p, k.trim()]));
     if (Object.keys(typed).length) patch.apiKeys = typed;
@@ -99,7 +102,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   };
   const testAi = async () => {
     if (!api.testAi) {
-      setAiTest({ ok: false, text: 'Testul cere aplicația desktop.' });
+      setAiTest({ ok: false, text: t('ui.settingsDialog.testul_cere_aplicatia_desktop') });
       return;
     }
     setAiTest({ busy: true });
@@ -111,7 +114,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         setAiKeys((k) => ({ ...k, [ai.provider]: '' }));
       }
       const r = await api.testAi({ provider: ai.provider, model: ai.model.trim(), baseUrl: EDITABLE_URL.has(ai.provider) ? ai.baseUrl.trim() : '' });
-      setAiTest({ ok: true, text: `Conexiune reușită: ${r.label}, model ${r.model} (${r.ms} ms). Răspuns: „${r.reply}”` });
+      setAiTest({ ok: true, text: t('ui.settingsDialog.conexiune_reusita_x_model_x', { label: r.label, model: r.model, ms: r.ms, reply: r.reply }) });
     } catch (e) {
       setAiTest({ ok: false, text: e.message });
     }
@@ -130,7 +133,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     if (file.size > 4 * 1024 * 1024) {
-      onError(new Error('Imaginea e prea mare (maxim 4 MB).'));
+      onError(new Error(t('ui.settingsDialog.imaginea_e_prea_mare_maxim')));
       return;
     }
     const r = new FileReader();
@@ -254,9 +257,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </select>
         </label>
         <label>
-          Aspect interfață
+          {t('ui.settingsDialog.aspect_interfata')}
           <select value={s.uiStyle} onChange={set('uiStyle')}>
-            <option value="classic">Clasic (ca Scrivener 3)</option>
+            <option value="classic">{t('ui.settingsDialog.clasic_ca_scrivener_3')}</option>
             <option value="modern">Modern</option>
           </select>
         </label>
@@ -324,16 +327,16 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
                 <span className="comp-bg-thumb" style={{ backgroundImage: `url("${comp.bgImage}")` }} aria-label="Previzualizare fundal" />
                 <select value={comp.bgImageFit} onChange={(e) => setComp((c) => ({ ...c, bgImageFit: e.target.value }))}>
                   <option value="cover">Umple</option>
-                  <option value="contain">Încadrează</option>
-                  <option value="tile">Repetă</option>
+                  <option value="contain">{t('ui.settingsDialog.incadreaza')}</option>
+                  <option value="tile">{t('ui.settingsDialog.repeta')}</option>
                   <option value="center">Centrat</option>
                 </select>
-                <button className="link" onClick={() => setComp((c) => ({ ...c, bgImage: '' }))}>Fără imagine</button>
+                <button className="link" onClick={() => setComp((c) => ({ ...c, bgImage: '' }))}>{t('ui.settingsDialog.fara_imagine')}</button>
               </>
             )}
           </div>
           <label className="check">
-            <input type="checkbox" checked={comp.showTargets} onChange={(e) => setComp((c) => ({ ...c, showTargets: e.target.checked }))} /> Arată ținta (document și sesiune) în modul compunere
+            <input type="checkbox" checked={comp.showTargets} onChange={(e) => setComp((c) => ({ ...c, showTargets: e.target.checked }))} /> {t('ui.settingsDialog.arata_tinta_document_si_sesiune')}
           </label>
         </fieldset>
       </>
@@ -360,7 +363,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         {check('smartQuotes', t('set.smartQuotes'))}
         {check('smartDashes', t('set.smartDashes'))}
         {check('smartEllipsis', t('set.smartEllipsis'))}
-        {check('smartFractions', 'Fracții: 1/2 → ½, 3/4 → ¾')}
+        {check('smartFractions', t('ui.settingsDialog.fractii_1_2_3_4'))}
         {check('autoCapitalize', t('set.autoCapitalize'))}
         <label>
           {t('set.spellLangs')}
@@ -406,8 +409,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     backup: api.chooseBackupDir ? (
       <>
         {check('backupOnClose', t('set.backupOnClose'))}
-        {check('backupOnOpen', 'Backup și la deschiderea proiectului')}
-        {check('backupZip', 'Backup comprimat (zip); debifat = copie de folder')}
+        {check('backupOnOpen', t('ui.settingsDialog.backup_si_la_deschiderea_proiectului'))}
+        {check('backupZip', t('ui.settingsDialog.backup_comprimat_zip_debifat_copie'))}
         <div className="row">
           <label>
             {t('set.backupEvery')}
@@ -452,11 +455,11 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <input value={ai.model} placeholder={aiPreset.defaultModel || aiPreset.modelHint} onChange={(e) => setAi((p) => ({ ...p, model: e.target.value }))} />
           </label>
           <p className="muted small">
-            {aiPreset.defaultModel ? `Gol = ${aiPreset.defaultModel}. ` : 'Scrie id-ul exact al modelului, așa cum apare la furnizor. '}
+            {aiPreset.defaultModel ? t('ui.settingsDialog.gol_x', { defaultModel: aiPreset.defaultModel }) : t('ui.settingsDialog.scrie_id_ul_exact_al')}
           </p>
           {aiPreset.kind !== 'anthropic' && (
             <label>
-              URL de bază
+              {t('ui.settingsDialog.url_de_baza')}
               <input
                 value={EDITABLE_URL.has(ai.provider) ? ai.baseUrl : aiPreset.baseUrl}
                 placeholder={aiPreset.baseUrl || 'https://server/v1'}
@@ -466,7 +469,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             </label>
           )}
           <label>
-            Cheie API {aiPreset.label} {hasKeys[ai.provider] ? '(setată, lasă gol ca s-o păstrezi)' : aiPreset.needsKey ? '' : '(opțională)'}
+            Cheie API {aiPreset.label} {hasKeys[ai.provider] ? t('set.apiKeySet') : aiPreset.needsKey ? '' : t('ui.settingsDialog.optionala')}
             <input
               type="password"
               autoComplete="off"
@@ -475,19 +478,36 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
               onChange={(e) => setAiKeys((k) => ({ ...k, [ai.provider]: e.target.value }))}
             />
           </label>
-          <p className="muted small">Cheia e criptată de sistemul de operare și rămâne în procesul principal; interfața nu o mai vede după salvare. Fiecare furnizor are cheia lui.</p>
+          <p className="muted small">{t('ui.settingsDialog.cheia_e_criptata_de_sistemul')}</p>
           <div className="row">
-            <button onClick={testAi} disabled={aiTest?.busy}>{aiTest?.busy ? 'Se testează…' : 'Testează conexiunea'}</button>
+            <button onClick={testAi} disabled={aiTest?.busy}>{aiTest?.busy ? t('ui.settingsDialog.se_testeaza') : t('ui.settingsDialog.testeaza_conexiunea')}</button>
             {hasKeys[ai.provider] && (
-              <button className="link" onClick={deleteAiKey}>Șterge cheia {aiPreset.label}</button>
+              <button className="link" onClick={deleteAiKey}>{t('ui.settingsDialog.sterge_cheia')} {aiPreset.label}</button>
             )}
           </div>
           {aiTest && !aiTest.busy && <p className={aiTest.ok ? 'muted small' : 'warn'} role="status">{aiTest.text}</p>}
         </fieldset>
         <fieldset>
+          <legend>{t('ui.settingsDialog.traducere_dictionare')}</legend>
+          <label>
+            {t('ui.settingsDialog.din_limba')}
+            <select value={ai.translateFrom} onChange={(e) => setAi((p) => ({ ...p, translateFrom: e.target.value }))}>
+              <option value="auto">{t('ui.settingsDialog.detectare_automata')}</option>
+              {Object.entries(LANG_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+            </select>
+          </label>
+          <label>
+            {t('ui.settingsDialog.in_limba')}
+            <select value={ai.translateTo} onChange={(e) => setAi((p) => ({ ...p, translateTo: e.target.value }))}>
+              {Object.entries(LANG_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+            </select>
+          </label>
+          <p className="muted small">{t('ui.settingsDialog.traducere_tip')}</p>
+        </fieldset>
+        <fieldset>
           <legend>NotebookLM</legend>
           <label>
-            Link notebook NotebookLM (opțional)
+            {t('ui.settingsDialog.link_notebook_notebooklm_optional')}
             <input
               type="url"
               value={ai.notebookLmUrl}
@@ -495,7 +515,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
               onChange={(e) => setAi((p) => ({ ...p, notebookLmUrl: e.target.value }))}
             />
           </label>
-          <p className="muted small">NotebookLM nu are API public pentru conturile personale. Exportă proiectul ca surse (Unelte → Exportă pentru NotebookLM…) și încarcă fișierele în notebook. „Deschide NotebookLM” deschide linkul de aici sau pagina principală.</p>
+          <p className="muted small">{t('ui.settingsDialog.notebooklm_nu_are_api_public')}</p>
         </fieldset>
         {project && (
           <fieldset>
@@ -520,20 +540,20 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </fieldset>
         )}
         <fieldset>
-          <legend>Editorial · liste de cuvinte (profil {edBase === 'generic' ? 'Generic' : 'Română'})</legend>
+          <legend>{t('ui.settingsDialog.editorial_liste_de_cuvinte_profil')} {edBase === 'generic' ? 'Generic' : t('ui.settingsDialog.romana')})</legend>
           <label>
-            Cuvinte interzise, câte unul pe rând: <code>cuvânt =&gt; înlocuire # notă</code>
-            <textarea rows={4} value={edL.forbidden} onChange={(e) => setEdL('forbidden', e.target.value)} placeholder={'gest => faptă\nurmă => depunere # P3'} />
+            {t('ui.settingsDialog.cuvinte_interzise_cate_unul_pe')} <code>{t('ui.settingsDialog.cuvant_inlocuire_nota')}</code>
+            <textarea rows={4} value={edL.forbidden} onChange={(e) => setEdL('forbidden', e.target.value)} placeholder={t('ui.settingsDialog.gest_fapta_urma_depunere_p3')} />
           </label>
           <label>
-            Forme preferate: <code>formă preferată &lt;= variantă evitată, alta # notă</code>
-            <textarea rows={4} value={edL.preferred} onChange={(e) => setEdL('preferred', e.target.value)} placeholder={'rânduiala lumii <= logica internă'} />
+            Forme preferate: <code>{t('ui.settingsDialog.forma_preferata_varianta_evitata_alta')}</code>
+            <textarea rows={4} value={edL.preferred} onChange={(e) => setEdL('preferred', e.target.value)} placeholder={t('ui.settingsDialog.randuiala_lumii_logica_interna')} />
           </label>
-          <p className="muted small">Liste încorporate active:</p>
+          <p className="muted small">{t('ui.settingsDialog.liste_incorporate_active')}</p>
           {[
             ['bannedAcademic', 'Lexic academic'],
-            ['bannedTransitions', 'Tranziții P9'],
-            ['selfReference', 'Autoreferințe R7'],
+            ['bannedTransitions', t('ui.settingsDialog.tranzitii_p9')],
+            ['selfReference', t('ui.settingsDialog.autoreferinte_r7')],
             ['llmResidue', 'Reziduuri LLM P3'],
             ['passive', 'Pasive'],
             ['teleology', 'Teleologie'],
@@ -543,7 +563,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             </label>
           ))}
           <label>
-            Cuvinte încorporate dezactivate (separate prin virgulă)
+            {t('ui.settingsDialog.cuvinte_incorporate_dezactivate_separate_prin')}
             <input value={edL.disabledWords} onChange={(e) => setEdL('disabledWords', e.target.value)} placeholder="astfel, mai sus" />
           </label>
         </fieldset>
@@ -571,43 +591,43 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     sharing: (
       <>
         <fieldset>
-          <legend>Sincronizare cu folder extern (implicit)</legend>
+          <legend>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</legend>
           <div className="row">
             <label>
               Format text
               <select value={sharing.sync.format} onChange={(e) => setSync({ format: e.target.value })}>
                 <option value="rtf">RTF</option>
-                <option value="txt">Text simplu</option>
+                <option value="txt">{t('ui.compileDialog.text_simplu')}</option>
                 <option value="md">Markdown</option>
               </select>
             </label>
             <label>
-              Format note
+              {t('ui.settingsDialog.format_note')}
               <select value={sharing.sync.notesFormat} onChange={(e) => setSync({ notesFormat: e.target.value })}>
-                <option value="same">Ca textul</option>
+                <option value="same">{t('ui.settingsDialog.ca_textul')}</option>
                 <option value="rtf">RTF</option>
-                <option value="txt">Text simplu</option>
+                <option value="txt">{t('ui.compileDialog.text_simplu')}</option>
                 <option value="md">Markdown</option>
               </select>
             </label>
           </div>
-          <label className="check"><input type="checkbox" checked={sharing.sync.includeNotes} onChange={(e) => setSync({ includeNotes: e.target.checked })} /> Sincronizează și notele</label>
-          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnOpen} onChange={(e) => setSync({ syncOnOpen: e.target.checked })} /> Sincronizează la deschiderea proiectului</label>
-          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnClose} onChange={(e) => setSync({ syncOnClose: e.target.checked })} /> Sincronizează la închiderea proiectului</label>
+          <label className="check"><input type="checkbox" checked={sharing.sync.includeNotes} onChange={(e) => setSync({ includeNotes: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_si_notele')}</label>
+          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnOpen} onChange={(e) => setSync({ syncOnOpen: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_la_deschiderea_proiectului')}</label>
+          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnClose} onChange={(e) => setSync({ syncOnClose: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_la_inchiderea_proiectului')}</label>
         </fieldset>
         <fieldset>
-          <legend>Export fișiere (implicit)</legend>
+          <legend>{t('ui.settingsDialog.export_fisiere_implicit')}</legend>
           <label>
             Format
             <select value={sharing.export.format} onChange={(e) => setExp({ format: e.target.value })}>
               <option value="docx">DOCX</option>
               <option value="rtf">RTF</option>
               <option value="md">Markdown</option>
-              <option value="txt">Text simplu</option>
+              <option value="txt">{t('ui.compileDialog.text_simplu')}</option>
               <option value="html">HTML</option>
             </select>
           </label>
-          <label className="check"><input type="checkbox" checked={sharing.export.keepFolders} onChange={(e) => setExp({ keepFolders: e.target.checked })} /> Păstrează structura de dosare</label>
+          <label className="check"><input type="checkbox" checked={sharing.export.keepFolders} onChange={(e) => setExp({ keepFolders: e.target.checked })} /> {t('ui.settingsDialog.pastreaza_structura_de_dosare')}</label>
           <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> Include notele</label>
           <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> Include metadatele</label>
         </fieldset>
@@ -660,14 +680,14 @@ function PersonalDictionary({ api, onError }) {
   const shown = words.filter((w) => w.toLowerCase().includes(filter.toLowerCase()));
   return (
     <fieldset>
-      <legend>Dicționar personal ({words.length})</legend>
-      {words.length > 8 && <input placeholder="Caută cuvânt…" value={filter} onChange={(e) => setFilter(e.target.value)} />}
-      {!words.length && <p className="muted">Gol. Cuvintele intră aici din meniul de clic dreapta: „Adaugă în dicționar”.</p>}
+      <legend>{t('ui.settingsDialog.dictionar_personal')}{words.length})</legend>
+      {words.length > 8 && <input placeholder={t('ui.settingsDialog.cauta_cuvant')} value={filter} onChange={(e) => setFilter(e.target.value)} />}
+      {!words.length && <p className="muted">{t('ui.settingsDialog.gol_cuvintele_intra_aici_din')}</p>}
       <div style={{ maxHeight: 160, overflow: 'auto' }}>
         {shown.map((w) => (
           <div key={w} className="row" style={{ justifyContent: 'space-between' }}>
             <span>{w}</span>
-            <button className="link" onClick={() => api.removeDictionaryWord(w).then(load).catch(onError)}>Șterge</button>
+            <button className="link" onClick={() => api.removeDictionaryWord(w).then(load).catch(onError)}>{t('btn.delete')}</button>
           </div>
         ))}
       </div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { t } from '../lib/i18n.js';
 
 // Quick jump to any document by title (Scrivener: Navigate > Go To, Ctrl+G).
 export default function GoToDialog({ items, onGo, onClose }) {
@@ -16,10 +17,11 @@ export default function GoToDialog({ items, onGo, onClose }) {
   };
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal goto" role="dialog" aria-label="Mergi la document" onClick={(e) => e.stopPropagation()}>
+      <div className="modal goto" role="dialog" aria-label={t('ui.goToDialog.mergi_la_document')} onClick={(e) => e.stopPropagation()}>
         <input
           autoFocus
-          placeholder="Mergi la… (titlu sau dosar)"
+          aria-label={t('ui.goToDialog.mergi_la_titlu_sau_dosar')}
+          placeholder={t('ui.goToDialog.mergi_la_titlu_sau_dosar')}
           value={q}
           onChange={(e) => {
             setQ(e.target.value);
@@ -43,7 +45,7 @@ export default function GoToDialog({ items, onGo, onClose }) {
               <small className="muted">{x.path}</small>
             </li>
           ))}
-          {list.length === 0 && <li className="muted">Niciun document.</li>}
+          {list.length === 0 && <li className="muted">{t('ui.app.niciun_document')}</li>}
         </ul>
       </div>
     </div>

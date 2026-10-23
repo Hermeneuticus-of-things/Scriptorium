@@ -3,6 +3,7 @@ import { styleCss, stylesOf } from '../lib/styles.js';
 // The presets live in lib/compileFormats.cjs (used by the main process). The
 // renderer has no Node and no eval, so it reads the JSON block from the source.
 import formatsSource from '../../lib/compileFormats.cjs?raw';
+import { t as tr } from '../lib/i18n.js';
 
 function readPresets() {
   try {
@@ -14,21 +15,21 @@ function readPresets() {
 }
 const PRESETS = readPresets();
 
-const OUTPUTS = [
+const OUTPUTS = () => ([
   ['docx', 'Word (.docx)'],
   ['pdf', 'PDF'],
   ['epub', 'EPUB (e-book)'],
-  ['html', 'HTML (pagină web)'],
+  ['html', tr('ui.compileDialog.html_pagina_web')],
   ['rtf', 'RTF'],
   ['odt', 'OpenDocument (.odt)'],
   ['md', 'Markdown'],
   ['mmd', 'MultiMarkdown'],
-  ['txt', 'Text simplu'],
+  ['txt', tr('ui.compileDialog.text_simplu')],
   ['fountain', 'Fountain (scenariu)'],
   ['fdx', 'Final Draft (.fdx)'],
   ['tex', 'LaTeX'],
-  ['print', 'Tipărire (previzualizare)'],
-];
+  ['print', tr('ui.compileDialog.tiparire_previzualizare')],
+]);
 
 const PAGE_SIZES = [
   ['A4', 'A4 (210 × 297 mm)'],
@@ -41,15 +42,15 @@ const PAGE_SIZES = [
 
 const FONTS = ['Times New Roman', 'Georgia', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Calibri'];
 
-const TABS = [
-  ['continut', 'Conținut'],
-  ['sectiuni', 'Secțiuni'],
-  ['separatoare', 'Separatoare'],
-  ['inlocuiri', 'Înlocuiri'],
-  ['note', 'Note'],
-  ['pagina', 'Pagină'],
+const TABS = () => ([
+  ['continut', tr('ui.compileDialog.continut')],
+  ['sectiuni', tr('ui.compileDialog.sectiuni')],
+  ['separatoare', tr('ui.compileDialog.separatoare')],
+  ['inlocuiri', tr('ui.compileDialog.inlocuiri')],
+  ['note', tr('ui.advancedSearchDialog.note')],
+  ['pagina', tr('ui.compileDialog.pagina')],
   ['metadate', 'Metadate'],
-];
+]);
 
 const LAYOUT_DEFAULTS = {
   showTitle: true,
@@ -200,7 +201,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     delete copy.builtin;
     copy.basedOn = format.basedOn || format.id;
     copy.id = newCustomId();
-    copy.name = `${format.name} (copie)`;
+    copy.name = tr('ui.compileDialog.x_copie', { name: format.name });
     setFormats((l) => [...l, copy]);
     setFormatId(copy.id);
   };
@@ -210,7 +211,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     if (name && name.trim()) setIn(['name'], name.trim());
   };
   const remove = () => {
-    if (!editable || !window.confirm(`Ștergi formatul „${format.name}”?`)) return;
+    if (!editable || !window.confirm(tr('ui.compileDialog.stergi_formatul_x', { name: format.name }))) return;
     if (isGlobal) saveGlobals(globals.filter((f) => f.id !== formatId)).catch(onError);
     else setFormats((l) => l.filter((f) => f.id !== formatId));
     setFormatId((PRESETS[0] || {}).id);
@@ -278,7 +279,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     try {
       const next = persist();
       if (output === 'print') {
-        if (!api.printPreview) throw new Error('Previzualizarea tipăririi nu este disponibilă.');
+        if (!api.printPreview) throw new Error(tr('ui.compileDialog.previzualizarea_tiparirii_nu_este_disponibila'));
         await api.printPreview(dir, next, { ...(await buildOptions(next)), compiled: true });
         return;
       }
@@ -309,7 +310,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
           }
         };
         await visit(project.tree[0].children);
-        setPreview(`<!doctype html><meta charset="utf-8"><style>body{font-family:Georgia,serif;max-width:40em;margin:2em auto}${opts.styleCss}</style><p><em>Previzualizare simplificată.</em></p>${parts.join('')}`);
+        setPreview(tr('ui.compileDialog.doctype_html_meta_charset_utf', { styleCss: opts.styleCss, v1: parts.join('') }));
       }
     } catch (e) {
       onError(e);
@@ -328,7 +329,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const setLayout = (t, key, value) => setIn(['layouts', t], { ...layoutOf(t), [key]: value });
 
   if (!format) return null;
-  const tr = format.transforms || {};
+  const xf = format.transforms || {};
   const ty = format.typography || {};
   const page = format.page;
   const sep = format.separators || {};
@@ -345,9 +346,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
           {label}
           <select value={s.kind} onChange={(e) => setIn(['separators', key], { ...s, kind: e.target.value })}>
             <option value="text">Text</option>
-            <option value="page">Pagină nouă</option>
-            <option value="space">Rând gol</option>
-            <option value="none">Nimic</option>
+            <option value="page">{tr('ui.compileDialog.pagina_noua')}</option>
+            <option value="space">{tr('ui.compileDialog.rand_gol')}</option>
+            <option value="none">{tr('ui.compileDialog.nimic')}</option>
           </select>
         </label>
         {s.kind === 'text' && (
@@ -366,8 +367,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
       {['left', 'center', 'right'].map((pos) => (
         <input
           key={pos}
-          aria-label={`${label} ${pos === 'left' ? 'stânga' : pos === 'center' ? 'centru' : 'dreapta'}`}
-          placeholder={pos === 'left' ? 'stânga' : pos === 'center' ? 'centru' : 'dreapta'}
+          aria-label={`${label} ${pos === 'left' ? tr('ui.compileDialog.stanga') : pos === 'center' ? 'centru' : 'dreapta'}`}
+          placeholder={pos === 'left' ? tr('ui.compileDialog.stanga') : pos === 'center' ? 'centru' : 'dreapta'}
           value={(page && page[key] && page[key][pos]) || ''}
           onChange={(e) => setIn(['page', key, pos], e.target.value)}
         />
@@ -377,9 +378,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide compile-dialog" role="dialog" aria-label="Compilează" onClick={(e) => e.stopPropagation()}>
+      <div className="modal wide compile-dialog" role="dialog" aria-label={tr('ui.compileDialog.compileaza')} onClick={(e) => e.stopPropagation()}>
         <style>{CSS}</style>
-        <h2>Compilează</h2>
+        <h2>{tr('ui.compileDialog.compileaza')}</h2>
         <div className="cd-body">
           <aside className="cd-formats">
             <h3>Formate</h3>
@@ -394,32 +395,32 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               ))}
             </ul>
             <div className="cd-format-actions">
-              <button type="button" onClick={duplicate}>Duplică</button>
-              <button type="button" onClick={rename} disabled={!editable}>Redenumește</button>
-              <button type="button" onClick={remove} disabled={!editable}>Șterge</button>
+              <button type="button" onClick={duplicate}>{tr('cmd.duplicate')}</button>
+              <button type="button" onClick={rename} disabled={!editable}>{tr('set.binderDbl.rename')}</button>
+              <button type="button" onClick={remove} disabled={!editable}>{tr('btn.delete')}</button>
               {api.saveGlobalFormats && (
-                <button type="button" onClick={makeGlobal} title="Salvează o copie disponibilă în toate proiectele">
-                  Salvează global
+                <button type="button" onClick={makeGlobal} title={tr('ui.compileDialog.salveaza_o_copie_disponibila_in')}>
+                  {tr('ui.compileDialog.salveaza_global')}
                 </button>
               )}
             </div>
-            {isGlobal && <p className="muted small">Format global 🌐: modificările se salvează pentru toate proiectele.</p>}
-            {!editable && <p className="muted small">Formatele predefinite nu se modifică. Duplică formatul pentru a-l personaliza.</p>}
+            {isGlobal && <p className="muted small">{tr('ui.compileDialog.format_global_modificarile_se_salveaza')}</p>}
+            {!editable && <p className="muted small">{tr('ui.compileDialog.formatele_predefinite_nu_se_modifica')}</p>}
           </aside>
 
           <section className="cd-main">
             <div className="row">
               <label>
-                Format de ieșire
+                {tr('ui.compileDialog.format_de_iesire')}
                 <select value={output} onChange={(e) => setOutput(e.target.value)}>
-                  {OUTPUTS.map(([id, label]) => (
+                  {OUTPUTS().map(([id, label]) => (
                     <option key={id} value={id}>{label}</option>
                   ))}
                 </select>
               </label>
             </div>
             <nav className="cd-tabs" role="tablist">
-              {TABS.map(([id, label]) => (
+              {TABS().map(([id, label]) => (
                 <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
                   {label}
                 </button>
@@ -430,29 +431,29 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               {tab === 'continut' && (
                 <div>
                   <fieldset>
-                    <legend>Ce se compilează</legend>
+                    <legend>{tr('ui.compileDialog.ce_se_compileaza')}</legend>
                     <label className="check">
-                      <input type="radio" checked={scope === 'draft'} onChange={() => setScope('draft')} /> Tot manuscrisul („{project.tree[0].title}”)
+                      <input type="radio" checked={scope === 'draft'} onChange={() => setScope('draft')} /> {tr('ui.compileDialog.tot_manuscrisul')}{project.tree[0].title}”)
                     </label>
                     <label className="check">
-                      <input type="radio" checked={scope === 'folder'} onChange={() => setScope('folder')} /> Un dosar
+                      <input type="radio" checked={scope === 'folder'} onChange={() => setScope('folder')} /> {tr('ui.compileDialog.un_dosar')}
                     </label>
                     {scope === 'folder' && (
-                      <select value={rootId} onChange={(e) => setRootId(e.target.value)} aria-label="Dosar">
+                      <select value={rootId} onChange={(e) => setRootId(e.target.value)} aria-label={tr('ui.compileDialog.dosar')}>
                         {draftFolders.map((f) => (
                           <option key={f.id} value={f.id}>{f.title}</option>
                         ))}
                       </select>
                     )}
                     <label className="check">
-                      <input type="radio" checked={scope === 'selection'} disabled={!selectionIds.length} onChange={() => setScope('selection')} /> Selecția curentă ({selectionIds.length} elemente)
+                      <input type="radio" checked={scope === 'selection'} disabled={!selectionIds.length} onChange={() => setScope('selection')} /> {tr('ui.compileDialog.selectia_curenta')}{selectionIds.length} elemente)
                     </label>
                   </fieldset>
                   <div className="row">
                     <label>
-                      Materie de început (front matter)
+                      {tr('ui.compileDialog.materie_de_inceput_front_matter')}
                       <select value={frontMatterId} onChange={(e) => setFront(e.target.value)}>
-                        <option value="">Fără</option>
+                        <option value="">{tr('ui.app.fara')}</option>
                         {folders.map((f) => (
                           <option key={f.id} value={f.id}>{f.title}</option>
                         ))}
@@ -461,7 +462,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <label>
                       Materie de final (back matter)
                       <select value={backMatterId} onChange={(e) => setBack(e.target.value)}>
-                        <option value="">Fără</option>
+                        <option value="">{tr('ui.app.fara')}</option>
                         {folders.map((f) => (
                           <option key={f.id} value={f.id}>{f.title}</option>
                         ))}
@@ -469,21 +470,21 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     </label>
                   </div>
                   <label className="check">
-                    <input type="checkbox" checked={titlePage ?? Boolean(format.titlePage)} onChange={(e) => setTitlePage(e.target.checked)} /> Pagină de titlu automată (titlu, autor)
+                    <input type="checkbox" checked={titlePage ?? Boolean(format.titlePage)} onChange={(e) => setTitlePage(e.target.checked)} /> {tr('ui.compileDialog.pagina_de_titlu_automata_titlu')}
                   </label>
                   <label className="check">
-                    <input type="checkbox" checked={toc ?? Boolean(format.toc)} onChange={(e) => setToc(e.target.checked)} /> Cuprins
-                    {output === 'epub' && <span className="muted"> (în EPUB cuprinsul de navigare există mereu)</span>}
+                    <input type="checkbox" checked={toc ?? Boolean(format.toc)} onChange={(e) => setToc(e.target.checked)} /> {tr('ui.compileDialog.cuprins')}
+                    {output === 'epub' && <span className="muted"> {tr('ui.compileDialog.in_epub_cuprinsul_de_navigare')}</span>}
                   </label>
                   {output === 'docx' && (
                     <label className="check">
-                      <input type="checkbox" checked={trackChanges} onChange={(e) => setTrackChanges(e.target.checked)} /> Reviziile ca modificări urmărite Word (Track Changes)
+                      <input type="checkbox" checked={trackChanges} onChange={(e) => setTrackChanges(e.target.checked)} /> {tr('ui.compileDialog.reviziile_ca_modificari_urmarite_word')}
                     </label>
                   )}
                   <fieldset>
-                    <legend>Filtre (gol = toate)</legend>
+                    <legend>{tr('ui.compileDialog.filtre_gol_toate')}</legend>
                     <div className="cd-chips">
-                      <span className="muted">Etichete:</span>
+                      <span className="muted">{tr('ui.compileDialog.etichete')}</span>
                       {labelNames.map((l) => (
                         <label key={l} className="check">
                           <input type="checkbox" checked={labels.includes(l)} onChange={() => toggleIn(labels, setLabels, l)} /> {l}
@@ -492,9 +493,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     </div>
                     {collections.length > 0 && (
                       <label>
-                        Colecție
+                        {tr('ui.compileDialog.colectie')}
                         <select value={collectionId} onChange={(e) => setCollectionId(e.target.value)}>
-                          <option value="">Toate documentele</option>
+                          <option value="">{tr('ui.compileDialog.toate_documentele')}</option>
                           {collections.map((c) => (
                             <option key={c.id} value={c.id}>{c.title}</option>
                           ))}
@@ -502,7 +503,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       </label>
                     )}
                     <div className="cd-chips">
-                      <span className="muted">Stări:</span>
+                      <span className="muted">{tr('ui.compileDialog.stari')}</span>
                       {statusNames.map((s) => (
                         <label key={s} className="check">
                           <input type="checkbox" checked={statuses.includes(s)} onChange={() => toggleIn(statuses, setStatuses, s)} /> {s}
@@ -516,10 +517,10 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               {tab === 'sectiuni' && (
                 <fieldset disabled={!editable}>
                   <p className="muted small">
-                    Fiecare tip de secțiune primește o aranjare. Substituenți: &lt;$n&gt;, &lt;$n:roman&gt;, &lt;$n:words&gt;, &lt;$n:Words&gt;, &lt;$t&gt;, &lt;$projecttitle&gt;, &lt;$author&gt;; în text, &lt;$img:Nume&gt; inserează imaginea din Cercetare cu acel nume. „\n” în prefix = rând nou.
+                    {tr('ui.compileDialog.fiecare_tip_de_sectiune_primeste')}
                   </p>
                   <div className="row">
-                    {[['folder', 'Dosare'], ['container', 'Documente cu subdocumente'], ['file', 'Documente']].map(([k, label]) => (
+                    {[['folder', tr('ui.compileDialog.dosare')], ['container', tr('ui.compileDialog.documente_cu_subdocumente')], ['file', tr('group.document')]].map(([k, label]) => (
                       <label key={k}>
                         {label}
                         <select value={(format.defaultLayouts || {})[k] || ''} onChange={(e) => setIn(['defaultLayouts', k], e.target.value)}>
@@ -533,15 +534,15 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   <table className="cd-table">
                     <thead>
                       <tr>
-                        <th>Tip de secțiune</th>
-                        <th>Titlu</th>
+                        <th>{tr('ui.compileDialog.tip_de_sectiune')}</th>
+                        <th>{tr('ui.advancedSearchDialog.titlu')}</th>
                         <th>Prefix</th>
                         <th>Sufix</th>
                         <th>Litere</th>
                         <th>Aliniere</th>
-                        <th>Pagină nouă</th>
+                        <th>{tr('ui.compileDialog.pagina_noua')}</th>
                         <th>Text</th>
-                        <th>Separator înainte</th>
+                        <th>{tr('ui.compileDialog.separator_inainte')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -550,31 +551,31 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                         return (
                           <tr key={t}>
                             <td>{t}</td>
-                            <td><input type="checkbox" aria-label="Arată titlul" checked={l.showTitle} onChange={(e) => setLayout(t, 'showTitle', e.target.checked)} /></td>
+                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.arata_titlul')} checked={l.showTitle} onChange={(e) => setLayout(t, 'showTitle', e.target.checked)} /></td>
                             <td><input aria-label="Prefix" value={l.titlePrefix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titlePrefix', e.target.value.replace(/\\n/g, '\n'))} /></td>
                             <td><input aria-label="Sufix" value={l.titleSuffix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titleSuffix', e.target.value.replace(/\\n/g, '\n'))} /></td>
                             <td>
                               <select aria-label="Litere" value={l.titleCase} onChange={(e) => setLayout(t, 'titleCase', e.target.value)}>
                                 <option value="normal">Normale</option>
                                 <option value="upper">MAJUSCULE</option>
-                                <option value="smallcaps">Majuscule mici</option>
+                                <option value="smallcaps">{tr('ui.compileDialog.majuscule_mici')}</option>
                               </select>
                             </td>
                             <td>
                               <select aria-label="Aliniere" value={l.titleAlign || 'center'} onChange={(e) => setLayout(t, 'titleAlign', e.target.value)}>
-                                <option value="center">Centru</option>
-                                <option value="left">Stânga</option>
-                                <option value="right">Dreapta</option>
+                                <option value="center">{tr('ui.compileDialog.centru')}</option>
+                                <option value="left">{tr('ui.compileDialog.stanga_2')}</option>
+                                <option value="right">{tr('ui.compileDialog.dreapta')}</option>
                               </select>
                             </td>
-                            <td><input type="checkbox" aria-label="Pagină nouă" checked={Boolean(l.pageBreakBefore)} onChange={(e) => setLayout(t, 'pageBreakBefore', e.target.checked)} /></td>
-                            <td><input type="checkbox" aria-label="Arată textul" checked={l.showText} onChange={(e) => setLayout(t, 'showText', e.target.checked)} /></td>
+                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.pagina_noua')} checked={Boolean(l.pageBreakBefore)} onChange={(e) => setLayout(t, 'pageBreakBefore', e.target.checked)} /></td>
+                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.arata_textul')} checked={l.showText} onChange={(e) => setLayout(t, 'showText', e.target.checked)} /></td>
                             <td>
-                              <select aria-label="Separator înainte" value={l.separatorBefore} onChange={(e) => setLayout(t, 'separatorBefore', e.target.value)}>
-                                <option value="auto">Automat</option>
-                                <option value="none">Nimic</option>
+                              <select aria-label={tr('ui.compileDialog.separator_inainte')} value={l.separatorBefore} onChange={(e) => setLayout(t, 'separatorBefore', e.target.value)}>
+                                <option value="auto">{tr('ui.compileDialog.automat')}</option>
+                                <option value="none">{tr('ui.compileDialog.nimic')}</option>
                                 <option value="text">Text</option>
-                                <option value="page">Pagină nouă</option>
+                                <option value="page">{tr('ui.compileDialog.pagina_noua')}</option>
                               </select>
                             </td>
                           </tr>
@@ -587,34 +588,34 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
 
               {tab === 'separatoare' && (
                 <fieldset disabled={!editable}>
-                  {sepEditor('sameType', 'Între secțiuni de același tip')}
-                  {sepEditor('differentType', 'Între secțiuni de tipuri diferite')}
-                  <p className="muted small">O secțiune care începe pe pagină nouă nu primește separator.</p>
+                  {sepEditor('sameType', tr('ui.compileDialog.intre_sectiuni_de_acelasi_tip'))}
+                  {sepEditor('differentType', tr('ui.compileDialog.intre_sectiuni_de_tipuri_diferite'))}
+                  <p className="muted small">{tr('ui.compileDialog.o_sectiune_care_incepe_pe')}</p>
                 </fieldset>
               )}
 
               {tab === 'inlocuiri' && (
                 <fieldset disabled={!editable}>
-                  <legend>Transformări</legend>
+                  <legend>{tr('ui.compileDialog.transformari')}</legend>
                   {[
                     ['smartQuotes', 'Ghilimele drepte → „…”'],
-                    ['dashes', 'Două cratime (--) → linie de dialog'],
-                    ['removeHighlights', 'Elimină evidențierile'],
-                    ['removeColors', 'Elimină culorile textului'],
-                    ['linksToText', 'Legăturile interne devin text simplu'],
+                    ['dashes', tr('ui.compileDialog.doua_cratime_linie_de_dialog')],
+                    ['removeHighlights', tr('ui.compileDialog.elimina_evidentierile')],
+                    ['removeColors', tr('ui.compileDialog.elimina_culorile_textului')],
+                    ['linksToText', tr('ui.compileDialog.legaturile_interne_devin_text_simplu')],
                   ].map(([k, label]) => (
                     <label key={k} className="check">
-                      <input type="checkbox" checked={Boolean(tr[k])} onChange={(e) => setIn(['transforms', k], e.target.checked)} /> {label}
+                      <input type="checkbox" checked={Boolean(xf[k])} onChange={(e) => setIn(['transforms', k], e.target.checked)} /> {label}
                     </label>
                   ))}
-                  <h4>Înlocuiri (doar în text)</h4>
+                  <h4>{tr('ui.compileDialog.inlocuiri_doar_in_text')}</h4>
                   <table className="cd-table">
                     <thead>
                       <tr>
-                        <th>Caută</th>
-                        <th>Înlocuiește cu</th>
+                        <th>{tr('ui.advancedSearchDialog.cauta')}</th>
+                        <th>{tr('ui.advancedSearchDialog.inlocuieste_cu')}</th>
                         <th>Regex</th>
-                        <th>Cuvânt întreg</th>
+                        <th>{tr('ui.compileDialog.cuvant_intreg')}</th>
                         <th>Majuscule</th>
                         <th />
                       </tr>
@@ -624,19 +625,19 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                         const set = (k, v) => setIn(['replacements'], reps.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
                         return (
                           <tr key={i}>
-                            <td><input aria-label="Caută" value={r.find || ''} onChange={(e) => set('find', e.target.value)} /></td>
-                            <td><input aria-label="Înlocuiește cu" value={r.replace || ''} onChange={(e) => set('replace', e.target.value)} /></td>
+                            <td><input aria-label={tr('ui.advancedSearchDialog.cauta')} value={r.find || ''} onChange={(e) => set('find', e.target.value)} /></td>
+                            <td><input aria-label={tr('ui.advancedSearchDialog.inlocuieste_cu')} value={r.replace || ''} onChange={(e) => set('replace', e.target.value)} /></td>
                             <td><input type="checkbox" aria-label="Regex" checked={Boolean(r.regex)} onChange={(e) => set('regex', e.target.checked)} /></td>
-                            <td><input type="checkbox" aria-label="Cuvânt întreg" checked={Boolean(r.wholeWord)} onChange={(e) => set('wholeWord', e.target.checked)} /></td>
-                            <td><input type="checkbox" aria-label="Ține cont de majuscule" checked={Boolean(r.caseSensitive)} onChange={(e) => set('caseSensitive', e.target.checked)} /></td>
-                            <td><button type="button" title="Șterge" onClick={() => setIn(['replacements'], reps.filter((_, j) => j !== i))}>✕</button></td>
+                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.cuvant_intreg')} checked={Boolean(r.wholeWord)} onChange={(e) => set('wholeWord', e.target.checked)} /></td>
+                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.tine_cont_de_majuscule')} checked={Boolean(r.caseSensitive)} onChange={(e) => set('caseSensitive', e.target.checked)} /></td>
+                            <td><button type="button" title={tr('btn.delete')} onClick={() => setIn(['replacements'], reps.filter((_, j) => j !== i))}>✕</button></td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                   <button type="button" onClick={() => setIn(['replacements'], [...reps, { find: '', replace: '', regex: false, wholeWord: false, caseSensitive: false }])}>
-                    Adaugă înlocuire
+                    {tr('ui.compileDialog.adauga_inlocuire')}
                   </button>
                 </fieldset>
               )}
@@ -645,20 +646,20 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                 <fieldset disabled={!editable}>
                   <label>
                     Notele de subsol
-                    <select value={tr.notes || 'footnotes'} onChange={(e) => setIn(['transforms', 'notes'], e.target.value)}>
-                      <option value="footnotes">Note de subsol</option>
-                      <option value="endnotes-chapter">Note la finalul fiecărui capitol</option>
-                      <option value="endnotes-book">Note la finalul cărții</option>
+                    <select value={xf.notes || 'footnotes'} onChange={(e) => setIn(['transforms', 'notes'], e.target.value)}>
+                      <option value="footnotes">{tr('ui.compileDialog.note_de_subsol')}</option>
+                      <option value="endnotes-chapter">{tr('ui.compileDialog.note_la_finalul_fiecarui_capitol')}</option>
+                      <option value="endnotes-book">{tr('ui.compileDialog.note_la_finalul_cartii')}</option>
                     </select>
                   </label>
                   <label>
                     Comentarii
-                    <select value={tr.comments || 'strip'} onChange={(e) => setIn(['transforms', 'comments'], e.target.value)}>
-                      <option value="strip">Se elimină</option>
-                      <option value="export">Comentarii Word (doar DOCX)</option>
+                    <select value={xf.comments || 'strip'} onChange={(e) => setIn(['transforms', 'comments'], e.target.value)}>
+                      <option value="strip">{tr('ui.compileDialog.se_elimina')}</option>
+                      <option value="export">{tr('ui.compileDialog.comentarii_word_doar_docx')}</option>
                     </select>
                   </label>
-                  <p className="muted small">Adnotările din text nu ajung niciodată în cartea compilată.</p>
+                  <p className="muted small">{tr('ui.compileDialog.adnotarile_din_text_nu_ajung')}</p>
                 </fieldset>
               )}
 
@@ -677,18 +678,18 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <label>
                       Font titluri
                       <select value={ty.headingFont || ''} onChange={(e) => setIn(['typography', 'headingFont'], e.target.value)}>
-                        <option value="">Același</option>
+                        <option value="">{tr('ui.compileDialog.acelasi')}</option>
                         {FONTS.map((f) => (
                           <option key={f}>{f}</option>
                         ))}
                       </select>
                     </label>
                     <label>
-                      Mărime (pt)
+                      {tr('ui.compileDialog.marime_pt')}
                       <input type="number" min="7" max="24" step="0.5" value={ty.fontSizePt} onChange={num(['typography', 'fontSizePt'], 12)} />
                     </label>
                     <label>
-                      Spațiere rânduri
+                      {tr('ui.compileDialog.spatiere_randuri')}
                       <select value={ty.lineSpacing} onChange={num(['typography', 'lineSpacing'], 1.5)}>
                         {[1, 1.15, 1.2, 1.4, 1.5, 2].map((v) => (
                           <option key={v} value={v}>{String(v).replace('.', ',')}</option>
@@ -702,19 +703,19 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <input type="number" min="0" max="2" step="0.05" value={ty.firstLineIndentIn} onChange={num(['typography', 'firstLineIndentIn'])} />
                     </label>
                     <label>
-                      Spațiu după paragraf (pt)
+                      {tr('ui.compileDialog.spatiu_dupa_paragraf_pt')}
                       <input type="number" min="0" max="24" value={ty.paragraphSpacingPt} onChange={num(['typography', 'paragraphSpacingPt'])} />
                     </label>
                     <label className="check">
-                      <input type="checkbox" checked={ty.noIndentAfterHeading !== false} onChange={(e) => setIn(['typography', 'noIndentAfterHeading'], e.target.checked)} /> Fără alineat după titluri
+                      <input type="checkbox" checked={ty.noIndentAfterHeading !== false} onChange={(e) => setIn(['typography', 'noIndentAfterHeading'], e.target.checked)} /> {tr('ui.compileDialog.fara_alineat_dupa_titluri')}
                     </label>
                   </div>
-                  <legend>Pagină (DOCX, PDF, RTF, ODT)</legend>
+                  <legend>{tr('ui.compileDialog.pagina_docx_pdf_rtf_odt')}</legend>
                   {!page ? (
                     <div>
-                      <p className="muted">Formatul nu are setări de pagină (e-book).</p>
+                      <p className="muted">{tr('ui.compileDialog.formatul_nu_are_setari_de')}</p>
                       <button type="button" onClick={() => setIn(['page'], { size: 'A4', margins: { top: 1, bottom: 1, inner: 1, outer: 1 }, mirrored: false, header: {}, footer: { center: '<$p>' }, differentFirstPage: true, pageNumbers: true })}>
-                        Adaugă setări de pagină
+                        {tr('ui.compileDialog.adauga_setari_de_pagina')}
                       </button>
                     </div>
                   ) : (
@@ -726,24 +727,24 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                             {PAGE_SIZES.map(([k, label]) => (
                               <option key={k} value={k}>{label}</option>
                             ))}
-                            <option value="custom">Personalizată</option>
+                            <option value="custom">{tr('ui.compileDialog.personalizata')}</option>
                           </select>
                         </label>
                         {page.size === 'custom' && (
                           <>
                             <label>
-                              Lățime (in)
+                              {tr('ui.compileDialog.latime_in')}
                               <input type="number" step="0.01" value={page.widthIn || ''} onChange={num(['page', 'widthIn'], 6)} />
                             </label>
                             <label>
-                              Înălțime (in)
+                              {tr('ui.compileDialog.inaltime_in')}
                               <input type="number" step="0.01" value={page.heightIn || ''} onChange={num(['page', 'heightIn'], 9)} />
                             </label>
                           </>
                         )}
                       </div>
                       <div className="row">
-                        {[['top', 'Sus'], ['bottom', 'Jos'], ['inner', page.mirrored ? 'Interior' : 'Stânga'], ['outer', page.mirrored ? 'Exterior' : 'Dreapta']].map(([k, label]) => (
+                        {[['top', tr('ui.compileDialog.sus')], ['bottom', tr('ui.compileDialog.jos')], ['inner', page.mirrored ? 'Interior' : tr('ui.compileDialog.stanga_2')], ['outer', page.mirrored ? 'Exterior' : tr('ui.compileDialog.dreapta')]].map(([k, label]) => (
                           <label key={k}>
                             {label} (in)
                             <input type="number" min="0" max="3" step="0.05" value={(page.margins || {})[k] ?? 1} onChange={num(['page', 'margins', k], 1)} />
@@ -751,15 +752,15 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                         ))}
                       </div>
                       <label className="check">
-                        <input type="checkbox" checked={Boolean(page.mirrored)} onChange={(e) => setIn(['page', 'mirrored'], e.target.checked)} /> Margini în oglindă (pagini față-verso)
+                        <input type="checkbox" checked={Boolean(page.mirrored)} onChange={(e) => setIn(['page', 'mirrored'], e.target.checked)} /> {tr('ui.compileDialog.margini_in_oglinda_pagini_fata')}
                       </label>
                       <label className="check">
-                        <input type="checkbox" checked={Boolean(page.differentFirstPage)} onChange={(e) => setIn(['page', 'differentFirstPage'], e.target.checked)} /> Prima pagină fără antet și subsol
+                        <input type="checkbox" checked={Boolean(page.differentFirstPage)} onChange={(e) => setIn(['page', 'differentFirstPage'], e.target.checked)} /> {tr('ui.compileDialog.prima_pagina_fara_antet_si')}
                       </label>
-                      <p className="muted small">Antet și subsol: &lt;$p&gt; = numărul paginii, &lt;$surname&gt;, &lt;$abbr_title&gt;, &lt;$projecttitle&gt;.</p>
+                      <p className="muted small">{tr('ui.compileDialog.antet_si_subsol_p_numarul')}</p>
                       {hfEditor('header', 'Antet')}
                       {hfEditor('footer', 'Subsol')}
-                      <button type="button" onClick={() => setIn(['page'], null)}>Fără setări de pagină</button>
+                      <button type="button" onClick={() => setIn(['page'], null)}>{tr('ui.compileDialog.fara_setari_de_pagina')}</button>
                     </div>
                   )}
                 </fieldset>
@@ -767,10 +768,10 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
 
               {tab === 'metadate' && (
                 <div>
-                  <p className="muted small">Pentru EPUB (titlul și autorul se folosesc și în celelalte formate).</p>
+                  <p className="muted small">{tr('ui.compileDialog.pentru_epub_titlul_si_autorul')}</p>
                   <div className="row">
                     <label>
-                      Titlu
+                      {tr('ui.advancedSearchDialog.titlu')}
                       <input value={epub.title || ''} placeholder={project.title} onChange={(e) => setEpub({ ...epub, title: e.target.value })} />
                     </label>
                     <label>
@@ -778,13 +779,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <input value={epub.author || ''} placeholder={project.author} onChange={(e) => setEpub({ ...epub, author: e.target.value })} />
                     </label>
                     <label>
-                      Limbă
+                      {tr('set.tab.language')}
                       <input value={epub.language || ''} placeholder="ro" onChange={(e) => setEpub({ ...epub, language: e.target.value })} />
                     </label>
                   </div>
                   <div className="row">
                     <label>
-                      Editură
+                      {tr('ui.compileDialog.editura')}
                       <input value={epub.publisher || ''} onChange={(e) => setEpub({ ...epub, publisher: e.target.value })} />
                     </label>
                     <label>
@@ -792,7 +793,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <input value={epub.isbn || ''} onChange={(e) => setEpub({ ...epub, isbn: e.target.value })} />
                     </label>
                     <label>
-                      Identificator (dacă nu există ISBN)
+                      {tr('ui.compileDialog.identificator_daca_nu_exista_isbn')}
                       <input value={epub.identifier || ''} onChange={(e) => setEpub({ ...epub, identifier: e.target.value })} />
                     </label>
                   </div>
@@ -801,13 +802,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <textarea rows="3" value={epub.description || ''} onChange={(e) => setEpub({ ...epub, description: e.target.value })} />
                   </label>
                   <label>
-                    Subiecte (separate prin virgulă)
+                    {tr('ui.compileDialog.subiecte_separate_prin_virgula')}
                     <input value={Array.isArray(epub.subjects) ? epub.subjects.join(', ') : epub.subjects || ''} onChange={(e) => setEpub({ ...epub, subjects: e.target.value })} />
                   </label>
                   <label>
-                    Copertă (imagine din Cercetare)
+                    {tr('ui.compileDialog.coperta_imagine_din_cercetare')}
                     <select value={coverId} onChange={(e) => setCoverId(e.target.value)}>
-                      <option value="">Fără copertă</option>
+                      <option value="">{tr('ui.compileDialog.fara_coperta')}</option>
                       {images.map((n) => (
                         <option key={n.id} value={n.id}>{n.title}</option>
                       ))}
@@ -823,7 +824,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
           <div className="cd-preview">
             <div className="row">
               <strong>Previzualizare</strong>
-              <button type="button" onClick={() => setPreview(null)}>Închide previzualizarea</button>
+              <button type="button" onClick={() => setPreview(null)}>{tr('ui.compileDialog.inchide_previzualizarea')}</button>
             </div>
             <iframe title="Previzualizare" sandbox="" srcDoc={preview} />
           </div>
@@ -831,10 +832,10 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
 
         {done && <p className="ok">Salvat: {done}</p>}
         <div className="actions">
-          <button type="button" onClick={onClose}>Închide</button>
-          <button type="button" onClick={persist}>Salvează setările</button>
+          <button type="button" onClick={onClose}>{tr('btn.close')}</button>
+          <button type="button" onClick={persist}>{tr('ui.compileDialog.salveaza_setarile')}</button>
           <button type="button" disabled={busy} onClick={showPreview}>Previzualizare</button>
-          <button type="button" className="primary" disabled={busy} onClick={run}>{busy ? 'Se compilează…' : 'Compilează'}</button>
+          <button type="button" className="primary" disabled={busy} onClick={run}>{busy ? tr('ui.compileDialog.se_compileaza') : tr('ui.compileDialog.compileaza')}</button>
         </div>
       </div>
     </div>

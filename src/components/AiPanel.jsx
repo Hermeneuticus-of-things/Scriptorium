@@ -2,15 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { textToHtml } from '../lib/text.js';
 import { actionKind, diffParts, noChange, providerText, sessionHistory } from '../lib/aiSession.js';
 import '../ai.css';
+import { t as tr, uiLocale } from '../lib/i18n.js';
 
-const ACTIONS = [
-  ['proofread', 'Corectură', 'Corectează ortografia, gramatica și punctuația (previzualizare cu diferențe)'],
-  ['summarize', 'Sinopsis', 'Sinopsis de 2-3 propoziții pentru Inspector'],
-  ['continue', 'Continuă', 'Continuă textul în aceeași voce'],
-  ['feedback', 'Critică', 'Feedback editorial: ritm, claritate, dialog'],
-  ['consistency', 'Consistență', 'Verifică textul față de notele și cercetarea proiectului'],
-];
-const LABEL = Object.fromEntries([...ACTIONS.map(([id, l]) => [id, l]), ['ask', 'Întrebare']]);
+const ACTIONS = () => ([
+  ['proofread', tr('ui.aiPanel.corectura'), tr('ui.aiPanel.corecteaza_ortografia_gramatica_si_punctuatia')],
+  ['summarize', tr('ui.advancedSearchDialog.sinopsis'), tr('ui.aiPanel.sinopsis_de_2_3_propozitii')],
+  ['continue', tr('ui.aiPanel.continua'), tr('ui.aiPanel.continua_textul_in_aceeasi_voce')],
+  ['feedback', tr('ui.aiPanel.critica'), tr('ui.aiPanel.feedback_editorial')],
+  ['consistency', tr('ui.aiPanel.consistenta'), tr('ui.aiPanel.verifica_textul_fata_de_notele')],
+  ['research', tr('ui.aiPanel.cercetare'), tr('ui.aiPanel.cercetare_tip')],
+  ['define', tr('ui.aiPanel.explica'), tr('ui.aiPanel.explica_tip')],
+  ['translate', tr('ui.aiPanel.traduce'), tr('ui.aiPanel.traduce_tip')],
+]);
+const LABEL = () => (Object.fromEntries([...ACTIONS().map(([id, l]) => [id, l]), ['ask', tr('ui.aiPanel.intrebare')]]));
 
 // Where a result goes back into the editor, captured when the request starts so a later
 // caret move cannot redirect it: { from, to, before } in the editor of `docId`.
@@ -32,6 +36,7 @@ function stillThere(ed, range) {
 export default function AiPanel({
   api, hasKey, node, getText, hasSelection, getContext, getHandle,
   onInsert, onReplace, onReplaceAll, onSynopsis, onOpenSettings, aiLabel = '', aiModel = '',
+  translateTo = '', request = null,
 }) {
   const [busy, setBusy] = useState(null); // { action, started }
   const [live, setLive] = useState('');
@@ -67,6 +72,12 @@ export default function AiPanel({
     };
   }, [busy]);
 
+  // Actions started from the editor's context menu or the command palette ({ action, n }).
+  const runRef = useRef(null);
+  useEffect(() => {
+    if (request && request.action) runRef.current?.(request.action);
+  }, [request && request.n]);
+
   const cancel = () => {
     runIdRef.current = '';
     if (api.cancelAi) api.cancelAi().catch(() => {});
@@ -75,13 +86,13 @@ export default function AiPanel({
   const run = async (action) => {
     if (busy) return;
     if (!hasKey) {
-      setError({ message: `Configurează mai întâi furnizorul AI${aiLabel ? ` (${aiLabel})` : ''} în Setări → AI.`, action, settings: true });
+      setError({ message: tr('ui.aiPanel.configureaza_mai_intai_furnizorul_aix', { v0: aiLabel ? ` (${aiLabel})` : '' }), action, settings: true });
       return;
     }
     if (action === 'ask' && !question.trim()) return;
     const text = getText();
     if (!text.trim() && action !== 'ask') {
-      setError({ message: 'Documentul e gol. Scrie ceva sau selectează un fragment.' });
+      setError({ message: tr('ui.aiPanel.documentul_e_gol_scrie_ceva') });
       return;
     }
     lastAction.current = action;
@@ -102,6 +113,7 @@ export default function AiPanel({
         question,
         runId,
         context: action === 'consistency' || action === 'ask' ? getContext() : '',
+        lang: action === 'translate' ? translateTo : undefined,
       });
       if (runIdRef.current !== runId) return; // cancelled meanwhile
       const entry = sessionHistory.add({
@@ -119,6 +131,8 @@ export default function AiPanel({
     }
   };
 
+  runRef.current = run;
+
   // Accept = one editor transaction, so a single Undo restores the original text.
   const accept = () => {
     const r = result;
@@ -126,7 +140,7 @@ export default function AiPanel({
     const kind = actionKind(r.action);
     if (ed && r.range) {
       if (!stillThere(ed, r.range)) {
-        setError({ message: 'Textul s-a schimbat de la cerere, rezultatul nu mai poate fi pus la locul lui. Rulează din nou sau copiază rezultatul.', action: r.action });
+        setError({ message: tr('ui.aiPanel.textul_s_a_schimbat_de'), action: r.action });
         return;
       }
       const html = textToHtml(r.text);
@@ -135,7 +149,7 @@ export default function AiPanel({
     } else if (kind === 'replace') {
       // Without the editor handle, only replace when the same text is still selected.
       if (Boolean(hasSelection()) !== Boolean(r.selection) || getText() !== r.before) {
-        setError({ message: 'Selecția s-a schimbat de la cerere. Selectează din nou textul și rulează iar, sau copiază rezultatul.', action: r.action });
+        setError({ message: tr('ui.aiPanel.selectia_s_a_schimbat_de'), action: r.action });
         return;
       }
       if (r.selection) onReplace(r.text);
@@ -164,21 +178,20 @@ export default function AiPanel({
   return (
     <aside className="ai-panel" onKeyDown={onKeyDown} aria-busy={Boolean(busy)}>
       <h3>Asistent AI</h3>
-      {who && <p className="muted small ai-provider" title="Furnizorul și modelul folosite">Model: {who}</p>}
+      {who && <p className="muted small ai-provider" title={tr('ui.aiPanel.furnizorul_si_modelul_folosite')}>Model: {who}</p>}
       {!hasKey && (
         <div className="ai-setup" role="note">
           <p>
-            Asistentul are nevoie de un furnizor AI configurat{aiLabel ? ` (acum: ${aiLabel}, fără cheie API)` : ''}. Poți folosi Anthropic, OpenAI, Gemini, OpenRouter
-            sau un model local (Ollama, LM Studio) fără cheie.
+            Asistentul are nevoie de un furnizor AI configurat{aiLabel ? tr('ui.aiPanel.acum_x_fara_cheie_api', { aiLabel: aiLabel }) : ''}{tr('ui.aiPanel.poti_folosi_anthropic_openai_gemini')}
           </p>
-          <button className="primary" onClick={() => onOpenSettings('ai')}>Deschide Setări → AI</button>
+          <button className="primary" onClick={() => onOpenSettings('ai')}>{tr('ui.aiPanel.deschide_setari_ai')}</button>
         </div>
       )}
       <p className="muted">
-        Lucrează pe {hasSelection() ? 'textul selectat' : `tot documentul „${node.title}”`}. <span className="ai-keys">Ctrl+Enter rulează din nou · Esc anulează</span>
+        {tr('ui.aiPanel.lucreaza_pe')} {hasSelection() ? tr('ui.aiPanel.textul_selectat') : tr('ui.aiPanel.tot_documentul_x', { title: node.title })}. <span className="ai-keys">{tr('ui.aiPanel.ctrl_enter_ruleaza_din_nou')}</span>
       </p>
       <div className="ai-actions">
-        {ACTIONS.map(([id, label, title]) => (
+        {ACTIONS().map(([id, label, title]) => (
           <button key={id} disabled={Boolean(busy) || !hasKey} title={title} onClick={() => run(id)}>
             {label}
           </button>
@@ -186,18 +199,18 @@ export default function AiPanel({
       </div>
       <textarea
         rows={3}
-        placeholder="Întreabă orice despre text sau proiect… (Ctrl+Enter)"
+        placeholder={tr('ui.aiPanel.intreaba_orice_despre_text_sau')}
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
-        aria-label="Întrebare pentru AI"
+        aria-label={tr('ui.aiPanel.intrebare_pentru_ai')}
       />
-      <button disabled={Boolean(busy) || !question.trim() || !hasKey} onClick={() => run('ask')}>Întreabă</button>
+      <button disabled={Boolean(busy) || !question.trim() || !hasKey} onClick={() => run('ask')}>{tr('ui.aiPanel.intreaba')}</button>
 
       {busy && (
         <div className="ai-live" aria-live="polite">
           <p className="muted">
-            {LABEL[busy.action]}: {live ? 'scrie' : 'se gândește'}… {elapsed}s{' '}
-            {api.cancelAi && <button className="link" onClick={cancel}>Anulează (Esc)</button>}
+            {LABEL()[busy.action]}: {live ? 'scrie' : tr('ui.aiPanel.se_gandeste')}… {elapsed}s{' '}
+            {api.cancelAi && <button className="link" onClick={cancel}>{tr('ui.aiPanel.anuleaza_esc')}</button>}
           </p>
           {live && <pre className="ai-stream">{live}</pre>}
         </div>
@@ -206,20 +219,20 @@ export default function AiPanel({
         <div className="ai-error" role="alert">
           <span>{error.message}</span>
           {error.settings ? (
-            <button className="link" onClick={() => onOpenSettings('ai')}>Setări → AI</button>
+            <button className="link" onClick={() => onOpenSettings('ai')}>{tr('ui.aiPanel.setari_ai')}</button>
           ) : (
-            error.action && <button className="link" onClick={() => run(error.action)}>Reîncearcă</button>
+            error.action && <button className="link" onClick={() => run(error.action)}>{tr('ui.aiPanel.reincearca')}</button>
           )}
         </div>
       )}
       {result && (
         <div className="ai-result">
-          <h4>{LABEL[result.action]}{result.selection ? ' · selecție' : ''}</h4>
+          <h4>{LABEL()[result.action]}{result.selection ? tr('ui.aiPanel.selectie') : ''}</h4>
           {parts ? (
             noChange(parts) ? (
-              <p className="ok">Nicio corectură necesară.</p>
+              <p className="ok">{tr('ui.aiPanel.nicio_corectura_necesara')}</p>
             ) : (
-              <div className="ai-diff" aria-label="Diferențe înainte/după">
+              <div className="ai-diff" aria-label={tr('ui.aiPanel.diferente_inainte_dupa')}>
                 {parts.map((p, i) => (p.added ? <ins key={i}>{p.value}</ins> : p.removed ? <del key={i}>{p.value}</del> : <span key={i}>{p.value}</span>))}
               </div>
             )
@@ -228,38 +241,38 @@ export default function AiPanel({
           )}
           <div className="ai-actions">
             {kind === 'replace' && parts && !noChange(parts) && (
-              <button className="primary" onClick={accept} title="Un singur pas de Undo">
-                {result.selection ? 'Acceptă (înlocuiește selecția)' : 'Acceptă (înlocuiește documentul)'}
+              <button className="primary" onClick={accept} title={tr('ui.aiPanel.un_singur_pas_de_undo')}>
+                {result.selection ? tr('ui.aiPanel.accepta_inlocuieste_selectia') : tr('ui.aiPanel.accepta_inlocuieste_documentul')}
               </button>
             )}
-            {kind === 'insert' && <button className="primary" onClick={accept}>Inserează</button>}
-            {result.action === 'ask' && <button onClick={() => onInsert(result.text)}>Inserează la cursor</button>}
+            {kind === 'insert' && <button className="primary" onClick={accept}>{tr('ui.aiPanel.insereaza')}</button>}
+            {result.action === 'ask' && <button onClick={() => onInsert(result.text)}>{tr('ui.aiPanel.insereaza_la_cursor')}</button>}
             {kind === 'synopsis' && (
-              <button className="primary" onClick={() => { onSynopsis(result.text); setResult(null); }}>Pune ca sinopsis în Inspector</button>
+              <button className="primary" onClick={() => { onSynopsis(result.text); setResult(null); }}>{tr('ui.aiPanel.pune_ca_sinopsis_in_inspector')}</button>
             )}
-            <button onClick={() => navigator.clipboard?.writeText(result.text)}>Copiază</button>
-            <button onClick={() => setResult(null)}>{kind === 'replace' || kind === 'insert' ? 'Respinge (Esc)' : 'Închide'}</button>
+            <button onClick={() => navigator.clipboard?.writeText(result.text)}>{tr('ui.aiPanel.copiaza')}</button>
+            <button onClick={() => setResult(null)}>{kind === 'replace' || kind === 'insert' ? 'Respinge (Esc)' : tr('btn.close')}</button>
           </div>
         </div>
       )}
       {history.length > 0 && (
         <details className="ai-history">
-          <summary>Rezultate recente ({history.length})</summary>
+          <summary>{tr('ui.aiPanel.rezultate_recente')}{history.length})</summary>
           <ul>
             {history.map((h) => (
               <li key={h.id}>
                 <div className="small muted">
-                  {LABEL[h.action]} · „{h.docTitle}” · {new Date(h.at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}
+                  {LABEL()[h.action]} · „{h.docTitle}” · {new Date(h.at).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' })}
                 </div>
                 <div className="ai-history-text">{h.text.length > 160 ? `${h.text.slice(0, 160)}…` : h.text}</div>
                 <div className="ai-actions">
-                  <button className="link" onClick={() => onInsert(h.text)}>Reinserează la cursor</button>
-                  <button className="link" onClick={() => navigator.clipboard?.writeText(h.text)}>Copiază</button>
+                  <button className="link" onClick={() => onInsert(h.text)}>{tr('ui.aiPanel.reinsereaza_la_cursor')}</button>
+                  <button className="link" onClick={() => navigator.clipboard?.writeText(h.text)}>{tr('ui.aiPanel.copiaza')}</button>
                 </div>
               </li>
             ))}
           </ul>
-          <button className="link" onClick={() => { sessionHistory.clear(); setHistory([]); }}>Golește istoricul</button>
+          <button className="link" onClick={() => { sessionHistory.clear(); setHistory([]); }}>{tr('ui.aiPanel.goleste_istoricul')}</button>
         </details>
       )}
     </aside>

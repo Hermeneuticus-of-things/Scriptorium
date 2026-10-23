@@ -17,6 +17,7 @@ const history = require('../lib/history.cjs');
 const { listTemplates } = require('../lib/templates.cjs');
 const { fileToHtml, splitHtml } = require('../lib/docxImport.cjs');
 const bundle = require('../lib/bundle.cjs');
+const projectWatch = require('../lib/projectWatch.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
 if (process.env.PORTABLE_EXECUTABLE_DIR) {
@@ -101,6 +102,7 @@ function migrateAiKeys() {
 
 function rememberRecent(dir, title) {
   openedDirs.add(path.resolve(dir));
+  rememberBase(dir);
   const s = readSettings();
   const pinned = new Set(s.recentPinned || []);
   const list = [{ dir, title }, ...(s.recent || []).filter((r) => r.dir !== dir)];
@@ -111,30 +113,52 @@ function rememberRecent(dir, title) {
 }
 
 // Multiple project windows: each window shows at most one project and a project
-// is open in at most one window. windowDirs: webContents id -> resolved dir.
-const windowDirs = new Map();
-
-function windowOwning(dir) {
-  const key = path.resolve(dir);
-  for (const [wcId, d] of windowDirs) {
-    if (d !== key) continue;
-    const win = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed() && w.webContents.id === wcId);
-    if (win) return win;
-    windowDirs.delete(wcId);
-  }
-  return null;
-}
+// is open in at most one window (lib/projectWatch.cjs createClaimRegistry).
+const liveWindow = (wcId) => BrowserWindow.getAllWindows().find((w) => !w.isDestroyed() && w.webContents.id === wcId && !w.webContents.isCrashed());
+const claims = projectWatch.createClaimRegistry({ isAlive: (wcId) => Boolean(liveWindow(wcId)) });
 
 // Returns false (and focuses the other window) when the project is open elsewhere.
 function claimDir(sender, dir) {
-  const other = windowOwning(dir);
-  if (other && other.webContents.id !== sender.id) {
-    if (other.isMinimized()) other.restore();
-    other.focus();
+  const res = claims.claim(sender.id, dir);
+  if (!res.ok) {
+    const other = liveWindow(res.owner);
+    if (other) {
+      if (other.isMinimized()) other.restore();
+      other.focus();
+    }
     return false;
   }
-  windowDirs.set(sender.id, path.resolve(dir));
   return true;
+}
+
+// Frees the window's project (closed, crashed, reloaded, back to start screen).
+function releaseWindow(wcId) {
+  const dir = claims.release(wcId);
+  closeWatchers(wcId);
+  if (dir && !claims.ownerOf(dir)) {
+    bases.delete(dir);
+    trackers.delete(dir);
+  }
+}
+
+// A window that is not the project's owner must not write into it (stale window
+// after a crash / reload while another window opened the project).
+function assertOwner(sender, dir) {
+  const owner = claims.ownerOf(dir);
+  if (owner !== null && owner !== sender.id) throw new Error('Proiectul este deschis în altă fereastră.');
+}
+
+// Last project.json content each open project's window started from (three-way
+// merge base for project:save). Set once per open; see lib/projectWatch.cjs saveMerged.
+const bases = new Map();
+function rememberBase(dir, force = false) {
+  const key = path.resolve(dir);
+  if (bases.has(key) && !force) return;
+  try {
+    bases.set(key, fs.readFileSync(path.join(dir, 'project.json'), 'utf8'));
+  } catch {
+    bases.delete(key);
+  }
 }
 
 function assertOpened(dir) {
@@ -144,6 +168,8 @@ function assertOpened(dir) {
 // Spell checking in Romanian (+ English) with a context menu of suggestions.
 // On Windows and macOS Chromium uses the system spellchecker, so the Romanian
 // language pack must be installed in the OS; on Linux the dictionaries download on demand.
+const { lookupGroups } = require('../src/lib/lookups.js');
+
 function setupSpelling(win) {
   const ses = win.webContents.session;
   const langs = (readSettings().spellLanguages || ['ro', 'en-US']).filter((l) => ses.availableSpellCheckerLanguages.length === 0 || ses.availableSpellCheckerLanguages.includes(l));
@@ -155,7 +181,7 @@ function setupSpelling(win) {
   // Words ignored for this session ("Ignoră"): no suggestions menu for them.
   const ignored = new Set();
   const lookup = (url) => shell.openExternal(url);
-  win.webContents.on('context-menu', (_e, params) => {
+  win.webContents.on('context-menu', async (_e, params) => {
     const items = [];
     if (params.misspelledWord && !ignored.has(params.misspelledWord.toLowerCase())) {
       for (const s of params.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => win.webContents.replaceMisspelling(s) });
@@ -164,16 +190,42 @@ function setupSpelling(win) {
       items.push({ label: `Ignoră „${params.misspelledWord}”`, click: () => ignored.add(params.misspelledWord.toLowerCase()) });
       items.push({ type: 'separator' });
     }
-    const word = (params.selectionText || params.misspelledWord || '').trim();
-    if (word && word.length < 80) {
-      const q = encodeURIComponent(word);
+    // The editor selects the word under the pointer in its own contextmenu handler; Chromium may
+    // have filled `params` before that, so read the live selection when params has none.
+    let text = (params.selectionText || params.misspelledWord || '').trim();
+    if (!text && params.isEditable) {
+      text = String((await win.webContents.executeJavaScript('String(getSelection())').catch(() => '')) || '').trim();
+      if (win.isDestroyed()) return;
+    }
+    if (text) {
+      const st = readSettings();
+      const g = lookupGroups(text, { from: st.translateFrom || 'auto', to: st.translateTo || 'ro' });
+      const links = (list) => list.map((l) => ({ label: l.label, click: () => lookup(l.url) }));
+      const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
+      if (g.translate.length) items.push({ label: 'Traduce', submenu: links(g.translate) });
+      if (g.dict.length) items.push({ label: 'Dicționare', submenu: links(g.dict) });
+      items.push({ label: 'Cercetare pe web', submenu: links(g.research) });
+      if (st.aiEnabled !== false) {
+        items.push({
+          label: 'Asistent AI',
+          submenu: [
+            { label: 'Cercetare', click: cmd('aiResearchSel') },
+            { label: 'Explică termenul', click: cmd('aiDefineSel') },
+            { label: 'Corectează', click: cmd('aiProofreadSel') },
+            { label: 'Traduce', click: cmd('aiTranslateSel') },
+          ],
+        });
+      }
+      items.push({ label: 'Întreabă NotebookLM', click: cmd('nlmAskSel') });
+      items.push({ type: 'separator' });
+    }
+    if (params.isEditable) {
+      const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
       items.push({
-        label: 'Unelte de scris',
+        label: 'Extinde selecția',
         submenu: [
-          { label: 'Caută în dicționar (dexonline)', click: () => lookup(`https://dexonline.ro/definitie/${q}`) },
-          { label: 'Sinonime (dexonline)', click: () => lookup(`https://dexonline.ro/definitie/${q}/sinonime`) },
-          { label: 'Wikipedia', click: () => lookup(`https://ro.wikipedia.org/w/index.php?search=${q}`) },
-          { label: 'Google', click: () => lookup(`https://www.google.com/search?q=${q}`) },
+          { label: 'La frază', click: cmd('selectSentence') },
+          { label: 'La paragraf', click: cmd('selectParagraph') },
         ],
       });
       items.push({ type: 'separator' });
@@ -231,10 +283,10 @@ function createWindow() {
   win.setMenuBarVisibility(false);
   setupSpelling(win);
   const wcId = win.webContents.id;
-  win.on('closed', () => {
-    windowDirs.delete(wcId);
-    closeWatchers(wcId);
-  });
+  win.on('closed', () => releaseWindow(wcId));
+  // A crashed or reloaded renderer has lost its project: free it for other windows.
+  win.webContents.on('render-process-gone', () => releaseWindow(wcId));
+  win.webContents.on('did-navigate', () => releaseWindow(wcId));
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
     return { action: 'deny' };
@@ -246,8 +298,7 @@ function createWindow() {
 
 // The window closed its project (back to the start screen): free it for other windows.
 handle('project:release', (e) => {
-  windowDirs.delete(e.sender.id);
-  closeWatchers(e.sender.id);
+  releaseWindow(e.sender.id);
   return true;
 });
 handle('window:fullScreen', (e, on) => {
@@ -340,6 +391,7 @@ handle('project:new', async (e, title, templateId) => {
   if (res.canceled) return null;
   const dir = store.projectDirFor(res.filePaths[0], title);
   const project = store.createProject(dir, title, templateId);
+  releaseWindow(e.sender.id);
   claimDir(e.sender, dir);
   rememberRecent(dir, title);
   return { dir, project };
@@ -358,11 +410,27 @@ handle('project:open', async (e, dirArg) => {
     throw new Error('Proiectul nu este în lista recentă.');
   }
   // Already open in another window: focus it and leave this one as it is.
-  if (!claimDir(e.sender, dir)) return null;
+  const owner = claims.ownerOf(dir);
+  if (owner !== null && owner !== e.sender.id) {
+    claimDir(e.sender, dir); // focuses the owner window
+    return null;
+  }
+  // Load before claiming: a missing / broken project must not move this window's claim.
   const project = store.loadProject(dir);
+  const reopening = claims.dirOf(e.sender.id) === path.resolve(dir);
+  if (!reopening) releaseWindow(e.sender.id);
+  if (!claimDir(e.sender, dir)) return null;
   rememberRecent(dir, project.title);
-  backup.backupOnOpen(dir, backupSettings());
+  if (!reopening) backup.backupOnOpen(dir, backupSettings());
   return { dir, project };
+});
+
+// Re-read project.json after an external change (no backup, no recent-list update).
+// The merge base stays where it is: the next save merges against it.
+handle('project:reload', (e, dir) => {
+  assertOpened(dir);
+  assertOwner(e.sender, dir);
+  return { dir, project: store.loadProject(dir) };
 });
 
 // Single-file project bundle (.json) for sync with the web/PWA build.
@@ -391,15 +459,21 @@ handle('project:importBundle', async (e) => {
   const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul?', properties: ['openDirectory', 'createDirectory'] });
   if (dest.canceled) return null;
   const result = bundle.importBundle(data, dest.filePaths[0]);
+  releaseWindow(e.sender.id);
   claimDir(e.sender, result.dir);
   rememberRecent(result.dir, result.project.title);
   return result;
 });
 
-handle('project:save', (_e, dir, project) => {
+handle('project:save', (e, dir, project) => {
   assertOpened(dir);
-  noteSelfWrite(path.join(dir, 'project.json'));
-  store.saveProject(dir, project);
+  assertOwner(e.sender, dir);
+  const key = path.resolve(dir);
+  const res = projectWatch.saveMerged(dir, project, bases.get(key), { noteWrite: noteSelfWrite });
+  // After a merge the window still holds its own version: keep the old base so its next
+  // save merges again, and tell it to reload the merged project.
+  if (!res.merged) bases.set(key, res.raw);
+  else if (!e.sender.isDestroyed()) e.sender.send('project:changed', { dir, files: ['project.json'], merged: true });
   dirtyDirs.add(dir);
   return true;
 });
@@ -408,9 +482,10 @@ handle('doc:read', (_e, dir, id, kind) => {
   assertOpened(dir);
   return store.readDoc(dir, id, kind === 'notes' ? 'notes' : 'docs');
 });
-handle('doc:write', (_e, dir, id, kind, html) => {
+handle('doc:write', (e, dir, id, kind, html) => {
   assertOpened(dir);
-  noteSelfWrite(path.join(dir, kind === 'notes' ? 'notes' : 'docs', `${id}.html`));
+  assertOwner(e.sender, dir);
+  noteSelfWrite(path.join(dir, kind === 'notes' ? 'notes' : 'docs', `${id}.html`), html);
   store.writeDoc(dir, id, kind === 'notes' ? 'notes' : 'docs', html);
   dirtyDirs.add(dir);
   return true;
@@ -433,8 +508,9 @@ handle('mcp:info', (_e, dir) => {
 });
 
 // Reload the open project when files change outside the app (an AI agent via MCP,
-// a sync client). Writes made by the app itself are ignored.
-const selfWrites = new Map(); // absolute file -> time
+// a sync client). Writes made by the app itself are recognised by content
+// (lib/projectWatch.cjs createChangeTracker).
+const trackers = new Map(); // resolved dir -> change tracker (shared by save paths and the watcher)
 const watchers = new Map(); // `${webContentsId}|${dir}` -> fs.FSWatcher (one per window)
 function closeWatchers(wcId) {
   for (const [k, w] of watchers) {
@@ -448,29 +524,35 @@ function closeWatchers(wcId) {
     }
   }
 }
-function noteSelfWrite(file) {
-  selfWrites.set(path.resolve(file), Date.now());
+function trackerFor(dir, onFlush = () => {}) {
+  const key = path.resolve(dir);
+  let t = trackers.get(key);
+  if (!t) {
+    const target = { onFlush };
+    t = projectWatch.createChangeTracker({ dir: key, onFlush: (files) => target.onFlush(files) });
+    t.target = target;
+    trackers.set(key, t);
+  }
+  return t;
+}
+// content: the exact text written (recommended); without it a 2 s window is used.
+function noteSelfWrite(file, content) {
+  const abs = path.resolve(file);
+  const projectDir = [...trackers.keys()].find((d) => abs.startsWith(d + path.sep));
+  trackerFor(projectDir || (path.basename(abs) === 'project.json' ? path.dirname(abs) : path.dirname(path.dirname(abs)))).noteWrite(abs, content);
 }
 function watchProject(dir, webContents) {
   const wkey = `${webContents.id}|${path.resolve(dir)}`;
   if (watchers.has(wkey)) return;
   // A window watches only its current project.
   closeWatchers(webContents.id);
-  let timer = null;
-  const changed = new Set();
+  const tracker = trackerFor(dir);
+  tracker.target.onFlush = (files) => {
+    if (!webContents.isDestroyed()) webContents.send('project:changed', { dir, files });
+  };
   try {
-    const w = fs.watch(dir, { recursive: true }, (_event, rel) => {
-      if (!rel || /(^|[\\/])(snapshots|media|scrivener-original)[\\/]|\.tmp$|agent-log\.jsonl$|history\.json$/.test(rel)) return;
-      const full = path.resolve(dir, rel);
-      const t = selfWrites.get(full);
-      if (t && Date.now() - t < 2000) return;
-      changed.add(rel.replace(/\\/g, '/'));
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        if (!webContents.isDestroyed()) webContents.send('project:changed', { dir, files: [...changed] });
-        changed.clear();
-      }, 400);
-    });
+    const w = fs.watch(dir, { recursive: true }, (_event, rel) => tracker.handle(rel));
+    w.on('error', () => closeWatchers(webContents.id));
     watchers.set(wkey, w);
   } catch {
     /* recursive watch unsupported: external changes appear on reopen */
@@ -478,6 +560,12 @@ function watchProject(dir, webContents) {
 }
 handle('project:watch', (e, dir) => {
   assertOpened(dir);
+  assertOwner(e.sender, dir);
+  // Projects opened through paths that don't claim (Save As, New from template) are claimed here.
+  if (claims.dirOf(e.sender.id) !== path.resolve(dir)) {
+    releaseWindow(e.sender.id);
+    claimDir(e.sender, dir);
+  }
   watchProject(dir, e.sender);
   return true;
 });
@@ -581,7 +669,8 @@ handle('backup:restore', async (_e, dir, file) => {
   if (!allowed) throw new Error('Backup necunoscut.');
   const target = await backup.restoreBackup(file, path.dirname(dir));
   const project = store.loadProject(target);
-  claimDir(_e.sender, target);
+  releaseWindow(_e.sender.id);
+  if (!claimDir(_e.sender, target)) throw new Error('Proiectul restaurat este deschis în altă fereastră.');
   rememberRecent(target, project.title);
   return { dir: target, project };
 });
@@ -626,6 +715,7 @@ handle('import:scriv', async (e) => {
   const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Scribner?', properties: ['openDirectory', 'createDirectory'] });
   if (dest.canceled) return null;
   const result = importScriv(src.filePaths[0], dest.filePaths[0]);
+  releaseWindow(e.sender.id);
   claimDir(e.sender, result.dir);
   rememberRecent(result.dir, result.project.title);
   return result;
@@ -763,6 +853,12 @@ handle('nlm:export', async (e, dir, options = {}) => {
   const out = notebookLm.exportNotebookLm({ project, readDoc: (id, kind) => store.readDoc(dir, id, kind), outDir: res.filePaths[0], ...options });
   shell.openPath(out.dir);
   return out;
+});
+// Web lookups from the renderer (dictionaries, DeepL, research). Only http(s) links leave the app.
+handle('app:openLink', async (_e, url) => {
+  if (typeof url !== 'string' || !/^https:\/\/[^\s]+$/.test(url) || url.length > 20000) throw new Error('Link invalid.');
+  await shell.openExternal(url);
+  return true;
 });
 handle('nlm:open', async () => {
   const url = notebookLm.notebookUrl(readSettings().notebookLmUrl);

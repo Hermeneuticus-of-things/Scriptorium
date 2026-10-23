@@ -416,3 +416,8 @@ legend { color: var(--muted); padding: 0 4px; }
 .ctx-menu kbd { flex: none; font: inherit; font-size: 11px; opacity: .7; background: none; border: none; }
 .ctx-menu .ctx-arrow { flex: none; font-size: 10px; opacity: .7; }
 .ctx-menu hr { border: none; border-top: 1px solid var(--line); margin: 4px 2px 4px 26px; }
+
+/* Keyboard focus in the format bar and its dropdowns (mouse clicks show no ring). */
+.format-bar :is(button, select, input):focus-visible,
+.format-bar .menu-pop :is(button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; position: relative; z-index: 1; }
+.format-bar .menu-pop [role='menuitem']:focus-visible { outline-offset: -2px; background: var(--accent-soft); }
