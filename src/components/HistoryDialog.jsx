@@ -90,7 +90,7 @@ export default function HistoryDialog({ api, dir, onClose, onError }) {
           <tbody>
             {[...rows].reverse().slice(0, 60).map((r) => (
               <tr key={r.date}>
-                <td>{r.date}{r.imported && <small className="muted"> · Scrivener</small>}</td>
+                <td>{r.date}{r.imported && <small className="muted"> · .scriv</small>}</td>
                 <td className="num">{r.draft.toLocaleString(uiLocale())}</td>
                 <td className="num">{r.total.toLocaleString(uiLocale())}</td>
                 {hasChars && <td className="num">{fmt(r.draftChars)}</td>}

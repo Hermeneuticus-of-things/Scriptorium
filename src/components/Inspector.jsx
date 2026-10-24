@@ -186,7 +186,7 @@ export default function Inspector({
           <label>
             {tr('ui.advancedSearchDialog.sinopsis')}
             <textarea
-              key={node.id}
+              key={`${node.id}:${node.synopsis || ''}`}
               rows={6}
               defaultValue={node.synopsis || ''}
               onBlur={(e) => e.target.value !== (node.synopsis || '') && onPatch({ synopsis: e.target.value })}
@@ -571,10 +571,10 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs }) {
 function MetaTable({ project, node }) {
   const fmt = (d) => (d ? new Date(d).toLocaleString(uiLocale()) : '');
   const rows = [
-    ['Creat', fmt(node.created)],
-    ['Modificat', fmt(node.modified)],
+    [tr('ui.inspector.creat'), fmt(node.created)],
+    [tr('ui.inspector.modificat'), fmt(node.modified)],
     [tr('ui.inspector.tinta'), node.target ? `${node.target} ${node.targetType === 'Characters' ? tr('ui.inspector.caractere') : tr('ui.inspector.cuvinte')}` : ''],
-    ['Origine Scrivener', node.scrivener ? `${node.scrivener.type} · ${node.scrivener.uuid}` : ''],
+    [tr('ui.inspector.origine_scriv'), node.scrivener ? `${node.scrivener.type} · ${node.scrivener.uuid}` : ''],
   ].filter(([, v]) => v);
   if (!rows.length) return null;
   return (

@@ -298,7 +298,12 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 - **Cine lucrează acum:** lângă titlul documentului apare numele celui care îl are deschis; în bara de jos vezi câți sunteți.
 - **Cine ce a schimbat și când:** *Proiect → Echipă…* arată jurnalul cu persoana, data, cuvintele adăugate și șterse și un fragment, filtrat pe document, persoană și perioadă.
 - **Blocare:** lacătul de lângă titlu blochează documentul pentru ceilalți; la ei se deschide doar pentru citire. Un calculator închis își pierde singur blocările după o jumătate de oră.
-- **Îmbinare:** schimbările făcute în paragrafe diferite se unesc singure. Același paragraf schimbat în două locuri: se deschide o fereastră cu cele două variante alături și alegi, pentru fiecare loc, varianta ta, a celuilalt sau pe amândouă. Varianta celuilalt rămâne oricum ca snapshot. Nu se pierde nimic.
+- **Îmbinare:** schimbările făcute în paragrafe diferite se unesc singure. Același paragraf schimbat în două locuri: în bara de jos apare „Conflict”; un clic deschide fereastra cu cele două variante alături, unde alegi, pentru fiecare loc, varianta ta, a celuilalt sau pe amândouă. Varianta celuilalt rămâne oricum ca snapshot. Nu se pierde nimic.
+<p align="center">
+  <img src="./assets/readme/conflict.png" width="100%" alt="Același paragraf schimbat pe două calculatoare: cele două variante alături, cu alegerea a mea, a celuilalt sau amândouă">
+</p>
+
+- **Fără conexiune:** dacă NAS-ul sau cloud-ul dispare, scrii mai departe. În bara de jos apare „În așteptare: 2 documente”, iar textul se trimite singur când revine folderul, chiar dacă între timp ai închis programul. Starea normală e „Sincronizat”.
 - **Siguranță:** copiile de conflict făcute de OneDrive sau Dropbox sunt recunoscute și semnalate; dacă NAS-ul ori cloud-ul se deconectează, primești un mesaj și programul reia singur.
 - **Agenții AI** (Claude, Codex prin MCP) apar în jurnal ca persoană separată, „agent”, și nu scriu în documentele blocate.
 
@@ -311,7 +316,6 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 
 - **Scris în același timp în același document**, printr-un server Scribner pe un calculator din rețea, pe NAS sau pe internet, cu cursorul și selecția celorlalți, colorate.
-- **Lucru fără internet**, cu trimiterea schimbărilor la reconectare și un indicator „sincronizat / în așteptare / conflict”.
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.

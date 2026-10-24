@@ -447,7 +447,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       </select>
                     )}
                     <label className="check">
-                      <input type="radio" checked={scope === 'selection'} disabled={!selectionIds.length} onChange={() => setScope('selection')} /> {tr('ui.compileDialog.selectia_curenta')}{selectionIds.length} elemente)
+                      <input type="radio" checked={scope === 'selection'} disabled={!selectionIds.length} onChange={() => setScope('selection')} /> {tr('ui.compileDialog.selectia_n', { n: selectionIds.length })}
                     </label>
                   </fieldset>
                   <div className="row">

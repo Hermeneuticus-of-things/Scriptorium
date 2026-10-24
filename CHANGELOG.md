@@ -1,5 +1,29 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.3 — Bug hunter pe interfață și pe textele în română
+
+### Cerința user
+> "continua automat cu roadmap+ bug hunter, ui, ui si romina tot app … actualizează README-ul cu text și imagini pentru funcțiile noi"
+
+- **Sinopsis:** editat în Inspector, pe Corkboard sau în Outline, nu mai e suprascris de varianta veche dintr-o altă casetă.
+- **Corkboard liber:** fișa nu mai sare la un simplu clic; selectarea textului din titlu nu mai mută fișa; clicul fără mișcare nu mai marchează proiectul ca modificat.
+- **Caută și înlocuiește în proiect:** „Înlocuiește tot” schimbă și titlurile și sinopsisurile pe care le arată în listă; nu mai cade pe un proiect fără Coș.
+- **Numere în română:** „1 cuvânt”, „1 document blocat”, „din 1 pagină”, „25 de cuvinte”, „100 de pagini” (`pluralRo` în `src/lib/i18n.js`, aplicat oricărui text cu număr); în engleză „1 word”.
+- **Fără nume de alte programe** în interfață și în ajutor: „proiect .scriv”, „Import .scriv”, „Legături interne”, „Text continuu” (în loc de numele vechi al modului).
+- **Traduceri:** „Creat”, „Modificat”, „Origine .scriv” din Inspector, „Ține cont de majuscule” din Caută, „Selecția curentă (n elemente)” din Compile.
+- **Lucru fără conexiune (roadmap §9):** textul care nu se poate scrie în folder rămâne în coadă, se reîncearcă singur la 15 s și imediat când revine folderul; coada se păstrează și dacă închizi programul. Bara de jos arată „Sincronizat” / „În așteptare: n documente” / „Conflict” (scenariu `offline.cjs`).
+- **Securitate:**
+  - fereastra programului nu mai poate fi dusă pe alt site de o legătură sau de un fișier tras peste ea; legăturile web se deschid în browser, iar doar pagina programului mai poate cere ceva procesului principal;
+  - cheia AI pleacă doar la furnizorul ei (adresa se poate alege numai pentru serverele proprii: personalizat, Ollama, LM Studio);
+  - lista de proiecte recente poate doar să scadă din fereastră, iar folderul de backup vine doar din dialogul de alegere;
+  - transcrierea D&TED primește doar fișiere alese în dialog; snapshot-ul cere fereastra care deține proiectul;
+  - serverul MCP nu mai poate fi păcălit să scrie în proiect prin litere mari/mici sau legături simbolice.
+- **Coada fără conexiune:** textul unui proiect nu mai poate ajunge în alt proiect deschis după; la recuperare, ce s-a schimbat între timp pe disc se îmbină (conflictul păstrează varianta de pe disc ca snapshot), iar documentele șterse nu se recreează.
+- **Viteză:** scrisul într-un paragraf uriaș (1 MB) nu mai încetinește: corecturile, ghilimelele și completarea automată citesc doar ultimele 256 de caractere.
+- **Data:** istoricul scrisului în browser și data din Compile LaTeX/Pandoc folosesc ziua locală, nu ora UTC.
+- **Conflictul nu mai deschide fereastra peste textul în care scrii:** apare „Conflict” în bara de jos, iar clicul deschide alegerea.
+- **Dialogul de conflict:** imagine în README, „Într-un loc” la un singur conflict, fără mesajul dublu de jos; scenariu de browser `conflict.cjs`.
+
 ## 2026-10-24 — v0.9.2 — Dialog de conflict + bug hunter pe tot programul (24 de bug-uri)
 
 ### Cerința user

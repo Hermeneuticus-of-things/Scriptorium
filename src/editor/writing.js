@@ -284,10 +284,11 @@ export const AutoComplete = Extension.create({
     const suggestionFor = (state) => {
       const { $from, empty } = state.selection;
       if (!empty || !$from.parent.isTextblock) return null;
-      const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '￼');
+      // Only the end of the paragraph matters: a bounded window keeps typing fast in huge paragraphs.
+      const before = $from.parent.textBetween(Math.max(0, $from.parentOffset - 256), $from.parentOffset, undefined, '￼');
       const m = /([\p{L}][\p{L}\p{M}'’-]{2,})$/u.exec(before);
       if (!m) return null;
-      const after = $from.parent.textBetween($from.parentOffset, $from.parent.content.size, undefined, '￼');
+      const after = $from.parent.textBetween($from.parentOffset, Math.min($from.parent.content.size, $from.parentOffset + 64), undefined, '￼');
       if (/^[\p{L}]/u.test(after)) return null;
       const prefix = m[1];
       const low = prefix.toLocaleLowerCase('ro');

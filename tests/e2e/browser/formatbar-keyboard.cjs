@@ -8,7 +8,7 @@ const { open, ed, check, done } = require('./_helpers.cjs');
     await page.setViewportSize({ width: w, height: 900 });
     await page.waitForTimeout(250);
     const vis = await page.evaluate(() => { const b = document.querySelector('.pane .format-bar'); return [...b.querySelectorAll(':scope > .fb-group button, :scope > .fb-group select')].map((x) => x.getAttribute('aria-label') || x.textContent.trim()); });
-    const need = ['Stilul paragrafului', 'Bold (Ctrl+B)', 'Italic (Ctrl+I)', 'Subliniat (Ctrl+U)', 'Comentariu pe textul selectat', 'Notă de subsol (dublu-clic pe număr pentru editare)', 'Link extern (Ctrl+L)', 'Highlight'];
+    const need = ['Stilul paragrafului', 'Aldin (Ctrl+B)', 'Cursiv (Ctrl+I)', 'Subliniat (Ctrl+U)', 'Comentariu pe textul selectat', 'Notă de subsol (dublu-clic pe număr pentru editare)', 'Link extern (Ctrl+L)', 'Evidențiere'];
     const miss = need.filter((n) => !vis.includes(n));
     check(`@${w}: frequent actions visible`, !miss.length, miss.join(', '));
   }
@@ -79,7 +79,7 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   // B via keyboard applies bold to a selection
   await page.evaluate(() => { const e = document.querySelector('.pane .ProseMirror').editor; e.commands.setTextSelection({ from: 1, to: 4 }); });
   await page.keyboard.press('Home');
-  for (let i = 0; i < 10 && (await active()).label !== 'Bold (Ctrl+B)'; i++) await page.keyboard.press('ArrowRight');
+  for (let i = 0; i < 10 && (await active()).label !== 'Aldin (Ctrl+B)'; i++) await page.keyboard.press('ArrowRight');
   await page.keyboard.press('Enter');
   check('Enter on B toggles bold', /<strong>/.test(await ed(page).innerHTML()));
   check('no console errors', errors.length === 0, errors.join(' | '));

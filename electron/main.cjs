@@ -86,13 +86,17 @@ function setApiKey(key, provider) {
   writeSettings(aiKeys.setKey(s, provider || aiProviderOf(s), key, safeStorage));
 }
 
+const OWN_URL_PROVIDERS = new Set(['custom', 'ollama', 'lmstudio']);
 /** {provider, model, baseUrl, apiKey}; `override` (unsaved Settings form) wins over saved values. */
 function getAiConfig(override = {}) {
   const s = readSettings();
   const provider = aiProviders.PRESETS[override.provider] ? override.provider : aiProviderOf(s);
   const same = provider === aiProviderOf(s);
   const model = override.model !== undefined ? override.model : same ? s.aiModel : '';
-  const baseUrl = override.baseUrl !== undefined ? override.baseUrl : same ? s.aiBaseUrl : '';
+  // A stored key only travels to its provider's own address: the URL can be chosen only for the
+  // servers that have none (custom, Ollama, LM Studio).
+  const ownUrl = OWN_URL_PROVIDERS.has(provider);
+  const baseUrl = !ownUrl ? '' : override.baseUrl !== undefined ? override.baseUrl : same ? s.aiBaseUrl : '';
   return { ...aiProviders.resolveConfig({ provider, model, baseUrl }), apiKey: aiKeys.getKey(s, provider, safeStorage) };
 }
 
@@ -309,6 +313,16 @@ function createWindow() {
   // A crashed or reloaded renderer has lost its project: free it for other windows.
   win.webContents.on('render-process-gone', () => releaseWindow(wcId));
   win.webContents.on('did-navigate', () => releaseWindow(wcId));
+  // The window only ever shows the app: a link or a dropped file must not load another page,
+  // which would get window.api. Web links open in the browser instead.
+  const guard = (e, url) => {
+    if (isAppUrl(url)) return;
+    e.preventDefault();
+    if (/^https?:/i.test(url)) shell.openExternal(url);
+  };
+  win.webContents.on('will-navigate', guard);
+  win.webContents.on('will-frame-navigate', (e) => e.isMainFrame === false || guard(e, e.url));
+  win.webContents.on('will-redirect', guard);
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
     return { action: 'deny' };
@@ -340,8 +354,18 @@ handle('window:new', () => {
   return true;
 });
 
+// Address of the app's own page (dev server or dist/index.html).
+function isAppUrl(url) {
+  const u = String(url || '');
+  if (process.env.VITE_DEV_SERVER_URL) return u.startsWith(process.env.VITE_DEV_SERVER_URL);
+  return u.startsWith('file:') && decodeURIComponent(u).replace(/\\/g, '/').includes('/dist/index.html');
+}
+
 function handle(channel, fn) {
   ipcMain.handle(channel, async (event, ...args) => {
+    // Only the app's own page may call the main process (never a page a link navigated to).
+    const from = event.senderFrame && event.senderFrame.url;
+    if (from && !isAppUrl(from)) return { ok: false, error: 'Cerere refuzată: pagina nu aparține programului.' };
     try {
       return { ok: true, value: await fn(event, ...args) };
     } catch (err) {
@@ -391,6 +415,11 @@ handle('settings:set', (_e, patch) => {
   const { apiKey, apiKeys, apiKeyEnc, apiKeyPlain, hasKeys, hasApiKey, ...rest } = patch || {};
   if (rest.aiProvider !== undefined && !aiProviders.PRESETS[rest.aiProvider]) delete rest.aiProvider;
   if (rest.notebookLmUrl !== undefined) rest.notebookLmUrl = String(rest.notebookLmUrl || '').trim();
+  const cur = readSettings();
+  // Recent projects: the window may only remove entries (Home → clear list), never add a folder,
+  // which would make it count as opened. The backup folder comes only from its folder dialog.
+  if (rest.recent !== undefined) rest.recent = (Array.isArray(rest.recent) ? rest.recent : []).filter((r) => r && (cur.recent || []).some((c) => c.dir === r.dir));
+  if (rest.backupDir !== undefined && rest.backupDir && rest.backupDir !== cur.backupDir && rest.backupDir !== chosenBackupDir) delete rest.backupDir;
   writeSettings({ ...readSettings(), ...rest });
   if (apiKeys && typeof apiKeys === 'object') {
     for (const [p, k] of Object.entries(apiKeys)) if (aiProviders.PRESETS[p] && typeof k === 'string') setApiKey(k, p);
@@ -404,8 +433,10 @@ handle('settings:chooseBackupDir', async (e) => {
     title: 'Folder pentru backup-uri',
     properties: ['openDirectory', 'createDirectory'],
   });
+  if (!res.canceled) chosenBackupDir = res.filePaths[0];
   return res.canceled ? null : res.filePaths[0];
 });
+let chosenBackupDir = null;
 handle('templates:list', () => listTemplates());
 
 handle('project:new', async (e, title, templateId) => {
@@ -810,8 +841,9 @@ handle('editorial:appendAuthorJournal', (e, dir, rows) => {
   assertOwner(e.sender, dir);
   return store.appendAuthorJournal(dir, rows);
 });
-handle('snap:take', (_e, dir, id, name) => {
+handle('snap:take', (e, dir, id, name) => {
   assertOpened(dir);
+  assertOwner(e.sender, dir);
   return store.takeSnapshot(dir, id, name);
 });
 handle('snap:list', (_e, dir, id) => {
