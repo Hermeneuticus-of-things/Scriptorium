@@ -101,3 +101,16 @@ describe('incremental decorations match a full rebuild', () => {
     }
   });
 });
+
+describe('find & replace in the document keeps notes and formatting (v0.9.5)', () => {
+  it('a regex match over a footnote is skipped, never deleting the note', () => {
+    make('<p>xF<span data-footnote="nota" class="footnote"></span>Gy</p>');
+    const ranges = findRanges(ed.state.doc, /F.G/gu);
+    expect(ranges).toHaveLength(0);
+  });
+  it('the replaced word keeps its own bold', () => {
+    make('<p>aa <strong>rece</strong> bb</p>');
+    replaceRanges(ed, findRanges(ed.state.doc, /rece/gu), 'CALD');
+    expect(ed.getHTML()).toContain('<strong>CALD</strong>');
+  });
+});
