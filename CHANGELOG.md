@@ -1,5 +1,9 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.9 — Fără date personale
+
+- Exemplele din ajutor, README, CLI și MCP folosesc proiectul inventat „Drumul spre munte” și `C:\Users\Nume`; profilul românesc are id-ul `ro` (proiectele vechi se citesc la fel); „.scriv” numit funcțional peste tot; nicio cheie sau token real în depozit (verificat în tot istoricul).
+
 ## 2026-10-24 — v0.8.8 (continuare) — README reorganizat
 
 ### Cerința user
