@@ -1,5 +1,6 @@
 # Windows build: Inno Setup installer wizard (Scribner-Setup-<version>.exe) and portable .exe.
-# Runs on every PR to main and on pushes to main (artifacts), and publishes a GitHub Release for v* tags.
+# Runs on every PR to main and on pushes to main (artifacts). Publishes a GitHub Release for v* tags and,
+# on main, for the version in package.json when no release v<version> exists yet (tag created by gh).
 name: Windows
 
 on:
@@ -64,12 +65,15 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main' && github.event_name != 'pull_request')
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: package.json
       - uses: actions/download-artifact@v4
         with:
           name: Scribner-Windows
@@ -77,4 +81,14 @@ jobs:
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" release/*.exe --repo "${GITHUB_REPOSITORY}" --title "Scribner ${GITHUB_REF_NAME}" --generate-notes
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$(node -p "require('./package.json').version")"
+            if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "Release $TAG există deja; nimic de publicat."
+              exit 0
+            fi
+          fi
+          gh release create "$TAG" release/*.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Scribner $TAG" --generate-notes
