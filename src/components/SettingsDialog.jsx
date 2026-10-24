@@ -1,4 +1,5 @@
 import { LANG_NAMES } from '../lib/lookups.js';
+import ServicesPanel from './ServicesPanel.jsx';
 import React, { useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
@@ -7,7 +8,7 @@ import AI_PRESETS from '../../lib/aiPresets.json';
 // Base URL is editable only for local / custom servers; cloud presets use their fixed URL.
 const EDITABLE_URL = new Set(['ollama', 'lmstudio', 'custom']);
 
-const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'language'];
+const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'language'];
 const TAB_FALLBACK = { sharing: 'Partajare' };
 const tabLabel = (k) => {
   const v = t(`set.tab.${k}`);
@@ -488,23 +489,6 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           {aiTest && !aiTest.busy && <p className={aiTest.ok ? 'muted small' : 'warn'} role="status">{aiTest.text}</p>}
         </fieldset>
         <fieldset>
-          <legend>{t('ui.settingsDialog.traducere_dictionare')}</legend>
-          <label>
-            {t('ui.settingsDialog.din_limba')}
-            <select value={ai.translateFrom} onChange={(e) => setAi((p) => ({ ...p, translateFrom: e.target.value }))}>
-              <option value="auto">{t('ui.settingsDialog.detectare_automata')}</option>
-              {Object.entries(LANG_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
-            </select>
-          </label>
-          <label>
-            {t('ui.settingsDialog.in_limba')}
-            <select value={ai.translateTo} onChange={(e) => setAi((p) => ({ ...p, translateTo: e.target.value }))}>
-              {Object.entries(LANG_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
-            </select>
-          </label>
-          <p className="muted small">{t('ui.settingsDialog.traducere_tip')}</p>
-        </fieldset>
-        <fieldset>
           <legend>NotebookLM</legend>
           <label>
             {t('ui.settingsDialog.link_notebook_notebooklm_optional')}
@@ -631,6 +615,31 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> Include notele</label>
           <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> Include metadatele</label>
         </fieldset>
+      </>
+    ),
+    services: (
+      <>
+      <fieldset>
+        <legend>{t('ui.settingsDialog.traducere_dictionare')}</legend>
+        <label>
+          {t('ui.settingsDialog.din_limba')}
+          <select value={ai.translateFrom} onChange={(e) => setAi((p) => ({ ...p, translateFrom: e.target.value }))}>
+            <option value="auto">{t('ui.settingsDialog.detectare_automata')}</option>
+            {Object.entries(LANG_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+          </select>
+        </label>
+        <label>
+          {t('ui.settingsDialog.in_limba')}
+          <select value={ai.translateTo} onChange={(e) => setAi((p) => ({ ...p, translateTo: e.target.value }))}>
+            {Object.entries(LANG_NAMES).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+          </select>
+        </label>
+        <p className="muted small">{t('ui.settingsDialog.traducere_tip')}</p>
+      </fieldset>
+      <fieldset>
+        <legend>{t('ui.services.servicii_conturi')}</legend>
+        <ServicesPanel api={api} />
+      </fieldset>
       </>
     ),
     language: (

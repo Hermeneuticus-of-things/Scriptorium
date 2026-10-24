@@ -30,9 +30,9 @@ import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
-import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc } from './lib/glossary.js';
+import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc, findGlossaryDoc, glossaryEntryHtml, glossaryHasTerm } from './lib/glossary.js';
 import { BackIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, OutlineIcon, ScriveningsIcon, SplitIcon } from './components/Icons.jsx';
-import { targetCrossed } from './lib/panelsExtra.js';
+import { mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
 import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
 import HelpWindow from './components/HelpWindow.jsx';
@@ -93,6 +93,7 @@ import {
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
 import ContextMenu from './components/ContextMenu.jsx';
+import ServiceResultDialog from './components/ServiceResultDialog.jsx';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
 import { replaceInHtml } from './lib/search.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
@@ -167,7 +168,10 @@ export default function App({ api }) {
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
-  const [aiRequest, setAiRequest] = useState(null); // { action, n } run by AiPanel
+  const [aiRequest, setAiRequest] = useState(null);
+  const [researchRequest, setResearchRequest] = useState(null); // { q, mode, n } run by ResearchPanel
+  const [findSeed, setFindSeed] = useState('');
+  const [serviceResult, setServiceResult] = useState(null); // { source, result, handle } from DeepL / Google / LanguageTool // { action, n } run by AiPanel
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
@@ -704,6 +708,93 @@ export default function App({ api }) {
     }
     return undefined;
   };
+  // In-app translation (DeepL / Google) and grammar check (LanguageTool) of the selection; the
+  // keys stay in the main process. The editor that held the selection receives the result.
+  // The document range holding exactly `source` (the trimmed selection), so the result replaces
+  // that text and not the spaces around it nor wherever the caret is when the user clicks Replace.
+  const serviceRange = (ed, source) => {
+    if (!ed) return null;
+    let { from, to } = ed.state.selection;
+    const text = (a, b) => ed.state.doc.textBetween(a, b, '\n\n'); // as Editor getSelectionText
+    while (from < to && /^\s/.test(text(from, Math.min(from + 1, to)))) from += 1;
+    while (to > from && /\s$/.test(text(Math.max(to - 1, from), to))) to -= 1;
+    return text(from, to) === source ? { from, to } : null;
+  };
+  // Puts `text` in place of the range captured by runService (when it still holds the source).
+  const applyServiceText = (sr, text, after = false) => {
+    const ed = sr.handle?.editor;
+    if (!ed) return;
+    const { range, source } = sr;
+    const ok = range && range.to <= ed.state.doc.content.size && ed.state.doc.textBetween(range.from, range.to, '\n\n') === source;
+    if (!ok) return setToast(tr('ui.app.textul_s_a_schimbat'));
+    const content = /[\r\n]/.test(text) ? textToHtml(text) : { type: 'text', text: after ? ` ${text}` : text };
+    const at = after ? { from: range.to, to: range.to } : range;
+    ed.chain().focus().insertContentAt(at, content).run();
+    return undefined;
+  };
+  const runService = async (kind, service) => {
+    const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+    const source = (handle?.getSelectionText() || '').trim();
+    if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    const range = serviceRange(handle.editor, source);
+    const label = kind === 'grammar' ? 'LanguageTool' : service === 'google' ? 'Google Translate' : 'DeepL';
+    setToast(tr('ui.services.lucrez', { service: label }));
+    try {
+      const result = kind === 'grammar'
+        ? { kind, ...(await api.checkGrammar({ text: source, language: settings.grammarLanguage || 'auto' })) }
+        : { kind, ...(await api.translateText({ service, text: source })) };
+      setServiceResult({ source, result, handle, range });
+    } catch (e) {
+      report(e);
+    } finally {
+      setToast('');
+    }
+    return undefined;
+  };
+  const searchProjectFor = () => {
+    const text = selectedText().trim();
+    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    setFindSeed(text.slice(0, 200));
+    setDialog('find');
+    return undefined;
+  };
+  // Research panel: passages from the project's own documents and notes; with AI, an answer citing them.
+  const researchSelection = (mode) => {
+    const text = selectedText().trim();
+    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    setShowResearch(true);
+    setResearchRequest((r) => ({ q: text.slice(0, 500), mode, n: (r?.n || 0) + 1 }));
+    return undefined;
+  };
+  // Translator's glossary: the term goes to the "Glosar…" research document (created when missing).
+  const addToGlossary = async () => {
+    const term = selectedText().trim().replace(/\s+/g, ' ');
+    if (!term) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (term.length > 120) return setToast(tr('ui.app.selectie_prea_lunga'));
+    const found = findGlossaryDoc(project);
+    const research = found.research;
+    let node = found.node;
+    const line = glossaryEntryHtml(term);
+    try {
+      if (node) {
+        const html = docsNow()[node.id] ?? ((await api.readDoc(dir, node.id, 'docs')) || '');
+        if (glossaryHasTerm(html, term)) return setToast(tr('ui.app.deja_in_glosar', { term }));
+        const next = html + line;
+        setDocs((d) => ({ ...d, [node.id]: next }));
+        editorRefs.current.get(node.id)?.setHtml(next);
+        await api.writeDoc(dir, node.id, 'docs', next);
+      } else {
+        node = newNode('text', tr('ui.app.glosar'));
+        setTree(updateNode(project.tree, research.id, { children: [...(research.children || []), node] }));
+        setDocs((d) => ({ ...d, [node.id]: line }));
+        await api.writeDoc(dir, node.id, 'docs', line);
+      }
+      setToast(tr('ui.app.adaugat_in_glosar', { term, title: node.title }));
+    } catch (e) {
+      report(e);
+    }
+    return undefined;
+  };
   const autoSynopsisSelection = async () => {
     let tree = project.tree;
     let n = 0;
@@ -799,7 +890,7 @@ export default function App({ api }) {
       const research = project.tree.find((n) => n.root === 'research');
       let tree = project.tree;
       for (const it of items) {
-        const node = { ...newNode('text', it.title), id: it.id, type: 'file', media: it.media, includeInCompile: false };
+        const node = mediaNode(newNode, it);
         if (/^image\//.test(it.media.mime)) node.synopsisImage = it.media.file;
         tree = insertNear(tree, research.id, node);
       }
@@ -989,22 +1080,9 @@ export default function App({ api }) {
   const importOpmlOutline = async () => {
     const items = await api.importOpml();
     if (!items || !items.length) return;
-    const byName = (list, name) => (name ? (list || []).find((x) => x.name === name)?.id : undefined);
-    const build = (it) => {
-      const kids = (it.children || []).map(build);
-      const node = newNode(kids.length ? 'folder' : 'text', it.title || tr('ui.app.fara_titlu'));
-      if (it.synopsis) node.synopsis = it.synopsis;
-      const lab = byName(project.labels, it.label);
-      const st = byName(project.statuses, it.status);
-      if (lab) node.label = lab;
-      if (st) node.status = st;
-      if (kids.length) node.children = kids;
-      return node;
-    };
     let tree = project.tree;
     let anchor = selectedId;
-    for (const it of items) {
-      const node = build(it);
+    for (const node of opmlToNodes(items, project, newNode, tr('ui.app.fara_titlu'))) {
       tree = insertNear(tree, anchor, node);
       anchor = node.id;
     }
@@ -1020,7 +1098,7 @@ export default function App({ api }) {
     // The download can take seconds; the binder may have changed meanwhile.
     const pj = projectRef.current;
     let tree = insertNear(pj.tree, selectedId, node);
-    for (const m of page.media || []) tree = insertNear(tree, node.id, { ...newNode('media', m.title), id: m.id, media: m.media });
+    for (const m of page.media || []) tree = insertNear(tree, node.id, mediaNode(newNode, m));
     saveProject({ ...pj, tree });
     setDocs((d) => ({ ...d, [node.id]: page.html }));
     await api.writeDoc(dir, node.id, 'docs', page.html);
@@ -1034,7 +1112,7 @@ export default function App({ api }) {
     const pj = projectRef.current;
     let tree = pj.tree;
     for (const m of res.media) {
-      const node = { ...newNode('media', m.title), id: m.id, media: m.media };
+      const node = mediaNode(newNode, m);
       tree = insertNear(tree, selectedId, node);
     }
     if (res.texts.length) importParts(res.texts, tree);
@@ -1441,7 +1519,7 @@ export default function App({ api }) {
     ['file', 'backups', 'Backup-uri…', () => setDialog('backup'), !api.listBackups],
     ['file', 'closeProject', tr('cmd.closeProject'), closeProject],
     ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
-    ['edit', 'findProject', tr('cmd.findProject'), () => setDialog('find')],
+    ['edit', 'findProject', tr('cmd.findProject'), () => { setFindSeed(''); setDialog('find'); }],
     ['edit', 'advSearch', tr('cmd.advSearch'), () => { setSearchSeed(''); setDialog('advsearch'); }],
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
@@ -1518,7 +1596,7 @@ export default function App({ api }) {
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', tr('cmd.speech'), () => setShowSpeech((v) => !v)],
     ['format', 'scriptOff', tr('cmd.scriptOff'), () => setScriptFormat(null).catch(report), !scriptFormat],
-    ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, tr('ui.app.mod_scenariu_x', { label: f.label }), () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
+    ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, tr('ui.app.mod_scenariu_x', { label: tr(`ui.scriptFormat.${f.id}`) }), () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
     ['file', 'exportFdx', tr('cmd.exportFdx'), () => flush().then(() => exportScript('fdx')).catch(report), !api.exportScript || !scriptFormat],
     ['file', 'exportFountain', tr('cmd.exportFountain'), () => flush().then(() => exportScript('fountain')).catch(report), !api.exportScript || !scriptFormat],
     ['tools', 'settings', tr('cmd.settings'), () => setDialog('settings')],
@@ -1562,6 +1640,13 @@ export default function App({ api }) {
     ['tools', 'aiDefineSel', tr('cmd.aiDefineSel'), () => aiOnSelection('define'), !aiEnabled],
     ['tools', 'aiTranslateSel', tr('cmd.aiTranslateSel'), () => aiOnSelection('translate'), !aiEnabled],
     ['tools', 'aiProofreadSel', tr('cmd.aiProofreadSel'), () => aiOnSelection('proofread'), !aiEnabled],
+    ['tools', 'findSel', tr('cmd.findSel'), searchProjectFor],
+    ['tools', 'researchSel', tr('cmd.researchSel'), () => researchSelection('search'), !api.ragQuery],
+    ['tools', 'researchAskSel', tr('cmd.researchAskSel'), () => researchSelection('ask'), !api.ragAsk || !aiEnabled],
+    ['tools', 'glossaryAdd', tr('cmd.glossaryAdd'), addToGlossary],
+    ['tools', 'deeplInApp', tr('cmd.deeplInApp'), () => runService('translate', 'deepl'), !api.translateText],
+    ['tools', 'googleInApp', tr('cmd.googleInApp'), () => runService('translate', 'google'), !api.translateText],
+    ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
     ['tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
@@ -1584,7 +1669,9 @@ export default function App({ api }) {
     if (text) {
       const g = lookupGroups(text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, action: () => openWeb(l.url) }));
-      if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: links(g.translate) });
+      const inApp = api.translateText ? [{ label: tr('cmd.deeplInApp'), action: run('deeplInApp') }, { label: tr('cmd.googleInApp'), action: run('googleInApp') }, '-'] : [];
+      if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: [...inApp, ...links(g.translate)] });
+      if (api.checkGrammar) items.push({ label: tr('cmd.grammarSel'), action: run('grammarSel') });
       if (g.dict.length) items.push({ label: tr('ui.ctx.dictionare'), submenu: links(g.dict) });
       items.push({ label: tr('ui.ctx.cercetare_web'), submenu: links(g.research) });
       if (aiEnabled) {
@@ -1598,6 +1685,15 @@ export default function App({ api }) {
           ],
         });
       }
+      items.push({
+        label: tr('ui.ctx.in_proiect'),
+        submenu: [
+          { label: tr('cmd.findSel'), action: run('findSel') },
+          ...(api.ragQuery ? [{ label: tr('cmd.researchSel'), action: run('researchSel') }] : []),
+          ...(api.ragAsk && aiEnabled ? [{ label: tr('cmd.researchAskSel'), action: run('researchAskSel') }] : []),
+          { label: tr('cmd.glossaryAdd'), action: run('glossaryAdd') },
+        ],
+      });
       if (api.nlmOpen) items.push({ label: tr('cmd.nlmAskSel'), action: askNotebookLm });
       items.push('-');
     }
@@ -1762,7 +1858,12 @@ export default function App({ api }) {
             )}
             {isFolderView && (
               <Scrivenings
-                key={`${scrivList ? scrivList.ids.join(',') : selected?.id}-${smartQuotes}`}
+                key={`${scrivList ? scrivList.ids.join(',') : selected?.id}-${smartQuotes}-${corrKey}`}
+                corrections={corrections}
+                styles={projectStyles}
+                defaultFormatting={project.defaultFormatting}
+                linkTargets={linkTargets}
+                onOpenLink={openLink}
                 title={scrivList ? scrivList.title : selected?.title}
                 sections={scrivSections}
                 docs={docs}
@@ -1912,7 +2013,7 @@ export default function App({ api }) {
                 />
               )}
               {showResearch && dir && (
-                <ResearchPanel api={api} dir={dir} aiEnabled={aiEnabled} aiLabel={settings.aiLabel} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
+                <ResearchPanel request={researchRequest} api={api} dir={dir} aiEnabled={aiEnabled} aiLabel={settings.aiLabel} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
               )}
               {showAi && aiEnabled && (
                 <AiPanel
@@ -2073,8 +2174,17 @@ export default function App({ api }) {
       {dialog === 'pageSetup' && <PageSetupDialog api={api} dir={dir} project={project} previewIds={selectedId ? [selectedId] : []} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
       {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || tr('ui.app.din_scratchpad')); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(tr('ui.app.trimis_in_x', { title: parent.title })); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
+      {serviceResult && (
+        <ServiceResultDialog
+          source={serviceResult.source}
+          result={serviceResult.result}
+          onReplace={(text) => { applyServiceText(serviceResult, text); setServiceResult(null); }}
+          onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
+          onClose={() => setServiceResult(null)}
+        />
+      )}
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
-      {showSpeech && <SpeechBar getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
+      {showSpeech && <SpeechBar api={api} getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (
@@ -2096,6 +2206,7 @@ export default function App({ api }) {
       )}
       {dialog === 'find' && (
         <FindDialog
+          initialQuery={findSeed}
           project={project}
           docs={docs}
           onOpen={(id) => {

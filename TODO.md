@@ -69,3 +69,30 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 - [x] Bug-uri: `tr` ascuns în CompileDialog, cronologie tăiată, câmpuri demo, selecție fără focus
 - [x] README pentru cititori obișnuiți + 8 capturi prezentate
 - [~] Re-audit interfață engleză / accesibilitate (agent în lucru)
+
+### Request: installer cu wizard (.exe), Inno Setup
+- [x] Inno Setup 6: installer/scribner.iss (română + engleză, licență, folder, Start, Desktop, pornire la final), build/icon.ico
+- [x] Workflow Windows: pachet + portabil + Scribner-Setup.exe ca artefact; Release automat la tag v*
+- [ ] Verificat installerul pe un Windows real
+
+## Session 2026-10-24 (MCP integral)
+### Request: serverul MCP acoperă tot ce face aplicația fără GUI
+- [x] Unelte noi în mcp/server.mjs (proiect/șabloane, import, export, note pe taburi, cuvinte cheie, etichete/statusuri/câmpuri/tipuri de secțiune, ținte, colecții, comentarii, note de subsol, documente, coș, snapshot-uri, statistici, cronologie, cercetare, glosar, căutări web, backup, I-EDIT fără AI)
+- [x] tests/mcpFull.test.js (o probă pe unealtă + refuz --read-only + lista completă de nume)
+- [x] README + ajutor (Conexiune MCP)
+Rezumat: 77 de unelte MCP (57 noi), 4 bug-uri reparate la cauză, 43 de teste noi.
+
+### Request: carte gata de tipar/digital, imagini, servicii și conturi, Speechify, bug hunting
+- [x] Subtitlu carte + capitol în toate formatele, copertă PDF/DOCX, tipografie de tipar, caractere speciale
+- [x] Imagini redimensionabile în editor (colțuri + bară), lățime/aliniere păstrate în Compile, încadrate în pagină
+- [x] Setări → Servicii și conturi: DeepL, Google, LanguageTool, Speechify, Zotero, alte conturi (criptat)
+- [x] Bug meniuri (Escape, focus), bug Windows (nume rezervate, fișiere blocate, Salvează ca, wizard RO)
+- [ ] Verificat cu chei reale DeepL / Google / LanguageTool Premium / Speechify (codul urmează documentația lor; testat cu răspunsuri simulate)
+- [ ] Zotero: importul bibliografiei direct din cont (cheia se salvează deja)
+
+### Request: bug hunter deep (încrucișat, divergent, convergent)
+- [x] Editor, date, Compile, interfață: 25+ bug-uri reparate la cauză, fiecare cu test
+- [x] DOCX: pagina de titlu și cuprinsul într-o secțiune fără antet; corpul de la pagina 1 (verificat în LibreOffice)
+- [ ] Antet/subsol: <$t> (titlul capitolului) și <$wc> în antet
+- [ ] Ctrl+Z după o corectură automată nu se poate reface cu Ctrl+Y (comportament ales, diferit de Word)
+- [ ] Verificat cu LanguageTool real: poziții după emoji

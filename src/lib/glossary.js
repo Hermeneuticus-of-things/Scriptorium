@@ -260,3 +260,43 @@ export async function buildGlossaries(project, readDoc, opts = {}) {
   const toc = buildPrintToc(project, { docs, title: t.toc, ...(opts.toc || {}) });
   return { docs, alogen, reading, toc };
 }
+
+// ---------------------------------------------------------------------------
+// Translator's glossary ("Adaugă în glosar"): one paragraph per term, "<strong>term</strong> — definition",
+// in the first Research text document whose title starts with "Glosar" / "Glossary".
+
+const GLOSSARY_TITLE = /^(glosar|glossary)\b/i;
+
+/** { research, node }: the research root and the glossary document (node null when missing). */
+export function findGlossaryDoc(project) {
+  const research = (project.tree || []).find((n) => n.root === 'research') || (project.tree || [])[1];
+  let node = null;
+  const walk = (list) => {
+    for (const n of list || []) {
+      if (!node && n.type === 'text' && GLOSSARY_TITLE.test(n.title || '')) node = n;
+      walk(n.children);
+    }
+  };
+  walk(research ? research.children : []);
+  return { research, node };
+}
+
+/** The paragraph appended for a new term (definition optional, filled in later by the author). */
+export function glossaryEntryHtml(term, definition = '') {
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  return `<p><strong>${esc(term)}</strong> — ${esc(definition)}</p>`;
+}
+
+/** Entries of a glossary document: [{term, definition}] (paragraphs of the form "term — definition"). */
+export function glossaryEntries(html) {
+  return paragraphs(html)
+    .map((p) => /^\s*(.+?)\s+—\s*([\s\S]*)$/.exec(p.text))
+    .filter(Boolean)
+    .map((m) => ({ term: m[1].trim(), definition: m[2].trim() }));
+}
+
+/** True when the glossary already has `term` (case-insensitive). */
+export function glossaryHasTerm(html, term) {
+  const t = String(term).trim().toLowerCase();
+  return paragraphs(html).some((p) => p.text.trim().toLowerCase().startsWith(`${t} —`));
+}

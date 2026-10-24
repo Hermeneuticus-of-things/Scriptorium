@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-labelledby="t d">
+  <title id="t">Cum lucrezi în Scribner</title>
+  <desc id="d">Patru pași: aduci textul, scrii pe fișe, verifici, primești cartea întreagă.</desc>
+  <rect width="1200" height="330" rx="24" fill="#f6f1e6"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <g fill="none" stroke="#c19466" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round">
+      <path d="M262 165 H322"/><path d="M546 165 H606"/><path d="M830 165 H890"/>
+    </g>
+    <g transform="translate(40 52)">
+      <rect width="222" height="226" rx="6" fill="#fffdf6" stroke="#e5dccb"/><rect y="62" width="222" height="3" fill="#c2413a"/>
+      <circle cx="111" cy="-2" r="10" fill="#c2413a"/>
+      <text x="20" y="44" font-size="26" font-weight="700" fill="#1f1b16">1 · Aduci</text>
+      <text x="20" y="104" font-size="20" fill="#3d362d">Fișierul Word</text>
+      <text x="20" y="134" font-size="20" fill="#3d362d">de la editură sau</text>
+      <text x="20" y="164" font-size="20" fill="#3d362d">ce ai scris deja.</text>
+      <text x="20" y="206" font-size="18" fill="#8a5a2b" font-weight="600">se împarte singur</text>
+    </g>
+    <g transform="translate(324 52)">
+      <rect width="222" height="226" rx="6" fill="#fffdf6" stroke="#e5dccb"/><rect y="62" width="222" height="3" fill="#c2413a"/>
+      <circle cx="111" cy="-2" r="10" fill="#2b6fd6"/>
+      <text x="20" y="44" font-size="26" font-weight="700" fill="#1f1b16">2 · Scrii</text>
+      <text x="20" y="104" font-size="20" fill="#3d362d">Scenă cu scenă,</text>
+      <text x="20" y="134" font-size="20" fill="#3d362d">fișă cu fișă,</text>
+      <text x="20" y="164" font-size="20" fill="#3d362d">în ordinea ta.</text>
+      <text x="20" y="206" font-size="18" fill="#2b6fd6" font-weight="600">clic dreapta: DeepL</text>
+    </g>
+    <g transform="translate(608 52)">
+      <rect width="222" height="226" rx="6" fill="#fffdf6" stroke="#e5dccb"/><rect y="62" width="222" height="3" fill="#c2413a"/>
+      <circle cx="111" cy="-2" r="10" fill="#3f8f5a"/>
+      <text x="20" y="44" font-size="26" font-weight="700" fill="#1f1b16">3 · Verifici</text>
+      <text x="20" y="104" font-size="20" fill="#3d362d">Revizie automată,</text>
+      <text x="20" y="134" font-size="20" fill="#3d362d">corectură cu AI,</text>
+      <text x="20" y="164" font-size="20" fill="#3d362d">„poze” ale textului.</text>
+      <text x="20" y="206" font-size="18" fill="#3f8f5a" font-weight="600">nimic nu se pierde</text>
+    </g>
+    <g transform="translate(892 52)">
+      <rect width="268" height="226" rx="6" fill="#1f1b16"/><rect y="62" width="268" height="3" fill="#e9b07a"/>
+      <circle cx="134" cy="-2" r="10" fill="#e9b07a"/>
+      <text x="20" y="44" font-size="26" font-weight="700" fill="#fbf7ef">4 · Primești cartea</text>
+      <text x="20" y="104" font-size="20" fill="#e6dccb">Un buton: un singur</text>
+      <text x="20" y="134" font-size="20" fill="#e6dccb">fișier, cu cuprins</text>
+      <text x="20" y="164" font-size="20" fill="#e6dccb">și pagină de titlu.</text>
+      <g font-size="17" font-weight="700" fill="#fff">
+        <rect x="20" y="186" width="62" height="28" rx="5" fill="#2b5797"/><text x="51" y="206" text-anchor="middle">DOCX</text>
+        <rect x="90" y="186" width="56" height="28" rx="5" fill="#b3261e"/><text x="118" y="206" text-anchor="middle">PDF</text>
+        <rect x="154" y="186" width="64" height="28" rx="5" fill="#3f8f5a"/><text x="186" y="206" text-anchor="middle">EPUB</text>
+      </g>
+    </g>
+  </g>
+</svg>

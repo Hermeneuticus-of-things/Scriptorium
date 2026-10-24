@@ -122,8 +122,13 @@ export function mergeTree(baseTree, mineTree, theirsTree) {
   const top = orderOf(null).map(build);
   const lost = [...kept.keys()].filter((id) => !placed.has(id));
   if (lost.length) {
-    const host = top.find((n) => n.children) || top[0];
-    for (const id of lost) if (!placed.has(id)) (host.children ||= []).push(build(id));
+    // When every node is in the cycle there is no root to host them: they go to the top level.
+    for (const id of lost) {
+      if (placed.has(id)) continue;
+      const host = top.find((n) => n.children) || top[0];
+      if (host) (host.children ||= []).push(build(id));
+      else top.push(build(id));
+    }
   }
   return top;
 }

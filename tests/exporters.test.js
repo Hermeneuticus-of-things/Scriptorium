@@ -85,5 +85,12 @@ describe('exporters', () => {
     expect(JSON.parse(fs.readFileSync(path.join(dir, 'project.json'), 'utf8')).title).toBe('Copie: nouă');
     expect(fs.readFileSync(path.join(dir, 'docs', 'abc.html'), 'utf8')).toBe('<p>Text</p>');
     expect(() => ex.saveProjectAs(srcDir, dest, 'Copie: nouă')).toThrow();
+    // A save in progress in the source (lock, temp file) is not copied.
+    fs.writeFileSync(path.join(srcDir, 'project.json.lock'), '1');
+    fs.writeFileSync(path.join(srcDir, 'docs', 'abc.html.1.ab.tmp'), 'x');
+    const { dir: d2 } = ex.saveProjectAs(srcDir, dest, 'Altă copie');
+    expect(fs.existsSync(path.join(d2, 'project.json.lock'))).toBe(false);
+    expect(fs.readdirSync(path.join(d2, 'docs')).filter((f) => f.endsWith('.tmp'))).toEqual([]);
+    expect(fs.existsSync(path.join(d2, 'docs', 'abc.html'))).toBe(true);
   });
 });

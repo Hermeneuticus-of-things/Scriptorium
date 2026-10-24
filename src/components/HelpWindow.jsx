@@ -1,7 +1,7 @@
 // Help viewer: manual with table of contents, full-text search, history, and
 // generated references (shortcuts, Compile placeholders, syntax, Script Mode).
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getLanguage } from '../lib/i18n.js';
+import { getLanguage, t } from '../lib/i18n.js';
 import { getManual, shortcutRows, placeholderRows, syntaxRows, scriptRows } from '../help/reference.js';
 import { buildIndex, searchManual, resolveTopic, terms, fold, CONTEXT_TOPICS } from '../help/helpSearch.js';
 
@@ -256,13 +256,13 @@ export default function HelpWindow({ initialTopic, initialTab = 'manual', onClos
                 <h2>{L.scriptMode}</h2>
                 {scripts.map((f) => (
                   <section key={f.id}>
-                    <h3>{f.label}</h3>
+                    <h3>{t(`ui.scriptFormat.${f.id}`)}</h3>
                     <p className="help-muted">{L.def}: {f.defaultElement}</p>
                     <table className="help-table">
                       <thead><tr><th>{L.element}</th><th>{L.tab}</th><th>{L.enter}</th></tr></thead>
                       <tbody>
                         {f.elements.map((e) => (
-                          <tr key={e.id}><td>{e.label}{e.upper ? ' (MAJ.)' : ''}</td><td>{e.tab}</td><td>{e.enter}</td></tr>
+                          <tr key={e.id}><td>{e.label}{e.upper ? (getLanguage() === 'en' ? ' (CAPS)' : ' (MAJ.)') : ''}</td><td>{e.tab}</td><td>{e.enter}</td></tr>
                         ))}
                       </tbody>
                     </table>
