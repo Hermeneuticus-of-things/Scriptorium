@@ -250,6 +250,7 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
   const rawKv = createRoutingKv(baseKv, folders);
   const kv = guardKv(rawKv);
   const watchers = new Map(); // dir -> { timer, stamps, own, fails }
+  const teamQueue = new Map(); // dir -> last team write (see teamWrite)
   // Own writes are not reported back as outside changes. They are recognised by content (as on the
   // desktop): a change whose file holds the text this tab wrote is ours; any other text is an outside
   // change, even when it lands right after an own write of the same file. Noted before writing, so a
@@ -595,12 +596,22 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       if (isFolderDir(dir) && folders.has(dir)) return folderTeamFiles(folders.get(dir));
       return { ...((await baseKv.get(K.team(dir))) || {}) };
     },
-    async teamWrite(dir, name, text, { append = false } = {}) {
-      if (isFolderDir(dir) && folders.has(dir)) return folderTeamWrite(folders.get(dir), name, text, append).then(() => true);
-      const all = { ...((await baseKv.get(K.team(dir))) || {}) };
-      all[name] = (append ? all[name] || '' : '') + String(text);
-      await baseKv.put(K.team(dir), all);
-      return true;
+    // Writes of one project run one after another: an append reads the file and writes it back,
+    // so two overlapping writes would lose one of them.
+    teamWrite(dir, name, text, { append = false } = {}) {
+      const run = async () => {
+        if (isFolderDir(dir) && folders.has(dir)) {
+          await folderTeamWrite(folders.get(dir), name, text, append);
+          return true;
+        }
+        const all = { ...((await baseKv.get(K.team(dir))) || {}) };
+        all[name] = (append ? all[name] || '' : '') + String(text);
+        await baseKv.put(K.team(dir), all);
+        return true;
+      };
+      const next = (teamQueue.get(dir) || Promise.resolve()).catch(() => {}).then(run);
+      teamQueue.set(dir, next);
+      return next;
     },
     exportBundleData,
     importBundleData,

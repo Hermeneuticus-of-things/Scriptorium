@@ -8,24 +8,37 @@ const { createDted, locate } = require('../lib/dted.cjs');
 const AUDIO = ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'wma', 'opus', 'webm'];
 
 module.exports = function register({ handle, assertOpened, getSettings, showOpenDialog, app, dtedFactory = createDted }) {
-  let owner = null; // webContents receiving the events
+  // Each request's events go to the window that made it; "service stopped" goes to every window.
+  const owners = new Map(); // request id -> webContents
+  const deliver = (wc, ev) => {
+    try {
+      if (wc && !wc.isDestroyed()) wc.send('dted:event', ev);
+    } catch {
+      /* window closed */
+    }
+  };
   const find = () => locate({ custom: getSettings().dtedPath || '' });
   const dted = dtedFactory({
     find,
     onEvent: (ev) => {
-      try {
-        if (owner && !owner.isDestroyed()) owner.send('dted:event', ev);
-      } catch {
-        /* window closed */
+      if (ev.ev === 'oprit') {
+        for (const wc of new Set(owners.values())) deliver(wc, ev);
+        owners.clear();
+        return;
       }
+      const wc = owners.get(String(ev.id));
+      deliver(wc, ev);
+      if (['rezultat', 'dictare_oprita', 'anulat'].includes(ev.ev) || (ev.ev === 'eroare' && String(ev.id).startsWith('t'))) owners.delete(String(ev.id));
     },
   });
+  const reqId = (e, given, prefix) => {
+    const id = String(given || `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`);
+    owners.set(id, e.sender);
+    return id;
+  };
   const opts = () => {
     const s = getSettings();
     return { limba: s.dtedLanguage || 'ro', termeni: String(s.dtedTerms || '').slice(0, 2000) };
-  };
-  const take = (e) => {
-    owner = e.sender;
   };
 
   // Where D&TED was found ({found, source}); with check, also starts it and asks its state.
@@ -33,7 +46,6 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
     const how = find();
     if (!how) return { found: false };
     if (!check) return { found: true, source: how.source };
-    take(e);
     await dted.start();
     await dted.status();
     return { found: true, source: how.source, running: dted.running() };
@@ -42,22 +54,17 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
     const r = await showOpenDialog(e, { title: 'Fișier audio de transcris', properties: ['openFile'], filters: [{ name: 'Audio', extensions: AUDIO }] });
     return r.canceled ? null : r.filePaths[0];
   });
-  handle('dted:transcribe', async (e, file) => {
+  handle('dted:transcribe', async (e, file, id) => {
     if (!file || !AUDIO.includes(path.extname(String(file)).slice(1).toLowerCase())) throw new Error('Alege un fișier audio (MP3, WAV, M4A, OGG, FLAC).');
-    take(e);
-    return dted.transcribe(file, opts());
+    return dted.transcribe(file, opts(), reqId(e, id, 't'));
   });
   // An audio file attached to the project (media/<file>), from the binder.
-  handle('dted:transcribeMedia', async (e, dir, file) => {
+  handle('dted:transcribeMedia', async (e, dir, file, id) => {
     assertOpened(dir);
     if (!/^[A-Za-z0-9-]+\.[a-z0-9]+$/.test(String(file))) throw new Error(`Fișier media invalid: ${file}`);
-    take(e);
-    return dted.transcribe(path.join(dir, 'media', file), opts());
+    return dted.transcribe(path.join(dir, 'media', file), opts(), reqId(e, id, 't'));
   });
-  handle('dted:dictateStart', async (e) => {
-    take(e);
-    return dted.dictateStart(opts());
-  });
+  handle('dted:dictateStart', async (e, id) => dted.dictateStart(opts(), reqId(e, id, 'd')));
   handle('dted:dictateStop', async (_e, id) => dted.dictateStop(id));
   handle('dted:cancel', async (_e, id) => dted.cancel(id));
 

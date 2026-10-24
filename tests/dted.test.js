@@ -37,6 +37,10 @@ describe('joining dictated text', () => {
     expect(joinFragment('Spuse: „', 'vino')).toBe('vino');
     expect(joinFragment('Era frig', ', apoi cald')).toBe(', apoi cald');
     expect(joinFragment('x', '   ')).toBe('');
+    // mid-sentence: the recogniser's capital goes away on common words, names keep it
+    expect(joinFragment('Am mers', 'Și apoi am stat.')).toBe(' și apoi am stat.');
+    expect(joinFragment('Am mers cu', 'Andrei acasă.')).toBe(' Andrei acasă.');
+    expect(joinFragment('Am mers.', 'Și apoi')).toBe(' Și apoi');
   });
   it("the writer's replacements apply to dictated words, case kept", () => {
     const list = [{ from: 'andrei', to: 'Andrei' }, { from: 'apuseni', to: 'Apuseni' }, { from: 'două cuvinte', to: 'x' }];

@@ -141,7 +141,25 @@ function saveUi(dir, ui) {
   }
 }
 
-export default function App({ api }) {
+export default function App({ api: apiProp }) {
+  // Text of each document as last read from or written to disk: the base of the three-way merge
+  // when the same document changes on another computer (src/lib/team.js mergeDoc). Every write
+  // of a document goes through this api, so no save path can leave the base stale.
+  const diskDocs = useRef(new Map());
+  const api = useMemo(() => {
+    const w = Object.create(apiProp);
+    w.writeDoc = async (d, id, kind, html) => {
+      const r = await apiProp.writeDoc(d, id, kind, html);
+      if (kind !== 'notes') diskDocs.current.set(id, String(html ?? ''));
+      return r;
+    };
+    w.readDoc = async (d, id, kind) => {
+      const html = await apiProp.readDoc(d, id, kind);
+      if (kind !== 'notes' && !diskDocs.current.has(id)) diskDocs.current.set(id, html);
+      return html;
+    };
+    return w;
+  }, [apiProp]);
   const [settings, setSettings] = useState(null);
   const settingsRef = useRef(null);
   settingsRef.current = settings;
@@ -173,9 +191,6 @@ export default function App({ api }) {
     typed.current.clear();
   };
   // Every document's newest text, for handlers (the render-time `docs` can be a few keys behind).
-  // Text of each document as last read from or written to disk: the base of the three-way merge
-  // when the same document changes on another computer (src/lib/team.js mergeDoc).
-  const diskDocs = useRef(new Map());
   const docsNow = () => (typed.current.size ? { ...docsStateRef.current, ...Object.fromEntries(typed.current) } : docsStateRef.current);
   // Render-time view: state plus pending typing, with a stable identity while neither changes
   // so the memos below are not recomputed by unrelated re-renders.
@@ -196,6 +211,7 @@ export default function App({ api }) {
     api,
     getEditor: () => activeHandle()?.editor,
     replacements: settings?.autoReplacements,
+    switchedMessage: tr('ui.dted.oprita_la_schimbare'),
     onMessage: (m) => setToast(m),
     onTranscript: (r, job) => {
       const html = transcriptHtml(r, { timestamps: settings?.dtedTimestamps !== false });
@@ -441,7 +457,6 @@ export default function App({ api }) {
       for (; i < items.length; i += 1) {
         const [id, kind] = items[i][0].split('|');
         await api.writeDoc(dir, id, kind, items[i][1]);
-        if (kind === 'docs') diskDocs.current.set(id, items[i][1]);
       }
       setSaveState('salvat');
       recordHistory();
@@ -1812,9 +1827,9 @@ export default function App({ api }) {
     ['file', 'importWeb', tr('cmd.importWeb'), () => importWeb().catch(report), !api.importWebPage],
     ['file', 'transcribeAudio', tr('cmd.transcribeAudio'), async () => {
       const file = await api.dtedPickAudio();
-      if (file) dict.transcribe({ title: file.split(/[\\/]/).pop() }, () => api.dtedTranscribe(file));
+      if (file) dict.transcribe({ title: file.split(/[\\/]/).pop() }, (id) => api.dtedTranscribe(file, id));
     }, !api.dtedTranscribe],
-    ['document', 'transcribeMedia', tr('cmd.transcribeMedia'), () => dict.transcribe({ title: selected.title }, () => api.dtedTranscribeMedia(dir, selected.media)), !api.dtedTranscribeMedia || !selected || selected.type !== 'file' || !AUDIO_EXT.test(selected.media || '')],
+    ['document', 'transcribeMedia', tr('cmd.transcribeMedia'), () => dict.transcribe({ title: selected.title }, (id) => api.dtedTranscribeMedia(dir, selected.media, id)), !api.dtedTranscribeMedia || !selected || selected.type !== 'file' || !AUDIO_EXT.test(selected.media || '')],
     ['tools', 'dictate', tr('cmd.dictate'), () => (dict.dictation ? dict.stop() : dict.start()), !dict.available],
     ['file', 'exportFiles', tr('cmd.exportFiles'), () => flush().then(() => setDialog('export'))],
     ['file', 'saveAs', tr('cmd.saveAs'), () => saveAs().catch(report), !api.saveProjectAs],
@@ -2177,12 +2192,12 @@ export default function App({ api }) {
                     <span className="team-dot" style={{ background: p.color }} /> {p.who}
                   </span>
                 ))}
-                {team.locks[selected.id] && (
-                  <span className="team-chip locked" style={{ borderColor: team.locks[selected.id].color }}>
-                    <LockIcon /> {tr('ui.team.blocat_de', { name: team.locks[selected.id].who })}
+                {team.lockOf(selected.id) && (
+                  <span className="team-chip locked" style={{ borderColor: team.lockOf(selected.id).color }}>
+                    <LockIcon /> {tr('ui.team.blocat_de', { name: team.lockOf(selected.id).who })}
                   </span>
                 )}
-                {team.who && !selected.root && !team.locks[selected.id] && (
+                {team.who && !selected.root && (team.myLocks.includes(selected.id) || !team.lockOf(selected.id)) && (
                   <button
                     className={team.myLocks.includes(selected.id) ? 'primary' : ''}
                     onClick={() => team.toggleLock(selected.id)}
@@ -2202,7 +2217,7 @@ export default function App({ api }) {
             {view === 'editor' && !scrivListNodes && selected && selected.type !== 'file' && !selected.children && (
               <Editor
                 scriptFormat={scriptFormat}
-                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.locks[selected.id])}-${corrKey}`}
+                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
                 historyKey={selected.id}
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
@@ -2210,7 +2225,7 @@ export default function App({ api }) {
                 ref={(r) => registerRef(selected.id, r)}
                 html={docs[selected.id] || ''}
                 title={selected.title}
-                readOnly={inTrash(selected.id) || Boolean(selected.locked) || Boolean(team.locks[selected.id])}
+                readOnly={inTrash(selected.id) || Boolean(selected.locked) || Boolean(team.lockOf(selected.id))}
                 typewriter={settings.typewriter}
                 smartQuotes={smartQuotes}
                 onFocus={() => (activeId.current = selected.id)}
@@ -2239,7 +2254,7 @@ export default function App({ api }) {
                 sections={scrivSections}
                 docs={docs}
                 settings={settings}
-                readOnlyIds={new Set(scrivSections.filter((n) => inTrash(n.id) || n.locked || team.locks[n.id]).map((n) => n.id))}
+                readOnlyIds={new Set(scrivSections.filter((n) => inTrash(n.id) || n.locked || team.lockOf(n.id)).map((n) => n.id))}
                 registerRef={registerRef}
                 onFocusSection={(id) => (activeId.current = id)}
                 onChange={(id, html) => writeSynced(id, html, 'main')}
@@ -2318,14 +2333,14 @@ export default function App({ api }) {
               ) : (
                 <Editor
                   scriptFormat={scriptFormat}
-                  key={`split-${splitNode.id}-${smartQuotes}-${Boolean(team.locks[splitNode.id])}-${corrKey}`}
+                  key={`split-${splitNode.id}-${smartQuotes}-${Boolean(team.lockOf(splitNode.id))}-${corrKey}`}
                   corrections={corrections}
                   defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
                   title={splitNode.title}
-                  readOnly={inTrash(splitNode.id) || Boolean(splitNode.locked) || Boolean(team.locks[splitNode.id])}
+                  readOnly={inTrash(splitNode.id) || Boolean(splitNode.locked) || Boolean(team.lockOf(splitNode.id))}
                   smartQuotes={smartQuotes}
                   onFocus={() => (activeId.current = splitNode.id)}
                   onChange={(html) => writeSynced(splitNode.id, html, 'split')}
@@ -2360,14 +2375,14 @@ export default function App({ api }) {
                 <button className="link" onClick={() => setCopyholder(null)}>{tr('btn.close')}</button>
               </div>
               <Editor
-                key={`copy-${copyNode.id}-${Boolean(copyholder.editable)}-${Boolean(team.locks[copyNode.id])}-${smartQuotes}-${corrKey}`}
+                key={`copy-${copyNode.id}-${Boolean(copyholder.editable)}-${Boolean(team.lockOf(copyNode.id))}-${smartQuotes}-${corrKey}`}
                 compact
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
                 ref={(r) => registerRef(`copy:${copyNode.id}`, r)}
                 html={docs[copyNode.id] || ''}
                 title={copyNode.title}
-                readOnly={!copyholder.editable || inTrash(copyNode.id) || Boolean(copyNode.locked) || Boolean(team.locks[copyNode.id])}
+                readOnly={!copyholder.editable || inTrash(copyNode.id) || Boolean(copyNode.locked) || Boolean(team.lockOf(copyNode.id))}
                 smartQuotes={smartQuotes}
                 onChange={(html) => writeSynced(copyNode.id, html, 'copy')}
                 linkTargets={linkTargets}

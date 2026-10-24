@@ -151,6 +151,48 @@ export function readPeers(files, { self, now = Date.now() } = {}) {
   return { live, locks };
 }
 
+/**
+ * Presence files with their times replaced by when this computer saw each one change (`seen`:
+ * machine -> {stamp, at}), so a computer whose clock runs ahead or behind is judged by this one's
+ * clock. The first time a file is seen its own time counts, but never later than now.
+ */
+export function seenTimes(files, seen, now = Date.now()) {
+  const out = {};
+  for (const [name, text] of Object.entries(files || {})) {
+    if (!/^presence-.+\.json$/.test(name)) {
+      out[name] = text;
+      continue;
+    }
+    let p;
+    try {
+      p = JSON.parse(text);
+    } catch {
+      continue;
+    }
+    if (!p || !p.machine) continue;
+    const prev = seen.get(p.machine);
+    let at;
+    if (prev && prev.stamp === p.time) at = prev.at;
+    else if (prev) at = now; // it changed since the last look: it is alive now
+    else at = Math.min(now, Date.parse(p.time) || 0);
+    seen.set(p.machine, { stamp: p.time, at });
+    out[name] = JSON.stringify({ ...p, time: new Date(at).toISOString() });
+  }
+  return out;
+}
+
+/**
+ * The lock that makes document `id` read-only here, or null. When two computers locked the same
+ * document (both clicked within one sync delay), the smaller machine id keeps it, so exactly one
+ * of them can write and the other still sees its own lock button to give it up.
+ */
+export function lockFor(peerLocks, myLocks, who, id) {
+  const p = peerLocks?.[id];
+  if (!p) return null;
+  if (who && (myLocks || []).includes(id) && String(who.machine) < String(p.machine)) return null;
+  return p;
+}
+
 // ---- storage through the api (teamFiles / teamWrite) ----
 
 export async function appendLog(api, dir, who, rows) {

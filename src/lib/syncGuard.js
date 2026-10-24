@@ -60,6 +60,8 @@ export async function pullExternalDocs({ api, dir, ids, hasLocal = () => false, 
   const theirs = {};
   const conflicts = [];
   for (const id of ids) {
+    // The base is taken before reading: reading may record what it read as the base.
+    const base = baseHtml ? baseHtml(id) : undefined;
     const disk = await api.readDoc(dir, id, 'docs');
     theirs[id] = disk;
     if (!hasLocal(id)) {
@@ -68,7 +70,6 @@ export async function pullExternalDocs({ api, dir, ids, hasLocal = () => false, 
     }
     const mine = localHtml ? localHtml(id) : undefined;
     if (mine === disk) continue;
-    const base = baseHtml ? baseHtml(id) : undefined;
     if (merge && base !== undefined && mine !== undefined) {
       const r = merge(base, mine, disk);
       if (r.html !== mine) merged[id] = r.html;
