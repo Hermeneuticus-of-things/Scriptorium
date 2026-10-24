@@ -109,3 +109,19 @@ describe('editorul învață corectura de mână', () => {
     expect(editor.getText()).toBe('O fata frumoasa. Frumoasă ');
   });
 });
+
+describe('cuvinte alogene', () => {
+  it('termenii cu litere străine (IAST, é) nu se învață niciodată', async () => {
+    const { isForeignWord } = await import('../src/lib/learnCorrections.js');
+    expect(isForeignWord('Ātman')).toBe(true);
+    expect(isForeignWord('saṃsāra')).toBe(true);
+    expect(isForeignWord('ṛṣi')).toBe(true);
+    expect(isForeignWord('café')).toBe(true);
+    expect(isForeignWord('știință')).toBe(false);
+    expect(isTypoFix('Atman', 'Ātman')).toBe(false);
+    expect(isTypoFix('Ātmanul', 'Ātman')).toBe(false);
+    expect(isTypoFix('samsara', 'saṃsāra')).toBe(false);
+    expect(learnCorrection([], 'Atman', 'Ātman')).toBeNull();
+    expect(isTypoFix('stiinta', 'știința')).toBe(true);
+  });
+});
