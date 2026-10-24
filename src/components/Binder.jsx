@@ -4,6 +4,7 @@ import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
 import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TrashIcon } from './Icons.jsx';
 import ContextMenu from './ContextMenu.jsx';
 import { t as tr } from '../lib/i18n.js';
+import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 
 function iconFor(node) {
   if (node.root === 'trash') return <TrashIcon />;
@@ -168,8 +169,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     ];
     if (onPatchItems) {
       items.push('-',
-        { label: tr('ui.binder.eticheta'), disabled: isRootNode, submenu: (project.labels || []).map((l) => ({ label: l.name, checked: (node.label || '') === l.name, action: () => onPatchItems(ids, { label: l.name }) })) },
-        { label: 'Status', disabled: isRootNode, submenu: (project.statuses || []).map((st) => ({ label: statusName(st), checked: (node.status || '') === statusName(st), action: () => onPatchItems(ids, { status: statusName(st) }) })) },
+        { label: tr('ui.binder.eticheta'), disabled: isRootNode, submenu: (project.labels || []).map((l) => ({ label: noneLabel(l.name, tr), checked: (node.label || '') === l.name, action: () => onPatchItems(ids, { label: l.name }) })) },
+        { label: 'Status', disabled: isRootNode, submenu: (project.statuses || []).map((st) => ({ label: noneStatus(statusName(st), tr), checked: (node.status || '') === statusName(st), action: () => onPatchItems(ids, { status: statusName(st) }) })) },
         { label: tr('ui.binder.include_in_compile'), checked: node.includeInCompile !== false, disabled: isRootNode, action: () => onPatchItems(ids, { includeInCompile: node.includeInCompile === false }) },
         { label: tr('ui.binder.favorit'), checked: Boolean(node.favorite), disabled: isRootNode, action: () => onPatchItems(ids, { favorite: !node.favorite }) });
     }
