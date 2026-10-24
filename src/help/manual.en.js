@@ -339,6 +339,7 @@ scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP s
 <li><strong>F9</strong> (or <em>Tools → Dictation</em>) starts and stops dictation. Text appears every ~4 seconds of speech, with spaces and a capital at sentence starts.</li>
 <li><strong>New text:</strong> with nothing selected it goes in at the cursor. <strong>Edit:</strong> over a selection it replaces it; one Ctrl+Z brings the old text back.</li>
 <li>In the bar: <em>Pause</em> (what you say is not written), <em>Stop</em>, <em>Cancel</em> (takes out everything dictated since starting).</li>
+<li><strong>Best accuracy:</strong> choose D&amp;TED in the settings; after <em>Check</em> you pick the model (default <em>eek</em>, tuned for Romanian: 5.8% words wrong against 10.9% for the standard model) and see which one is in use now.</li>
 <li><em>File → Import → Transcribe audio file…</em>: MP3, WAV, M4A, OGG, FLAC → a new document in Research, in paragraphs, with the recording time [mm:ss] (can be turned off in settings). On an audio file in the binder: <em>Documents → Transcribe with D&amp;TED</em>.</li>
 <li>The book's names and terms, typed in settings, help recognition; auto-replacements also apply to dictated text. A locked document gets no dictated text.</li>
 </ul>`,

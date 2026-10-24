@@ -67,6 +67,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     backupDir: init.backupDir || '',
     teamName: init.team?.name || '',
     dtedPath: init.dtedPath || '',
+    dtedModel: init.dtedModel || 'auto',
     dtedTerms: init.dtedTerms || '',
     dtedTimestamps: init.dtedTimestamps !== false,
     speechEngine: init.speechEngine || 'local',
@@ -84,6 +85,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [hasKeys, setHasKeys] = useState(() => ({ ...(init.hasKeys || {}), ...(init.hasKeys ? {} : { anthropic: Boolean(init.hasApiKey) }) }));
   const [aiTest, setAiTest] = useState(null);
   const [dtedCheck, setDtedCheck] = useState('');
+  const [dtedState, setDtedState] = useState(null); // {model, model_folosit, modele} after Verifică
   // Saves the D&TED path first, so the check uses what was typed.
   const checkDted = async () => {
     setDtedCheck(t('ui.dted.verific'));
@@ -91,6 +93,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       await api.setSettings({ dtedPath: s.dtedPath.trim() });
       const r = await api.dtedStatus({ check: true });
       setDtedCheck(r.found ? t('ui.dted.gasit', { source: r.source }) : t('ui.dted.negasit'));
+      setDtedState(r.state && Array.isArray(r.state.modele) ? r.state : null);
     } catch (e) {
       setDtedCheck(e.message);
     }
@@ -687,6 +690,32 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
                 <button onClick={checkDted}>{t('ui.dted.verifica')}</button>
                 {dtedCheck && <span className="muted small" role="status">{dtedCheck}</span>}
               </div>
+              {dtedState && (
+                <label>
+                  {t('ui.dted.model')}
+                  <select
+                    value={s.dtedModel || 'auto'}
+                    onChange={async (e) => {
+                      const nume = e.target.value;
+                      setS((p) => ({ ...p, dtedModel: nume }));
+                      try {
+                        await api.setSettings({ dtedModel: nume });
+                        setDtedState(await api.dtedSetModel(nume));
+                      } catch (err) {
+                        onError?.(err);
+                      }
+                    }}
+                  >
+                    <option value="auto">{t('ui.dted.model_auto')}</option>
+                    {dtedState.modele.map((m) => (
+                      <option key={m.nume} value={m.nume} disabled={!m.instalat}>
+                        {m.descriere}{m.instalat ? '' : ` — ${t('ui.dted.neinstalat')}`}
+                      </option>
+                    ))}
+                  </select>
+                  {dtedState.model_folosit && <span className="muted small">{t('ui.dted.model_folosit', { name: (dtedState.modele.find((m) => m.nume === dtedState.model_folosit) || {}).descriere || dtedState.model_folosit })}</span>}
+                </label>
+              )}
             </>
           )}
           <label>

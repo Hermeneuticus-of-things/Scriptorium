@@ -543,13 +543,23 @@ function fakeDted() {
     emit(cancelled ? { ev: 'anulat', id: dict.id } : { ev: 'dictare_oprita', id: dict.id, text: dict.sent.join(' ') });
     dict = null;
   };
+  let demoDtedModel = 'auto';
+  const DEMO_MODELE = [
+    { nume: 'whisper-turbo-ro-en-ct2', descriere: 'Optimizat pentru română (recomandat — WER 5,8%)', instalat: true },
+    { nume: 'whisper-large-v3-turbo-ct2', descriere: 'Standard multilingv', instalat: true },
+  ];
+  const demoDtedState = () => ({ model: demoDtedModel, model_folosit: demoDtedModel === 'auto' ? DEMO_MODELE[0].nume : demoDtedModel, modele: DEMO_MODELE });
   return {
     onDtedEvent(fn) {
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
     async dtedStatus() {
-      return { found: true, source: 'D&TED simulat (demo)', running: true };
+      return { found: true, source: 'D&TED simulat (demo)', running: true, state: demoDtedState() };
+    },
+    async dtedSetModel(nume) {
+      demoDtedModel = nume || 'auto';
+      return demoDtedState();
     },
     async dtedPickAudio() {
       return 'interviu-bunica.mp3';

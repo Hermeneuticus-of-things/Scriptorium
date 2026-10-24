@@ -22,6 +22,7 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
     find,
     onEvent: (ev) => {
       if (ev.ev === 'oprit') {
+        appliedModel = null; // a restarted service starts again from its own choice
         for (const wc of new Set(owners.values())) deliver(wc, ev);
         owners.clear();
         return;
@@ -47,8 +48,23 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
     if (!how) return { found: false };
     if (!check) return { found: true, source: how.source };
     await dted.start();
-    await dted.status();
-    return { found: true, source: how.source, running: dted.running() };
+    await applyModel();
+    const state = await dted.state().catch(() => null);
+    return { found: true, source: how.source, running: dted.running(), state };
+  });
+  // The model chosen in Settings (dtedModel), sent once per service start.
+  let appliedModel = null;
+  const applyModel = async () => {
+    const want = getSettings().dtedModel || 'auto';
+    if (appliedModel === want && dted.running()) return;
+    await dted.setModel(want).catch(() => {});
+    appliedModel = want;
+  };
+  handle('dted:setModel', async (e, nume) => {
+    await dted.start();
+    const state = await dted.setModel(nume || 'auto');
+    appliedModel = nume || 'auto';
+    return state;
   });
   handle('dted:pickAudio', async (e) => {
     const r = await showOpenDialog(e, { title: 'Fișier audio de transcris', properties: ['openFile'], filters: [{ name: 'Audio', extensions: AUDIO }] });
@@ -59,6 +75,8 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
   handle('dted:transcribe', async (e, file, id) => {
     if (!file || !AUDIO.includes(path.extname(String(file)).slice(1).toLowerCase())) throw new Error('Alege un fișier audio (MP3, WAV, M4A, OGG, FLAC).');
     if (!pickedAudio.has(file)) throw new Error('Alege fișierul audio din fereastra de deschidere.'); // only files the user picked
+    await dted.start();
+    await applyModel();
     return dted.transcribe(file, opts(), reqId(e, id, 't'));
   });
   // An audio file attached to the project (media/<file>), from the binder.
@@ -67,7 +85,11 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
     if (!/^[A-Za-z0-9-]+\.[a-z0-9]+$/.test(String(file))) throw new Error(`Fișier media invalid: ${file}`);
     return dted.transcribe(path.join(dir, 'media', file), opts(), reqId(e, id, 't'));
   });
-  handle('dted:dictateStart', async (e, id) => dted.dictateStart(opts(), reqId(e, id, 'd')));
+  handle('dted:dictateStart', async (e, id) => {
+    await dted.start();
+    await applyModel();
+    return dted.dictateStart(opts(), reqId(e, id, 'd'));
+  });
   handle('dted:dictateStop', async (_e, id) => dted.dictateStop(id));
   handle('dted:cancel', async (_e, id) => dted.cancel(id));
 

@@ -20,6 +20,12 @@ process.stdin.on('data', (chunk) => {
   }
 });
 process.stdin.on('end', () => process.exit(0));
+const MODELE = [
+  { nume: 'whisper-turbo-ro-en-ct2', descriere: 'Optimizat pentru română (recomandat — WER 5,8%)', instalat: true },
+  { nume: 'whisper-large-v3-turbo-ct2', descriere: 'Standard multilingv', instalat: true },
+];
+let model = 'auto';
+const stare = () => ({ ev: 'stare', protocol: 1, versiune: 'fals', model_incarcat: true, dispozitiv: 'cpu', model, model_folosit: model === 'auto' ? MODELE[0].nume : model, modele: MODELE });
 function stopDict(cancelled) {
   if (!dict) return;
   clearInterval(dict.timer);
@@ -31,7 +37,14 @@ function handle(c) {
     stopDict(true);
     process.exit(0);
   }
-  if (c.cmd === 'stare') out({ ev: 'stare', protocol: 1, versiune: 'fals', model_incarcat: true, dispozitiv: 'cpu' });
+  if (c.cmd === 'stare') out(stare());
+  else if (c.cmd === 'model') {
+    if (c.nume !== 'auto' && !MODELE.some((m) => m.nume === c.nume)) out({ ev: 'eroare', id: c.id, mesaj: `Model necunoscut: ${c.nume}` });
+    else {
+      model = c.nume;
+      out(stare());
+    }
+  }
   else if (c.cmd === 'transcrie') {
     const name = path.basename(String(c.cale));
     if (/stricat/.test(name)) return out({ ev: 'eroare', id: c.id, mesaj: `Fișierul „${name}” nu a putut fi citit.`, ce_fac: 'Formatele acceptate sunt MP3, WAV, M4A, OGG și FLAC.' });

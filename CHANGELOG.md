@@ -1,5 +1,14 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.7 — Modelul eek de la D&TED în Scribner
+
+### Cerința user
+> "pune motor eek de la D&TED – Dictare și transcriere și integrează motor eek și să fie deep în Scribner UI dictarea"
+
+- **Dictarea cu D&TED folosește modelul eek** (antrenat pe română, 5,8% cuvinte greșite față de 10,9%): *Setări → Servicii și conturi → D&TED → Verifică* arată modelele instalate, „Folosit acum” și permite alegerea; alegerea se păstrează și se aplică la fiecare pornire a serviciului.
+- D&TED (repo separat, ramura cu modul serviciu): comanda `model` și lista modelelor în `stare`.
+- Ajutor (RO/EN), README și `docs/DTED.md` §8.
+
 ## 2026-10-24 — v0.9.6 — Bucle divergente/convergente (runda 3)
 
 - **Interfața în engleză și Ajutorul (căutare divergentă):**
