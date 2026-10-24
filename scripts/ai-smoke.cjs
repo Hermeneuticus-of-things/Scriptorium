@@ -26,21 +26,34 @@ const CASES = [
 // instruct/chat model, so the test does not depend on a model id that may be retired.
 const PREFER = [/llama-3\.\d.*(70b|405b).*instruct/i, /nemotron.*(super|ultra)/i, /qwen.*instruct/i, /mistral.*(large|medium)/i, /instruct|chat/i];
 const SKIP = /embed|rerank|guard|safety|reward|vision|vlm|clip|parse|ocr|retriev|coder|tts|asr|whisper|nv-?ingest|deplot|kosmos|fuyu|paligemma|neva/i;
+// The list also holds models not deployed for every account (404 "Function … not found"):
+// each candidate gets a tiny request, and the first one that answers is used.
+async function probe(id) {
+  const res = await fetch(`${pre.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
+    body: JSON.stringify({ model: id, messages: [{ role: 'user', content: 'Spune OK.' }], max_tokens: 5 }),
+  });
+  return res.status;
+}
 async function pickModel() {
   if (model || pre.kind !== 'openai' || !pre.baseUrl) return;
   const res = await fetch(`${pre.baseUrl}/models`, { headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {} });
   if (!res.ok) throw new Error(`Lista de modele: HTTP ${res.status}`);
   const ids = ((await res.json()).data || []).map((m) => m.id).filter((id) => !SKIP.test(id));
-  for (const re of PREFER) {
-    const hit = ids.filter((id) => re.test(id)).sort().reverse()[0];
-    if (hit) {
-      model = hit;
-      break;
+  const ranked = [];
+  for (const re of PREFER) for (const id of ids.filter((x) => re.test(x)).sort().reverse()) if (!ranked.includes(id)) ranked.push(id);
+  for (const id of ids) if (!ranked.includes(id)) ranked.push(id);
+  for (const id of ranked.slice(0, 15)) {
+    const status = await probe(id).catch(() => 0);
+    console.log(`     încerc ${id}: ${status === 200 ? 'răspunde' : `HTTP ${status || 'rețea'}`}`);
+    if (status === 200) {
+      model = id;
+      console.log(`Model ales automat: ${model} (altul: node scripts/ai-smoke.cjs ${provider} <model>)`);
+      return;
     }
   }
-  model = model || ids[0];
-  if (!model) throw new Error('Serverul nu a dat niciun model de chat.');
-  console.log(`Model ales automat: ${model} (din ${ids.length}; altul: node scripts/ai-smoke.cjs ${provider} <model>)`);
+  throw new Error('Niciunul din primele 15 modele nu răspunde pentru acest cont.');
 }
 
 (async () => {
