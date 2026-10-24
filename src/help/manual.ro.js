@@ -64,7 +64,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'projects-home',
         title: 'Ecranul Acasă',
-        html: `<p>La pornire (sau după <em>Închide proiectul</em>) apare ecranul <em>Acasă</em>: proiecte recente (cu fixare la favorite și golirea listei), deschiderea unui proiect existent, importul unui proiect Scrivener și crearea unui proiect nou din șablon.</p>
+        html: `<p>La pornire (sau după <em>Închide proiectul</em>) apare ecranul <em>Acasă</em>: proiecte recente (cu fixare la favorite și golirea listei), deschiderea unui proiect existent, importul unui proiect .scriv și crearea unui proiect nou din șablon.</p>
 <p>Opțiunea <em>Setări → General → La pornire, redeschide ultimul proiect</em> sare peste acest ecran.</p>`,
       },
       {
@@ -222,7 +222,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'styles-compile',
         title: 'Stiluri la import și la Compile',
-        html: `<p>Stilurile pot fi importate dintr-un alt proiect Scribner (butonul din panoul de stiluri). La importul din Scrivener, stilurile din proiect se păstrează.</p>
+        html: `<p>Stilurile pot fi importate dintr-un alt proiect Scribner (butonul din panoul de stiluri). La importul .scriv, stilurile din proiect se păstrează.</p>
 <p>La Compile, textul cu stil păstrează numele stilului (de exemplu în DOCX), astfel încât în Word poți modifica aspectul tuturor citatelor dintr-o dată.</p>`,
       },
     ],
@@ -257,13 +257,13 @@ media/                 imagini, PDF, audio, video</pre>
   },
   {
     id: 'scrivenings',
-    title: 'Scrivenings, split, Quick Reference, compunere',
+    title: 'Text continuu, split, Quick Reference, compunere',
     sections: [
       {
         id: 'scrivenings-basics',
-        title: 'Scrivenings: mai multe documente ca un singur text',
+        title: 'Text continuu: mai multe documente ca un singur text',
         html: `<p>Când selectezi un dosar în modul Editor, documentele lui apar unul sub altul, ca un text continuu, pe care îl poți edita direct. Fiecare modificare se salvează în documentul ei.</p>
-<p>Poți vedea astfel și o selecție (<em>Vizualizare → Scrivenings pentru selecție</em>) sau colecția activă. Titlurile și separatoarele dintre documente se ascund sau se arată din <em>Vizualizare</em>.</p>`,
+<p>Poți vedea astfel și o selecție (<em>Vizualizare → Text continuu pentru selecție</em>) sau colecția activă. Titlurile și separatoarele dintre documente se ascund sau se arată din <em>Vizualizare</em>.</p>`,
       },
       {
         id: 'scrivenings-split',
@@ -393,7 +393,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'search-collections',
         title: 'Colecții',
-        html: `<p>Colecțiile sunt file deasupra binderului cu liste de documente (de exemplu „De revizuit”, „Scenele Anei”). Le creezi, redenumești, colorezi, adaugi sau scoți documente. Un document poate fi în mai multe colecții fără să fie mutat. <em>Scrivenings pentru colecția activă</em> le afișează ca text continuu; Compile poate filtra după colecție.</p>`,
+        html: `<p>Colecțiile sunt file deasupra binderului cu liste de documente (de exemplu „De revizuit”, „Scenele Anei”). Le creezi, redenumești, colorezi, adaugi sau scoți documente. Un document poate fi în mai multe colecții fără să fie mutat. <em>Text continuu pentru colecția activă</em> le afișează ca text continuu; Compile poate filtra după colecție.</p>`,
       },
     ],
   },
@@ -416,7 +416,7 @@ media/                 imagini, PDF, audio, video</pre>
         id: 'targets-stats',
         title: 'Statistici și istoricul scrisului',
         html: `<p><em>Proiect → Statistici…</em> (${k('Ctrl+Alt+Shift+I')}): cuvinte, caractere, pagini estimate pentru tot proiectul, pentru Compile sau pentru selecție; frecvența cuvintelor, lungimea frazelor, distribuția părților de vorbire (euristic).</p>
-<p><em>Proiect → Istoricul scrisului…</em>: grafic zilnic și lunar, serie de zile, export CSV. Istoricul importat din Scrivener este marcat separat.</p>`,
+<p><em>Proiect → Istoricul scrisului…</em>: grafic zilnic și lunar, serie de zile, export CSV. Istoricul importat din proiectul .scriv este marcat separat.</p>`,
       },
     ],
   },
@@ -495,7 +495,7 @@ media/                 imagini, PDF, audio, video</pre>
   },
   {
     id: 'import',
-    title: 'Import/export, Scrivener .scriv, sincronizare',
+    title: 'Import/export, proiecte .scriv, sincronizare',
     sections: [
       {
         id: 'import-files',
@@ -505,10 +505,10 @@ media/                 imagini, PDF, audio, video</pre>
       },
       {
         id: 'import-scrivener',
-        title: 'Proiecte Scrivener (.scriv)',
-        html: `<p>Din ecranul <em>Acasă</em>, importă un proiect Scrivener 1, 2 sau 3. Se preiau: binderul, textul (cu formatare, liste, tabele, imagini), comentarii, note de subsol, adnotări, legături, stiluri, note, sinopsis, etichete, statusuri, cuvinte cheie, metadate, tipuri de secțiune, ținte, colecții, semne de carte, snapshot-uri, istoricul scrisului și media.</p>
-<p>O copie completă a originalului rămâne în <code>scrivener-original/</code>, iar la final apare un <strong>raport de import</strong> cu ce s-a convertit. Proiectul Scrivener original nu este modificat.</p>
-<p><em>Fișier → Exportă ca proiect Scrivener (.scriv)…</em> scrie proiectul înapoi în format Scrivener.</p>`,
+        title: 'Proiecte .scriv',
+        html: `<p>Din ecranul <em>Acasă</em>, importă un proiect .scriv (versiunile 1, 2 sau 3). Se preiau: binderul, textul (cu formatare, liste, tabele, imagini), comentarii, note de subsol, adnotări, legături, stiluri, note, sinopsis, etichete, statusuri, cuvinte cheie, metadate, tipuri de secțiune, ținte, colecții, semne de carte, snapshot-uri, istoricul scrisului și media.</p>
+<p>O copie completă a originalului rămâne în <code>scrivener-original/</code>, iar la final apare un <strong>raport de import</strong> cu ce s-a convertit. Proiectul .scriv original nu este modificat.</p>
+<p><em>Fișier → Exportă ca proiect .scriv…</em> scrie proiectul înapoi în format .scriv.</p>`,
       },
       {
         id: 'import-export',
@@ -757,7 +757,7 @@ media/                 imagini, PDF, audio, video</pre>
       },
       {
         id: 'faq-scriv',
-        title: 'Importul Scrivener nu a adus ceva',
+        title: 'Importul .scriv nu a adus ceva',
         html: `<p>Citește raportul de import: arată ce s-a convertit și ce a rămas doar în copia <code>scrivener-original/</code> din proiect. Dacă lipsește ceva important, raportează problema din <em>Ajutor → Raportează o problemă</em>, cu o descriere (fără să trimiți textul cărții).</p>`,
       },
       {
@@ -948,8 +948,8 @@ scribner mcp "D:\\Carti\\Drumul spre munte.scribner"               serverul MCP 
       },
       {
         id: 'yours-realproject',
-        title: 'Proiectele tale Scrivener și regulile I-REP / I-EDIT',
-        html: `<p>Importul <code>.scriv</code> e testat pe proiecte de probă. Pe un proiect real (de exemplu cartea ta), fă importul cu <em>Fișier → Importă proiect Scrivener</em>, citește raportul de import și verifică capitolele cu cele mai multe formatări, comentarii și note de subsol. Originalul rămâne neatins, iar o copie stă în <code>scrivener-original/</code>.</p>
+        title: 'Proiectele tale .scriv și regulile I-REP / I-EDIT',
+        html: `<p>Importul <code>.scriv</code> e testat pe proiecte de probă. Pe un proiect real (de exemplu cartea ta), fă importul cu <em>Fișier → Importă proiect .scriv</em>, citește raportul de import și verifică capitolele cu cele mai multe formatări, comentarii și note de subsol. Originalul rămâne neatins, iar o copie stă în <code>scrivener-original/</code>.</p>
 <p>I-REP / I-EDIT urmează definițiile tale VKB2: repetițiile apropiate (S70, runda R8b) și protecția textului scris de tine (vezi capitolul <em>Revizie I-REP/I-EDIT</em>).</p>`,
       },
       {
@@ -958,7 +958,6 @@ scribner mcp "D:\\Carti\\Drumul spre munte.scribner"               serverul MCP 
         html: `<ul>
 <li>Tab-urile cu poziții exacte (din riglă) apar exact în DOCX; în PDF, EPUB și HTML tab-urile sunt egale, după prima poziție. Doar tab-uri la stânga.</li>
 <li>Kindle: programul produce EPUB, pe care Amazon îl acceptă direct; formatul KPF nu se poate produce cu unelte deschise.</li>
-<li>Sincronizarea cu aplicația Scrivener pentru iOS nu e posibilă (format închis); folosește folderul sincronizat de mai sus.</li>
 </ul>`,
       },
     ],

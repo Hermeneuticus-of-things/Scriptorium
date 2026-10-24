@@ -16,7 +16,7 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
   const results = useMemo(() => {
     if (!re) return [];
     const trash = project.tree.find((n) => n.root === 'trash');
-    const trashIds = new Set(flatten(trash.children).map((n) => n.id));
+    const trashIds = new Set(flatten(trash?.children || []).map((n) => n.id));
     const out = [];
     for (const n of flatten(project.tree)) {
       if (n.root || (!opts.includeTrash && trashIds.has(n.id))) continue;
@@ -34,7 +34,7 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
   const toggle = (k) => () => setOpts((o) => ({ ...o, [k]: !o[k] }));
 
   const replaceAll = async () => {
-    const ids = results.filter((r) => r.hits.length).map((r) => r.node.id);
+    const ids = results.map((r) => r.node.id);
     if (!ids.length) return;
     if (!window.confirm(t('ui.findDialog.inlocuiesti_x_aparitii_in_x', { total: total, length: ids.length }))) return;
     setBusy(true);
@@ -61,7 +61,7 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
           </label>
         </div>
         <div className="checks">
-          <label className="check"><input type="checkbox" checked={opts.caseSensitive} onChange={toggle('caseSensitive')} /> Majuscule exacte</label>
+          <label className="check"><input type="checkbox" checked={opts.caseSensitive} onChange={toggle('caseSensitive')} /> {t('ui.compileDialog.tine_cont_de_majuscule')}</label>
           <label className="check"><input type="checkbox" checked={opts.wholeWord} onChange={toggle('wholeWord')} /> {t('ui.advancedSearchDialog.cuvinte_intregi')}</label>
           <label className="check"><input type="checkbox" checked={opts.regex} onChange={toggle('regex')} /> {t('ui.advancedSearchDialog.expresie_regulata')}</label>
           <label className="check"><input type="checkbox" checked={opts.includeTrash} onChange={toggle('includeTrash')} /> {t('ui.advancedSearchDialog.include_cosul')}</label>

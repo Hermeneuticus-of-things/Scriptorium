@@ -11,7 +11,7 @@ const ro = {
   'cmd.customizeToolbar': 'Personalizează bara de instrumente…',
   'menu.import': 'Importă', 'menu.export': 'Exportă', 'menu.sync': 'Sincronizare', 'menu.print': 'Tipărire',
   'menu.select': 'Selectează', 'menu.bookViews': 'Vederi pe toată cartea', 'menu.posFocus': 'Focus lingvistic',
-  'menu.scrivenings': 'Scrivenings', 'menu.textLook': 'Aspectul textului', 'menu.lookup': 'Caută selecția în',
+  'menu.scrivenings': 'Text continuu', 'menu.textLook': 'Aspectul textului', 'menu.lookup': 'Caută selecția în',
   'menu.translate': 'Tradu selecția', 'menu.inProject': 'Selecția în proiect', 'menu.notebookLm': 'NotebookLM',
   'menu.aiSelection': 'AI pe selecție', 'menu.aiBook': 'AI pe toată cartea',
   // commands
@@ -30,7 +30,7 @@ const ro = {
   'cmd.bookmarks': 'Semne de carte ale proiectului…',
   'cmd.bookmarkAdd': 'Adaugă documentul la semne de carte',
   'cmd.projectNotes': 'Note proiect (file)…',
-  'cmd.exportScriv': 'Exportă ca proiect Scrivener (.scriv)…',
+  'cmd.exportScriv': 'Exportă ca proiect .scriv…',
   'cmd.syncOut': 'Sincronizează cu folder extern: scrie…',
   'cmd.syncIn': 'Sincronizează cu folder extern: citește modificările',
   'cmd.importBib': 'Importă bibliografie (Zotero BibTeX / CSL-JSON)…',
@@ -141,10 +141,10 @@ const ro = {
   'cmd.revealBinder': 'Arată în binder',
   'cmd.hoist': 'Focus pe dosar (hoist)',
   'cmd.unhoist': 'Ieși din focus',
-  'cmd.scrivSelection': 'Scrivenings pentru selecție',
-  'cmd.scrivCollection': 'Scrivenings pentru colecția activă',
-  'cmd.scrivTitles': 'Scrivenings: arată / ascunde titlurile',
-  'cmd.scrivSeparators': 'Scrivenings: arată / ascunde separatoarele',
+  'cmd.scrivSelection': 'Text continuu pentru selecție',
+  'cmd.scrivCollection': 'Text continuu pentru colecția activă',
+  'cmd.scrivTitles': 'Text continuu: arată / ascunde titlurile',
+  'cmd.scrivSeparators': 'Text continuu: arată / ascunde separatoarele',
   'cmd.toggleFormatBar': 'Arată / ascunde bara de format',
   'cmd.toggleComments': 'Aspect text: evidențierea comentariilor',
   'cmd.toggleRevisions': 'Aspect text: culorile reviziilor',
@@ -193,7 +193,7 @@ const en = {
   'cmd.customizeToolbar': 'Customize toolbar…',
   'menu.import': 'Import', 'menu.export': 'Export', 'menu.sync': 'Sync', 'menu.print': 'Printing',
   'menu.select': 'Select', 'menu.bookViews': 'Whole-book views', 'menu.posFocus': 'Linguistic focus',
-  'menu.scrivenings': 'Scrivenings', 'menu.textLook': 'Text appearance', 'menu.lookup': 'Look up selection in',
+  'menu.scrivenings': 'Continuous text', 'menu.textLook': 'Text appearance', 'menu.lookup': 'Look up selection in',
   'menu.translate': 'Translate selection', 'menu.inProject': 'Selection in project', 'menu.notebookLm': 'NotebookLM',
   'menu.aiSelection': 'AI on selection', 'menu.aiBook': 'AI on the whole book',
   'cmd.save': 'Save now', 'cmd.compile': 'Compile…', 'cmd.import': 'Import Word / text / Markdown…',
@@ -211,7 +211,7 @@ const en = {
   'cmd.bookmarks': 'Project bookmarks…',
   'cmd.bookmarkAdd': 'Add document to bookmarks',
   'cmd.projectNotes': 'Project notes (tabs)…',
-  'cmd.exportScriv': 'Export as Scrivener project (.scriv)…',
+  'cmd.exportScriv': 'Export as .scriv project…',
   'cmd.syncOut': 'Sync with external folder: write…',
   'cmd.syncIn': 'Sync with external folder: read changes',
   'cmd.importBib': 'Import bibliography (Zotero BibTeX / CSL-JSON)…',
@@ -320,10 +320,10 @@ const en = {
   'cmd.revealBinder': 'Reveal in Binder',
   'cmd.hoist': 'Hoist binder (focus on folder)',
   'cmd.unhoist': 'Unhoist binder',
-  'cmd.scrivSelection': 'Scrivenings for selection',
-  'cmd.scrivCollection': 'Scrivenings for active collection',
-  'cmd.scrivTitles': 'Scrivenings: show / hide titles',
-  'cmd.scrivSeparators': 'Scrivenings: show / hide separators',
+  'cmd.scrivSelection': 'Continuous text for selection',
+  'cmd.scrivCollection': 'Continuous text for active collection',
+  'cmd.scrivTitles': 'Continuous text: show / hide titles',
+  'cmd.scrivSeparators': 'Continuous text: show / hide separators',
   'cmd.toggleFormatBar': 'Show / hide Format Bar',
   'cmd.toggleComments': 'Text appearance: comment highlights',
   'cmd.toggleRevisions': 'Text appearance: revision colours',
@@ -384,8 +384,29 @@ export const onLanguageChange = (fn) => (listeners.add(fn), () => listeners.dele
 export function t(key, vars) {
   let s = dictionaries[current][key] ?? ro[key] ?? key;
   if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] != null ? String(vars[k]) : m));
-  return s;
+  return vars && (current === 'ro' || !dictionaries[current][key]) ? pluralRo(s) : vars ? pluralEn(s) : s;
 }
+
+// Romanian counts: "1 cuvânt", "5 cuvinte", "25 de cuvinte" (from 20 up, except 101–119 and the like).
+const RO_ONE = {
+  cuvinte: 'cuvânt', caractere: 'caracter', pagini: 'pagină', documente: 'document', fișiere: 'fișier',
+  scene: 'scenă', locuri: 'loc', minute: 'minut', zile: 'zi', comentarii: 'comentariu', note: 'notă',
+  'snapshot-uri': 'snapshot', elemente: 'element', rânduri: 'rând', paragrafe: 'paragraf', surse: 'sursă',
+  pasaje: 'pasaj', apariții: 'apariție', înlocuiri: 'înlocuire', secunde: 'secundă', ore: 'oră',
+};
+const RO_ADJ_ONE = { blocate: 'blocat', modificate: 'modificat', selectate: 'selectat', noi: 'nou', șterse: 'șters' };
+const RO_COUNT = new RegExp(`(^|[^\\d.,])(\\d{1,3}(?:\\.\\d{3})+|\\d+) (${Object.keys(RO_ONE).join('|')})(?: (${Object.keys(RO_ADJ_ONE).join('|')}))?(?![\\wăâîșț-])`, 'g');
+export function pluralRo(s) {
+  return s.replace(RO_COUNT, (m, pre, num, noun, adj) => {
+    const n = Number(num.replace(/\./g, ''));
+    if (n === 1) return `${pre}${num} ${RO_ONE[noun]}${adj ? ` ${RO_ADJ_ONE[adj]}` : ''}`;
+    const de = n % 100 === 0 ? n > 0 : n % 100 >= 20;
+    return `${pre}${num} ${de ? 'de ' : ''}${noun}${adj ? ` ${adj}` : ''}`;
+  });
+}
+const EN_ONE = { words: 'word', characters: 'character', pages: 'page', documents: 'document', files: 'file', scenes: 'scene', places: 'place', minutes: 'minute', days: 'day', comments: 'comment', notes: 'note', snapshots: 'snapshot', items: 'item', lines: 'line', paragraphs: 'paragraph', sources: 'source', passages: 'passage', matches: 'match', replacements: 'replacement', seconds: 'second', hours: 'hour' };
+const EN_COUNT = new RegExp(`(^|[^\\d.,])1 (${Object.keys(EN_ONE).join('|')})(?![\\w-])`, 'g');
+export const pluralEn = (s) => s.replace(EN_COUNT, (m, pre, noun) => `${pre}1 ${EN_ONE[noun]}`);
 export const has = (key) => key in dictionaries[current] || key in ro;
 
 /** Label for a command id; layout:N ids and unknown ids fall back. */

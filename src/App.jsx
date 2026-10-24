@@ -107,7 +107,6 @@ import { mergeBibliography } from './lib/bibMerge.js';
 import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
-import { replaceInHtml } from './lib/search.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 import { mergeProject } from './lib/projectMerge.js';
@@ -1303,14 +1302,22 @@ export default function App({ api: apiProp }) {
     const docs = docsNow();
     let total = 0;
     const next = {};
+    const nodeUpdates = [];
     for (const id of ids) {
-      const { html, count } = replaceInHtml(docs[id] || '', re, replacement);
-      if (!count) continue;
+      const node = findNode(projectRef.current.tree, id);
+      if (!node) continue;
+      // Titles and synopses too: the dialog lists matches there.
+      const r = replaceInFields(node, docs[id] || '', '', re, replacement, ['title', 'synopsis', 'text']);
+      if (!r.count) continue;
       await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_inlocuire')).catch(report);
-      await api.writeDoc(dir, id, 'docs', html);
-      next[id] = html;
-      total += count;
+      if (r.docHtml !== (docs[id] || '')) {
+        await api.writeDoc(dir, id, 'docs', r.docHtml);
+        next[id] = r.docHtml;
+      }
+      if (r.node.title !== node.title || r.node.synopsis !== node.synopsis) nodeUpdates.push([id, { title: r.node.title, synopsis: r.node.synopsis }]);
+      total += r.count;
     }
+    if (nodeUpdates.length) saveProject({ ...projectRef.current, tree: nodeUpdates.reduce((t, [id, patch]) => updateNode(t, id, patch), projectRef.current.tree) });
     setDocs((d) => ({ ...d, ...next }));
     for (const [id, html] of Object.entries(next)) setEditorHtml(id, html);
     recordHistory();

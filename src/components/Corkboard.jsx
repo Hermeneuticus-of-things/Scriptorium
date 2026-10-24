@@ -51,10 +51,13 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
       aria-selected={Boolean(selected)}
       aria-label={n.title || t('ui.app.fara_titlu')}
       onFocus={(e) => e.target === e.currentTarget && onSelect?.(n.id)}
-      onMouseDown={(e) => !e.target.closest('textarea, input, button') && onSelect?.(n.id)}
+      {...dragProps}
+      onMouseDown={(e) => {
+        if (!e.target.closest('textarea, input, button')) onSelect?.(n.id);
+        dragProps?.onMouseDown?.(e); // the freeform drag must not replace selection
+      }}
       onKeyDown={(e) => e.target === e.currentTarget && onKey?.(e, n)}
       onDoubleClick={(e) => !e.target.closest('textarea, input, header') && onOpen(n.id)}
-      {...dragProps}
     >
       {pins && <span className="card-pin" style={{ background: colors[n.label] || undefined }} aria-hidden="true" />}
       {n.label && n.label !== 'Fără' && colors[n.label] && <span className="card-tint" style={{ background: colors[n.label] }} />}
@@ -94,6 +97,7 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
         <textarea
           aria-label={t('ui.corkboard.sinopsis_x', { title: n.title || '' })}
           placeholder={t('ui.corkboard.sinopsis')}
+          key={n.synopsis || ''} // edited elsewhere (Inspector, Outline): show it, never write the old text back
           defaultValue={n.synopsis}
           onBlur={(e) => e.target.value !== (n.synopsis || '') && onPatch(n.id, { synopsis: e.target.value })}
         />
@@ -218,9 +222,10 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   // Freeform: cards keep {x, y} in node.corkPos; "Fixează ordinea" writes the visual
   // order (top-to-bottom, left-to-right) back to the binder.
   const startFree = (n, e) => {
-    if (e.target.closest('textarea, button')) return;
+    if (e.target.closest('textarea, button, input')) return;
     const box = freeRef.current.getBoundingClientRect();
-    const pos = n.corkPos || { x: 0, y: 0 };
+    const el0 = e.currentTarget;
+    const pos = { x: parseFloat(el0.style.left) || 0, y: parseFloat(el0.style.top) || 0 }; // where the card is drawn (autoPos when never moved)
     const dx = e.clientX - box.left - pos.x;
     const dy = e.clientY - box.top - pos.y;
     const el = e.currentTarget;
@@ -231,6 +236,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
     const up = (ev) => {
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
+      if (Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) < 4) return; // a click, not a move
       onPatch(n.id, { corkPos: { x: Math.max(0, Math.round(ev.clientX - box.left - dx)), y: Math.max(0, Math.round(ev.clientY - box.top - dy)) } });
     };
     window.addEventListener('mousemove', move);
