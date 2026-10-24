@@ -145,7 +145,8 @@ export function readPeers(files, { self, now = Date.now() } = {}) {
     const age = now - Date.parse(p.time);
     if (!(age >= -60000)) continue; // unreadable time
     if (age <= PRESENCE_STALE_MS) live.push(p);
-    if (age <= LOCK_STALE_MS) for (const id of p.locks || []) locks[id] = p;
+    // Several computers locked the same document: the smallest machine id keeps it (lockFor).
+    if (age <= LOCK_STALE_MS) for (const id of p.locks || []) if (!locks[id] || String(p.machine) < String(locks[id].machine)) locks[id] = p;
   }
   live.sort((a, b) => String(a.who).localeCompare(String(b.who)));
   return { live, locks };
