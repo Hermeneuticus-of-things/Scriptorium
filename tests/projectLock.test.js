@@ -55,7 +55,10 @@ describe('project.json lock', () => {
       }
     `);
     await Promise.all(Array.from({ length: 6 }, () => new Promise((res, rej) => {
-      fork(worker, [dir, log]).on('exit', (c) => (c === 0 ? res() : rej(new Error(`exit ${c}`))));
+      const child = fork(worker, [dir, log], { stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+      let err = '';
+      child.stderr.on('data', (d) => { err += d; });
+      child.on('exit', (c) => (c === 0 ? res() : rej(new Error(`exit ${c}: ${err.slice(0, 800)}`))));
     })));
     const lines = fs.readFileSync(log, 'utf8').trim().split('\n');
     expect(lines.length).toBe(6 * 15 * 2);
