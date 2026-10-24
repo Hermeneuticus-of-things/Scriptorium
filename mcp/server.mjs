@@ -200,9 +200,9 @@ function outsideProjects(p, what = 'output_path') {
     }
     return process.platform === 'win32' || process.platform === 'darwin' ? r.toLowerCase() : r;
   };
-  const out = norm(p);
-  if (projects.map(norm).some((pd) => out === pd || out.startsWith(pd + path.sep))) throw new Error(`${what} nu poate fi în interiorul unui proiect.`);
-  return out;
+  const real = norm(p);
+  if (projects.map(norm).some((pd) => real === pd || real.startsWith(pd + path.sep))) throw new Error(`${what} nu poate fi în interiorul unui proiect.`);
+  return path.resolve(p); // the comparison form is only for the check; the caller keeps its spelling
 }
 // A project created / imported / restored by a tool becomes reachable in this session.
 function addProject(dir) {
