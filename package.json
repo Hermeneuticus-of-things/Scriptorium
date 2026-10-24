@@ -28,6 +28,7 @@
       "electron/**",
       "lib/**",
       "mcp/**",
+      "cli/**",
       "src/lib/**",
       "package.json"
     ],

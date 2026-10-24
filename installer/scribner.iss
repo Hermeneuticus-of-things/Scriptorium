@@ -1,4 +1,4 @@
-; Scribner — installer wizard (Inno Setup 6).
+﻿; Scribner — installer wizard (Inno Setup 6).
 ; Input: release\win-unpacked from `npm run dist:win`. Built by installer\build-setup.cjs:
 ;   ISCC /DAppVersion=<version> installer\scribner.iss
 #ifndef AppVersion
@@ -37,9 +37,12 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "addtopath"; Description: "Comanda „scribner” în terminal (adaugă folderul programului în PATH)"; GroupDescription: "Linia de comandă:"; Flags: unchecked
 
 [Files]
 Source: "..\release\win-unpacked\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Command line: "scribner" from any terminal once {app} is on PATH (Ajutor → Ce faci tu → Linia de comandă).
+Source: "scribner.cmd"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
@@ -49,3 +52,20 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 ; Projects and settings stay on uninstall: they live in the user's folders and %APPDATA%\Scribner.
+
+[Registry]
+; Optional: the install folder on the user's PATH, so "scribner" works in any terminal.
+Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Tasks: addtopath; Check: NeedsAddPath(ExpandConstant('{app}'))
+
+[Code]
+function NeedsAddPath(Dir: string): Boolean;
+var
+  OrigPath: string;
+begin
+  if not RegQueryStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', OrigPath) then
+  begin
+    Result := True;
+    exit;
+  end;
+  Result := Pos(';' + Uppercase(Dir) + ';', ';' + Uppercase(OrigPath) + ';') = 0;
+end;
