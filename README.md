@@ -4,69 +4,81 @@
 
 <p align="center">
   <a href="../../releases/latest"><strong>Descarcă pentru Windows</strong></a> ·
-  <a href="#cum-îl-instalezi">Instalare</a> ·
-  <a href="#dictezi-direct-în-carte">Dictare</a> ·
-  <a href="#lucru-în-echipă">Echipă</a> ·
-  <a href="#întrebări">Întrebări</a> ·
-  <a href="#ai-găsit-o-problemă">Ai găsit o problemă?</a> ·
-  <a href="#sub-capotă">Sub capotă</a>
+  <a href="#3-ce-face">Ce face</a> ·
+  <a href="#5-cum-lucrezi">Cum lucrezi</a> ·
+  <a href="#7-cum-lucrați-împreună">Împreună</a> ·
+  <a href="#8-ce-urmează">Ce urmează</a> ·
+  <a href="#instalare">Instalare</a>
 </p>
 
-Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. În Scribner textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. Când ai terminat, apeși un buton și primești cartea întreagă.
+## 1. Ce este
 
-<p align="center">
-  <img src="./assets/readme/workflow.svg" width="100%" alt="Patru pași: aduci textul, scrii pe fișe, verifici, primești cartea întreagă în DOCX, PDF sau EPUB">
-</p>
+Scribner e un program gratuit de scris cărți lungi, în română și engleză. Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. Aici textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. La final apeși un buton și primești cartea întreagă.
+
+## 2. Pentru cine
+
+Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânească pe bucăți.
 
 <p align="center">
   <img src="./assets/readme/for-whom.svg" width="100%" alt="Pentru cine e: scrii o carte, traduci o carte, scrii o lucrare">
 </p>
 
-<p align="center">
-  <img src="./assets/readme/voice-team.svg" width="100%" alt="Scrii cu vocea: vorbești și fraza apare pe fișa scenei, fără internet. Lucrați împreună: fiecare om cu culoarea lui pe fișele aceleiași cărți, una blocată de Ana">
-</p>
-
-## Pentru traducători
+## 3. Ce face
 
 <p align="center">
-  <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
+  <img src="./assets/readme/features.svg" width="100%" alt="Ce face: scrii pe fișe, traduci, dictezi, corectezi, cercetezi, lucrați împreună, agenți AI, compilezi cartea întreagă">
 </p>
 
-Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă. Fereastra în care scrii are un chenar verde, iar cealaltă e ușor estompată, ca să știi mereu unde ajunge textul. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+| Funcția | Pe scurt |
+|---|---|
+| [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, cronologie, legături între documente |
+| [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic |
+| [Dictezi](#dictezi) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
+| [Corectezi](#corectezi) | revizie fără AI, corecturi învățate, asistent AI opțional, versiuni |
+| [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri |
+| [Agenți AI și comenzi](#agenți-ai-și-linia-de-comandă) | Claude, Codex prin MCP; comanda `scribner` în terminal |
+| [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate |
+| [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când |
+
+## 4. Cum face
+
+- **Pe bucăți.** Fiecare scenă, capitol, notă sau sursă e un document separat în *binder*, lista din stânga. Le aranjezi ca pe fișe; ordinea din binder e ordinea din carte.
+- **Pe calculatorul tău.** Proiectul e un folder cu fișiere text simple. Nu ai nevoie de cont și nici de internet; nimic nu pleacă din calculator dacă nu vrei.
+- **Fără să pierzi ceva.** Totul se salvează singur, copiile de siguranță se fac automat, iar înainte de o schimbare mare faci o „poză” a textului (snapshot), la care te poți întoarce.
+- **AI doar dacă vrei.** Programul e complet fără AI. Cu o cheie pusă de tine, asistentul propune, iar tu accepți; paragrafele scrise de tine nu sunt rescrise.
+- **La final, o singură carte.** *Compile* adună bucățile în formatul ales, cu pagina, titlurile și notele așezate cum hotărăști tu.
+
+## 5. Cum lucrezi
 
 <p align="center">
-  <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">
+  <img src="./assets/readme/workflow.svg" width="100%" alt="Patru pași: aduci textul, scrii pe fișe, verifici, primești cartea întreagă în DOCX, PDF sau EPUB">
 </p>
 
-Clic dreapta pe un cuvânt și ai la îndemână:
+1. **Aduci textul.** Pornești de la zero, dintr-un șablon, sau imporți Word, RTF, ODT, Markdown, pagini web, scenarii ori un proiect `.scriv`; capitolele devin fișe singure.
+2. **Scrii pe fișe.** Scrii, muți, împarți și unești scene; ții personajele, locurile și cercetarea lângă text. Dacă vrei, dictezi.
+3. **Verifici.** Revizia găsește ghilimele, spații, punctuație și repetiții; compari versiunile; întrebi sursele.
+4. **Primești cartea.** *Fișier → Compilează…* și ai DOCX pentru editură, PDF pentru tipar sau EPUB pentru cititor.
 
-- **Traduce:** DeepL sau Google Translate, pe cuvânt, pe frază sau pe un paragraf întreg. Fără cont se deschide pagina DeepL cu textul deja pus. Cu o cheie DeepL, inclusiv cea **gratuită** (DeepL API Free, 500.000 de caractere pe lună, cheia se termină în `:fx`), traducerea apare direct în program și o pui în text cu un clic.
-- **Dicționare:** dexonline și sinonime, [sinonimul.ro](https://sinonimul.ro/), Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
-- **Asistent AI:** cercetare despre termen, explicație, corectură sau traducere, cu înainte și după.
-- **În proiect:** caută termenul în toată cartea și în notele tale sau pune-l în glosar.
-- **NotebookLM:** întrebi despre termen în sursele tale.
+## 6. Funcțiile, pe rând
 
-Nu trebuie să selectezi nimic înainte: clic dreapta pe un cuvânt îl selectează singur, iar meniul extinde selecția la frază sau la paragraf.
-
-## Pentru scriitori
+### Scrii pe fișe
 
 <p align="center">
   <img src="./assets/readme/corkboard.png" width="100%" alt="Panoul de fișe: fiecare scenă cu titlul, rezumatul și starea ei">
 </p>
 
-Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-ul și textul se mută odată cu ea. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris.
+Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-ul și textul se mută odată cu ea. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text.
+
+<details>
+<summary><strong>Cronologie, legături între documente, panoul de referință</strong></summary>
 
 <p align="center">
   <img src="./assets/readme/timeline.png" width="100%" alt="Cronologia: scenele pe zile, câte un fir pentru fiecare personaj">
 </p>
 
-Personajele, locurile și cercetarea stau lângă text. Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor.
+Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor. O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o citești și fără internet. *Vizualizare → Focus lingvistic* îți colorează substantivele sau verbele, ca să vezi unde se îngroașă textul.
 
-O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o citești și fără internet. *Vizualizare → Focus lingvistic* îți colorează substantivele sau verbele, ca să vezi unde se îngroașă textul.
-
-**Legături între documente.** Scrii `[[Matei]]` și textul devine legătură către fișa lui Matei. Dacă nu există încă un document cu acel titlu, de exemplu `[[Titlu nou]]`, programul îți propune să-l creeze pe loc și să-l lege. Legăturile merg și înapoi, singure: în Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el.
-
-Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, fișe liniate ca pe hârtie și fișe colorate după etichetă (din setările panoului).
+**Legături între documente.** Scrii `[[Matei]]` și textul devine legătură către fișa lui Matei. Dacă documentul nu există încă, de exemplu `[[Titlu nou]]`, programul îți propune să-l creeze pe loc. În Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el. Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, liniate ca pe hârtie, colorate după etichetă.
 
 <p align="center">
   <img src="./assets/readme/reference.png" width="100%" alt="Panoul de referință: scena Drumul deschisă doar pentru citire lângă scena la care scrii">
@@ -74,130 +86,89 @@ Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, 
 
 *Vizualizare → Deschide ca referință* pune alt document lângă cel la care scrii, doar de citit: planul, o scenă veche sau originalul. Bifezi *Editabil* dacă vrei totuși să-l schimbi.
 
-## Dictezi direct în carte
+</details>
+
+### Traduci
+
+<p align="center">
+  <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
+</p>
+
+Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă; fereastra în care scrii are chenar verde, cealaltă e ușor estompată. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+
+<p align="center">
+  <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">
+</p>
+
+Clic dreapta pe un cuvânt și ai la îndemână:
+
+- **Traduce:** DeepL sau Google Translate, pe cuvânt, frază sau paragraf. Cu o cheie DeepL, inclusiv cea **gratuită** (DeepL API Free, 500.000 de caractere pe lună, cheia se termină în `:fx`), traducerea apare direct în program și o pui în text cu un clic.
+- **Dicționare:** dexonline și sinonime, [sinonimul.ro](https://sinonimul.ro/), Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
+- **Asistent AI, În proiect, NotebookLM:** explicație sau traducere, căutare în toată cartea, glosar, întrebări despre termen în sursele tale.
+
+### Dictezi
 
 <p align="center">
   <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Scribner: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
 </p>
 
-Apeși **F9** și vorbești. Textul apare în carte pe măsură ce vorbești, cam la fiecare patru secunde, cu spații și majusculă la început de frază.
+Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spații și majusculă la început de frază.
 
-- **Text nou:** fără nimic selectat, textul intră la cursor.
-- **Modificare:** selectezi un cuvânt, o frază sau un paragraf și dictezi. Ce spui înlocuiește selecția, iar un singur Ctrl+Z te întoarce la textul vechi.
-- **Pauză** oprește scrierea fără să închidă microfonul, **Stop** încheie, iar **Anulează** scoate tot ce ai dictat de la pornire.
-- **Fișier → Importă → Transcrie fișier audio…** face din MP3, WAV, M4A, OGG sau FLAC un document nou în Cercetare, pe paragrafe, cu ora din înregistrare la fiecare paragraf. Pe un fișier audio din binder ai *Transcrie cu D&TED*.
-- Numele din carte (Ilinca, Apuseni…) le scrii o dată în *Setări → Servicii și conturi*, ca să fie recunoscute corect. Înlocuirile tale automate se aplică și textului dictat.
+- **Text nou:** fără selecție, textul intră la cursor.
+- **Modificare:** selectezi un cuvânt, o frază sau un paragraf și dictezi; ce spui înlocuiește selecția, iar un singur Ctrl+Z te întoarce la textul vechi.
+- **Pauză**, **Stop** și **Anulează**, care scoate tot ce ai dictat de la pornire.
+- **Fișier → Importă → Transcrie fișier audio…**: un MP3, WAV, M4A, OGG sau FLAC devine document în Cercetare, pe paragrafe, cu ora din înregistrare.
+- Numele din carte le scrii o dată în *Setări → Servicii și conturi*, ca să fie recunoscute corect; înlocuirile tale automate se aplică și textului dictat.
 
-Recunoașterea vorbirii o face [D&TED](https://github.com/Hermeneuticus-of-things/dted), un program separat, gratuit, care lucrează **pe calculatorul tău, fără internet**. Îl instalezi o dată, iar Scribner îl găsește singur. Fără D&TED, restul programului merge la fel.
+Recunoașterea vorbirii o face [D&TED](https://github.com/Hermeneuticus-of-things/dted), un program separat, gratuit, care lucrează **pe calculatorul tău, fără internet**. Îl instalezi o dată, iar Scribner îl găsește singur.
 
-## Interfață pe gustul tău
-
-<p align="center">
-  <img src="./assets/readme/customize.png" width="100%" alt="Fereastra Personalizează bara de instrumente: elementele disponibile în stânga, cele din bară în dreapta">
-</p>
-
-Sus vezi doar ce folosești des: meniurile, titlul, Editor / Corkboard / Outline, Compile și Inspector. Restul stă în meniuri ordonate: Fișier, Editare, Vizualizare, Proiect, Documente, Navigare, Unelte, AI și Ajutor.
-
-Din *Vizualizare → Personalizează bara de instrumente* alegi singur butoanele, pentru bara de sus și pentru bara de formatare. Le adaugi, le scoți, le muți cu mouse-ul. Ce scoți din bară rămâne în meniuri. Dacă te-ai încurcat, apeși „Restabilește implicit”.
-
-<p align="center">
-  <img src="./assets/readme/aimenu.png" width="100%" alt="Meniul AI deschis, cu submeniul AI pe selecție">
-</p>
-
-Tot ce ține de AI stă într-un singur meniu: asistentul, revizia, AI pe selecție sau pe toată cartea, NotebookLM și setările. Dacă oprești AI-ul, în meniu rămân doar revizia fără AI și setările.
-
-<p align="center">
-  <img src="./assets/readme/ruler.png" width="100%" alt="Rigla deasupra textului, cu indentare și un tab care aliniază numerele de pagină">
-</p>
-
-Rigla (*Editare → Format → Arată / ascunde rigla* sau Ctrl+Alt+Shift+R) îți arată indentările și tab-urile. Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat, la dreapta sau zecimal, pentru cifre aliniate la virgulă. În Word iese exact la fel.
-
-## Corectezi fără grijă
+### Corectezi
 
 <p align="center">
   <img src="./assets/readme/irep.png" width="100%" alt="Revizia automată găsește ghilimele, spații și punctuație greșite">
 </p>
 
-Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, punctuația și repetițiile, apoi le repară cu un clic.
+Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, punctuația și repetițiile, apoi le repară cu un clic. Când corectezi de mână un cuvânt subliniat, programul ține minte și data viitoare îl corectează singur. Cuvintele străine și transliterările (de exemplu sanscrita în IAST: ā, ī, ṛ, ś) rămân neatinse.
 
-**Corecturi învățate.** Când corectezi de mână un cuvânt subliniat, programul ține minte. Data viitoare îl corectează singur, cu majusculele la locul lor.
-
-**Cuvintele străine rămân neatinse.** Termenii din alte limbi și transliterările (de exemplu sanscrita în IAST: ā, ī, ṛ, ś) nu sunt „corectați” nici de corecturile învățate, nici de verificarea limbii.
+<details>
+<summary><strong>Repetiții apropiate, asistentul AI, versiuni</strong></summary>
 
 <p align="center">
   <img src="./assets/readme/repetition.png" width="100%" alt="Panoul de revizie cu secțiunea Repetiții apropiate (S70): scutul apare de două ori în fraze vecine">
 </p>
 
-**Repetiția apropiată.** Același cuvânt în aceeași frază sau în fraza vecină apare ca semnal: `⚠ REP L1 «scutul» ×2`. Un clic te duce la el. Nu e o greșeală și nu se repară automat; tu hotărăști dacă supără.
+**Repetiția apropiată.** Același cuvânt în aceeași frază sau în fraza vecină apare ca semnal: `⚠ REP L1 «scutul» ×2`. Un clic te duce la el; tu hotărăști dacă supără.
 
-**Textul tău e protejat.** Ce scrii de mână devine text al autorului. Revizia cu AI nu schimbă, nu mută și nu șterge niciun paragraf scris de tine. Dacă vede ceva acolo, doar îți semnalează, iar toate modificările tale se notează.
+**Textul tău e protejat.** Ce scrii de mână devine text al autorului. Revizia cu AI nu schimbă, nu mută și nu șterge niciun paragraf scris de tine; doar semnalează, iar modificările tale se notează.
 
 <p align="center">
   <img src="./assets/readme/ai.png" width="100%" alt="Asistentul AI arată corectura cuvânt cu cuvânt, cu înainte și după">
 </p>
 
-Dacă vrei, asistentul AI face corectură, rezumate sau o a doua părere. Vezi exact ce schimbă și accepți doar ce îți place. Merge cu furnizorul tău: Anthropic, OpenAI, Google Gemini, NVIDIA NIM, OpenRouter și alții, sau un model care rulează pe calculatorul tău. Poți opri AI-ul complet din Setări.
+Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce îți place. Merge cu Anthropic, OpenAI, Google Gemini, NVIDIA NIM, OpenRouter și alții, sau cu un model care rulează pe calculatorul tău. Îl poți opri complet din Setări.
 
 <p align="center">
   <img src="./assets/readme/snapshots.png" width="100%" alt="Două versiuni ale aceluiași text, comparate una lângă alta">
 </p>
 
-Înainte de o rescriere mare faci o „poză” a textului. Mai târziu compari versiunile și te întorci la cea bună. Totul se salvează singur, iar copiile de siguranță se fac automat.
+Înainte de o rescriere mare faci o „poză” a textului; mai târziu compari versiunile și te întorci la cea bună.
 
-## Același proiect, oriunde
+</details>
 
-<p align="center">
-  <img src="./assets/readme/sync.svg" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
-</p>
-
-Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe calculatorul tău îl deschizi din aplicație. Pe alt calculator îl deschizi în Chrome sau Edge, cu „Deschide proiect .scribner”, fără să instalezi nimic. Ce scrii într-o parte apare în cealaltă în câteva secunde. Dacă ai scris în același document în două locuri, schimbările se unesc singure, paragraf cu paragraf. Doar când același paragraf a fost schimbat în ambele părți rămâne textul tău, iar varianta venită de pe celălalt calculator se păstrează ca snapshot („Versiunea de pe celălalt calculator, ora …”), cu un mesaj. Nu se pierde nimic. Copiile de conflict făcute de OneDrive, Dropbox sau Google Drive sunt recunoscute și semnalate, iar fișierele lor ascunse sunt ignorate. Dacă NAS-ul sau cloud-ul se deconectează, programul te anunță și reia singur când folderul revine.
-
-## Lucru în echipă
-
-<p align="center">
-  <img src="./assets/readme/team.png" width="100%" alt="Fereastra Echipă: cine lucrează acum, la ce document, și jurnalul cine ce a modificat, cu filtre pe document, persoană și perioadă">
-</p>
-
-Mai mulți oameni lucrează la aceeași carte, fiecare cu Scribner pe calculatorul lui. Proiectul stă într-un folder comun: pe un NAS, în OneDrive, Dropbox sau Google Drive. Fiecare își scrie numele și alege o culoare în Setări → Partajare → Echipă. Fără nume, proiectul rămâne exact ca până acum.
-
-- **Cine lucrează acum:** lângă titlul documentului apare numele celui care îl are deschis, iar în bara de jos vezi câți sunteți în lucru.
-- **Cine ce a modificat și când:** Proiect → Echipă… arată jurnalul cu persoana, data și ora, câte cuvinte a adăugat și a șters și un fragment din text. Îl filtrezi pe documentul deschis sau pe tot proiectul, pe persoană și pe perioadă.
-- **Blocare:** butonul cu lacăt de lângă titlu blochează documentul pentru ceilalți. La ei se deschide doar pentru citire, cu „Blocat de …”. Dacă un calculator rămâne închis, blocarea expiră singură după o jumătate de oră.
-- **Schimbările se unesc singure,** paragraf cu paragraf. Același paragraf schimbat de doi oameni: rămâne textul tău, iar varianta celuilalt se păstrează în Snapshot-uri.
-- **Agenții AI** (Claude, Codex prin MCP) apar în jurnal ca persoană separată, „agent”, și pot citi cine lucrează și ce e blocat.
-
-Fiecare calculator scrie doar fișierele lui (`team/log-<calculator>.jsonl` și `team/presence-<calculator>.json`), așa că OneDrive sau Dropbox nu fac copii de conflict din cauza echipei.
-
-## Legătura cu Claude, Codex și alți agenți AI
-
-Dacă lucrezi cu un agent AI, îl poți lăsa să lucreze direct în proiect: să citească capitolele, să scrie sinopsisuri, să caute, să facă revizia sau Compile. Din meniul *AI → Conectează la Claude (MCP)* configurezi Claude Desktop cu un clic sau copiezi comanda pentru Claude Code. Nu ai nevoie de Node.js: programul instalat pornește singur legătura.
-
-Merge și cu Codex, Gemini CLI, Cursor, VS Code și alți clienți MCP. Comenzile exacte, cu căile tale, sunt în *Ajutor → „Ce faci tu”*. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
-
-## Întrebi sursele, ca într-un caiet de cercetare
+### Cercetezi
 
 <p align="center">
   <img src="./assets/readme/research.png" width="100%" alt="Panoul Cercetare în proiect: o întrebare și o întrebare de continuare, răspunsuri cu trimiteri [1], [2], sursele folosite și întrebări propuse sub răspuns">
 </p>
 
-În panoul **Cercetare → Întreabă** discuți cu sursele tale:
+În **Cercetare → Întreabă** discuți cu sursele tale: primești răspunsul cu trimiteri [1], [2], iar un clic te duce la pasaj. Continui discuția, alegi ce surse folosește (manuscrisul, cercetarea, notele sau anumite dosare), aduci PDF, Word, text sau pagini web și salvezi răspunsul ca notă ori îl inserezi în text, cu trimiterile ca note de subsol. Fără AI, panoul doar caută în surse. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT**, **Claude Projects** sau **Manus**, gata împărțită.
 
-- pui o întrebare și primești răspunsul cu trimiteri [1], [2]; un clic te duce la pasajul din document;
-- continui discuția („și în capitolul 3?”); programul ține minte ce ați vorbit, iar discuțiile se păstrează în proiect;
-- alegi ce poate folosi: manuscrisul, cercetarea, notele sau doar anumite dosare;
-- aduci surse noi dintr-un pas: PDF, Word, text, pagini web (cu imagini) sau text lipit;
-- folosești răspunsul: **Salvează ca notă**, **Inserează în document** (trimiterile devin note de subsol sau legături), **Copiază**;
-- sub fiecare răspuns apar 2–3 întrebări de continuare, pe care le alegi cu un clic.
+### Agenți AI și linia de comandă
 
-Fără AI, panoul caută doar în surse. Cartea se poate trimite și în afară: **NotebookLM**, **Gemini**, **ChatGPT** sau **Claude Projects** și **Manus** primesc aceleași surse, gata împărțite (vezi linia de comandă mai jos).
-
-## Linia de comandă
-
-Pentru cine preferă terminalul sau vrea scripturi, programul instalat are comanda `scribner` (la instalare bifezi „Comanda scribner în terminal”), fără Node.js:
+Un agent AI poate lucra direct în proiect: citește capitolele, scrie sinopsisuri, caută, face revizia sau Compile. Din *AI → Conectează la Claude (MCP)* configurezi Claude Desktop cu un clic sau copiezi comanda pentru Claude Code; merge și cu Codex, Gemini CLI, Cursor și VS Code. Nu ai nevoie de Node.js. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
 
 ```powershell
 scribner info "D:\Carti\Karma.scribner"
-scribner search "D:\Carti\Karma.scribner" "faptă" --whole
 scribner compile "D:\Carti\Karma.scribner" --format docx -o "D:\Carti\Karma.docx"
 scribner export-sources "D:\Carti\Karma.scribner" -o "D:\Surse" --target notebooklm
 scribner ask "D:\Carti\Karma.scribner" "Ce spune cartea despre urmă?" --session karma
@@ -207,15 +178,18 @@ scribner ask "D:\Carti\Karma.scribner" "Ce spune cartea despre urmă?" --session
   <img src="./assets/readme/cli.png" width="100%" alt="Fereastră PowerShell cu scribner info, care arată titlul, autorul și numărul de cuvinte, apoi scribner export-sources pentru NotebookLM și fișierele create">
 </p>
 
-`export-sources` face un folder cu cuprinsul cu rezumate, câte un fișier pe capitol, cercetarea și notele; cu `--target` (`notebooklm`, `gemini`, `chatgpt`, `claude`, `manus`) se potrivește limitelor fiecărei unelte, de exemplu cel mult 50 de surse pentru NotebookLM. `ask` răspunde din surse cu trimiteri, iar `--session` păstrează discuția pentru întrebări de continuare. Toate comenzile sunt în Ajutor → Ce faci tu → Linia de comandă.
+Comanda `scribner` o bifezi la instalare. Toate comenzile sunt în *Ajutor → Ce faci tu → Linia de comandă*.
 
-## Compile: de la bucăți la carte
+### Compilezi
 
 <p align="center">
   <img src="./assets/readme/compile.png" width="100%" alt="Fereastra Compilează: formatele predefinite în stânga, formatul de ieșire și filele de setări în dreapta">
 </p>
 
-Scrii pe bucăți: scene, capitole, părți. *Compile* (*Fișier → Compilează…*) le adună într-o singură carte, gata de trimis la editură, de tipărit sau de pus pe un cititor de e-book. Pașii sunt mereu aceiași: alegi ce intră, alegi forma, apeși *Compilează*.
+*Fișier → Compilează…* adună bucățile într-o singură carte. Pașii sunt mereu aceiași: alegi ce intră, alegi forma, apeși *Compilează*. Formatele gata făcute acoperă manuscrisul pentru editură, cartea tipărită 6 × 9 in, e-book-ul și PDF-ul de citit; ieșirea poate fi Word, PDF, EPUB, ODT, RTF, HTML, Markdown, LaTeX, Fountain sau Final Draft.
+
+<details>
+<summary><strong>Compile pas cu pas: conținut, formate, secțiuni, pagină, tipografie</strong></summary>
 
 **1. Ce intră în carte.** În fila *Conținut* alegi tot manuscrisul, un singur dosar sau doar selecția curentă, ori o colecție. Orice document poate fi scos din carte fără să-l ștergi: clic dreapta în binder și debifezi *Include în Compile* (titlul apare tăiat). Poți filtra după etichetă și după stare, de exemplu doar scenele „Final”. Tot aici adaugi materia de început (pagina de titlu automată cu titlu, subtitlu și autor, cuprinsul, un dosar cu dedicație sau prefață) și materia de final.
 
@@ -286,41 +260,77 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 
 **10. Verificarea.** *Previzualizare* îți arată rezultatul înainte să salvezi. Fișierele ies valide: DOCX-ul se deschide fără reparații în Word și LibreOffice, EPUB-ul trece verificarea cititoarelor de e-book. *Salvează setările* ține alegerile pentru data viitoare, ca următorul Compile să fie un singur clic.
 
-### Câteva pagini pe hârtie
+**Câteva pagini pe hârtie.**
 
 <p align="center">
   <img src="./assets/readme/pagesetup.png" width="100%" alt="Fereastra Configurare pagină: hârtie, orientare, margini, antet și subsol">
 </p>
 
 Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire → Configurare pagină* alege formatul, marginile, antetul și subsolul. În aplicația desktop, *Previzualizare tipărire* îți arată paginile reale (zoom, Tipărește, Salvează PDF) înainte să le trimiți la imprimantă.
+</details>
 
-## Ce urmează
-
-**Lucru în echipă în timp real, printr-un server Scribner.** Lucrul prin folderul comun e gata (vezi „Lucru în echipă”). Urmează un server mic, pe care îl pornești pe un calculator din rețea, pe NAS sau pe internet. Cu el vei avea:
-
-- **scris în același timp în același document,** cu cursorul și selecția celorlalți, colorate;
-- **lucru fără internet:** scrii liniștit, iar la reconectare schimbările pleacă și vin singure;
-- **roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor;
-- **modificări propuse:** schimbările altcuiva apar marcate până le accepți sau le respingi;
-- **alegerea variantei** când același paragraf a fost schimbat de doi oameni, cu cele două texte puse unul lângă altul.
-
-Planul complet e în [`ROADMAP.md`](ROADMAP.md).
-
-## Ai găsit o problemă?
+### Interfața
 
 <p align="center">
-  <img src="./assets/readme/report.png" width="100%" alt="Fereastra Raportează o problemă: descrierea cu cuvintele tale, ce făceai înainte și detaliile tehnice completate automat">
+  <img src="./assets/readme/customize.png" width="100%" alt="Fereastra Personalizează bara de instrumente: elementele disponibile în stânga, cele din bară în dreapta">
 </p>
 
-Nu trebuie să știi nimic tehnic:
+Sus vezi doar ce folosești des; restul stă în meniuri ordonate. Din *Vizualizare → Personalizează bara de instrumente* alegi singur butoanele și le muți cu mouse-ul. Tot ce ține de AI stă într-un singur meniu. Rigla (Ctrl+Alt+Shift+R) arată indentările și tab-urile, ca în Word.
 
-1. Deschide *Ajutor → Raportează o problemă…*. Dacă programul a întâlnit o eroare, îți propune singur, discret, jos în dreapta: „A apărut o problemă. Trimite raportul?”.
-2. Scrie cu cuvintele tale ce s-a întâmplat și, dacă vrei, ce făceai înainte.
-3. Apasă *Trimite pe GitHub*. Se deschide pagina proiectului cu raportul completat; acolo apeși *Submit new issue*. Ai nevoie de un cont GitHub gratuit. Fără cont, apeși *Copiază raportul* și trimiți textul cum îți e comod.
+<details>
+<summary><strong>Meniul AI și rigla</strong></summary>
 
-**Ce se trimite:** versiunea programului, sistemul de operare, limba interfeței, ultimele erori înregistrate de program și numele ultimelor comenzi. Le vezi pe toate la *Detalii tehnice trimise*, înainte să trimiți. **Ce nu se trimite:** textul cărții și al notelor, numele tău de utilizator, căile proiectelor și cheile API; acestea sunt ascunse automat.
+<p align="center">
+  <img src="./assets/readme/aimenu.png" width="100%" alt="Meniul AI deschis, cu submeniul AI pe selecție">
+</p>
 
-## Cum îl instalezi
+Meniul AI adună asistentul, revizia, AI pe selecție sau pe toată cartea, NotebookLM și setările. Dacă oprești AI-ul, în meniu rămân doar revizia fără AI și setările.
+
+<p align="center">
+  <img src="./assets/readme/ruler.png" width="100%" alt="Rigla deasupra textului, cu indentare și un tab care aliniază numerele de pagină">
+</p>
+
+Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat, la dreapta sau zecimal, pentru cifre aliniate la virgulă. În Word iese exact la fel.
+
+</details>
+
+## 7. Cum lucrați împreună
+
+<p align="center">
+  <img src="./assets/readme/team.png" width="100%" alt="Fereastra Echipă: cine lucrează acum, la ce document, și jurnalul cine ce a modificat, cu filtre pe document, persoană și perioadă">
+</p>
+
+**Același proiect, pe mai multe calculatoare.** Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe fiecare calculator îl deschizi din aplicație sau direct în Chrome ori Edge, fără instalare. Ce scrie unul apare la celălalt în câteva secunde.
+
+**Mai mulți oameni, aceeași carte.** Fiecare își scrie numele și alege o culoare în *Setări → Partajare → Echipă*. Fără nume, proiectul rămâne exact ca până acum.
+
+- **Cine lucrează acum:** lângă titlul documentului apare numele celui care îl are deschis; în bara de jos vezi câți sunteți.
+- **Cine ce a schimbat și când:** *Proiect → Echipă…* arată jurnalul cu persoana, data, cuvintele adăugate și șterse și un fragment, filtrat pe document, persoană și perioadă.
+- **Blocare:** lacătul de lângă titlu blochează documentul pentru ceilalți; la ei se deschide doar pentru citire. Un calculator închis își pierde singur blocările după o jumătate de oră.
+- **Îmbinare:** schimbările făcute în paragrafe diferite se unesc singure. Același paragraf schimbat în două locuri: rămâne textul tău, iar varianta celuilalt se păstrează ca snapshot. Nu se pierde nimic.
+- **Siguranță:** copiile de conflict făcute de OneDrive sau Dropbox sunt recunoscute și semnalate; dacă NAS-ul ori cloud-ul se deconectează, primești un mesaj și programul reia singur.
+- **Agenții AI** (Claude, Codex prin MCP) apar în jurnal ca persoană separată, „agent”, și nu scriu în documentele blocate.
+
+<p align="center">
+  <img src="./assets/readme/sync.svg" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
+</p>
+
+## 8. Ce urmează
+
+Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
+
+- **Scris în același timp în același document**, printr-un server Scribner pe un calculator din rețea, pe NAS sau pe internet, cu cursorul și selecția celorlalți, colorate.
+- **Lucru fără internet**, cu trimiterea schimbărilor la reconectare și un indicator „sincronizat / în așteptare / conflict”.
+- **Alegerea variantei** când același paragraf a fost schimbat de doi oameni, cu textele puse alături.
+- **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
+- **Compararea versiunilor direct din jurnalul echipei.**
+- **Adnotări pe PDF-urile** din Cercetare.
+
+Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea e descrisă în [`docs/DTED.md`](docs/DTED.md).
+
+## 9. Instalare, întrebări, probleme
+
+### Instalare
 
 Din pagina [Releases](../../releases/latest) descarci una dintre variante:
 
@@ -357,7 +367,8 @@ O versiune nouă apare în Releases de fiecare dată când iese, automat.
 
 La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 lecții scurte, în care înveți lucrând. Manualul complet se deschide oricând cu F1.
 
-## Întrebări
+
+### Întrebări
 
 **Am nevoie de internet?** Nu. Scribner merge pe calculatorul tău și textele rămân la tine. Internetul îți trebuie doar pentru DeepL, dicționarele online și AI.
 
@@ -367,7 +378,9 @@ La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 le
 
 **Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Da. În Setări → Servicii și conturi pui cheile: traduci în program cu DeepL sau Google, verifici gramatica cu LanguageTool, asculți textul cu vocile Speechify. Tot acolo îți ții și alte conturi cu parolă. Totul se păstrează criptat pe calculatorul tău. Pentru AI pui cheia în *AI → Setări AI*: Anthropic, OpenAI, Gemini, NVIDIA NIM, OpenRouter și alții; unele au și modele gratuite.
 
-**Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Același proiect, oriunde](#același-proiect-oriunde).
+**Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
+
+**Pot dicta?** Da, cu F9, dacă ai instalat [D&TED](https://github.com/Hermeneuticus-of-things/dted). Vezi [Dictezi](#dictezi).
 
 **Pot lega un agent AI, ca Claude sau Codex?** Da, prin *AI → Conectează la Claude (MCP)*, fără Node.js. Pentru Codex, Gemini CLI, Cursor sau VS Code, comenzile sunt în *Ajutor → „Ce faci tu”*.
 
@@ -375,7 +388,23 @@ La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 le
 
 **Cât costă?** Nimic. E gratuit și cu cod deschis.
 
-## Sub capotă
+
+### Ai găsit o problemă?
+
+<p align="center">
+  <img src="./assets/readme/report.png" width="100%" alt="Fereastra Raportează o problemă: descrierea cu cuvintele tale, ce făceai înainte și detaliile tehnice completate automat">
+</p>
+
+Nu trebuie să știi nimic tehnic:
+
+1. Deschide *Ajutor → Raportează o problemă…*. Dacă programul a întâlnit o eroare, îți propune singur, discret, jos în dreapta: „A apărut o problemă. Trimite raportul?”.
+2. Scrie cu cuvintele tale ce s-a întâmplat și, dacă vrei, ce făceai înainte.
+3. Apasă *Trimite pe GitHub*. Se deschide pagina proiectului cu raportul completat; acolo apeși *Submit new issue*. Ai nevoie de un cont GitHub gratuit. Fără cont, apeși *Copiază raportul* și trimiți textul cum îți e comod.
+
+**Ce se trimite:** versiunea programului, sistemul de operare, limba interfeței, ultimele erori înregistrate de program și numele ultimelor comenzi. Le vezi pe toate la *Detalii tehnice trimise*, înainte să trimiți. **Ce nu se trimite:** textul cărții și al notelor, numele tău de utilizator, căile proiectelor și cheile API; acestea sunt ascunse automat.
+
+
+### Sub capotă
 
 <details>
 <summary><strong>Pentru cine vrea detalii tehnice</strong></summary>
@@ -432,9 +461,10 @@ Cartea mea.scribner/
   media/                 imagini, PDF, audio
 ```
 
-**Teste.** `npm test` rulează peste 840 de teste. `npm run test:e2e` pornește aplicația reală în Electron și parcurge fluxurile principale. În CI rulează pe Linux și pe Windows, unde se construiesc și installerul și varianta portabilă; la fiecare versiune nouă, Release-ul se publică automat. Planul complet e în [`ROADMAP.md`](ROADMAP.md).
+**Teste.** `npm test` rulează peste 1.000 de teste. `npm run test:e2e` pornește aplicația reală în Electron și parcurge fluxurile principale. În CI rulează pe Linux și pe Windows, unde se construiesc și installerul și varianta portabilă; la fiecare versiune nouă, Release-ul se publică automat. Planul complet e în [`ROADMAP.md`](ROADMAP.md).
 
 </details>
+
 
 ## Licență
 

@@ -1,5 +1,14 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.8 (continuare) — README reorganizat
+
+### Cerința user
+> "README s-a aglomerat; logică mai bună: ce este, pentru cine, ce face, cum face, cum lucrezi, funcțiile pe rând, cum lucrați împreună, ce urmează, instalare"
+
+### Rezultat
+- README pe 9 secțiuni numerotate, în ordinea cerută; harta nouă `features.svg` (8 fișe) cu tabel de linkuri; „Cum face” (bucăți, local, fără pierderi, AI opțional, Compile); „Cum lucrezi” în 4 pași; detaliile lungi (Compile pas cu pas, cronologie, AI, riglă) în secțiuni care se deschid la clic.
+- Scos `voice-team.svg` (înlocuit de harta funcțiilor); „Ce urmează” cu tot planul; întrebare nouă „Pot dicta?”; numărul de teste actualizat.
+
 ## 2026-10-24 — v0.8.8 (continuare) — Bug hunter: 19 bug-uri în echipă și dictare
 
 - **Dictare:** id-urile cererilor se fac în fereastră și se înregistrează înainte de trimitere (rezultatul unei transcrieri rapide nu se mai pierde, bara nu mai rămâne blocată după o eroare); evenimentele merg la fereastra care a cerut; dictarea se oprește la schimbarea documentului (nu mai scrie în altul); „Și apoi” la mijloc de frază devine „și apoi”; scrierea către un D&TED căzut nu mai oprește aplicația; D&TED de altă versiune e închis.
