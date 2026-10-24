@@ -105,3 +105,17 @@ describe('control characters never reach the files', () => {
     expect(rtfEscape('a\u0001b\u000bc')).toBe('abc');
   });
 });
+
+import { parseComments, updateComment } from '../src/lib/panelsExtra.js';
+describe('a comment over mixed formatting is one comment', () => {
+  const html = '<p><span data-comment="C1" class="comment">plain </span><strong><span data-comment="C1" class="comment">bold</span></strong><span data-comment="C1" class="comment"> tail</span> <span data-comment="C2" class="comment">alt</span></p>';
+  it('lists it once, with all its text', () => {
+    const c = parseComments(html);
+    expect(c.map((x) => [x.text, x.on])).toEqual([['C1', 'plain bold tail'], ['C2', 'alt']]);
+  });
+  it('edits and deletes every piece', () => {
+    expect(updateComment(html, 0, { text: 'EDITAT' }).match(/data-comment="EDITAT"/g)).toHaveLength(3);
+    const del = updateComment(html, 0, null);
+    expect(del).toBe('<p>plain <strong>bold</strong> tail <span data-comment="C2" class="comment">alt</span></p>');
+  });
+});
