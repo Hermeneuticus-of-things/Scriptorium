@@ -121,3 +121,9 @@ Rezumat: tot ce se putea face fără resurse de la autor e închis.
 - [x] Învățare din rescriere și din sugestiile corectorului, cu verificare ortografică
 - [x] Potrivire fără majuscule, cu păstrarea lor; opțiune în Setări; ajutor
 Rezumat: greșelile corectate o dată se corectează singure.
+
+### Request: interfață aerisită (după ce termină I-REP/I-EDIT, care lucrează în App.jsx)
+- [ ] Meniu „AI” unic: Asistent AI, I-REP / I-EDIT, cercetare cu AI, acțiuni AI pe selecție, NotebookLM, setări AI, Conectează la Claude (MCP); ascuns cu AI oprit (I-REP rămâne)
+- [ ] Bara de sus fără aglomerare: butoanele rare mutate în meniuri derulante; grupare pe Fișier / Editare / Vizualizare / Proiect / Document / Unelte / AI / Ajutor, ca în Scrivener
+- [ ] FormatBar: comenzile rare în meniuri derulante; ce nu încape trece în „Mai mult ▾”
+- [ ] Verificat la 900 px și 1366 px, temă luminoasă și întunecată; scurtăturile neschimbate
