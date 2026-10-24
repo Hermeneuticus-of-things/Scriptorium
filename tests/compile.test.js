@@ -309,7 +309,9 @@ describe('other outputs', () => {
     expect(await compile.compile(makeProject(), read, 'html', {})).toContain('<!doctype html>');
     const pdf = await compile.compile(makeProject(), read, 'pdf', { format: fmt('pdf-a5') }, { renderPdf: async (html, o) => ({ html, o }) });
     expect(pdf.html).toContain('@page{size:5.83in 8.27in');
-    expect(pdf.o.displayHeaderFooter).toBe(true);
+    // header/footer are CSS page-margin boxes in the HTML (mirrorable, off on front pages)
+    expect(pdf.o.displayHeaderFooter).toBe(false);
+    expect(pdf.html).toMatch(/@(top|bottom)-(left|center|right)\{content:"/);
     await expect(compile.compile(makeProject(), read, 'xyz', {})).rejects.toThrow('Format necunoscut');
   });
   it('previewHtml', () => {
@@ -322,12 +324,13 @@ describe('pdfOptions and print CSS', () => {
     const o = compile.pdfOptions({ format: fmt('paperback') }, makeProject());
     expect(o.pageSize).toEqual({ width: 6, height: 9 });
     expect(o.margins).toEqual({ top: 0.75, bottom: 0.75, left: 0.875, right: 0.625 });
-    expect(o.displayHeaderFooter).toBe(true);
-    expect(o.footerTemplate).toContain('class="pageNumber"');
-    expect(o.headerTemplate).toContain('Drumul');
+    expect(o.displayHeaderFooter).toBe(false);
+    const html = compile.compileHtml(makeProject(), read, { target: 'pdf', format: fmt('paperback') });
+    expect(html).toMatch(/counter\(page\)/);
+    expect(html).toContain('Drumul');
     const a4 = compile.pdfOptions({ format: fmt('manuscris') }, makeProject());
     expect(a4.pageSize).toEqual({ width: 8.27, height: 11.69 });
-    expect(a4.headerTemplate).toContain('Popescu / DRUM / <span class="pageNumber"></span>');
+    expect(compile.compileHtml(makeProject(), read, { target: 'pdf', format: fmt('manuscris') })).toContain('"Popescu / DRUM / " counter(page)');
   });
   it('mirrored margins via @page :left/:right only for pdf target', () => {
     const css = compile.compileHtml(makeProject(), read, { format: fmt('paperback'), target: 'pdf' });

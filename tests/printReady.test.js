@@ -48,7 +48,7 @@ describe('book ready for print and digital', () => {
     const html = compile.compileHtml(project, read, { titlePage: true, target: 'pdf', coverImage: cover });
     expect(html).toContain('<p class="book-subtitle">Roman în trei părți</p>');
     expect(html).toMatch(/Plecarea<\/h\d><p class="subtitle">O dimineață de octombrie<\/p>/);
-    expect(html).toContain('class="cover-page"');
+    expect(html).toContain('class="cover-page front-page"');
     expect(html).toContain(SPECIAL);
     expect(html).toMatch(/orphans:2;widows:2;hyphens:auto/);
     expect(html).toMatch(/break-after:avoid/);
@@ -140,5 +140,35 @@ describe('images keep the size and place chosen in the editor', () => {
     const dim = F.pageDimensions(pg);
     const m = pg.margins || {};
     expect(Math.round(ext[0][0])).toBe(Math.floor((dim.widthIn - (m.inner ?? 1) - (m.outer ?? 1)) * 96));
+  });
+});
+
+describe('figures vs images with text around them', () => {
+  it('only a paragraph without text is centered as a figure', () => {
+    const p1 = { title: 'T', tree: [{ id: 'draft', root: 'draft', type: 'folder', title: 'M', children: [{ id: 'a', type: 'text', title: 'A', includeInCompile: true }] }] };
+    const html = compile.compileHtml(p1, () => `<p><img src="${bigPng(10, 10)}" data-align="right" style="float: right">Text care curge în jurul imaginii.</p><p> <img src="${bigPng(10, 10)}"> </p>`, {});
+    expect(html).toMatch(/<p><img[^>]*float: right[^>]*>Text care/);
+    expect(html).toMatch(/<p class="fig"><img/);
+    expect(html).not.toMatch(/:only-child/);
+  });
+});
+
+describe('running header and footer in the PDF', () => {
+  const p1 = { title: 'Drumul "lung"', tree: [{ id: 'draft', root: 'draft', type: 'folder', title: 'M', children: [{ id: 'a', type: 'text', title: 'A', includeInCompile: true }] }] };
+  const fmt = (page) => ({ ...F.legacyFormat(), page: { ...F.legacyFormat().page, ...page } });
+  it('drawn as CSS page-margin boxes, page number as counter(page), mirrored on left pages', () => {
+    const html = compile.compileHtml(p1, () => '<p>x</p>', { target: 'pdf', titlePage: true, format: fmt({ mirrored: true, header: { left: '<$projecttitle>', center: '', right: '' }, footer: { left: '', center: '', right: 'p. <$p>' } }) });
+    expect(html).toMatch(/@page :right\{@top-left\{content:"Drumul \\"lung\\""/);
+    expect(html).toMatch(/@page :left\{@top-left\{content:none;[^}]*\}[^]*@top-right\{content:"Drumul \\"lung\\""/);
+    expect(html).toMatch(/@bottom-right\{content:"p\. " counter\(page\) ""/);
+  });
+  it('no header on the cover, title page and contents; none on the first page when asked', () => {
+    const html = compile.compileHtml(p1, () => '<p>x</p>', { target: 'pdf', titlePage: true, format: fmt({ differentFirstPage: true, header: { left: '', center: '<$projecttitle>', right: '' }, footer: null }) });
+    expect(html).toMatch(/@page front\{@top-left\{content:none\}/);
+    expect(html).toMatch(/\.front-page\{page:front\}/);
+    expect(html).toMatch(/@page :first\{@top-left\{content:none\}/);
+    expect(html).toContain('<div class="title-page front-page">');
+    const opts = compile.pdfOptions({ format: fmt({ header: { left: 'x' } }) }, p1);
+    expect(opts.displayHeaderFooter).toBe(false);
   });
 });
