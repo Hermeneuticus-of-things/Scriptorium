@@ -75,7 +75,10 @@ Alegi forma (manuscris pentru editură, carte tipărită sau e-book) și Scribne
 
 ## Cum îl pornești
 
-Pe Windows: descarci arhiva din pagina [Releases](../../releases), o dezarhivezi oriunde (merge și de pe stick) și pornești `Scribner.exe`. Nu trebuie instalat.
+Pe Windows ai două variante, în pagina [Releases](../../releases):
+
+- **`Scribner-Setup.exe`**: programul de instalare, ca la orice aplicație. Alegi limba și folderul și primești scurtătură pe Desktop și în meniul Start. Se dezinstalează din Setări → Aplicații, iar textele tale rămân.
+- **`Scribner-portabil.exe`**: nu se instalează. Îl pui oriunde, chiar pe stick, și îl pornești. Setările stau lângă el.
 
 La prima pornire poți deschide **Tutorialul interactiv** din ecranul de start: 15 lecții scurte în care înveți făcând. Manualul complet e mereu la F1.
 
@@ -89,7 +92,8 @@ La prima pornire poți deschide **Tutorialul interactiv** din ecranul de start: 
 ```bash
 npm install
 npm start          # construiește și pornește aplicația
-npm run dist:win   # creează Scribner.exe portabil în release/
+npm run dist:win         # aplicația împachetată și varianta portabilă, în release/
+npm run dist:win:setup   # installerul cu wizard (Inno Setup 6, pe Windows)
 ```
 
 `npm run dev` deschide interfața în browser; cu `?demo` la finalul adresei pornește un proiect demonstrativ.

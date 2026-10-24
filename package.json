@@ -1,8 +1,8 @@
 {
   "name": "scribner",
   "productName": "Scribner",
-  "version": "0.2.0",
-  "description": "Program de scris cărți lungi, inspirat de Scrivener 3: import .scriv fără pierderi, Compile, I-REP / I-EDIT, asistent Claude, server MCP pentru agenți AI",
+  "version": "0.7.1",
+  "description": "Program de scris pentru cărți lungi: scrii pe bucăți, le aranjezi liber și primești cartea în Word, PDF sau EPUB.",
   "main": "electron/main.cjs",
   "private": true,
   "bin": {
@@ -15,8 +15,10 @@
     "start": "vite build && electron .",
     "test": "vitest run",
     "mcp": "node mcp/server.mjs",
-    "dist:win": "vite build && electron-builder --win portable",
-    "test:e2e": "vite build && node tests/e2e/electron.e2e.cjs && node tests/e2e/flows.e2e.cjs"
+    "dist:win": "vite build && electron-builder --win dir portable --publish never",
+    "test:e2e": "vite build && node tests/e2e/electron.e2e.cjs && node tests/e2e/flows.e2e.cjs",
+    "dist:win:portable": "vite build && electron-builder --win portable --publish never",
+    "dist:win:setup": "node installer/build-setup.cjs"
   },
   "build": {
     "appId": "ro.scribner.app",
@@ -30,10 +32,19 @@
       "package.json"
     ],
     "win": {
-      "target": "portable"
+      "target": [
+        "dir",
+        "portable"
+      ],
+      "icon": "build/icon.ico"
     },
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
+    },
+    "productName": "Scribner",
+    "portable": {
+      "artifactName": "Scribner-${version}-portabil.exe"
     }
   },
   "dependencies": {

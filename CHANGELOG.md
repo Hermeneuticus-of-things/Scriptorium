@@ -1,5 +1,15 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.7.1 — Installer Windows cu wizard (Inno Setup)
+
+### Cerința user
+> "programul să aibă wizard de instalare, adică .exe" · "Inno Setup cu wizard"
+
+### Rezultat
+- `installer/scribner.iss`: wizard Inno Setup 6 în română și engleză (licență, folder, grup în Start, scurtătură pe Desktop, pornire la final); instalare per utilizator fără drepturi de admin sau pentru toți utilizatorii; dezinstalarea păstrează proiectele și setările.
+- `npm run dist:win` împachetează aplicația și varianta portabilă; `npm run dist:win:setup` face `Scribner-Setup-<versiune>.exe`.
+- Workflow `Windows` pe GitHub (windows-latest): teste, pachet, installer; artefactele se descarcă din Actions, iar un tag `v*` publică automat un Release cu ambele `.exe`.
+
 ## 2026-10-24 — v0.7.1 — Clic dreapta: „În proiect” (căutare, cercetare, glosar)
 
 ### Cerința user
