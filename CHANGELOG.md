@@ -1,5 +1,9 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.6 — Bucle divergente/convergente (runda 3)
+
+- **Lucru în echipă, mai puține conflicte false:** un paragraf adăugat sau șters de un om chiar lângă unul editat de altul se unește singur (înainte cerea alegere). Simularea cu 500 de rulări: conflictele scad de la 379 la 304, fără text pierdut. Ștergerea unui paragraf pe care celălalt l-a editat rămâne o alegere.
+
 ## 2026-10-24 — v0.9.5 — Bucle divergente/convergente (runda 2)
 
 ### Cerința user
