@@ -34,7 +34,7 @@ Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. 
 
 Clic dreapta pe un cuvânt și ai la îndemână:
 
-- **Traduce:** DeepL sau Google Translate, pe cuvânt, pe frază sau pe un paragraf întreg. Cu cheia ta DeepL, traducerea apare direct în program și o pui în text cu un clic.
+- **Traduce:** DeepL sau Google Translate, pe cuvânt, pe frază sau pe un paragraf întreg. Fără cont se deschide pagina DeepL cu textul deja pus. Cu o cheie DeepL, inclusiv cea **gratuită** (DeepL API Free, 500.000 de caractere pe lună, cheia se termină în `:fx`), traducerea apare direct în program și o pui în text cu un clic.
 - **Dicționare:** dexonline și sinonime, [sinonimul.ro](https://sinonimul.ro/), Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
 - **Asistent AI:** cercetare despre termen, explicație, corectură sau traducere, cu înainte și după.
 - **În proiect:** caută termenul în toată cartea și în notele tale sau pune-l în glosar.
