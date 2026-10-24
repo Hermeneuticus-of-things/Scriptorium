@@ -13,7 +13,7 @@ export const MANUAL_RO = [
         id: 'start-intro',
         title: 'Ce este Scribner',
         html: `<p>Scribner este un program pentru texte lungi: romane, non-ficțiune, teze, scenarii, volume de poezie. În loc de un singur fișier uriaș, lucrezi cu <strong>documente mici</strong> (scene, capitole, secțiuni) așezate într-un arbore numit <strong>binder</strong>. Le muți, le împarți și le unești liber, iar la final <strong>Compile</strong> le adună într-un singur manuscris (DOCX, PDF, EPUB și altele).</p>
-<p>Funcțiile urmează logica Scrivener 3, dar programul este scris de la zero. Proiectele Scrivener <code>.scriv</code> se pot importa fără pierderi și se pot exporta înapoi.</p>
+<p>Programul e scris de la zero. Proiectele <code>.scriv</code> se pot importa fără pierderi și se pot exporta înapoi.</p>
 <p>AI-ul este <strong>opțional</strong>: totul merge fără el, iar comutatorul din <em>Setări → AI</em> îl oprește complet.</p>`,
       },
       {
@@ -25,7 +25,7 @@ export const MANUAL_RO = [
 <li><strong>Zona de lucru</strong> (centru): editorul, corkboard-ul sau outline-ul pentru elementul selectat. Comuți cu ${k('Ctrl+1')}, ${k('Ctrl+2')}, ${k('Ctrl+3')} sau cu butoanele <em>Editor / Corkboard / Outline</em> din bara de sus.</li>
 <li><strong>Inspectorul</strong> (dreapta): sinopsis, metadate, note, snapshot-uri, comentarii. Se arată și se ascunde cu ${k('Ctrl+Shift+I')}.</li>
 </ul>
-<p>Bara de sus e aerisită: ⌂ (închide proiectul), Înapoi/Înainte, titlul proiectului, comutatorul <em>Editor / Corkboard / Outline</em>, <em>Compile</em> și <em>Inspector</em>. Restul comenzilor sunt în meniuri, ca în Scrivener 3: <em>Fișier, Editare, Vizualizare, Proiect, Documente, Navigare, Unelte, AI, Ajutor</em> (în aplicația desktop, în meniul nativ al ferestrei). Comenzile înrudite sunt grupate în submeniuri (▸), de exemplu <em>Fișier → Importă ▸ / Exportă ▸</em>; <em>Format</em> e un submeniu în <em>Editare</em>, iar <em>Fereastră</em> (layout-uri, ecran complet) unul în <em>Vizualizare</em>. Split-ul editorului e în <em>Vizualizare → Împarte editorul</em> (și pe bara documentului), Compunerea în <em>Vizualizare</em> (F11).</p>
+<p>Bara de sus e aerisită: ⌂ (închide proiectul), Înapoi/Înainte, titlul proiectului, comutatorul <em>Editor / Corkboard / Outline</em>, <em>Compile</em> și <em>Inspector</em>. Restul comenzilor sunt în meniuri: <em>Fișier, Editare, Vizualizare, Proiect, Documente, Navigare, Unelte, AI, Ajutor</em> (în aplicația desktop, în meniul nativ al ferestrei). Comenzile înrudite sunt grupate în submeniuri (▸), de exemplu <em>Fișier → Importă ▸ / Exportă ▸</em>; <em>Format</em> e un submeniu în <em>Editare</em>, iar <em>Fereastră</em> (layout-uri, ecran complet) unul în <em>Vizualizare</em>. Split-ul editorului e în <em>Vizualizare → Împarte editorul</em> (și pe bara documentului), Compunerea în <em>Vizualizare</em> (F11).</p>
 <p><strong>Meniul AI</strong> adună tot ce ține de AI: <em>Asistent AI</em> (panoul), <em>I-REP / I-EDIT</em>, <em>AI pe selecție ▸</em> (cercetare, explică, corectează, traduce, răspuns din cercetarea proiectului), <em>AI pe toată cartea ▸</em> (sinopsis în bloc, consistență, revizie pe niveluri), <em>NotebookLM ▸</em>, <em>Setări AI…</em> și, în aplicația desktop, <em>Conectează la Claude (MCP)…</em>. Cu AI oprit, în meniu rămân doar <em>I-REP</em> (funcționează fără AI) și <em>Setări AI…</em> (ca să-l pornești din nou).</p>
 <p><strong>Bara se personalizează</strong> din <em>Vizualizare → Personalizează bara de instrumente…</em>: pentru bara de sus și pentru bara de formatare vezi elementele disponibile și pe cele din bară; adaugi, scoți, reordonezi (tragere sau butoanele ↑/↓; în listă Alt+↑/↓), pui separatoare și spații flexibile, alegi afișarea (pictogramă și text / doar pictogramă / doar text) și poți reveni cu <em>Restabilește implicit</em>. Ce scoți din bară rămâne accesibil din meniuri. Bara de formatare mută automat în <em>»</em> ce nu încape pe un rând.</p>
 <p>Lățimea panourilor se schimbă trăgând de marginea lor; programul ține minte layout-ul pentru fiecare proiect.</p>`,
@@ -112,7 +112,7 @@ media/                 imagini, PDF, audio, video</pre>
 <li><strong>Cercetare</strong>: fișe, note, surse, imagini, PDF-uri, pagini web.</li>
 <li><strong>Coș</strong>: elementele șterse. <em>Document → Restaurează din coș</em> le pune la locul inițial; golirea coșului este definitivă.</li>
 </ul>
-<p>Elementele pot fi <strong>documente text</strong>, <strong>dosare</strong> și <strong>fișiere media</strong>. Un document text poate avea și el copii (document-container), ca în Scrivener.</p>`,
+<p>Elementele pot fi <strong>documente text</strong>, <strong>dosare</strong> și <strong>fișiere media</strong>. Un document text poate avea și el copii (document-container).</p>`,
       },
       {
         id: 'binder-organize',
@@ -201,7 +201,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'editor-links',
         title: 'Legături, semne de carte, dicționar',
-        html: `<p>Scrie <code>[[</code> pentru o legătură internă spre alt document din proiect. Legăturile externe se inserează și se editează din bara de format.</p>
+        html: `<p>Scrie <code>[[Titlu]]</code> pentru o legătură internă spre documentul din proiect cu acel titlu (nu contează majusculele și diacriticele; ajunge și începutul titlului, dacă e unic). Dacă niciun document nu se potrivește, textul rămâne așa cum l-ai scris. Legătura internă se poate alege și din bara de format. Legăturile externe se inserează și se editează din bara de format.</p>
 <p>Semnele de carte în text și semnele de carte ale proiectului (<em>Proiect → Semne de carte ale proiectului…</em>) duc rapid la un loc anume.</p>
 <p>Din meniul contextual sau din <em>Unelte</em>: caută cuvântul în dicționar sau sinonime (dexonline), pe Wikipedia sau cu Google; se deschide browserul.</p>
 <p>Corectura ortografică folosește dicționarele sistemului (română și engleză, configurabile). Clic dreapta pe un cuvânt subliniat: sugestii, <em>Adaugă în dicționar</em>, <em>Ignoră</em>. <em>Unelte → Verifică ortografia acum</em> reverifică documentul.</p>`,
@@ -267,7 +267,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'scrivenings-split',
         title: 'Editorul împărțit (split)',
-        html: `<p>Butonul <em>Split</em> deschide al doilea panou. ${k('Alt')}+clic în binder deschide documentul în panoul din dreapta. Panoul poate fi blocat pe un document, așezat orizontal sau vertical (<em>Vizualizare → Split orizontal / vertical</em>) și inversat (<em>Inversează panourile</em>). Același document poate fi deschis în ambele panouri.</p>`,
+        html: `<p><em>Vizualizare → Împarte editorul</em> (sau butonul de pe antetul documentului) deschide al doilea panou. ${k('Alt')}+clic în binder deschide documentul în panoul din dreapta. Panoul poate fi blocat pe un document, așezat orizontal sau vertical (<em>Vizualizare → Împarte orizontal / vertical</em>) și inversat (<em>Inversează panourile</em>). Același document poate fi deschis în ambele panouri.</p>`,
       },
       {
         id: 'scrivenings-quickref',
@@ -364,7 +364,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'snapshots-compare',
         title: 'Comparare și restaurare',
-        html: `<p>În Inspector, fila Snapshot-uri: vezi textul, compară cu textul curent sau între două snapshot-uri (diff colorat), redenumește, șterge, restaurează. Restaurarea face mai întâi snapshot textului curent, deci nu pierzi nimic.</p>`,
+        html: `<p>În Inspector, fila Snapshot-uri: vezi textul, compară cu textul curent sau între două snapshot-uri (diff colorat), redenumește, șterge, restaurează. La comparare alegi nivelul: pe cuvinte, pe sintagme (până la virgulă), pe fraze sau pe paragrafe; nivelurile mari arată mai limpede o rescriere amplă. Restaurarea face mai întâi snapshot textului curent, deci nu pierzi nimic.</p>`,
       },
     ],
   },
@@ -406,7 +406,8 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'targets-document',
         title: 'Ținta documentului',
-        html: `<p>În Inspector setezi ținta unui document, în cuvinte sau caractere. Progresul apare în bara de jos a editorului și în coloana <em>Progres</em> din Outline.</p>`,
+        html: `<p>În Inspector setezi ținta unui document, în cuvinte sau caractere. Progresul apare în bara de jos a editorului și în coloana <em>Progres</em> din Outline.</p>
+<p>Când selectezi text în editor, bara de jos arată și câte cuvinte și caractere are selecția.</p>`,
       },
       {
         id: 'targets-stats',
@@ -444,8 +445,8 @@ media/                 imagini, PDF, audio, video</pre>
       },
       {
         id: 'compile-placeholders',
-        title: 'Placeholders',
-        html: `<p>Placeholder-ele sunt coduri de forma <code>&lt;$nume&gt;</code> înlocuite la Compile. Funcționează în prefixe/sufixe, antete și subsoluri și în text. Lista completă, cu explicații, este în fila <strong>Placeholders</strong> a acestei ferestre de ajutor. Cele mai folosite:</p>
+        title: 'Substituenți',
+        html: `<p>Substituenții sunt coduri de forma <code>&lt;$nume&gt;</code> înlocuite la Compile. Funcționează în prefixe/sufixe, antete și subsoluri și în text. Lista completă, cu explicații, este în fila <strong>Placeholders</strong> a acestei ferestre de ajutor. Cele mai folosite:</p>
 <ul>
 <li><code>&lt;$n&gt;</code>: numărul secțiunii (1, 2, 3…); cu format: <code>&lt;$n:roman&gt;</code> (IV), <code>&lt;$n:lroman&gt;</code> (iv), <code>&lt;$n:words&gt;</code> (patru), <code>&lt;$n:Words&gt;</code> (Patru), <code>&lt;$n:WORDS&gt;</code>.</li>
 <li><code>&lt;$t&gt;</code>: titlul documentului; <code>&lt;$wc&gt;</code>: cuvintele.</li>
@@ -718,7 +719,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'faq-placeholder',
         title: 'Un placeholder apare ca text în carte',
-        html: `<p>Verifică ortografia (<code>&lt;$n&gt;</code>, nu <code>&lt;$N&gt;</code>) și lista din fila Placeholders. <code>&lt;$p&gt;</code> funcționează doar în antet și subsol. Pentru <code>&lt;$img:Nume&gt;</code>, imaginea trebuie să existe în Cercetare cu exact acel titlu sau nume de fișier.</p>`,
+        html: `<p>Verifică ortografia (<code>&lt;$n&gt;</code>, nu <code>&lt;$N&gt;</code>) și lista din fila Substituenți. <code>&lt;$p&gt;</code> funcționează doar în antet și subsol. Pentru <code>&lt;$img:Nume&gt;</code>, imaginea trebuie să existe în Cercetare cu exact acel titlu sau nume de fișier.</p>`,
       },
       {
         id: 'faq-spelling',
@@ -803,7 +804,7 @@ node scripts\ai-smoke.cjs nvidia</pre>
         id: 'yours-mcp',
         title: 'Legarea de Claude, Codex și alți agenți AI (MCP)',
         html: `<p>Scribner are un server MCP inclus (peste 70 de unelte: binder, documente, note, metadate, snapshot-uri, căutare, Compile). Orice agent AI care știe MCP îl poate folosi. <strong>Nu ai nevoie de Node.js</strong>: programul instalat pornește serverul singur, cu variabila <code>ELECTRON_RUN_AS_NODE=1</code>. Agentul vede doar proiectele puse după <code>--project</code>; cu <code>--read-only</code> doar citește. Fiecare scriere face întâi un snapshot și se notează în <code>agent-log.jsonl</code> din proiect.</p>
-<p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>Ajutor → Conectează la Claude (MCP)</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
+<p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>AI → Conectează la Claude (MCP)…</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
 <p>Căile de mai jos sunt cele ale installerului pe Windows (instalare pentru utilizatorul curent). Înlocuiește <code>Ionut</code> cu numele tău de utilizator și calea proiectului cu a ta. Varianta portabilă: folosește calea unde ai pus-o.</p>
 <pre>Program:  C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
 Server:   C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs
