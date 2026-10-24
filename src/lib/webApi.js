@@ -3,7 +3,8 @@
 // sync with the desktop app through a single-file bundle (same shape as lib/bundle.cjs).
 import { newNode } from './text.js';
 import { mergeProject } from './projectMerge.js';
-import { createRoutingKv, createFolderStore, folderSupported, isFolderDir } from './folderKv.js';
+import { createRoutingKv, createFolderStore, folderSupported, isFolderDir, projectText } from './folderKv.js';
+import { findConflictCopies, treeIds } from './syncGuard.js';
 
 export const BUNDLE_FORMAT = 'scribner-bundle';
 export const BUNDLE_VERSION = 1;
@@ -247,11 +248,14 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
   const folders = new Map(); // dir -> FileSystemDirectoryHandle
   const rawKv = createRoutingKv(baseKv, folders);
   const kv = guardKv(rawKv);
-  const watchers = new Map(); // dir -> { timer, stamps, own }
-  // Own writes are not reported back as outside changes: the next change seen on that file is ours.
-  const touched = (dir, file) => {
+  const watchers = new Map(); // dir -> { timer, stamps, own, fails }
+  // Own writes are not reported back as outside changes. They are recognised by content (as on the
+  // desktop): a change whose file holds the text this tab wrote is ours; any other text is an outside
+  // change, even when it lands right after an own write of the same file. Noted before writing, so a
+  // tick between the write and the note cannot report it.
+  const touched = (dir, file, text) => {
     const w = watchers.get(dir);
-    if (w) w.own.set(file, Date.now() + 2 * watchMs + 1000);
+    if (w) w.own.set(file, { text: String(text), until: Date.now() + 2 * watchMs + 1000 });
   };
   // Handle of a folder project, from memory or from IndexedDB (handles survive reloads; the
   // browser asks the user again for permission once per session).
@@ -335,8 +339,11 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
     const docs = {};
     const notes = {};
     const snapshots = {};
+    // Conflict copies a sync client left in docs/ ("<id>-PC.html") are not documents of the project.
+    const ids = treeIds(project.tree);
     for (const k of await kv.keys(K.docPrefix(dir))) {
       const [, kind, id] = k.slice(2).split('|');
+      if (findConflictCopies({ [kind === 'notes' ? 'notes' : 'docs']: [`${id}.html`], ids }).length) continue;
       (kind === 'notes' ? notes : docs)[id] = await kv.get(k);
     }
     for (const k of await kv.keys(K.snapPrefix(dir))) {
@@ -408,9 +415,25 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       return { dir, project };
     },
     // Re-read after another tab changed the project (merge base unchanged).
+    // The window adopts the version it reloads, so it is the base of its next merge (an older base
+    // made the writer's undo of an outside change look like "no change here" and lost it).
     async reloadProject(dir) {
       if (isFolderDir(dir)) await folderHandle(dir);
-      return { dir, project: await need(dir) };
+      const project = await need(dir);
+      bases.set(dir, structuredClone(project));
+      return { dir, project };
+    },
+    // Conflict copies a sync client left in a folder project (see syncGuard.js).
+    async syncConflicts(dir) {
+      if (!isFolderDir(dir)) return [];
+      const st = createFolderStore(await folderHandle(dir));
+      let ids = new Set();
+      try {
+        ids = treeIds((await st.get({ kind: 'project' })).tree);
+      } catch {
+        /* unreadable project.json: only project copies are listed */
+      }
+      return findConflictCopies({ root: await st.names(''), docs: await st.names('docs'), notes: await st.names('notes'), ids });
     },
     // Folder projects: poll the files' modification times (no change events for folders in
     // browsers); changes made by the desktop app or a sync client are reported like a desktop watcher.
@@ -421,20 +444,32 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       }
       if (!isFolderDir(dir) || !folders.has(dir)) return true;
       const store = createFolderStore(folders.get(dir));
-      const w = { stamps: await store.stamps().catch(() => ({})), own: new Map(), busy: false };
+      const w = { stamps: await store.stamps().catch(() => ({})), own: new Map(), busy: false, fails: 0 };
       w.timer = setInterval(async () => {
         if (w.busy) return;
         w.busy = true;
         try {
           const now = await store.stamps();
+          if (w.fails >= 2) emit({ dir, files: [], online: true });
+          w.fails = 0;
           const t = Date.now();
-          for (const [f, until] of w.own) if (until < t) w.own.delete(f);
-          const changed = [...new Set([...Object.keys(now), ...Object.keys(w.stamps)])].filter((f) => now[f] !== w.stamps[f]);
-          const files = changed.filter((f) => !w.own.delete(f));
+          for (const [f, o] of w.own) if (o.until < t) w.own.delete(f);
+          // A file that disappeared is not reported (sync clients delete and recreate files; reading
+          // it now would blank the open document). Its stamp is dropped, so the new copy is reported.
+          const changed = Object.keys(now).filter((f) => now[f] !== w.stamps[f]);
+          const files = [];
+          for (const f of changed) {
+            const own = w.own.get(f);
+            if (own && (await store.text(f).catch(() => undefined)) === own.text) continue;
+            files.push(f);
+          }
           w.stamps = now;
           if (files.length) emit({ dir, files, external: true });
         } catch {
-          /* folder briefly unavailable (sync client, NAS offline): try again next tick */
+          // Folder unavailable (NAS offline, sync client busy, permission withdrawn): try again next
+          // tick, and tell the writer once when it lasts.
+          w.fails += 1;
+          if (w.fails === 2) emit({ dir, files: [], offline: true });
         } finally {
           w.busy = false;
         }
@@ -459,11 +494,13 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       const base = bases.get(dir);
       let merged = false;
       const apply = (stored) => {
+        let out = project;
         if (base && stored && !sameJson(stored, base)) {
           merged = true;
-          return mergeProject(base, project, stored);
+          out = mergeProject(base, project, stored);
         }
-        return project;
+        touched(dir, 'project.json', projectText(out));
+        return out;
       };
       let out;
       if (kv.update) out = await kv.update(K.project(dir), apply);
@@ -471,7 +508,6 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
         out = apply(await kv.get(K.project(dir)));
         await kv.put(K.project(dir), out);
       }
-      touched(dir, 'project.json');
       if (!merged) bases.set(dir, structuredClone(project));
       else emit({ dir, files: ['project.json'], merged: true });
       announce(dir, ['project.json']);
@@ -501,8 +537,8 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       return (await kv.get(K.doc(dir, kind, id))) || '';
     },
     async writeDoc(dir, id, kind, html) {
+      touched(dir, `${kind === 'notes' ? 'notes' : 'docs'}/${id}.html`, String(html ?? ''));
       await kv.put(K.doc(dir, kind, id), html);
-      touched(dir, `${kind === 'notes' ? 'notes' : 'docs'}/${id}.html`);
       announce(dir, [`${kind === 'notes' ? 'notes' : 'docs'}/${id}.html`]);
       return true;
     },

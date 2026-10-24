@@ -109,6 +109,8 @@ import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/B
 import { replaceInHtml } from './lib/search.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
+import { mergeProject } from './lib/projectMerge.js';
+import { pullExternalDocs } from './lib/syncGuard.js';
 
 const SAVE_DELAY = 700;
 const TYPED_COMMIT_DELAY = 400;
@@ -440,36 +442,61 @@ export default function App({ api }) {
     return () => window.removeEventListener('beforeunload', onUnload);
   }, [flush]);
 
-  // Reload documents changed outside the app (AI agents via MCP, sync clients).
-  // A document with unsaved typing keeps the local text; the agent's version is in its snapshots.
+  // Reload documents changed outside the app (AI agents via MCP, sync clients, the same folder
+  // open on another computer). A document with unsaved local edits keeps the local text; the
+  // version that arrived is kept as a snapshot and the writer is told (src/lib/syncGuard.js).
   useEffect(() => {
     if (!dir || !api.onProjectChanged) return undefined;
     api.watchProject(dir).catch(() => {});
-    return api.onProjectChanged(async ({ dir: changedDir, files }) => {
+    return api.onProjectChanged(async ({ dir: changedDir, files, offline, online }) => {
       if (changedDir !== dir) return;
+      if (offline) return setToast(tr('ui.app.folder_indisponibil'));
+      if (online) setToast(tr('ui.app.folder_din_nou_disponibil'));
       try {
         if (files.some((f) => f === 'project.json')) {
           const before = projectRef.current;
           const res = await (api.reloadProject ? api.reloadProject(dir) : api.openProject(dir));
-          // A binder edit made while reading is merged by the next save; keep it on screen.
           if (projectRef.current === before) setProject(res.project);
+          // A binder edit made while reading: the reloaded version is now the merge base, so the
+          // edit is merged onto it here (saving the older copy would undo the outside change).
+          else saveProject(mergeProject(before, projectRef.current, res.project));
         }
         const ids = files.map((f) => /^docs\/([A-Za-z0-9-]+)\.html$/.exec(f)).filter(Boolean).map((m) => m[1]);
-        const updated = {};
-        for (const id of ids) {
-          if (pending.current.has(`${id}|docs`)) continue;
-          updated[id] = await api.readDoc(dir, id, 'docs');
-        }
+        if (!ids.length) return;
+        // Typing an editor has not handed over yet counts as a local edit too.
+        for (const id of ids) for (const k of [id, `split:${id}`, `copy:${id}`]) editorRefs.current.get(k)?.flush?.();
+        const time = new Date().toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' });
+        const { updated, conflicts } = await pullExternalDocs({
+          api,
+          dir,
+          ids,
+          hasLocal: (id) => pending.current.has(`${id}|docs`),
+          localHtml: (id) => pending.current.get(`${id}|docs`),
+          label: tr('ui.app.versiunea_de_pe_celalalt_calculator', { time }),
+        });
         if (Object.keys(updated).length) {
           setDocs((d) => ({ ...d, ...updated }));
           for (const [id, html] of Object.entries(updated)) setEditorHtml(id, html);
           setSaveState(tr('ui.app.actualizat_din_exterior'));
+        }
+        if (conflicts.length) {
+          const titles = conflicts.map((id) => findNode(projectRef.current.tree, id)?.title || id);
+          setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }));
         }
       } catch (e) {
         report(e);
       }
     });
   }, [api, dir, report]);
+
+  // Conflict copies left by the sync client (OneDrive, Dropbox…) are never loaded: tell the writer.
+  useEffect(() => {
+    if (!dir || !api.syncConflicts) return;
+    api
+      .syncConflicts(dir)
+      .then((list) => list?.length && setToast(tr('ui.app.copii_in_conflict', { files: list.slice(0, 5).join(', ') + (list.length > 5 ? ', …' : '') })))
+      .catch(() => {});
+  }, [api, dir]);
 
   // "Notify when target is reached" (Project Targets): once per session and per target.
   const notified = useRef({});

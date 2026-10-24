@@ -1,5 +1,15 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.7 (continuare) — Sincronizare prin OneDrive, Dropbox, Google Drive și NAS: 10 bug-uri, plasă de siguranță
+
+- **Același document editat în două locuri:** nu se mai pierde nimic; textul local rămâne, varianta venită se salvează ca snapshot „Versiunea de pe celălalt calculator, HH:MM”, cu mesaj.
+- **Copii de conflict** (Dropbox, OneDrive, Google Drive, Syncthing, Nextcloud) recunoscute, scoase din exporturi și semnalate la deschidere; `desktop.ini`, `Thumbs.db`, `.DS_Store`, `~$…`, `.~lock` ignorate.
+- **Schimbările nu se mai pierd:** scrierea din celălalt calculator imediat după a ta, NAS cu ore rotunjite la 2 s, fișier șters și recreat de clientul de cloud (nu mai golește documentul deschis).
+- **Îmbinarea binderului** corectă după reîncărcare, pe ambele părți; lock venit de pe un calculator cu ceasul înainte nu mai blochează salvarea.
+- **NAS / cloud deconectat:** un mesaj la dispariție și unul la revenire; aplicația desktop reia urmărirea singură.
+- **Instalare dintr-o comandă:** cât timp depozitul e privat, scriptul acceptă un token GitHub (`GITHUB_TOKEN`) și explică eroarea 404.
+- Teste: 1034 + 2 sărite; scenariu nou folder-sync.
+
 ## 2026-10-24 — v0.8.7 (continuare) — Panoul activ evidențiat
 
 ### Cerința user

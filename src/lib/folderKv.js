@@ -49,6 +49,8 @@ async function remove(dirHandle, name) {
     if (e.name !== 'NotFoundError') throw e;
   }
 }
+// project.json as written to a folder (the web watcher compares its own writes by content).
+export const projectText = (v) => JSON.stringify(v, null, 2);
 const snapName = (file) => (String(file).endsWith('.json') ? String(file) : `${file}.json`);
 
 /** Storage for one project folder. */
@@ -93,7 +95,7 @@ export function createFolderStore(root) {
   async function put(k, v) {
     switch (k.kind) {
       case 'project':
-        return writeText(root, 'project.json', JSON.stringify(v, null, 2));
+        return writeText(root, 'project.json', projectText(v));
       case 'doc':
         check(k.id);
         return writeText(await subdir(root, k.sub, true), `${k.id}.html`, String(v ?? ''));
@@ -121,18 +123,39 @@ export function createFolderStore(root) {
     if (k.kind === 'snaps') return put(k, []);
     return undefined; // never delete project.json / history.json of a user's folder from the web
   }
-  // Last-modified times of project.json, docs/ and notes/ (for watching changes made elsewhere).
+  // Change stamps ("<lastModified>:<size>") of project.json and of docs/<id>.html, notes/<id>.html,
+  // for watching changes made elsewhere. The size catches a second write within the same timestamp
+  // (FAT / SMB shares keep 2 s). Sync-client and OS files (desktop.ini, ~$…, .DS_Store, lock files,
+  // conflict copies of project.json) are left out.
   async function stamps() {
     const out = {};
     const add = async (dirHandle, prefix) => {
       if (!dirHandle) return;
       for await (const [name, h] of dirHandle.entries()) {
-        if (h.kind === 'file' && (prefix || name === 'project.json')) out[prefix + name] = (await h.getFile()).lastModified;
+        if (h.kind !== 'file') continue;
+        if (prefix ? !(name.endsWith('.html') && ID.test(name.slice(0, -5))) : name !== 'project.json') continue;
+        const f = await h.getFile();
+        out[prefix + name] = `${f.lastModified}:${f.size}`;
       }
     };
     await add(root, '');
     await add(await subdir(root, 'docs', false), 'docs/');
     await add(await subdir(root, 'notes', false), 'notes/');
+    return out;
+  }
+  // Raw text of a file given by its path in the folder ("project.json", "docs/<id>.html").
+  async function text(rel) {
+    const parts = String(rel).split('/');
+    const name = parts.pop();
+    let d = root;
+    for (const p of parts) d = await subdir(d, p, false);
+    return readText(d, name);
+  }
+  // File names in the folder itself or in one of its sub-folders ('' = the folder).
+  async function names(sub) {
+    const d = sub ? await subdir(root, sub, false) : root;
+    const out = [];
+    if (d) for await (const [name, h] of d.entries()) if (h.kind === 'file') out.push(name);
     return out;
   }
   // Keys of this folder's docs/notes ("d:<dir>|docs|<id>") or snapshot lists ("s:<dir>|<id>").
@@ -153,7 +176,7 @@ export function createFolderStore(root) {
     }
     return out.sort();
   }
-  return { get, put, del, stamps, keys };
+  return { get, put, del, stamps, keys, text, names };
 }
 
 /**

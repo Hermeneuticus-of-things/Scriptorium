@@ -56,6 +56,7 @@ contextBridge.exposeInMainWorld('api', {
   watchProject: (dir) => call('project:watch', dir),
   // Re-read project.json after an external change (no backup / recent-list side effects).
   reloadProject: (dir) => call('project:reload', dir),
+  syncConflicts: (dir) => call('project:syncConflicts', dir),
   onProjectChanged: (fn) => {
     const listener = (_e, info) => fn(info);
     ipcRenderer.on('project:changed', listener);
