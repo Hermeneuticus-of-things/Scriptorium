@@ -36,7 +36,10 @@ async function probe(id) {
   });
   return res.status;
 }
+let ranked = [];
+let next = 0;
 async function pickModel() {
+  if (ranked.length) return pickNext();
   if (model || pre.kind !== 'openai' || !pre.baseUrl) return;
   const res = await fetch(`${pre.baseUrl}/models`, { headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {} });
   if (!res.ok) throw new Error(`Lista de modele: HTTP ${res.status}`);
@@ -46,10 +49,14 @@ async function pickModel() {
   const pool = provider === 'openrouter' ? all.filter(free) : all;
   const ids = pool.map((m) => m.id).filter((id) => !SKIP.test(id));
   if (provider === 'openrouter') console.log(`     modele gratuite pe OpenRouter: ${ids.length}`);
-  const ranked = [];
   for (const re of PREFER) for (const id of ids.filter((x) => re.test(x)).sort().reverse()) if (!ranked.includes(id)) ranked.push(id);
   for (const id of ids) if (!ranked.includes(id)) ranked.push(id);
-  for (const id of ranked.slice(0, 15)) {
+  ranked = ranked.slice(0, 15);
+  return pickNext();
+}
+async function pickNext() {
+  while (next < ranked.length) {
+    const id = ranked[next++];
     const status = await probe(id).catch(() => 0);
     console.log(`     încerc ${id}: ${status === 200 ? 'răspunde' : `HTTP ${status || 'rețea'}`}`);
     if (status === 200) {
@@ -58,7 +65,7 @@ async function pickModel() {
       return;
     }
   }
-  throw new Error('Niciunul din primele 15 modele nu răspunde pentru acest cont.');
+  throw new Error('Niciun alt model din primele 15 nu răspunde pentru acest cont.');
 }
 
 (async () => {
@@ -70,14 +77,27 @@ async function pickModel() {
     process.exit(1);
   }
   for (const c of CASES) {
-    const t0 = Date.now();
-    try {
-      const r = await ai.runAction({ provider, model, apiKey, ...c });
-      if (!r.text) throw new Error('răspuns gol');
-      console.log(`OK   ${c.action.padEnd(10)} ${r.model} ${Date.now() - t0} ms\n     ${r.text.replace(/\s+/g, ' ').slice(0, 160)}`);
-    } catch (e) {
-      fails++;
-      console.log(`FAIL ${c.action.padEnd(10)} ${e.message}`);
+    // Free models are often overloaded: two retries (3 s, 6 s), then the next model that answers.
+    let done = false;
+    for (let attempt = 0; !done; attempt++) {
+      const t0 = Date.now();
+      try {
+        const r = await ai.runAction({ provider, model, apiKey, ...c });
+        if (!r.text) throw new Error('răspuns gol');
+        console.log(`OK   ${c.action.padEnd(10)} ${r.model} ${Date.now() - t0} ms\n     ${r.text.replace(/\s+/g, ' ').slice(0, 160)}`);
+        done = true;
+      } catch (e) {
+        console.log(`     ${c.action}: ${e.message}`);
+        if (attempt < 2) {
+          await new Promise((res) => setTimeout(res, 3000 * (attempt + 1)));
+          continue;
+        }
+        const switched = ranked.length && (await pickModel().then(() => true, () => false));
+        if (switched && attempt < 8) continue;
+        fails++;
+        console.log(`FAIL ${c.action.padEnd(10)} ${e.message}`);
+        done = true;
+      }
     }
   }
   process.exit(fails ? 1 : 0);
