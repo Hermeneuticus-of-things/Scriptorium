@@ -10,7 +10,7 @@ import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../src/editor/syn
 
 let ed;
 afterEach(() => ed?.destroy());
-const SAVED = '<p data-tabs="2" style="tab-size: 2cm;">a\tb  c</p><p> lead</p><ul><li><p>x</p></li></ul>';
+const SAVED = '<p data-tabs="2" style="tab-size: 2cm;">a\tb  c</p><p> lead</p><ul><li><p>x</p></li></ul><p>end</p>';
 
 describe('saved HTML round-trips whitespace', () => {
   it('loading saved HTML keeps tabs, double and leading spaces', () => {
@@ -29,7 +29,7 @@ describe('saved HTML round-trips whitespace', () => {
     expect(ed.getHTML()).toBe(SAVED);
   });
   it('the Editor component parses with PARSE_OPTIONS', () => {
-    const src = fs.readFileSync(new URL('../src/components/Editor.jsx', import.meta.url), 'utf8');
+    const src = fs.readFileSync('src/components/Editor.jsx', 'utf8');
     expect(src).toMatch(/parseOptions: PARSE_OPTIONS/);
     expect(src).toMatch(/htmlToDoc\(/);
   });

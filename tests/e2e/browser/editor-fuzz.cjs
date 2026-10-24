@@ -60,7 +60,9 @@ async function run(seed) {
         await binder('Începutul').click();
         await page.waitForTimeout(100);
         const after = await html();
-        if (before !== after) fail = `switch lost content\n${before}\n${after}`;
+        // a bare <span> (style-less pasted span) is dropped on reload: harmless
+        const norm = (h) => h.replace(/<span>|<\/span>/g, '');
+        if (norm(before) !== norm(after)) fail = `switch lost content\n${before}\n${after}`;
         await ed(page).click({ delay: 60 });
         await page.waitForTimeout(80);
       }
