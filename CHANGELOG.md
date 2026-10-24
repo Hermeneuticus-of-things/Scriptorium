@@ -9,6 +9,11 @@
 - **Tastatură:** taburile din Compile și din Inspector se schimbă cu ←/→/Home/End și sunt un singur pas de Tab; pe Corkboard tot panoul e un singur pas de Tab, iar săgețile trec de la o fișă la alta.
 - **Siguranță:** previzualizarea semnelor de carte, notele din Inspectorul plutitor și snapshot-urile trec printr-un filtru comun care păstrează doar formatarea (fără scripturi, formulare, redirecționări sau imagini de pe internet); legăturile se deschid în browser.
 - **Restaurarea unei copii de siguranță** refuză arhivele cu peste 200 000 de fișiere sau peste 4 GB despachetat.
+- **Drumul textului (căutare divergentă pe date):**
+  - exportul `.scriv` păstrează tab-urile și spațiile repetate;
+  - saltul de pagină rămâne salt de pagină după oricâte drumuri `.scriv` (nu se mai transformă în „* * *”);
+  - pachetul de proiect (export/import) duce cu el și istoricul scrisului;
+  - „Unește documentele” nu mai trimite în Coș documentele așezate sub cele unite (trec sub primul) și păstrează cuvintele-cheie ale tuturor.
 - **Viteză:** numărul de caractere (ținte pe caractere, istoric) se calculează doar pentru documentele schimbate.
 
 ## 2026-10-24 — v0.9.3 — Bug hunter pe interfață și pe textele în română

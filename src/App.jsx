@@ -1353,7 +1353,10 @@ export default function App({ api: apiProp }) {
     const html = nodes.map((n) => docsNow()[n.id] || '').join('<p>* * *</p>');
     const notes = await Promise.all(nodes.map((n) => api.readDoc(dir, n.id, 'notes')));
     const synopsis = nodes.map((n) => n.synopsis).filter(Boolean).join('\n');
-    let tree = updateNode(projectRef.current.tree, first.id, { synopsis });
+    const keywords = [...new Set(nodes.flatMap((n) => n.keywords || []))];
+    let tree = updateNode(projectRef.current.tree, first.id, { synopsis, ...(keywords.length ? { keywords } : {}) });
+    // Documents nested under a merged one stay in the book: they move under the first document.
+    for (const n of rest) for (const c of findNode(tree, n.id)?.children || []) tree = moveNode(tree, c.id, first.id, 'inside');
     for (const n of rest) tree = moveToTrash(tree, n.id);
     saveProject({ ...projectRef.current, tree });
     writeDocNow(first.id, html);
