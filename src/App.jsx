@@ -41,6 +41,8 @@ import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
 import PrintPreviewDialog from './components/PrintPreviewDialog.jsx';
 import HelpWindow from './components/HelpWindow.jsx';
+import ReportProblemDialog from './components/ReportProblemDialog.jsx';
+import { errorKey, noteAction, onMemoryError } from './lib/reportProblem.js';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import AiJobBar from './components/AiJobBar.jsx';
 import McpConnectDialog from './components/McpConnectDialog.jsx';
@@ -187,6 +189,19 @@ export default function App({ api }) {
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
+  // Help → Report a problem, and the discreet "send a report?" toast for a newly captured error.
+  const [reportOpen, setReportOpen] = useState(false);
+  const [errorPrompt, setErrorPrompt] = useState(false);
+  const seenErrors = useRef(new Set());
+  useEffect(() => {
+    const onErr = (e) => {
+      const k = errorKey(e || {});
+      if (seenErrors.current.has(k)) return;
+      seenErrors.current.add(k);
+      setErrorPrompt(true);
+    };
+    return api.onAppError ? api.onAppError(onErr) : onMemoryError(onErr);
+  }, [api]);
   // Learned corrections: a misspelled word fixed by hand becomes an auto-replacement (Settings →
   // Corrections), so the same typo is fixed while typing next time.
   const replacementsNow = useCallback(() => settingsRef.current?.autoReplacements || [], []);
@@ -1396,6 +1411,7 @@ export default function App({ api }) {
             onError={report}
           />
         )}
+        <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
         <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
       </>
     );
@@ -1759,7 +1775,7 @@ export default function App({ api }) {
     ['help', 'helpPlaceholders', tr('cmd.helpPlaceholders'), () => setHelp({ topic: null, tab: 'placeholders' })],
     ['help', 'helpSyntax', tr('cmd.helpSyntax'), () => setHelp({ topic: null, tab: 'syntax' })],
     ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
-    ['help', 'reportIssue', tr('cmd.reportIssue'), () => window.open('https://github.com/Hermeneuticus-of-things/Scriptorium/issues', '_blank')],
+    ['help', 'reportIssue', tr('cmd.reportIssue'), () => setReportOpen(true)],
     ['help', 'about', 'Despre Scribner', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
     ['tools', 'nameGen', tr('cmd.nameGen'), () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
@@ -1824,7 +1840,7 @@ export default function App({ api }) {
   // MCP needs the desktop app (browser mode has no api.mcpConnectInfo).
   const activeCommands = commandList.filter(([, id]) => (aiEnabled || !AI_ONLY_COMMANDS.has(id)) && (id !== 'mcpConnect' || api.mcpConnectInfo));
   const commands = Object.fromEntries(
-    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run, disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
+    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run: (...a) => (noteAction(id), run(...a)), disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
   );
   commandsRef.current = commands;
   // Menu bar (in-app menus and the native application menu share this layout).
@@ -2660,6 +2676,7 @@ export default function App({ api }) {
         />
       )}
       <DialogA11y />
+      <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
       <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
     </div>
   );
@@ -2667,6 +2684,38 @@ export default function App({ api }) {
 
 // Live regions stay in the DOM all the time so screen readers announce the messages that
 // appear in them (a region inserted together with its text is often not read).
+function ReportUi({ api, open, setOpen, prompt, setPrompt, onDone }) {
+  return (
+    <>
+      {prompt && !open && (
+        <div className="report-toast" role="status">
+          <span>{tr('ui.report.toast')}</span>
+          <button
+            className="primary"
+            onClick={() => {
+              setPrompt(false);
+              setOpen(true);
+            }}
+          >
+            {tr('ui.report.toastSend')}
+          </button>
+          <button onClick={() => setPrompt(false)} aria-label={tr('btn.close')}>×</button>
+        </div>
+      )}
+      {open && (
+        <ReportProblemDialog
+          api={api}
+          onClose={() => setOpen(false)}
+          onDone={(m) => {
+            setOpen(false);
+            onDone(m);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 function Toasts({ error, onCloseError, toast, onCloseToast }) {
   return (
     <>

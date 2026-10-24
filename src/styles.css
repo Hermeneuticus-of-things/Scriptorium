@@ -465,3 +465,15 @@ legend { color: var(--muted); padding: 0 4px; }
 @media (max-width: 640px) { .tb-lists { grid-template-columns: 1fr; } .tb-mid { flex-direction: row; } }
 .toolbar > button[data-tb] { min-width: 30px; justify-content: center; }
 .toolbar .tb-glyph { font-size: 15px; line-height: 1; }
+
+/* Help → Report a problem */
+.report-toast { position: fixed; bottom: 40px; right: 16px; background: var(--panel); color: var(--ink, inherit); border: 1px solid var(--line); box-shadow: 0 6px 24px rgba(0,0,0,.2); padding: 8px 12px; border-radius: 8px; display: flex; gap: 10px; align-items: center; z-index: 21; max-width: min(420px, 92vw); font-size: 13px; }
+.report-toast > button:last-child { background: none; border: none; font-size: 18px; }
+.report-problem textarea { width: 100%; box-sizing: border-box; font: inherit; }
+.report-problem label { display: flex; flex-direction: column; gap: 4px; }
+.report-tech { white-space: pre-wrap; word-break: break-word; font-size: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px; max-height: 30vh; overflow: auto; user-select: text; }
+.report-problem .small { font-size: 12px; margin: 0; }
+
+/* Render error fallback (ErrorBoundary) */
+.crash-screen { max-width: 36em; margin: 15vh auto; padding: 0 16px; }
+.crash-screen h1 { font-size: 1.4em; }

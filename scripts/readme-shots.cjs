@@ -300,6 +300,34 @@ const SHOTS = {
       await p.waitForTimeout(500);
     },
   },
+  reference: {
+    kicker: 'Panoul de referință',
+    title: 'Un al doilea text, doar de citit',
+    sub: 'Vizualizare → Deschide ca referință: ții alături planul, o scenă veche sau originalul, fără să-l modifici din greșeală.',
+    async setup(p) {
+      await pick(p, 'Drumul');
+      await menuPick(p, 'Vizualizare', 'Deschide ca referință');
+      await pick(p, 'Începutul');
+      await noCaret(p);
+    },
+  },
+  report: {
+    kicker: 'Ai găsit o problemă?',
+    title: 'Descrii problema, restul vine singur',
+    sub: 'Ajutor → Raportează o problemă: versiunea, sistemul și ultimele erori se completează automat. Textul cărții nu se trimite.',
+    async setup(p) {
+      await p.evaluate(() => setTimeout(() => { throw new TypeError("Cannot read properties of undefined (reading 'title')"); }, 0));
+      await p.waitForTimeout(300);
+      await p.locator('.report-toast button[aria-label]').click().catch(() => {});
+      await menuPick(p, 'Ajutor', 'Raportează o problemă');
+      const d = p.locator('.report-problem');
+      await d.locator('textarea').first().fill('Am apăsat Compile pe tot manuscrisul și nu s-a creat niciun fișier.');
+      await d.locator('textarea').nth(1).fill('Mutasem două scene în Partea a doua.');
+      await d.locator('summary').click();
+      await p.waitForTimeout(300);
+      await noCaret(p);
+    },
+  },
 };
 
 // --- composition ------------------------------------------------------------------------------

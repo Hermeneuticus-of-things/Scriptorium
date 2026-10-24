@@ -1,5 +1,19 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.6 (continuare) — Raportează o problemă, cu erorile din jurnal
+
+### Cerința user
+> "buton de trimis erori direct pe GitHub, pentru userul care nu se pricepe la calculatoare; automat și eroarea din log"
+
+### Rezultat
+- **Jurnal de erori** (`userData/logs/errors.jsonl`, maximum 200 / 1 MB): erorile din fereastră și din procesul principal se notează singure.
+- **Mesaj discret** la o eroare nouă: „A apărut o problemă. Trimite raportul?”.
+- **Ajutor → Raportează o problemă…**: scrii ce s-a întâmplat; detaliile tehnice (versiune, sistem, ultimele erori, ultimele comenzi) sunt completate automat și se văd înainte de trimitere. „Trimite pe GitHub” deschide pagina cu raportul gata scris (cont GitHub gratuit) și copiază raportul întreg; „Copiază raportul” pentru orice alt canal.
+- **Fără date personale:** fără text din carte, căile de pe disc scurtate (~, <proiect>), cheile API ascunse.
+- **Ecran de recuperare** pentru erorile de afișare: în loc de fereastră albă, un mesaj cu „Reîncarcă”; eroarea ajunge în raport.
+- **README:** secțiunea „Ai găsit o problemă?”, panoul de referință, `[[Titlu nou]]`, legăturile înapoi, numerotarea notelor, aspectul fișelor și blocurile cu formatare păstrată; imagini noi `reference.png`, `report.png`.
+- Teste: 901 + 2 sărite; scenariu report-problem; E2E Electron trece.
+
 ## 2026-10-24 — v0.8.6 — Legături înapoi, panou de referință, numerotarea notelor, fișe personalizate, formatare păstrată
 
 ### Rezultat

@@ -217,7 +217,14 @@ export const MANUAL_EN = [
       { id: 'faq-lost-text', title: 'I lost text', html: `<p>Undo, snapshots, Trash, then <em>File → Backups…</em>.</p>` },
       { id: 'faq-ai', title: 'AI commands are greyed out', html: `<p>Enable AI and enter the key in <em>Settings → AI</em>.</p>` },
       { id: 'faq-scriv', title: 'Scrivener import missed something', html: `<p>Read the import report; the original copy is in <code>scrivener-original/</code>.</p>` },
-      { id: 'faq-report', title: 'Reporting a problem', html: `<p><em>Help → Report a problem</em> opens the GitHub issues page. Include the version, OS and steps to reproduce.</p>` },
+      { id: 'faq-report', title: 'Reporting a problem', html: `<p><em>Help → Report a problem…</em> opens a simple window where you describe the problem in your own words. No technical knowledge is needed.</p>
+<ol>
+<li>Under <em>What happened?</em> write what you saw (e.g. “I clicked Compile and no file was created”).</li>
+<li>Optionally, under <em>What were you doing before?</em>, the steps before it.</li>
+<li>Click <em>Send on GitHub</em>: the project page opens with the report filled in; click <em>Submit new issue</em> there. A free GitHub account is needed. Without one, use <em>Copy report</em> and send the text any way you like.</li>
+</ol>
+<p><strong>What is sent:</strong> the program version, operating system, interface language, the latest errors recorded by the program and the names of the last commands used. You can see all of it under <em>Technical details sent</em> before sending. <strong>What is not sent:</strong> your book's text, notes, your user name, project paths (shown as <code>~</code> and <code>&lt;proiect&gt;</code>) and API keys.</p>
+<p>When the program hits an error, a discreet message appears at the bottom right: <em>Something went wrong. Send a report?</em> (once per distinct error). You can safely close it. Errors are kept in a small log in the app's data folder (<code>logs/errors.jsonl</code>, at most 200 entries).</p>` },
     ],
   },
   {

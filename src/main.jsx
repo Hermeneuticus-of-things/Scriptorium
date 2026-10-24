@@ -1,8 +1,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { createMockApi } from './lib/mockApi.js';
 import { createWebApi } from './lib/webApi.js';
+import { installErrorCapture } from './lib/reportProblem.js';
 import './styles.css';
 import './script.css';
 import './behaviour.css';
@@ -43,5 +45,10 @@ function setupPwa() {
 }
 
 const api = pickApi();
+installErrorCapture(window, api);
 if (api.isWeb) setupPwa();
-createRoot(document.getElementById('root')).render(<App api={api} />);
+createRoot(document.getElementById('root')).render(
+  <ErrorBoundary api={api}>
+    <App api={api} />
+  </ErrorBoundary>,
+);
