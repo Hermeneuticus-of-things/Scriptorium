@@ -203,7 +203,7 @@ function setupSpelling(win) {
     }
     if (text) {
       const st = readSettings();
-      const g = lookupGroups(text, { from: st.translateFrom || 'auto', to: st.translateTo || 'ro' });
+      const g = lookupGroups(text, { from: st.translateFrom || 'auto', to: st.translateTo || 'ro', lang: st.language || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, click: () => lookup(l.url) }));
       const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
       const sv = services.serviceStatus(st, safeStorage);
