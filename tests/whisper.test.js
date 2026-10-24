@@ -43,7 +43,10 @@ describe('built-in engine (main process)', () => {
     zip.file('Release/whisper.dll', 'dll');
     zip.file('../evil.txt', 'x');
     const zipBytes = await zip.generateAsync({ type: 'nodebuffer' });
-    const model = Buffer.alloc(MODEL.minBytes + 10);
+    // A small model: the size limits are lowered for the test (writing 500 MB is slow on CI disks).
+    const savedModel = { minBytes: MODEL.minBytes, maxBytes: MODEL.maxBytes };
+    Object.assign(MODEL, { minBytes: 1000, maxBytes: 100000 });
+    const model = Buffer.alloc(2000);
     model.writeUInt32LE(0x67676d6c, 0);
     const saved = { ...VARIANTS.cpu };
     VARIANTS.cpu.sha256 = crypto.createHash('sha256').update(zipBytes).digest('hex');
@@ -76,8 +79,9 @@ describe('built-in engine (main process)', () => {
       await expect(createWhisperEngine({ root: tempDir(), download: small, platform: 'win32' }).install()).rejects.toThrow(/nu e întreg/);
     } finally {
       Object.assign(VARIANTS.cpu, saved);
+      Object.assign(MODEL, savedModel);
     }
-  });
+  }, 30000);
   it('other systems: no automatic download; removal deletes everything', async () => {
     const e = createWhisperEngine({ root: tempDir(), download: async () => {}, platform: 'linux' });
     expect(e.status().supported).toBe(false);
