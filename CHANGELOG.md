@@ -1,5 +1,26 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.3 — Versiunea web pe un folder .scribner real (OneDrive, Dropbox, Google Drive, NAS), NVIDIA NIM
+
+### Cerința user
+> "continuă automat cu roadmap" · "sincronizare între web și desktop prin OneDrive, Dropbox sau Google Drive sau personal NAS" · "o cheie AI pentru testul cu un model real: NVIDIA sau OpenRouter"
+
+### Decizii
+- Versiunea web (Chrome / Edge pe desktop) deschide un folder `.scribner` real prin File System Access API și scrie exact formatul aplicației desktop (`project.json`, `docs/`, `notes/`, `snapshots/`, `history.json`). Sincronizarea o face clientul de cloud sau NAS-ul; programul nu are server propriu.
+- Schimbările făcute de desktop sau de sincronizare se văd în web printr-un watcher care verifică fișierele la 3 secunde; scrierile proprii nu sunt raportate înapoi.
+- „Șterge” din lista web doar uită folderul; fișierele de pe disc rămân.
+- Cheia AI nu e scrisă nicăieri în repo; testul cu model real citește cheia din variabila de mediu.
+
+### Rezultat
+- `src/lib/folderKv.js` (nou): stocare pe folder + rutare `fs:` în `src/lib/webApi.js`; permisiunea se cere din nou după reîncărcare; același folder deschis de două ori rămâne o singură intrare; id-urile cu `../` sunt respinse.
+- Home în web: „Deschide proiect .scribner” alege un folder, „Importă pachet .json” rămâne separat.
+- Furnizor nou **NVIDIA NIM** (`integrate.api.nvidia.com`, compatibil OpenAI, model implicit `meta/llama-3.3-70b-instruct`, cheie `nvapi-…`).
+- `scripts/ai-smoke.cjs`: `NVIDIA_API_KEY=… node scripts/ai-smoke.cjs nvidia` (sau `openrouter` cu `OPENROUTER_API_KEY`) rulează corectura, traducerea și explicarea unui termen pe modelul real.
+- `tests/webFolder.test.js`: 7 teste pe un folder real, cu aplicația desktop (`lib/store.cjs`) de cealaltă parte. Total 692 teste + 2 sărite.
+
+### Neverificat aici
+- Testul cu modelul NVIDIA real: mediul cloud blochează `integrate.api.nvidia.com` și `openrouter.ai` (403 la proxy). Rulează local scriptul de mai sus.
+
 ## 2026-10-24 — v0.8.2 — Titlul capitolului în antet, Ctrl+Y după o corectură automată, versiune publicată
 
 ### Cerința user

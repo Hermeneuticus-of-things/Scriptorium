@@ -102,7 +102,9 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
         <section>
           <h2>{tr('ui.app.deschide')}</h2>
           <button onClick={run(() => api.openProject())}>{tr('ui.home.deschide_proiect_scribner')}</button>
+          {api.isWeb && api.importBundle && <button onClick={run(() => api.importBundle())}>{tr('ui.home.importa_pachet_json')}</button>}
           <button onClick={run(() => api.importScriv())}>{tr('ui.home.importa_proiect_scrivener_scriv')}</button>
+          {api.isWeb && typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function' && <p className="muted small">{tr('ui.home.folder_sync_tip')}</p>}
         </section>
         <section>
           <h2>Recente</h2>

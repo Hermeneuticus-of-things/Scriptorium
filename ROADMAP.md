@@ -189,7 +189,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Cronologie, hartă de relații, analiză de ritm
 - [x] Panou NotebookLM / RAG cu cozi asincrone și cache pe concept (fluxul NLM din workspace)
 - [x] Revizie multi-agent pe niveluri de zoom (Maha / Macro / Mezzo / Micro / Nano), cu rapoarte GRAVE/MEDIU
-- [~] PWA / sync mobil: versiune web cu IndexedDB și pachete de proiect; sincronizare automată nu există
+- [x] PWA / sync: versiune web cu IndexedDB și pachete de proiect, plus folder `.scribner` real în Chrome/Edge (sincronizare prin OneDrive, Dropbox, Google Drive sau NAS cu aplicația desktop). Pe telefon rămâne pachetul .json (browserele mobile nu au acces la foldere).
 
 ## 5. Excluse intenționat
 

@@ -98,3 +98,12 @@ Rezumat: 77 de unelte MCP (57 noi), 4 bug-uri reparate la cauză, 43 de teste no
 - [ ] Verificat cu LanguageTool real: poziții după emoji
 - [x] Release v0.8.2 cu installer și varianta portabilă
 - [x] installer/build-windows.cmd: installerul cu wizard construit local cu dublu clic
+
+## Session 2026-10-24 (v0.8.3)
+### Request: roadmap: sync web ↔ desktop prin folder (cloud / NAS) + test AI cu model real
+- [x] folderKv.js + rutare în webApi (fs:), permisiune, watcher, ștergere = uitare
+- [x] Home web: deschidere folder + import pachet separat
+- [x] Teste pe folder real cu store.cjs de cealaltă parte (7)
+- [x] Preset NVIDIA NIM + scripts/ai-smoke.cjs (cheia doar din mediu)
+- [ ] Test model real: blocat de rețeaua mediului cloud; de rulat local `NVIDIA_API_KEY=… node scripts/ai-smoke.cjs nvidia`
+Rezumat: web și desktop lucrează pe același folder; sincronizarea o face clientul de cloud sau NAS-ul.
