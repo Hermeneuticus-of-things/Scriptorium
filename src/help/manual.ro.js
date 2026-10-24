@@ -919,7 +919,20 @@ scribner mcp "D:\\Carti\\Karma.scribner"               serverul MCP pentru agen�
       {
         id: 'yours-sync',
         title: 'Același proiect pe desktop și în browser',
-        html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Nu edita același document în două locuri în același timp. Dacă totuși se întâmplă, textul tău rămâne, iar versiunea sosită de pe celălalt calculator este păstrată în <em>Snapshot-uri</em> („Versiunea de pe celălalt calculator, &lt;oră&gt;”) și primești un mesaj. Copiile în conflict lăsate de serviciul de sincronizare (de exemplu <code>project (conflicted copy …).json</code> sau <code>project-PC.json</code>) nu sunt încărcate: aplicația ți le arată la deschidere, ca să le compari și să le ștergi. Dacă folderul nu mai e accesibil (NAS deconectat, permisiune retrasă), primești un mesaj; schimbările reapar când folderul revine. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
+        html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Dacă același document a fost schimbat în două locuri, schimbările se unesc paragraf cu paragraf. Când același paragraf a fost schimbat în ambele părți, textul tău rămâne, iar versiunea sosită de pe celălalt calculator este păstrată în <em>Snapshot-uri</em> („Versiunea de pe celălalt calculator, &lt;oră&gt;”) și primești un mesaj. Copiile în conflict lăsate de serviciul de sincronizare (de exemplu <code>project (conflicted copy …).json</code> sau <code>project-PC.json</code>) nu sunt încărcate: aplicația ți le arată la deschidere, ca să le compari și să le ștergi. Dacă folderul nu mai e accesibil (NAS deconectat, permisiune retrasă), primești un mesaj; schimbările reapar când folderul revine. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
+      },
+      {
+        id: 'yours-team',
+        title: 'Lucru în echipă: mai mulți oameni, același proiect',
+        html: `<p>Pune proiectul într-un folder comun (NAS, OneDrive, Dropbox, Google Drive). Pe fiecare calculator, în <em>Setări → Partajare → Echipă</em>, scrie-ți numele și alege o culoare. Fără nume, nimic nu se schimbă față de lucrul singur.</p>
+<ul>
+<li><strong>Cine lucrează acum:</strong> lângă titlul documentului apare numele celui care îl are deschis; în bara de jos vezi câți sunteți în lucru (clic deschide fereastra <em>Echipă</em>).</li>
+<li><strong>Cine ce a modificat:</strong> <em>Proiect → Echipă…</em> arată jurnalul: persoana, data și ora, cuvinte adăugate și șterse, un fragment. Filtre: documentul deschis sau tot proiectul, persoana, ultima zi, săptămână sau lună. Clic pe titlu deschide documentul.</li>
+<li><strong>Blocare:</strong> butonul cu lacăt de lângă titlu blochează documentul pentru ceilalți; la ei se deschide doar pentru citire, cu „Blocat de …”. Clic din nou deblochează. Un calculator care nu mai dă semne timp de 30 de minute își pierde blocările.</li>
+<li><strong>Îmbinare:</strong> schimbările făcute de doi oameni în paragrafe diferite se unesc singure; același paragraf: rămâne textul tău, varianta celuilalt e în <em>Inspector → Snapshot-uri</em>.</li>
+<li><strong>Agenți AI:</strong> scrierile prin MCP apar în jurnal ca „agent AI (MCP)”; unealta <code>team_activity</code> le arată agenților cine lucrează și ce e blocat.</li>
+</ul>
+<p>Fișierele echipei stau în <code>team/</code>, câte unul pentru fiecare calculator, ca serviciul de sincronizare să nu facă copii de conflict.</p>`,
       },
       {
         id: 'yours-karma',

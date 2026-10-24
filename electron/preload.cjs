@@ -20,6 +20,8 @@ contextBridge.exposeInMainWorld('api', {
   takeSnapshot: (dir, id, name) => call('snap:take', dir, id, name),
   listSnapshots: (dir, id) => call('snap:list', dir, id),
   appendAuthorJournal: (dir, rows) => call('editorial:appendAuthorJournal', dir, rows),
+  teamFiles: (dir) => call('team:files', dir),
+  teamWrite: (dir, name, text, opts) => call('team:write', dir, name, text, opts),
   importScriv: () => call('import:scriv'),
   importFile: (mode, separator) => call('import:file', mode, separator),
   readMedia: (dir, file) => call('media:read', dir, file),

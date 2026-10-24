@@ -77,6 +77,7 @@ const NEW_READ_TOOLS = (ctx) => ({
   list_backups: {},
   editorial_round: {},
   author_journal: {},
+  team_activity: {},
 });
 
 // Every renderer API (electron/preload.cjs) is either reachable over MCP (tool name) or GUI-only
@@ -181,6 +182,8 @@ const PRELOAD_COVERAGE = {
   releaseProject: 'gui: ferestre',
   exportBundle: 'export_bundle',
   importBundle: 'import_bundle',
+  teamFiles: 'team_activity',
+  teamWrite: 'gui: prezența și jurnalul echipei le scrie fereastra persoanei care lucrează (agentul e înregistrat automat ca „agent”)',
   appendAuthorJournal: 'gui: jurnalul MODIFICARI_AUTOR se scrie de fereastra în care autorul salvează (author_journal îl citește)',
   ragBuild: 'research_search',
   ragQuery: 'research_search',

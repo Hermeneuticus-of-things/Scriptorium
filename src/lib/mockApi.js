@@ -169,6 +169,22 @@ export function createMockApi() {
   const files = {};
   const snaps = {};
   const authorJournal = {}; // dir -> I-EDIT journal rows
+  const team = {}; // dir -> { name: text } (team/ files on the desktop)
+  // ?demo&team: a second writer ("Ana") works on the first chapter, for trying team work alone
+  // (?demo&team=lock: she has also locked it).
+  const teamDemo = typeof location !== 'undefined' && /[?&]team\b/.test(location.search);
+  if (teamDemo) state.settings.team = { name: 'Ion', color: '#2e7dd7', machine: 'pc-demo' };
+  const demoPeer = (dir) => {
+    const first = state.projects[dir]?.tree?.[0]?.children?.[0]?.children?.[0] || state.projects[dir]?.tree?.[0]?.children?.[0];
+    if (!first) return {};
+    const now = Date.now();
+    const at = (min) => new Date(now - min * 60000).toISOString();
+    const row = (min, added, removed, sample) => JSON.stringify({ doc: first.id, title: first.title, who: 'Ana', color: '#d9822b', machine: 'pc-ana', time: at(min), added, removed, paragraphs: 1, sample });
+    return {
+      'presence-pc-ana.json': JSON.stringify({ who: 'Ana', color: '#d9822b', machine: 'pc-ana', doc: first.id, locks: /[?&]team=lock\b/.test(location.search) ? [first.id] : [], time: at(0) }),
+      'log-pc-ana.jsonl': [row(2 * 1440, 42, 3, 'Drumul urca pe lângă pârâu, printre fagi.'), row(25, 12, 9, 'Ceața se ridica încet din vale.')].join('\n') + '\n',
+    };
+  };
   const key = (dir, id, kind) => `${dir}|${kind || 'docs'}|${id}`;
   const load = (dir) => {
     if (!state.projects[dir]) {
@@ -272,6 +288,14 @@ export function createMockApi() {
       const list = (Array.isArray(rows) ? rows : [rows]).filter((r) => r && r.doc && r.old !== r.new);
       (authorJournal[dir] ||= []).push(...list.map((r) => ({ ...r })));
       return list.length;
+    },
+    async teamFiles(dir) {
+      return { ...(teamDemo ? demoPeer(dir) : {}), ...(team[dir] || {}) };
+    },
+    async teamWrite(dir, name, text, { append = false } = {}) {
+      const all = (team[dir] ||= {});
+      all[name] = (append ? all[name] || '' : '') + String(text);
+      return true;
     },
     async readAuthorJournal(dir) {
       return (authorJournal[dir] || []).map((r) => ({ ...r }));

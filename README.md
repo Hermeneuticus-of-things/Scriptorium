@@ -128,7 +128,23 @@ Dacă vrei, asistentul AI face corectură, rezumate sau o a doua părere. Vezi e
   <img src="./assets/readme/sync.svg" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
 </p>
 
-Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe calculatorul tău îl deschizi din aplicație. Pe alt calculator îl deschizi în Chrome sau Edge, cu „Deschide proiect .scribner”, fără să instalezi nimic. Ce scrii într-o parte apare în cealaltă în câteva secunde. Dacă totuși ai scris în același document în două locuri, nu se pierde nimic: varianta venită de pe celălalt calculator se păstrează ca snapshot („Versiunea de pe celălalt calculator, ora …”) și primești un mesaj. Copiile de conflict făcute de OneDrive, Dropbox sau Google Drive sunt recunoscute și semnalate, iar fișierele lor ascunse sunt ignorate. Dacă NAS-ul sau cloud-ul se deconectează, programul te anunță și reia singur când folderul revine.
+Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe calculatorul tău îl deschizi din aplicație. Pe alt calculator îl deschizi în Chrome sau Edge, cu „Deschide proiect .scribner”, fără să instalezi nimic. Ce scrii într-o parte apare în cealaltă în câteva secunde. Dacă ai scris în același document în două locuri, schimbările se unesc singure, paragraf cu paragraf. Doar când același paragraf a fost schimbat în ambele părți rămâne textul tău, iar varianta venită de pe celălalt calculator se păstrează ca snapshot („Versiunea de pe celălalt calculator, ora …”), cu un mesaj. Nu se pierde nimic. Copiile de conflict făcute de OneDrive, Dropbox sau Google Drive sunt recunoscute și semnalate, iar fișierele lor ascunse sunt ignorate. Dacă NAS-ul sau cloud-ul se deconectează, programul te anunță și reia singur când folderul revine.
+
+## Lucru în echipă
+
+<p align="center">
+  <img src="./assets/readme/team.png" width="100%" alt="Fereastra Echipă: cine lucrează acum, la ce document, și jurnalul cine ce a modificat, cu filtre pe document, persoană și perioadă">
+</p>
+
+Mai mulți oameni lucrează la aceeași carte, fiecare cu Scribner pe calculatorul lui. Proiectul stă într-un folder comun: pe un NAS, în OneDrive, Dropbox sau Google Drive. Fiecare își scrie numele și alege o culoare în Setări → Partajare → Echipă. Fără nume, proiectul rămâne exact ca până acum.
+
+- **Cine lucrează acum:** lângă titlul documentului apare numele celui care îl are deschis, iar în bara de jos vezi câți sunteți în lucru.
+- **Cine ce a modificat și când:** Proiect → Echipă… arată jurnalul cu persoana, data și ora, câte cuvinte a adăugat și a șters și un fragment din text. Îl filtrezi pe documentul deschis sau pe tot proiectul, pe persoană și pe perioadă.
+- **Blocare:** butonul cu lacăt de lângă titlu blochează documentul pentru ceilalți. La ei se deschide doar pentru citire, cu „Blocat de …”. Dacă un calculator rămâne închis, blocarea expiră singură după o jumătate de oră.
+- **Schimbările se unesc singure,** paragraf cu paragraf. Același paragraf schimbat de doi oameni: rămâne textul tău, iar varianta celuilalt se păstrează în Snapshot-uri.
+- **Agenții AI** (Claude, Codex prin MCP) apar în jurnal ca persoană separată, „agent”, și pot citi cine lucrează și ce e blocat.
+
+Fiecare calculator scrie doar fișierele lui (`team/log-<calculator>.jsonl` și `team/presence-<calculator>.json`), așa că OneDrive sau Dropbox nu fac copii de conflict din cauza echipei.
 
 ## Legătura cu Claude, Codex și alți agenți AI
 
@@ -258,19 +274,13 @@ Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire
 
 ## Ce urmează
 
-**Lucru în echipă pe aceeași carte.** Mai mulți oameni, fiecare cu Scribner pe calculatorul lui, lucrează la același proiect. Proiectul stă într-un singur loc comun, la alegere:
+**Lucru în echipă în timp real, printr-un server Scribner.** Lucrul prin folderul comun e gata (vezi „Lucru în echipă”). Urmează un server mic, pe care îl pornești pe un calculator din rețea, pe NAS sau pe internet. Cu el vei avea:
 
-- un folder pe un **NAS** din casă sau din birou;
-- un **cloud** (OneDrive, Dropbox, Google Drive);
-- un **server** mic, pe care îl pornești pe un calculator din rețea sau pe internet.
-
-Ce vei vedea în program:
-
-- **cine a schimbat ce și când:** pentru fiecare document, istoria modificărilor, cu numele persoanei, data și ora, și textul de dinainte și de după;
-- **cine lucrează acum** la un document, ca să nu scrieți doi în același loc; documentul deschis de altcineva apare marcat;
-- **îmbinarea schimbărilor:** dacă doi oameni au scris în documente diferite, totul se unește singur; dacă au scris în același paragraf, alegi tu varianta, cu cele două texte puse unul lângă altul;
+- **scris în același timp în același document,** cu cursorul și selecția celorlalți, colorate;
 - **lucru fără internet:** scrii liniștit, iar la reconectare schimbările pleacă și vin singure;
-- **roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor.
+- **roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor;
+- **modificări propuse:** schimbările altcuiva apar marcate până le accepți sau le respingi;
+- **alegerea variantei** când același paragraf a fost schimbat de doi oameni, cu cele două texte puse unul lângă altul.
 
 Planul complet e în [`ROADMAP.md`](ROADMAP.md).
 
