@@ -7,9 +7,9 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 // newest text (blur, unmount, getHtml/setHtml, window unload, App flush) flushes first.
 export const SERIALIZE_DELAY = 300;
 import { EditorContent, useEditor } from '@tiptap/react';
-import { createDocument, getHTMLFromFragment } from '@tiptap/core';
+import { getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
-import { replaceChangedRange } from '../editor/syncDoc.js';
+import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
 import FindBar from './FindBar.jsx';
@@ -75,6 +75,7 @@ const Editor = forwardRef(function Editor(
     {
       extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current }),
       content: html || '<p></p>',
+      parseOptions: PARSE_OPTIONS,
       editable: !readOnly,
       onUpdate: ({ editor: ed }) => {
         dirty.current = { doc: ed.state.doc, schema: ed.schema };
@@ -181,7 +182,7 @@ const Editor = forwardRef(function Editor(
         flushRef.current();
         if (!editor || editor.isDestroyed) return;
         const tr = editor.state.tr;
-        if (replaceChangedRange(tr, createDocument(h || '<p></p>', editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true));
+        if (replaceChangedRange(tr, htmlToDoc(h, editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true));
       },
       selectAround: (kind) => Boolean(editor && !editor.isDestroyed && selectAround(editor.view, undefined, kind)),
       getSelectionText: () => {

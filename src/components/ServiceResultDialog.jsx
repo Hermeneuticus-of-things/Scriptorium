@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { t } from '../lib/i18n.js';
+import { applyCorrections } from '../lib/textRange.js';
 
 // Result of an in-app translation (DeepL / Google) or a grammar check (LanguageTool) on the selection.
 // result: { kind: 'translate', text, service, detected } | { kind: 'grammar', matches, language }
@@ -7,17 +8,7 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
   const isGrammar = result.kind === 'grammar';
   const [chosen, setChosen] = useState(() => (isGrammar ? result.matches.map((m) => (m.replacements[0] !== undefined ? 0 : -1)) : []));
   // Corrected text: apply the chosen replacement of each match, from the end so offsets stay valid.
-  const corrected = () => {
-    let out = source;
-    result.matches
-      .map((m, i) => ({ m, r: chosen[i] }))
-      .filter((x) => x.r >= 0)
-      .sort((a, b) => b.m.offset - a.m.offset)
-      .forEach(({ m, r }) => {
-        out = out.slice(0, m.offset) + m.replacements[r] + out.slice(m.offset + m.length);
-      });
-    return out;
-  };
+  const corrected = () => applyCorrections(source, result.matches, chosen);
   const copy = (text) => navigator.clipboard && navigator.clipboard.writeText(text);
 
   return (

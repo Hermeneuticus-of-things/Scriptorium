@@ -35,9 +35,13 @@ export default function ServicesPanel({ api }) {
     }
   };
   const remove = async (id, fields) => {
-    await api.setService(id, Object.fromEntries(fields.map((f) => [f.id, ''])));
-    setMsg(t('ui.services.sters', { name: data.services[id].label }));
-    load();
+    try {
+      await api.setService(id, Object.fromEntries(fields.map((f) => [f.id, ''])));
+      setMsg(t('ui.services.sters', { name: data.services[id].label }));
+      load();
+    } catch (e) {
+      setMsg(e.message);
+    }
   };
   const saveAccount = async () => {
     try {
@@ -64,7 +68,7 @@ export default function ServicesPanel({ api }) {
                 {f.label}
                 <input
                   type={f.secret ? 'password' : 'text'}
-                  autoComplete="off"
+                  autoComplete={f.secret ? 'new-password' : 'off'}
                   value={typed[`${id}.${f.id}`] ?? (f.secret ? '' : f.value)}
                   placeholder={f.secret && f.set ? t('ui.services.salvata_scrie_alta') : ''}
                   onChange={(e) => setTyped((x) => ({ ...x, [`${id}.${f.id}`]: e.target.value }))}
@@ -88,7 +92,7 @@ export default function ServicesPanel({ api }) {
             {a.url && <button type="button" className="link" onClick={() => (api.openLink ? api.openLink(a.url) : window.open(a.url, '_blank', 'noopener'))}>{t('ui.services.deschide_site')}</button>}
             {a.hasPassword && <button type="button" className="link" onClick={() => api.copyAccountPassword(a.id).then(() => setMsg(t('ui.services.parola_copiata'))).catch((e) => setMsg(e.message))}>{t('ui.services.copiaza_parola')}</button>}
             <button type="button" className="link" onClick={() => setAcc({ ...a, password: undefined })}>{t('ui.services.editeaza')}</button>
-            <button type="button" className="link" onClick={() => window.confirm(t('ui.services.stergi_contul', { name: a.name })) && api.deleteAccount(a.id).then(load)}>{t('ui.services.sterge')}</button>
+            <button type="button" className="link" onClick={() => window.confirm(t('ui.services.stergi_contul', { name: a.name })) && api.deleteAccount(a.id).then(load).catch((e) => setMsg(e.message))}>{t('ui.services.sterge')}</button>
           </li>
         ))}
       </ul>

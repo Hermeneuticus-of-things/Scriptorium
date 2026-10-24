@@ -31,3 +31,25 @@ function trim(text, s, e) {
   while (e > s && /\s/.test(text[e - 1])) e -= 1;
   return e > s ? [s, e] : null;
 }
+
+/**
+ * Applies the chosen replacement of each grammar match to `source`. `chosen[i]` is the index of the
+ * replacement for matches[i] (-1 = leave). Matches are applied from the end so earlier offsets stay
+ * valid; a match that overlaps one already applied (or falls outside the text) is skipped, so
+ * overlapping suggestions can never duplicate or garble text.
+ */
+export function applyCorrections(source, matches, chosen) {
+  let out = source;
+  let limit = source.length; // start of the leftmost range applied so far
+  matches
+    .map((m, i) => ({ m, r: chosen[i] }))
+    .filter((x) => x.r >= 0 && x.m.replacements[x.r] !== undefined)
+    .sort((a, b) => b.m.offset - a.m.offset || b.m.length - a.m.length)
+    .forEach(({ m, r }) => {
+      const end = m.offset + m.length;
+      if (m.offset < 0 || end > limit) return;
+      out = out.slice(0, m.offset) + m.replacements[r] + out.slice(end);
+      limit = m.offset;
+    });
+  return out;
+}
