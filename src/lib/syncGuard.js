@@ -45,25 +45,39 @@ export function treeIds(tree) {
 }
 
 /**
- * Documents changed on the other computer. A document with local edits not yet saved here keeps
- * the local text (it is saved next, as usual), and the other computer's version is kept as a
- * snapshot named `label` instead of being lost; the caller tells the writer. `localHtml(id)` (when
- * given) skips the snapshot if both sides hold the same text.
- * Returns { updated: { id: html } to show, conflicts: [ids saved as snapshots] }.
+ * Documents changed on the other computer. A document with no local edits shows their version.
+ * With local edits not yet saved here, and the text both started from known (`baseHtml`) and a
+ * `merge` given (src/lib/team.js mergeDoc), the two are merged by paragraphs: changes to different
+ * paragraphs are both kept. A paragraph changed on both sides keeps the local text, and their whole
+ * version is kept as a snapshot named `label` (nothing is lost); the caller tells the writer.
+ * `localHtml(id)` (when given) skips everything if both sides hold the same text.
+ * Returns { updated: {id: html} to show, merged: {id: html} to show and save, theirs: {id: html}
+ * read from disk, conflicts: [ids saved as snapshots] }.
  */
-export async function pullExternalDocs({ api, dir, ids, hasLocal = () => false, localHtml, label }) {
+export async function pullExternalDocs({ api, dir, ids, hasLocal = () => false, localHtml, baseHtml, merge, label }) {
   const updated = {};
+  const merged = {};
+  const theirs = {};
   const conflicts = [];
   for (const id of ids) {
+    // The base is taken before reading: reading may record what it read as the base.
+    const base = baseHtml ? baseHtml(id) : undefined;
+    const disk = await api.readDoc(dir, id, 'docs');
+    theirs[id] = disk;
     if (!hasLocal(id)) {
-      updated[id] = await api.readDoc(dir, id, 'docs');
+      updated[id] = disk;
       continue;
     }
-    const theirs = await api.readDoc(dir, id, 'docs');
-    if (localHtml && localHtml(id) === theirs) continue;
+    const mine = localHtml ? localHtml(id) : undefined;
+    if (mine === disk) continue;
+    if (merge && base !== undefined && mine !== undefined) {
+      const r = merge(base, mine, disk);
+      if (r.html !== mine) merged[id] = r.html;
+      if (!r.conflicts) continue;
+    }
     // takeSnapshot stores what is on disk now: the version that just arrived.
     await api.takeSnapshot(dir, id, label);
     conflicts.push(id);
   }
-  return { updated, conflicts };
+  return { updated, merged, theirs, conflicts };
 }

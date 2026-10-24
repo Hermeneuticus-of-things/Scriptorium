@@ -18,12 +18,52 @@ import { htmlToManuscript, lint, manuscriptToHtml, profileFor, reattach, summari
 import { styleCss, stylesOf } from '../src/lib/styles.js';
 import { projectNoteTabs } from '../src/lib/projectNotes.js';
 import { registerFullTools } from './fullTools.mjs';
+import { diffParagraphs } from '../src/lib/authorText.js';
+import { AGENT, logRow, readPeers } from '../src/lib/team.js';
 
 const require = createRequire(import.meta.url);
 const store = require('../lib/store.cjs');
 const compile = require('../lib/compile.cjs');
 const history = require('../lib/history.cjs');
 const compileFormats = require('../lib/compileFormats.cjs');
+const teamStore = require('../lib/teamStore.cjs');
+
+// Team work (src/lib/team.js): in a project shared by a team (it has a team/ folder), the agent's
+// changes to a document go in the change log as a separate person, "agent".
+const AGENT_WHO = { name: AGENT, color: '#7a7a7a', machine: AGENT };
+const writeDocPlain = store.writeDoc;
+store.writeDoc = (dir, id, kind, html) => {
+  const logged = kind === 'docs' && fs.existsSync(path.join(dir, 'team'));
+  // A document a person locked (Scribner, lock button) is not written by the agent either.
+  if (logged) {
+    const lock = readPeers(teamStore.teamFiles(dir)).locks[id];
+    if (lock) throw new Error(`Documentul e blocat de ${lock.who} (lucru în echipă); nu l-am modificat. Cere-i să-l deblocheze sau lucrează la alt document.`);
+  }
+  let before = '';
+  if (logged) {
+    try {
+      before = store.readDoc(dir, id, 'docs');
+    } catch {
+      /* new document */
+    }
+  }
+  const out = writeDocPlain(dir, id, kind, html);
+  if (logged && before !== html) {
+    try {
+      const chunks = diffParagraphs(before, html);
+      let title = '';
+      try {
+        title = findNode(store.loadProject(dir, { readOnly: true }).tree, id)?.title || '';
+      } catch {
+        /* title is optional */
+      }
+      if (chunks.length) teamStore.teamWrite(dir, 'log-agent.jsonl', `${JSON.stringify(logRow({ who: AGENT_WHO, doc: id, title, chunks }))}\n`, { append: true });
+    } catch {
+      /* the log never blocks a write */
+    }
+  }
+  return out;
+};
 
 // ---------------------------------------------------------------------------
 // Arguments

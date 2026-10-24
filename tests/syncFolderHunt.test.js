@@ -354,7 +354,7 @@ describe('same document edited on both sides (safety net)', () => {
     const desktopApi = { readDoc: async (d, id) => store.readDoc(d, id), takeSnapshot: async () => { throw new Error('nu'); } };
     store.writeDoc(dir, doc.id, 'docs', '<p>nou</p>');
     const res = await pullExternalDocs({ api: desktopApi, dir, ids: [doc.id], hasLocal: () => false, label });
-    expect(res).toEqual({ updated: { [doc.id]: '<p>nou</p>' }, conflicts: [] });
+    expect(res).toMatchObject({ updated: { [doc.id]: '<p>nou</p>' }, merged: {}, conflicts: [] });
   });
 
   it('the snapshot of an identical text is skipped (both sides typed the same)', async () => {

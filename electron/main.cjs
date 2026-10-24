@@ -3,6 +3,7 @@ const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell, clipboard
 const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
+const teamStore = require('../lib/teamStore.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
 const compile = require('../lib/compile.cjs');
 const scriptExport = require('../lib/scriptExport.cjs');
@@ -679,6 +680,7 @@ handle('app:copyText', (_e, text) => {
 require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
 require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai, noteSelfWrite, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
+require('./dtedHandlers.cjs')({ handle, assertOpened, getSettings: readSettings, app, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators
@@ -790,6 +792,16 @@ handle('import:file', async (e, mode, separator) => {
   return parts;
 });
 // I-EDIT: journal of the author's own changes. Only the window that owns the project writes.
+// Team work through a shared folder (src/lib/team.js): log and presence files in <project>/team/.
+handle('team:files', (_e, dir) => {
+  assertOpened(dir);
+  return teamStore.teamFiles(dir);
+});
+handle('team:write', (e, dir, name, text, opts) => {
+  assertOpened(dir);
+  assertOwner(e.sender, dir);
+  return teamStore.teamWrite(dir, name, text, opts);
+});
 handle('editorial:appendAuthorJournal', (e, dir, rows) => {
   assertOpened(dir);
   assertOwner(e.sender, dir);

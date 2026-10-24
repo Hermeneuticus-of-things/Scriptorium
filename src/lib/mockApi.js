@@ -169,6 +169,22 @@ export function createMockApi() {
   const files = {};
   const snaps = {};
   const authorJournal = {}; // dir -> I-EDIT journal rows
+  const team = {}; // dir -> { name: text } (team/ files on the desktop)
+  // ?demo&team: a second writer ("Ana") works on the first chapter, for trying team work alone
+  // (?demo&team=lock: she has also locked it).
+  const teamDemo = typeof location !== 'undefined' && /[?&]team\b/.test(location.search);
+  if (teamDemo) state.settings.team = { name: 'Ion', color: '#2e7dd7', machine: 'pc-demo' };
+  const demoPeer = (dir) => {
+    const first = state.projects[dir]?.tree?.[0]?.children?.[0]?.children?.[0] || state.projects[dir]?.tree?.[0]?.children?.[0];
+    if (!first) return {};
+    const now = Date.now();
+    const at = (min) => new Date(now - min * 60000).toISOString();
+    const row = (min, added, removed, sample) => JSON.stringify({ doc: first.id, title: first.title, who: 'Ana', color: '#d9822b', machine: 'pc-ana', time: at(min), added, removed, paragraphs: 1, sample });
+    return {
+      'presence-pc-ana.json': JSON.stringify({ who: 'Ana', color: '#d9822b', machine: 'pc-ana', doc: first.id, locks: /[?&]team=lock\b/.test(location.search) ? [first.id] : [], time: at(0) }),
+      'log-pc-ana.jsonl': [row(2 * 1440, 42, 3, 'Drumul urca pe lângă pârâu, printre fagi.'), row(25, 12, 9, 'Ceața se ridica încet din vale.')].join('\n') + '\n',
+    };
+  };
   const key = (dir, id, kind) => `${dir}|${kind || 'docs'}|${id}`;
   const load = (dir) => {
     if (!state.projects[dir]) {
@@ -192,6 +208,7 @@ export function createMockApi() {
     return `<h1>${project.title}</h1>${out.join('')}`;
   };
   return {
+    ...(typeof location !== 'undefined' && /[?&]dted\b/.test(location.search) ? fakeDted() : {}),
     isMock: true,
     async getSettings() {
       return structuredClone(state.settings);
@@ -272,6 +289,14 @@ export function createMockApi() {
       const list = (Array.isArray(rows) ? rows : [rows]).filter((r) => r && r.doc && r.old !== r.new);
       (authorJournal[dir] ||= []).push(...list.map((r) => ({ ...r })));
       return list.length;
+    },
+    async teamFiles(dir) {
+      return { ...(teamDemo ? demoPeer(dir) : {}), ...(team[dir] || {}) };
+    },
+    async teamWrite(dir, name, text, { append = false } = {}) {
+      const all = (team[dir] ||= {});
+      all[name] = (append ? all[name] || '' : '') + String(text);
+      return true;
     },
     async readAuthorJournal(dir) {
       return (authorJournal[dir] || []).map((r) => ({ ...r }));
@@ -473,6 +498,68 @@ export function createMockApi() {
         await simulate(text, payload.runId, 2);
         return { text, provider: state.settings.aiLabel, model: state.settings.aiModel };
       }
+    },
+  };
+}
+
+// ?demo&dted: a simulated D&TED (docs/DTED.md) — dictation sends a few Romanian phrases, an
+// audio file "transcribes" into two paragraphs — so dictation can be tried in the browser.
+function fakeDted() {
+  const listeners = new Set();
+  const emit = (ev) => setTimeout(() => listeners.forEach((f) => f(ev)), 0);
+  const phrases = ['ceața se ridica încet din vale', 'și drumul urca pe lângă pârâu.', 'Andrei s-a oprit la marginea pădurii'];
+  let seq = 0;
+  let dict = null;
+  const stopDict = (cancelled) => {
+    if (!dict) return;
+    clearInterval(dict.timer);
+    emit(cancelled ? { ev: 'anulat', id: dict.id } : { ev: 'dictare_oprita', id: dict.id, text: dict.sent.join(' ') });
+    dict = null;
+  };
+  return {
+    onDtedEvent(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
+    async dtedStatus() {
+      return { found: true, source: 'D&TED simulat (demo)', running: true };
+    },
+    async dtedPickAudio() {
+      return 'interviu-bunica.mp3';
+    },
+    async dtedTranscribe(file, given) {
+      const id = given || `t${++seq}`;
+      emit({ ev: 'faza', id, text: 'Transcriu…' });
+      setTimeout(() => emit({ ev: 'progres', id, p: 0.6 }), 200);
+      setTimeout(() => emit({ ev: 'rezultat', id, text: '', secunde_audio: 70, segmente: [{ start: 0, end: 4, text: 'Când eram mică, iarna venea devreme.' }, { start: 4.5, end: 8, text: 'Tata tăia lemne în curte.' }, { start: 62, end: 66, text: 'Apoi am plecat la oraș.' }] }), 700);
+      return id;
+    },
+    async dtedTranscribeMedia(_dir, file, id) {
+      return this.dtedTranscribe(file, id);
+    },
+    async dtedDictateStart(given) {
+      if (dict) throw new Error('Dictarea este deja pornită.');
+      const id = given || `d${++seq}`;
+      dict = { id, n: 0, sent: [] };
+      emit({ ev: 'dictare_pornita', id });
+      dict.timer = setInterval(() => {
+        emit({ ev: 'nivel', id, nivel: 0.2 + Math.random() * 0.5 });
+        if (dict && dict.n < phrases.length) {
+          const text = phrases[dict.n++];
+          dict.sent.push(text);
+          emit({ ev: 'fragment', id, text });
+        }
+      }, 700);
+      return id;
+    },
+    async dtedDictateStop() {
+      stopDict(false);
+      return true;
+    },
+    async dtedCancel(id) {
+      if (dict && dict.id === id) stopDict(true);
+      else emit({ ev: 'anulat', id });
+      return true;
     },
   };
 }

@@ -15,18 +15,18 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const { menuPick, menuCmd } = require('../tests/e2e/browser/_helpers.cjs');
+const { menuPick, menuCmd, caretEnd } = require('../tests/e2e/browser/_helpers.cjs');
 
 const URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
 const OUT = path.join(__dirname, '..', 'assets', 'readme');
 const W = 1440;
 const H = 900;
 
-async function openApp(browser) {
+async function openApp(browser, query = '') {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   page.on('dialog', (d) => d.accept());
-  await page.goto(URL);
+  await page.goto(URL + query);
   await page.getByText('Deschide proiect .scribner').first().click();
   await page.waitForSelector('.pane .ProseMirror');
   await page.waitForTimeout(400);
@@ -336,6 +336,32 @@ const SHOTS = {
       await noCaret(p);
     },
   },
+  dictation: {
+    kicker: 'Dictare · D&TED',
+    title: 'Vorbești, iar textul apare în carte',
+    sub: 'F9 pornește dictarea. Fără selecție, textul intră la cursor; peste o frază selectată, o înlocuiește. Recunoașterea vorbirii se face pe calculatorul tău, fără internet.',
+    query: '&dted',
+    async setup(p) {
+      await caretEnd(p);
+      await p.keyboard.press('F9');
+      await p.waitForFunction(() => document.querySelector('.pane .ProseMirror').innerText.includes('drumul urca'), null, { timeout: 6000 });
+      await p.waitForTimeout(250);
+    },
+  },
+  team: {
+    kicker: 'Lucru în echipă',
+    title: 'Vezi cine lucrează acum și cine ce a schimbat',
+    sub: 'Proiectul stă pe NAS sau în cloud. Fiecare om are un nume și o culoare; jurnalul arată cine, când și cât a scris, pe document sau în tot proiectul.',
+    query: '&team',
+    async setup(p) {
+      await caretEnd(p);
+      await p.keyboard.type(' Vântul bătea tare.');
+      await p.waitForTimeout(9000);
+      await menuCmd(p, /^Echipă…/);
+      await p.waitForSelector('.team-dialog .team-log li');
+      await p.waitForTimeout(300);
+    },
+  },
   report: {
     kicker: 'Ai găsit o problemă?',
     title: 'Descrii problema, restul vine singur',
@@ -435,7 +461,7 @@ function optimise(file) {
   for (const name of names) {
     const shot = SHOTS[name];
     if (!shot) { console.error(`unknown image: ${name}`); process.exitCode = 1; continue; }
-    const page = await openApp(browser);
+    const page = await openApp(browser, shot.query);
     try {
       await shot.setup(page);
       const png = await page.screenshot();

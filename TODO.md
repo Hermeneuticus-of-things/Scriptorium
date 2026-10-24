@@ -131,4 +131,31 @@ Rezumat: greșelile corectate o dată se corectează singure.
 
 ### Request: roadmap lucru în echipă (server / NAS / cloud, cine ce a modificat și când)
 - [x] Scris în README („Ce urmează”) și în ROADMAP.md secțiunea 9
-- [ ] Implementare (planificată)
+- [x] Implementare etapa 1, folder comun (v0.8.8); etapa 2, server, în listă mai jos
+
+## Session 2026-10-24 (echipă)
+### Request: ROADMAP §9 — lucru în echipă
+- [x] identitate, jurnal, prezență, blocare, îmbinare pe paragrafe, agent MCP, team_activity
+- [x] teste unitare + browser, README + imagine, ajutor RO/EN, ROADMAP, CHANGELOG
+- [ ] etapa 2: server Scribner în timp real (CRDT), cursori, roluri, mod sugestie, coadă offline, dialog variante alături
+
+## Următoarele (detalii în ROADMAP.md §10)
+- [ ] server Scribner în timp real (CRDT, WebSocket, HTTPS, conturi)
+- [ ] cursorii celorlalți, colorați
+- [ ] dialog de conflict cu variantele alături
+- [ ] coadă offline + indicator de sincronizare
+- [ ] roluri și permisiuni
+- [ ] mod „sugestie”
+- [ ] comparare direct din jurnalul echipei
+- [ ] adnotări pe PDF în Cercetare
+- [ ] sinonimul.ro cu adresă directă
+- [ ] la autor: instalare Windows, test MCP, import Karma, chei, test AI complet, depozit public?
+### Request: plugin D&TED în Scribner (spec: docs/DTED.md)
+- [x] D&TED: modul --serviciu (JSON pe linii) + teste
+- [x] lib/dted.cjs + IPC + D&TED fals pentru teste
+- [x] dictare: text nou la cursor; peste selecție = modificare (înlocuire), un singur Ctrl+Z
+- [x] bara de dictare (nivel, Pauză, Stop, Anulează), Unelte → Dictare, F9
+- [x] transcriere fișier audio → document în Cercetare; din binder
+- [x] Setări → Servicii → D&TED (cale găsită automat, Verifică, termeni)
+- [x] ajutor RO/EN, README + imagine, CHANGELOG, versiune
+- [ ] test real pe Windows (autorul)

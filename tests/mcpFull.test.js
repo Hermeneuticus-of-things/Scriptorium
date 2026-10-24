@@ -77,6 +77,7 @@ const NEW_READ_TOOLS = (ctx) => ({
   list_backups: {},
   editorial_round: {},
   author_journal: {},
+  team_activity: {},
 });
 
 // Every renderer API (electron/preload.cjs) is either reachable over MCP (tool name) or GUI-only
@@ -181,6 +182,16 @@ const PRELOAD_COVERAGE = {
   releaseProject: 'gui: ferestre',
   exportBundle: 'export_bundle',
   importBundle: 'import_bundle',
+  teamFiles: 'team_activity',
+  dtedStatus: 'gui: D&TED (dictare) rulează pe calculatorul autorului, cu microfonul lui',
+  dtedPickAudio: 'gui: dialog de fișiere',
+  dtedTranscribe: 'gui: transcrierea D&TED o cere autorul din fereastră (agentul primește documentul creat)',
+  dtedTranscribeMedia: 'gui: transcrierea D&TED o cere autorul din binder',
+  dtedDictateStart: 'gui: dictare la microfon',
+  dtedDictateStop: 'gui: dictare la microfon',
+  dtedCancel: 'gui: dictare la microfon',
+  onDtedEvent: 'gui: evenimentele dictării',
+  teamWrite: 'gui: prezența și jurnalul echipei le scrie fereastra persoanei care lucrează (agentul e înregistrat automat ca „agent”)',
   appendAuthorJournal: 'gui: jurnalul MODIFICARI_AUTOR se scrie de fereastra în care autorul salvează (author_journal îl citește)',
   ragBuild: 'research_search',
   ragQuery: 'research_search',
