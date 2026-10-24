@@ -236,6 +236,10 @@ function defaultChannel() {
 // the desktop app opens the same folder, and the polling watcher below picks up its changes.
 const WATCH_MS = 3000;
 
+// Snapshot file ids: folder projects list them as "<ts>.json" (the desktop's file names), while
+// takeSnapshot hands out "<ts>"; both name the same snapshot.
+const sameSnap = (a, b) => String(a).replace(/\.json$/, '') === String(b).replace(/\.json$/, '');
+
 export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChannel(), pickDirectory, watchMs = WATCH_MS } = {}) {
   const canPick = () => Boolean(pickDirectory) || folderSupported();
   const pick = pickDirectory || (() => globalThis.showDirectoryPicker({ mode: 'readwrite' }));
@@ -507,7 +511,7 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
         const prev = Array.isArray(list) ? list : [];
         // Unique file id even for two snapshots in the same millisecond.
         let file = String(Date.now());
-        for (let n = 2; prev.some((x) => x.file === file); n++) file = `${Date.now()}-${n}`;
+        for (let n = 2; prev.some((x) => sameSnap(x.file, file)); n++) file = `${Date.now()}-${n}`;
         s = { file, name: name || 'Snapshot', date, html };
         return [s, ...prev];
       };
@@ -520,12 +524,12 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
     },
     async deleteSnapshot(dir, id, file) {
       const list = (await kv.get(K.snaps(dir, id))) || [];
-      await kv.put(K.snaps(dir, id), list.filter((x) => x.file !== file));
+      await kv.put(K.snaps(dir, id), list.filter((x) => !sameSnap(x.file, file)));
       return true;
     },
     async renameSnapshot(dir, id, file, name) {
       const list = (await kv.get(K.snaps(dir, id))) || [];
-      await kv.put(K.snaps(dir, id), list.map((x) => (x.file === file ? { ...x, name: String(name || 'Snapshot') } : x)));
+      await kv.put(K.snaps(dir, id), list.map((x) => (sameSnap(x.file, file) ? { ...x, name: String(name || 'Snapshot') } : x)));
       return true;
     },
     async recordHistory(dir, counts) {
