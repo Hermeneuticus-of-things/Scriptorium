@@ -31,7 +31,7 @@ export function newNode(type, title) {
 export function textToHtml(text) {
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return (text || '')
-    .split(/\n+/).filter((p) => p.trim())
+    .split(/[\r\n]+/).filter((p) => p.trim())
     .map((p) => `<p>${esc(p)}</p>`)
     .join('');
 }

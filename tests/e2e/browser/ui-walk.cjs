@@ -13,9 +13,15 @@ const findings = new Map();
 const note = (k, v) => { if (!findings.has(k)) { findings.set(k, v); console.log('FINDING', k, '—', v); } };
 
 async function settings(p, lang, theme) {
-  await p.keyboard.press('Control+,');
-  await p.waitForTimeout(250);
-  if (!(await p.locator('.settings-dialog').count())) return note('settings-shortcut', 'Ctrl+, did not open Settings');
+  const menus = p.locator('header.toolbar .menu > button');
+  for (let i = 0; i < (await menus.count()) && !(await p.locator('.settings-dialog').count()); i++) {
+    await menus.nth(i).click();
+    await p.waitForTimeout(60);
+    const it = p.locator('.menu-pop button:not([disabled])').filter({ hasText: /^(Setări|Settings)…/ });
+    if (await it.count()) await it.first().click(); else await p.keyboard.press('Escape');
+    await p.waitForTimeout(150);
+  }
+  if (!(await p.locator('.settings-dialog').count())) throw new Error('Settings not found in menus');
   const tabs = p.locator('.settings-dialog [role=tab]');
   await tabs.nth(1).click(); // appearance
   const th = p.locator('.settings-dialog select').filter({ has: p.locator('option[value=sepia]') });
