@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { sanitizeHtml } from '../lib/sanitize.js';
 import { Notes } from './Inspector.jsx';
 import { t } from '../lib/i18n.js';
 import { noneStatus } from '../lib/projectSettings.js';
@@ -67,7 +68,7 @@ export default function FloatingInspector({ node, project, notesHtml = '', onPat
           {onNotesChange ? (
             <Notes key={`n-${node.id}`} initial={notesHtml} onChange={onNotesChange} placeholder={t('ui.floatingInspector.note_pentru_document')} />
           ) : (
-            <div className="notes prose" dangerouslySetInnerHTML={{ __html: notesHtml }} />
+            <div className="notes prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(notesHtml) }} />
           )}
         </div>
       </div>

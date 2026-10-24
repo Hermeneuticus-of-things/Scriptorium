@@ -10,8 +10,10 @@ const URL = process.env.URL || 'http://localhost:4183/?demo&conflict';
   await page.goto(URL);
   await page.getByText('Deschide proiect .scribner').first().click();
   const ed = page.locator('.pane .ProseMirror').first();
+  await page.waitForFunction(() => document.querySelector('.pane .ProseMirror')?.innerText.includes('rece de octombrie'));
+  await page.waitForTimeout(300); // the editor finishes loading the document before typing
   await ed.click();
-  await page.evaluate(() => document.querySelector('.pane .ProseMirror').editor.commands.setTextSelection(1));
+  await page.keyboard.press('Control+Home'); // real keys: the DOM selection follows
   await page.keyboard.type('Ploua mărunt. ');
   await page.waitForTimeout(400);
   await page.evaluate(() => window.__demoExternalEdit((h) => h.replace('rece de octombrie', 'cețoasă de noiembrie')));

@@ -40,14 +40,14 @@ function SynopsisImage({ file, readMedia }) {
   return url ? <img className="card-image" src={url} alt="" /> : null;
 }
 
-function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins, selected, editing, onSelect, onKey, onEndEdit }) {
+function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins, selected, tabStop, editing, onSelect, onKey, onEndEdit }) {
   return (
     <article
       className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''}`}
       style={{ borderTopColor: colors[n.label] || 'transparent', ...(colors[n.label] ? { '--label-color': colors[n.label] } : {}), ...style }}
       data-card-id={n.id}
       role="gridcell"
-      tabIndex={0}
+      tabIndex={tabStop ? 0 : -1} // one Tab stop for the board; arrows move between cards
       aria-selected={Boolean(selected)}
       aria-label={n.title || t('ui.app.fara_titlu')}
       onFocus={(e) => e.target === e.currentTarget && onSelect?.(n.id)}
@@ -216,7 +216,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
       setEditing(node.id);
     }
   };
-  const cardState = (n) => ({ selected: sel === n.id, editing: editing === n.id, onSelect: setSel, onKey, onEndEdit: (id) => (setEditing(null), focusCard(id)) });
+  const cardState = (n) => ({ selected: sel === n.id, tabStop: sel && items.some((x) => x.id === sel) ? sel === n.id : n.id === items[0]?.id, editing: editing === n.id, onSelect: setSel, onKey, onEndEdit: (id) => (setEditing(null), focusCard(id)) });
   const common = { colors, keywordColors, onOpen, onPatch, readMedia, pins: Boolean(cork.pins) };
 
   // Freeform: cards keep {x, y} in node.corkPos; "Fixează ordinea" writes the visual

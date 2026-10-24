@@ -1,5 +1,6 @@
 // Project-wide find & replace on editor HTML. Matching runs on text between
-// tags, so markup is never touched (a match cannot span formatting changes).
+// tags, so markup is never touched (a match cannot span formatting changes), but the text around
+// a piece inside the same paragraph is visible to whole-word checks and ^/$.
 
 export function buildRegex({ query, regex, caseSensitive, wholeWord }) {
   if (!query) return null;
@@ -44,13 +45,57 @@ function encode(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/ /g, '&nbsp;');
 }
 
-// Splits html into [{tag:true, s}] / [{tag:false, s(decoded)}]
+// Splits html into [{tag:true, s}] / [{tag:false, s(decoded), prev, next}]. prev/next: the text
+// around the piece inside the same paragraph (across bold, italic, links…), so "whole word" and
+// ^/$ see the real neighbours ("pre<strong>fix</strong>" is not the word "fix").
+const INLINE = /^<\/?(strong|b|em|i|u|s|span|a|sub|sup|mark|code|small|del|ins)\b/i;
+const CONTEXT = 32;
 function segments(html) {
   const out = [];
   const re = /(<[^>]*>)|([^<]+)/g;
   let m;
   while ((m = re.exec(html || ''))) out.push(m[1] ? { tag: true, s: m[1] } : { tag: false, s: decode(m[2]) });
+  let run = '';
+  for (const seg of out) {
+    if (seg.tag) {
+      if (!INLINE.test(seg.s)) run = '';
+      continue;
+    }
+    seg.prev = run.slice(-CONTEXT);
+    run += seg.s;
+  }
+  run = '';
+  for (let i = out.length - 1; i >= 0; i--) {
+    const seg = out[i];
+    if (seg.tag) {
+      if (!INLINE.test(seg.s)) run = '';
+      continue;
+    }
+    seg.next = run.slice(0, CONTEXT);
+    run = seg.s + run;
+  }
   return out;
+}
+
+// Matches of re inside seg.s, with the neighbours visible to lookbehind/lookahead and ^/$.
+function matchesIn(seg, re) {
+  const text = seg.prev + seg.s + seg.next;
+  const from = seg.prev.length;
+  const to = from + seg.s.length;
+  const found = [];
+  re.lastIndex = from;
+  let m;
+  while ((m = re.exec(text))) {
+    if (m.index >= to) break;
+    if (m[0] === '') {
+      re.lastIndex++;
+      continue;
+    }
+    if (m.index + m[0].length <= to) found.push({ index: m.index - from, m });
+    else re.lastIndex = m.index + 1;
+  }
+  re.lastIndex = 0;
+  return found;
 }
 
 export function findInHtml(html, re, context = 40) {
@@ -58,18 +103,12 @@ export function findInHtml(html, re, context = 40) {
   const results = [];
   for (const seg of segments(html)) {
     if (seg.tag) continue;
-    re.lastIndex = 0;
-    let m;
-    while ((m = re.exec(seg.s))) {
-      if (m[0] === '') {
-        re.lastIndex++;
-        continue;
-      }
-      const start = Math.max(0, m.index - context);
+    for (const { index, m } of matchesIn(seg, re)) {
+      const start = Math.max(0, index - context);
       results.push({
-        before: (start > 0 ? '…' : '') + seg.s.slice(start, m.index),
+        before: (start > 0 ? '…' : '') + seg.s.slice(start, index),
         match: m[0],
-        after: seg.s.slice(m.index + m[0].length, m.index + m[0].length + context) + (m.index + m[0].length + context < seg.s.length ? '…' : ''),
+        after: seg.s.slice(index + m[0].length, index + m[0].length + context) + (index + m[0].length + context < seg.s.length ? '…' : ''),
       });
     }
   }
@@ -93,13 +132,14 @@ export function replaceInHtml(html, re, replacement) {
   const out = segments(html)
     .map((seg) => {
       if (seg.tag) return seg.s;
-      re.lastIndex = 0;
-      return encode(
-        seg.s.replace(re, (...args) => {
-          count++;
-          return expand(args);
-        }),
-      );
+      let res = '';
+      let at = 0;
+      for (const { index, m } of matchesIn(seg, re)) {
+        count++;
+        res += seg.s.slice(at, index) + expand([...m]);
+        at = index + m[0].length;
+      }
+      return encode(res + seg.s.slice(at));
     })
     .join('');
   return { html: out, count };
