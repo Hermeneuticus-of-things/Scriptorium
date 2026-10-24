@@ -71,7 +71,7 @@ export default function StatusBar({ node, words, chars = 0, selectionCount = 1, 
           ))}
         </select>
       )}
-      <span className={`save ${saveState.startsWith('eroare') ? 'err' : ''}`}>{saveState}</span>
+      <span className={`save ${saveState === t('ui.app.eroare_la_salvare') ? 'err' : ''}`}>{saveState === 'salvat' ? t('ui.app.salvat') : saveState}</span>
     </footer>
   );
 }

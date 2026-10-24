@@ -19,7 +19,7 @@ const ro = {
   'cmd.importFiles': 'Importă fișiere (RTF, ODT, HTML, Fountain, media)…', 'cmd.importOpml': 'Importă OPML…',
   'cmd.importWeb': 'Importă pagină web…', 'cmd.exportFiles': 'Exportă documente / OPML / CSV…', 'cmd.saveAs': 'Salvează ca…',
   'cmd.nameGen': 'Generator de nume…', 'cmd.scratchpad': 'Ciorne (Scratchpad)', 'cmd.speech': 'Citire cu voce tare / dictare',
-  'cmd.scriptOff': 'Mod scenariu: dezactivat', 'cmd.exportFdx': 'Exportă scenariu Final Draft (.fdx)…', 'cmd.exportFountain': 'Exportă scenariu Fountain…',
+  'cmd.scriptOff': 'Mod scenariu: dezactivat', 'cmd.exportFdx': 'Exportă scenariu .fdx…', 'cmd.exportFountain': 'Exportă scenariu Fountain…',
   'cmd.floatInspector': 'Inspector plutitor (compoziție)',
   'cmd.viewTimeline': 'Cronologie',
   'cmd.viewRelations': 'Hartă de relații',
@@ -200,7 +200,7 @@ const en = {
   'cmd.importFiles': 'Import files (RTF, ODT, HTML, Fountain, media)…', 'cmd.importOpml': 'Import OPML…',
   'cmd.importWeb': 'Import web page…', 'cmd.exportFiles': 'Export documents / OPML / CSV…', 'cmd.saveAs': 'Save as…',
   'cmd.nameGen': 'Name generator…', 'cmd.scratchpad': 'Scratchpad', 'cmd.speech': 'Read aloud / Dictation',
-  'cmd.scriptOff': 'Script mode: off', 'cmd.exportFdx': 'Export Final Draft script (.fdx)…', 'cmd.exportFountain': 'Export Fountain script…',
+  'cmd.scriptOff': 'Script mode: off', 'cmd.exportFdx': 'Export screenplay (.fdx)…', 'cmd.exportFountain': 'Export Fountain script…',
   'cmd.floatInspector': 'Floating Inspector (composition)',
   'cmd.viewTimeline': 'Timeline',
   'cmd.viewRelations': 'Relationship map',
@@ -404,9 +404,10 @@ export function pluralRo(s) {
     return `${pre}${num} ${de ? 'de ' : ''}${noun}${adj ? ` ${adj}` : ''}`;
   });
 }
-const EN_ONE = { words: 'word', characters: 'character', pages: 'page', documents: 'document', files: 'file', scenes: 'scene', places: 'place', minutes: 'minute', days: 'day', comments: 'comment', notes: 'note', snapshots: 'snapshot', items: 'item', lines: 'line', paragraphs: 'paragraph', sources: 'source', passages: 'passage', matches: 'match', replacements: 'replacement', seconds: 'second', hours: 'hour' };
-const EN_COUNT = new RegExp(`(^|[^\\d.,])1 (${Object.keys(EN_ONE).join('|')})(?![\\w-])`, 'g');
-export const pluralEn = (s) => s.replace(EN_COUNT, (m, pre, noun) => `${pre}1 ${EN_ONE[noun]}`);
+const EN_ONE = { words: 'word', characters: 'character', pages: 'page', documents: 'document', files: 'file', scenes: 'scene', places: 'place', minutes: 'minute', days: 'day', comments: 'comment', notes: 'note', snapshots: 'snapshot', items: 'item', lines: 'line', paragraphs: 'paragraph', sources: 'source', passages: 'passage', matches: 'match', replacements: 'replacement', seconds: 'second', hours: 'hour', errors: 'error', issues: 'issue', conflicts: 'conflict', entries: 'entry', sentences: 'sentence', signals: 'signal', loops: 'loop', problems: 'problem', pages: 'page', 'shared scenes': 'shared scene', minutes: 'minute' };
+const EN_ADJ = '(?:(?:locked|blocking|shared|book|standard|new|changed) )?';
+const EN_COUNT = new RegExp(`(^|[^\\d.,])1 (${EN_ADJ})(${Object.keys(EN_ONE).join('|')})(?![\\w-])`, 'g');
+export const pluralEn = (s) => s.replace(EN_COUNT, (m, pre, adj, noun) => `${pre}1 ${adj}${EN_ONE[noun]}`);
 export const has = (key) => key in dictionaries[current] || key in ro;
 
 /** Label for a command id; layout:N ids and unknown ids fall back. */

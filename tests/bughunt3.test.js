@@ -148,3 +148,19 @@ describe('team sync (v0.9.5)', () => {
     expect(incomplete('<p>gata</p>', '<p>x</p>')).toBe(false);
   });
 });
+
+import { mergeDoc } from '../src/lib/team.js';
+describe('no false conflict next to an edit', () => {
+  it('a paragraph inserted on one side next to one edited on the other: both kept', () => {
+    const r = mergeDoc('<p>b1</p><p>b2</p>', '<p>b1</p><p>NEW</p><p>b2</p>', '<p>b1</p><p>b2T</p>');
+    expect(r.conflicts).toBe(0);
+    expect(r.html).toBe('<p>b1</p><p>NEW</p><p>b2T</p>');
+    const s = mergeDoc('<p>b1</p><p>b2</p>', '<p>b1</p><p>b2T</p>', '<p>b1</p><p>NEW</p><p>b2</p>');
+    expect(s.conflicts).toBe(0);
+    expect(s.html).toBe('<p>b1</p><p>NEW</p><p>b2T</p>');
+  });
+  it('deleted on one side while edited on the other is still a choice', () => {
+    const r = mergeDoc('<p>b1</p><p>b2</p><p>b3</p>', '<p>b1</p><p>b3</p>', '<p>b1</p><p>b2T</p><p>b3</p>');
+    expect(r.conflicts).toBe(1);
+  });
+});

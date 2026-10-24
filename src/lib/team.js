@@ -267,6 +267,13 @@ const same = (x, y) => x.length === y.length && x.every((v, i) => v === y[i]);
  * conflict (the caller keeps their whole version as a snapshot, so nothing is lost).
  * Returns { html, conflicts }.
  */
+// x is a subsequence of y (same blocks, in order, others may sit between them).
+function isSub(x, y) {
+  let j = 0;
+  for (const v of y) if (j < x.length && v === x[j]) j++;
+  return j === x.length;
+}
+
 export function mergeDoc(base, mine, theirs) {
   if (mine === theirs) return { html: mine, conflicts: 0, pieces: [mine] };
   if (base === theirs) return { html: mine, conflicts: 0, pieces: [mine] };
@@ -304,7 +311,40 @@ export function mergeDoc(base, mine, theirs) {
         else if (t[i] === x || t[i] === a[i]) pieces.push(a[i]);
         else clash([a[i]], [t[i]]);
       });
-    } else clash(a, t);
+    } else if (!inPlaceOver(a, t, b) && !inPlaceOver(t, a, b, true)) clash(a, t);
+  };
+  // One side only inserted or deleted paragraphs (b is a subsequence of `grown`, or `grown` of b)
+  // and the other edited paragraphs in place (`edited` has b's length): both apply, no clash.
+  // `flip`: `grown` is theirs, so a deleted paragraph the other side edited stays theirs.
+  const inPlaceOver = (grown, edited, b, flip = false) => {
+    if (edited.length !== b.length) return false;
+    const out = [];
+    if (isSub(b, grown)) {
+      let j = 0;
+      for (const x of grown) {
+        if (j < b.length && x === b[j]) out.push(edited[j++]);
+        else out.push(x);
+      }
+      pieces.push(...out);
+      return true;
+    }
+    if (isSub(grown, b)) {
+      let j = 0;
+      for (let i = 0; i < b.length; i++) {
+        if (j < grown.length && grown[j] === b[i]) {
+          out.push(edited[i]);
+          j++;
+        } else if (edited[i] !== b[i]) {
+          // deleted on one side, edited on the other: the writer decides
+          pieces.push(...out.splice(0));
+          if (flip) clash([edited[i]], []);
+          else clash([], [edited[i]]);
+        }
+      }
+      pieces.push(...out);
+      return true;
+    }
+    return false;
   };
   for (const k of anchors) {
     const ak = inA.get(k);

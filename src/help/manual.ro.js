@@ -430,7 +430,7 @@ media/                 imagini, PDF, audio, video</pre>
         html: `<p>${k('Ctrl+Shift+E')} deschide fereastra Compile. Aici alegi trei lucruri:</p>
 <ol>
 <li><strong>Formatul</strong> (lista din stânga): cum arată cartea. Predefinite: Manuscris standard, Carte tipărită (paperback), E-book, Modern, Citire PDF A5, Implicit, Times New Roman (dublu spațiat), Courier (manuscris clasic).</li>
-<li><strong>Ieșirea</strong>: Word (.docx), PDF, EPUB, HTML, RTF, OpenDocument (.odt), Markdown, MultiMarkdown, Text simplu, Fountain, Final Draft (.fdx), LaTeX, Tipărire (previzualizare).</li>
+<li><strong>Ieșirea</strong>: Word (.docx), PDF, EPUB, HTML, RTF, OpenDocument (.odt), Markdown, MultiMarkdown, Text simplu, Fountain, scenariu .fdx, LaTeX, Tipărire (previzualizare).</li>
 <li><strong>Conținutul</strong>: ce documente intră.</li>
 </ol>
 <p>Formatele predefinite nu se modifică: apasă <em>Duplică</em> și editează copia. <em>Salvează global</em> face formatul disponibil în toate proiectele (🌐). Previzualizarea arată rezultatul înainte de salvare.</p>`,
@@ -542,8 +542,8 @@ media/                 imagini, PDF, audio, video</pre>
       },
       {
         id: 'script-export',
-        title: 'Export Final Draft și Fountain',
-        html: `<p><em>Fișier → Exportă scenariu Final Draft (.fdx)…</em> și <em>Exportă scenariu Fountain…</em> (active când modul scenariu este pornit). Compile are și ieșirile Fountain și FDX. Fișierele .fdx și .fountain se pot și importa.</p>`,
+        title: 'Export .fdx și Fountain',
+        html: `<p><em>Fișier → Exportă scenariu .fdx…</em> și <em>Exportă scenariu Fountain…</em> (active când modul scenariu este pornit). Compile are și ieșirile Fountain și FDX. Fișierele .fdx și .fountain se pot și importa.</p>`,
       },
     ],
   },
@@ -919,7 +919,7 @@ scribner mcp "D:\\Carti\\Drumul spre munte.scribner"               serverul MCP 
       {
         id: 'yours-sync',
         title: 'Același proiect pe desktop și în browser',
-        html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Dacă același document a fost schimbat în două locuri, schimbările se unesc paragraf cu paragraf. Când același paragraf a fost schimbat în ambele părți, textul tău rămâne, iar versiunea sosită de pe celălalt calculator este păstrată în <em>Snapshot-uri</em> („Versiunea de pe celălalt calculator, &lt;oră&gt;”) și primești un mesaj. Copiile în conflict lăsate de serviciul de sincronizare (de exemplu <code>project (conflicted copy …).json</code> sau <code>project-PC.json</code>) nu sunt încărcate: aplicația ți le arată la deschidere, ca să le compari și să le ștergi. Dacă folderul nu mai e accesibil (NAS deconectat, permisiune retrasă), primești un mesaj; schimbările reapar când folderul revine. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
+        html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Dacă același document a fost schimbat în două locuri, schimbările se unesc paragraf cu paragraf. Când același paragraf a fost schimbat în ambele părți, în bara de jos apare <strong>Conflict</strong>: un clic arată cele două variante alături și alegi, pentru fiecare loc, <em>a mea</em>, <em>a lor</em> sau <em>amândouă</em>. Varianta celuilalt rămâne și în <em>Snapshot-uri</em>, iar ce ai scris între timp nu e suprascris. Dacă folderul proiectului nu e disponibil, ce scrii așteaptă într-o coadă (în bara de jos: <em>În așteptare: n documente</em>), se reîncearcă la 15 s și se trimite singur când revine folderul, chiar dacă ai închis programul între timp; <em>Sincronizat</em> înseamnă că totul a ajuns în folder. Copiile în conflict lăsate de serviciul de sincronizare (de exemplu <code>project (conflicted copy …).json</code> sau <code>project-PC.json</code>) nu sunt încărcate: aplicația ți le arată la deschidere, ca să le compari și să le ștergi. Dacă folderul nu mai e accesibil (NAS deconectat, permisiune retrasă), primești un mesaj; schimbările reapar când folderul revine. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
       },
       {
         id: 'yours-team',
@@ -929,7 +929,7 @@ scribner mcp "D:\\Carti\\Drumul spre munte.scribner"               serverul MCP 
 <li><strong>Cine lucrează acum:</strong> lângă titlul documentului apare numele celui care îl are deschis; în bara de jos vezi câți sunteți în lucru (clic deschide fereastra <em>Echipă</em>).</li>
 <li><strong>Cine ce a modificat:</strong> <em>Proiect → Echipă…</em> arată jurnalul: persoana, data și ora, cuvinte adăugate și șterse, un fragment. Filtre: documentul deschis sau tot proiectul, persoana, ultima zi, săptămână sau lună. Clic pe titlu deschide documentul.</li>
 <li><strong>Blocare:</strong> butonul cu lacăt de lângă titlu blochează documentul pentru ceilalți; la ei se deschide doar pentru citire, cu „Blocat de …”. Clic din nou deblochează. Un calculator care nu mai dă semne timp de 30 de minute își pierde blocările.</li>
-<li><strong>Îmbinare:</strong> schimbările făcute de doi oameni în paragrafe diferite se unesc singure; același paragraf: rămâne textul tău, varianta celuilalt e în <em>Inspector → Snapshot-uri</em>.</li>
+<li><strong>Îmbinare:</strong> schimbările făcute de doi oameni în paragrafe diferite se unesc singure; același paragraf: în bara de jos apare <strong>Conflict</strong>, iar un clic te lasă să alegi varianta ta, a celuilalt sau pe amândouă; varianta celuilalt rămâne și în <em>Inspector → Snapshot-uri</em>.</li>
 <li><strong>Agenți AI:</strong> scrierile prin MCP apar în jurnal ca „agent AI (MCP)”; unealta <code>team_activity</code> le arată agenților cine lucrează și ce e blocat.</li>
 </ul>
 <p>Fișierele echipei stau în <code>team/</code>, câte unul pentru fiecare calculator, ca serviciul de sincronizare să nu facă copii de conflict.</p>`,

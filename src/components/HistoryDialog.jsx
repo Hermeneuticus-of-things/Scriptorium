@@ -33,7 +33,7 @@ export default function HistoryDialog({ api, dir, onClose, onError }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal wide" role="dialog" aria-label="Istoric scriere" onClick={(e) => e.stopPropagation()}>
-        <h2>Istoricul scrisului</h2>
+        <h2>{t('ui.history.titlu')}</h2>
         <div className="stats">
           <div><strong>{totalWritten.toLocaleString(uiLocale())}</strong><span>{t('ui.historyDialog.cuvinte_scrise_in_manuscris')}</span></div>
           <div><strong>{days}</strong><span>{t('ui.historyDialog.zile_cu_scris')}</span></div>
@@ -41,8 +41,8 @@ export default function HistoryDialog({ api, dir, onClose, onError }) {
           <div><strong>{streak}</strong><span>{t('ui.historyDialog.zile_la_rand')}</span></div>
         </div>
         <div className="seg" role="tablist">
-          <button className={mode === 'daily' ? 'on' : ''} onClick={() => setMode('daily')}>Zilnic</button>
-          <button className={mode === 'monthly' ? 'on' : ''} onClick={() => setMode('monthly')}>Lunar</button>
+          <button className={mode === 'daily' ? 'on' : ''} onClick={() => setMode('daily')}>{t('ui.history.zilnic')}</button>
+          <button className={mode === 'monthly' ? 'on' : ''} onClick={() => setMode('monthly')}>{t('ui.history.lunar')}</button>
         </div>
         {mode === 'monthly' ? (
           <>
@@ -56,7 +56,7 @@ export default function HistoryDialog({ api, dir, onClose, onError }) {
             </div>
             <table className="history-table">
               <thead>
-                <tr><th>Luna</th><th className="num">Manuscris</th><th className="num">{t('ui.advancedSearchDialog.tot_proiectul')}</th>{hasChars && <th className="num">{t('ui.historyDialog.caractere')}</th>}<th className="num">{t('ui.historyDialog.zile_cu_scris_2')}</th></tr>
+                <tr><th>{t('ui.history.luna')}</th><th className="num">{t('ui.stats.manuscris')}</th><th className="num">{t('ui.advancedSearchDialog.tot_proiectul')}</th>{hasChars && <th className="num">{t('ui.historyDialog.caractere')}</th>}<th className="num">{t('ui.historyDialog.zile_cu_scris_2')}</th></tr>
               </thead>
               <tbody>
                 {[...months].reverse().map((m) => (
@@ -85,7 +85,7 @@ export default function HistoryDialog({ api, dir, onClose, onError }) {
         )}
         {mode === 'daily' && <table className="history-table">
           <thead>
-            <tr><th>{t('ui.historyDialog.data')}</th><th className="num">Manuscris</th><th className="num">{t('ui.advancedSearchDialog.tot_proiectul')}</th>{hasChars && <th className="num">{t('ui.historyDialog.caractere')}</th>}<th className="num">Total manuscris</th></tr>
+            <tr><th>{t('ui.historyDialog.data')}</th><th className="num">{t('ui.stats.manuscris')}</th><th className="num">{t('ui.advancedSearchDialog.tot_proiectul')}</th>{hasChars && <th className="num">{t('ui.historyDialog.caractere')}</th>}<th className="num">Total manuscris</th></tr>
           </thead>
           <tbody>
             {[...rows].reverse().slice(0, 60).map((r) => (

@@ -5,7 +5,7 @@ import { projectStats, projectText, wordFrequency, sentenceLengths } from '../li
 import { t, uiLocale } from '../lib/i18n.js';
 
 const SCOPES = () => ([
-  ['draft', 'Manuscris'],
+  ['draft', t('ui.stats.manuscris')],
   ['compile', t('ui.statisticsDialog.doar_ce_intra_in_compile')],
   ['all', t('ui.advancedSearchDialog.tot_proiectul')],
   ['selection', t('ui.statisticsDialog.selectia')],
@@ -39,12 +39,12 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
       <div className="modal wide" role="dialog" aria-label="Statistici" onClick={(e) => e.stopPropagation()}>
         <h2>Statistici</h2>
         <div className="tabs" role="tablist">
-          {[['project', t('group.project')], ['words', t('ui.statisticsDialog.frecventa_cuvintelor')], ['sentences', 'Fraze'], ['pos', t('ui.statisticsDialog.parti_de_vorbire')]].map(([k, l]) => (
+          {[['project', t('group.project')], ['words', t('ui.statisticsDialog.frecventa_cuvintelor')], ['sentences', t('ui.stats.fraze_tab')], ['pos', t('ui.statisticsDialog.parti_de_vorbire')]].map(([k, l]) => (
             <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
         <label>
-          Domeniu
+          {t('ui.stats.domeniu')}
           <select value={scope} onChange={(e) => setScope(e.target.value)}>
             {SCOPES().map(([k, l]) => (
               <option key={k} value={k} disabled={k === 'selection' && !hasSelection}>{l}</option>
@@ -57,8 +57,8 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
             <div><strong>{fmt(stats.words)}</strong><span>{t('ui.inspector.cuvinte')}</span></div>
             <div><strong>{fmt(stats.chars)}</strong><span>{t('ui.statisticsDialog.caractere_cu_spatii')}</span></div>
             <div><strong>{fmt(stats.charsNoSpaces)}</strong><span>{t('ui.statisticsDialog.caractere_fara_spatii')}</span></div>
-            <div><strong>{fmt(stats.sentences)}</strong><span>fraze</span></div>
-            <div><strong>{fmt(stats.paragraphs)}</strong><span>paragrafe</span></div>
+            <div><strong>{fmt(stats.sentences)}</strong><span>{t('ui.stats.fraze')}</span></div>
+            <div><strong>{fmt(stats.paragraphs)}</strong><span>{t('ui.stats.paragrafe')}</span></div>
             <div><strong>{fmt(stats.documents)}</strong><span>{t('ui.advancedSearchDialog.documente')}</span></div>
             <div><strong>{fmt(stats.pagesPaperback)}</strong><span>{t('ui.statisticsDialog.pagini_carte_300_cuvinte_pagina')}</span></div>
             <div><strong>{fmt(stats.pagesPrinted)}</strong><span>{t('ui.statisticsDialog.pagini_standard_1800_caractere')}</span></div>
@@ -102,7 +102,7 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
               <div><strong>{sent.average.toLocaleString(uiLocale())}</strong><span>{t('ui.statisticsDialog.cuvinte_pe_fraza_in_medie')}</span></div>
               <div><strong>{fmt(sent.longest)}</strong><span>{t('ui.statisticsDialog.cea_mai_lunga_fraza')}</span></div>
               <div><strong>{fmt(sent.shortest)}</strong><span>{t('ui.statisticsDialog.cea_mai_scurta_fraza')}</span></div>
-              <div><strong>{fmt(sent.histogram.reduce((s, h) => s + h.count, 0))}</strong><span>fraze</span></div>
+              <div><strong>{fmt(sent.histogram.reduce((s, h) => s + h.count, 0))}</strong><span>{t('ui.stats.fraze')}</span></div>
             </div>
             <div className="bars" aria-label={t('ui.statisticsDialog.distributia_lungimii_frazelor_cuvinte')}>
               {sent.histogram.map((h) => (

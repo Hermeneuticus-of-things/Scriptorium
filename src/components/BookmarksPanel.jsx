@@ -41,7 +41,7 @@ export default function BookmarksPanel({ bookmarks = [], nodeTitle = () => undef
       <div className="row">
         <h4>{t('ui.bookmarksPanel.semne_de_carte')}</h4>
         <span className="spacer" />
-        <button onClick={add} disabled={!currentId || has(currentId)} title={t('ui.bookmarksPanel.adauga_documentul_curent')}>+ Document curent</button>
+        <button onClick={add} disabled={!currentId || has(currentId)} title={t('ui.bookmarksPanel.adauga_documentul_curent')}>+ {t('ui.bookmarksPanel.document_curent')}</button>
       </div>
       {bookmarks.length === 0 && <p className="muted">{t('ui.bookmarksPanel.niciun_semn_de_carte_in')}</p>}
       <ul className="bookmark-list">
