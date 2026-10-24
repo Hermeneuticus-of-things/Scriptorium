@@ -158,7 +158,9 @@ label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--t
 .modal .row > label { flex: 1; }
 .actions { display: flex; justify-content: flex-end; gap: 8px; }
 .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: var(--danger); color: #fff; padding: 10px 14px; border-radius: 8px; display: flex; gap: 12px; align-items: center; z-index: 20; max-width: 90vw; }
-.toast button { background: none; border: none; color: #fff; font-size: 18px; }
+.toast button { background: none; border: none; color: #fff; font-size: 18px; pointer-events: auto; }
+/* A message never blocks what is under it (a dialog's buttons): only its close button takes clicks. */
+.toast { pointer-events: none; }
 
 /* Home */
 .home { max-width: 900px; margin: 0 auto; padding: 48px 20px; display: flex; flex-direction: column; gap: 16px; }

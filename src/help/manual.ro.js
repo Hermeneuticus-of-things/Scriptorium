@@ -937,7 +937,7 @@ scribner mcp "D:\\Carti\\Drumul spre munte.scribner"               serverul MCP 
       {
         id: 'yours-dictation',
         title: 'Dictare și transcriere (D&TED)',
-        html: `<p>Dictarea folosește <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a>, un program separat care recunoaște vorbirea în română pe calculatorul tău, fără internet. Îl instalezi o dată; Scribner îl găsește singur (sau scrii unde se află în <em>Setări → Servicii și conturi → Dictare și transcriere</em>, unde ai și <em>Verifică</em>).</p>
+        html: `<p>Recunoașterea vorbirii în română e în Scribner și lucrează pe calculatorul tău, fără internet. Prima dată: <em>Setări → Servicii și conturi → Dictare și transcriere → Descarcă motorul</em> (în jur de 590 MB, o singură dată; bifezi <em>Am placă video NVIDIA</em> pentru varianta mai rapidă). Motorul (whisper.cpp, modelul large-v3-turbo) rulează doar pe calculatorul tău; amprenta fișierelor descărcate e verificată. Dacă ai programul <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a>, îl poți alege în locul motorului încorporat, în același loc.</p>
 <ul>
 <li><strong>F9</strong> (sau <em>Unelte → Dictare</em>) pornește și oprește dictarea. Textul apare la fiecare ~4 secunde de vorbire, cu spații și majusculă la început de frază.</li>
 <li><strong>Text nou:</strong> fără selecție, intră la cursor. <strong>Modificare:</strong> peste o selecție, o înlocuiește; un singur Ctrl+Z întoarce textul vechi.</li>

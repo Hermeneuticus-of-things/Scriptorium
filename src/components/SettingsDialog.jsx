@@ -68,6 +68,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     dtedPath: init.dtedPath || '',
     dtedTerms: init.dtedTerms || '',
     dtedTimestamps: init.dtedTimestamps !== false,
+    speechEngine: init.speechEngine || 'local',
     teamColor: init.team?.color || '',
   });
   const set = (k) => (e) => {
@@ -664,23 +665,34 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     ),
     services: (
       <>
-      {api.dtedStatus && (
+      {(api.dtedStatus || api.whisperStatus) && (
         <fieldset>
           <legend>{t('ui.dted.setari_titlu')}</legend>
           <p className="muted small">{t('ui.dted.setari_explicatie')}</p>
-          <label>
-            {t('ui.dted.cale')}
-            <input value={s.dtedPath} onChange={set('dtedPath')} placeholder={t('ui.dted.cale_automata')} />
-          </label>
+          {api.whisperStatus && (
+            <div role="radiogroup" aria-label={t('ui.dted.motor')}>
+              <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine !== 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'local' }))} /> {t('ui.dted.motor_local')}</label>
+              <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine === 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'dted' }))} /> {t('ui.dted.motor_dted')}</label>
+            </div>
+          )}
+          {api.whisperStatus && s.speechEngine !== 'dted' && <LocalEngine api={api} onError={onError} />}
+          {(s.speechEngine === 'dted' || !api.whisperStatus) && (
+            <>
+              <label>
+                {t('ui.dted.cale')}
+                <input value={s.dtedPath} onChange={set('dtedPath')} placeholder={t('ui.dted.cale_automata')} />
+              </label>
+              <div className="row">
+                <button onClick={checkDted}>{t('ui.dted.verifica')}</button>
+                {dtedCheck && <span className="muted small" role="status">{dtedCheck}</span>}
+              </div>
+            </>
+          )}
           <label>
             {t('ui.dted.termeni')}
             <input value={s.dtedTerms} onChange={set('dtedTerms')} placeholder="Ilinca, Apuseni, Matei" />
           </label>
           <label className="check"><input type="checkbox" checked={s.dtedTimestamps} onChange={set('dtedTimestamps')} /> {t('ui.dted.marcaje_timp')}</label>
-          <div className="row">
-            <button onClick={checkDted}>{t('ui.dted.verifica')}</button>
-            {dtedCheck && <span className="muted small" role="status">{dtedCheck}</span>}
-          </div>
         </fieldset>
       )}
       <fieldset>
@@ -737,6 +749,63 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <button className="primary" onClick={save}>{t('btn.save')}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// The built-in recogniser: download (with progress), state, removal (docs/DTED.md §7).
+function LocalEngine({ api, onError }) {
+  const [st, setSt] = React.useState(null);
+  const [prog, setProg] = React.useState(null);
+  const [cuda, setCuda] = React.useState(false);
+  const [msg, setMsg] = React.useState('');
+  React.useEffect(() => {
+    api.whisperStatus().then(setSt).catch(onError);
+    return api.onWhisperProgress ? api.onWhisperProgress(setProg) : undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  if (!st) return null;
+  const install = async (variant = cuda ? 'cuda' : 'cpu') => {
+    setMsg('');
+    setProg({ what: 'motor', mb: 0, totalMb: 0 });
+    try {
+      setSt(await api.whisperInstall(variant));
+      setMsg(t('ui.dted.descarcat'));
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setProg(null);
+    }
+  };
+  const remove = async () => {
+    if (!window.confirm(t('ui.dted.sterge_confirma'))) return;
+    try {
+      setSt(await api.whisperRemove());
+    } catch (e) {
+      onError(e);
+    }
+  };
+  return (
+    <div className="local-engine">
+      <p className="small">
+        {st.installed ? t('ui.dted.motor_gata', { varianta: st.variants.includes('cuda') ? 'NVIDIA (CUDA)' : t('ui.dted.procesor') }) : t('ui.dted.motor_lipsa', { mb: st.sizes.model + (cuda ? st.sizes.cuda : st.sizes.cpu) })}
+      </p>
+      {!st.supported && <p className="muted small">{t('ui.dted.doar_windows')}</p>}
+      {st.supported && !st.installed && (
+        <label className="check"><input type="checkbox" checked={cuda} onChange={(e) => setCuda(e.target.checked)} /> {t('ui.dted.am_nvidia', { mb: st.sizes.cuda })}</label>
+      )}
+      {prog && (
+        <div className="row">
+          <progress max={prog.totalMb || 1} value={prog.mb || 0} />
+          <span className="muted small">{prog.what === 'model' ? t('ui.dted.descarc_model') : t('ui.dted.descarc_motor')} {Math.round(prog.mb)} / {prog.totalMb} MB</span>
+        </div>
+      )}
+      <div className="row">
+        {st.supported && !st.installed && <button className="primary" onClick={() => install()} disabled={Boolean(prog)}>{t('ui.dted.descarca')}</button>}
+        {st.supported && st.installed && !st.variants.includes('cuda') && <button onClick={() => install('cuda')} disabled={Boolean(prog)}>{t('ui.dted.adauga_cuda')}</button>}
+        {(st.installed || st.model) && <button onClick={remove} disabled={Boolean(prog)}>{t('ui.dted.sterge_motor')}</button>}
+      </div>
+      {msg && <p className="muted small" role="status">{msg}</p>}
     </div>
   );
 }

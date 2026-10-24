@@ -159,3 +159,8 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] Setări → Servicii → D&TED (cale găsită automat, Verifică, termeni)
 - [x] ajutor RO/EN, README + imagine, CHANGELOG, versiune
 - [ ] test real pe Windows (autorul)
+
+### Request: motorul D&TED în Scribner (v0.9.0)
+- [x] motor încorporat (whisper.cpp), descărcare din Setări cu progres și amprente, dictare cu microfonul, fișiere audio decodate în fereastră
+- [x] teste unitare + browser cu microfon fals; docs, README, ajutor
+- [ ] proba pe Windows (autorul): Descarcă motorul, F9, un MP3

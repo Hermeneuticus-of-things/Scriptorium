@@ -334,7 +334,7 @@ scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP s
       {
         id: 'yours-dictation',
         title: 'Dictation and transcription (D&TED)',
-        html: `<p>Dictation uses <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a>, a separate program that recognises Romanian speech on your computer, without internet. Install it once; Scribner finds it by itself (or type where it is in <em>Settings → Services and accounts → Dictation and transcription</em>, which also has <em>Check</em>).</p>
+        html: `<p>Romanian speech recognition is built into Scribner and works on your computer, without internet. The first time: <em>Settings → Services and accounts → Dictation and transcription → Download the engine</em> (about 590 MB, once; tick <em>I have an NVIDIA graphics card</em> for the faster version). The engine (whisper.cpp, model large-v3-turbo) runs only on your computer; the downloaded files are checked against their fingerprints. If you have the <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a> program you can choose it instead, in the same place.</p>
 <ul>
 <li><strong>F9</strong> (or <em>Tools → Dictation</em>) starts and stops dictation. Text appears every ~4 seconds of speech, with spaces and a capital at sentence starts.</li>
 <li><strong>New text:</strong> with nothing selected it goes in at the cursor. <strong>Edit:</strong> over a selection it replaces it; one Ctrl+Z brings the old text back.</li>
