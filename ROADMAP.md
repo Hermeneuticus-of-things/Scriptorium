@@ -28,7 +28,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 | [x] | Panouri redimensionabile, starea proiectului memorată, teme (luminos/întunecat/sepia), mod compunere |
 | [x] | Asistent AI Claude: corectură, sinopsis, continuare, critică, consistență, întrebări |
 | [x] | Import Scrivener fără pierderi (testat pe un proiect de test complet; neverificat încă pe Karma Book real) |
-| [~] | I-REP / I-EDIT (motor de reguli Karma, bucle micro/mezzo/macro, panou; verificat cu simulator, nu cu Claude real) |
+| [~] | I-REP / I-EDIT (motor de reguli Karma, bucle micro/mezzo/macro, panou, VKB2 implementat; verificat cu simulator, nu cu Claude real) |
 | [x] | AI opțional: programul funcționează complet și fără AI |
 
 ---
@@ -73,7 +73,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [~] Test end-to-end cu un model real: lanțul aplicației (setări → furnizor → răspuns) verificat cu OpenRouter; cu Claude real încă nu
 - [x] Glosare generate automat: `Glosar_Alogeni_Indieni`, `Glosar_de_lectură`, `Cuprins_de_tipar`
 - [x] Index canonic (`Index_de_Lucru`, noduri N.N.N cu tip/greutate/dependențe) ca sursă pentru R1 și R6 macro
-- [ ] „VKB2” și definițiile tale exacte pentru I-REP / I-EDIT (nu le am; aștept fișierele)
+- [x] VKB2: I-REP repetiția apropiată (SEMNAL, R8b/S70) și I-EDIT textul autorului (poartă HARD, COADA_AUTOR, jurnal), după `docs/VKB2.md`
 
 ### 1.3 Conexiune MCP pentru agenți AI
 - [x] Server MCP `scribner-mcp` (stdio), pornit de Claude Code / Claude Desktop / alți agenți, mod `--read-only`
@@ -218,6 +218,6 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [ ] Proiectul Karma real (`.scriv`) pentru proba de import fără pierderi
 - [ ] Cheile reale DeepL / Google / LanguageTool Premium / Speechify / Zotero pentru o probă cap-coadă (codul e testat cu răspunsuri simulate)
 - [~] Test cu model real: rulat de autor pe Windows prin OpenRouter (model gratuit `nvidia/nemotron-3.5-super-vl:free`): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit („Provider returned error”); scriptul reîncearcă acum și trece la alt model. Rămâne o rulare completă verde.
-- [ ] Definițiile VKB2 pentru I-REP / I-EDIT
+- [x] Definițiile VKB2 primite și implementate
 - [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add scribner …`)
 - [ ] Pachetul de limbă română pentru corectorul ortografic al Windows (setare de sistem)

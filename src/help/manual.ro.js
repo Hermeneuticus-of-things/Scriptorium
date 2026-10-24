@@ -606,6 +606,21 @@ media/                 imagini, PDF, audio, video</pre>
 </ul>
 <p>Opțional: limita de cuvinte pe document, verificarea primei linii „Cap. N / Secț. N / Subcap. N” și a notei finale de navigare. Profilul se salvează în proiect, deci fiecare carte poate avea regulile ei.</p>`,
       },
+      {
+        id: 'irep-near',
+        title: 'Repetiții apropiate (S70)',
+        html: `<p>Panoul are secțiunea <em>Repetiții apropiate (S70)</em>: același cuvânt cu conținut (aceeași lemă sau formă) în aceeași frază sau în două fraze vecine, inclusiv anadiploza „…scutul. Scutul…”. Câte un rând <code>⚠ REP L&lt;n&gt; «formă» ×k</code> pe fiecare paragraf (L = numărul paragrafului în document) unde grupul are apariții; un clic selectează apariția în editor.</p>
+<p>Nu se numără cuvintele-unealtă (pronume, prepoziții, conjuncții, numerale, auxiliare), locuțiunile („în fața”, „pe lângă”, „de-a lungul”…), iar reduplicatele („pas cu pas”, „zi de zi”) contează o singură apariție. Termenii cărții („faptă”, „karma”, „urmă”) se numără.</p>
+<p>Este un <strong>semnal</strong>, nu o problemă: nu oprește bucla, nu se repară automat și nu ajunge în promptul de reparare. Regula S70: termenul nu se schimbă doar ca să nu se repete. Lista intră doar la runda <strong>R8b Cuvântul și litera</strong> din I-EDIT, unde cititorul judecă dacă repetiția supără.</p>`,
+      },
+      {
+        id: 'irep-author',
+        title: 'Textul tău: editare în propunere și protecția paragrafelor tale',
+        html: `<p>Ce scrii tu de mână e decizie. Paragrafele pe care le schimbi în editor devin <strong>text al autorului</strong> (după câteva secunde de pauză) și fiecare salvare se notează în <code>editorial/MODIFICARI_AUTOR.jsonl</code>, câte un rând pe bucată schimbată: document, rând, vechi, nou, oră, hash-uri.</p>
+<p>În propunerea I-REP / I-EDIT, <em>✎ Editează</em> îți arată textul propus ca să-l corectezi tu; <em>Salvează</em> face întâi un snapshot <code>.bak-autor-&lt;dată-oră&gt;</code>. Salvarea e refuzată dacă documentul s-a schimbat între timp (409) sau dacă textul nou e sub 20% din cel vechi (412, cu <em>Salvează oricum</em>). Paragrafele scrise de tine acolo devin și ele text al autorului.</p>
+<p>Bucla nu rescrie textul autorului: poarta <code>fraza_autor_atinsa</code> respinge orice rezultat care îl schimbă, îl mută sau îl șterge, fără excepție, și îți arată rândul și motivul. Modelul primește paragrafele tale în secțiunea „TEXT AL AUTORULUI (doar semnalezi)”. Problemele care cad pe ele vin la tine în <em>COADA_AUTOR</em>; cele de pe paragrafele vecine merg la reparare cu nota „leagă de textul autorului, fără să-l schimbi”. Reparațiile sigure nu ating paragrafele tale.</p>
+<p>Dacă salvezi în timpul unei bucle, jurnalul ei primește <code>MODIFICARE_AUTOR</code>, raportul are secțiunea „Modificările tale în text”, iar propunerea nu se mai aplică peste textul tău: textul se reverifică chiar înainte de scriere. O propunere respinsă rămâne respinsă doar cât textul documentului nu se schimbă.</p>`,
+      },
     ],
   },
   {
@@ -784,10 +799,67 @@ node scripts\ai-smoke.cjs nvidia</pre>
       },
       {
         id: 'yours-mcp',
-        title: 'Claude Code în proiect (MCP)',
-        html: `<p>Un agent Claude Code poate citi și scrie proiectul prin serverul MCP inclus (77 de unelte: binder, documente, metadate, snapshot-uri, Compile). În terminal, din folderul programului:</p>
-<pre>claude mcp add scribner -- node "C:\\cale\\Scribner\\mcp\\server.mjs" --project "C:\\cale\\Cartea mea.scribner"</pre>
-<p>Apoi, în Claude Code, cere de exemplu „deschide proiectul X și fă un sinopsis pentru fiecare capitol”. Fă un snapshot înainte de modificări mari.</p>`,
+        title: 'Legarea de Claude, Codex și alți agenți AI (MCP)',
+        html: `<p>Scribner are un server MCP inclus (peste 70 de unelte: binder, documente, note, metadate, snapshot-uri, căutare, Compile). Orice agent AI care știe MCP îl poate folosi. <strong>Nu ai nevoie de Node.js</strong>: programul instalat pornește serverul singur, cu variabila <code>ELECTRON_RUN_AS_NODE=1</code>. Agentul vede doar proiectele puse după <code>--project</code>; cu <code>--read-only</code> doar citește. Fiecare scriere face întâi un snapshot și se notează în <code>agent-log.jsonl</code> din proiect.</p>
+<p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>Ajutor → Conectează la Claude (MCP)</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
+<p>Căile de mai jos sunt cele ale installerului pe Windows (instalare pentru utilizatorul curent). Înlocuiește <code>Ionut</code> cu numele tău de utilizator și calea proiectului cu a ta. Varianta portabilă: folosește calea unde ai pus-o.</p>
+<pre>Program:  C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
+Server:   C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs
+Proiect:  D:\\Carti\\Karma.scribner</pre>
+
+<h4>Claude Code (terminal și fila Code din Claude Desktop)</h4>
+<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<p>Verificare: <code>claude mcp list</code> arată <em>scribner: connected</em>. În sesiune, <code>/mcp</code> arată uneltele.</p>
+
+<h4>Claude Desktop (chat)</h4>
+<p>Fișierul <code>%APPDATA%\\Claude\\claude_desktop_config.json</code> (în Claude Desktop: <em>Settings → Developer → Edit Config</em>). Adaugă în <code>mcpServers</code>, apoi repornește Claude Desktop complet (și din bara de sistem):</p>
+<pre>{
+  "mcpServers": {
+    "scribner": {
+      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
+      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
+               "--project", "D:\\\\Carti\\\\Karma.scribner"],
+      "env": { "ELECTRON_RUN_AS_NODE": "1" }
+    }
+  }
+}</pre>
+<p>În JSON, fiecare <code>\\</code> din cale se scrie dublat.</p>
+
+<h4>OpenAI Codex (CLI și extensia de editor)</h4>
+<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<p>Sau direct în <code>%USERPROFILE%\\.codex\\config.toml</code>:</p>
+<pre>[mcp_servers.scribner]
+command = 'C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe'
+args = ['C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Carti\\Karma.scribner']
+env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
+<p>Verificare: <code>codex mcp list</code>.</p>
+
+<h4>Gemini CLI</h4>
+<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<p>Sau în <code>%USERPROFILE%\\.gemini\\settings.json</code>, același bloc <code>mcpServers</code> ca la Claude Desktop.</p>
+
+<h4>Cursor, Windsurf, LM Studio și alți clienți cu <code>mcpServers</code></h4>
+<p>Același bloc JSON ca la Claude Desktop, în fișierul fiecăruia: Cursor <code>%USERPROFILE%\\.cursor\\mcp.json</code>; Windsurf <code>%USERPROFILE%\\.codeium\\windsurf\\mcp_config.json</code>; LM Studio <em>Program → Install → Edit mcp.json</em>.</p>
+
+<h4>VS Code (GitHub Copilot, mod Agent)</h4>
+<p>Fișierul <code>.vscode\\mcp.json</code> din folderul de lucru (cheia e <code>servers</code>, nu <code>mcpServers</code>):</p>
+<pre>{
+  "servers": {
+    "scribner": {
+      "type": "stdio",
+      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
+      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
+               "--project", "D:\\\\Carti\\\\Karma.scribner"],
+      "env": { "ELECTRON_RUN_AS_NODE": "1" }
+    }
+  }
+}</pre>
+
+<h4>Din sursă (fără installer, cu Node.js)</h4>
+<pre>claude mcp add scribner -- node "C:\\cale\\Scriptorium\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+
+<h4>Probă</h4>
+<p>Cere agentului: „listează documentele din proiectul Scribner”, apoi „citește primul capitol și scrie-i sinopsisul în inspector”. Fă un snapshot înainte de modificări mari. Mai multe proiecte: repetă <code>--project</code> pentru fiecare. Dacă agentul nu vede unelte: repornește clientul, verifică dublarea <code>\\</code> în JSON și că Scribner e instalat la calea scrisă.</p>`,
       },
       {
         id: 'yours-sync',
@@ -798,7 +870,7 @@ node scripts\ai-smoke.cjs nvidia</pre>
         id: 'yours-karma',
         title: 'Proiectele tale Scrivener și regulile I-REP / I-EDIT',
         html: `<p>Importul <code>.scriv</code> e testat pe proiecte de probă. Pe un proiect real (de exemplu cartea Karma), fă importul cu <em>Fișier → Importă proiect Scrivener</em>, citește raportul de import și verifică capitolele cu cele mai multe formatări, comentarii și note de subsol. Originalul rămâne neatins, iar o copie stă în <code>scrivener-original/</code>.</p>
-<p>I-REP / I-EDIT merg acum cu regulile incluse în program. Definițiile tale proprii (VKB2) nu există încă în program: trimite fișierele lor ca problemă nouă din <em>Ajutor → Raportează o problemă</em>, ca să fie adăugate.</p>`,
+<p>I-REP / I-EDIT urmează definițiile tale VKB2: repetițiile apropiate (S70, runda R8b) și protecția textului scris de tine (vezi capitolul <em>Revizie I-REP/I-EDIT</em>).</p>`,
       },
       {
         id: 'yours-limits',

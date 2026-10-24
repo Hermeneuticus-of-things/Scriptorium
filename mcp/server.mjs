@@ -473,7 +473,7 @@ tool(
 tool(
   'lint',
   'I-REP: verifică un document sau toate documentele dintr-un dosar după profilul editorial (DOOM III, binar, ALOGEN, LLM, redundanță micro/mezzo/macro). Întoarce problemele cu rundă și gravitate.',
-  { project, id: z.string().describe('Document sau dosar'), severity: z.enum(['GRAVE', 'MEDIU', 'MINOR']).optional().describe('Doar această gravitate') },
+  { project, id: z.string().describe('Document sau dosar'), severity: z.enum(['GRAVE', 'MEDIU', 'MINOR', 'SEMNAL']).optional().describe('Doar această gravitate') },
   (dir, { id, severity }) => {
     const p = load(dir);
     const n = nodeOrThrow(p, id);

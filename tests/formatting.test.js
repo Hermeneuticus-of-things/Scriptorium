@@ -117,7 +117,7 @@ describe('pure helpers', () => {
   it('bounds, tabs, css, fade', () => {
     expect(wordBounds('ab cd', 4)).toEqual([3, 5]);
     expect(sentenceBounds('Unu. Doi trei!', 7)).toEqual([5, 14]);
-    expect(parseTabStops('3, 1,1,x')).toEqual([1, 3]);
+    expect(parseTabStops('3, 1,1,x')).toEqual([{ pos: 1, type: 'left' }, { pos: 3, type: 'left' }]);
     expect(paragraphCss({ indentLeft: 1, spaceBefore: 0 })).toBe('margin-top: 0pt; margin-left: 1cm');
     expect(fadeOpacity('x')).toBe(0.28);
     expect(fadeOpacity(5)).toBe(1);

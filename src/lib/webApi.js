@@ -99,6 +99,7 @@ const K = {
   snaps: (dir, id) => `s:${dir}|${id}`,
   snapPrefix: (dir) => `s:${dir}|`,
   history: (dir) => `h:${dir}`,
+  authorJournal: (dir) => `aj:${dir}`,
 };
 
 export function newWebDir() {
@@ -538,6 +539,15 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
     },
     async getHistory(dir) {
       return summarizeHistory(await kv.get(K.history(dir)));
+    },
+    // I-EDIT journal (MODIFICARI_AUTOR.jsonl on the desktop): rows kept in the browser store, capped.
+    async appendAuthorJournal(dir, rows) {
+      const list = (Array.isArray(rows) ? rows : [rows]).filter((r) => r && r.doc && r.old !== r.new);
+      if (!list.length) return 0;
+      const add = (prev) => [...(Array.isArray(prev) ? prev : []), ...list].slice(-5000);
+      if (kv.update) await kv.update(K.authorJournal(dir), add);
+      else await kv.put(K.authorJournal(dir), add(await kv.get(K.authorJournal(dir))));
+      return list.length;
     },
     exportBundleData,
     importBundleData,

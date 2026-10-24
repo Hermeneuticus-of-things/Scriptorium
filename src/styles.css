@@ -281,6 +281,10 @@ legend { color: var(--muted); padding: 0 4px; }
 .issues li:hover { background: var(--accent-soft); }
 .issues li.sev-GRAVE { border-left-color: #b3261e; }
 .issues li.sev-MEDIU { border-left-color: #c77700; }
+.issues li.sev-SEMNAL { border-left-color: #5b7fa6; border-left-style: dashed; }
+.near-rep summary, .author-queue summary { cursor: pointer; font-weight: 600; font-size: 12.5px; margin: 6px 0; }
+.author-edit { display: flex; flex-direction: column; gap: 6px; }
+.author-edit textarea { width: 100%; box-sizing: border-box; font-family: Georgia, serif; font-size: 13px; line-height: 1.45; resize: vertical; }
 .issues .tag { font-weight: 700; font-size: 11px; color: var(--muted); margin-right: 4px; }
 .issues .excerpt { color: var(--muted); font-family: Georgia, serif; margin-top: 2px; }
 .media-view { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; height: 100%; }

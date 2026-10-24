@@ -26,6 +26,7 @@ import { collectionNodes, createCollection } from './lib/collections.js';
 import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
+import { diffParagraphs, journalRows, updateAuthorHashes } from './lib/authorText.js';
 import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
@@ -103,6 +104,9 @@ import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 
 const SAVE_DELAY = 700;
 const TYPED_COMMIT_DELAY = 400;
+// I-EDIT: a run of hand edits is journaled (MODIFICARI_AUTOR) once the writer pauses this long,
+// so autosave never writes one row per keystroke.
+const AUTHOR_COMMIT_DELAY = 8000;
 const HISTORY_DELAY = 5000;
 
 // Per-machine UI state (open document, view, panel widths) kept in localStorage.
@@ -451,6 +455,9 @@ export default function App({ api }) {
 
   const saveProject = useCallback(
     (next) => {
+      // Handlers that save twice before the next render (I-EDIT author text, then the
+      // editorial stamp) must build on this version, not on the render-time one.
+      projectRef.current = next;
       setProject(next);
       api.saveProject(dir, next).catch(report);
     },
@@ -595,7 +602,61 @@ export default function App({ api }) {
     go(id);
   };
 
-  const writeDocNow = (id, html) => {
+  // I-EDIT author text: paragraphs the writer changes by hand. authorBase holds, per document,
+  // the text before the current run of hand edits; commitAuthor() diffs it against the newest
+  // text, journals one row per changed chunk and records the new paragraphs as author text
+  // (node.authorHashes). Programmatic writes (AI proposals, merges, replace) are not author text.
+  const authorBase = useRef(new Map());
+  const authorTimer = useRef(null);
+  const [authorEvent, setAuthorEvent] = useState({ seq: 0 });
+  const commitAuthor = (only, extra = {}) => {
+    const ids = only ? [only].filter((id) => authorBase.current.has(id) || extra[id]) : [...authorBase.current.keys()];
+    if (!only) clearTimeout(authorTimer.current);
+    if (!ids.length || !dir) return;
+    const pj = projectRef.current;
+    const now = docsNow();
+    let tree = pj.tree;
+    const events = [];
+    for (const id of ids) {
+      const node = findNode(tree, id);
+      const x = extra[id];
+      const base = x ? x.base : authorBase.current.get(id);
+      const after = x ? x.after : now[id] || '';
+      if (!x) authorBase.current.delete(id);
+      if (!node || base === undefined || base === after) continue;
+      const chunks = diffParagraphs(base, after);
+      if (!chunks.length) continue;
+      const rows = journalRows(id, node.title, chunks);
+      api.appendAuthorJournal?.(dir, rows).catch(report);
+      const prev = node.authorHashes || [];
+      // Edited in the I-EDIT preview: the author's words are what differs from the model's proposal.
+      const own = x && x.authorFrom !== undefined ? diffParagraphs(x.authorFrom, after) : chunks;
+      const next = updateAuthorHashes(prev, after, own.flatMap((c) => c.newHashes));
+      if (next.length !== prev.length || next.some((h, i) => h !== prev[i])) tree = updateNode(tree, id, { authorHashes: next });
+      events.push({ id, title: node.title, rows });
+    }
+    if (tree !== pj.tree) saveProject({ ...pj, tree });
+    if (events.length) setAuthorEvent((e) => ({ seq: e.seq + 1, events }));
+  };
+  const commitAuthorRef = useRef(commitAuthor);
+  commitAuthorRef.current = commitAuthor;
+  const noteHandEdit = (id) => {
+    if (!authorBase.current.has(id)) authorBase.current.set(id, docsNow()[id] ?? '');
+    clearTimeout(authorTimer.current);
+    authorTimer.current = setTimeout(() => commitAuthorRef.current(), AUTHOR_COMMIT_DELAY);
+  };
+  useEffect(() => {
+    const onUnload = () => commitAuthorRef.current();
+    window.addEventListener('beforeunload', onUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onUnload);
+      commitAuthorRef.current();
+    };
+  }, [dir]);
+
+  const writeDocNow = (id, html, { hand = false } = {}) => {
+    // A programmatic write closes the run of hand edits first: they stay the writer's.
+    if (!hand && authorBase.current.has(id)) commitAuthor(id);
     typed.current.set(id, html);
     queueWrite(id, 'docs', html);
     clearTimeout(typedTimer.current);
@@ -603,7 +664,8 @@ export default function App({ api }) {
   };
   // Same document open in both panes: an edit in one is pushed into the other editor.
   const writeSynced = (id, html, from) => {
-    writeDocNow(id, html);
+    noteHandEdit(id);
+    writeDocNow(id, html, { hand: true });
     if (id !== splitId) return;
     const other = from === 'split' ? editorRefs.current.get(id) : editorRefs.current.get(`split:${id}`);
     if (other && other.getHtml() !== html) other.setHtml(html);
@@ -2111,24 +2173,40 @@ export default function App({ api }) {
                     const slice = ed.state.doc.cut(from, to);
                     return htmlToManuscript(getHTMLFromFragment(slice.content, ed.schema));
                   }}
+                  authorEvent={authorEvent}
                   onJump={(issue) => {
                     if (!mainIds.has(editorialNode.id)) go(editorialNode.id);
-                    setTimeout(() => editorRefs.current.get(editorialNode.id)?.findText(issue.match || issue.excerpt), 50);
+                    setTimeout(() => editorRefs.current.get(editorialNode.id)?.findText(issue.match || issue.excerpt, { block: issue.paragraph, at: issue.at }), 50);
                   }}
                   onApply={async (p) => {
                     await flush();
-                    if (!p.safe) await api.takeSnapshot(dir, p.id, tr('ui.app.inainte_de_x', { v0: p.rounds ? 'I-EDIT' : 'I-REP' })).catch(report);
+                    // Hand edits made so far are the writer's (author text) before anything is written.
+                    commitAuthor(p.id);
+                    if (!p.selection && !p.safe) {
+                      // Re-check the bytes right before writing: a save of the author's at this
+                      // moment (or an agent's write) is never overwritten.
+                      const cur = docsNow()[p.id] || '';
+                      const disk = api.readDoc ? await api.readDoc(dir, p.id, 'docs').catch(() => null) : null;
+                      if (cur !== p.before || (disk && disk !== p.before)) throw new Error(tr('ui.app.document_schimbat_409', { title: p.title }));
+                    }
+                    const now = new Date();
+                    const pad = (x) => String(x).padStart(2, '0');
+                    if (p.authorEdit) await api.takeSnapshot(dir, p.id, `.bak-autor-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`);
+                    else if (!p.safe) await api.takeSnapshot(dir, p.id, tr('ui.app.inainte_de_x', { v0: p.rounds ? 'I-EDIT' : 'I-REP' })).catch(report);
                     if (p.selection) {
                       editorRefs.current.get(p.id)?.replaceSelectionHtml(p.after);
                       return;
                     }
                     writeDocNow(p.id, p.after);
                     editorRefs.current.get(p.id)?.setHtml(p.after);
-                    const n = findNode(project.tree, p.id);
-                    const stamp = new Date().toISOString();
+                    const pj = projectRef.current;
+                    const n = findNode(pj.tree, p.id);
+                    const stamp = now.toISOString();
                     const editorial = { ...(n?.editorial || {}), lastRep: stamp };
                     if (p.rounds) editorial.rounds = { ...(editorial.rounds || {}), ...Object.fromEntries(p.rounds.map((r) => [r, stamp])) };
-                    patchNode(p.id, { editorial });
+                    saveProject({ ...pj, tree: updateNode(pj.tree, p.id, { editorial, authorHashes: updateAuthorHashes(n?.authorHashes, p.after) }) });
+                    // Edited in the preview: journal the save and mark the author's own words.
+                    if (p.authorEdit) commitAuthor(p.id, { [p.id]: { base: p.before, after: p.after, authorFrom: p.proposed } });
                   }}
                   onOpenSettings={openSettings}
                 />

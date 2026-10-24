@@ -209,15 +209,27 @@ const Editor = forwardRef(function Editor(
       },
       replaceSelectionHtml: (h) => editor?.chain().focus().insertContent(h).run(),
       // Selects the first occurrence of a text snippet (used to jump to an editorial issue).
-      findText: (snippet) => {
+      // opts.block (0-based textblock index, = lint paragraph) and opts.at (offset in it) pick
+      // the occurrence nearest to that place, so a repeated word jumps to the right one.
+      findText: (snippet, opts = {}) => {
         if (!editor || !snippet) return false;
         const needle = snippet.replace(/^…|…$/g, '').trim().slice(0, 60);
         if (!needle) return false;
         let found = null;
-        editor.state.doc.descendants((node, pos) => {
+        let blockNo = -1;
+        const wantBlock = Number.isInteger(opts.block) ? opts.block : null;
+        const nearest = (text) => {
+          if (!Number.isFinite(opts.at)) return text.indexOf(needle);
+          let best = -1;
+          for (let i = text.indexOf(needle); i >= 0; i = text.indexOf(needle, i + 1)) if (best < 0 || Math.abs(i - opts.at) < Math.abs(best - opts.at)) best = i;
+          return best;
+        };
+        const pass = (only) => editor.state.doc.descendants((node, pos) => {
           if (found || !node.isTextblock) return !found;
+          blockNo += 1;
+          if (only !== null && blockNo !== only) return false;
           const text = node.textContent;
-          const at = text.indexOf(needle);
+          const at = only !== null ? nearest(text) : text.indexOf(needle);
           if (at >= 0) {
             // map text offset to document position by walking inline children
             let offset = 0;
@@ -232,6 +244,9 @@ const Editor = forwardRef(function Editor(
           }
           return false;
         });
+        if (wantBlock !== null) pass(wantBlock);
+        blockNo = -1;
+        if (!found) pass(null);
         if (!found) return false;
         editor.chain().focus().setTextSelection(found).scrollIntoView().run();
         return true;
