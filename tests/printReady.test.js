@@ -172,3 +172,32 @@ describe('running header and footer in the PDF', () => {
     expect(opts.displayHeaderFooter).toBe(false);
   });
 });
+
+describe('DOCX front matter without running header', () => {
+  const proj = {
+    title: 'Drumul spre munte', subtitle: 'Roman', author: 'Ilinca Matei',
+    tree: [{ id: 'draft', root: 'draft', type: 'folder', title: 'M', children: [
+      { id: 'c1', type: 'folder', title: 'Plecarea', includeInCompile: true, children: [{ id: 's1', type: 'text', title: 'S', includeInCompile: true }] },
+    ] }],
+  };
+  const pb = () => F.allFormats().find((f) => f.id === 'paperback');
+  const withHeader = () => ({ ...pb(), page: { ...pb().page, header: { left: '<$projecttitle>', center: '', right: '<$p>' }, differentFirstPage: false } });
+  it('cover, title page and contents are a first section with no header; the body restarts at page 1', async () => {
+    const buf = await compile.compileDocx(proj, () => '<p>Text.</p>', { titlePage: true, toc: true, format: withHeader() });
+    const xml = await (await JSZip.loadAsync(buf)).file('word/document.xml').async('string');
+    const sects = [...xml.matchAll(/<w:sectPr[\s\S]*?<\/w:sectPr>/g)].map((m) => m[0]);
+    expect(sects.length).toBe(2);
+    expect(sects[0]).not.toMatch(/headerReference/);
+    expect(sects[1]).toMatch(/headerReference/);
+    expect(sects[1]).toMatch(/<w:pgNumType w:start="1"\/>/);
+    // the title comes before the first section break, the chapter after it
+    const brk = xml.indexOf('<w:sectPr');
+    expect(xml.indexOf('Drumul spre munte')).toBeLessThan(brk);
+    expect(xml.indexOf('Plecarea', xml.indexOf('Cuprins') + 100)).toBeGreaterThan(brk);
+  });
+  it('without a header/footer there is a single section', async () => {
+    const buf = await compile.compileDocx(proj, () => '<p>Text.</p>', { titlePage: true, toc: true, format: { ...pb(), page: { ...pb().page, header: null, footer: null } } });
+    const xml = await (await JSZip.loadAsync(buf)).file('word/document.xml').async('string');
+    expect((xml.match(/<w:sectPr/g) || []).length).toBe(1);
+  });
+});
