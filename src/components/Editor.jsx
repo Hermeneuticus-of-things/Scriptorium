@@ -200,7 +200,13 @@ const Editor = forwardRef(function Editor(
         const { to } = editor.state.selection;
         editor.chain().focus().setTextSelection(to).insertContent(textToHtml(text)).run();
       },
-      replaceSelection: (text) => editor?.chain().focus().insertContent(textToHtml(text)).run(),
+      // One line goes into the current paragraph as text; several lines become paragraphs.
+      replaceSelection: (text) => {
+        if (!editor) return false;
+        const t = String(text ?? '');
+        if (!/[\r\n]/.test(t)) return editor.chain().focus().insertContent({ type: 'text', text: t }).run();
+        return editor.chain().focus().insertContent(textToHtml(t)).run();
+      },
       replaceSelectionHtml: (h) => editor?.chain().focus().insertContent(h).run(),
       // Selects the first occurrence of a text snippet (used to jump to an editorial issue).
       findText: (snippet) => {

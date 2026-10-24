@@ -3,7 +3,7 @@ import { styleCss, stylesOf } from '../lib/styles.js';
 // The presets live in lib/compileFormats.cjs (used by the main process). The
 // renderer has no Node and no eval, so it reads the JSON block from the source.
 import formatsSource from '../../lib/compileFormats.cjs?raw';
-import { t as tr } from '../lib/i18n.js';
+import { t as tr, builtinName } from '../lib/i18n.js';
 
 function readPresets() {
   try {
@@ -388,7 +388,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               {all.map((f) => (
                 <li key={f.id}>
                   <button type="button" className={f.id === formatId ? 'active' : ''} onClick={() => setFormatId(f.id)}>
-                    {f.name}
+                    {builtinName('format', f)}
                     {f.builtin ? '' : f.global && !formats.some((x) => x.id === f.id) ? ' 🌐' : ' ✎'}
                   </button>
                 </li>

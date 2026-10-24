@@ -33,9 +33,17 @@ const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
   await page.waitForSelector('.translate-pair');
   await page.getByRole('button', { name: 'Înlocuiește selecția' }).click();
   await page.waitForTimeout(200);
-  console.log(JSON.stringify((await ed(page).locator('p').allInnerTexts()).slice(-3)));
   const last = (await ed(page).locator('p').last().innerText()).trim();
   check('trailing space of the selection is kept', last === 'alfa [ro] beta gama', JSON.stringify(last));
+  // "Insert after" puts the text after the sent words, in the same paragraph
+  await page.keyboard.press('End');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('Shift+ArrowLeft');
+  await cmd('Traduce selecția în program (DeepL)');
+  await page.waitForSelector('.translate-pair');
+  await page.getByRole('button', { name: 'Inserează după' }).click();
+  await page.waitForTimeout(200);
+  const last2 = (await ed(page).locator('p').last().innerText()).trim();
+  check('insert after stays in the paragraph', last2 === 'alfa [ro] beta gama [ro] gama', JSON.stringify(last2));
   check('no page errors', !errors.length, errors.join(' | '));
   await browser.close();
   done();

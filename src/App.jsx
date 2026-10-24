@@ -710,17 +710,40 @@ export default function App({ api }) {
   };
   // In-app translation (DeepL / Google) and grammar check (LanguageTool) of the selection; the
   // keys stay in the main process. The editor that held the selection receives the result.
+  // The document range holding exactly `source` (the trimmed selection), so the result replaces
+  // that text and not the spaces around it nor wherever the caret is when the user clicks Replace.
+  const serviceRange = (ed, source) => {
+    if (!ed) return null;
+    let { from, to } = ed.state.selection;
+    const text = (a, b) => ed.state.doc.textBetween(a, b, '\n\n'); // as Editor getSelectionText
+    while (from < to && /^\s/.test(text(from, Math.min(from + 1, to)))) from += 1;
+    while (to > from && /\s$/.test(text(Math.max(to - 1, from), to))) to -= 1;
+    return text(from, to) === source ? { from, to } : null;
+  };
+  // Puts `text` in place of the range captured by runService (when it still holds the source).
+  const applyServiceText = (sr, text, after = false) => {
+    const ed = sr.handle?.editor;
+    if (!ed) return;
+    const { range, source } = sr;
+    const ok = range && range.to <= ed.state.doc.content.size && ed.state.doc.textBetween(range.from, range.to, '\n\n') === source;
+    if (!ok) return setToast(tr('ui.app.textul_s_a_schimbat'));
+    const content = /[\r\n]/.test(text) ? textToHtml(text) : { type: 'text', text: after ? ` ${text}` : text };
+    const at = after ? { from: range.to, to: range.to } : range;
+    ed.chain().focus().insertContentAt(at, content).run();
+    return undefined;
+  };
   const runService = async (kind, service) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
     const source = (handle?.getSelectionText() || '').trim();
     if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    const range = serviceRange(handle.editor, source);
     const label = kind === 'grammar' ? 'LanguageTool' : service === 'google' ? 'Google Translate' : 'DeepL';
     setToast(tr('ui.services.lucrez', { service: label }));
     try {
       const result = kind === 'grammar'
         ? { kind, ...(await api.checkGrammar({ text: source, language: settings.grammarLanguage || 'auto' })) }
         : { kind, ...(await api.translateText({ service, text: source })) };
-      setServiceResult({ source, result, handle });
+      setServiceResult({ source, result, handle, range });
     } catch (e) {
       report(e);
     } finally {
@@ -2155,8 +2178,8 @@ export default function App({ api }) {
         <ServiceResultDialog
           source={serviceResult.source}
           result={serviceResult.result}
-          onReplace={(text) => { serviceResult.handle?.replaceSelection(text); setServiceResult(null); }}
-          onInsertAfter={(text) => { const ed = serviceResult.handle?.editor; if (ed) ed.chain().focus().setTextSelection(ed.state.selection.to).insertContent(` ${text}`).run(); setServiceResult(null); }}
+          onReplace={(text) => { applyServiceText(serviceResult, text); setServiceResult(null); }}
+          onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onClose={() => setServiceResult(null)}
         />
       )}

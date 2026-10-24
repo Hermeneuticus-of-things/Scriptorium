@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { STYLE_KINDS, duplicateShortcuts, isParaStyle, normalizeShortcut, stylesOf } from '../lib/styles.js';
-import { t } from '../lib/i18n.js';
+import { t, builtinName } from '../lib/i18n.js';
 
 const EMPTY = () => ({ name: t('ui.stylesDialog.stil_nou'), type: 'para', bold: false, italic: false, smallCaps: false, underline: false, align: '', indent: 0, size: 100, color: '' });
 
@@ -68,7 +68,7 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
           <ul className="style-list">
             {styles.map((s, i) => (
               <li key={s.id} className={i === sel ? 'on' : ''} onClick={() => setSel(i)}>
-                <span className="muted">{s.type === 'both' ? '¶a' : s.type === 'para' ? '¶' : 'a'}</span> {s.name}
+                <span className="muted">{s.type === 'both' ? '¶a' : s.type === 'para' ? '¶' : 'a'}</span> {builtinName('style', s)}
                 {s.shortcut && <kbd className="muted"> {s.shortcut}</kbd>}
               </li>
             ))}

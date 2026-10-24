@@ -183,11 +183,12 @@ function setupSpelling(win) {
   const lookup = (url) => shell.openExternal(url);
   win.webContents.on('context-menu', async (_e, params) => {
     const items = [];
+    const L = services.contextMenuLabels(readSettings().language);
     if (params.misspelledWord && !ignored.has(params.misspelledWord.toLowerCase())) {
       for (const s of params.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => win.webContents.replaceMisspelling(s) });
-      if (!params.dictionarySuggestions.length) items.push({ label: 'Nicio sugestie', enabled: false });
-      items.push({ label: `Adaugă „${params.misspelledWord}” în dicționar`, click: () => ses.addWordToSpellCheckerDictionary(params.misspelledWord) });
-      items.push({ label: `Ignoră „${params.misspelledWord}”`, click: () => ignored.add(params.misspelledWord.toLowerCase()) });
+      if (!params.dictionarySuggestions.length) items.push({ label: L.noSuggestions, enabled: false });
+      items.push({ label: L.addToDict(params.misspelledWord), click: () => ses.addWordToSpellCheckerDictionary(params.misspelledWord) });
+      items.push({ label: L.ignore(params.misspelledWord), click: () => ignored.add(params.misspelledWord.toLowerCase()) });
       items.push({ type: 'separator' });
     }
     // The editor selects the word under the pointer in its own contextmenu handler; Chromium may
@@ -204,60 +205,60 @@ function setupSpelling(win) {
       const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
       const sv = services.serviceStatus(st, safeStorage);
       const inApp = [
-        ...(sv.deepl.configured ? [{ label: 'În program: DeepL', click: cmd('deeplInApp') }] : []),
-        ...(sv.googleTranslate.configured ? [{ label: 'În program: Google', click: cmd('googleInApp') }] : []),
+        ...(sv.deepl.configured ? [{ label: L.inAppDeepl, click: cmd('deeplInApp') }] : []),
+        ...(sv.googleTranslate.configured ? [{ label: L.inAppGoogle, click: cmd('googleInApp') }] : []),
       ];
-      if (g.translate.length) items.push({ label: 'Traduce', submenu: [...inApp, ...(inApp.length ? [{ type: 'separator' }] : []), ...links(g.translate)] });
-      items.push({ label: 'Verifică gramatica (LanguageTool)', click: cmd('grammarSel') });
-      if (g.dict.length) items.push({ label: 'Dicționare', submenu: links(g.dict) });
-      items.push({ label: 'Cercetare pe web', submenu: links(g.research) });
+      if (g.translate.length) items.push({ label: L.translate, submenu: [...inApp, ...(inApp.length ? [{ type: 'separator' }] : []), ...links(g.translate)] });
+      items.push({ label: L.grammar, click: cmd('grammarSel') });
+      if (g.dict.length) items.push({ label: L.dictionaries, submenu: links(g.dict) });
+      items.push({ label: L.research, submenu: links(g.research) });
       if (st.aiEnabled !== false) {
         items.push({
-          label: 'Asistent AI',
+          label: L.ai,
           submenu: [
-            { label: 'Cercetare', click: cmd('aiResearchSel') },
-            { label: 'Explică termenul', click: cmd('aiDefineSel') },
-            { label: 'Corectează', click: cmd('aiProofreadSel') },
-            { label: 'Traduce', click: cmd('aiTranslateSel') },
+            { label: L.aiResearch, click: cmd('aiResearchSel') },
+            { label: L.aiDefine, click: cmd('aiDefineSel') },
+            { label: L.aiProofread, click: cmd('aiProofreadSel') },
+            { label: L.aiTranslate, click: cmd('aiTranslateSel') },
           ],
         });
       }
       items.push({
-        label: 'În proiect',
+        label: L.inProject,
         submenu: [
-          { label: 'Caută selecția în proiect', click: cmd('findSel') },
-          { label: 'Caută în cercetarea proiectului', click: cmd('researchSel') },
-          ...(st.aiEnabled !== false ? [{ label: 'AI: răspunde din cercetarea proiectului', click: cmd('researchAskSel') }] : []),
-          { label: 'Adaugă în glosar', click: cmd('glossaryAdd') },
+          { label: L.findSel, click: cmd('findSel') },
+          { label: L.researchSel, click: cmd('researchSel') },
+          ...(st.aiEnabled !== false ? [{ label: L.researchAsk, click: cmd('researchAskSel') }] : []),
+          { label: L.glossaryAdd, click: cmd('glossaryAdd') },
         ],
       });
-      items.push({ label: 'Întreabă NotebookLM', click: cmd('nlmAskSel') });
+      items.push({ label: L.notebookLm, click: cmd('nlmAskSel') });
       items.push({ type: 'separator' });
     }
     if (params.isEditable) {
       const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
       items.push({
-        label: 'Extinde selecția',
+        label: L.extend,
         submenu: [
-          { label: 'La frază', click: cmd('selectSentence') },
-          { label: 'La paragraf', click: cmd('selectParagraph') },
+          { label: L.toSentence, click: cmd('selectSentence') },
+          { label: L.toParagraph, click: cmd('selectParagraph') },
         ],
       });
       items.push({ type: 'separator' });
     }
     if (params.isEditable) {
       items.push(
-        { label: 'Taie', role: 'cut', enabled: params.editFlags.canCut },
-        { label: 'Copiază', role: 'copy', enabled: params.editFlags.canCopy },
-        { label: 'Lipește', role: 'paste', enabled: params.editFlags.canPaste },
-        { label: 'Lipește fără formatare', role: 'pasteAndMatchStyle', enabled: params.editFlags.canPaste },
+        { label: L.cut, role: 'cut', enabled: params.editFlags.canCut },
+        { label: L.copy, role: 'copy', enabled: params.editFlags.canCopy },
+        { label: L.paste, role: 'paste', enabled: params.editFlags.canPaste },
+        { label: L.pastePlain, role: 'pasteAndMatchStyle', enabled: params.editFlags.canPaste },
         { type: 'separator' },
-        { label: 'Selectează tot', role: 'selectAll' },
+        { label: L.selectAll, role: 'selectAll' },
         { type: 'separator' },
-        { label: 'Verifică ortografia acum', click: () => recheckSpelling(win) },
+        { label: L.recheck, click: () => recheckSpelling(win) },
       );
     } else if (params.selectionText) {
-      items.push({ label: 'Copiază', role: 'copy' });
+      items.push({ label: L.copy, role: 'copy' });
     }
     if (items.length) Menu.buildFromTemplate(items).popup({ window: win });
   });

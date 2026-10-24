@@ -374,5 +374,22 @@ export function cmdLabel(id, fallback) {
   return has(key) ? t(key) : fallback ?? id;
 }
 /** Displayed name of a template category (stored values stay as they are). */
+// Built-in Compile formats and styles keep their stored (Romanian) names; only the display is
+// translated, and only while the user has not renamed them.
+const BUILTIN_EN = {
+  format: { manuscris: 'Standard manuscript', paperback: 'Printed book (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'A5 PDF for reading', implicit: 'Default', times: 'Times New Roman (double-spaced)', courier: 'Courier (classic manuscript)' },
+  style: { ilustratie: 'Illustration', accent: 'Accent', sanscrit: 'Sanskrit term', 'citat-bloc': 'Block quote', motto: 'Epigraph', scrisoare: 'Letter', centrat: 'Centered', separator: 'Scene separator' },
+};
+const BUILTIN_RO = {
+  format: { manuscris: 'Manuscris standard', paperback: 'Carte tipărită (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'Citire PDF A5', implicit: 'Implicit (Default)', times: 'Times New Roman (dublu spațiat)', courier: 'Courier (manuscris clasic)' },
+  style: { ilustratie: 'Ilustrație', accent: 'Accent', sanscrit: 'Termen sanscrit', 'citat-bloc': 'Citat bloc', motto: 'Motto', scrisoare: 'Scrisoare', centrat: 'Centrat', separator: 'Separator de scenă' },
+};
+/** Display name of a built-in format/style ({ id, name }); renamed or user items show their own name. */
+export function builtinName(kind, item) {
+  if (!item) return '';
+  const ro0 = BUILTIN_RO[kind] && BUILTIN_RO[kind][item.id];
+  if (current !== 'en' || !ro0 || item.name !== ro0) return item.name;
+  return BUILTIN_EN[kind][item.id] || item.name;
+}
 export const categoryLabel = (c) => (has(`tplcat.${c}`) ? t(`tplcat.${c}`) : c);
 export const groupLabel = (group) => (has(`group.${group}`) ? t(`group.${group}`) : group);
