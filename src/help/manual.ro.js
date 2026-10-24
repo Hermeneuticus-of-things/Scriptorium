@@ -267,7 +267,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'scrivenings-split',
         title: 'Editorul împărțit (split)',
-        html: `<p>Butonul <em>Split</em> deschide al doilea panou. ${k('Alt')}+clic în binder deschide documentul în panoul din dreapta. Panoul poate fi blocat pe un document, așezat orizontal sau vertical (<em>Vizualizare → Split orizontal / vertical</em>) și inversat (<em>Inversează panourile</em>). Același document poate fi deschis în ambele panouri.</p>`,
+        html: `<p><em>Vizualizare → Împarte editorul</em> (sau butonul de pe antetul documentului) deschide al doilea panou. ${k('Alt')}+clic în binder deschide documentul în panoul din dreapta. Panoul poate fi blocat pe un document, așezat orizontal sau vertical (<em>Vizualizare → Împarte orizontal / vertical</em>) și inversat (<em>Inversează panourile</em>). Același document poate fi deschis în ambele panouri.</p>`,
       },
       {
         id: 'scrivenings-quickref',
@@ -444,8 +444,8 @@ media/                 imagini, PDF, audio, video</pre>
       },
       {
         id: 'compile-placeholders',
-        title: 'Placeholders',
-        html: `<p>Placeholder-ele sunt coduri de forma <code>&lt;$nume&gt;</code> înlocuite la Compile. Funcționează în prefixe/sufixe, antete și subsoluri și în text. Lista completă, cu explicații, este în fila <strong>Placeholders</strong> a acestei ferestre de ajutor. Cele mai folosite:</p>
+        title: 'Substituenți',
+        html: `<p>Substituenții sunt coduri de forma <code>&lt;$nume&gt;</code> înlocuite la Compile. Funcționează în prefixe/sufixe, antete și subsoluri și în text. Lista completă, cu explicații, este în fila <strong>Placeholders</strong> a acestei ferestre de ajutor. Cele mai folosite:</p>
 <ul>
 <li><code>&lt;$n&gt;</code>: numărul secțiunii (1, 2, 3…); cu format: <code>&lt;$n:roman&gt;</code> (IV), <code>&lt;$n:lroman&gt;</code> (iv), <code>&lt;$n:words&gt;</code> (patru), <code>&lt;$n:Words&gt;</code> (Patru), <code>&lt;$n:WORDS&gt;</code>.</li>
 <li><code>&lt;$t&gt;</code>: titlul documentului; <code>&lt;$wc&gt;</code>: cuvintele.</li>
@@ -718,7 +718,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'faq-placeholder',
         title: 'Un placeholder apare ca text în carte',
-        html: `<p>Verifică ortografia (<code>&lt;$n&gt;</code>, nu <code>&lt;$N&gt;</code>) și lista din fila Placeholders. <code>&lt;$p&gt;</code> funcționează doar în antet și subsol. Pentru <code>&lt;$img:Nume&gt;</code>, imaginea trebuie să existe în Cercetare cu exact acel titlu sau nume de fișier.</p>`,
+        html: `<p>Verifică ortografia (<code>&lt;$n&gt;</code>, nu <code>&lt;$N&gt;</code>) și lista din fila Substituenți. <code>&lt;$p&gt;</code> funcționează doar în antet și subsol. Pentru <code>&lt;$img:Nume&gt;</code>, imaginea trebuie să existe în Cercetare cu exact acel titlu sau nume de fișier.</p>`,
       },
       {
         id: 'faq-spelling',
@@ -803,7 +803,7 @@ node scripts\ai-smoke.cjs nvidia</pre>
         id: 'yours-mcp',
         title: 'Legarea de Claude, Codex și alți agenți AI (MCP)',
         html: `<p>Scribner are un server MCP inclus (peste 70 de unelte: binder, documente, note, metadate, snapshot-uri, căutare, Compile). Orice agent AI care știe MCP îl poate folosi. <strong>Nu ai nevoie de Node.js</strong>: programul instalat pornește serverul singur, cu variabila <code>ELECTRON_RUN_AS_NODE=1</code>. Agentul vede doar proiectele puse după <code>--project</code>; cu <code>--read-only</code> doar citește. Fiecare scriere face întâi un snapshot și se notează în <code>agent-log.jsonl</code> din proiect.</p>
-<p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>Ajutor → Conectează la Claude (MCP)</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
+<p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>AI → Conectează la Claude (MCP)…</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
 <p>Căile de mai jos sunt cele ale installerului pe Windows (instalare pentru utilizatorul curent). Înlocuiește <code>Ionut</code> cu numele tău de utilizator și calea proiectului cu a ta. Varianta portabilă: folosește calea unde ai pus-o.</p>
 <pre>Program:  C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
 Server:   C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs

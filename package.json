@@ -1,7 +1,7 @@
 {
   "name": "scribner",
   "productName": "Scribner",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "description": "Program de scris pentru cărți lungi: scrii pe bucăți, le aranjezi liber și primești cartea în Word, PDF sau EPUB.",
   "main": "electron/main.cjs",
   "private": true,

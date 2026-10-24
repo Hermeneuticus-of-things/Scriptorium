@@ -1,10 +1,15 @@
 // Pure helpers for the Project Settings dialog (no DOM). Every function returns a NEW
 // project; inputs are never mutated.
+import { getLanguage } from './i18n.js';
 
 export const NONE = 'Fără';
 // The stored "none" value is Romanian; show it in the UI language (option value stays NONE).
-export const noneLabel = (name, t) => (name === NONE ? t('ui.corkboard.fara_eticheta') : name);
-export const noneStatus = (name, t) => (name === NONE ? t('ui.corkboard.fara_status') : name);
+// Built-in default labels/statuses (lib/store.cjs, demo, tutorial) are stored in Romanian; in
+// English mode only their display is translated. User-created names show as stored.
+const BUILTIN_LABELS_EN = { Idee: 'Idea', Personaj: 'Character', Loc: 'Place' };
+const BUILTIN_STATUSES_EN = { 'De făcut': 'To Do', 'Prima ciornă': 'First Draft', Revizuit: 'Revised', Final: 'Final' };
+export const noneLabel = (name, t) => (name === NONE ? t('ui.corkboard.fara_eticheta') : (getLanguage() === 'en' && BUILTIN_LABELS_EN[name]) || name);
+export const noneStatus = (name, t) => (name === NONE ? t('ui.corkboard.fara_status') : (getLanguage() === 'en' && BUILTIN_STATUSES_EN[name]) || name);
 export const DEFAULT_LABEL_TITLE = 'Etichetă';
 export const DEFAULT_STATUS_TITLE = 'Status';
 export const FIELD_TYPES = ['text', 'checkbox', 'list', 'date'];

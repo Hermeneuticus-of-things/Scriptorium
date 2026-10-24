@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { t } from '../lib/i18n.js';
 import { buildRegex } from '../lib/search.js';
 import { findRanges, replaceRanges } from '../editor/docSearch.js';
 
@@ -46,7 +47,7 @@ export default function FindBar({ editor, onClose }) {
     <div className="find-bar" role="search">
       <input
         ref={input}
-        placeholder="Caută în document"
+        placeholder={t('ui.findBar.search')}
         value={query}
         className={query && !re ? 'invalid' : ''}
         onChange={(e) => {
@@ -59,15 +60,15 @@ export default function FindBar({ editor, onClose }) {
         }}
       />
       <span className="count">{query ? (ranges.length ? `${Math.min(index + 1, ranges.length)}/${ranges.length}` : '0') : ''}</span>
-      <button onClick={() => select(index - 1)} disabled={!ranges.length} title="Anterior (Shift+Enter)">↑</button>
-      <button onClick={() => select(index + 1)} disabled={!ranges.length} title="Următor (Enter)">↓</button>
-      <button className={opts.caseSensitive ? 'on' : ''} onClick={toggle('caseSensitive')} title="Majuscule exacte">Aa</button>
-      <button className={opts.wholeWord ? 'on' : ''} onClick={toggle('wholeWord')} title="Cuvinte întregi">„ab”</button>
-      <button className={opts.regex ? 'on' : ''} onClick={toggle('regex')} title="Expresie regulată">.*</button>
-      <input placeholder="Înlocuiește cu" value={replacement} onChange={(e) => setReplacement(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && onClose()} />
-      <button onClick={replaceOne} disabled={!ranges.length}>Înlocuiește</button>
-      <button onClick={() => replaceRanges(editor, ranges, replacement, opts)} disabled={!ranges.length}>Toate</button>
-      <button onClick={onClose} title="Închide (Esc)">×</button>
+      <button onClick={() => select(index - 1)} disabled={!ranges.length} title={t('ui.findBar.prev')}>↑</button>
+      <button onClick={() => select(index + 1)} disabled={!ranges.length} title={t('ui.findBar.next')}>↓</button>
+      <button className={opts.caseSensitive ? 'on' : ''} onClick={toggle('caseSensitive')} title={t('ui.findBar.case')}>Aa</button>
+      <button className={opts.wholeWord ? 'on' : ''} onClick={toggle('wholeWord')} title={t('ui.advancedSearchDialog.cuvinte_intregi')}>„ab”</button>
+      <button className={opts.regex ? 'on' : ''} onClick={toggle('regex')} title={t('ui.advancedSearchDialog.expresie_regulata')}>.*</button>
+      <input placeholder={t('ui.advancedSearchDialog.inlocuieste_cu')} value={replacement} onChange={(e) => setReplacement(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && onClose()} />
+      <button onClick={replaceOne} disabled={!ranges.length}>{t('ui.findBar.replace')}</button>
+      <button onClick={() => replaceRanges(editor, ranges, replacement, opts)} disabled={!ranges.length}>{t('ui.findBar.all')}</button>
+      <button onClick={onClose} title={t('ui.findBar.close')}>×</button>
     </div>
   );
 }

@@ -19,7 +19,7 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   // select "beta " (with the trailing space)
   for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowLeft');
   for (let i = 0; i < 5; i++) await page.keyboard.press('Shift+ArrowLeft');
-  await cmd('Traduce selecția în program (DeepL)');
+  await cmd('Tradu selecția în program (DeepL)');
   await page.waitForSelector('.translate-pair');
   await page.getByRole('button', { name: 'Înlocuiește selecția' }).click();
   await page.waitForTimeout(200);
@@ -28,7 +28,7 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   // "Insert after" puts the text after the sent words, in the same paragraph
   await page.keyboard.press('End');
   for (let i = 0; i < 4; i++) await page.keyboard.press('Shift+ArrowLeft');
-  await cmd('Traduce selecția în program (DeepL)');
+  await cmd('Tradu selecția în program (DeepL)');
   await page.waitForSelector('.translate-pair');
   await page.getByRole('button', { name: 'Inserează după' }).click();
   await page.waitForTimeout(200);

@@ -8,7 +8,7 @@ describe('native editor context menu labels', () => {
     const ro = contextMenuLabels('ro');
     const en = contextMenuLabels('en');
     expect(Object.keys(en).sort()).toEqual(Object.keys(ro).sort());
-    expect(ro.translate).toBe('Traduce');
+    expect(ro.translate).toBe('Tradu');
   });
   it('have no Romanian in English', () => {
     const en = contextMenuLabels('en');
