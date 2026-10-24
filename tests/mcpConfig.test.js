@@ -12,7 +12,7 @@ const store = require('../lib/store.cjs');
 
 describe('mcpConfig', () => {
   it('calea config-ului Claude Desktop pe fiecare sistem', () => {
-    expect(m.claudeDesktopConfigPath({ platform: 'win32', env: { APPDATA: 'C:\\Users\\Ionut\\AppData\\Roaming' }, home: 'C:\\Users\\Ionut' })).toBe('C:\\Users\\Ionut\\AppData\\Roaming\\Claude\\claude_desktop_config.json');
+    expect(m.claudeDesktopConfigPath({ platform: 'win32', env: { APPDATA: 'C:\\Users\\Nume\\AppData\\Roaming' }, home: 'C:\\Users\\Nume' })).toBe('C:\\Users\\Nume\\AppData\\Roaming\\Claude\\claude_desktop_config.json');
     expect(m.claudeDesktopConfigPath({ platform: 'darwin', env: {}, home: '/Users/i' })).toBe('/Users/i/Library/Application Support/Claude/claude_desktop_config.json');
     expect(m.claudeDesktopConfigPath({ platform: 'linux', env: {}, home: '/home/i' })).toBe('/home/i/.config/Claude/claude_desktop_config.json');
   });
