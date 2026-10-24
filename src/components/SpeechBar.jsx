@@ -11,6 +11,7 @@ export default function SpeechBar({ getText, onInsertText, onClose, api = {} }) 
   const [engine, setEngine] = useState('system');
   const [cloudReady, setCloudReady] = useState(false);
   const audio = useRef(null); // { el, queue, stopped }
+  const run = useRef(0); // bumped by stop / engine switch / close: a pending Speechify request is dropped
   const [voices, setVoices] = useState([]);
   const [voice, setVoice] = useState('');
   const [rate, setRate] = useState(1);
@@ -29,10 +30,11 @@ export default function SpeechBar({ getText, onInsertText, onClose, api = {} }) 
         if (ok) setEngine('speechify');
       }).catch(() => {});
     }
-    return () => audio.current && stopCloud();
+    return () => stopCloud();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const stopCloud = () => {
+    run.current += 1;
     const a = audio.current;
     if (!a) return;
     a.stopped = true;
@@ -40,11 +42,14 @@ export default function SpeechBar({ getText, onInsertText, onClose, api = {} }) 
     audio.current = null;
   };
   const playCloud = async (text) => {
-    setState('speaking');
+    const my = ++run.current;
+    setState('loading');
     setMsg(tr('ui.services.lucrez', { service: 'Speechify' }));
     try {
       const res = await api.speakCloud({ text });
+      if (my !== run.current) return; // stopped, switched engine or closed meanwhile
       setMsg('');
+      setState('speaking');
       const el = new Audio();
       const a = { el, queue: [...res.chunks], stopped: false };
       audio.current = a;
@@ -63,6 +68,7 @@ export default function SpeechBar({ getText, onInsertText, onClose, api = {} }) 
       el.onended = next;
       next();
     } catch (e) {
+      if (my !== run.current) return;
       setMsg(e.message);
       setState('idle');
     }
@@ -79,6 +85,7 @@ export default function SpeechBar({ getText, onInsertText, onClose, api = {} }) 
   }, []);
 
   const play = () => {
+    if (state === 'loading') return;
     if (state === 'paused') {
       if (engine === 'speechify' && audio.current) audio.current.el.play();
       else resume();
@@ -129,7 +136,7 @@ export default function SpeechBar({ getText, onInsertText, onClose, api = {} }) 
           <button onClick={play} title={tr('ui.speechBar.citeste_selectia_sau_documentul')}>{state === 'paused' ? tr('ui.speechBar.continua') : tr('ui.speechBar.citeste')}</button>
           <button onClick={doPause} disabled={state !== 'speaking'}>{tr('ui.speechBar.pauza')}</button>
           <button onClick={doStop} disabled={state === 'idle'}>{tr('ui.speechBar.opreste')}</button>
-          {engine === 'system' && <select value={voice} onChange={(e) => setVoice(e.target.value)} style={{ maxWidth: 200 }} title="Voce">
+          {engine === 'system' && <select value={voice} onChange={(e) => setVoice(e.target.value)} style={{ maxWidth: 200 }} title={tr('ui.speechBar.voce')} aria-label={tr('ui.speechBar.voce')}>
             {voices.map((v) => (
               <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
             ))}
@@ -142,8 +149,8 @@ export default function SpeechBar({ getText, onInsertText, onClose, api = {} }) 
         <span>{tr('ui.speechBar.citirea_cu_voce_tare_nu')}</span>
       )}
       {onInsertText && (
-        <button onClick={toggleDictation} disabled={!dictationSupported() && !listening} title={dictationSupported() ? 'Dictare (ro-RO)' : tr('ui.speechBar.dictarea_nu_este_disponibila')}>
-          {listening ? tr('ui.speechBar.opreste_dictarea') : '🎤 Dictare'}
+        <button onClick={toggleDictation} disabled={!dictationSupported() && !listening} title={dictationSupported() ? tr('ui.speechBar.dictare_titlu') : tr('ui.speechBar.dictarea_nu_este_disponibila')}>
+          {listening ? tr('ui.speechBar.opreste_dictarea') : tr('ui.speechBar.dictare')}
         </button>
       )}
       {interim && <em style={{ opacity: 0.7 }}>{interim}</em>}
