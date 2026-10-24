@@ -2199,7 +2199,7 @@ export default function App({ api: apiProp }) {
 
   // Browser build: the desktop app shows the same actions in the native menu (electron/main.cjs).
   function onEditorContextMenu(e) {
-    if (window.api || !e.target.closest?.('.ProseMirror')) return;
+    if (window.api || e.shiftKey || !e.target.closest?.('.ProseMirror')) return; // Shift: the browser's own menu (paste, spelling)
     e.preventDefault();
     setEditorCtx({ x: e.clientX, y: e.clientY });
   }
@@ -2239,7 +2239,10 @@ export default function App({ api: apiProp }) {
       items.push('-');
     }
     items.push({ label: tr('ui.ctx.extinde'), submenu: [{ label: tr('cmd.selectSentence'), action: run('selectSentence') }, { label: tr('cmd.selectParagraph'), action: run('selectParagraph') }] });
-    if (text) items.push({ label: tr('ui.ctx.copiaza'), action: () => navigator.clipboard?.writeText(text) });
+    if (text) {
+      items.push({ label: tr('ui.ctx.taie'), action: () => { activeHandle()?.editor?.commands.focus(); document.execCommand('cut'); } });
+      items.push({ label: tr('ui.ctx.copiaza'), action: () => navigator.clipboard?.writeText(text) });
+    }
     return items;
   };
 
