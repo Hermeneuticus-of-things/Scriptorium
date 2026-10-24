@@ -1,5 +1,14 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.6 (continuare) — Bug-uri în funcțiile noi
+
+- **Raport de probleme:** numele de familie din căi cu spații (`C:\Users\Ion Popescu\…`), numele cu diacritice, adresele de e-mail și cheile din adrese web (`access_token=…`) nu se mai scurg în raport.
+- **Note de subsol cu simboluri sau litere:** HTML, PDF și EPUB numerotează acum ca Word (*, †, ‡, §, apoi dublate; z, aa, bb…), nu diferit de DOCX.
+- **`[[Titlu nou]]`** nu mai creează documentul în coș când dosarul ales între timp a fost șters.
+- **„Legături către acest document”** nu mai arată documente din coș; legăturile din dosare apar cu titlul lor.
+- Texte: „Fereastra nu se mai poate afișa”, „Send via GitHub”, butonul „+ link web” din Inspector tradus.
+- Teste: 910 + 2 sărite; E2E Electron trece.
+
 ## 2026-10-24 — v0.8.6 (continuare) — Raportează o problemă, cu erorile din jurnal
 
 ### Cerința user
