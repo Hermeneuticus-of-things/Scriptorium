@@ -6,6 +6,11 @@
 export const MAX_LEARNED = 2000;
 const WORD = /^[\p{L}][\p{L}\p{M}'’-]*$/u;
 
+// Foreign (ALOGEN) words, e.g. Sanskrit in IAST (Ātman, saṃsāra) or French (café): any letter outside
+// the Romanian/English alphabet means the spelling is deliberate, so it is never learned or rewritten.
+const NATIVE = /^[A-Za-zĂÂÎȘȚŞŢăâîșțşţ'’-]+$/u;
+export const isForeignWord = (w) => !NATIVE.test(String(w || '').trim());
+
 const fold = (w) => w.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 // Optimal string alignment distance (Damerau-Levenshtein with adjacent swaps), stops past `max`.
@@ -40,6 +45,7 @@ export function isTypoFix(from, to) {
   const b = String(to || '').trim();
   if (a.length < 2 || b.length < 2 || !WORD.test(a) || !WORD.test(b)) return false;
   if (a.toLowerCase() === b.toLowerCase()) return false;
+  if (isForeignWord(a) || isForeignWord(b)) return false;
   if (fold(a) === fold(b)) return true; // diacritics only: "fata" → "față"
   const la = a.toLowerCase();
   const lb = b.toLowerCase();

@@ -200,7 +200,8 @@ describe('lossless Scrivener 3 import', () => {
     expect(fs.existsSync(path.join(dir, 'scrivener-original', 'Settings', 'compile.xml'))).toBe(true);
 
     expect(stats).toMatchObject({ documents: 5, media: 2, comments: 1, footnotes: 2, annotations: 2, snapshots: 1, links: 1, collections: 1, historyDays: 2, projectNotes: true });
-  });
+    // Many small file writes (import + copy of the original .scriv): slow Windows runners need more than 5 s.
+  }, 30000);
 
   it('compiles the imported project: text groups included, excluded docs and annotations dropped', () => {
     const { dir, project } = importScriv(makeProject(), tmp);

@@ -1,7 +1,7 @@
 // Keyboard-only use: Tab order reaches menus, binder and editor with a visible focus target;
 // a menu command chosen with the keyboard leaves focus in the editor; binder moves with
 // Ctrl+arrows keep focus in the binder and are undoable; Escape from the binder goes to the editor.
-process.env.SCRIBNER_URL = process.env.SCRIBNER_URL || 'http://localhost:4191/?demo';
+process.env.SCRIBNER_URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
 const { open, ed, check, done } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();

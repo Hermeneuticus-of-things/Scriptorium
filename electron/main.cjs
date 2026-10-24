@@ -617,11 +617,12 @@ require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, get
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
 handle('menu:set', (e, spec) => {
   const win = BrowserWindow.fromWebContents(e.sender);
-  const template = spec.map((menu) => ({
-    label: menu.label,
-    submenu: menu.items.map((it) =>
+  const items = (list) =>
+    list.map((it) =>
       it === '-'
         ? { type: 'separator' }
+        : Array.isArray(it.items)
+        ? { label: it.label, submenu: items(it.items) }
         : {
             label: it.label,
             enabled: !it.disabled,
@@ -629,8 +630,8 @@ handle('menu:set', (e, spec) => {
             registerAccelerator: false,
             click: () => win && !win.isDestroyed() && win.webContents.send('menu:command', it.id),
           },
-    ),
-  }));
+    );
+  const template = spec.map((menu) => ({ label: menu.label, submenu: items(menu.items) }));
   // The renderer sends its own Help menu; About and developer tools are appended to it.
   const extra = [
     { type: 'separator' },

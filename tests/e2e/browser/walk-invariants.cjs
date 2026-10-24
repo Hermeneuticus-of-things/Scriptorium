@@ -60,7 +60,7 @@ async function setTheme(p, theme) {
       await page.keyboard.type(' undomark');
       await page.waitForTimeout(150);
       for (let k = 0; k < 6 && (await ed(page).innerText()).includes('undomark'); k++) { await page.keyboard.press('Control+z'); await page.waitForTimeout(60); }
-      check(`seed${seed} undo restores text`, (await ed(page).innerText()) === before);
+      check(`seed${seed} undo restores text`, (await ed(page).innerText()) === before, JSON.stringify([before.slice(-80), (await ed(page).innerText()).slice(-80)]));
     }
     // Narrow window: no horizontal page overflow.
     await page.setViewportSize({ width: 900, height: 700 });

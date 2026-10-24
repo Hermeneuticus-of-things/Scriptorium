@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // Learned corrections: a misspelled word fixed by hand becomes an auto-replacement.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { isTypoFix, learnCorrection, matchCase, editDistance, MAX_LEARNED } from '../src/lib/learnCorrections.js';
@@ -68,6 +68,11 @@ describe('aplicarea la scriere', () => {
 });
 
 describe('editorul învață corectura de mână', () => {
+  // Destroy every editor: ProseMirror's DOM observer timer must not fire after jsdom is torn down.
+  const editors = [];
+  afterEach(() => {
+    for (const e of editors.splice(0)) e.destroy();
+  });
   function setup() {
     const seen = [];
     const list = [];
@@ -75,6 +80,7 @@ describe('editorul învață corectura de mână', () => {
       extensions: [StarterKit, Corrections.configure({ getReplacements: () => list, onLearn: (a, b) => seen.push([a, b]) })],
       content: '<p>O fata frumoasa.</p>',
     });
+    editors.push(editor);
     return { editor, seen, list };
   }
   const typeText = (editor, s) => {
@@ -107,5 +113,21 @@ describe('editorul învață corectura de mână', () => {
     editor.commands.setTextSelection(editor.state.doc.content.size - 1);
     typeText(editor, ' Frumoasa ');
     expect(editor.getText()).toBe('O fata frumoasa. Frumoasă ');
+  });
+});
+
+describe('cuvinte alogene', () => {
+  it('termenii cu litere străine (IAST, é) nu se învață niciodată', async () => {
+    const { isForeignWord } = await import('../src/lib/learnCorrections.js');
+    expect(isForeignWord('Ātman')).toBe(true);
+    expect(isForeignWord('saṃsāra')).toBe(true);
+    expect(isForeignWord('ṛṣi')).toBe(true);
+    expect(isForeignWord('café')).toBe(true);
+    expect(isForeignWord('știință')).toBe(false);
+    expect(isTypoFix('Atman', 'Ātman')).toBe(false);
+    expect(isTypoFix('Ātmanul', 'Ātman')).toBe(false);
+    expect(isTypoFix('samsara', 'saṃsāra')).toBe(false);
+    expect(learnCorrection([], 'Atman', 'Ātman')).toBeNull();
+    expect(isTypoFix('stiinta', 'știința')).toBe(true);
   });
 });

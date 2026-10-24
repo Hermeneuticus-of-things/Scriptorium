@@ -473,6 +473,18 @@ const flat = (nodes, out = []) => {
       check(`menu: "${label}" opens its dialog`, r === true && Boolean(await waitFor(() => win.locator(sel).count(), 3000)), String(r));
       await closeModal();
     }
+    // AI menu: native and in-app; "Conectează la Claude (MCP)…" opens its dialog.
+    check('native menu has AI', menuLabels.includes('AI'), menuLabels.join(' | '));
+    check('in-app AI menu in the toolbar', (await win.locator('header.toolbar .menu > button', { hasText: /^AI/ }).count()) === 1);
+    check('native AI menu has the "AI pe selecție" submenu', await app.evaluate(({ Menu }) => {
+      const m = global.__lastMenu || Menu.getApplicationMenu();
+      const ai = m && m.items.find((i) => i.label === 'AI');
+      const sub = ai && ai.submenu.items.find((i) => i.label === 'AI pe selecție');
+      return Boolean(sub && sub.submenu && sub.submenu.items.some((i) => i.label === 'AI: cercetare pe selecție'));
+    }));
+    const mcp = await menuClick('Conectează la Claude (MCP)…');
+    check('menu: MCP dialog opens', mcp === true && Boolean(await waitFor(() => win.locator('.modal[aria-label="Conectează la Claude (MCP)"]').count(), 3000)), String(mcp));
+    await closeModal();
     // Keyboard shortcuts (renderer handler) on an editor document.
     await binderRow('Alfa').click();
     await ed().click();

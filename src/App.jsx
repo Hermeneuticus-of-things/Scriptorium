@@ -32,7 +32,9 @@ import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
 import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc, findGlossaryDoc, glossaryEntryHtml, glossaryHasTerm } from './lib/glossary.js';
-import { BackIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, OutlineIcon, ScriveningsIcon, SplitIcon } from './components/Icons.jsx';
+import { AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, NotesIcon, OutlineIcon, ScriveningsIcon, SearchIcon, SnapshotIcon, SplitIcon } from './components/Icons.jsx';
+import { TOP_ITEMS, topItemAvailable, toolbarPrefs, setFormatLayout } from './lib/toolbars.js';
+import ToolbarCustomizeDialog from './components/ToolbarCustomizeDialog.jsx';
 import { mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
 import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
@@ -40,6 +42,8 @@ import PrintPreviewDialog from './components/PrintPreviewDialog.jsx';
 import HelpWindow from './components/HelpWindow.jsx';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import AiJobBar from './components/AiJobBar.jsx';
+import McpConnectDialog from './components/McpConnectDialog.jsx';
+import { buildMenuLayout, nativeMenuSpec, AI_ONLY_COMMANDS } from './lib/menuLayout.js';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
 import ProjectNotesTabs from './components/ProjectNotesTabs.jsx';
@@ -1281,17 +1285,18 @@ export default function App({ api }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
+  // Format bar layout (customizable) is published for every FormatBar.
+  useEffect(() => {
+    if (settings) setFormatLayout(toolbarPrefs(settings.toolbars).format);
+  }, [settings]);
   // Native application menu: send the menu built from the registry whenever it changes.
   const lastMenu = useRef('');
+  const menuLayoutRef = useRef(null);
+  const menuActionsRef = useRef({});
   useEffect(() => {
     if (!api.setAppMenu || !project) return;
-    const titles = Object.fromEntries(['file', 'edit', 'view', 'nav', 'project', 'document', 'format', 'tools', 'window', 'help'].map((g) => [g, groupLabel(g)]));
-    const spec = Object.entries(titles).map(([g, label]) => ({
-      label: groupLabel(g) || label,
-      items: Object.values(commandsRef.current)
-        .filter((c) => c.group === g)
-        .map((c) => ({ id: c.id, label: c.label, key: c.key, disabled: c.disabled })),
-    }));
+    const { spec, actions } = nativeMenuSpec(menuLayoutRef.current || []);
+    menuActionsRef.current = actions;
     const json = JSON.stringify(spec);
     if (json === lastMenu.current) return;
     lastMenu.current = json;
@@ -1300,7 +1305,7 @@ export default function App({ api }) {
   // Native application menu: commands come back by id.
   useEffect(() => {
     if (!api.onMenuCommand) return undefined;
-    return api.onMenuCommand((id) => commandsRef.current[id]?.run());
+    return api.onMenuCommand((id) => (commandsRef.current[id] ? commandsRef.current[id].run() : menuActionsRef.current[id]?.()));
   }, [api]);
 
   // --- resizable panels ---
@@ -1397,6 +1402,7 @@ export default function App({ api }) {
     onLearn: settings.learnCorrections === false ? null : learnFromEdit,
   };
   const corrKey = JSON.stringify(corrections);
+  const toolbars = toolbarPrefs(settings.toolbars);
   // AI is optional: with it off, every feature that needs Claude is hidden and nothing else changes.
   const aiEnabled = settings.aiEnabled !== false;
   // Loads every text document of the project into memory (views and AI jobs over the whole book).
@@ -1658,8 +1664,12 @@ export default function App({ api }) {
     }],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
-    ['tools', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
-    ['tools', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
+    ['ai', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
+    ['ai', 'mcpConnect', tr('cmd.mcpConnect'), () => setDialog('mcp'), !api.mcpConnectInfo],
+    ['view', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
+    ['view', 'splitEditor', tr('cmd.splitEditor'), () => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)],
     ['view', 'floatInspector', tr('cmd.floatInspector'), () => setShowFloatInspector((v) => !v), !composition],
     ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
     ['view', 'viewRelations', tr('cmd.viewRelations'), () => showWholeBook('relations')],
@@ -1682,11 +1692,11 @@ export default function App({ api }) {
     ['file', 'exportLatex', tr('cmd.exportLatex'), () => flush().then(() => api.exportLatex(dir, project)).catch(report), !api.exportLatex],
     ['file', 'exportPandoc', tr('cmd.exportPandoc'), () => flush().then(() => api.exportPandoc(dir, project)).catch(report), !api.exportPandoc],
     ['file', 'exportMmd', tr('cmd.exportMmd'), () => flush().then(() => api.exportPandoc(dir, project, { flavor: 'mmd' })).catch(report), !api.exportPandoc],
-    ['tools', 'aiBulkSynopsis', tr('cmd.aiBulkSynopsis'), () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
-    ['tools', 'aiConsistency', tr('cmd.aiConsistency'), () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
-    ['tools', 'aiZoomReview', tr('cmd.aiZoomReview'), () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
-    ['tools', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
-    ['tools', 'nlmOpen', tr('cmd.nlmOpen'), () => api.nlmOpen().catch(report), !api.nlmOpen],
+    ['ai', 'aiBulkSynopsis', tr('cmd.aiBulkSynopsis'), () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
+    ['ai', 'aiConsistency', tr('cmd.aiConsistency'), () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
+    ['ai', 'aiZoomReview', tr('cmd.aiZoomReview'), () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
+    [aiEnabled ? 'ai' : 'tools', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
+    [aiEnabled ? 'ai' : 'tools', 'nlmOpen', tr('cmd.nlmOpen'), () => api.nlmOpen().catch(report), !api.nlmOpen],
     ['file', 'newWindow', tr('cmd.newWindow'), () => api.newWindow().catch(report), !api.newWindow],
     ['file', 'exportBundle', tr('cmd.exportBundle'), () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', tr('cmd.importBundle'), () => api.importBundle().then(openResult).catch(report), !api.importBundle],
@@ -1748,25 +1758,80 @@ export default function App({ api }) {
     ['tools', 'selIate', tr('cmd.selIate'), () => lookupWord('iate')],
     ['tools', 'selWiktionary', tr('cmd.selWiktionary'), () => lookupWord('wiktionary')],
     ['tools', 'selScholar', tr('cmd.selScholar'), () => lookupWord('scholar')],
-    ['tools', 'aiResearchSel', tr('cmd.aiResearchSel'), () => aiOnSelection('research'), !aiEnabled],
-    ['tools', 'aiDefineSel', tr('cmd.aiDefineSel'), () => aiOnSelection('define'), !aiEnabled],
-    ['tools', 'aiTranslateSel', tr('cmd.aiTranslateSel'), () => aiOnSelection('translate'), !aiEnabled],
-    ['tools', 'aiProofreadSel', tr('cmd.aiProofreadSel'), () => aiOnSelection('proofread'), !aiEnabled],
+    ['ai', 'aiResearchSel', tr('cmd.aiResearchSel'), () => aiOnSelection('research'), !aiEnabled],
+    ['ai', 'aiDefineSel', tr('cmd.aiDefineSel'), () => aiOnSelection('define'), !aiEnabled],
+    ['ai', 'aiTranslateSel', tr('cmd.aiTranslateSel'), () => aiOnSelection('translate'), !aiEnabled],
+    ['ai', 'aiProofreadSel', tr('cmd.aiProofreadSel'), () => aiOnSelection('proofread'), !aiEnabled],
     ['tools', 'findSel', tr('cmd.findSel'), searchProjectFor],
     ['tools', 'researchSel', tr('cmd.researchSel'), () => researchSelection('search'), !api.ragQuery],
-    ['tools', 'researchAskSel', tr('cmd.researchAskSel'), () => researchSelection('ask'), !api.ragAsk || !aiEnabled],
+    ['ai', 'researchAskSel', tr('cmd.researchAskSel'), () => researchSelection('ask'), !api.ragAsk || !aiEnabled],
     ['tools', 'glossaryAdd', tr('cmd.glossaryAdd'), addToGlossary],
     ['tools', 'deeplInApp', tr('cmd.deeplInApp'), () => runService('translate', 'deepl'), !api.translateText],
     ['tools', 'googleInApp', tr('cmd.googleInApp'), () => runService('translate', 'google'), !api.translateText],
     ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
-    ['tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
+    [aiEnabled ? 'ai' : 'tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];
+  // AI off: every command that needs Claude is left out (menus, shortcuts, native menu); I-REP stays.
+  // MCP needs the desktop app (browser mode has no api.mcpConnectInfo).
+  const activeCommands = commandList.filter(([, id]) => (aiEnabled || !AI_ONLY_COMMANDS.has(id)) && (id !== 'mcpConnect' || api.mcpConnectInfo));
   const commands = Object.fromEntries(
-    commandList.map(([group, id, label, run, disabled]) => [id, { group, id, label: cmdLabel(id, label), run, disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
+    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run, disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
   );
   commandsRef.current = commands;
+  // Menu bar (in-app menus and the native application menu share this layout).
+  const menuItem = (id) => {
+    const c = commands[id];
+    return c && { id, label: c.label, action: c.run, disabled: c.disabled, shortcut: c.key };
+  };
+  const menuLayout = buildMenuLayout(commands, {
+    extras: { document: documentMenu, nav: navigateMenu, project: projectMenu },
+    label: (k) => tr(k),
+    item: menuItem,
+  });
+  menuLayoutRef.current = menuLayout;
+
+  // Top toolbar from the customizable registry (src/lib/toolbars.js).
+  const TB_ICONS = { back: BackIcon, forward: ForwardIcon, compile: CompileIcon, compose: ComposeIcon, inspector: InspectorIcon, split: SplitIcon, binder: BinderIcon, search: SearchIcon, add: AddIcon, snapshot: SnapshotIcon, bookmark: BookmarkIcon, notes: NotesIcon };
+  const tbOn = { inspector: showInspector, binder: !hideBinder, splitEditor: Boolean(splitId), irep: showEditorial, ai: showAi, composition };
+  const tbDisabled = { back: nav.index <= 0, forward: nav.index >= nav.stack.length - 1 };
+  const renderTopItem = (id, i) => {
+    if (id === 'sep') return <span key={`sep${i}`} className="tb-sep" role="separator" />;
+    if (id === 'space') return <span key={`sp${i}`} className="spacer" />;
+    const it = TOP_ITEMS.find((x) => x.id === id);
+    if (!it || !topItemAvailable(it, { aiEnabled, desktop: Boolean(api.setAppMenu) })) return null;
+    if (it.kind === 'title') return <strong key={id} className="project-title" title={project.title}>{project.title}</strong>;
+    if (it.kind === 'aiMenu') {
+      const m = menuLayout.find((x) => x.group === 'ai');
+      return m ? <Menu key={id} label={m.label} items={m.items} className="menu-ai" /> : null;
+    }
+    if (it.kind === 'views') {
+      return (
+        <div key={id} className="seg" role="group" aria-label={tr('ui.tb.views')}>
+          {[['editor', 'Editor', ScriveningsIcon, 'Editor / Scrivenings (Ctrl+1)'], ['corkboard', 'Corkboard', CorkboardIcon, 'Corkboard (Ctrl+2)'], ['outline', 'Outline', OutlineIcon, 'Outline (Ctrl+3)']].map(([v, l, Ic, t]) => (
+            <button key={v} className={view === v ? 'on' : ''} onClick={() => setView(v)} title={t} aria-label={l}>
+              <span className="sc-ico">{toolbars.display !== 'text' && <Ic />}{toolbars.display !== 'icon' && <span className="tb-label">{l}</span>}</span>
+            </button>
+          ))}
+        </div>
+      );
+    }
+    const cmd = commands[it.command];
+    if (!cmd) return null;
+    const Ic = it.icon && TB_ICONS[it.icon];
+    const icon = Ic ? <Ic /> : it.glyph ? <span className="tb-glyph" aria-hidden="true">{it.glyph}</span> : null;
+    const text = it.text ? (it.text.includes('.') ? tr(it.text) : it.text) : '';
+    const showText = toolbars.display === 'text' || (toolbars.display === 'iconText' && text) || !icon;
+    return (
+      <button key={id} data-tb={id} className={tbOn[id] ? 'on' : ''} disabled={tbDisabled[id] || cmd.disabled} onClick={cmd.run} title={cmd.key ? `${cmd.label} (${cmd.key})` : cmd.label} aria-label={cmd.label}>
+        <span className="sc-ico">
+          {toolbars.display !== 'text' && icon}
+          {showText && <span className="tb-label">{text || cmd.label}</span>}
+        </span>
+      </button>
+    );
+  };
 
   // Browser build: the desktop app shows the same actions in the native menu (electron/main.cjs).
   function onEditorContextMenu(e) {
@@ -1831,40 +1896,14 @@ export default function App({ api }) {
       }
     >
       <style>{styleCss(projectStyles)}</style>
-      <header className="toolbar">
-        <button onClick={closeProject} title={tr('cmd.closeProject')}>⌂</button>
-        <button onClick={back} disabled={nav.index <= 0} title={tr('ui.app.inapoi_alt')} aria-label={tr('cmd.back')}><BackIcon /></button>
-        <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title={tr('ui.app.inainte_alt')} aria-label={tr('cmd.forward')}><ForwardIcon /></button>
-        <strong className="project-title">{project.title}</strong>
-        <div className="seg">
-          <button className={view === 'editor' ? 'on' : ''} onClick={() => setView('editor')} title="Editor / Scrivenings"><span className="sc-ico"><ScriveningsIcon />Editor</span></button>
-          <button className={view === 'corkboard' ? 'on' : ''} onClick={() => setView('corkboard')} title="Corkboard"><span className="sc-ico"><CorkboardIcon />Corkboard</span></button>
-          <button className={view === 'outline' ? 'on' : ''} onClick={() => setView('outline')} title="Outline"><span className="sc-ico"><OutlineIcon />Outline</span></button>
-        </div>
-        <span className="spacer" />
-        <button className={splitId ? 'on' : ''} onClick={() => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)} title={tr('ui.app.split_editor_alt_clic_in')}>
-          <span className="sc-ico"><SplitIcon />Split</span>
-        </button>
-        <button onClick={() => setComposition(true)} title={tr('set.composition')}><span className="sc-ico"><ComposeIcon />Compunere</span></button>
-        <button onClick={() => flush().then(() => setDialog('compile'))} title={tr('ui.app.compileaza_ctrl_shift_e')}><span className="sc-ico"><CompileIcon />Compile</span></button>
-        <button className={showInspector ? 'on' : ''} onClick={() => setShowInspector((v) => !v)} title="Inspector"><span className="sc-ico"><InspectorIcon />Inspector</span></button>
-        <button className={showEditorial ? 'on' : ''} onClick={() => setShowEditorial((v) => !v)} title={tr('ui.app.i_rep_reparare_reverificare_si')}>
-          {aiEnabled ? 'I-REP / I-EDIT' : 'I-REP'}
-        </button>
-        {aiEnabled && <button className={showAi ? 'on' : ''} onClick={() => setShowAi((v) => !v)}>Asistent AI</button>}
-        <Menu label="Document" items={documentMenu} />
-        <Menu label="Navigare" items={navigateMenu} />
-        <Menu label={tr('group.project')} items={projectMenu} />
-        {!api.setAppMenu &&
-          ['file', 'view', 'format', 'tools', 'help'].map((g) => (
-            <Menu
-              key={g}
-              label={groupLabel(g)}
-              items={Object.values(commands)
-                .filter((c) => c.group === g)
-                .map((c) => ({ label: c.label, action: c.run, disabled: c.disabled, shortcut: c.key }))}
-            />
-          ))}
+      <header className={`toolbar tb-${toolbars.display}`}>
+        {/* Browser: the full menu bar lives here; desktop: the native menu has it (AI can stay in-app via the toolbar). */}
+        {!api.setAppMenu && (
+          <nav className="menubar" aria-label={tr('ui.tb.menubar')}>
+            {menuLayout.map((m) => <Menu key={m.group} label={m.label} items={m.items} caret={false} className={m.group === 'ai' ? 'menu-ai' : ''} />)}
+          </nav>
+        )}
+        {toolbars.top.map((id, i) => renderTopItem(id, i))}
       </header>
 
       <div className="main">
@@ -1948,6 +1987,7 @@ export default function App({ api }) {
               <Editor
                 scriptFormat={scriptFormat}
                 key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${corrKey}`}
+                historyKey={selected.id}
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
                 showInvisibles={settings.showInvisibles}
@@ -2310,6 +2350,20 @@ export default function App({ api }) {
         />
       )}
       {dialog === 'printPreview' && printOpts && <PrintPreviewDialog api={api} dir={dir} project={project} options={printOpts} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'toolbars' && (
+        <ToolbarCustomizeDialog
+          api={api}
+          settings={settings}
+          aiEnabled={aiEnabled}
+          desktop={Boolean(api.setAppMenu)}
+          onClose={async () => {
+            setDialog(null);
+            setSettings(await api.getSettings());
+          }}
+          onError={report}
+        />
+      )}
+      {dialog === 'mcp' && api.mcpConnectInfo && <McpConnectDialog api={api} dir={dir} onClose={() => setDialog(null)} />}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
       {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || tr('ui.app.din_scratchpad')); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(tr('ui.app.trimis_in_x', { title: parent.title })); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
       {serviceResult && (
@@ -2508,7 +2562,7 @@ export default function App({ api }) {
       )}
       {dialog === 'shortcuts' && (
         <ShortcutsDialog
-          commands={commandList.map(([group, id, label]) => ({ group, id, label: cmdLabel(id, label) }))}
+          commands={activeCommands.map(([group, id, label]) => ({ group, id, label: cmdLabel(id, label) }))}
           settings={settings}
           onSave={async (shortcuts) => {
             await api.setSettings({ shortcuts });
