@@ -171,6 +171,14 @@ const Editor = forwardRef(function Editor(
           return false;
         },
         handlePaste: (view, event) => {
+          // An image on the clipboard (screenshot, copied picture) goes in as an image.
+          const img = [...(event.clipboardData?.files || [])].find((f) => f.type.startsWith('image/'));
+          if (img && !readOnly && !event.clipboardData?.getData('text/html')) {
+            const reader = new FileReader();
+            reader.onload = () => editor?.chain().focus().setImage({ src: reader.result, alt: img.name || '' }).run();
+            reader.readAsDataURL(img);
+            return true;
+          }
           if (!plainPaste.current) return false;
           plainPaste.current = false;
           const text = event.clipboardData?.getData('text/plain') || '';
@@ -181,7 +189,9 @@ const Editor = forwardRef(function Editor(
         handleDoubleClickOn: (_view, _pos, node, nodePos) => {
           if (node.type.name !== 'footnote' || readOnly) return false;
           const text = window.prompt(i18nT('ui.editor.footnotePrompt'), node.attrs.text);
-          if (text !== null) editor?.chain().setNodeSelection(nodePos).updateAttributes('footnote', { text }).run();
+          // Emptied: the note goes away instead of staying as an empty numbered note.
+          if (text !== null && !text.trim()) editor?.chain().deleteRange({ from: nodePos, to: nodePos + node.nodeSize }).run();
+          else if (text !== null) editor?.chain().setNodeSelection(nodePos).updateAttributes('footnote', { text }).run();
           return true;
         },
       },

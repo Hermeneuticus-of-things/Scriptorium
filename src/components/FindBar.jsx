@@ -38,7 +38,14 @@ export default function FindBar({ editor, onClose }) {
     if (!ranges.length) return;
     const k = Math.min(index, ranges.length - 1);
     replaceRanges(editor, [ranges[k]], replacement, opts);
-    setTimeout(() => select(k), 0);
+    // Positions moved after the replace: select the next match from a fresh search.
+    setTimeout(() => {
+      const fresh = findRanges(editor.state.doc, re);
+      if (!fresh.length) return;
+      const j = Math.min(k, fresh.length - 1);
+      setIndex(j);
+      editor.chain().setTextSelection({ from: fresh[j].from, to: fresh[j].to }).scrollIntoView().run();
+    }, 0);
   };
 
   const toggle = (k) => () => setOpts((o) => ({ ...o, [k]: !o[k] }));

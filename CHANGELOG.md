@@ -13,6 +13,13 @@
   - exportul `.scriv` păstrează tab-urile și spațiile repetate;
   - saltul de pagină rămâne salt de pagină după oricâte drumuri `.scriv` (nu se mai transformă în „* * *”);
   - pachetul de proiect (export/import) duce cu el și istoricul scrisului;
+- **Editor (căutare divergentă pe funcțiile editorului):**
+  - Caută și înlocuiește (Ctrl+F) nu mai poate șterge o notă de subsol, o imagine sau o adnotare aflată în mijlocul unei potriviri;
+  - textul înlocuit își păstrează aldinul, cursivul și comentariul;
+  - după „Înlocuiește”, selecția și contorul trec corect la potrivirea următoare;
+  - o notă de subsol golită la editare se șterge, nu mai rămâne numerotată și goală;
+  - o imagine din clipboard (captură de ecran, imagine copiată) se lipește direct în text.
+- **Ecran îngust (mod browser):** bara de meniuri trece pe două rânduri, iar meniurile nu mai ies din pagină.
   - caracterele de control (din text lipit) nu mai ajung în RTF, comentariile `.scriv`, OPML și LaTeX, care ieșeau invalide;
   - listele numerotate care încep de la alt număr („5.”) încep tot de acolo în DOCX;
   - „Unește documentele” nu mai trimite în Coș documentele așezate sub cele unite (trec sub primul) și păstrează cuvintele-cheie ale tuturor.
