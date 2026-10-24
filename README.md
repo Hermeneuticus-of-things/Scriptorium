@@ -210,6 +210,24 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 
 Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire → Configurare pagină* alege formatul, marginile, antetul și subsolul. În aplicația desktop, *Previzualizare tipărire* îți arată paginile reale (zoom, Tipărește, Salvează PDF) înainte să le trimiți la imprimantă.
 
+## Ce urmează
+
+**Lucru în echipă pe aceeași carte.** Mai mulți oameni, fiecare cu Scribner pe calculatorul lui, lucrează la același proiect. Proiectul stă într-un singur loc comun, la alegere:
+
+- un folder pe un **NAS** din casă sau din birou;
+- un **cloud** (OneDrive, Dropbox, Google Drive);
+- un **server** mic, pe care îl pornești pe un calculator din rețea sau pe internet.
+
+Ce vei vedea în program:
+
+- **cine a schimbat ce și când:** pentru fiecare document, istoria modificărilor, cu numele persoanei, data și ora, și textul de dinainte și de după;
+- **cine lucrează acum** la un document, ca să nu scrieți doi în același loc; documentul deschis de altcineva apare marcat;
+- **îmbinarea schimbărilor:** dacă doi oameni au scris în documente diferite, totul se unește singur; dacă au scris în același paragraf, alegi tu varianta, cu cele două texte puse unul lângă altul;
+- **lucru fără internet:** scrii liniștit, iar la reconectare schimbările pleacă și vin singure;
+- **roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor.
+
+Planul complet e în [`ROADMAP.md`](ROADMAP.md).
+
 ## Cum îl instalezi
 
 Din pagina [Releases](../../releases/latest) descarci una dintre variante:

@@ -128,3 +128,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] FormatBar: comenzile rare în meniuri derulante; ce nu încape trece în „Mai mult ▾”
 - [x] Verificat la 900 px și 1366 px, temă luminoasă și întunecată; scurtăturile neschimbate
 - [x] Personalizează bara de instrumente (ca Scrivener 3) — v0.8.4
+
+### Request: roadmap lucru în echipă (server / NAS / cloud, cine ce a modificat și când)
+- [x] Scris în README („Ce urmează”) și în ROADMAP.md secțiunea 9
+- [ ] Implementare (planificată)
