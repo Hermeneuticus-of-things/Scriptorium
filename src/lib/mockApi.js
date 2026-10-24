@@ -298,6 +298,8 @@ export function createMockApi() {
       return files[key(dir, id, kind)] || '';
     },
     async writeDoc(dir, id, kind, html) {
+      // ?demo&offline: window.__demoOffline = true makes writes fail like an unplugged NAS.
+      if (typeof window !== 'undefined' && window.__demoOffline) throw Object.assign(new Error('EHOSTDOWN: folderul nu e disponibil'), { code: 'EHOSTDOWN' });
       files[key(dir, id, kind)] = html;
       return true;
     },

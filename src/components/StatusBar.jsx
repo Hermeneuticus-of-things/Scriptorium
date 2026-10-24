@@ -31,7 +31,7 @@ function Progress({ value, max, label }) {
   );
 }
 
-export default function StatusBar({ node, words, chars = 0, selectionCount = 1, totalDraft, draftTarget, sessionWords, sessionTarget, saveState, team, onTeam, zoom, onZoom }) {
+export default function StatusBar({ node, words, chars = 0, selectionCount = 1, totalDraft, draftTarget, sessionWords, sessionTarget, saveState, sync, onSync, team, onTeam, zoom, onZoom }) {
   const sel = useEditorSelection();
   return (
     <footer className="statusbar">
@@ -52,6 +52,17 @@ export default function StatusBar({ node, words, chars = 0, selectionCount = 1, 
           )}{' '}
           {team.live.length ? t('ui.team.in_lucru', { n: team.live.length + 1 }) : t('ui.team.doar_tu')}
         </button>
+      )}
+      {sync && (
+        sync.state === 'conflict' ? (
+          <button className="sync-status sync-conflict" onClick={onSync} title={t('ui.sync.conflict_info')}>
+            <span className="sync-dot" aria-hidden="true" /> {t('ui.sync.conflict')}
+          </button>
+        ) : (
+          <span className={`sync-status sync-${sync.state}`} role="status" title={t(`ui.sync.${sync.state}_info`)}>
+            <span className="sync-dot" aria-hidden="true" /> {t(`ui.sync.${sync.state}`, { n: sync.n || 0 })}
+          </span>
+        )
       )}
       {onZoom && (
         <select className="zoom-select" value={zoom} onChange={(e) => onZoom(Number(e.target.value))} title={t('ui.statusBar.zoom')} aria-label={t('ui.statusBar.zoom')}>

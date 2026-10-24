@@ -378,6 +378,8 @@ const SHOTS = {
       await p.evaluate(() => {
         window.__demoExternalEdit((h) => h.replace('rece de octombrie', 'cețoasă de noiembrie'));
       });
+      while (await p.locator('.toast button').count()) await p.locator('.toast button').first().click();
+      await p.locator('button.sync-conflict').click();
       await p.waitForSelector('.conflict-dialog');
       await p.waitForTimeout(300);
     },
