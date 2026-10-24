@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { autofix, GENERIC_PROFILE, KARMA_PROFILE, lint, repairPrompt, roundContext, roundPrompt, ROUNDS, summarize } from '../src/lib/editorial.js';
+import { autofix, GENERIC_PROFILE, ROMANIAN_PROFILE, lint, repairPrompt, roundContext, roundPrompt, ROUNDS, summarize } from '../src/lib/editorial.js';
 import { authorParagraphs, hashParagraphs, paragraphHash } from '../src/lib/authorText.js';
 import { createWebApi, createMemoryKv } from '../src/lib/webApi.js';
 import { createMockApi } from '../src/lib/mockApi.js';
@@ -17,7 +17,7 @@ const REP = '<p>Omul ridică scutul.</p><p>Scutul îl apără de lovituri.</p>';
 
 describe('I-REP repetitionNear is a SEMNAL', () => {
   it('on in both profiles, one issue per group and line', () => {
-    for (const profile of [KARMA_PROFILE, GENERIC_PROFILE]) {
+    for (const profile of [ROMANIAN_PROFILE, GENERIC_PROFILE]) {
       const near = lint(REP, { profile }).filter((i) => i.rule === 'repetitionNear');
       expect(near.map((i) => [i.severity, i.round, i.message, i.paragraph, i.match])).toEqual([
         ['SEMNAL', 'R8b', '⚠ REP L1 «scutul» ×2', 0, 'scutul'],
@@ -27,7 +27,7 @@ describe('I-REP repetitionNear is a SEMNAL', () => {
   });
 
   it('never blocking, never autofixed, never in the repair prompt', () => {
-    const issues = lint(REP, { profile: KARMA_PROFILE });
+    const issues = lint(REP, { profile: ROMANIAN_PROFILE });
     const s = summarize(issues);
     expect(s.SEMNAL).toBe(2);
     expect(s.GRAVE + s.MEDIU).toBe(0);
@@ -36,13 +36,13 @@ describe('I-REP repetitionNear is a SEMNAL', () => {
     // attention decay never counts signals
     const tail = ['Vântul bate tare. Vântul tace.', 'Râul curge lin. Râul doarme.', 'Focul arde mocnit. Focul moare.'];
     const many = ['Liniște deplină.', 'Seara coboară.', 'Casa așteaptă.', 'Drumul urcă.', 'Lumina scade.', ...tail].map((x) => `<p>${x}</p>`).join('');
-    const found = lint(many, { profile: KARMA_PROFILE });
+    const found = lint(many, { profile: ROMANIAN_PROFILE });
     expect(found.filter((i) => i.severity === 'SEMNAL').length).toBeGreaterThanOrEqual(3);
     expect(found.some((i) => i.rule === 'attentionDecay')).toBe(false);
   });
 
   it('can be switched off per project', () => {
-    const profile = { ...KARMA_PROFILE, rules: { ...KARMA_PROFILE.rules, repetitionNear: false } };
+    const profile = { ...ROMANIAN_PROFILE, rules: { ...ROMANIAN_PROFILE.rules, repetitionNear: false } };
     expect(lint(REP, { profile }).some((i) => i.rule === 'repetitionNear')).toBe(false);
   });
 });

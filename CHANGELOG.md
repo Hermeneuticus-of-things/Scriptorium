@@ -160,10 +160,10 @@
 - **README:** toate imaginile refăcute pe interfața nouă; secțiuni noi (interfață personalizabilă, meniu AI, riglă, repetiții S70 și textul tău protejat, sync prin cloud/NAS, MCP pentru Claude/Codex/Gemini/Cursor/VS Code, pagină și tipărire); generator `scripts/readme-shots.cjs`.
 - Teste: 841 + 2 sărite; scenarii noi project-replace, composition, settings-roundtrip, split-scrivenings, scrivenings-empty-undo; test MCP care pornește serverul real.
 
-## 2026-10-24 — v0.8.4 — Interfață personalizabilă ca în Scrivener 3, meniu AI unic, Conectează la Claude (MCP)
+## 2026-10-24 — v0.8.4 — Interfață personalizabilă, meniu AI unic, Conectează la Claude (MCP)
 
 ### Cerința user
-> "în UI pune tot ce e legat de AI într-un submeniu" · "interfața să nu fie aglomerată, folosește submeniuri / dropdown" · "interfața custom e mai importantă pentru useri, ca la Scrivener 3"
+> "în UI pune tot ce e legat de AI într-un submeniu" · "interfața să nu fie aglomerată, folosește submeniuri / dropdown" · "interfața personalizabilă e mai importantă"
 
 ### Rezultat
 - **Personalizează bara de instrumente** (Vizualizare): bara de sus și bara de formatare; adaugi, scoți, ordonezi (tragere, ↑/↓, Alt+↑/↓), separatoare și spațiu flexibil, iconiță+text / iconiță / text, Restabilește implicit. Salvat în setări; ce scoți rămâne în meniuri.
@@ -209,7 +209,7 @@
 - **Configurare pagină și Previzualizare tipărire** (Fișier): hârtie A4/A5/Letter/Legal/6×9/personalizată, orientare, margini, antet/subsol cu câmpuri, fără antet pe prima pagină; previzualizarea arată PDF-ul real (pagini, zoom, Tipărește, Salvează PDF); tipărirea folosește aceleași pagini. Verificat în Electron: 6×9 in → 432×648 pt.
 - **Cercetare → pagină web**: imaginile se descarcă și se salvează în proiect (srcset, data-src, adrese relative), cu limite de număr, mărime și timp; doar `image/*`; imaginile care nu se pot lua rămân link cu textul alternativ.
 - **Linguistic Focus**: etichetare RO/EN refăcută (liste închise complete, terminații, context). Pe texte noi: RO 72% → 87%, EN 83% → 96%.
-- **Ajutor**: capitol nou „Ce faci tu” (chei de servicii și AI, test cu model real, corectorul românesc din Windows, MCP, sincronizare prin folder, proiectul Karma și VKB2, limite cunoscute).
+- **Ajutor**: capitol nou „Ce faci tu” (chei de servicii și AI, test cu model real, corectorul românesc din Windows, MCP, sincronizare prin folder, proiectul real și VKB2, limite cunoscute).
 - **Test cu model real** rulat de autor pe Windows prin OpenRouter (model gratuit): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit. Scriptul reîncearcă acum și trece la alt model.
 
 ### Limite
@@ -323,7 +323,7 @@ Patru vânători de bug-uri în paralel, pe zone separate (editor, integritatea 
 - README nou, pe limba unui om obișnuit, cu 8 capturi prezentate din proiectul demo îmbogățit.
 - Teste: 546 unitare, E2E Electron și browser trec.
 
-## 2026-10-23 — v0.6.0 — Bug-uri reparate la cauză, AI cu orice furnizor, UI/UX ca Scrivener 3
+## 2026-10-23 — v0.6.0 — Bug-uri reparate la cauză, AI cu orice furnizor, UI/UX
 
 ### Cerința user
 > "repare bug cu best practice root cause" · "ori ce cheie API, nu doar Anthropic" · "NotebookLM" · "UI și UX (Scrivener clone)"
@@ -331,7 +331,7 @@ Patru vânători de bug-uri în paralel, pe zone separate (editor, integritatea 
 ### Rezultat
 - Bug-uri reproduse cu test, apoi reparate la cauză: sincronizare folder (căi în afara folderului), import mixt, salvări din stare veche, scrieri pierdute la eroare, setări atomice, snapshot cu dată invalidă, MCP after_id, editor (redo/undo, cursor în split, $n, ghilimele românești, apostrof, regex pătratice, viteză pe documente lungi), AI (raționament în răspuns, răspunsuri goale/blocate/tăiate, cache pe model, propuneri peste editări noi, anulare și limită de timp).
 - AI cu orice furnizor (Anthropic, OpenAI, Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Ollama, LM Studio, compatibil OpenAI), cheie criptată per furnizor; export pentru NotebookLM.
-- UX ca Scrivener 3: săgeți și căutare din tastatură în binder, Delete în coș, documente noi în modul redenumire, undo/redo în binder, corkboard și outline din tastatură, scurtături fără Ctrl+Alt (AltGr).
+- UX: săgeți și căutare din tastatură în binder, Delete în coș, documente noi în modul redenumire, undo/redo în binder, corkboard și outline din tastatură, scurtături fără Ctrl+Alt (AltGr).
 - UI: contrast AA în luminos și întunecat, bara de unelte la 1024 px, ferestre care nu ies din ecran, stări de selecție ca în Scrivener.
 - CI nou (teste, build, E2E Electron), `npm audit` 0 vulnerabilități.
 - Teste: 386 trec; E2E Electron OK local și în CI.
@@ -349,13 +349,13 @@ Fluxul „NodeJS with Webpack” rula `npx webpack`, dar Scribner se construieș
 - SLSA: construiește artefactele reale (Scribner pentru Windows, zip, și versiunea web), le semnează și le atașează la release; generator `v2.1.0`.
 - Verificat: toți pașii CI rulați într-o clonă curată trec (312 teste, build, E2E OK).
 
-## 2026-10-23 — v0.5.0 — Aspect Scrivener 3, profil generic, ferestre, web, Karma
+## 2026-10-23 — v0.5.0 — Aspect nou, profil generic, ferestre, web, profil românesc
 
 ### Cerința user
-> "toate paginile să arate ca Scrivener 3" · "Karma este doar exemplu, programul este pentru orice fel de text" · profilul Karma „să se numească Română”
+> "programul este pentru orice fel de text" · profilul românesc „să se numească Română”
 
 ### Rezultat
-- Temă „Clasic (ca Scrivener 3)” implicită pe toate paginile, cu variantă întunecată; iconițe SVG proprii (bara de unelte, binder, taburile Inspectorului), bara de titlu deasupra editorului; „Modern” rămâne în Setări → Aspect.
+- Temă „Clasic” implicită pe toate paginile, cu variantă întunecată; iconițe SVG proprii (bara de unelte, binder, taburile Inspectorului), bara de titlu deasupra editorului; „Modern” rămâne în Setări → Aspect.
 - Profil editorial implicit „Generic: orice text”; profilul cărții se numește „Română”; numele glosarelor și ale pachetului pentru editor urmează profilul.
 - Setările din Opțiuni au efect (corecturi automate cu Ctrl+Z, invizibile, binder, autosave, redeschidere, vedere implicită).
 - Ferestre multiple, versiune web/PWA cu IndexedDB și pachete de proiect, panou de cercetare local (BM25) cu răspuns Claude opțional.
@@ -394,7 +394,7 @@ Alegeri: Electron + React; Baza Scrivener, Import .scriv, Export DOCX/PDF/EPUB, 
 ### Decizii
 - Implementare proprie de la zero (clean-room), fără cod decompilat din Scrivener.
 - Format proiect: folder `<Nume>.scriptorium/` cu `project.json` + `docs/*.html` + `notes/*.html` + `snapshots/`.
-- Import `.scriv` (Scrivener 3): parsare `.scrivx` + RTF → HTML.
+- Import `.scriv`: parsare `.scrivx` + RTF → HTML.
 - AI: Anthropic SDK în procesul main, model `claude-opus-5-5`, cheie API din setări locale.
 - Build portabil Windows: electron-builder target `portable`.
 
@@ -403,14 +403,14 @@ Alegeri: Electron + React; Baza Scrivener, Import .scriv, Export DOCX/PDF/EPUB, 
 
 ### Rezultat (v0.1.0)
 - Aplicație completă: binder (drag & drop, căutare), editor TipTap, corkboard, outline, inspector (sinopsis, etichetă, status, țintă, note, snapshot-uri), mod compunere, teme (luminos/întunecat/sepia), ținte carte/sesiune/document.
-- Import Scrivener 3 (`lib/scrivImport.cjs`, `lib/rtf.cjs`).
+- Import `.scriv` (`lib/scrivImport.cjs`, `lib/rtf.cjs`).
 - Compile DOCX/EPUB/HTML (`lib/compile.cjs`) + PDF A5 prin Electron.
 - Asistent AI (`lib/ai.cjs`): corectură, sinopsis, continuare, critică, consistență, întrebări.
 - Teste: 11/11 vitest; UI verificat în Chromium (mod browser), fără erori în consolă.
 - Neverificat aici: rularea efectivă în Electron (binarul nu se poate descărca în containerul cloud) și apelul real la API (fără cheie).
 
 ## 2026-10-23 — ROADMAP.md
-Roadmap extins cu funcțiile Scrivener 3 (12 secțiuni, P1/P2/P3) și ordinea v0.2 / v0.3 / v1.0.
+Roadmap extins cu toate funcțiile (12 secțiuni, P1/P2/P3) și ordinea v0.2 / v0.3 / v1.0.
 
 ## 2026-10-23 — v0.2.0 — Roadmap v0.2 (scris zilnic)
 
@@ -429,9 +429,9 @@ Roadmap extins cu funcțiile Scrivener 3 (12 secțiuni, P1/P2/P3) și ordinea v0
 
 ### Rezultat (v0.2.0)
 - Funcțiile v0.2 (binder multi-selecție, Scrivenings, split editor, comentarii, note de subsol, ghilimele „”, Split/Merge, Find & Replace în proiect, Writing History, backup, import DOCX/TXT/MD, șabloane, panouri redimensionabile).
-- Import Scrivener fără pierderi: `lib/rtf.cjs` rescris (aliniere, culori, highlight, super/subscript, liste, tabele, imagini, comentarii și note legate/inline, adnotări, Scrivener Links, stiluri), `lib/scrivImport.cjs` rescris (keywords, metadate personalizate, section types, ținte, colecții, bookmarks, snapshot-uri, writing.history, note de proiect, media, Scrivener 1/2, copie completă în `scrivener-original/`), raport de import, vizualizare media, metadate în Inspector.
-- I-REP / I-EDIT după `karma-book-engine`: `src/lib/editorial.js` (reguli R0–R11, ALOGEN, DOOM III, bucle micro/mezzo/macro, reattach), `src/components/EditorialPanel.jsx`, profil editorial în Setări.
-- `FEATURES-SCRIVENER3.md` (inventar complet) și `ROADMAP.md` extins.
+- Import Scrivener fără pierderi: `lib/rtf.cjs` rescris (aliniere, culori, highlight, super/subscript, liste, tabele, imagini, comentarii și note legate/inline, adnotări, Scrivener Links, stiluri), `lib/scrivImport.cjs` rescris (keywords, metadate personalizate, section types, ținte, colecții, bookmarks, snapshot-uri, writing.history, note de proiect, media, formatul `.scriv` 1/2, copie completă în `scrivener-original/`), raport de import, vizualizare media, metadate în Inspector.
+- I-REP / I-EDIT după motorul editorial românesc: `src/lib/editorial.js` (reguli R0–R11, ALOGEN, DOOM III, bucle micro/mezzo/macro, reattach), `src/components/EditorialPanel.jsx`, profil editorial în Setări.
+- `docs/FEATURES.md` (inventar complet) și `ROADMAP.md` extins.
 - Teste: 44/44. UI verificat în Chromium cu simulator de AI.
 
 ## 2026-10-23 — v0.2.1 — Roadmap 1.4

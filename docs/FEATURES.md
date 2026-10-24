@@ -1,11 +1,11 @@
-# Inventarul complet al funcțiilor Scrivener 3 → Scribner
+# Inventarul complet al funcțiilor Scribner
 
-Lista de control după care construim. Structura urmează meniurile și panourile din Scrivener 3 (Windows 3.x și macOS 3.x), plus Compile, sincronizare și formatul de fișier.
+Lista de control după care construim. Structura urmează meniurile și panourile programului de referință, plus Compile, sincronizare și formatul de fișier.
 
 Stare: `[x]` făcut · `[~]` parțial · `[ ]` de făcut · `[-]` exclus intenționat (motivul e scris lângă).
 Versiunea țintă: v0.2 / v0.3 / v0.4 / v1.0.
 
-Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și documentația comunității pentru formatul `.scriv` ([scrivener-skills](https://github.com/donnfelker/scrivener-skills)). Nu am putut verifica manualul oficial de aici, pentru că literatureandlatte.com e blocat în rețeaua containerului.
+Sursele sunt programul de referință, din cunoașterea mea, și documentația comunității pentru formatul `.scriv` ([scrivener-skills](https://github.com/donnfelker/scrivener-skills)). Nu am putut verifica manualul oficial de aici, pentru că literatureandlatte.com e blocat în rețeaua containerului.
 
 ---
 
@@ -24,7 +24,7 @@ Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și docu
 | [x] | 0.3 | Save As (copie a proiectului cu alt nume) |
 | [x] | 0.2 | Backup: automat la închidere și la interval, păstrează N, folder ales, restaurare |
 | [x] | 0.3 | Backup: la deschidere, la salvarea manuală, opțiunea zip/nezipat, nume cu dată — la deschidere (setarea backupOnOpen), închidere, interval, manual; zip sau folder (backupZip) |
-| [x] | 0.1 | Import Scrivener 3 (.scriv) |
+| [x] | 0.1 | Import `.scriv` (.scriv) |
 | [~] | 0.2 | Import .scriv **fără pierderi** (vezi secțiunea Q) |
 | [x] | 0.3 | Import Scrivener 1 și 2 (Files/Docs/N.rtf) |
 | [x] | 0.2 | Import Word (.docx), text, Markdown, cu împărțire în documente |
@@ -187,7 +187,7 @@ Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și docu
 | [x] | 0.3 | Tabele (inserare, rânduri, coloane, margini) |
 | [x] | 0.3 | Imagini (inserare, scalare, aliniere) — lățime (25–100% sau personalizată) și aliniere stânga/centru/dreapta |
 | [x] | 0.3 | Styles: Paragraph, Character, Para+Char; panou stiluri; Redefine from selection; Next style; scurtături; import stylesheet din alt proiect |
-| [-] | 0.3 | Formatting presets (Scrivener 2) — înlocuit de Styles (Scrivener 3 a renunțat la Formatting presets) |
+| [-] | 0.3 | Formatting presets (formatul 2) — înlocuit de Styles (formatul 3 a renunțat la Formatting presets) |
 | [x] | 0.3 | Revision Mode (5 nivele de culoare), Remove revision colors, Track changes la import/export DOCX — w:ins/w:del ↔ marcaje de revizie (ștergerile ca text tăiat), export cu autor și dată |
 | [x] | 0.3 | Make Default Formatting, Copy/Paste formatting — Formatarea implicită (doc/selecție), Copiază/Lipește formatarea (Ctrl+Alt+C/V) |
 | [x] | 0.3 | Script Mode (Screenplay, Stage Play, Comic) cu elemente și Tab/Enter |
@@ -311,7 +311,7 @@ Sursele sunt manualul și interfața Scrivener 3, din cunoașterea mea, și docu
 | [x] | 0.4 | Elemente cu Tab/Enter, auto-complete personaje/scene — + auto-complete scene (INT./EXT. și titluri anterioare, Tab) |
 | [x] | 0.4 | Export Final Draft FDX, Fountain |
 
-## Q. Import Scrivener 3 fără pierderi
+## Q. Import `.scriv` fără pierderi
 
 Ce conține un proiect `.scriv` și unde ajunge în Scribner:
 
@@ -356,7 +356,7 @@ Ce conține un proiect `.scriv` și unde ajunge în Scribner:
 | [x] | Corkboard freeform (poziții), Outline (stări) | păstrat |
 | [x] | Proprietăți proiect (titlu, autor) | proiect |
 | [x] | Orice altceva necunoscut | copia completă a proiectului original, păstrată în `scrivener-original/` |
-| [x] | Scrivener 1/2 (`Files/Docs/N.rtf`) | la fel ca Scrivener 3 |
+| [x] | formatul `.scriv` 1/2 (`Files/Docs/N.rtf`) | la fel ca formatul 3 |
 | [x] | Raport de import: câte elemente, ce s-a convertit, ce s-a păstrat doar în copie | dialog |
 
 ## R. Excluse intenționat

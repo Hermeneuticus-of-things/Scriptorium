@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { parseCanonIndex, validateCanonIndex, createNode, serializeCanonIndex, canonContext, nodeIdFromTitle, findCanonDoc } from '../src/lib/canonIndex.js';
-import { roundContext, lint, applyLists, KARMA_PROFILE, profileFor, systemPrompt } from '../src/lib/editorial.js';
+import { roundContext, lint, applyLists, ROMANIAN_PROFILE, profileFor, systemPrompt } from '../src/lib/editorial.js';
 
 const TEXT = `# Index_de_Lucru
 | Nod | Titlu | Tip | Greutate | Dependențe |
 |---|---|---|---|---|
-| 1 | Karma | capitol | 8 | |
+| 1 | Drumul | capitol | 8 | |
 | 1.1 | Fapta | definiție | 6 | |
 | 1.1.1 | Fapta și urma | mecanism | 7 | 1.1 |
 2 | Depunerea | capitol | 5 | dep: 1.1
@@ -59,8 +59,8 @@ describe('canonIndex', () => {
 
 describe('editorial word lists', () => {
   it('flags forbidden/preferred, disables built-ins, per profile', () => {
-    const lists = { karma: { forbidden: [{ word: 'gest', replacement: 'faptă' }], preferred: [{ word: 'rânduiala lumii', replacement: 'ordinea cosmică' }], builtins: { bannedTransitions: false }, disabledWords: ['desigur'] } };
-    const p = applyLists(KARMA_PROFILE, lists);
+    const lists = { ro: { forbidden: [{ word: 'gest', replacement: 'faptă' }], preferred: [{ word: 'rânduiala lumii', replacement: 'ordinea cosmică' }], builtins: { bannedTransitions: false }, disabledWords: ['desigur'] } };
+    const p = applyLists(ROMANIAN_PROFILE, lists);
     const r = lint('<p>Un gest în ordinea cosmică. Astfel, desigur, merge.</p>', { profile: p });
     expect(r.find((i) => i.rule === 'forbidden').suggestion).toBe('faptă');
     expect(r.find((i) => i.rule === 'preferred').suggestion).toBe('rânduiala lumii');

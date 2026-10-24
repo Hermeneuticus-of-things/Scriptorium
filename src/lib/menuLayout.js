@@ -1,4 +1,4 @@
-// Menu bar layout (Scrivener 3 order): which command goes in which menu and submenu.
+// Menu bar layout: which command goes in which menu and submenu.
 // Shared by the in-app menu bar (browser) and the native application menu (desktop).
 
 export const MENU_GROUPS = ['file', 'edit', 'view', 'project', 'document', 'nav', 'tools', 'ai', 'help'];

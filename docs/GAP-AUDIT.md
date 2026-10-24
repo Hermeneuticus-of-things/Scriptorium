@@ -1,9 +1,9 @@
-# Gap audit: Scribner vs Scrivener 3 (Windows + macOS)
+# Gap audit: Scribner, complete feature list
 
 Internal document. Audit date: 2026-10-24. Each row was checked in the code (not in
-`FEATURES-SCRIVENER3.md`); the evidence column points to the implementing file:line.
+`docs/FEATURES.md`); the evidence column points to the implementing file:line.
 The official manual (literatureandlatte.com) is not reachable from the build container, so the
-feature list comes from knowledge of the Scrivener 3 manual and UI.
+feature list comes from the reference feature list.
 
 Status: **present** · **partial** · **missing** · **excluded** (deliberately out of scope).
 Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H · M · L.
@@ -47,7 +47,7 @@ Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H
 | Preserve Formatting blocks (kept verbatim in Compile) | **present (round 2)** | src/editor/formatting.js PreserveFormat; lib/compile.cjs (mapText, parseBlocks `preserve`, DOCX paragraph) | M | L |
 | Writing direction RTL | present | src/components/FormatBar.jsx:513 | – | L |
 | Images with links, resize, alignment | present | src/components/FormatBar.jsx:317; lib/compile.cjs | – | M |
-| Equations / MathType | excluded | FEATURES-SCRIVENER3.md §R (commercial plug-in) | L | L |
+| Equations / MathType | excluded | docs/FEATURES.md §R (commercial plug-in) | L | L |
 | Selection word/character count in footer | **present (implemented now)** | src/components/StatusBar.jsx (useEditorSelection); src/lib/text.js selectionStats | S | H |
 | Text transformations (case, spaces, quotes, dashes) | present | src/components/FormatBar.jsx:432-439 | – | M |
 | Copy Special, Paste and Match Style | present | src/components/Editor.jsx | – | M |

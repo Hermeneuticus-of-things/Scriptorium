@@ -213,7 +213,7 @@ describe('Scrivener export -> import round trip', () => {
     expect(s1.targetType).toBe('Words');
     expect(s1.icon).toBe('🔥');
     expect(s1.locked).toBe(true);
-    // Section type as Scrivener 3 stores it: <MetaData><SectionType>UUID</SectionType>, UUID defined under <SectionTypes>.
+    // Section type as the `.scriv` format stores it: <MetaData><SectionType>UUID</SectionType>, UUID defined under <SectionTypes>.
     const scrivx = fs.readFileSync(path.join(res.dir, 'Roman bogat.scrivx'), 'utf8');
     const stId = (t) => new RegExp(`<SectionType ID="([0-9A-F-]{36})"><Title>${t}</Title>`).exec(scrivx)[1];
     expect(scrivx).toContain(`<SectionType>${stId('Scenă')}</SectionType>`);
@@ -355,7 +355,7 @@ describe('Scrivener export -> import round trip', () => {
     expect(h.days['2024-05-02']).toMatchObject({ draftWritten: 300, totalWritten: 450 });
   });
 
-  it('writes the Scrivener 3 support files', () => {
+  it('writes the .scriv support files', () => {
     const files = path.join(res.dir, 'Files');
     expect(fs.readFileSync(path.join(files, 'version.txt'), 'utf8')).toBe('23');
     expect(fs.readFileSync(path.join(files, 'styles.xml'), 'utf8')).toContain('Name="Motto"');

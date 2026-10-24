@@ -1,9 +1,9 @@
-# Roadmap Scribner: toate funcțiile Scrivener 3 (extins)
+# Roadmap Scribner
 
 Starea reală la 2026-10-23. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
 Versiuni: **v0.2** în lucru · **v0.3** revizie și publicare · **v0.4** paritate avansată · **v1.0** paritate completă + extra.
 
-Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEATURES-SCRIVENER3.md). Fișierul de față e planul de lucru, în ordinea în care construiesc.
+Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATURES.md). Fișierul de față e planul de lucru, în ordinea în care construiesc.
 
 ---
 
@@ -27,15 +27,15 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 | [x] | Compile DOCX / PDF A5 / EPUB 3 / HTML cu note de subsol reale, comentariile eliminate |
 | [x] | Panouri redimensionabile, starea proiectului memorată, teme (luminos/întunecat/sepia), mod compunere |
 | [x] | Asistent AI Claude: corectură, sinopsis, continuare, critică, consistență, întrebări |
-| [x] | Import Scrivener fără pierderi (testat pe un proiect de test complet; neverificat încă pe Karma Book real) |
-| [~] | I-REP / I-EDIT (motor de reguli Karma, bucle micro/mezzo/macro, panou, VKB2 implementat; verificat cu simulator, nu cu Claude real) |
+| [x] | Import Scrivener fără pierderi (testat pe un proiect de test complet; neverificat încă pe un proiect real mare) |
+| [~] | I-REP / I-EDIT (motor de reguli pentru română, bucle micro/mezzo/macro, panou, VKB2 implementat; verificat cu simulator, nu cu Claude real) |
 | [x] | AI opțional: programul funcționează complet și fără AI |
 
 ---
 
 ## 1. v0.2: finalizare (în lucru)
 
-### 1.1 Import Scrivener 3 fără pierderi
+### 1.1 Import `.scriv` fără pierderi
 - [x] Binder complet, ordinea, titluri, titlu adaptiv când lipsește
 - [x] RTF: paragrafe, aliniere, bold/italic/subliniat/tăiat, superscript/subscript, culori text, highlight, majuscule
 - [x] RTF: liste cu buline/numerotate, tabele, salt de pagină, imagini PNG/JPEG (EMF/WMF păstrate byte cu byte)
@@ -50,23 +50,23 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Collections, bookmarks (document + proiect), note de proiect
 - [x] Snapshot-uri (titlu, dată, text), `writing.history`
 - [x] Media (imagini, PDF, audio, video) copiate în `media/`
-- [x] Scrivener 1/2 (`Files/Docs`)
+- [x] formatul `.scriv` 1/2 (`Files/Docs`)
 - [x] Copia completă a proiectului original în `scrivener-original/`
 - [x] Vizualizare media în editor (imagine, PDF, audio, video), icoane pe tip în binder
 - [x] Raport de import (ce s-a convertit, ce a rămas doar în copie)
 - [x] Inspector: metadate personalizate editabile (Text/Checkbox/List/Date), tip de secțiune, date, icoană, țintă, origine Scrivener, bookmark-uri
 - [x] Istoric importat afișat în Writing History (marcat „Scrivener”)
 - [x] Compile: documente-container incluse cu copiii lor, adnotări și imagini EMF eliminate, media sărită
-- [ ] Verificare pe un proiect Scrivener real (Karma Book)
+- [ ] Verificare pe un proiect .scriv real, mare
 
-### 1.2 I-REP și I-EDIT (fluxul cărții Karma)
+### 1.2 I-REP și I-EDIT (fluxul editorial pentru română)
 - [x] Motor de reguli: DOOM III (em-dash, paranteze, două puncte, bold, liste, numerotare, majusculă), ghilimele, construcții binare, pasive, „noi” explicit, lexic academic, tranziții P9, autoreferințe R7, reziduuri LLM P3, teleologie, ALOGEN (ancoră, repetiție, terminații), metronom, repetiții micro/mezzo/macro, limita de canvas, antet/notă canonică, attention decay
 - [x] Reparații sigure fără AI (ghilimele, spații, majusculă)
 - [x] Bucle I-REP repară → reverifică pe trei niveluri: micro (selecție), mezzo (document), macro (capitol)
 - [x] I-EDIT: rundele R0–R11 alese individual, apoi P3 + bucla I-REP de verificare
 - [x] Comentariile, adnotările și alinierea se re-atașează după fiecare trecere AI
 - [x] Propunere cu diff, acceptare cu snapshot automat, evidența rundelor pe document
-- [x] Alegerea profilului editorial în Setări (Karma / Generic), limita canvas, verificarea antetului și notei canonice
+- [x] Alegerea profilului editorial în Setări (Română / Generic), limita canvas, verificarea antetului și notei canonice
 - [x] Clic pe o problemă selectează textul în editor
 - [x] Bucla verificată în browser cu simulator de AI
 - [x] Editarea listelor de cuvinte interzise din Setări
@@ -184,7 +184,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 
 ## 4. v1.0: paritate completă + extra
 
-- [x] Toate rândurile `[ ]` din `FEATURES-SCRIVENER3.md` închise sau mutate explicit la `[-]` (0 rămase)
+- [x] Toate rândurile `[ ]` din `docs/FEATURES.md` închise sau mutate explicit la `[-]` (0 rămase)
 - [x] Sinopsis AI în bloc, consistență pe toată cartea, fișe vii
 - [x] Cronologie, hartă de relații, analiză de ritm
 - [x] Panou NotebookLM / RAG cu cozi asincrone și cache pe concept (fluxul NLM din workspace)
@@ -210,12 +210,12 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 
 - [x] Test cap-coadă `npm run test:e2e` (Electron real, dialoguri simulate): proiect nou, text cu corecturi automate salvat pe disc, meniu nativ complet, Compile DOCX/PDF/EPUB, export `.scriv` și reimport; trece pe Linux
 - [x] Același test pe Windows: rulează în CI pe windows-latest la fiecare PR (E2E cu aplicația reală, installer, portabil)
-- [ ] Import pe proiectul Karma real (aștept proiectul)
+- [ ] Import pe un proiect real mare (la autor)
 
 
 ## 8. Așteaptă ceva de la autor (nu se pot face fără)
 
-- [ ] Proiectul Karma real (`.scriv`) pentru proba de import fără pierderi
+- [ ] Un proiect `.scriv` real, mare, pentru proba de import fără pierderi
 - [ ] Cheile reale DeepL / Google / LanguageTool Premium / Speechify / Zotero pentru o probă cap-coadă (codul e testat cu răspunsuri simulate)
 - [~] Test cu model real: rulat de autor pe Windows prin OpenRouter (model gratuit `nvidia/nemotron-3.5-super-vl:free`): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit („Provider returned error”); scriptul reîncearcă acum și trece la alt model. Rămâne o rulare completă verde.
 - [x] Definițiile VKB2 primite și implementate
@@ -250,7 +250,7 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 7. **Comparare din jurnalul echipei**: clic pe un rând → diferența față de versiunea de dinainte.
 8. **Adnotări pe PDF-urile din Cercetare** (singura funcție lipsă din docs/GAP-AUDIT.md).
 9. **sinonimul.ro cu adresă directă** în loc de căutarea prin Google (de verificat formatul adresei pe site).
-10. **Rămân la autor** (§8): instalare pe Windows, test MCP cu Claude Desktop / Claude Code, importul proiectului Karma, cheile de servicii, testul AI complet cu un model real, decizia depozit public / privat.
+10. **Rămân la autor** (§8): instalare pe Windows, test MCP cu Claude Desktop / Claude Code, importul unui proiect real mare, cheile de servicii, testul AI complet cu un model real, decizia depozit public / privat.
 11. **[x] v0.8.8 — Plugin D&TED (dictare și transcriere în română) integrat în interfață; rămâne testul real pe Windows** — specificația tehnică completă (protocol, arhitectură, teste, pași): [`docs/DTED.md`](docs/DTED.md). Dictare de text nou la cursor și **dictare peste o selecție, care o înlocuiește (modificare)**. D&TED (https://github.com/Hermeneuticus-of-things/dted) e un program Python separat (Whisper `large-v3-turbo`, local, fără internet). Pași:
     - în D&TED: un mod fără fereastră pentru alte programe: `python -m dictare_transcriere_romana --transcrie <fișier> --json` (text + segmente cu timp) și `--dictare --stdio` (text parțial pe măsură ce vorbești, JSON pe linii);
     - în Scribner: Setări → Servicii → D&TED (calea programului, detectată automat din instalarea Windows; test „Verifică”);

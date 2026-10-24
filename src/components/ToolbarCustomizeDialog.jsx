@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { t, has } from '../lib/i18n.js';
 import { BARS, DISPLAY_MODES, SEP, SPACE, toolbarPrefs, toolbarSettings, topItemAvailable } from '../lib/toolbars.js';
 
-// Vizualizare → Personalizează bara de instrumente… (Scrivener 3: View → Customize Toolbar…).
+// Vizualizare → Personalizează bara de instrumente….
 // Two lists per bar: available items and the current ones. Add/remove, reorder by drag or with
 // ↑/↓ (keyboard), separators and flexible spaces, display mode, and "Restore defaults".
 export default function ToolbarCustomizeDialog({ api, settings, aiEnabled, desktop, onClose, onError }) {

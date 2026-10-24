@@ -141,7 +141,7 @@ describe('corkboard keyboard', () => {
   });
 });
 
-describe('default shortcuts (Scrivener 3 Windows)', () => {
+describe('default shortcuts (Windows)', () => {
   it('match Scrivener for the common commands and do not conflict', () => {
     expect(DEFAULT_KEYS).toMatchObject({
       newText: 'Ctrl+N', newFolder: 'Ctrl+Shift+N', split: 'Ctrl+K', splitTitle: 'Ctrl+Shift+K',
