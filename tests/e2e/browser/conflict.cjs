@@ -15,6 +15,7 @@ const URL = process.env.URL || 'http://localhost:4183/?demo&conflict';
   await page.keyboard.type('Ploua mărunt. ');
   await page.waitForTimeout(400);
   await page.evaluate(() => window.__demoExternalEdit((h) => h.replace('rece de octombrie', 'cețoasă de noiembrie')));
+  await page.locator('button.sync-conflict').click();
   await page.waitForSelector('.conflict-dialog');
   await page.locator('.conflict-side', { hasText: 'celălalt calculator' }).click();
   await page.getByRole('button', { name: 'Aplică alegerile' }).click();

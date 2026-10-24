@@ -121,6 +121,22 @@ import TeamDialog from './components/TeamDialog.jsx';
 import ConflictDialog from './components/ConflictDialog.jsx';
 
 const SAVE_DELAY = 700;
+const RETRY_DELAY = 15000; // offline queue: retry unwritten edits every 15 s
+const queueKey = (dir) => `scribner-queue:${dir}`;
+function saveQueue(dir, items) {
+  try {
+    if (items && Object.keys(items).length) localStorage.setItem(queueKey(dir), JSON.stringify(items));
+    else localStorage.removeItem(queueKey(dir));
+  } catch { /* storage full or blocked: the in-memory queue still retries */ }
+}
+function loadQueue(dir) {
+  try {
+    const v = JSON.parse(localStorage.getItem(queueKey(dir)) || 'null');
+    return v && typeof v === 'object' && Object.keys(v).length ? v : null;
+  } catch {
+    return null;
+  }
+}
 const TYPED_COMMIT_DELAY = 400;
 // I-EDIT: a run of hand edits is journaled (MODIFICARI_AUTOR) once the writer pauses this long,
 // so autosave never writes one row per keystroke.
@@ -354,6 +370,12 @@ export default function App({ api: apiProp }) {
     saveStateRef.current = v;
     setSaveStateRaw(v);
   }, []);
+  // Offline queue: edits that could not be written stay in `pending` and are retried by themselves
+  // (every 15 s, at once when the folder or the network comes back). Shown in the status bar.
+  const [offline, setOffline] = useState(false);
+  const [queued, setQueued] = useState(0);
+  const queuedRef = useRef(0);
+  const retryTimer = useRef(null);
   const [sessionStart, setSessionStart] = useState(0);
   const [widths, setWidths] = useState({ binder: 260, side: 320 });
   const [nav, setNav] = useState({ stack: [], index: -1 });
@@ -476,14 +498,37 @@ export default function App({ api: apiProp }) {
         await api.writeDoc(dir, id, kind, items[i][1]);
       }
       setSaveState('salvat');
+      if (queuedRef.current) {
+        queuedRef.current = 0;
+        setQueued(0);
+        saveQueue(dir, null);
+      }
       recordHistory();
     } catch (e) {
       // Keep the unwritten edits queued (unless newer text replaced them) so the next save retries them.
       for (const [k, html] of items.slice(i)) if (!pending.current.has(k)) pending.current.set(k, html);
       setSaveState(tr('ui.app.eroare_la_salvare'));
-      report(e);
+      // Only the first failure is reported; the queue then retries quietly until it gets through.
+      if (!queuedRef.current) report(e);
+      queuedRef.current = pending.current.size;
+      setQueued(pending.current.size);
+      // Kept on this computer too: closing the app while the folder is away loses nothing.
+      saveQueue(dir, Object.fromEntries(pending.current));
+      clearTimeout(retryTimer.current);
+      retryTimer.current = setTimeout(() => flushRef.current?.(), RETRY_DELAY);
     }
   }, [api, dir, report, recordHistory, commitTyped]);
+
+  const flushRef = useRef(null);
+  flushRef.current = flush;
+  useEffect(() => {
+    const back = () => flushRef.current?.();
+    window.addEventListener('online', back);
+    return () => {
+      window.removeEventListener('online', back);
+      clearTimeout(retryTimer.current);
+    };
+  }, []);
 
   const queueWrite = useCallback(
     (id, kind, html) => {
@@ -509,8 +554,15 @@ export default function App({ api: apiProp }) {
     api.watchProject(dir).catch(() => {});
     return api.onProjectChanged(async ({ dir: changedDir, files, offline, online }) => {
       if (changedDir !== dir) return;
-      if (offline) return setToast(tr('ui.app.folder_indisponibil'));
-      if (online) setToast(tr('ui.app.folder_din_nou_disponibil'));
+      if (offline) {
+        setOffline(true);
+        return setToast(tr('ui.app.folder_indisponibil'));
+      }
+      if (online) {
+        setOffline(false);
+        setToast(tr('ui.app.folder_din_nou_disponibil'));
+        flushRef.current?.(); // send what was queued while the folder was away
+      }
       try {
         if (files.some((f) => f === 'project.json')) {
           const before = projectRef.current;
@@ -553,7 +605,8 @@ export default function App({ api: apiProp }) {
           const titles = conflicts.map((id) => findNode(projectRef.current.tree, id)?.title || id);
           // Paragraph-level clashes: the writer chooses in the dialog, one document at a time.
           const first = conflicts.find((id) => clashes?.[id]);
-          if (!first) setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }));
+          setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }) + (first ? ` ${tr('ui.conflict.alege_jos')}` : ''));
+          // Not opened by itself: a window popping up would take the keyboard while you type.
           if (first) setConflict({ id: first, title: findNode(projectRef.current.tree, first)?.title || first, pieces: clashes[first], html: merged[first] ?? docsNow()[first] });
         }
       } catch (e) {
@@ -648,6 +701,19 @@ export default function App({ api: apiProp }) {
       const ui = loadUi(res.dir);
       dropTyped();
       diskDocs.current = new Map(entries);
+      // A queue left from a session closed while the folder was away: shown and sent now.
+      const left = loadQueue(res.dir);
+      if (left) {
+        for (const [k, html] of Object.entries(left)) {
+          const [id, kind] = k.split('|');
+          if (kind === 'docs' && id in cache) cache[id] = html;
+          pending.current.set(k, html);
+        }
+        queuedRef.current = Object.keys(left).length; // cleared (with the stored copy) once written
+        setQueued(queuedRef.current);
+        setToast(tr('ui.sync.recuperat', { n: Object.keys(left).length }));
+        setTimeout(() => flushRef.current?.(), 0);
+      }
       setDocs(cache);
       setDir(res.dir);
       setProject(res.project);
@@ -2591,6 +2657,8 @@ export default function App({ api: apiProp }) {
         sessionWords={Math.max(0, totals.draft - sessionStart)}
         sessionTarget={project.targets?.session || 0}
         saveState={saveState}
+        onSync={() => conflict && setConflict((c) => c && { ...c, open: true })}
+        sync={conflict ? { state: 'conflict' } : offline || queued ? { state: 'pending', n: queued } : team.who ? { state: 'ok' } : null}
         team={team.who ? team : null}
         onTeam={() => setDialog('team')}
         zoom={editorView.zoom || 100}
@@ -2690,7 +2758,7 @@ export default function App({ api: apiProp }) {
           onError={report}
         />
       )}
-      {conflict && (
+      {conflict?.open && (
         <ConflictDialog
           conflict={conflict}
           onClose={() => setConflict(null)}

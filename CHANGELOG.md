@@ -11,6 +11,8 @@
 - **Numere în română:** „1 cuvânt”, „1 document blocat”, „din 1 pagină”, „25 de cuvinte”, „100 de pagini” (`pluralRo` în `src/lib/i18n.js`, aplicat oricărui text cu număr); în engleză „1 word”.
 - **Fără nume de alte programe** în interfață și în ajutor: „proiect .scriv”, „Import .scriv”, „Legături interne”, „Text continuu” (în loc de numele vechi al modului).
 - **Traduceri:** „Creat”, „Modificat”, „Origine .scriv” din Inspector, „Ține cont de majuscule” din Caută, „Selecția curentă (n elemente)” din Compile.
+- **Lucru fără conexiune (roadmap §9):** textul care nu se poate scrie în folder rămâne în coadă, se reîncearcă singur la 15 s și imediat când revine folderul; coada se păstrează și dacă închizi programul. Bara de jos arată „Sincronizat” / „În așteptare: n documente” / „Conflict” (scenariu `offline.cjs`).
+- **Conflictul nu mai deschide fereastra peste textul în care scrii:** apare „Conflict” în bara de jos, iar clicul deschide alegerea.
 - **Dialogul de conflict:** imagine în README, „Într-un loc” la un singur conflict, fără mesajul dublu de jos; scenariu de browser `conflict.cjs`.
 
 ## 2026-10-24 — v0.9.2 — Dialog de conflict + bug hunter pe tot programul (24 de bug-uri)

@@ -520,3 +520,10 @@ legend { color: var(--muted); padding: 0 4px; }
 .conflict-head { font-weight: 600; }
 .conflict-text { white-space: pre-wrap; font-family: var(--editor-font, Georgia, serif); max-height: 220px; overflow: auto; }
 @media (max-width: 700px) { .conflict-cols { grid-template-columns: 1fr; } }
+
+/* Sync indicator (status bar): synced / waiting (offline queue) / conflict. */
+.sync-status { display: inline-flex; align-items: center; gap: 5px; }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #2e9d57; }
+.sync-pending .sync-dot { background: #d9822b; }
+.sync-conflict .sync-dot { background: #c62828; }
+.sync-conflict { color: #c62828; font-weight: 600; }
