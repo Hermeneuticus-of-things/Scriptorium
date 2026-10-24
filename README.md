@@ -124,7 +124,7 @@ Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spaț
 - **Fișier → Importă → Transcrie fișier audio…**: un MP3, WAV, M4A, OGG sau FLAC devine document în Cercetare, pe paragrafe, cu ora din înregistrare.
 - Numele din carte le scrii o dată în *Setări → Servicii și conturi*, ca să fie recunoscute corect; înlocuirile tale automate se aplică și textului dictat.
 
-Recunoașterea vorbirii o face [D&TED](https://github.com/Hermeneuticus-of-things/dted), un program separat, gratuit, care lucrează **pe calculatorul tău, fără internet**. Îl instalezi o dată, iar Scribner îl găsește singur.
+Recunoașterea vorbirii e **în Scribner** și lucrează **pe calculatorul tău, fără internet**. Prima dată, din *Setări → Servicii și conturi → Dictare și transcriere*, apeși *Descarcă motorul* (în jur de 590 MB, o singură dată; cu placă NVIDIA poți lua și varianta mai rapidă). Motorul e [whisper.cpp](https://github.com/ggml-org/whisper.cpp) cu modelul Whisper large-v3-turbo; amprenta fișierelor e verificată la descărcare. Dacă ai deja [D&TED](https://github.com/Hermeneuticus-of-things/dted), îl poți alege în locul lui.
 
 ### Corectezi
 
@@ -357,7 +357,7 @@ $env:GITHUB_TOKEN='token-ul-tău'; irm -Headers @{Authorization="Bearer $env:GIT
 
 Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `scribner` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
 
-Pentru dictare instalezi, dacă vrei, și [D&TED](https://github.com/Hermeneuticus-of-things/dted), separat. Modelul de recunoaștere a vorbirii are în jur de 1,6 GB, așa că nu e inclus în Scribner.
+Pentru dictare, motorul de recunoaștere a vorbirii se descarcă din program, la prima folosire (în jur de 590 MB, o singură dată); nu e inclus în installer, ca acesta să rămână mic.
 
 O versiune nouă apare în Releases de fiecare dată când iese, automat.
 
@@ -376,7 +376,7 @@ La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 le
 
 **Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
 
-**Pot dicta?** Da, cu F9, dacă ai instalat [D&TED](https://github.com/Hermeneuticus-of-things/dted). Vezi [Dictezi](#dictezi).
+**Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi).
 
 **Pot lega un agent AI, ca Claude sau Codex?** Da, prin *AI → Conectează la Claude (MCP)*, fără Node.js. Pentru Codex, Gemini CLI, Cursor sau VS Code, comenzile sunt în *Ajutor → „Ce faci tu”*.
 
