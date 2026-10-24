@@ -1,3 +1,4 @@
+import { t as tr } from './i18n.js';
 // Pure helpers for the binder tree (array of nodes with optional children).
 
 export function walk(nodes, fn, depth = 0, parent = null) {
@@ -244,7 +245,7 @@ export function duplicateNode(tree, id, { withChildren = true, newId = () => cry
     const copy = structuredClone({ ...n, children: undefined });
     copy.id = newId();
     pairs.push([n.id, copy.id]);
-    if (top) copy.title = `${n.title} (copie)`;
+    if (top) copy.title = tr('ui.app.x_copie', { title: n.title });
     if (n.children) copy.children = withChildren ? n.children.map((c) => clone(c, false)) : [];
     if (!n.children) delete copy.children;
     return copy;

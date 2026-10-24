@@ -149,6 +149,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] (v0.9.5) comentariul peste formatare mixtă = un singur comentariu în Inspector
 - [ ] răspuns și „rezolvat” la comentarii
 - [x] (v0.9.6) echipă: conflicte false la paragrafe vecine
+- [ ] engleză, rămase: bara de imagini, „Caută după formatare”, limbile din Servicii, tabelele din Ajutor → Sintaxă (mod scenariu), mesajele motorului de dictare, folderul `scrivener-original/` (nume nou + citire nume vechi)
 - [ ] echipă: ordonarea jurnalului cu ceasuri decalate; copiile de conflict ale jurnalelor de echipă
 - [ ] `mergeDoc` re-ancorare după inserții (conflicte false)
 - [x] (v0.9.4) căutare „cuvânt întreg” și `^`/`$` peste granițele de formatare (bold în mijlocul cuvântului) — `src/lib/search.js`

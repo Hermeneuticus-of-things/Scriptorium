@@ -1,3 +1,4 @@
+import { t as tr } from './i18n.js';
 export function htmlToText(html) {
   const el = document.createElement('div');
   el.innerHTML = (html || '').replace(/<\/(p|h[1-6]|li|blockquote)>/gi, '$&\n').replace(/<br\s*\/?>/gi, '\n');
@@ -16,7 +17,7 @@ export function wordCount(html) {
 export function newNode(type, title) {
   const node = {
     id: crypto.randomUUID(),
-    title: title || (type === 'folder' ? 'Dosar nou' : 'Document nou'),
+    title: title || tr(type === 'folder' ? 'cmd.newFolder' : 'cmd.newText'),
     type,
     synopsis: '',
     label: 'Fără',

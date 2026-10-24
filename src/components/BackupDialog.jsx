@@ -33,8 +33,8 @@ export default function BackupDialog({ api, dir, onOpenProject, onClose, onError
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal backup-dialog" role="dialog" aria-label="Backup-uri" onClick={(e) => e.stopPropagation()}>
-        <h2>Backup-uri</h2>
+      <div className="modal backup-dialog" role="dialog" aria-label={t('ui.backup.titlu')} onClick={(e) => e.stopPropagation()}>
+        <h2>{t('ui.backup.titlu')}</h2>
         <p className="muted">{t('ui.backupDialog.backup_automat_la_inchidere_si')}</p>
         <button className="primary" disabled={busy} onClick={now}>{busy ? 'Se face backup…' : t('ui.backupDialog.fa_backup_acum')}</button>
         {list.length === 0 && <p className="muted">{t('ui.backupDialog.niciun_backup_inca')}</p>}
