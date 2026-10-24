@@ -2326,8 +2326,7 @@ export default function App({ api }) {
                   onInsert={(html) => {
                     const h = activeHandle();
                     if (!h || !h.replaceSelectionHtml) return false;
-                    h.replaceSelectionHtml(html);
-                    return true;
+                    return h.replaceSelectionHtml(html) !== false;
                   }}
                   onAddSources={async (list) => {
                     await flush();

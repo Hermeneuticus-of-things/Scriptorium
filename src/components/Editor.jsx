@@ -281,7 +281,8 @@ const Editor = forwardRef(function Editor(
         if (!/[\r\n]/.test(t)) return editor.chain().focus().insertContent({ type: 'text', text: t }).run();
         return editor.chain().focus().insertContent(textToHtml(t)).run();
       },
-      replaceSelectionHtml: (h) => editor?.chain().focus().insertContent(h).run(),
+      // A read-only editor (locked document, snapshot view) is left alone: false tells the caller.
+      replaceSelectionHtml: (h) => Boolean(editor && !editor.isDestroyed && editor.isEditable && editor.chain().focus().insertContent(h).run()),
       // Selects the first occurrence of a text snippet (used to jump to an editorial issue).
       // opts.block (0-based textblock index, = lint paragraph) and opts.at (offset in it) pick
       // the occurrence nearest to that place, so a repeated word jumps to the right one.
@@ -482,7 +483,7 @@ const Editor = forwardRef(function Editor(
         <h2 className="doc-title" onClick={onTitleClick}>
           {title}
         </h2>
-        {readOnly && <p className="hint">Doar citire.</p>}
+        {readOnly && <p className="hint">{i18nT('ui.editor.doar_citire')}</p>}
         {showFormatFind && <FormatFind editor={editor} styles={styles} onClose={() => { setShowFormatFind(false); editor.commands.focus(); }} />}
         {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={(view.zoom || 100) / 100} />}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}

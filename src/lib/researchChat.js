@@ -3,11 +3,22 @@
 // and persistence live in the main process (lib/researchChat.cjs).
 
 export const DEFAULT_SCOPE = { kinds: ['research', 'notes'], ids: [] };
-const HEADING_RE = /\n?[ \t]*(?:#{1,4}[ \t]*)?\**[ \t]*(?:Întrebări de continuare|Intrebari de continuare|Follow-up questions|Suggested questions)[\s\S]*$/i;
+// Same heading variants as lib/researchChat.cjs; only a heading on its own line starts the section.
+const HEADING_WORDS = '(?:[ÎIîi]ntreb[ăa]ri (?:de continuare|sugerate|posibile)|Sugestii de [îi]ntreb[ăa]ri|(?:Suggested |Possible )?follow[- ]?up questions|Suggested questions)';
+const HEADING_RE = new RegExp(`(?:^|\\n)[ \\t]*(?:#{1,4}[ \\t]*)?\\**[ \\t]*${HEADING_WORDS}[ \\t]*\\**[ \\t]*:?[ \\t]*\\**[ \\t]*(?:\\n[\\s\\S]*)?$`, 'i');
 
 /** Streamed text without the follow-up section (and without a half-written heading at the end). */
 export function visibleAnswer(text) {
   return String(text || '').replace(HEADING_RE, '').replace(/\n[ \t]*#{1,4}[^\n]*$/, '').trimEnd();
+}
+
+/** One-line title (max. 80 characters, emoji kept whole) for a conversation or a saved note. */
+export function noteTitle(q) {
+  const t = String(q || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= 80) return t;
+  let end = 79;
+  if (/[\ud800-\udbff]/.test(t[end - 1])) end--;
+  return `${t.slice(0, end)}…`;
 }
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

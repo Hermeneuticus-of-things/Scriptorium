@@ -1,6 +1,7 @@
 // In-browser stand-in for the Electron bridge, used by `npm run dev` in a plain
 // browser. Keeps a demo project in memory so the UI can be tried without Electron.
 import { newNode } from './text.js';
+import { noteTitle } from './researchChat.js';
 
 function demoProject() {
   // A short story with dates, points of view and several characters, so every view
@@ -388,7 +389,8 @@ export function createMockApi() {
         await simulate(`${answer}\n\n### Întrebări de continuare\n${followups.map((f) => `- ${f}`).join('\n')}`, opts.runId, 5);
       }
       const turn = { q: String(q).trim(), answer, followups, passages, cited: passages.length ? [1] : [], at: new Date().toISOString(), provider: 'demo', model: state.settings.aiModel };
-      const chat = prev ? { ...prev, turns: [...prev.turns, turn], updated: turn.at } : { id: `c${Date.now().toString(36)}`, title: turn.q.slice(0, 80), created: turn.at, updated: turn.at, turns: [turn] };
+      // Same caps and title as lib/researchChat.cjs: 100 turns per conversation, 30 conversations.
+      const chat = prev ? { ...prev, turns: [...prev.turns, turn].slice(-100), updated: turn.at } : { id: `c${Date.now().toString(36)}`, title: noteTitle(turn.q), created: turn.at, updated: turn.at, turns: [turn] };
       if (opts.scope) chat.scope = opts.scope;
       saveDemoChats(dir, [chat, ...chats.filter((c) => c.id !== chat.id)].slice(0, 30));
       return { chat, turn };
