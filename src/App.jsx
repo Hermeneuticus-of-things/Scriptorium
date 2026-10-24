@@ -1907,7 +1907,7 @@ export default function App({ api }) {
     const run = (id) => () => commands[id]?.run();
     const items = [];
     if (text) {
-      const g = lookupGroups(text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro' });
+      const g = lookupGroups(text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro', lang: settings.language || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, action: () => openWeb(l.url) }));
       const inApp = api.translateText ? [{ label: tr('cmd.deeplInApp'), action: run('deeplInApp') }, { label: tr('cmd.googleInApp'), action: run('googleInApp') }, '-'] : [];
       if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: [...inApp, ...links(g.translate)] });
