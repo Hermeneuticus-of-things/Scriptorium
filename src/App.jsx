@@ -107,7 +107,6 @@ import { mergeBibliography } from './lib/bibMerge.js';
 import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
-import { replaceInHtml } from './lib/search.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 import { mergeProject } from './lib/projectMerge.js';
@@ -122,6 +121,22 @@ import TeamDialog from './components/TeamDialog.jsx';
 import ConflictDialog from './components/ConflictDialog.jsx';
 
 const SAVE_DELAY = 700;
+const RETRY_DELAY = 15000; // offline queue: retry unwritten edits every 15 s
+const queueKey = (dir) => `scribner-queue:${dir}`;
+function saveQueue(dir, items) {
+  try {
+    if (items && Object.keys(items).length) localStorage.setItem(queueKey(dir), JSON.stringify(items));
+    else localStorage.removeItem(queueKey(dir));
+  } catch { /* storage full or blocked: the in-memory queue still retries */ }
+}
+function loadQueue(dir) {
+  try {
+    const v = JSON.parse(localStorage.getItem(queueKey(dir)) || 'null');
+    return v && typeof v === 'object' && Object.keys(v).length ? v : null;
+  } catch {
+    return null;
+  }
+}
 const TYPED_COMMIT_DELAY = 400;
 // I-EDIT: a run of hand edits is journaled (MODIFICARI_AUTOR) once the writer pauses this long,
 // so autosave never writes one row per keystroke.
@@ -355,6 +370,12 @@ export default function App({ api: apiProp }) {
     saveStateRef.current = v;
     setSaveStateRaw(v);
   }, []);
+  // Offline queue: edits that could not be written stay in `pending` and are retried by themselves
+  // (every 15 s, at once when the folder or the network comes back). Shown in the status bar.
+  const [offline, setOffline] = useState(false);
+  const [queued, setQueued] = useState(0);
+  const queuedRef = useRef(0);
+  const retryTimer = useRef(null);
   const [sessionStart, setSessionStart] = useState(0);
   const [widths, setWidths] = useState({ binder: 260, side: 320 });
   const [nav, setNav] = useState({ stack: [], index: -1 });
@@ -477,14 +498,51 @@ export default function App({ api: apiProp }) {
         await api.writeDoc(dir, id, kind, items[i][1]);
       }
       setSaveState('salvat');
+      if (queuedRef.current) {
+        queuedRef.current = 0;
+        setQueued(0);
+        saveQueue(dir, null);
+      }
       recordHistory();
     } catch (e) {
       // Keep the unwritten edits queued (unless newer text replaced them) so the next save retries them.
       for (const [k, html] of items.slice(i)) if (!pending.current.has(k)) pending.current.set(k, html);
       setSaveState(tr('ui.app.eroare_la_salvare'));
-      report(e);
+      // Only the first failure is reported; the queue then retries quietly until it gets through.
+      if (!queuedRef.current) report(e);
+      queuedRef.current = pending.current.size;
+      setQueued(pending.current.size);
+      // Kept on this computer too: closing the app while the folder is away loses nothing.
+      saveQueue(dir, queueEntries());
+      clearTimeout(retryTimer.current);
+      retryTimer.current = setTimeout(() => flushRef.current?.(), RETRY_DELAY);
     }
   }, [api, dir, report, recordHistory, commitTyped]);
+
+  const flushRef = useRef(null);
+  flushRef.current = flush;
+  // What the queue stores: the text and the disk version it was written over (for merging later).
+  const queueEntries = () =>
+    Object.fromEntries([...pending.current].map(([k, html]) => [k, { html, base: k.endsWith('|docs') ? diskDocs.current.get(k.split('|')[0]) : undefined }]));
+  // Leaving a project: its unsent edits stay stored under its own folder and never follow into
+  // the next project.
+  const parkQueue = (fromDir) => {
+    if (fromDir && pending.current.size) saveQueue(fromDir, queueEntries());
+    pending.current.clear();
+    clearTimeout(retryTimer.current);
+    queuedRef.current = 0;
+    setQueued(0);
+  };
+  const dirNowRef = useRef(null);
+  dirNowRef.current = dir;
+  useEffect(() => {
+    const back = () => flushRef.current?.();
+    window.addEventListener('online', back);
+    return () => {
+      window.removeEventListener('online', back);
+      clearTimeout(retryTimer.current);
+    };
+  }, []);
 
   const queueWrite = useCallback(
     (id, kind, html) => {
@@ -510,8 +568,15 @@ export default function App({ api: apiProp }) {
     api.watchProject(dir).catch(() => {});
     return api.onProjectChanged(async ({ dir: changedDir, files, offline, online }) => {
       if (changedDir !== dir) return;
-      if (offline) return setToast(tr('ui.app.folder_indisponibil'));
-      if (online) setToast(tr('ui.app.folder_din_nou_disponibil'));
+      if (offline) {
+        setOffline(true);
+        return setToast(tr('ui.app.folder_indisponibil'));
+      }
+      if (online) {
+        setOffline(false);
+        setToast(tr('ui.app.folder_din_nou_disponibil'));
+        flushRef.current?.(); // send what was queued while the folder was away
+      }
       try {
         if (files.some((f) => f === 'project.json')) {
           const before = projectRef.current;
@@ -552,9 +617,10 @@ export default function App({ api: apiProp }) {
         }
         if (conflicts.length) {
           const titles = conflicts.map((id) => findNode(projectRef.current.tree, id)?.title || id);
-          setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }));
-          // Paragraph-level clashes: the writer chooses, one document at a time.
+          // Paragraph-level clashes: the writer chooses in the dialog, one document at a time.
           const first = conflicts.find((id) => clashes?.[id]);
+          setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }) + (first ? ` ${tr('ui.conflict.alege_jos')}` : ''));
+          // Not opened by itself: a window popping up would take the keyboard while you type.
           if (first) setConflict({ id: first, title: findNode(projectRef.current.tree, first)?.title || first, pieces: clashes[first], html: merged[first] ?? docsNow()[first] });
         }
       } catch (e) {
@@ -649,6 +715,38 @@ export default function App({ api: apiProp }) {
       const ui = loadUi(res.dir);
       dropTyped();
       diskDocs.current = new Map(entries);
+      // A queue left from a session closed while the folder was away: shown and sent now.
+      if (dirNowRef.current && dirNowRef.current !== res.dir) parkQueue(dirNowRef.current);
+      const left = loadQueue(res.dir);
+      if (left) {
+        const ids = new Set(all.map((n) => n.id));
+        let n = 0;
+        for (const [k, item] of Object.entries(left)) {
+          const [id, kind] = k.split('|');
+          if (!ids.has(id)) continue; // deleted meanwhile: not recreated
+          let html = typeof item === 'string' ? item : item?.html;
+          if (typeof html !== 'string') continue;
+          const base = typeof item === 'object' ? item.base : undefined;
+          if (kind === 'docs') {
+            // Changed on disk since (another computer): merged, never overwritten blindly.
+            const disk = cache[id] ?? '';
+            if (base !== undefined && disk !== base && disk !== html) {
+              const r = mergeDoc(base, html, disk);
+              html = r.html;
+              if (r.conflicts) api.takeSnapshot(res.dir, id, tr('ui.app.versiunea_de_pe_celalalt_calculator', { time: '' })).catch(() => {});
+            }
+            cache[id] = html;
+          }
+          pending.current.set(k, html);
+          n++;
+        }
+        if (n) {
+          queuedRef.current = n; // cleared (with the stored copy) once written
+          setQueued(n);
+          setToast(tr('ui.sync.recuperat', { n }));
+          setTimeout(() => flushRef.current?.(), 0);
+        } else saveQueue(res.dir, null);
+      }
       setDocs(cache);
       setDir(res.dir);
       setProject(res.project);
@@ -681,6 +779,7 @@ export default function App({ api: apiProp }) {
 
   const closeProject = async () => {
     await flush();
+    parkQueue(dir);
     if (project?.syncFolder && (project.syncAuto || settings?.sharingSync?.syncOnClose)) await api.syncAuto?.(dir, { ...withSyncDefaults(project), syncAuto: true }, 'close').catch(() => {});
     api.releaseProject?.().catch(() => {});
     setProject(null);
@@ -1303,14 +1402,22 @@ export default function App({ api: apiProp }) {
     const docs = docsNow();
     let total = 0;
     const next = {};
+    const nodeUpdates = [];
     for (const id of ids) {
-      const { html, count } = replaceInHtml(docs[id] || '', re, replacement);
-      if (!count) continue;
+      const node = findNode(projectRef.current.tree, id);
+      if (!node) continue;
+      // Titles and synopses too: the dialog lists matches there.
+      const r = replaceInFields(node, docs[id] || '', '', re, replacement, ['title', 'synopsis', 'text']);
+      if (!r.count) continue;
       await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_inlocuire')).catch(report);
-      await api.writeDoc(dir, id, 'docs', html);
-      next[id] = html;
-      total += count;
+      if (r.docHtml !== (docs[id] || '')) {
+        await api.writeDoc(dir, id, 'docs', r.docHtml);
+        next[id] = r.docHtml;
+      }
+      if (r.node.title !== node.title || r.node.synopsis !== node.synopsis) nodeUpdates.push([id, { title: r.node.title, synopsis: r.node.synopsis }]);
+      total += r.count;
     }
+    if (nodeUpdates.length) saveProject({ ...projectRef.current, tree: nodeUpdates.reduce((t, [id, patch]) => updateNode(t, id, patch), projectRef.current.tree) });
     setDocs((d) => ({ ...d, ...next }));
     for (const [id, html] of Object.entries(next)) setEditorHtml(id, html);
     recordHistory();
@@ -2584,6 +2691,8 @@ export default function App({ api: apiProp }) {
         sessionWords={Math.max(0, totals.draft - sessionStart)}
         sessionTarget={project.targets?.session || 0}
         saveState={saveState}
+        onSync={() => conflict && setConflict((c) => c && { ...c, open: true })}
+        sync={conflict ? { state: 'conflict' } : offline || queued ? { state: 'pending', n: queued } : team.who ? { state: 'ok' } : null}
         team={team.who ? team : null}
         onTeam={() => setDialog('team')}
         zoom={editorView.zoom || 100}
@@ -2683,7 +2792,7 @@ export default function App({ api: apiProp }) {
           onError={report}
         />
       )}
-      {conflict && (
+      {conflict?.open && (
         <ConflictDialog
           conflict={conflict}
           onClose={() => setConflict(null)}

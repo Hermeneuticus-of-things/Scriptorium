@@ -232,7 +232,7 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 - [ ] **Transport 2, server Scribner:** un server mic (Node, în același repo, pornit din aplicație sau ca serviciu pe NAS / VPS), cu WebSocket; schimbările circulă în timp real ca operații CRDT pe documente (de ex. Yjs pentru TipTap), cu salvare pe disc în formatul `.scribner`; autentificare cu cont și parolă sau cheie de invitație; HTTPS.
 - [~] **Prezență** (v0.8.8, prin folder: cine are deschis ce document, la 20 s; blocare cu lacăt, doar citire la ceilalți, expiră după 30 min fără semne; cursorii celorlalți rămân pentru server): cine are deschis ce document; cursorul și selecția celorlalți, colorate; blocare opțională a unui document (Inspector → Blocat de …).
 - [~] **Conflicte** (v0.8.8: paragrafe diferite se îmbină automat; același paragraf: rămâne textul local, al celuilalt în snapshot; rămâne dialogul cu variantele alături): documente diferite se îmbină automat; același paragraf modificat offline de doi oameni → dialog cu cele două variante, alături, și alegere sau combinare; nimic nu se pierde (ambele variante rămân în snapshot-uri).
-- [ ] **Offline:** coadă locală a schimbărilor, trimisă la reconectare; indicator de stare în bara de jos (sincronizat / în așteptare / conflict).
+- [x] **Offline:** (v0.9.3) coadă locală a schimbărilor, trimisă la reconectare; indicator de stare în bara de jos (sincronizat / în așteptare / conflict).
 - [ ] **Roluri și permisiuni:** autor (tot), traducător (textul), redactor (comentarii și modificări propuse, fără scriere directă), cititor; pe proiect și pe dosar.
 - [ ] **Modificări propuse:** mod „sugestie” în care schimbările altcuiva apar marcate până le accepți sau le respingi, pe persoană.
 - [x] **Compatibilitate** (v0.8.8: fără nume nu se scrie nimic în `team/`; agentul MCP apare ca „agent”, unealta `team_activity`): proiectele fără echipă rămân exact ca acum; MCP vede autorul agentului ca persoană separată („agent”).
@@ -244,7 +244,7 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 1. **Server Scribner în timp real** (§9, transport 2): server mic Node pe NAS / VPS, WebSocket + HTTPS, schimbări CRDT (Yjs) pe documente, salvare în formatul `.scribner`, cont și parolă sau cheie de invitație.
 2. **Cursorii și selecția celorlalți**, colorați, prin server (§9, prezență).
 3. ✅ (v0.9.2) **Dialogul de conflict cu variantele alături**: același paragraf schimbat de doi oameni, alegi sau combini (§9, conflicte).
-4. **Coadă offline** a schimbărilor + indicator sincronizat / în așteptare / conflict în bara de jos (§9).
+4. ✅ (v0.9.3) **Coadă offline** a schimbărilor + indicator sincronizat / în așteptare / conflict în bara de jos (§9).
 5. **Roluri și permisiuni**: autor, traducător, redactor, cititor; pe proiect și pe dosar (§9).
 6. **Modul „sugestie”**: schimbările altcuiva marcate până le accepți sau le respingi, pe persoană (§9).
 7. **Comparare din jurnalul echipei**: clic pe un rând → diferența față de versiunea de dinainte.

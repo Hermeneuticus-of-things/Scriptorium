@@ -211,6 +211,30 @@ export function createMockApi() {
     ...(typeof location !== 'undefined' && /[?&]dted\b/.test(location.search) ? fakeDted() : {}),
     ...(typeof location !== 'undefined' && /[?&]whisper\b/.test(location.search) ? fakeWhisper(/[?&]whisper=missing\b/.test(location.search)) : {}),
     isMock: true,
+    // ?demo&conflict: window.__demoExternalEdit(id, fn) changes a document "on another computer"
+    // (fn gets the HTML on disk) and announces it like the folder watcher does.
+    ...(typeof location !== 'undefined' && /[?&]conflict\b/.test(location.search)
+      ? (() => {
+          const listeners = new Set();
+          let watched = null;
+          // Changes the open document (or the given one) in the watched project.
+          window.__demoExternalEdit = (fn, id) => {
+            const dir = watched;
+            if (!id) {
+              let found = null;
+              const walk = (ns) => ns.forEach((n) => { if (!found && n.type === 'text' && !n.root) found = n.id; if (n.children) walk(n.children); });
+              walk(state.projects[dir].tree[0].children);
+              id = found;
+            }
+            files[key(dir, id, 'docs')] = fn(files[key(dir, id, 'docs')] || '');
+            listeners.forEach((l) => l({ dir, files: [`docs/${id}.html`] }));
+          };
+          return {
+            async watchProject(dir) { watched = dir; return true; },
+            onProjectChanged(cb) { listeners.add(cb); return () => listeners.delete(cb); },
+          };
+        })()
+      : {}),
     async getSettings() {
       return structuredClone(state.settings);
     },
@@ -230,7 +254,7 @@ export function createMockApi() {
       ];
     },
     async recordHistory(dir, counts) {
-      const day = new Date().toISOString().slice(0, 10);
+      const day = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
       const h = (history[dir] ||= {});
       if (!h[day]) h[day] = { draftStart: counts.draft, totalStart: counts.total };
       Object.assign(h[day], { draftEnd: counts.draft, totalEnd: counts.total });
@@ -274,6 +298,8 @@ export function createMockApi() {
       return files[key(dir, id, kind)] || '';
     },
     async writeDoc(dir, id, kind, html) {
+      // ?demo&offline: window.__demoOffline = true makes writes fail like an unplugged NAS.
+      if (typeof window !== 'undefined' && window.__demoOffline) throw Object.assign(new Error('EHOSTDOWN: folderul nu e disponibil'), { code: 'EHOSTDOWN' });
       files[key(dir, id, kind)] = html;
       return true;
     },

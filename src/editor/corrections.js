@@ -89,7 +89,7 @@ export const Corrections = Extension.create({
           const ch = match[0];
           const $from = state.doc.resolve(range.from);
           if ($from.parent.type.spec.code) return null;
-          const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '￼');
+          const before = $from.parent.textBetween(Math.max(0, $from.parentOffset - 256), $from.parentOffset, undefined, '￼'); // last 256 chars are enough
           const opts = live ? { ...base, replacements: [...(base.replacements || []), ...(base.getReplacements() || [])] } : base;
           const c = correctionFor(before, ch, opts);
           if (!c) return null;
