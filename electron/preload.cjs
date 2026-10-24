@@ -145,6 +145,10 @@ contextBridge.exposeInMainWorld('api', {
   ragBuild: (dir) => call('rag:build', dir),
   ragQuery: (dir, q, opts) => call('rag:query', dir, q, opts),
   ragAsk: (dir, q, opts) => call('rag:ask', dir, q, opts),
+  ragChat: (dir, q, opts) => call('rag:chat', dir, q, opts),
+  ragChats: (dir) => call('rag:chats', dir),
+  ragChatDelete: (dir, chatId) => call('rag:chatDelete', dir, chatId),
+  ragImportFiles: (dir) => call('rag:importFiles', dir),
   onRagProgress: (fn) => {
     const listener = (_e, p) => fn(p);
     ipcRenderer.on('rag:progress', listener);

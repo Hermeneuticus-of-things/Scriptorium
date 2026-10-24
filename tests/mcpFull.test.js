@@ -184,6 +184,10 @@ const PRELOAD_COVERAGE = {
   ragBuild: 'research_search',
   ragQuery: 'research_search',
   ragAsk: 'research_search',
+  ragChat: 'gui: conversația AI din panoul Cercetare (clientul MCP este AI-ul; research_search îi dă pasajele cu care răspunde singur)',
+  ragChats: 'gui: istoricul conversațiilor panoului Cercetare (research-chats.json din folderul proiectului)',
+  ragChatDelete: 'gui: istoricul conversațiilor panoului Cercetare',
+  ragImportFiles: 'gui: dialog de fișiere pentru surse (agentul folosește import_files / import_web_page)',
   onRagProgress: 'gui: progresul indexării',
 };
 

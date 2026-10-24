@@ -136,6 +136,33 @@ Dacă lucrezi cu un agent AI, îl poți lăsa să lucreze direct în proiect: s�
 
 Merge și cu Codex, Gemini CLI, Cursor, VS Code și alți clienți MCP. Comenzile exacte, cu căile tale, sunt în *Ajutor → „Ce faci tu”*. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
 
+## Întrebi sursele, ca într-un caiet de cercetare
+
+În panoul **Cercetare → Întreabă** discuți cu sursele tale:
+
+- pui o întrebare și primești răspunsul cu trimiteri [1], [2]; un clic te duce la pasajul din document;
+- continui discuția („și în capitolul 3?”); programul ține minte ce ați vorbit, iar discuțiile se păstrează în proiect;
+- alegi ce poate folosi: manuscrisul, cercetarea, notele sau doar anumite dosare;
+- aduci surse noi dintr-un pas: PDF, Word, text, pagini web (cu imagini) sau text lipit;
+- folosești răspunsul: **Salvează ca notă**, **Inserează în document** (trimiterile devin note de subsol sau legături), **Copiază**;
+- sub fiecare răspuns apar 2–3 întrebări de continuare, pe care le alegi cu un clic.
+
+Fără AI, panoul caută doar în surse. Cartea se poate trimite și în afară: **NotebookLM**, **Gemini**, **ChatGPT** sau **Claude Projects** și **Manus** primesc aceleași surse, gata împărțite (vezi linia de comandă mai jos).
+
+## Linia de comandă
+
+Pentru cine preferă terminalul sau vrea scripturi, programul instalat are comanda `scribner` (la instalare bifezi „Comanda scribner în terminal”), fără Node.js:
+
+```powershell
+scribner info "D:\Carti\Karma.scribner"
+scribner search "D:\Carti\Karma.scribner" "faptă" --whole
+scribner compile "D:\Carti\Karma.scribner" --format docx -o "D:\Carti\Karma.docx"
+scribner export-sources "D:\Carti\Karma.scribner" -o "D:\Surse" --target notebooklm
+scribner ask "D:\Carti\Karma.scribner" "Ce spune cartea despre urmă?" --session karma
+```
+
+`export-sources` face un folder cu cuprinsul cu rezumate, câte un fișier pe capitol, cercetarea și notele; cu `--target` (`notebooklm`, `gemini`, `chatgpt`, `claude`, `manus`) se potrivește limitelor fiecărei unelte, de exemplu cel mult 50 de surse pentru NotebookLM. `ask` răspunde din surse cu trimiteri, iar `--session` păstrează discuția pentru întrebări de continuare. Toate comenzile sunt în Ajutor → Ce faci tu → Linia de comandă.
+
 ## Compile: de la bucăți la carte
 
 <p align="center">

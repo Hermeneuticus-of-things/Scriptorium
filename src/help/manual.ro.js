@@ -648,6 +648,15 @@ media/                 imagini, PDF, audio, video</pre>
 <p>În bloc (meniul <em>Unelte</em>): <em>Sinopsis AI în bloc</em>, <em>Consistență pe toată cartea (fișe vii)</em> (fișe de personaje actualizate), <em>Revizie pe niveluri de zoom</em> (de la carte la frază).</p>`,
       },
       {
+        id: 'ai-research-chat',
+        title: 'Conversație cu sursele (Cercetare în proiect)',
+        html: `<p><em>Unelte → Cercetare în proiect (RAG)</em> devine, cu AI pornit, o conversație despre sursele tale. Pui o întrebare, AI-ul răspunde numai din pasajele găsite în surse și le citează ca [1], [2]; un clic pe o citare deschide documentul din care vine pasajul. Întrebările de continuare (de exemplu „și în capitolul 3?”) țin cont de ultimele schimburi din conversație, iar căutarea folosește și întrebarea anterioară.</p>
+<p><strong>Sursele.</strong> Butonul <em>Alege sursele…</em> arată ce poate folosi AI-ul: Manuscris, Cercetare, Note sau doar anumite foldere și documente. Implicit sunt bifate Cercetare și Note; alegerea apare ca etichete deasupra conversației și se poate scoate cu ×.</p>
+<p><strong>Adăugarea surselor.</strong> Tot acolo: <em>Din fișiere</em> (PDF cu text, DOCX, TXT, MD, HTML), <em>Pagină web</em> (cu imaginile salvate local) și <em>Lipește text ca sursă</em>. Sursele noi intră în folderul Cercetare și sunt indexate imediat. Un PDF scanat (numai imagini) nu are text de extras.</p>
+<p><strong>Folosirea răspunsurilor.</strong> Sub fiecare răspuns: <em>Salvează ca notă</em> (document nou în Cercetare → Note, cu întrebarea, răspunsul și legături către surse), <em>Inserează în document</em> (la cursor; citările devin note de subsol sau legături, după opțiunea din panoul surselor) și <em>Copiază</em>. Întrebările de continuare propuse apar ca butoane sub ultimul răspuns.</p>
+<p>Conversațiile se salvează în proiect (fișierul <code>research-chats.json</code>) și se regăsesc după redeschidere; <em>Conversație nouă</em> începe una curată. Răspunsul apare pe măsură ce e scris și se poate opri cu <em>Anulează</em> sau Esc. Fără AI, panoul rămâne căutare locală în surse.</p>`,
+      },
+      {
         id: 'ai-mcp',
         title: 'Agenți AI prin MCP',
         html: `<p>Serverul MCP Scribner (<code>mcp/server.mjs</code>) permite unui agent (Claude Code, Claude Desktop sau alt client MCP) să lucreze cu un proiect ca din program: binder, text, căutare, metadate, note pe taburi, cuvinte cheie, etichete și statusuri, ținte, colecții, comentarii și note de subsol, împărțire și unire, coș, snapshot-uri și comparare, I-REP și I-EDIT fără AI, statistici, cronologie, cercetare, glosar, Compile în toate formatele, import și export (inclusiv <code>.scriv</code>, NotebookLM, pachetul PENTRU EDITOR), proiecte noi din șabloane și backup. Fiecare scriere face snapshot înainte și se notează în <code>agent-log.jsonl</code>.</p>

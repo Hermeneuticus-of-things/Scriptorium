@@ -80,7 +80,13 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
       <div className="home-grid">
         <section>
           <h2>{tr('ui.home.proiect_nou')}</h2>
-          <input placeholder={tr('ui.home.titlul_cartii')} value={title} onChange={(e) => setTitle(e.target.value)} />
+          <input
+            placeholder={tr('ui.home.titlul_cartii')}
+            aria-label={tr('ui.home.titlul_cartii')}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && title.trim()) run(create)(); }}
+          />
           <label>
             {tr('ui.home.sablon')}
             <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
@@ -107,12 +113,15 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
           {api.isWeb && typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function' && <p className="muted small">{tr('ui.home.folder_sync_tip')}</p>}
         </section>
         <section>
-          <h2>Recente</h2>
+          <h2>{tr('ui.home.recente')}</h2>
           {recent.length === 0 && <p className="muted">{tr('ui.home.niciun_proiect_recent')}</p>}
           <ul className="recent">
             {recent.map((r) => (
-              <li key={r.dir} className={pinned.includes(r.dir) ? 'pinned' : ''}>
-                <button className="link" onClick={run(() => api.openProject(r.dir))} title={r.dir}>{r.title}</button>
+              <li key={r.dir} className={[pinned.includes(r.dir) ? 'pinned' : '', r.missing ? 'missing' : ''].filter(Boolean).join(' ')}>
+                <button className="link" onClick={run(() => api.openProject(r.dir))} title={r.missing ? tr('ui.home.lipseste_titlu', { dir: r.dir }) : r.dir}>
+                  {r.title}
+                  {r.missing && <span className="muted small"> ({tr('ui.home.lipseste')})</span>}
+                </button>
                 <button
                   className={`pin ${pinned.includes(r.dir) ? 'on' : ''}`}
                   onClick={() => togglePin(r.dir)}
@@ -124,13 +133,13 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
               </li>
             ))}
           </ul>
-          {recent.length > pinned.length && <button className="link" onClick={clearRecent}>{tr('ui.home.goleste_lista_pastreaza_fixatele')}</button>}
+          {recent.some((r) => !pinned.includes(r.dir)) && <button className="link" onClick={clearRecent}>{tr('ui.home.goleste_lista_pastreaza_fixatele')}</button>}
         </section>
       </div>
       <nav className="home-links">
         <button className="link" onClick={onSettings}>{tr('set.title')}</button>
-        {onHelp && <button className="link" onClick={onHelp}>Manual (F1)</button>}
-        {onTutorial && <button className="link" onClick={onTutorial}>Tutorial interactiv</button>}
+        {onHelp && <button className="link" onClick={onHelp}>{tr('cmd.help')} (F1)</button>}
+        {onTutorial && <button className="link" onClick={onTutorial}>{tr('cmd.tutorial')}</button>}
       </nav>
     </div>
   );
