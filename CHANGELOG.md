@@ -13,6 +13,7 @@
   - exportul `.scriv` păstrează tab-urile și spațiile repetate;
   - saltul de pagină rămâne salt de pagină după oricâte drumuri `.scriv` (nu se mai transformă în „* * *”);
   - pachetul de proiect (export/import) duce cu el și istoricul scrisului;
+  - listele numerotate care încep de la alt număr („5.”) încep tot de acolo în DOCX;
   - „Unește documentele” nu mai trimite în Coș documentele așezate sub cele unite (trec sub primul) și păstrează cuvintele-cheie ale tuturor.
 - **Viteză:** numărul de caractere (ținte pe caractere, istoric) se calculează doar pentru documentele schimbate.
 

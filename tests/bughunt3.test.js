@@ -86,3 +86,15 @@ describe('data round trips (v0.9.4)', () => {
     expect(JSON.parse(fs.readFileSync(path.join(out.dir, 'history.json'), 'utf8'))['2026-10-24'].draftStart).toBe(1);
   });
 });
+
+describe('DOCX numbered lists', () => {
+  it('<ol start="5"> starts at 5 in DOCX', async () => {
+    const JSZip = require('jszip');
+    const { compileDocx } = require('../lib/compile.cjs');
+    const project = { title: 'T', tree: [{ id: 'd', root: 'draft', title: 'M', children: [{ id: 'a', type: 'text', title: 'A', includeInCompile: true }] }, { id: 'r', root: 'research', children: [] }, { id: 't', root: 'trash', children: [] }] };
+    const buf = await compileDocx(project, () => '<ol start="5"><li><p>cinci</p></li><li><p>șase</p></li></ol><ol><li><p>unu</p></li></ol>', {});
+    const zip = await JSZip.loadAsync(buf);
+    const num = await zip.file('word/numbering.xml').async('string');
+    expect(num).toContain('w:start w:val="5"');
+  });
+});
