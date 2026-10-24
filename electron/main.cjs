@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell, clipboard } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell, clipboard, net } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
@@ -680,7 +680,9 @@ handle('app:copyText', (_e, text) => {
 require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
 require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai, noteSelfWrite, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
-require('./dtedHandlers.cjs')({ handle, assertOpened, getSettings: readSettings, app, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
+const pickedAudio = new Set();
+require('./whisperHandlers.cjs')({ handle, app, net, assertOpened, store, pickedAudio });
+require('./dtedHandlers.cjs')({ handle, assertOpened, getSettings: readSettings, app, pickedAudio, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators

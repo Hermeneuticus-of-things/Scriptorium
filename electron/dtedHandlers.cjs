@@ -7,7 +7,7 @@ const { createDted, locate } = require('../lib/dted.cjs');
 
 const AUDIO = ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'wma', 'opus', 'webm'];
 
-module.exports = function register({ handle, assertOpened, getSettings, showOpenDialog, app, dtedFactory = createDted }) {
+module.exports = function register({ handle, assertOpened, getSettings, showOpenDialog, app, pickedAudio = new Set(), dtedFactory = createDted }) {
   // Each request's events go to the window that made it; "service stopped" goes to every window.
   const owners = new Map(); // request id -> webContents
   const deliver = (wc, ev) => {
@@ -52,7 +52,9 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
   });
   handle('dted:pickAudio', async (e) => {
     const r = await showOpenDialog(e, { title: 'Fișier audio de transcris', properties: ['openFile'], filters: [{ name: 'Audio', extensions: AUDIO }] });
-    return r.canceled ? null : r.filePaths[0];
+    if (r.canceled) return null;
+    pickedAudio.add(r.filePaths[0]); // the built-in recogniser may read this file (whisperHandlers)
+    return r.filePaths[0];
   });
   handle('dted:transcribe', async (e, file, id) => {
     if (!file || !AUDIO.includes(path.extname(String(file)).slice(1).toLowerCase())) throw new Error('Alege un fișier audio (MP3, WAV, M4A, OGG, FLAC).');
