@@ -303,7 +303,8 @@ function lastModified(dir) {
   see(path.join(dir, 'project.json'));
   for (const sub of ['docs', 'notes']) {
     const d = path.join(dir, sub);
-    if (fs.existsSync(d)) for (const f of fs.readdirSync(d)) see(path.join(d, f));
+    // Only the project's own files: Thumbs.db, desktop.ini, .DS_Store are touched by the OS.
+    if (fs.existsSync(d)) for (const f of fs.readdirSync(d)) if (/^[A-Za-z0-9-]+\.html$/.test(f)) see(path.join(d, f));
   }
   return t ? new Date(t).toISOString() : null;
 }

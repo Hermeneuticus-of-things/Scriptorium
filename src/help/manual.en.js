@@ -316,7 +316,7 @@ scribner mcp "D:\\Books\\Karma.scribner"               the MCP server for AI age
       {
         id: 'yours-sync',
         title: 'The same project on the desktop and in the browser',
-        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. Do not edit the same document in two places at once. Phones cannot open folders: use the .json bundle there.</p>`,
+        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. Do not edit the same document in two places at once. If it happens anyway, your text stays and the version that arrived from the other computer is kept in <em>Snapshots</em> (“Version from the other computer, &lt;time&gt;”), with a message. Conflict copies left by the sync service (such as <code>project (conflicted copy …).json</code> or <code>project-PC.json</code>) are never loaded: the app lists them when the project opens so you can compare and delete them. If the folder cannot be reached (NAS disconnected, permission withdrawn) you get a message; changes show up again when it is back. Phones cannot open folders: use the .json bundle there.</p>`,
       },
       {
         id: 'yours-karma',

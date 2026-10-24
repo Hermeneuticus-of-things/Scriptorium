@@ -114,6 +114,7 @@ const PRELOAD_COVERAGE = {
   onMenuCommand: 'gui: meniul ferestrei',
   watchProject: 'gui: reîncărcarea ferestrei la schimbări externe',
   reloadProject: 'gui: reîncărcarea ferestrei la schimbări externe',
+  syncConflicts: 'gui: anunță copiile în conflict lăsate de serviciul de sincronizare',
   onProjectChanged: 'gui: reîncărcarea ferestrei la schimbări externe',
   backupNow: 'backup_now',
   listBackups: 'list_backups',

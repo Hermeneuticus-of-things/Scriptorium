@@ -128,7 +128,7 @@ Dacă vrei, asistentul AI face corectură, rezumate sau o a doua părere. Vezi e
   <img src="./assets/readme/sync.svg" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
 </p>
 
-Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe calculatorul tău îl deschizi din aplicație. Pe alt calculator îl deschizi în Chrome sau Edge, cu „Deschide proiect .scribner”, fără să instalezi nimic. Ce scrii într-o parte apare în cealaltă în câteva secunde. Doar nu lucra la același document în două locuri deodată.
+Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe calculatorul tău îl deschizi din aplicație. Pe alt calculator îl deschizi în Chrome sau Edge, cu „Deschide proiect .scribner”, fără să instalezi nimic. Ce scrii într-o parte apare în cealaltă în câteva secunde. Dacă totuși ai scris în același document în două locuri, nu se pierde nimic: varianta venită de pe celălalt calculator se păstrează ca snapshot („Versiunea de pe celălalt calculator, ora …”) și primești un mesaj. Copiile de conflict făcute de OneDrive, Dropbox sau Google Drive sunt recunoscute și semnalate, iar fișierele lor ascunse sunt ignorate. Dacă NAS-ul sau cloud-ul se deconectează, programul te anunță și reia singur când folderul revine.
 
 ## Legătura cu Claude, Codex și alți agenți AI
 

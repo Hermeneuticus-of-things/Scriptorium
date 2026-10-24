@@ -453,7 +453,12 @@ handle('project:open', async (e, dirArg) => {
 handle('project:reload', (e, dir) => {
   assertOpened(dir);
   assertOwner(e.sender, dir);
-  return { dir, project: store.loadProject(dir) };
+  store.loadProject(dir); // creates missing sub-folders, as before
+  return projectWatch.reloadWithBase(dir, bases);
+});
+handle('project:syncConflicts', (e, dir) => {
+  assertOpened(dir);
+  return projectWatch.syncConflicts(dir);
 });
 
 // Single-file project bundle (.json) for sync with the web/PWA build.
@@ -575,7 +580,21 @@ function watchProject(dir, webContents) {
   };
   try {
     const w = fs.watch(dir, { recursive: true }, (_event, rel) => tracker.handle(rel));
-    w.on('error', () => closeWatchers(webContents.id));
+    // The folder went away (NAS offline, network drive or sync folder disconnected): tell the window
+    // and watch again once it is back, instead of silently never reporting changes again.
+    w.on('error', () => {
+      closeWatchers(webContents.id);
+      if (!webContents.isDestroyed()) webContents.send('project:changed', { dir, files: [], offline: true });
+      const retry = setInterval(() => {
+        if (webContents.isDestroyed() || claims.dirOf(webContents.id) !== path.resolve(dir)) return clearInterval(retry);
+        if (!fs.existsSync(path.join(dir, 'project.json'))) return undefined;
+        clearInterval(retry);
+        watchProject(dir, webContents);
+        // Whatever changed meanwhile is read again.
+        webContents.send('project:changed', { dir, files: ['project.json'], online: true });
+        return undefined;
+      }, 5000);
+    });
     watchers.set(wkey, w);
   } catch {
     /* recursive watch unsupported: external changes appear on reopen */
