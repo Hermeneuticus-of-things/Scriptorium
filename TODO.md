@@ -88,11 +88,42 @@ Rezumat: 77 de unelte MCP (57 noi), 4 bug-uri reparate la cauză, 43 de teste no
 - [x] Setări → Servicii și conturi: DeepL, Google, LanguageTool, Speechify, Zotero, alte conturi (criptat)
 - [x] Bug meniuri (Escape, focus), bug Windows (nume rezervate, fișiere blocate, Salvează ca, wizard RO)
 - [ ] Verificat cu chei reale DeepL / Google / LanguageTool Premium / Speechify (codul urmează documentația lor; testat cu răspunsuri simulate)
-- [ ] Zotero: importul bibliografiei direct din cont (cheia se salvează deja)
+- [x] Zotero: importul bibliografiei direct din cont
 
 ### Request: bug hunter deep (încrucișat, divergent, convergent)
 - [x] Editor, date, Compile, interfață: 25+ bug-uri reparate la cauză, fiecare cu test
 - [x] DOCX: pagina de titlu și cuprinsul într-o secțiune fără antet; corpul de la pagina 1 (verificat în LibreOffice)
-- [ ] Antet/subsol: <$t> (titlul capitolului) și <$wc> în antet
-- [ ] Ctrl+Z după o corectură automată nu se poate reface cu Ctrl+Y (comportament ales, diferit de Word)
+- [x] Antet/subsol: <$t> (titlul capitolului) în PDF și Word, <$wc> real în PDF
+- [x] Ctrl+Y / Ctrl+Shift+Z readuce corectura automată anulată cu Ctrl+Z
 - [ ] Verificat cu LanguageTool real: poziții după emoji
+- [x] Release v0.8.2 cu installer și varianta portabilă
+- [x] installer/build-windows.cmd: installerul cu wizard construit local cu dublu clic
+
+## Session 2026-10-24 (v0.8.3)
+### Request: roadmap: sync web ↔ desktop prin folder (cloud / NAS) + test AI cu model real
+- [x] folderKv.js + rutare în webApi (fs:), permisiune, watcher, ștergere = uitare
+- [x] Home web: deschidere folder + import pachet separat
+- [x] Teste pe folder real cu store.cjs de cealaltă parte (7)
+- [x] Preset NVIDIA NIM + scripts/ai-smoke.cjs (cheia doar din mediu)
+- [ ] Test model real: blocat de rețeaua mediului cloud; de rulat local `NVIDIA_API_KEY=… node scripts/ai-smoke.cjs nvidia`
+Rezumat: web și desktop lucrează pe același folder; sincronizarea o face clientul de cloud sau NAS-ul.
+
+### Request: roadmap pentru tot app + restul în Ajutor
+- [x] Riglă vizuală + tab-uri (DOCX exact)
+- [x] Page Setup + Print Preview
+- [x] Imagini offline în paginile web importate
+- [x] Linguistic Focus precis (gold + held-out)
+- [x] Ajutor: capitol „Ce faci tu”
+- [ ] Ce cere autorul: vezi ROADMAP secțiunea 8 și Ajutor → „Ce faci tu”
+Rezumat: tot ce se putea face fără resurse de la autor e închis.
+
+### Request: corecturile manuale învățate automat
+- [x] Învățare din rescriere și din sugestiile corectorului, cu verificare ortografică
+- [x] Potrivire fără majuscule, cu păstrarea lor; opțiune în Setări; ajutor
+Rezumat: greșelile corectate o dată se corectează singure.
+
+### Request: interfață aerisită (după ce termină I-REP/I-EDIT, care lucrează în App.jsx)
+- [ ] Meniu „AI” unic: Asistent AI, I-REP / I-EDIT, cercetare cu AI, acțiuni AI pe selecție, NotebookLM, setări AI, Conectează la Claude (MCP); ascuns cu AI oprit (I-REP rămâne)
+- [ ] Bara de sus fără aglomerare: butoanele rare mutate în meniuri derulante; grupare pe Fișier / Editare / Vizualizare / Proiect / Document / Unelte / AI / Ajutor, ca în Scrivener
+- [ ] FormatBar: comenzile rare în meniuri derulante; ce nu încape trece în „Mai mult ▾”
+- [ ] Verificat la 900 px și 1366 px, temă luminoasă și întunecată; scurtăturile neschimbate

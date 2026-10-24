@@ -16,6 +16,7 @@ import { createRequire } from 'node:module';
 import { diffWords } from 'diff';
 import { convertNode, duplicateNode, emptyTrash, findParent, flatten, inOrder, moveToTrash, restoreFromTrash, rootOf, updateNode } from '../src/lib/tree.js';
 import { autofix, htmlToManuscript, profileFor, ROUNDS, roundContext, roundPrompt, systemPrompt } from '../src/lib/editorial.js';
+import { authorParagraphs } from '../src/lib/authorText.js';
 import { findCanonDoc, parseCanonIndex } from '../src/lib/canonIndex.js';
 import {
   addKeyword,
@@ -1180,7 +1181,9 @@ export function registerFullTools(ctx) {
       const changed = [];
       for (const n of textDocs(load(dir), id)) {
         const html = readDocSafe(dir, n.id);
-        const fixed = autofix(html);
+        // Author text (paragraphs the writer changed by hand) is never touched.
+        const own = new Set(authorParagraphs(html, n.authorHashes).map((x) => x.text));
+        const fixed = autofix(html, { skip: (p) => own.has(p.md) });
         if (fixed === html) continue;
         writeWithSnapshot(dir, n.id, fixed, 'Înainte de corecturile automate (agent AI)');
         changed.push(n.title);
@@ -1201,6 +1204,7 @@ export function registerFullTools(ctx) {
       if (!id) throw new Error('id lipsește.');
       const p = load(dir);
       const n = textNodeOrThrow(dir, id);
+      const html = store.readDoc(dir, id);
       const parent = findParent(p.tree, id);
       const chapterContext = flatten(parent ? parent.children || [] : [])
         .filter((x) => x.type === 'text' && x.id !== id)
@@ -1212,9 +1216,16 @@ export function registerFullTools(ctx) {
       return {
         round: { id: r.id, title: r.title, protocols: r.protocols },
         system: systemPrompt(profileFor(p, settings())),
-        prompt: roundPrompt(r, htmlToManuscript(store.readDoc(dir, id)), roundContext(r, { chapterContext, canonNodes, title: n.title })),
+        prompt: roundPrompt(r, htmlToManuscript(html), roundContext(r, { chapterContext, canonNodes, title: n.title, html }), { authorText: authorParagraphs(html, n.authorHashes) }),
       };
     },
+  );
+
+  tool(
+    'author_journal',
+    'I-EDIT: jurnalul modificărilor făcute de autor de mână (editorial/MODIFICARI_AUTOR.jsonl): câte un rând pe bucată schimbată {doc, title, line, old, new, time, hashOld, hashNew}. Cu id, doar documentul acela. Paragrafele autorului nu se rescriu.',
+    { project, id: z.string().optional(), limit: z.number().int().min(1).max(5000).optional() },
+    (dir, { id, limit }) => store.readAuthorJournal(dir, { doc: id, limit: limit || 200 }),
   );
 
   return FULL_TOOL_NAMES;

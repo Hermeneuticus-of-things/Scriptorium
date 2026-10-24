@@ -28,7 +28,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 | [x] | Panouri redimensionabile, starea proiectului memorată, teme (luminos/întunecat/sepia), mod compunere |
 | [x] | Asistent AI Claude: corectură, sinopsis, continuare, critică, consistență, întrebări |
 | [x] | Import Scrivener fără pierderi (testat pe un proiect de test complet; neverificat încă pe Karma Book real) |
-| [~] | I-REP / I-EDIT (motor de reguli Karma, bucle micro/mezzo/macro, panou; verificat cu simulator, nu cu Claude real) |
+| [~] | I-REP / I-EDIT (motor de reguli Karma, bucle micro/mezzo/macro, panou, VKB2 implementat; verificat cu simulator, nu cu Claude real) |
 | [x] | AI opțional: programul funcționează complet și fără AI |
 
 ---
@@ -70,10 +70,10 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Clic pe o problemă selectează textul în editor
 - [x] Bucla verificată în browser cu simulator de AI
 - [x] Editarea listelor de cuvinte interzise din Setări
-- [ ] Test end-to-end cu Claude real
+- [~] Test end-to-end cu un model real: lanțul aplicației (setări → furnizor → răspuns) verificat cu OpenRouter; cu Claude real încă nu
 - [x] Glosare generate automat: `Glosar_Alogeni_Indieni`, `Glosar_de_lectură`, `Cuprins_de_tipar`
 - [x] Index canonic (`Index_de_Lucru`, noduri N.N.N cu tip/greutate/dependențe) ca sursă pentru R1 și R6 macro
-- [ ] „VKB2” și definițiile tale exacte pentru I-REP / I-EDIT (nu le am; aștept fișierele)
+- [x] VKB2: I-REP repetiția apropiată (SEMNAL, R8b/S70) și I-EDIT textul autorului (poartă HARD, COADA_AUTOR, jurnal), după `docs/VKB2.md`
 
 ### 1.3 Conexiune MCP pentru agenți AI
 - [x] Server MCP `scribner-mcp` (stdio), pornit de Claude Code / Claude Desktop / alți agenți, mod `--read-only`
@@ -98,7 +98,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 
 ### 2.1 Editor și format
 - [x] Bara de format completă: stil de paragraf, superscript, subscript, culoare text, highlight (5 culori), aliniere, tabele (rânduri, coloane, antet, unire, împărțire), imagini, liste numerotate cu indentare
-- [~] Ruler: indent și spațiere prin stiluri; lipsesc riglă vizuală și tab-uri
+- [x] Ruler: riglă vizuală cu indentări și tab-uri la stânga (exacte în DOCX)
 - [x] Styles de paragraf și de caractere: panou, creare, editare, Redefine din selecție, import din alt proiect (păstrează / înlocuiește / adaugă), duse în Compile
 - [x] Styles: Para+Char, Next style, scurtături de tastatură
 - [x] Revision Mode (5 runde colorate), acceptarea tuturor sau a unei runde, eliminate la Compile
@@ -107,7 +107,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Scrivener Links `[[ ]]` (Ctrl+clic deschide documentul) și linkuri externe (Ctrl+L)
 - [x] Page View (A5), Text Zoom 75–200%, semne de paragraf, caractere în bara de stare
 - [x] Linguistic Focus: dialog, paragraf, frază; evidențierea paragrafului curent
-- [~] Linguistic Focus pe părți de vorbire (substantive, verbe, adjective): etichetare euristică RO/EN, aproximativă
+- [x] Linguistic Focus pe părți de vorbire: etichetare RO/EN cu liste, terminații și context (≈87% RO, ≈96% EN pe texte noi)
 - [x] Composition: fundal, lățimea textului, opacitatea paginii, pagină de hârtie
 - [x] Composition: Inspector plutitor
 - [x] Transformations: majuscule, minuscule, Title Case, propoziție, spații duble, ghilimele, cratime
@@ -127,7 +127,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Document-container (text cu sub-documente, drop în document), conversie Text ↔ Folder
 - [x] Icoane personalizate, Lock document (doar citire), sortare conținut (A→Z, Z→A, dată), favorite
 - [x] Media în Cercetare: adăugare imagini, PDF, audio, video, cu vizualizare
-- [~] Pagini web salvate offline în Cercetare: importul paginii ca document gata; imaginile rămân linkuri
+- [x] Pagini web salvate offline în Cercetare, cu imagini
 - [x] Căutare avansată: câmpuri, operatori (oricare / toate / frază), filtre (etichetă, status, cuvinte cheie, zonă, coș, Compile), salvare ca colecție, înlocuire în text, note, titluri și sinopsis cu snapshot
 - [x] Project Targets: carte și sesiune în cuvinte sau caractere, termen limită cu zile de scris și cuvinte pe zi, reset sesiune, notificare
 - [x] Statistici: proiect / Compile / tot / selecție, pagini estimate, timp de citire, frecvența cuvintelor (cu cuvinte de legătură românești), lungimea frazelor
@@ -159,7 +159,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Import RTF, ODT, HTML, OPML, PDF, imagini, pagini web
 - [x] Export documente ca fișiere (DOCX/RTF/MD/TXT) cu structura de foldere și metadate
 - [x] Export OPML, Export metadate CSV
-- [~] Print, Page Setup, Print Preview: tipărire document gata; pagina și previzualizarea sunt în Compile
+- [x] Print, Page Setup, Print Preview
 - [x] Proprietăți proiect (titlu, autor, abreviere), Save As
 - [x] Recente: fixare, ștergere
 
@@ -184,12 +184,12 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 
 ## 4. v1.0: paritate completă + extra
 
-- [ ] Toate rândurile `[ ]` din `FEATURES-SCRIVENER3.md` închise sau mutate explicit la `[-]`
+- [x] Toate rândurile `[ ]` din `FEATURES-SCRIVENER3.md` închise sau mutate explicit la `[-]` (0 rămase)
 - [x] Sinopsis AI în bloc, consistență pe toată cartea, fișe vii
 - [x] Cronologie, hartă de relații, analiză de ritm
 - [x] Panou NotebookLM / RAG cu cozi asincrone și cache pe concept (fluxul NLM din workspace)
 - [x] Revizie multi-agent pe niveluri de zoom (Maha / Macro / Mezzo / Micro / Nano), cu rapoarte GRAVE/MEDIU
-- [~] PWA / sync mobil: versiune web cu IndexedDB și pachete de proiect; sincronizare automată nu există
+- [x] PWA / sync: versiune web cu IndexedDB și pachete de proiect, plus folder `.scribner` real în Chrome/Edge (sincronizare prin OneDrive, Dropbox, Google Drive sau NAS cu aplicația desktop). Pe telefon rămâne pachetul .json (browserele mobile nu au acces la foldere).
 
 ## 5. Excluse intenționat
 
@@ -209,5 +209,15 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 ## 7. Verificare în Electron real
 
 - [x] Test cap-coadă `npm run test:e2e` (Electron real, dialoguri simulate): proiect nou, text cu corecturi automate salvat pe disc, meniu nativ complet, Compile DOCX/PDF/EPUB, export `.scriv` și reimport; trece pe Linux
-- [ ] Același test pe Windows; import pe proiectul Karma real
+- [x] Același test pe Windows: rulează în CI pe windows-latest la fiecare PR (E2E cu aplicația reală, installer, portabil)
+- [ ] Import pe proiectul Karma real (aștept proiectul)
 
+
+## 8. Așteaptă ceva de la autor (nu se pot face fără)
+
+- [ ] Proiectul Karma real (`.scriv`) pentru proba de import fără pierderi
+- [ ] Cheile reale DeepL / Google / LanguageTool Premium / Speechify / Zotero pentru o probă cap-coadă (codul e testat cu răspunsuri simulate)
+- [~] Test cu model real: rulat de autor pe Windows prin OpenRouter (model gratuit `nvidia/nemotron-3.5-super-vl:free`): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit („Provider returned error”); scriptul reîncearcă acum și trece la alt model. Rămâne o rulare completă verde.
+- [x] Definițiile VKB2 primite și implementate
+- [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add scribner …`)
+- [ ] Pachetul de limbă română pentru corectorul ortografic al Windows (setare de sistem)

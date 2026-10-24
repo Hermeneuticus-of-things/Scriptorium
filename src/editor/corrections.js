@@ -3,6 +3,8 @@
 // (correctionFor) so it can be tested without an editor; the TipTap side wraps it
 // in input rules, so Backspace or Ctrl+Z right after a correction reverts it.
 import { Extension, InputRule } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { matchCase } from '../lib/learnCorrections.js';
 
 const WORD = /[\p{L}\p{N}_]/u;
 
@@ -29,10 +31,13 @@ export function correctionFor(before, ch, opts = {}) {
   // Replacements: when a word boundary is typed after a replacement's "from".
   if (!WORD.test(ch)) {
     for (const r of replacements || []) {
-      if (!r || !r.from || !text.endsWith(r.from)) continue;
+      if (!r || !r.from) continue;
+      // Learned entries (lower case) match any case and keep the case typed.
+      const tail = text.slice(-r.from.length);
+      if (r.learned ? tail.toLowerCase() !== r.from : tail !== r.from) continue;
       const prev = text[text.length - r.from.length - 1];
       if (WORD.test(r.from[0]) && prev && WORD.test(prev)) continue;
-      return { deleteFrom: r.from.length, insert: (r.to ?? '') + ch };
+      return { deleteFrom: r.from.length, insert: (r.learned ? matchCase(tail, r.to ?? '') : r.to ?? '') + ch };
     }
   }
   // Capitalize the first letter of a sentence (start of block or after . ! ? … + space).
@@ -65,12 +70,17 @@ export function simulateTyping(chars, opts) {
 
 export const Corrections = Extension.create({
   name: 'corrections',
+  // Above the history extension, so Ctrl+Y can restore a reverted correction before plain redo runs.
+  priority: 1000,
   addOptions() {
-    return { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [] };
+    // getReplacements: live list (changes without rebuilding the editor); onLearn(from, to): a word
+    // replaced by hand, called once the new word is finished (see learnPlugin).
+    return { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [], getReplacements: null, onLearn: null };
   },
   addInputRules() {
-    const opts = this.options;
-    if (!opts.smartDashes && !opts.smartEllipsis && !opts.autoCapitalize && !opts.smartFractions && !(opts.replacements || []).length) return [];
+    const base = this.options;
+    const live = typeof base.getReplacements === 'function';
+    if (!base.smartDashes && !base.smartEllipsis && !base.autoCapitalize && !base.smartFractions && !(base.replacements || []).length && !live) return [];
     // One rule matching any single typed char; correctionFor decides.
     return [
       new InputRule({
@@ -80,6 +90,7 @@ export const Corrections = Extension.create({
           const $from = state.doc.resolve(range.from);
           if ($from.parent.type.spec.code) return null;
           const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '￼');
+          const opts = live ? { ...base, replacements: [...(base.replacements || []), ...(base.getReplacements() || [])] } : base;
           const c = correctionFor(before, ch, opts);
           if (!c) return null;
           state.tr.insertText(c.insert, range.from - c.deleteFrom, range.to);
@@ -89,7 +100,88 @@ export const Corrections = Extension.create({
     ];
   },
   // Ctrl/Cmd+Z right after an input rule (ours or Typography's) undoes only the correction.
+  // Ctrl/Cmd+Y (or Shift+Z) right after that brings the correction back, as in Word. The
+  // corrected document is remembered and only the changed range is put back.
+  addProseMirrorPlugins() {
+    return this.options.onLearn ? [learnPlugin(this.options.onLearn)] : [];
+  },
+  addStorage() {
+    return { reverted: null }; // { after: doc once reverted, corrected: doc before, selection }
+  },
   addKeyboardShortcuts() {
-    return { 'Mod-z': () => this.editor.commands.undoInputRule() };
+    const redoCorrection = () => {
+      const r = this.storage.reverted;
+      const { state, view } = this.editor;
+      if (!r || r.after !== state.doc) return false;
+      this.storage.reverted = null;
+      const start = r.corrected.content.findDiffStart(state.doc.content);
+      if (start == null) return false;
+      const end = r.corrected.content.findDiffEnd(state.doc.content);
+      const tr = state.tr.replace(start, end.b, r.corrected.slice(start, end.a));
+      tr.setSelection(r.selection.map(tr.mapping).resolve(tr.doc));
+      view.dispatch(tr);
+      return true;
+    };
+    return {
+      'Mod-z': () => {
+        const corrected = this.editor.state.doc;
+        const selection = this.editor.state.selection;
+        const ok = this.editor.commands.undoInputRule();
+        this.storage.reverted = ok ? { after: this.editor.state.doc, corrected, selection: selection.getBookmark() } : null;
+        return ok;
+      },
+      'Mod-y': redoCorrection,
+      'Shift-Mod-z': redoCorrection,
+    };
   },
 });
+
+const isLetter = (c) => /[\p{L}\p{M}'’-]/u.test(c);
+const learnKey = new PluginKey('learnCorrections');
+
+/**
+ * Watches for a word replaced by hand: a selection that is exactly one word gets replaced by typing
+ * (or by a spelling suggestion). When the cursor leaves the new word, onLearn(old, new) is called.
+ * Deciding whether the pair is a typo fix is left to onLearn.
+ */
+export function learnPlugin(onLearn) {
+  let pending = null; // { pos, word }
+  return new Plugin({
+    key: learnKey,
+    appendTransaction(trs, oldState) {
+      for (const tr of trs) {
+        if (!tr.docChanged) continue;
+        if (pending) pending = { ...pending, pos: tr.mapping.map(pending.pos, -1) };
+        const sel = oldState.selection;
+        const step = tr.steps[0];
+        if (sel.empty || !step || step.from !== sel.from || step.to !== sel.to || tr.getMeta('history$') || tr.getMeta('paste')) continue;
+        const word = oldState.doc.textBetween(sel.from, sel.to, '\n', '\n');
+        const before = sel.from > 0 ? oldState.doc.textBetween(sel.from - 1, sel.from, '\n', '\n') : '';
+        const after = oldState.doc.textBetween(sel.to, Math.min(sel.to + 1, oldState.doc.content.size), '\n', '\n');
+        const whole = word.length > 1 && [...word].every(isLetter) && !isLetter(before) && !isLetter(after);
+        pending = whole ? { pos: sel.from, word } : null;
+      }
+      return null;
+    },
+    view() {
+      return {
+        update(view) {
+          if (!pending) return;
+          const { doc, selection } = view.state;
+          const $pos = doc.resolve(Math.min(pending.pos, doc.content.size));
+          const parentStart = $pos.start();
+          const text = $pos.parent.textBetween(0, $pos.parent.content.size, '\n', '\n');
+          let end = pending.pos - parentStart;
+          while (end < text.length && isLetter(text[end])) end++;
+          const word = text.slice(pending.pos - parentStart, end);
+          const head = selection.head;
+          // Still typing the word: wait.
+          if (selection.empty && head >= pending.pos && head <= parentStart + end && head === parentStart + end) return;
+          const old = pending.word;
+          pending = null;
+          if (word && word !== old) onLearn(old, word);
+        },
+      };
+    },
+  });
+}

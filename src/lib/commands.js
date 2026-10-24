@@ -11,10 +11,17 @@ export function keyFromEvent(e) {
   if (e.altKey) parts.push('Alt');
   if (e.shiftKey) parts.push('Shift');
   let k = NAMED[e.key] || e.key;
+  // Option/Alt (macOS) and Shift change the character (Option+R = "®", Shift+5 = "%"): use the
+  // physical letter/digit (only then, so AZERTY/Dvorak letters still win) so Ctrl+Alt+R and Ctrl+Shift+5 match the shortcut table.
+  const phys = (e.altKey || e.shiftKey) && !/^[a-z0-9]$/i.test(k) && /^(?:Key([A-Z])|Digit(\d))$/.exec(e.code || '');
+  if (phys) k = phys[1] || phys[2];
   if (k.length === 1) k = k.toUpperCase();
   parts.push(k);
   return parts.join('+');
 }
+
+// Typed key names → the spelling keyFromEvent produces.
+const NAMED_INPUT = { up: '↑', down: '↓', left: '←', right: '→', arrowup: '↑', arrowdown: '↓', arrowleft: '←', arrowright: '→', esc: 'Esc', escape: 'Esc', space: 'Space' };
 
 // Normalizes user input like "ctrl + shift + k" to "Ctrl+Shift+K".
 export function normalizeCombo(s) {
@@ -27,7 +34,7 @@ export function normalizeCombo(s) {
     if (l === 'ctrl' || l === 'cmd' || l === 'control') mods.add('Ctrl');
     else if (l === 'alt' || l === 'option') mods.add('Alt');
     else if (l === 'shift') mods.add('Shift');
-    else key = p.length === 1 ? p.toUpperCase() : p;
+    else key = p.length === 1 ? p.toUpperCase() : NAMED_INPUT[l] || (/^f\d{1,2}$/.test(l) ? p.toUpperCase() : p);
   }
   return [...['Ctrl', 'Alt', 'Shift'].filter((m) => mods.has(m)), key].filter(Boolean).join('+');
 }
@@ -64,6 +71,8 @@ export const DEFAULT_KEYS = {
   print: 'Ctrl+P',
   fullScreen: 'Ctrl+Shift+F11',
   revealBinder: 'Ctrl+Alt+R',
+  // Scrivener's Format > Show Ruler is Ctrl+Shift+R, already Quick Reference here.
+  toggleRuler: 'Ctrl+Alt+Shift+R',
 };
 
 // Effective shortcut for a command; an empty string in settings disables it.

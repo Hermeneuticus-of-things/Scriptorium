@@ -450,6 +450,8 @@ media/                 imagini, PDF, audio, video</pre>
 <li><code>&lt;$projecttitle&gt;</code>, <code>&lt;$abbr_title&gt;</code>, <code>&lt;$author&gt;</code>, <code>&lt;$surname&gt;</code>, <code>&lt;$forename&gt;</code>.</li>
 <li><code>&lt;$date&gt;</code>, <code>&lt;$year&gt;</code>.</li>
 <li><code>&lt;$p&gt;</code>: numărul paginii, doar în antet și subsol.</li>
+<li><code>&lt;$t&gt;</code> în antet sau subsol: titlul capitolului de pe pagina respectivă (în PDF și Word).</li>
+<li><code>&lt;$subtitle&gt;</code>: subtitlul cărții.</li>
 <li><code>&lt;$img:Nume&gt;</code>: imaginea din Cercetare cu acel titlu sau nume de fișier.</li>
 </ul>
 <p>Un placeholder necunoscut rămâne ca text, ca să-l observi.</p>`,
@@ -604,6 +606,21 @@ media/                 imagini, PDF, audio, video</pre>
 </ul>
 <p>Opțional: limita de cuvinte pe document, verificarea primei linii „Cap. N / Secț. N / Subcap. N” și a notei finale de navigare. Profilul se salvează în proiect, deci fiecare carte poate avea regulile ei.</p>`,
       },
+      {
+        id: 'irep-near',
+        title: 'Repetiții apropiate (S70)',
+        html: `<p>Panoul are secțiunea <em>Repetiții apropiate (S70)</em>: același cuvânt cu conținut (aceeași lemă sau formă) în aceeași frază sau în două fraze vecine, inclusiv anadiploza „…scutul. Scutul…”. Câte un rând <code>⚠ REP L&lt;n&gt; «formă» ×k</code> pe fiecare paragraf (L = numărul paragrafului în document) unde grupul are apariții; un clic selectează apariția în editor.</p>
+<p>Nu se numără cuvintele-unealtă (pronume, prepoziții, conjuncții, numerale, auxiliare), locuțiunile („în fața”, „pe lângă”, „de-a lungul”…), iar reduplicatele („pas cu pas”, „zi de zi”) contează o singură apariție. Termenii cărții („faptă”, „karma”, „urmă”) se numără.</p>
+<p>Este un <strong>semnal</strong>, nu o problemă: nu oprește bucla, nu se repară automat și nu ajunge în promptul de reparare. Regula S70: termenul nu se schimbă doar ca să nu se repete. Lista intră doar la runda <strong>R8b Cuvântul și litera</strong> din I-EDIT, unde cititorul judecă dacă repetiția supără.</p>`,
+      },
+      {
+        id: 'irep-author',
+        title: 'Textul tău: editare în propunere și protecția paragrafelor tale',
+        html: `<p>Ce scrii tu de mână e decizie. Paragrafele pe care le schimbi în editor devin <strong>text al autorului</strong> (după câteva secunde de pauză) și fiecare salvare se notează în <code>editorial/MODIFICARI_AUTOR.jsonl</code>, câte un rând pe bucată schimbată: document, rând, vechi, nou, oră, hash-uri.</p>
+<p>În propunerea I-REP / I-EDIT, <em>✎ Editează</em> îți arată textul propus ca să-l corectezi tu; <em>Salvează</em> face întâi un snapshot <code>.bak-autor-&lt;dată-oră&gt;</code>. Salvarea e refuzată dacă documentul s-a schimbat între timp (409) sau dacă textul nou e sub 20% din cel vechi (412, cu <em>Salvează oricum</em>). Paragrafele scrise de tine acolo devin și ele text al autorului.</p>
+<p>Bucla nu rescrie textul autorului: poarta <code>fraza_autor_atinsa</code> respinge orice rezultat care îl schimbă, îl mută sau îl șterge, fără excepție, și îți arată rândul și motivul. Modelul primește paragrafele tale în secțiunea „TEXT AL AUTORULUI (doar semnalezi)”. Problemele care cad pe ele vin la tine în <em>COADA_AUTOR</em>; cele de pe paragrafele vecine merg la reparare cu nota „leagă de textul autorului, fără să-l schimbi”. Reparațiile sigure nu ating paragrafele tale.</p>
+<p>Dacă salvezi în timpul unei bucle, jurnalul ei primește <code>MODIFICARE_AUTOR</code>, raportul are secțiunea „Modificările tale în text”, iar propunerea nu se mai aplică peste textul tău: textul se reverifică chiar înainte de scriere. O propunere respinsă rămâne respinsă doar cât textul documentului nu se schimbă.</p>`,
+      },
     ],
   },
   {
@@ -643,7 +660,7 @@ media/                 imagini, PDF, audio, video</pre>
 <li><strong>General</strong>: redeschiderea ultimului proiect, salvarea automată, ținte implicite, căutarea actualizărilor (oprită: aplicația nu contactează rețeaua).</li>
 <li><strong>Aspect</strong>: tema (sistem, luminoasă, întunecată, sepia), fontul și mărimea editorului, interlinia, lățimea paginii, mărimea textului în binder, culoarea de accent, modul compunere.</li>
 <li><strong>Comportament</strong>: ce face Enter și dublu-clicul în binder, vederea implicită.</li>
-<li><strong>Corecturi</strong>: ghilimele, liniuțe, puncte de suspensie, majuscule automate, limbile corectorului, înlocuirile automate.</li>
+<li><strong>Corecturi</strong>: ghilimele, liniuțe, puncte de suspensie, majuscule automate, limbile corectorului, înlocuirile automate. Cu <em>Învață din corecturile mele</em> (pornit implicit), un cuvânt subliniat ca greșit pe care îl corectezi de mână (îl selectezi și scrii forma bună sau alegi o sugestie din clic dreapta) intră în înlocuiri, marcat <em>învățat</em>, și se corectează singur data viitoare, păstrând majusculele. Se învață doar greșeli apropiate (diacritice, o literă lipsă sau inversată), doar când corectorul respinge vechea formă și o acceptă pe cea nouă. O intrare învățată se șterge sau se modifică din aceeași listă.</li>
 <li><strong>Editare</strong>: defilare tip mașină de scris, indentarea și spațierea implicite, caractere invizibile.</li>
 <li><strong>Backup</strong>: la închidere, la interval, câte se păstrează, folderul.</li>
 <li><strong>Tastatură</strong>: scurtăturile (vezi capitolul Scurtături).</li>
@@ -730,6 +747,139 @@ media/                 imagini, PDF, audio, video</pre>
         id: 'faq-report',
         title: 'Raportarea unei probleme',
         html: `<p><em>Ajutor → Raportează o problemă</em> deschide pagina de probleme a proiectului pe GitHub. Scrie versiunea (din <em>Ajutor → Despre Scribner</em>), sistemul de operare, pașii care reproduc problema și ce te așteptai să se întâmple.</p>`,
+      },
+    ],
+  },
+  {
+    id: 'yours',
+    title: 'Ce faci tu (pași care țin de contul și calculatorul tău)',
+    sections: [
+      {
+        id: 'yours-overview',
+        title: 'Pe scurt',
+        html: `<p>Programul e complet, dar câteva lucruri depind de conturile, cheile și setările tale. Fără ele funcțiile respective rămân oprite, restul merge normal.</p>
+<ul>
+<li>cheile serviciilor externe (traducere, gramatică, voce, bibliografie);</li>
+<li>cheia unui model AI;</li>
+<li>pachetul de limbă română pentru corectorul din Windows;</li>
+<li>legătura cu Claude Code (MCP), dacă vrei ca un agent să lucreze direct în proiect;</li>
+<li>folderul de sincronizare (OneDrive, Dropbox, Google Drive sau NAS), dacă scrii și din browser.</li>
+</ul>`,
+      },
+      {
+        id: 'yours-services',
+        title: 'Cheile serviciilor: DeepL, Google, LanguageTool, Speechify, Zotero',
+        html: `<p>Deschide <em>Setări → Servicii și conturi</em>. Fiecare serviciu are linkul <em>Unde găsesc cheia</em>. Lipești cheia, apeși <em>Salvează</em>; cheia e criptată pe calculatorul tău și nu mai poate fi citită din interfață.</p>
+<ul>
+<li><strong>DeepL</strong>: contul gratuit dă 500.000 de caractere pe lună.</li>
+<li><strong>Google Cloud Translation</strong>: cheie din Google Cloud Console, cu Cloud Translation API activat.</li>
+<li><strong>LanguageTool</strong>: merge fără cont; cu Premium pui e-mailul și cheia API.</li>
+<li><strong>Speechify</strong>: cheia din consola Speechify API și ID-ul vocii (de exemplu <code>george</code>).</li>
+<li><strong>Zotero</strong>: ID-ul numeric de utilizator și o cheie din <em>zotero.org/settings/keys</em>; apoi <em>Fișier → Importă bibliografia din Zotero</em>.</li>
+</ul>
+<p>Verificare: selectezi un paragraf, clic dreapta, <em>În program: DeepL</em> sau <em>Verifică gramatica</em>.</p>`,
+      },
+      {
+        id: 'yours-ai',
+        title: 'Cheia AI și testul cu un model real',
+        html: `<p>În <em>Setări → AI</em> alegi furnizorul (Anthropic, OpenAI, OpenRouter, NVIDIA NIM, Mistral, Groq, DeepSeek, xAI, Gemini, Ollama local, LM Studio local sau un server compatibil OpenAI), lipești cheia și scrii id-ul modelului. Modelele se retrag des: dacă primești <em>modelul a fost retras</em>, alege altul din lista furnizorului.</p>
+<p>Fără bani: pe OpenRouter, modelele terminate în <code>:free</code>; pe <em>build.nvidia.com</em>, cheia <code>nvapi-…</code> vine cu credite gratuite; local, Ollama sau LM Studio nu cer cheie.</p>
+<p>Test rapid din folderul programului, în PowerShell:</p>
+<pre>$env:OPENROUTER_API_KEY = "sk-or-…"
+node scripts\ai-smoke.cjs openrouter
+
+$env:NVIDIA_API_KEY = "nvapi-…"
+node scripts\ai-smoke.cjs nvidia</pre>
+<p>Scriptul alege singur un model care răspunde și încearcă corectura, traducerea și explicarea unui termen. Modelele gratuite sunt uneori supraîncărcate; scriptul reîncearcă și trece la alt model. Nu scrie cheile în fișiere sau în mesaje; dacă una a ajuns undeva public, regenereaz-o.</p>`,
+      },
+      {
+        id: 'yours-spelling',
+        title: 'Corectorul ortografic românesc pe Windows',
+        html: `<p>Pe Windows programul folosește corectorul sistemului. Instalează limba: <em>Setări Windows → Oră și limbă → Limbă și regiune → Adăugare limbă → Română</em>, cu opțiunea de verificare ortografică bifată. Repornește Scribner. Pe Linux și macOS dicționarul vine cu programul.</p>`,
+      },
+      {
+        id: 'yours-mcp',
+        title: 'Legarea de Claude, Codex și alți agenți AI (MCP)',
+        html: `<p>Scribner are un server MCP inclus (peste 70 de unelte: binder, documente, note, metadate, snapshot-uri, căutare, Compile). Orice agent AI care știe MCP îl poate folosi. <strong>Nu ai nevoie de Node.js</strong>: programul instalat pornește serverul singur, cu variabila <code>ELECTRON_RUN_AS_NODE=1</code>. Agentul vede doar proiectele puse după <code>--project</code>; cu <code>--read-only</code> doar citește. Fiecare scriere face întâi un snapshot și se notează în <code>agent-log.jsonl</code> din proiect.</p>
+<p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>Ajutor → Conectează la Claude (MCP)</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
+<p>Căile de mai jos sunt cele ale installerului pe Windows (instalare pentru utilizatorul curent). Înlocuiește <code>Ionut</code> cu numele tău de utilizator și calea proiectului cu a ta. Varianta portabilă: folosește calea unde ai pus-o.</p>
+<pre>Program:  C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
+Server:   C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs
+Proiect:  D:\\Carti\\Karma.scribner</pre>
+
+<h4>Claude Code (terminal și fila Code din Claude Desktop)</h4>
+<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<p>Verificare: <code>claude mcp list</code> arată <em>scribner: connected</em>. În sesiune, <code>/mcp</code> arată uneltele.</p>
+
+<h4>Claude Desktop (chat)</h4>
+<p>Fișierul <code>%APPDATA%\\Claude\\claude_desktop_config.json</code> (în Claude Desktop: <em>Settings → Developer → Edit Config</em>). Adaugă în <code>mcpServers</code>, apoi repornește Claude Desktop complet (și din bara de sistem):</p>
+<pre>{
+  "mcpServers": {
+    "scribner": {
+      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
+      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
+               "--project", "D:\\\\Carti\\\\Karma.scribner"],
+      "env": { "ELECTRON_RUN_AS_NODE": "1" }
+    }
+  }
+}</pre>
+<p>În JSON, fiecare <code>\\</code> din cale se scrie dublat.</p>
+
+<h4>OpenAI Codex (CLI și extensia de editor)</h4>
+<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<p>Sau direct în <code>%USERPROFILE%\\.codex\\config.toml</code>:</p>
+<pre>[mcp_servers.scribner]
+command = 'C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe'
+args = ['C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Carti\\Karma.scribner']
+env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
+<p>Verificare: <code>codex mcp list</code>.</p>
+
+<h4>Gemini CLI</h4>
+<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<p>Sau în <code>%USERPROFILE%\\.gemini\\settings.json</code>, același bloc <code>mcpServers</code> ca la Claude Desktop.</p>
+
+<h4>Cursor, Windsurf, LM Studio și alți clienți cu <code>mcpServers</code></h4>
+<p>Același bloc JSON ca la Claude Desktop, în fișierul fiecăruia: Cursor <code>%USERPROFILE%\\.cursor\\mcp.json</code>; Windsurf <code>%USERPROFILE%\\.codeium\\windsurf\\mcp_config.json</code>; LM Studio <em>Program → Install → Edit mcp.json</em>.</p>
+
+<h4>VS Code (GitHub Copilot, mod Agent)</h4>
+<p>Fișierul <code>.vscode\\mcp.json</code> din folderul de lucru (cheia e <code>servers</code>, nu <code>mcpServers</code>):</p>
+<pre>{
+  "servers": {
+    "scribner": {
+      "type": "stdio",
+      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
+      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
+               "--project", "D:\\\\Carti\\\\Karma.scribner"],
+      "env": { "ELECTRON_RUN_AS_NODE": "1" }
+    }
+  }
+}</pre>
+
+<h4>Din sursă (fără installer, cu Node.js)</h4>
+<pre>claude mcp add scribner -- node "C:\\cale\\Scriptorium\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+
+<h4>Probă</h4>
+<p>Cere agentului: „listează documentele din proiectul Scribner”, apoi „citește primul capitol și scrie-i sinopsisul în inspector”. Fă un snapshot înainte de modificări mari. Mai multe proiecte: repetă <code>--project</code> pentru fiecare. Dacă agentul nu vede unelte: repornește clientul, verifică dublarea <code>\\</code> în JSON și că Scribner e instalat la calea scrisă.</p>`,
+      },
+      {
+        id: 'yours-sync',
+        title: 'Același proiect pe desktop și în browser',
+        html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Nu edita același document în două locuri în același timp. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
+      },
+      {
+        id: 'yours-karma',
+        title: 'Proiectele tale Scrivener și regulile I-REP / I-EDIT',
+        html: `<p>Importul <code>.scriv</code> e testat pe proiecte de probă. Pe un proiect real (de exemplu cartea Karma), fă importul cu <em>Fișier → Importă proiect Scrivener</em>, citește raportul de import și verifică capitolele cu cele mai multe formatări, comentarii și note de subsol. Originalul rămâne neatins, iar o copie stă în <code>scrivener-original/</code>.</p>
+<p>I-REP / I-EDIT urmează definițiile tale VKB2: repetițiile apropiate (S70, runda R8b) și protecția textului scris de tine (vezi capitolul <em>Revizie I-REP/I-EDIT</em>).</p>`,
+      },
+      {
+        id: 'yours-limits',
+        title: 'Limite cunoscute',
+        html: `<ul>
+<li>Tab-urile cu poziții exacte (din riglă) apar exact în DOCX; în PDF, EPUB și HTML tab-urile sunt egale, după prima poziție. Doar tab-uri la stânga.</li>
+<li>Kindle: programul produce EPUB, pe care Amazon îl acceptă direct; formatul KPF nu se poate produce cu unelte deschise.</li>
+<li>Sincronizarea cu aplicația Scrivener pentru iOS nu e posibilă (format închis); folosește folderul sincronizat de mai sus.</li>
+</ul>`,
       },
     ],
   },

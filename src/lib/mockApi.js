@@ -76,6 +76,7 @@ function demoProject() {
 export function createMockApi() {
   const noKey = typeof location !== 'undefined' && /[?&]nokey\b/.test(location.search);
   const state = { settings: { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true, hasApiKey: !noKey, aiLabel: 'Demo (simulat)', aiModel: 'demo-local' }, projects: {} };
+  let pageSetupDefault = null; // File > Page Setup default (desktop: userData/page-setup.json)
   // Simulated AI: streams its answer word by word ('ai:delta'), honours cancelAi, reports bulk progress.
   const deltaFns = new Set();
   const progressFns = new Set();
@@ -147,6 +148,7 @@ export function createMockApi() {
   const history = {};
   const files = {};
   const snaps = {};
+  const authorJournal = {}; // dir -> I-EDIT journal rows
   const key = (dir, id, kind) => `${dir}|${kind || 'docs'}|${id}`;
   const load = (dir) => {
     if (!state.projects[dir]) {
@@ -242,8 +244,27 @@ export function createMockApi() {
     async listSnapshots(_dir, id) {
       return snaps[id] || [];
     },
+    // I-EDIT journal of the author's changes (MODIFICARI_AUTOR.jsonl on the desktop).
+    async appendAuthorJournal(dir, rows) {
+      const list = (Array.isArray(rows) ? rows : [rows]).filter((r) => r && r.doc && r.old !== r.new);
+      (authorJournal[dir] ||= []).push(...list.map((r) => ({ ...r })));
+      return list.length;
+    },
+    async readAuthorJournal(dir) {
+      return (authorJournal[dir] || []).map((r) => ({ ...r }));
+    },
     async importScriv() {
       throw new Error('Importul .scriv funcționează doar în aplicația desktop.');
+    },
+    // File > Page Setup / Print Preview: the setup is kept in memory (the project keeps its own
+    // copy in project.pageSetup). printPreview / printDocuments / savePrintPdf are left out on
+    // purpose: the PDF preview needs the desktop app, so those menu items stay disabled here.
+    async getPageSetup(project) {
+      return project?.pageSetup || pageSetupDefault;
+    },
+    async setPageSetup(setup) {
+      pageSetupDefault = { ...(setup || {}) };
+      return pageSetupDefault;
     },
     async exportCompiled(dir, project, format) {
       if (format !== 'html') throw new Error('În browser se poate exporta doar HTML. DOCX/EPUB/PDF merg în aplicația desktop.');
@@ -344,6 +365,14 @@ export function createMockApi() {
     async translateText({ text, to }) {
       if (!(state.services && state.services.deepl && state.services.deepl.apiKey)) throw new Error('Pune cheia DeepL în Setări → Servicii și conturi.');
       return { text: `[${to || 'ro'}] ${text}`, detected: 'en', service: 'DeepL (demo)' };
+    },
+    async importZotero() {
+      const z = state.services && state.services.zotero;
+      if (!(z && z.userId && z.apiKey)) throw new Error('Pune ID-ul de utilizator Zotero și cheia în Setări → Servicii și conturi.');
+      return { entries: [
+        { key: 'Blaga1937', type: 'book', title: 'Trilogia culturii', authors: [{ family: 'Blaga', given: 'Lucian' }], editors: [], year: '1937', container: '', publisher: 'Fundația pentru Literatură și Artă', place: 'București', volume: '', issue: '', pages: '', edition: '', doi: '', url: '' },
+        { key: 'Eliade1949', type: 'book', title: 'Le mythe de l’éternel retour', authors: [{ family: 'Eliade', given: 'Mircea' }], editors: [], year: '1949', container: '', publisher: 'Gallimard', place: 'Paris', volume: '', issue: '', pages: '', edition: '', doi: '', url: '' },
+      ] };
     },
     async speakCloud() {
       if (!(state.services && state.services.speechify && state.services.speechify.apiKey)) throw new Error('Pune cheia Speechify în Setări → Servicii și conturi.');

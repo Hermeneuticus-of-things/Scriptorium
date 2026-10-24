@@ -76,11 +76,16 @@ const NEW_READ_TOOLS = (ctx) => ({
   lookup_url: { text: 'karma' },
   list_backups: {},
   editorial_round: {},
+  author_journal: {},
 });
 
 // Every renderer API (electron/preload.cjs) is either reachable over MCP (tool name) or GUI-only
 // (reason). A new preload function makes this test fail until it is listed here.
 const PRELOAD_COVERAGE = {
+  mcpConnectInfo: 'gui: legarea programului la Claude se face din interfață (Ajutor)',
+  mcpConnectDesktop: 'gui: scrie configurarea Claude Desktop la cererea autorului',
+  isMisspelled: 'gui: corectorul ortografic al ferestrei (corecturi învățate)',
+  onSpellReplaced: 'gui: sugestie aleasă din meniul nativ de clic dreapta',
   getSettings: 'gui: setările aplicației (temă, chei API); serverul citește doar backup / liste editoriale',
   setSettings: 'gui: setările aplicației și cheile API nu se schimbă din agent',
   chooseBackupDir: 'gui: dialog de folder (backup_now primește backup_dir)',
@@ -141,6 +146,8 @@ const PRELOAD_COVERAGE = {
   getPageSetup: 'gui: Page Setup pentru imprimantă',
   setPageSetup: 'gui: Page Setup pentru imprimantă',
   printPreview: 'compile',
+  printDocuments: 'gui: tipărire la imprimantă (dialogul sistemului)',
+  savePrintPdf: 'gui: salvează PDF-ul din previzualizare (dialog de salvare)',
   listGlobalFormats: 'list_compile_formats',
   saveGlobalFormats: 'gui: editorul de formate Compile',
   listDictionaryWords: 'gui: dicționarul ortografic al lui Chromium',
@@ -159,6 +166,7 @@ const PRELOAD_COVERAGE = {
   copyAccountPassword: 'gui: parolele nu ies spre agent',
   translateText: 'gui: cheia DeepL/Google e criptată cu safeStorage (agentul traduce singur sau folosește lookup_url)',
   checkGrammar: 'gui: serviciu extern cu cont din Setări (agentul corectează singur; lint pentru I-REP)',
+  importZotero: 'gui: contul Zotero e criptat cu safeStorage, pe care serverul MCP nu îl poate citi; agentul folosește import_bibliography cu un fișier',
   speakCloud: 'gui: citire cu voce tare (Speechify) redată în fereastră; un agent nu are difuzoare',
   newWindow: 'gui: ferestre',
   toggleFullScreen: 'gui: ferestre',
@@ -167,6 +175,7 @@ const PRELOAD_COVERAGE = {
   releaseProject: 'gui: ferestre',
   exportBundle: 'export_bundle',
   importBundle: 'import_bundle',
+  appendAuthorJournal: 'gui: jurnalul MODIFICARI_AUTOR se scrie de fereastra în care autorul salvează (author_journal îl citește)',
   ragBuild: 'research_search',
   ragQuery: 'research_search',
   ragAsk: 'research_search',

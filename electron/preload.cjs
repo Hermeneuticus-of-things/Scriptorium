@@ -1,5 +1,5 @@
 'use strict';
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webFrame } = require('electron');
 
 const call = async (channel, ...args) => {
   const res = await ipcRenderer.invoke(channel, ...args);
@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('api', {
   writeDoc: (dir, id, kind, html) => call('doc:write', dir, id, kind, html),
   takeSnapshot: (dir, id, name) => call('snap:take', dir, id, name),
   listSnapshots: (dir, id) => call('snap:list', dir, id),
+  appendAuthorJournal: (dir, rows) => call('editorial:appendAuthorJournal', dir, rows),
   importScriv: () => call('import:scriv'),
   importFile: (mode, separator) => call('import:file', mode, separator),
   readMedia: (dir, file) => call('media:read', dir, file),
@@ -37,6 +38,20 @@ contextBridge.exposeInMainWorld('api', {
     const listener = (_e, id) => fn(id);
     ipcRenderer.on('menu:command', listener);
     return () => ipcRenderer.removeListener('menu:command', listener);
+  },
+  // Learned corrections: is a word misspelled for the active spell checker; a suggestion picked
+  // from the native context menu ({ from, to }).
+  isMisspelled: (word) => {
+    try {
+      return webFrame.isWordMisspelled(String(word));
+    } catch {
+      return false;
+    }
+  },
+  onSpellReplaced: (fn) => {
+    const listener = (_e, info) => fn(info);
+    ipcRenderer.on('spell:replaced', listener);
+    return () => ipcRenderer.removeListener('spell:replaced', listener);
   },
   watchProject: (dir) => call('project:watch', dir),
   // Re-read project.json after an external change (no backup / recent-list side effects).
@@ -77,9 +92,11 @@ contextBridge.exposeInMainWorld('api', {
   newFromTemplate: (title, templateId) => call('io:newFromTemplate', title, templateId),
   importText: (mode, separator) => call('io:importText', mode, separator),
   importWebPage: (url, dir) => call('io:importWebPage', url, dir),
-  getPageSetup: () => call('io:getPageSetup'),
+  getPageSetup: (project) => call('io:getPageSetup', project),
   setPageSetup: (setup) => call('io:setPageSetup', setup),
   printPreview: (dir, project, options) => call('io:printPreview', dir, project, options),
+  printDocuments: (dir, project, options) => call('io:printDocuments', dir, project, options),
+  savePrintPdf: (token) => call('io:savePrintPdf', token),
   listGlobalFormats: () => call('io:listGlobalFormats'),
   saveGlobalFormats: (list) => call('io:saveGlobalFormats', list),
   syncAuto: (dir, project, event) => call('v04:syncAuto', dir, project, event),
@@ -105,6 +122,9 @@ contextBridge.exposeInMainWorld('api', {
   translateText: (req) => call('translate:run', req),
   checkGrammar: (req) => call('grammar:check', req),
   speakCloud: (req) => call('tts:speak', req),
+  importZotero: (req) => call('zotero:import', req),
+  mcpConnectInfo: (opts) => call('mcp:connectInfo', opts),
+  mcpConnectDesktop: (opts) => call('mcp:connectDesktop', opts),
   newWindow: () => call('window:new'),
   toggleFullScreen: (on) => call('window:fullScreen', on),
   recheckSpelling: () => call('spell:recheck'),

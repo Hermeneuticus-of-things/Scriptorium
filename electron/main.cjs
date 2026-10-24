@@ -185,7 +185,10 @@ function setupSpelling(win) {
     const items = [];
     const L = services.contextMenuLabels(readSettings().language);
     if (params.misspelledWord && !ignored.has(params.misspelledWord.toLowerCase())) {
-      for (const s of params.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => win.webContents.replaceMisspelling(s) });
+      for (const s of params.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => {
+        win.webContents.replaceMisspelling(s);
+        win.webContents.send('spell:replaced', { from: params.misspelledWord, to: s });
+      } });
       if (!params.dictionarySuggestions.length) items.push({ label: L.noSuggestions, enabled: false });
       items.push({ label: L.addToDict(params.misspelledWord), click: () => ses.addWordToSpellCheckerDictionary(params.misspelledWord) });
       items.push({ label: L.ignore(params.misspelledWord), click: () => ignored.add(params.misspelledWord.toLowerCase()) });
@@ -294,6 +297,8 @@ function createWindow() {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
+      // Chromium's built-in PDF viewer, for the Print Preview dialog (blob: PDF in an iframe).
+      plugins: true,
     },
   });
   win.setMenuBarVisibility(false);
@@ -715,6 +720,12 @@ handle('import:file', async (e, mode, separator) => {
   }
   return parts;
 });
+// I-EDIT: journal of the author's own changes. Only the window that owns the project writes.
+handle('editorial:appendAuthorJournal', (e, dir, rows) => {
+  assertOpened(dir);
+  assertOwner(e.sender, dir);
+  return store.appendAuthorJournal(dir, rows);
+});
 handle('snap:take', (_e, dir, id, name) => {
   assertOpened(dir);
   return store.takeSnapshot(dir, id, name);
@@ -908,6 +919,19 @@ handle('translate:run', async (_e, { service = 'deepl', text, from, to } = {}) =
   if (service === 'google') return translate.googleTranslate({ ...opts, apiKey: services.getService(st, 'googleTranslate', safeStorage).apiKey });
   return translate.deeplTranslate({ ...opts, apiKey: services.getService(st, 'deepl', safeStorage).apiKey });
 });
+handle('zotero:import', async (_e, { collection } = {}) => {
+  const zt = services.getService(readSettings(), 'zotero', safeStorage);
+  return { entries: await require('../lib/zotero.cjs').fetchZoteroLibrary({ userId: zt.userId, apiKey: zt.apiKey, collection }) };
+});
+// Ajutor → Conectează la Claude (MCP): the installed app runs the MCP server itself (no Node.js needed).
+const mcpEntry = ({ projects = [], readOnly = false } = {}) =>
+  require('../lib/mcpConfig.cjs').serverEntry({ execPath: process.execPath, serverPath: path.join(app.getAppPath(), 'mcp', 'server.mjs'), projects, readOnly });
+handle('mcp:connectInfo', async (_e, opts = {}) => {
+  const mc = require('../lib/mcpConfig.cjs');
+  const entry = mcpEntry(opts);
+  return { entry, command: mc.claudeCodeCommand(entry), desktopConfig: mc.claudeDesktopConfigPath() };
+});
+handle('mcp:connectDesktop', async (_e, opts = {}) => require('../lib/mcpConfig.cjs').writeClaudeDesktopConfig(mcpEntry(opts)));
 handle('tts:speak', async (_e, { text } = {}) => {
   const sp = services.getService(readSettings(), 'speechify', safeStorage);
   return translate.speechifySpeak({ apiKey: sp.apiKey, voiceId: sp.voiceId, text });

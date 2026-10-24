@@ -86,6 +86,19 @@ const watchdog = setTimeout(() => {
     const imp = await win.evaluate(() => window.api.importScriv()).catch((e) => 'ERR ' + e.message);
     log('re-import .scriv:', typeof imp === 'string' ? imp : `${imp?.project?.title} · docs: ${JSON.stringify(imp?.stats || {}).slice(0, 120)}`);
   }
+  // 5. File > Print Preview with a Page Setup (6 × 9 in, footer with page number) → real PDF, Save PDF.
+  step = 'print preview';
+  await answer(`${W}/preview.pdf`);
+  const pv = await win.evaluate(async (d) => {
+    const { project } = await window.api.openProject(d.dir);
+    const r = await window.api.printPreview(d.dir, project, { pageSetup: { size: '6x9', footer: { center: '<$p>' } } });
+    const saved = await window.api.savePrintPdf(r.token);
+    return { pageCount: r.pageCount, pageSize: r.pageSize, bytes: r.data?.length || 0, saved };
+  }, { dir: path.join(W, 'projects', dir) }).catch((e) => ({ error: e.message }));
+  const pvFile = fs.existsSync(`${W}/preview.pdf`) ? fs.readFileSync(`${W}/preview.pdf`) : null;
+  const pvOk = Boolean(pvFile) && pvFile.slice(0, 5).toString() === '%PDF-' && pv.pageCount >= 1 && Math.round(pv.pageSize?.width) === 432 && Math.round(pv.pageSize?.height) === 648;
+  log('print preview:', JSON.stringify(pv), pvOk);
+  if (!pvOk) errs.push('print preview PDF missing or wrong page size');
   // Typing right before closing the window must reach the disk (no Ctrl+S, before the autosave delay).
   step = 'close with unsaved typing';
   await win.locator('.pane .ProseMirror').first().click();
