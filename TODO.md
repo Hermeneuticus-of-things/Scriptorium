@@ -69,3 +69,8 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 - [x] Bug-uri: `tr` ascuns în CompileDialog, cronologie tăiată, câmpuri demo, selecție fără focus
 - [x] README pentru cititori obișnuiți + 8 capturi prezentate
 - [~] Re-audit interfață engleză / accesibilitate (agent în lucru)
+
+### Request: installer cu wizard (.exe), Inno Setup
+- [x] Inno Setup 6: installer/scribner.iss (română + engleză, licență, folder, Start, Desktop, pornire la final), build/icon.ico
+- [x] Workflow Windows: pachet + portabil + Scribner-Setup.exe ca artefact; Release automat la tag v*
+- [ ] Verificat installerul pe un Windows real
