@@ -344,7 +344,7 @@ function handle(channel, fn) {
     try {
       return { ok: true, value: await fn(event, ...args) };
     } catch (err) {
-      return { ok: false, error: channel.startsWith('ai:') || channel === 'rag:ask' ? ai.friendlyError(err) : err.message || String(err) };
+      return { ok: false, error: channel.startsWith('ai:') || channel === 'rag:ask' || channel === 'rag:chat' ? ai.friendlyError(err, readSettings().language) : err.message || String(err) };
     }
   });
 }
@@ -353,7 +353,8 @@ handle('settings:get', () => {
   const s = readSettings();
   const b = backupSettings();
   return {
-    recent: s.recent || [],
+    // `missing`: the Home screen marks recents whose folder is gone (moved, deleted, drive unplugged).
+    recent: (s.recent || []).map((r) => (r && r.dir && !fs.existsSync(path.join(r.dir, 'project.json')) ? { ...r, missing: true } : r)),
     theme: s.theme,
     fontSize: s.fontSize,
     typewriter: s.typewriter,
@@ -437,6 +438,7 @@ handle('project:open', async (e, dirArg) => {
     return null;
   }
   // Load before claiming: a missing / broken project must not move this window's claim.
+  store.checkProjectDir(dir, readSettings().language);
   const project = store.loadProject(dir);
   const reopening = claims.dirOf(e.sender.id) === path.resolve(dir);
   if (!reopening) releaseWindow(e.sender.id);
@@ -657,7 +659,7 @@ handle('app:copyText', (_e, text) => {
 });
 require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
-require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai });
+require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai, noteSelfWrite, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators

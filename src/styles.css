@@ -391,8 +391,10 @@ legend { color: var(--muted); padding: 0 4px; }
 .project-notes-tabs .tabs { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 6px; }
 .project-notes-tabs .tabs button.on { font-weight: 600; border-bottom: 2px solid var(--accent, #1565c0); }
 .home .recent li { display: flex; align-items: center; gap: 6px; }
+.home .recent li.missing > .link { opacity: 0.6; font-style: italic; }
 .home .recent .pin { border: 0; background: none; cursor: pointer; opacity: .5; }
-.home .recent .pin.on, .home .recent li:hover .pin { opacity: 1; }
+.home .recent .pin.on, .home .recent li:hover .pin, .home .recent .pin:focus-visible { opacity: 1; }
+.home .recent li > .link { min-width: 0; overflow-wrap: anywhere; text-align: left; }
 
 /* --- Batch A: scrivenings toggles, split orientation, hoist, separators, text appearance, format bar --- */
 .scrivenings.no-titles .scriv-section .doc-title { display: none; }

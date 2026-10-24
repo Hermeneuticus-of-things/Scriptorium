@@ -101,6 +101,7 @@ import {
 } from './lib/tree.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
+import { applyTextEdits, replaceRangeText } from './lib/serviceApply.js';
 import { mergeBibliography } from './lib/bibMerge.js';
 import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
@@ -852,15 +853,17 @@ export default function App({ api }) {
     return text(from, to) === source ? { from, to } : null;
   };
   // Puts `text` in place of the range captured by runService (when it still holds the source).
-  const applyServiceText = (sr, text, after = false) => {
+  // One line keeps the formatting of the range; grammar `edits` change only the corrected spans.
+  const applyServiceText = (sr, text, after = false, edits = null) => {
     const ed = sr.handle?.editor;
     if (!ed) return;
     const { range, source } = sr;
     const ok = range && range.to <= ed.state.doc.content.size && ed.state.doc.textBetween(range.from, range.to, '\n\n') === source;
     if (!ok) return setToast(tr('ui.app.textul_s_a_schimbat'));
-    const content = /[\r\n]/.test(text) ? textToHtml(text) : { type: 'text', text: after ? ` ${text}` : text };
+    if (edits && applyTextEdits(ed, range, source, edits)) return undefined;
+    if (!/[\r\n]/.test(text)) return void replaceRangeText(ed, range, text, after);
     const at = after ? { from: range.to, to: range.to } : range;
-    ed.chain().focus().insertContentAt(at, content).run();
+    ed.chain().focus().insertContentAt(at, textToHtml(text)).run();
     return undefined;
   };
   const runService = async (kind, service) => {
@@ -1239,6 +1242,45 @@ export default function App({ api }) {
     setDocs((d) => ({ ...d, [node.id]: page.html }));
     await api.writeDoc(dir, node.id, 'docs', page.html);
     go(node.id);
+  };
+  // Research chat: new documents appended to the Research folder (or a named subfolder of it).
+  const addResearchDocs = async (items, folderTitle = '') => {
+    const pj = projectRef.current;
+    let tree = pj.tree;
+    const research = tree.find((n) => n.root === 'research');
+    if (!research) return [];
+    let parentId = research.id;
+    if (folderTitle) {
+      const existing = (research.children || []).find((n) => n.type === 'folder' && n.title === folderTitle);
+      if (existing) parentId = existing.id;
+      else {
+        const folder = { ...newNode('folder', folderTitle), children: [] };
+        tree = updateNode(tree, research.id, { children: [...(research.children || []), folder] });
+        parentId = folder.id;
+      }
+    }
+    const created = [];
+    for (const it of items) {
+      const node = newNode('text', it.title || tr('ui.app.fara_titlu'));
+      const parent = findNode(tree, parentId);
+      tree = updateNode(tree, parentId, { children: [...(parent.children || []), node] });
+      for (const m of it.media || []) tree = insertNear(tree, node.id, mediaNode(newNode, m));
+      created.push([node.id, it.html || '<p></p>']);
+    }
+    saveProject({ ...pj, tree });
+    setDocs((d) => ({ ...d, ...Object.fromEntries(created) }));
+    await Promise.all(created.map(([id, html]) => api.writeDoc(dir, id, 'docs', html)));
+    // Index the new sources right away so the next question can use them.
+    if (api.ragBuild) api.ragBuild(dir).catch(() => {});
+    return created.map(([id]) => id);
+  };
+  const importWebSource = async () => {
+    const url = window.prompt(tr('ui.researchChat.pagina_web_adresa'), 'https://');
+    if (!url || url === 'https://') return false;
+    await flush();
+    const page = await api.importWebPage(url, dir);
+    await addResearchDocs([{ title: page.title || url, html: page.html, media: page.media }]);
+    return true;
   };
   const importFilesCmd = async (mode = 'none', separator = '#') => {
     const res = await api.importFiles(dir, mode, separator);
@@ -2268,7 +2310,31 @@ export default function App({ api }) {
                 />
               )}
               {showResearch && dir && (
-                <ResearchPanel request={researchRequest} api={api} dir={dir} aiEnabled={aiEnabled} aiLabel={settings.aiLabel} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
+                <ResearchPanel
+                  request={researchRequest}
+                  api={api}
+                  dir={dir}
+                  project={project}
+                  aiEnabled={aiEnabled}
+                  aiLabel={settings.aiLabel}
+                  onOpen={(id) => go(id)}
+                  onClose={() => setShowResearch(false)}
+                  onSaveNote={async ({ title, html }) => {
+                    await flush();
+                    await addResearchDocs([{ title, html }], tr('ui.researchChat.note_folder'));
+                  }}
+                  onInsert={(html) => {
+                    const h = activeHandle();
+                    if (!h || !h.replaceSelectionHtml) return false;
+                    h.replaceSelectionHtml(html);
+                    return true;
+                  }}
+                  onAddSources={async (list) => {
+                    await flush();
+                    await addResearchDocs(list);
+                  }}
+                  onImportWeb={api.importWebPage ? importWebSource : undefined}
+                />
               )}
               {showAi && aiEnabled && (
                 <AiPanel
@@ -2473,7 +2539,7 @@ export default function App({ api }) {
         <ServiceResultDialog
           source={serviceResult.source}
           result={serviceResult.result}
-          onReplace={(text) => { applyServiceText(serviceResult, text); setServiceResult(null); }}
+          onReplace={(text, edits) => { applyServiceText(serviceResult, text, false, edits); setServiceResult(null); }}
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onClose={() => setServiceResult(null)}
         />
