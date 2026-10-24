@@ -60,3 +60,14 @@ describe('EPUB keeps image types it cannot size', () => {
     expect(Object.keys(zip.files).some((n) => /images\/img1\.svg$/.test(n))).toBe(true);
   });
 });
+
+describe('EPUB image width', () => {
+  it('turns a percentage width (invalid in XHTML) into CSS width', async () => {
+    const zip = await epubFiles(`<p><img src="data:image/png;base64,${PNG}" width="40%" data-align="left" style="float: left; margin: 0 1em 0.5em 0" alt="a"></p>`);
+    const all = (await Promise.all(Object.keys(zip.files).filter((n) => n.endsWith('.xhtml')).map((n) => zip.file(n).async('string')))).join('');
+    const img = /<img\b[^>]*src="images\/[^>]*>/.exec(all)[0];
+    expect(img).not.toMatch(/width="[^"]*%"/);
+    expect(img).toMatch(/style="[^"]*width:\s*40%/);
+    expect(img).toMatch(/float: left/);
+  });
+});
