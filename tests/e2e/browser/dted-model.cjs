@@ -25,6 +25,15 @@ const URL = process.env.URL || 'http://localhost:4183/?demo&dted';
     ['choosing another model applies it', /Standard multilingv/.test(inUse2), inUse2],
     ['no page errors', !errors.length, errors.join(' | ')],
   ];
+  // An older D&TED: no list, a message to update it.
+  await page.goto(URL.replace('&dted', '&dted=old'));
+  await page.getByText('Deschide proiect .scribner').first().click();
+  await page.locator('.pane .ProseMirror').first().waitFor();
+  await require('./_helpers.cjs').menuCmd(page, 'Setări…');
+  await page.getByRole('tab', { name: 'Servicii și conturi' }).click();
+  await page.getByRole('button', { name: 'Verifică' }).click();
+  const old = await page.getByRole('status').filter({ hasText: 'D&TED' }).first().innerText().catch(() => '');
+  checks.push(['an older D&TED is told to update', /actualizează D&TED la 0\.4\.2/.test(old) && !(await page.getByText(/Folosit acum:/).count()), old]);
   for (const [n, ok, d] of checks) console.log(`${ok ? 'PASS' : 'FAIL'} ${n}${!ok && d ? ` — ${d}` : ''}`);
   await browser.close();
   if (checks.some(([, ok]) => !ok)) process.exit(1);

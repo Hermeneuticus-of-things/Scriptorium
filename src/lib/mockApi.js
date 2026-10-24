@@ -555,7 +555,9 @@ function fakeDted() {
       return () => listeners.delete(fn);
     },
     async dtedStatus() {
-      return { found: true, source: 'D&TED simulat (demo)', running: true, state: demoDtedState() };
+      // ?demo&dted=old: a D&TED from before the model choice (no model list).
+      const old = typeof location !== 'undefined' && /[?&]dted=old\b/.test(location.search);
+      return { found: true, source: 'D&TED simulat (demo)', running: true, state: old ? { versiune: '0.3.1' } : demoDtedState() };
     },
     async dtedSetModel(nume) {
       demoDtedModel = nume || 'auto';

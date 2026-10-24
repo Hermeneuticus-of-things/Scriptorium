@@ -94,6 +94,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       const r = await api.dtedStatus({ check: true });
       setDtedCheck(r.found ? t('ui.dted.gasit', { source: r.source }) : t('ui.dted.negasit'));
       setDtedState(r.state && Array.isArray(r.state.modele) ? r.state : null);
+      // An older D&TED answers without the model list: tell the writer to update it.
+      if (r.found && r.state && !Array.isArray(r.state.modele)) setDtedCheck(`${t('ui.dted.gasit', { source: r.source })} ${t('ui.dted.vechi', { v: r.state.versiune || '?' })}`);
     } catch (e) {
       setDtedCheck(e.message);
     }

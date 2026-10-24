@@ -124,7 +124,11 @@ Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spaț
 - **Fișier → Importă → Transcrie fișier audio…**: un MP3, WAV, M4A, OGG sau FLAC devine document în Cercetare, pe paragrafe, cu ora din înregistrare.
 - Numele din carte le scrii o dată în *Setări → Servicii și conturi*, ca să fie recunoscute corect; înlocuirile tale automate se aplică și textului dictat.
 
-Recunoașterea vorbirii e **în Scribner** și lucrează **pe calculatorul tău, fără internet**. Prima dată, din *Setări → Servicii și conturi → Dictare și transcriere*, apeși *Descarcă motorul* (în jur de 590 MB, o singură dată; cu placă NVIDIA poți lua și varianta mai rapidă). Motorul e [whisper.cpp](https://github.com/ggml-org/whisper.cpp) cu modelul Whisper large-v3-turbo; amprenta fișierelor e verificată la descărcare. Pentru cea mai bună recunoaștere a românei, alege [D&TED](https://github.com/Hermeneuticus-of-things/dted) în locul lui: D&TED folosește modelul **eek**, antrenat pe română, cu aproape jumătate din greșeli (5,8% cuvinte greșite față de 10,9% la modelul standard). După *Verifică*, în aceeași fereastră alegi modelul și vezi care e folosit acum.
+Recunoașterea vorbirii e **în Scribner** și lucrează **pe calculatorul tău, fără internet**. Prima dată, din *Setări → Servicii și conturi → Dictare și transcriere*, apeși *Descarcă motorul* (în jur de 590 MB, o singură dată; cu placă NVIDIA poți lua și varianta mai rapidă). Motorul e [whisper.cpp](https://github.com/ggml-org/whisper.cpp) cu modelul Whisper large-v3-turbo; amprenta fișierelor e verificată la descărcare. Pentru cea mai bună recunoaștere a românei, alege [D&TED](https://github.com/Hermeneuticus-of-things/dted) în locul lui: D&TED folosește modelul **eek**, antrenat pe română, cu aproape jumătate din greșeli (5,8% cuvinte greșite față de 10,9% la modelul standard). După *Verifică*, în aceeași fereastră alegi modelul și vezi care e folosit acum (D&TED 0.4.2 sau mai nou; unul mai vechi îți spune să-l actualizezi).
+
+<p align="center">
+  <img src="./assets/readme/dtedmodel.png" width="100%" alt="Setări, Servicii și conturi, D&TED: lista modelelor de recunoaștere, cu eek optimizat pentru română ales și folosit acum">
+</p>
 
 ### Corectezi
 

@@ -150,6 +150,9 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] răspuns și „rezolvat” la comentarii
 - [x] (v0.9.6) echipă: conflicte false la paragrafe vecine
 - [ ] engleză, rămase: bara de imagini, „Caută după formatare”, limbile din Servicii, tabelele din Ajutor → Sintaxă (mod scenariu), mesajele motorului de dictare, folderul `scrivener-original/` (nume nou + citire nume vechi)
+- [x] (v0.9.7) eek din D&TED în dictarea Scribner: listă modele, alegere, „Folosit acum”, mesaj pentru D&TED vechi, imagine README
+- [ ] D&TED 0.4.2: construit și publicat pe Windows (PyInstaller + instalator + amprente) — la autor
+- [ ] probă reală pe Windows: dictare cu eek prin D&TED în Scribner — la autor
 - [ ] echipă: ordonarea jurnalului cu ceasuri decalate; copiile de conflict ale jurnalelor de echipă
 - [ ] `mergeDoc` re-ancorare după inserții (conflicte false)
 - [x] (v0.9.4) căutare „cuvânt întreg” și `^`/`$` peste granițele de formatare (bold în mijlocul cuvântului) — `src/lib/search.js`

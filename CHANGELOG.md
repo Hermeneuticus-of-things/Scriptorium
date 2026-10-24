@@ -7,7 +7,10 @@
 
 - **Dictarea cu D&TED folosește modelul eek** (antrenat pe română, 5,8% cuvinte greșite față de 10,9%): *Setări → Servicii și conturi → D&TED → Verifică* arată modelele instalate, „Folosit acum” și permite alegerea; alegerea se păstrează și se aplică la fiecare pornire a serviciului.
 - D&TED (repo separat, ramura cu modul serviciu): comanda `model` și lista modelelor în `stare`.
-- Ajutor (RO/EN), README și `docs/DTED.md` §8.
+- Un D&TED mai vechi (fără alegerea modelului) primește mesajul să se actualizeze la 0.4.2.
+- D&TED 0.4.2: versiunea și pașii de publicare (`docs/SERVICIU.md`); executabilul Windows se construiește pe calculatorul autorului.
+- Ajutor (RO/EN), README cu imagine (`assets/readme/dtedmodel.png`) și `docs/DTED.md` §8.
+- Test E2E „typing saved to Alfa” așteaptă scrierea pe disc (era fragil pe CI).
 
 ## 2026-10-24 — v0.9.6 — Bucle divergente/convergente (runda 3)
 
