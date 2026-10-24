@@ -150,3 +150,4 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] adnotări pe PDF în Cercetare
 - [ ] sinonimul.ro cu adresă directă
 - [ ] la autor: instalare Windows, test MCP, import Karma, chei, test AI complet, depozit public?
+- [ ] plugin D&TED (https://github.com/Hermeneuticus-of-things/dted) integrat în UI: dictare la cursor, transcriere fișier audio → document, transcriere din binder; întâi mod CLI/JSON în D&TED (detalii ROADMAP §10.11)
