@@ -32,7 +32,7 @@ ShowLanguageDialog=auto
 CloseApplications=yes
 
 [Languages]
-Name: "ro"; MessagesFile: "compiler:Languages\Romanian.isl"
+Name: "ro"; MessagesFile: "Romanian.isl"
 Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
