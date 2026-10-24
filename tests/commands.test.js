@@ -20,3 +20,23 @@ describe('commands', () => {
     expect([...conflicts(['split', 'goto', 'save'], s)].sort()).toEqual(['goto', 'split']);
   });
 });
+
+describe('commands: layout-dependent keys', () => {
+  it('uses the physical key when Option/Alt or Shift changes the character (macOS Option+R = ®)', () => {
+    expect(keyFromEvent({ key: '®', code: 'KeyR', ctrlKey: true, altKey: true, shiftKey: true })).toBe('Ctrl+Alt+Shift+R');
+    expect(keyFromEvent({ key: '†', code: 'KeyT', ctrlKey: true, altKey: true })).toBe('Ctrl+Alt+T');
+    expect(keyFromEvent({ key: '%', code: 'Digit5', ctrlKey: true, shiftKey: true })).toBe('Ctrl+Shift+5');
+  });
+  it('normalizes named keys the way keyFromEvent spells them', () => {
+    expect(normalizeCombo('ctrl+alt+down')).toBe('Ctrl+Alt+↓');
+    expect(normalizeCombo('alt+left')).toBe('Alt+←');
+    expect(normalizeCombo('escape')).toBe('Esc');
+    expect(normalizeCombo('f11')).toBe('F11');
+  });
+});
+
+describe('commands: non-QWERTY layouts', () => {
+  it('keeps the typed letter when it is already a letter (AZERTY A sits on KeyQ)', () => {
+    expect(keyFromEvent({ key: 'A', code: 'KeyQ', ctrlKey: true, shiftKey: true })).toBe('Ctrl+Shift+A');
+  });
+});
