@@ -10,6 +10,7 @@
 - **Ctrl+Y / Ctrl+Shift+Z** după Ctrl+Z pe o corectură automată (ghilimele, liniuță, …) readuce corectura, ca în Word; după alte tastări redo-ul obișnuit rămâne neschimbat.
 - **Zotero:** „Fișier → Importă bibliografia din Zotero” aduce toată biblioteca din contul tău (ID și cheie din Setări → Servicii și conturi), cu chei de citare lizibile; titlurile cu aceeași cheie se actualizează, celelalte rămân.
 - Manualul și dialogul Compile descriu `<$t>` și `<$subtitle>`.
+- `installer\\build-windows.cmd`: pe un Windows cu Node.js și Inno Setup, dublu clic construiește aplicația, varianta portabilă și installerul cu wizard, apoi deschide folderul `release`.
 - Release `v0.8.2` pe GitHub cu `Scribner-Setup-0.8.2.exe` (wizard) și varianta portabilă.
 
 ## 2026-10-24 — v0.8.1 — Vânătoare de bug-uri: încrucișat, divergent și convergent

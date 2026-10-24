@@ -97,3 +97,4 @@ Rezumat: 77 de unelte MCP (57 noi), 4 bug-uri reparate la cauză, 43 de teste no
 - [x] Ctrl+Y / Ctrl+Shift+Z readuce corectura automată anulată cu Ctrl+Z
 - [ ] Verificat cu LanguageTool real: poziții după emoji
 - [x] Release v0.8.2 cu installer și varianta portabilă
+- [x] installer/build-windows.cmd: installerul cu wizard construit local cu dublu clic
