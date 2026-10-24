@@ -15,7 +15,7 @@ const store = require('../lib/store.cjs');
 const templates = require('../lib/templates.cjs');
 const { tutorialTemplate } = require('../lib/tutorialProject.cjs');
 
-const CHAPTERS = ['start', 'projects', 'binder', 'editor', 'styles', 'comments', 'scrivenings', 'corkboard', 'outline', 'inspector', 'snapshots', 'search', 'targets', 'compile', 'import', 'script', 'tools', 'irep', 'ai', 'settings', 'shortcuts', 'faq'];
+const CHAPTERS = ['start', 'projects', 'binder', 'editor', 'styles', 'comments', 'scrivenings', 'corkboard', 'outline', 'inspector', 'snapshots', 'search', 'targets', 'compile', 'import', 'script', 'tools', 'irep', 'ai', 'settings', 'shortcuts', 'faq', 'yours'];
 
 describe('help manual', () => {
   for (const [lang, manual] of [['ro', MANUAL_RO], ['en', MANUAL_EN]]) {
