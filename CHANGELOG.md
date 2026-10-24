@@ -1,5 +1,12 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.5 — Bucle divergente/convergente (runda 2)
+
+### Cerința user
+> "continua automat cu roadmap + bug hunter, ALL TYPE în bucle mai multe divergent și bucle mai multe convergente"
+
+- **Comentarii:** un comentariu pus peste text cu formatare amestecată (o parte aldin) apare în Inspector ca un singur comentariu; editarea și ștergerea îl schimbă în întregime (`src/lib/panelsExtra.js`).
+
 ## 2026-10-24 — v0.9.4 — Bug hunter din TODO: căutare, tastatură, siguranță
 
 ### Cerința user
