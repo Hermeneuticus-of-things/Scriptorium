@@ -1,5 +1,18 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.1 — Vânătoare de bug-uri: încrucișat, divergent și convergent
+
+### Cerința user
+> "testează încrucișat și divergent, convergent, BUG HUNTER DEEP"
+
+### Rezultat
+Patru vânători de bug-uri în paralel, pe zone separate (editor, integritatea datelor, Compile, interfață): sesiuni aleatoare cu semințe reproductibile (divergent) și cazuri cu risc mare (convergent); fiecare bug reprodus întâi cu un test care pică, apoi reparat la cauză.
+- **Editor:** tab-urile, spațiile duble și cele de la început de paragraf se pierdeau la redeschiderea documentului și în split; lipirea fără formatare lăsa `\r`; Ctrl+Shift+V rămânea armat; inserarea unui singur rând (generator de nume, dictare, traduceri) rupea paragraful; Scrivenings nu aplica corecturile, stilurile și linkurile; titlul imaginii nu se ștergea.
+- **Date:** îmbinarea binderului cu mutări încrucișate bloca salvarea; fișier temporar rămas după o scriere eșuată; două snapshot-uri în aceeași milisecundă se suprascriau; backup-uri parțiale (disc plin) socotite valide; restaurarea unui zip gol; pachet cu id invalid lăsa un proiect pe jumătate; cursă la preluarea unui lock vechi (acum lock cu token, test cu 6 procese) și erorile trecătoare de lock pe Windows.
+- **Compile:** caractere de control stricau capitole EPUB; imagini stricate puse în EPUB/DOCX/ODT/RTF (acum textul alternativ); lățimi în procente respinse de epubcheck; imaginile din DOCX tăiate la un rând în LibreOffice (inclusiv coperta); subtitlurile lipseau din LaTeX. Matrice: 8 formate × 12 ieșiri × 2 seturi de opțiuni, validate cu epubcheck, validatorul OOXML, LibreOffice, pandoc și PDF-ul real privit pagină cu pagină.
+- **Interfață:** meniurile ieșeau din ecran în ferestre mici; „Înlocuiește” după traducere rupea paragraful și pierdea spațiile; citirea Speechify continua după Stop; meniul de clic dreapta din aplicația desktop rămânea în română în modul englez; numele formatelor de Compile, ale stilurilor și ale modurilor de scenariu rămâneau în română în modul englez; erorile din Servicii și conturi erau tăcute; corecturile LanguageTool suprapuse stricau textul.
+- Scenarii noi în browser: editor-fuzz, ui-walk, keyboard-only, drag-drop, escape-stack, menu-viewport, service-replace, replace-inline. Total 677 teste unitare + 2 sărite; E2E Electron trece; CI pe Linux și Windows.
+
 ## 2026-10-24 — v0.8.0 — Carte gata de tipar și digital, imagini redimensionabile, servicii și conturi, Speechify, bug-uri Windows și meniuri
 
 ### Cerința user

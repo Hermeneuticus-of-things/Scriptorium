@@ -46,7 +46,7 @@ async function invariants(p, label, lang, errors) {
     for (const a of ['title', 'aria-label', 'placeholder']) for (const e of document.querySelectorAll(`[${a}]`)) {
       const m = e.getAttribute(a).match(/^(ui|cmd|set|btn)\.[a-zA-Z_.]+$/); if (m) out.keys.push(`${a}=${m[0]}`);
     }
-    const tops = [...document.querySelectorAll('.modal, .menu-pop, .context-menu, [role=menu]')];
+    const tops = [...document.querySelectorAll('.modal, .menu-pop, .ctx-menu, [role=menu]')];
     const top = tops.pop();
     if (top) {
       const b = top.getBoundingClientRect();
@@ -112,8 +112,8 @@ async function walk(seed, lang, theme, vp) {
         await rows.nth(k).click({ button: 'right', timeout: 1500 });
         await p.waitForTimeout(80);
         await invariants(p, `${ctx} ${label}`, lang, errors);
-        const items = (await p.locator('.context-menu button:not([disabled])').allInnerTexts()).map((s) => s.split('\n')[0].trim()).filter((s) => s && !SKIP.test(s));
-        if (items.length && rand() < 0.6) { const it = pick(items); label += ` › ${it}`; await p.locator('.context-menu button', { hasText: it }).first().click({ timeout: 1500 }); }
+        const items = (await p.locator('.ctx-menu button:not([disabled])').allInnerTexts()).map((s) => s.split('\n')[0].trim()).filter((s) => s && !SKIP.test(s));
+        if (items.length && rand() < 0.6) { const it = pick(items); label += ` › ${it}`; await p.locator('.ctx-menu button', { hasText: it }).first().click({ timeout: 1500 }); }
       } else if (a < 0.82) {
         const e = p.locator('.pane .ProseMirror').first();
         if (!(await e.count())) continue;
@@ -123,8 +123,8 @@ async function walk(seed, lang, theme, vp) {
         await p.mouse.click(box.x + 20 + rand() * Math.min(300, box.width - 40), box.y + 10 + rand() * Math.min(100, box.height - 20), { button: 'right' });
         await p.waitForTimeout(80);
         await invariants(p, `${ctx} ${label}`, lang, errors);
-        const items = (await p.locator('.context-menu button:not([disabled])').allInnerTexts()).map((s) => s.split('\n')[0].trim()).filter((s) => s && !SKIP.test(s));
-        if (items.length && rand() < 0.5) { const it = pick(items); label += ` › ${it}`; await p.locator('.context-menu button', { hasText: it }).first().click({ timeout: 1500 }); }
+        const items = (await p.locator('.ctx-menu button:not([disabled])').allInnerTexts()).map((s) => s.split('\n')[0].trim()).filter((s) => s && !SKIP.test(s));
+        if (items.length && rand() < 0.5) { const it = pick(items); label += ` › ${it}`; await p.locator('.ctx-menu button', { hasText: it }).first().click({ timeout: 1500 }); }
       } else {
         const k = pick(['Escape', 'Escape', 'Control+1', 'Control+2', 'Control+3', 'Control+f', 'Control+Shift+f', 'Control+k', 'F1', 'Control+g']);
         label = `key ${k}`;
