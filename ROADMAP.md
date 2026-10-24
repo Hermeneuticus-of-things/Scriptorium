@@ -251,3 +251,12 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 8. **Adnotări pe PDF-urile din Cercetare** (singura funcție lipsă din docs/GAP-AUDIT.md).
 9. **sinonimul.ro cu adresă directă** în loc de căutarea prin Google (de verificat formatul adresei pe site).
 10. **Rămân la autor** (§8): instalare pe Windows, test MCP cu Claude Desktop / Claude Code, importul proiectului Karma, cheile de servicii, testul AI complet cu un model real, decizia depozit public / privat.
+11. **Plugin D&TED (dictare și transcriere în română) integrat în interfață.** D&TED (https://github.com/Hermeneuticus-of-things/dted) e un program Python separat (Whisper `large-v3-turbo`, local, fără internet). Pași:
+    - în D&TED: un mod fără fereastră pentru alte programe: `python -m dictare_transcriere_romana --transcrie <fișier> --json` (text + segmente cu timp) și `--dictare --stdio` (text parțial pe măsură ce vorbești, JSON pe linii);
+    - în Scribner: Setări → Servicii → D&TED (calea programului, detectată automat din instalarea Windows; test „Verifică”);
+    - Unelte → Dictare (D&TED): bară de dictare peste editor, textul intră la cursor, cu ghilimele, diacritice și corecturile învățate aplicate; pauză / reluare / stop;
+    - Fișier → Importă → Transcrie fișier audio…: MP3, WAV, M4A, OGG, FLAC → document nou în Cercetare (opțional cu marcaje de timp), fișierul audio atașat ca media;
+    - în binder, pe un fișier audio: „Transcrie cu D&TED” → nota sau un document legat;
+    - fără D&TED instalat, comenzile apar cu un link de instalare; nimic nu pleacă pe internet; procesul rulează din main, renderer-ul nu pornește programe;
+    - teste: protocolul JSON simulat, anularea, erori (lipsă model, fără microfon), scenariu de browser cu un D&TED fals.
+
