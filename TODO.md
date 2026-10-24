@@ -145,7 +145,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] dialog de conflict cu variantele alături (v0.9.2, `src/components/ConflictDialog.jsx`, `resolveMerge`)
 - [ ] rămase din bug hunt v0.9.3: Outline la 1024 px (Inspector strâns automat); termeni: Binder/Corkboard/Outline/Compile/Layout/bookmark în română unitară; categoriile de șabloane ca id-uri traduse; fragmente de propoziție lipite în JSX → chei întregi
 - [x] din bug hunt v0.9.3: Corkboard un singur Tab, caractere în cache, `restoreBackup` limită, sanitizer unic (v0.9.4)
-- [ ] din căutarea pe date (v0.9.4): celule unite (colspan) și imagini SVG/GIF cu mărime la `.scriv`; `<ol start>` în DOCX și `.scriv`; `<code>` la `.scriv`; `trashedFrom` și spațiile din titluri la `.scriv`; avertisment la pachet pentru fișierele media
+- [ ] din căutarea pe date (v0.9.4): celule unite (colspan) și imagini SVG/GIF cu mărime la `.scriv`; `<ol start>` la `.scriv` (DOCX gata); `<code>` la `.scriv`; `trashedFrom` și spațiile din titluri la `.scriv`; avertisment la pachet pentru fișierele media
 - [ ] `mergeDoc` re-ancorare după inserții (conflicte false)
 - [x] (v0.9.4) căutare „cuvânt întreg” și `^`/`$` peste granițele de formatare (bold în mijlocul cuvântului) — `src/lib/search.js`
 - [ ] Ctrl+Z după schimbarea documentului: pași pe cuvinte, fără reluarea anulărilor — `src/components/Editor.jsx`
