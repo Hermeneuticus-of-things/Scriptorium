@@ -65,6 +65,8 @@ export function simulateTyping(chars, opts) {
 
 export const Corrections = Extension.create({
   name: 'corrections',
+  // Above the history extension, so Ctrl+Y can restore a reverted correction before plain redo runs.
+  priority: 1000,
   addOptions() {
     return { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [] };
   },
@@ -89,7 +91,35 @@ export const Corrections = Extension.create({
     ];
   },
   // Ctrl/Cmd+Z right after an input rule (ours or Typography's) undoes only the correction.
+  // Ctrl/Cmd+Y (or Shift+Z) right after that brings the correction back, as in Word. The
+  // corrected document is remembered and only the changed range is put back.
+  addStorage() {
+    return { reverted: null }; // { after: doc once reverted, corrected: doc before, selection }
+  },
   addKeyboardShortcuts() {
-    return { 'Mod-z': () => this.editor.commands.undoInputRule() };
+    const redoCorrection = () => {
+      const r = this.storage.reverted;
+      const { state, view } = this.editor;
+      if (!r || r.after !== state.doc) return false;
+      this.storage.reverted = null;
+      const start = r.corrected.content.findDiffStart(state.doc.content);
+      if (start == null) return false;
+      const end = r.corrected.content.findDiffEnd(state.doc.content);
+      const tr = state.tr.replace(start, end.b, r.corrected.slice(start, end.a));
+      tr.setSelection(r.selection.map(tr.mapping).resolve(tr.doc));
+      view.dispatch(tr);
+      return true;
+    };
+    return {
+      'Mod-z': () => {
+        const corrected = this.editor.state.doc;
+        const selection = this.editor.state.selection;
+        const ok = this.editor.commands.undoInputRule();
+        this.storage.reverted = ok ? { after: this.editor.state.doc, corrected, selection: selection.getBookmark() } : null;
+        return ok;
+      },
+      'Mod-y': redoCorrection,
+      'Shift-Mod-z': redoCorrection,
+    };
   },
 });

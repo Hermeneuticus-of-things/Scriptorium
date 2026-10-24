@@ -450,6 +450,8 @@ media/                 imagini, PDF, audio, video</pre>
 <li><code>&lt;$projecttitle&gt;</code>, <code>&lt;$abbr_title&gt;</code>, <code>&lt;$author&gt;</code>, <code>&lt;$surname&gt;</code>, <code>&lt;$forename&gt;</code>.</li>
 <li><code>&lt;$date&gt;</code>, <code>&lt;$year&gt;</code>.</li>
 <li><code>&lt;$p&gt;</code>: numărul paginii, doar în antet și subsol.</li>
+<li><code>&lt;$t&gt;</code> în antet sau subsol: titlul capitolului de pe pagina respectivă (în PDF și Word).</li>
+<li><code>&lt;$subtitle&gt;</code>: subtitlul cărții.</li>
 <li><code>&lt;$img:Nume&gt;</code>: imaginea din Cercetare cu acel titlu sau nume de fișier.</li>
 </ul>
 <p>Un placeholder necunoscut rămâne ca text, ca să-l observi.</p>`,
