@@ -36,7 +36,7 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 | [Dictezi](#dictezi) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
 | [Corectezi](#corectezi) | revizie fără AI, corecturi învățate, asistent AI opțional, versiuni |
 | [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri |
-| [Agenți AI și comenzi](#agenți-ai-și-linia-de-comandă) | Claude, Codex prin MCP; comanda `scribner` în terminal |
+| [Agenți AI](#agenți-ai) | Claude sau Codex lucrează direct în carte, dacă vrei |
 | [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate |
 | [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când |
 
@@ -109,6 +109,10 @@ Clic dreapta pe un cuvânt și ai la îndemână:
 ### Dictezi
 
 <p align="center">
+  <img src="./assets/readme/voice-team.svg" width="100%" alt="Scrii cu vocea: vorbești și fraza apare pe fișa scenei, fără internet. Lucrați împreună: fiecare om cu culoarea lui pe fișele aceleiași cărți, una blocată de Ana">
+</p>
+
+<p align="center">
   <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Scribner: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
 </p>
 
@@ -163,22 +167,9 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 
 În **Cercetare → Întreabă** discuți cu sursele tale: primești răspunsul cu trimiteri [1], [2], iar un clic te duce la pasaj. Continui discuția, alegi ce surse folosește (manuscrisul, cercetarea, notele sau anumite dosare), aduci PDF, Word, text sau pagini web și salvezi răspunsul ca notă ori îl inserezi în text, cu trimiterile ca note de subsol. Fără AI, panoul doar caută în surse. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT**, **Claude Projects** sau **Manus**, gata împărțită.
 
-### Agenți AI și linia de comandă
+### Agenți AI
 
-Un agent AI poate lucra direct în proiect: citește capitolele, scrie sinopsisuri, caută, face revizia sau Compile. Din *AI → Conectează la Claude (MCP)* configurezi Claude Desktop cu un clic sau copiezi comanda pentru Claude Code; merge și cu Codex, Gemini CLI, Cursor și VS Code. Nu ai nevoie de Node.js. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
-
-```powershell
-scribner info "D:\Carti\Karma.scribner"
-scribner compile "D:\Carti\Karma.scribner" --format docx -o "D:\Carti\Karma.docx"
-scribner export-sources "D:\Carti\Karma.scribner" -o "D:\Surse" --target notebooklm
-scribner ask "D:\Carti\Karma.scribner" "Ce spune cartea despre urmă?" --session karma
-```
-
-<p align="center">
-  <img src="./assets/readme/cli.png" width="100%" alt="Fereastră PowerShell cu scribner info, care arată titlul, autorul și numărul de cuvinte, apoi scribner export-sources pentru NotebookLM și fișierele create">
-</p>
-
-Comanda `scribner` o bifezi la instalare. Toate comenzile sunt în *Ajutor → Ce faci tu → Linia de comandă*.
+Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic. Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
 
 ### Compilezi
 
@@ -337,11 +328,14 @@ Din pagina [Releases](../../releases/latest) descarci una dintre variante:
 - **`Scribner-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator; programul se pune în `AppData\Local\Programs\Scribner`. La dezinstalare, cărțile tale rămân.
 - **`Scribner-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
 
-**Dintr-o singură comandă.** Deschide PowerShell și lipește:
+**Sau dintr-o singură comandă,** dacă folosești PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex
 ```
+
+<details>
+<summary><strong>Variante pentru cine folosește PowerShell</strong></summary>
 
 Comanda ia ultima versiune din Releases, verifică amprenta SHA-256 publicată de GitHub și pornește installerul. Variante, puse înainte, pe același rând:
 
@@ -358,6 +352,8 @@ Cât timp depozitul e privat, GitHub cere autentificare și pentru script, și p
 ```powershell
 $env:GITHUB_TOKEN='token-ul-tău'; irm -Headers @{Authorization="Bearer $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex
 ```
+
+</details>
 
 Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `scribner` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
 
@@ -408,6 +404,21 @@ Nu trebuie să știi nimic tehnic:
 
 <details>
 <summary><strong>Pentru cine vrea detalii tehnice</strong></summary>
+
+**Agenți AI și linia de comandă.** Un agent AI poate lucra direct în proiect: citește capitolele, scrie sinopsisuri, caută, face revizia sau Compile. Din *AI → Conectează la Claude (MCP)* configurezi Claude Desktop cu un clic sau copiezi comanda pentru Claude Code; merge și cu Codex, Gemini CLI, Cursor și VS Code. Nu ai nevoie de Node.js. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
+
+```powershell
+scribner info "D:\Carti\Karma.scribner"
+scribner compile "D:\Carti\Karma.scribner" --format docx -o "D:\Carti\Karma.docx"
+scribner export-sources "D:\Carti\Karma.scribner" -o "D:\Surse" --target notebooklm
+scribner ask "D:\Carti\Karma.scribner" "Ce spune cartea despre urmă?" --session karma
+```
+
+<p align="center">
+  <img src="./assets/readme/cli.png" width="100%" alt="Fereastră PowerShell cu scribner info, care arată titlul, autorul și numărul de cuvinte, apoi scribner export-sources pentru NotebookLM și fișierele create">
+</p>
+
+Pentru scripturi și terminal, programul instalat are comanda `scribner` (o bifezi la instalare, fără Node.js). Toate comenzile sunt în *Ajutor → Ce faci tu → Linia de comandă*.
 
 **Din cod sursă** (Node.js 22+ și git):
 
