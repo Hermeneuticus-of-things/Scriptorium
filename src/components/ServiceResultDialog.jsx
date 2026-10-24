@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { t } from '../lib/i18n.js';
-import { applyCorrections } from '../lib/textRange.js';
+import { applyCorrections, correctionEdits } from '../lib/textRange.js';
 
 // Result of an in-app translation (DeepL / Google) or a grammar check (LanguageTool) on the selection.
 // result: { kind: 'translate', text, service, detected } | { kind: 'grammar', matches, language }
@@ -46,7 +46,7 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
         )}
         <div className="actions">
           {isGrammar ? (
-            <button className="primary" disabled={!result.matches.length} onClick={() => onReplace(corrected())}>{t('ui.services.aplica_corecturile')}</button>
+            <button className="primary" disabled={!result.matches.length} onClick={() => onReplace(corrected(), correctionEdits(source, result.matches, chosen))}>{t('ui.services.aplica_corecturile')}</button>
           ) : (
             <>
               <button className="primary" onClick={() => onReplace(result.text)}>{t('ui.services.inlocuieste_selectia')}</button>

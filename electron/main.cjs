@@ -203,7 +203,7 @@ function setupSpelling(win) {
     }
     if (text) {
       const st = readSettings();
-      const g = lookupGroups(text, { from: st.translateFrom || 'auto', to: st.translateTo || 'ro' });
+      const g = lookupGroups(text, { from: st.translateFrom || 'auto', to: st.translateTo || 'ro', lang: st.language || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, click: () => lookup(l.url) }));
       const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
       const sv = services.serviceStatus(st, safeStorage);
@@ -344,7 +344,7 @@ function handle(channel, fn) {
     try {
       return { ok: true, value: await fn(event, ...args) };
     } catch (err) {
-      return { ok: false, error: channel.startsWith('ai:') || channel === 'rag:ask' ? ai.friendlyError(err) : err.message || String(err) };
+      return { ok: false, error: channel.startsWith('ai:') || channel === 'rag:ask' || channel === 'rag:chat' ? ai.friendlyError(err, readSettings().language) : err.message || String(err) };
     }
   });
 }
@@ -353,7 +353,8 @@ handle('settings:get', () => {
   const s = readSettings();
   const b = backupSettings();
   return {
-    recent: s.recent || [],
+    // `missing`: the Home screen marks recents whose folder is gone (moved, deleted, drive unplugged).
+    recent: (s.recent || []).map((r) => (r && r.dir && !fs.existsSync(path.join(r.dir, 'project.json')) ? { ...r, missing: true } : r)),
     theme: s.theme,
     fontSize: s.fontSize,
     typewriter: s.typewriter,
@@ -437,6 +438,7 @@ handle('project:open', async (e, dirArg) => {
     return null;
   }
   // Load before claiming: a missing / broken project must not move this window's claim.
+  store.checkProjectDir(dir, readSettings().language);
   const project = store.loadProject(dir);
   const reopening = claims.dirOf(e.sender.id) === path.resolve(dir);
   if (!reopening) releaseWindow(e.sender.id);
@@ -451,7 +453,12 @@ handle('project:open', async (e, dirArg) => {
 handle('project:reload', (e, dir) => {
   assertOpened(dir);
   assertOwner(e.sender, dir);
-  return { dir, project: store.loadProject(dir) };
+  store.loadProject(dir); // creates missing sub-folders, as before
+  return projectWatch.reloadWithBase(dir, bases);
+});
+handle('project:syncConflicts', (e, dir) => {
+  assertOpened(dir);
+  return projectWatch.syncConflicts(dir);
 });
 
 // Single-file project bundle (.json) for sync with the web/PWA build.
@@ -573,7 +580,21 @@ function watchProject(dir, webContents) {
   };
   try {
     const w = fs.watch(dir, { recursive: true }, (_event, rel) => tracker.handle(rel));
-    w.on('error', () => closeWatchers(webContents.id));
+    // The folder went away (NAS offline, network drive or sync folder disconnected): tell the window
+    // and watch again once it is back, instead of silently never reporting changes again.
+    w.on('error', () => {
+      closeWatchers(webContents.id);
+      if (!webContents.isDestroyed()) webContents.send('project:changed', { dir, files: [], offline: true });
+      const retry = setInterval(() => {
+        if (webContents.isDestroyed() || claims.dirOf(webContents.id) !== path.resolve(dir)) return clearInterval(retry);
+        if (!fs.existsSync(path.join(dir, 'project.json'))) return undefined;
+        clearInterval(retry);
+        watchProject(dir, webContents);
+        // Whatever changed meanwhile is read again.
+        webContents.send('project:changed', { dir, files: ['project.json'], online: true });
+        return undefined;
+      }, 5000);
+    });
     watchers.set(wkey, w);
   } catch {
     /* recursive watch unsupported: external changes appear on reopen */
@@ -608,9 +629,56 @@ handle('media:add', async (e, dir) => {
   });
 });
 
+// Error log for Help → Report a problem (logs/errors.jsonl in userData, rotated).
+const errorLog = require('../lib/errorLog.cjs');
+const errorLogFile = () => path.join(app.getPath('userData'), 'logs', 'errors.jsonl');
+function logAppError(info) {
+  try {
+    const entry = errorLog.appendEntry(errorLogFile(), errorLog.makeEntry({ version: app.getVersion(), ...info }));
+    for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send('app:error', entry);
+    return entry;
+  } catch (err) {
+    console.error('Jurnalul de erori nu poate fi scris', err);
+    return null;
+  }
+}
+process.on('uncaughtException', (error) => {
+  console.error(error);
+  logAppError({ process: 'main', kind: 'uncaughtException', error });
+});
+process.on('unhandledRejection', (error) => {
+  console.error(error);
+  logAppError({ process: 'main', kind: 'unhandledRejection', error });
+});
+app.on('render-process-gone', (_e, _wc, d) => logAppError({ process: 'renderer', kind: 'render-process-gone', message: `Fereastra s-a oprit: ${d.reason} (cod ${d.exitCode})` }));
+app.on('child-process-gone', (_e, d) => {
+  if (d.reason !== 'clean-exit') logAppError({ process: d.type, kind: 'child-process-gone', message: `${d.type}${d.name ? ' ' + d.name : ''}: ${d.reason} (cod ${d.exitCode})` });
+});
+handle('errors:get', () => ({
+  entries: errorLog.readEntries(errorLogFile()),
+  env: {
+    appVersion: app.getVersion(),
+    os: `${process.platform} ${require('os').release()}`,
+    arch: process.arch,
+    electron: process.versions.electron,
+    chrome: process.versions.chrome,
+    home: require('os').homedir(),
+    user: (() => { try { return require('os').userInfo().username; } catch { return ''; } })(),
+    projectDirs: (readSettings().recent || []).map((r) => (typeof r === 'string' ? r : r && r.dir)).filter(Boolean),
+  },
+}));
+handle('errors:clear', () => errorLog.clear(errorLogFile()));
+handle('errors:log', (_e, info = {}) => {
+  logAppError({ process: 'renderer', kind: String(info.kind || 'error').slice(0, 40), message: String(info.message || '').slice(0, 1000), stack: String(info.stack || '').slice(0, 4000) });
+  return true;
+});
+handle('app:copyText', (_e, text) => {
+  clipboard.writeText(String(text || ''));
+  return true;
+});
 require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
-require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai });
+require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai, noteSelfWrite, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators

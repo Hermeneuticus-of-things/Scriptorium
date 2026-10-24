@@ -1,5 +1,85 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.7 (continuare) — Sincronizare prin OneDrive, Dropbox, Google Drive și NAS: 10 bug-uri, plasă de siguranță
+
+- **Același document editat în două locuri:** nu se mai pierde nimic; textul local rămâne, varianta venită se salvează ca snapshot „Versiunea de pe celălalt calculator, HH:MM”, cu mesaj.
+- **Copii de conflict** (Dropbox, OneDrive, Google Drive, Syncthing, Nextcloud) recunoscute, scoase din exporturi și semnalate la deschidere; `desktop.ini`, `Thumbs.db`, `.DS_Store`, `~$…`, `.~lock` ignorate.
+- **Schimbările nu se mai pierd:** scrierea din celălalt calculator imediat după a ta, NAS cu ore rotunjite la 2 s, fișier șters și recreat de clientul de cloud (nu mai golește documentul deschis).
+- **Îmbinarea binderului** corectă după reîncărcare, pe ambele părți; lock venit de pe un calculator cu ceasul înainte nu mai blochează salvarea.
+- **NAS / cloud deconectat:** un mesaj la dispariție și unul la revenire; aplicația desktop reia urmărirea singură.
+- **Instalare dintr-o comandă:** cât timp depozitul e privat, scriptul acceptă un token GitHub (`GITHUB_TOKEN`) și explică eroarea 404.
+- Teste: 1034 + 2 sărite; scenariu nou folder-sync.
+
+## 2026-10-24 — v0.8.7 (continuare) — Panoul activ evidențiat
+
+### Cerința user
+> "originalul într-o parte și traducerea în cealaltă: fereastra activă cu chenar verde, cea inactivă altfel, automat, fără setări"
+
+### Rezultat
+- Cu două panouri deschise (split sau panoul de referință), cel în care dai clic sau scrii are chenar verde; celelalte au chenar gri și textul ușor estompat. Automat, fără setare; culori potrivite și pentru tema întunecată.
+- Butonul de pe bara panoului 2 tradus („Alăturate” / „Una sub alta”), la fel comanda din meniu.
+- Imaginea „Originalul și traducerea, alături” refăcută; README și ajutorul descriu evidențierea.
+- Scenariu nou: active-pane.
+
+## 2026-10-24 — v0.8.7 (continuare) — Instalare dintr-o comandă, 17 bug-uri în discuția cu sursele, CLI și installer
+
+- **Instalare dintr-o comandă:** `irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex` (ultima versiune, verificare SHA-256 publicată de GitHub, opțiuni pentru PATH, fără ferestre și portabil). CI pe Windows instalează silențios installerul construit, verifică programul, serverul MCP, comanda `scribner` din PATH și rulează scriptul în mod de probă.
+- **Discuția cu sursele:** întrebări foarte lungi încap în buget; mai multe titluri de „întrebări de continuare” recunoscute; răspunsul nu mai e tăiat în timp ce curge; un fișier de discuții stricat e păstrat ca `.bad-<oră>`, nu suprascris; titluri pe un rând; Enter în timpul răspunsului nu mai trimite a doua întrebare; „Inserează în document” refuză documentele doar-citire.
+- **Import PDF:** ghilimelele românești, liniuțele și „…” apar corect; șiruri mari nu mai opresc importul; dicționare imbricate; PDF-urile criptate apar ca „Fără text”.
+- **Linia de comandă:** NotebookLM rămâne sub 50 de surse și cu `--per document`; valorile numerice greșite opresc comanda cu mesaj; căile Windows cu ghilimele la final și folderele noi `-o dir\` merg; o sesiune `ask` stricată se pune deoparte; `scribner.cmd` păstrează codul de ieșire și argumentele cu paranteze.
+- **Installer:** PATH fără dubluri și fără `;` goale, scos la dezinstalare, terminalele deschise anunțate; textul opțiunii în română și engleză.
+- „Doar citire.” tradus; importul arată și ODT/RTF.
+- Teste: 1014 + 2 sărite; E2E Electron trece.
+
+## 2026-10-24 — v0.8.7 — Discuție cu sursele (ca într-un caiet de cercetare), linia de comandă „scribner”, 13 bug-uri
+
+### Cerința user
+> "import, consultă AI cu sursele, cu întrebare follow-up, alături de NotebookLM" · "CLI pentru NotebookLM și altele asemănătoare, ChatGPT/Claude Projects, Manus" · "bug hunter la dicționare, traducere online, AI, MCP, ecranul de început, română" · "să meargă și cu DeepL gratuit"
+
+### Rezultat
+- **Cercetare → Întreabă devine o discuție:** întrebări de continuare (ultimele 6 replici, cu buget de lungime), trimiteri [n] care deschid pasajul, alegerea surselor (manuscris, cercetare, note, dosare), import de surse (PDF, DOCX, TXT, MD, HTML, RTF, ODT, pagini web, text lipit), „Salvează ca notă”, „Inserează în document” (note de subsol sau legături), „Copiază”, 2–3 întrebări sugerate; discuțiile se păstrează în proiect (`research-chats.json`); răspunsul curge pe ecran și se poate opri.
+- **Linia de comandă `scribner`** (`cli/scribner.cjs`, `scribner.cmd` instalat lângă program, opțiune în installer pentru PATH): info, list, cat, search, stats, compile, export-sources cu `--target notebooklm|gemini|chatgpt|claude|manus|generic`, export-notebooklm, export-docs, backup, snapshot, import, ask cu `--session`, mcp.
+- **DeepL gratuit:** cheile API Free (`:fx`) merg automat; fără cont se deschide pagina DeepL.
+- **Bug-uri:** meniul de dicționare cădea la un emoji pe limita de 5000 de caractere; dicționare și erori AI în engleză; timpul depășit scris corect („10 secunde”); acțiune AI pe text gol nu mai costă; cheia API ascunsă din mesajele de eroare; config Claude Desktop cu BOM sau `mcpServers` neobișnuit; ecranul de început: proiecte dispărute marcate „(lipsește)”, „Golește lista” nu mai dispare, Enter creează proiectul, titluri lungi; clic dreapta pe „cuvânt--altul”; „Înlocuiește” după traducere păstrează aldinul și cursivul, corecturile de gramatică schimbă doar cuvintele corectate.
+- **MCP verificat în rulare:** doar-citire refuză scrierile, snapshot înainte de scriere, jurnalul agentului, lock fără pierderi, diacritice și emoji.
+- **README:** secțiunile „Întrebi sursele” și „Linia de comandă”, DeepL gratuit.
+- Teste: 989 + 2 sărite; E2E Electron trece.
+
+## 2026-10-24 — v0.8.6 (continuare) — Bug-uri în funcțiile noi
+
+- **Raport de probleme:** numele de familie din căi cu spații (`C:\Users\Ion Popescu\…`), numele cu diacritice, adresele de e-mail și cheile din adrese web (`access_token=…`) nu se mai scurg în raport.
+- **Note de subsol cu simboluri sau litere:** HTML, PDF și EPUB numerotează acum ca Word (*, †, ‡, §, apoi dublate; z, aa, bb…), nu diferit de DOCX.
+- **`[[Titlu nou]]`** nu mai creează documentul în coș când dosarul ales între timp a fost șters.
+- **„Legături către acest document”** nu mai arată documente din coș; legăturile din dosare apar cu titlul lor.
+- Texte: „Fereastra nu se mai poate afișa”, „Send via GitHub”, butonul „+ link web” din Inspector tradus.
+- Teste: 910 + 2 sărite; E2E Electron trece.
+
+## 2026-10-24 — v0.8.6 (continuare) — Raportează o problemă, cu erorile din jurnal
+
+### Cerința user
+> "buton de trimis erori direct pe GitHub, pentru userul care nu se pricepe la calculatoare; automat și eroarea din log"
+
+### Rezultat
+- **Jurnal de erori** (`userData/logs/errors.jsonl`, maximum 200 / 1 MB): erorile din fereastră și din procesul principal se notează singure.
+- **Mesaj discret** la o eroare nouă: „A apărut o problemă. Trimite raportul?”.
+- **Ajutor → Raportează o problemă…**: scrii ce s-a întâmplat; detaliile tehnice (versiune, sistem, ultimele erori, ultimele comenzi) sunt completate automat și se văd înainte de trimitere. „Trimite pe GitHub” deschide pagina cu raportul gata scris (cont GitHub gratuit) și copiază raportul întreg; „Copiază raportul” pentru orice alt canal.
+- **Fără date personale:** fără text din carte, căile de pe disc scurtate (~, <proiect>), cheile API ascunse.
+- **Ecran de recuperare** pentru erorile de afișare: în loc de fereastră albă, un mesaj cu „Reîncarcă”; eroarea ajunge în raport.
+- **README:** secțiunea „Ai găsit o problemă?”, panoul de referință, `[[Titlu nou]]`, legăturile înapoi, numerotarea notelor, aspectul fișelor și blocurile cu formatare păstrată; imagini noi `reference.png`, `report.png`.
+- Teste: 901 + 2 sărite; scenariu report-problem; E2E Electron trece.
+
+## 2026-10-24 — v0.8.6 — Legături înapoi, panou de referință, numerotarea notelor, fișe personalizate, formatare păstrată
+
+### Rezultat
+- **Legături înapoi automate** (Setări → Editare, oprit implicit): când un document primește o legătură către altul, sursa apare în semnele de carte ale țintei; Inspectorul arată „Legături către acest document”.
+- **`[[Titlu nou]]`** fără potrivire: bară cu „Creează și leagă” / „Anulează” și alegerea dosarului.
+- **Panou de referință** (Vizualizare → Deschide ca referință, Alt+Shift+clic în binder): un document alături de editor și de split, doar citire până bifezi „Editabil”; păstrează derularea și se salvează în layout.
+- **Numerotarea notelor de subsol** în Compile: 1, 2, 3 / i, ii, iii / a, b, c / *, †, ‡, §, cu reluare pe capitol (DOCX, HTML/PDF; EPUB format; ODT/RTF format fără reluare).
+- **Fișe pe corkboard:** colțuri rotunjite sau drepte, fișe liniate, culoare după etichetă.
+- **Păstrează formatarea** (Format): blocuri pe care Compile nu le reformatează (fără înlocuiri, ghilimele, alineat; DOCX își păstrează fontul și indentările).
+- Verificarea funcțiilor (`docs/GAP-AUDIT.md`): 69 prezente, 1 lipsă (adnotări în PDF).
+- Teste: 882 + 2 sărite; E2E Electron trece.
+
 ## 2026-10-24 — v0.8.5 (continuare) — Verificare completă a funcțiilor, legături [[Titlu]], comparare pe frază/paragraf, numărul selecției
 
 ### Cerința user

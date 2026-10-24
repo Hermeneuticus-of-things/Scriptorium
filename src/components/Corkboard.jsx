@@ -44,7 +44,7 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
   return (
     <article
       className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''}`}
-      style={{ borderTopColor: colors[n.label] || 'transparent', ...style }}
+      style={{ borderTopColor: colors[n.label] || 'transparent', ...(colors[n.label] ? { '--label-color': colors[n.label] } : {}), ...style }}
       data-card-id={n.id}
       role="gridcell"
       tabIndex={0}
@@ -111,6 +111,11 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
 }
 
 // Corkboard with grid, lines (arrange by label/status/keyword) and freeform modes.
+/** Class list of the board from its look options: card shape, ruled cards, card colour by label. */
+export function corkClass(cork = {}) {
+  return ['corkboard', cork.shape === 'square' ? 'cards-square' : 'cards-rounded', cork.ruled ? 'cards-ruled' : '', cork.labelFill ? 'cards-label-fill' : ''].filter(Boolean).join(' ');
+}
+
 // Board settings live on the folder: folder.cork = {mode, size, by, ratio, spacing, columns, pins}.
 // Pass `folders` (array of folder nodes) to stack several boards, one section per folder.
 export default function Corkboard(props) {
@@ -263,7 +268,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   }
 
   return (
-    <div ref={boardRef} className="corkboard" style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
+    <div ref={boardRef} className={corkClass(cork)} style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
       <div className="cork-head">
         <h2>{folder?.title}</h2>
         <button onClick={addCard} title={t('ui.corkboard.fisa_noua_dupa_fisa_selectata')}>{t('ui.corkboard.fisa')}</button>
@@ -308,6 +313,19 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
             </label>
             <label className="check">
               <input type="checkbox" checked={Boolean(cork.pins)} onChange={(e) => setCork({ pins: e.target.checked })} /> Pioneze
+            </label>
+            <label>
+              {t('ui.corkboard.cardShape')}
+              <select value={cork.shape || 'rounded'} onChange={(e) => setCork({ shape: e.target.value })}>
+                <option value="rounded">{t('ui.corkboard.shapeRounded')}</option>
+                <option value="square">{t('ui.corkboard.shapeSquare')}</option>
+              </select>
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={Boolean(cork.ruled)} onChange={(e) => setCork({ ruled: e.target.checked })} /> {t('ui.corkboard.ruledCards')}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={Boolean(cork.labelFill)} onChange={(e) => setCork({ labelFill: e.target.checked })} /> {t('ui.corkboard.labelFill')}
             </label>
           </div>
         </details>
