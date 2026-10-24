@@ -78,7 +78,7 @@ const { parseBibliography } = require('../lib/bibliography.cjs');
 export const FULL_TOOL_NAMES = [];
 
 export function registerFullTools(ctx) {
-  const { z, project, store, textIndexOf, load, mutate, trashIds, nodeOrThrow, textNodeOrThrow, pathOf, outsideProjects, addProject, appSettings, userData } = ctx;
+  const { z, project, store, textIndexOf, load, mutate, trashIds, nodeOrThrow, textNodeOrThrow, pathOf, outsideProjects, freshOutput, hiddenPath, addProject, appSettings, userData } = ctx;
   const tool = (name, ...rest) => {
     FULL_TOOL_NAMES.push(name);
     return ctx.tool(name, ...rest);
@@ -112,6 +112,8 @@ export function registerFullTools(ctx) {
   };
   const existingFile = (p) => {
     const abs = path.resolve(p);
+    // Hidden places (.ssh, .aws, dotfiles, AppData) are not read for a client.
+    if (hiddenPath(abs)) throw new Error(`Nu import din foldere sau fișiere ascunse ori de sistem: ${abs}`);
     if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) throw new Error(`Fișier inexistent: ${abs}`);
     return abs;
   };
@@ -124,7 +126,7 @@ export function registerFullTools(ctx) {
   const outputFile = (p) => {
     const abs = outsideProjects(p, 'output_path');
     fs.mkdirSync(path.dirname(abs), { recursive: true });
-    return abs;
+    return freshOutput(abs);
   };
   const rootByKind = (p, kind) => p.tree.find((n) => n.root === kind) || (kind === 'research' ? p.tree[1] : p.tree[0]);
   const containerOrThrow = (p, id) => {
