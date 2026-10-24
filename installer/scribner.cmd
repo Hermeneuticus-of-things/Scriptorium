@@ -1,8 +1,8 @@
 @echo off
 rem Scribner command line wrapper. Put this file next to Scribner.exe (the install folder,
 rem usually %LOCALAPPDATA%\Programs\Scribner) and add that folder to PATH. Then:
-rem   scribner info "D:\Carti\Karma.scribner"
-rem   scribner export-sources "D:\Carti\Karma.scribner" -o "D:\NotebookLM"
+rem   scribner info "D:\Carti\Drumul spre munte.scribner"
+rem   scribner export-sources "D:\Carti\Drumul spre munte.scribner" -o "D:\NotebookLM"
 rem No Node.js is needed: Scribner.exe runs the CLI as plain Node (ELECTRON_RUN_AS_NODE=1).
 rem No ( ) blocks around the calls: %* may hold parentheses, and %ERRORLEVEL% inside a block
 rem would be read before the command runs (the exit code would be lost).

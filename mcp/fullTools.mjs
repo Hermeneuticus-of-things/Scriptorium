@@ -176,8 +176,8 @@ export function registerFullTools(ctx) {
 
   tool(
     'set_project_info',
-    'Schimbă datele proiectului: titlu, autor (nume complet, prenume, nume), titlu prescurtat, profil editorial (karma | generic).',
-    { project, title: z.string().optional(), author: z.string().optional(), author_first: z.string().optional(), author_last: z.string().optional(), title_abbreviation: z.string().optional(), editorial_profile: z.enum(['karma', 'generic']).optional() },
+    'Schimbă datele proiectului: titlu, autor (nume complet, prenume, nume), titlu prescurtat, profil editorial (ro | generic).',
+    { project, title: z.string().optional(), author: z.string().optional(), author_first: z.string().optional(), author_last: z.string().optional(), title_abbreviation: z.string().optional(), editorial_profile: z.enum(['ro', 'generic']).optional() },
     (dir, input) => {
       const changed = [];
       mutate(dir, (p) => {
@@ -377,7 +377,7 @@ export function registerFullTools(ctx) {
 
   tool(
     'export_scriv',
-    'Exportă proiectul ca proiect Scrivener 3 (.scriv) în output_dir: text, note, media, snapshot-uri, etichete, statusuri, cuvinte cheie, istoricul scrisului.',
+    'Exportă proiectul ca proiect `.scriv` (format 3) în output_dir: text, note, media, snapshot-uri, etichete, statusuri, cuvinte cheie, istoricul scrisului.',
     { project, output_dir: z.string() },
     (dir, { output_dir }) => {
       const res = exportScriv(load(dir), scrivExportIo(store, dir), outputDir(output_dir));

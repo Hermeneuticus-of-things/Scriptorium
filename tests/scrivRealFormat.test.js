@@ -1,4 +1,4 @@
-// Scrivener 3 import from files shaped as Scrivener itself writes them (not via our exporter),
+// .scriv import from files shaped as Scrivener itself writes them (not via our exporter),
 // plus the 'v04:exportScriv' handler wiring (snapshots + writing history).
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRequire } from 'module';
@@ -112,7 +112,7 @@ const find = (tree, title) => {
   return f;
 };
 
-describe('Scrivener 3 import, real file shapes', () => {
+describe('.scriv import, real file shapes', () => {
   it('section types by UUID (case and whitespace tolerant)', () => {
     const { project } = importScriv(makeProject(), tmp, { keepOriginal: false });
     expect(find(project.tree, 'Capitol').sectionType).toBe('Chapter Heading');

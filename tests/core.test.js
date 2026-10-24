@@ -48,7 +48,7 @@ describe('store', () => {
 });
 
 function makeScriv(parent) {
-  const scriv = path.join(parent, 'Karma Book.scriv');
+  const scriv = path.join(parent, 'Drumul Book.scriv');
   const data = path.join(scriv, 'Files', 'Data');
   const put = (uuid, file, content) => {
     fs.mkdirSync(path.join(data, uuid), { recursive: true });
@@ -56,7 +56,7 @@ function makeScriv(parent) {
   };
   fs.mkdirSync(scriv, { recursive: true });
   fs.writeFileSync(
-    path.join(scriv, 'Karma Book.scrivx'),
+    path.join(scriv, 'Drumul Book.scrivx'),
     `<?xml version="1.0" encoding="UTF-8"?>
 <ScrivenerProject Version="2.0">
  <Binder>
@@ -75,7 +75,7 @@ function makeScriv(parent) {
  <StatusSettings><StatusItems><Status ID="-1">No Status</Status><Status ID="2">Revised Draft</Status></StatusItems></StatusSettings>
 </ScrivenerProject>`,
   );
-  put('S1', 'content.rtf', String.raw`{\rtf1\ansi Karma \b este\b0  lege.\par A doua fraz\u259?.}`);
+  put('S1', 'content.rtf', String.raw`{\rtf1\ansi Drumul \b este\b0  lege.\par A doua fraz\u259?.}`);
   put('S1', 'synopsis.txt', 'Eroul află adevărul.');
   put('S1', 'notes.rtf', String.raw`{\rtf1\ansi Verifică data.}`);
   put('S2', 'content.rtf', String.raw`{\rtf1\ansi Scenă exclusă.}`);
@@ -97,7 +97,7 @@ describe('importScriv', () => {
     expect(s1.label).toBe('Flashback');
     expect(s1.status).toBe('Revised Draft');
     expect(s2.includeInCompile).toBe(false);
-    expect(store.readDoc(dir, s1.id)).toBe('<p>Karma <strong>este</strong> lege.</p><p>A doua frază.</p>');
+    expect(store.readDoc(dir, s1.id)).toBe('<p>Drumul <strong>este</strong> lege.</p><p>A doua frază.</p>');
     expect(store.readDoc(dir, s1.id, 'notes')).toContain('Verifică data');
     expect(project.tree[1].children[0].title).toBe('Personaje');
     expect(project.labels.find((l) => l.name === 'Flashback').color).toBe('#1a80e6');
@@ -114,7 +114,7 @@ describe('compile', () => {
     const { project, read } = setup();
     const html = compile.compileHtml(project, read);
     expect(html).toContain('<h1>Capitolul 1</h1>');
-    expect(html).toContain('Karma <strong>este</strong> lege.');
+    expect(html).toContain('Drumul <strong>este</strong> lege.');
     expect(html).not.toContain('Scenă exclusă');
   });
   it('builds a valid DOCX', async () => {
@@ -133,7 +133,7 @@ describe('compile', () => {
     const zip = await JSZip.loadAsync(buf);
     expect(await zip.file('mimetype').async('string')).toBe('application/epub+zip');
     expect(await zip.file('OEBPS/nav.xhtml').async('string')).toContain('Capitolul 1');
-    expect(await zip.file('OEBPS/ch1.xhtml').async('string')).toContain('Karma');
+    expect(await zip.file('OEBPS/ch1.xhtml').async('string')).toContain('Drumul');
   });
   it('parses inline marks for DOCX', () => {
     const blocks = compile.parseBlocks('<p>a <strong>b <em>c</em></strong> &amp; d</p><h2>T</h2>');

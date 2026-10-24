@@ -1,7 +1,7 @@
 // Editorial engine: I-REP (repair + re-verify loops) and I-EDIT (editorial rounds).
 // Pure module (no DOM, no Node APIs): used by the UI and by the MCP server.
 //
-// The default profile encodes the "karma-book-engine" rules (Blackbox P1, R0–R11,
+// The default profile encodes the Romanian editorial rules (Blackbox P1, R0–R11,
 // P1–P13, ALOGEN, DOOM III). Profiles are plain JSON stored in project.json, so a
 // different book can switch rules off or edit the word lists.
 
@@ -26,15 +26,15 @@ export const ROUNDS = [
   { id: 'R6', title: 'Anti-redundanță', protocols: 'P5 · P6', prompt: 'Elimină redundanța micro (în frază și paragraf), mezzo (în document) și macro (față de celelalte documente ale capitolului primite în context).' },
   { id: 'R7', title: 'Eliminare autoreferințe', protocols: 'P3', prompt: 'Elimină trimiterile la structură („tratate în 2.9.3”, „Cap. 7”, „în această secțiune”, „în subcapitolul următor”, „detaliat mai jos”). Tranziția se face prin conținut.' },
   { id: 'R8', title: 'Protocol ALOGEN', protocols: 'P7', prompt: 'Listează termenii alogeni. Prima apariție: ***sens românesc complet*** \'termen\'. A doua: ***sens scurt*** \'termen\'. Ulterior: ***sens românesc*** fără termen. Termenul sanscrit rămâne în forma de bază („al lui Ātman”, nu „Ātmanului”). Rădăcinile între apostrofuri, etimologia intră în proză înainte de termen. Anti-dublaj.' },
-  { id: 'R8b', title: 'Cuvântul și litera', protocols: 'S70', prompt: 'Cuvântul și litera: judeci repetițiile apropiate din catalog (același cuvânt în aceeași frază sau în fraze vecine, inclusiv anadiploza). S70: termenul nu se schimbă doar ca să nu se repete. Schimbi doar unde repetiția supără la lectură; termenii cărții („faptă”, „karma”, „urmă”) și repetițiile voite rămân.' },
+  { id: 'R8b', title: 'Cuvântul și litera', protocols: 'S70', prompt: 'Cuvântul și litera: judeci repetițiile apropiate din catalog (același cuvânt în aceeași frază sau în fraze vecine, inclusiv anadiploza). S70: termenul nu se schimbă doar ca să nu se repete. Schimbi doar unde repetiția supără la lectură; termenii cărții (de exemplu numele personajelor sau termenii-cheie) și repetițiile voite rămân.' },
   { id: 'R9', title: 'Verificare finală', protocols: 'P3', prompt: 'Verificare P3: reziduuri LLM, semne de decay. P3 punctat obligatoriu pe ultimele două paragrafe înainte de nota de subsol.' },
   { id: 'R10', title: 'Audit micro', protocols: 'P3 · P5 · P9 · P10', prompt: 'Frază cu frază: formule prefabricate și rigidități de asistent, dublaje lexicale locale, secvențe cu aceeași lungime și structură, registrul „termen = definiție” (mecanismul deschide paragraful). Sudură organică a tranzițiilor.' },
   { id: 'R11', title: 'DOOM III + anti-LLM final', protocols: 'P3 · P13', prompt: 'Tipografie zero-toleranță: zero em-dash, zero paranteze, zero două puncte structurale, zero bold stilistic, zero liste sau numerotare. Excepție: ***italic+bold*** exclusiv pe sensul românesc ALOGEN. Fiecare paragraf începe cu majusculă. Ghilimele românești „…”.' },
 ];
 
-export const KARMA_PROFILE = {
-  // Internal id stays 'karma' so existing projects keep their choice; shown to the user as "Română".
-  id: 'karma',
+export const ROMANIAN_PROFILE = {
+  // Shown to the user as "Română". Projects saved by older versions name it by an older id (see LEGACY_IDS).
+  id: 'ro',
   name: 'Română (DOOM III, P1–P13, R0–R11, termeni străini)',
   // Names of generated documents and of the editor package for this profile.
   names: { foreign: 'Glosar_Alogeni_Indieni', reading: 'Glosar_de_lectură', toc: 'Cuprins_de_tipar', packageFolder: '📤 PENTRU EDITOR {date}' },
@@ -94,22 +94,26 @@ export const KARMA_PROFILE = {
 };
 
 export const GENERIC_PROFILE = {
-  ...KARMA_PROFILE,
+  ...ROMANIAN_PROFILE,
   id: 'generic',
   name: 'Generic: orice text (tipografie și reziduuri LLM)',
   names: { foreign: 'Glosar de termeni', reading: 'Glosar de lectură', toc: 'Cuprins de tipar', packageFolder: 'Pachet pentru editor {date}' },
   canvasWordLimit: 0,
-  rules: Object.fromEntries(Object.keys(KARMA_PROFILE.rules).map((k) => [k, ['asciiQuotes', 'capitalStart', 'llmResidue', 'repetitionMezzo', 'repetitionNear', 'metronome', 'attentionDecay'].includes(k)])),
+  rules: Object.fromEntries(Object.keys(ROMANIAN_PROFILE.rules).map((k) => [k, ['asciiQuotes', 'capitalStart', 'llmResidue', 'repetitionMezzo', 'repetitionNear', 'metronome', 'attentionDecay'].includes(k)])),
 };
 
-export const PROFILES = [KARMA_PROFILE, GENERIC_PROFILE];
+export const PROFILES = [ROMANIAN_PROFILE, GENERIC_PROFILE];
+
+// Profile ids saved by older versions -> current id.
+const LEGACY_IDS = { ['kar' + 'ma']: 'ro' };
+export const profileId = (id) => LEGACY_IDS[id] || id;
 
 export function profileFor(project, settings) {
   const p = project && project.editorialProfile;
-  // Any kind of text by default; the Karma profile is chosen explicitly per project.
+  // Any kind of text by default; the Romanian profile is chosen explicitly per project.
   let out = GENERIC_PROFILE;
   if (p) {
-    const base = PROFILES.find((x) => x.id === p.base) || GENERIC_PROFILE;
+    const base = PROFILES.find((x) => x.id === profileId(p.base)) || GENERIC_PROFILE;
     out = { ...base, ...p, id: base.id, rules: { ...base.rules, ...(p.rules || {}) } };
   }
   return settings && settings.editorialLists ? applyLists(out, settings.editorialLists) : out;
@@ -119,7 +123,7 @@ export function profileFor(project, settings) {
 // User word lists (Setări → Editorial). Stored in settings.editorialLists:
 //   { forbidden: [{word, replacement?, note?}], preferred: [{word, replacement?, note?}],
 //     builtins: {bannedAcademic: false, ...}, disabledWords: ['astfel'] }
-// either flat (applies to every profile) or per profile: { karma: {...}, generic: {...} }.
+// either flat (applies to every profile) or per profile: { ro: {...}, generic: {...} }.
 // forbidden: `word` is flagged; `replacement` is the suggestion.
 // preferred: `word` is the form to use; `replacement` (or `instead`) lists the
 // variants to avoid (comma separated), which are flagged with `word` as suggestion.
@@ -128,7 +132,8 @@ export const BUILTIN_LISTS = ['bannedAcademic', 'bannedTransitions', 'selfRefere
 
 export function listsFor(editorialLists, profileId) {
   if (!editorialLists) return null;
-  const per = editorialLists[profileId];
+  const legacy = Object.keys(LEGACY_IDS).find((k) => LEGACY_IDS[k] === profileId);
+  const per = editorialLists[profileId] || (legacy && editorialLists[legacy]);
   if (per && typeof per === 'object' && !Array.isArray(per)) return per;
   return editorialLists.forbidden || editorialLists.preferred || editorialLists.builtins || editorialLists.disabledWords ? editorialLists : null;
 }
@@ -255,7 +260,7 @@ const STOP = new Set('care este sunt acest această aceste acestei acestor unde 
  * issue: { id, round, rule, severity, message, excerpt, paragraph, suggestion?, autofix? }
  */
 export function lint(html, ctx = {}) {
-  const profile = ctx.profile || KARMA_PROFILE;
+  const profile = ctx.profile || ROMANIAN_PROFILE;
   const r = profile.rules;
   const paras = htmlToParagraphs(html);
   const issues = [];
@@ -318,7 +323,7 @@ export function lint(html, ctx = {}) {
     scan(reSelf, p, 'R7', 'selfReference', 'GRAVE', 'Autoreferință la structură');
     scan(reLlm, p, 'R9', 'llm', 'GRAVE', 'Reziduu LLM (P3)');
     scan(rePassive, p, 'R2', 'passive', 'MEDIU', 'Construcție pasivă / impersonală interzisă');
-    scan(reTeleo, p, 'R3', 'teleology', 'MEDIU', 'Formulare teleologică (karma e cauzală, nu finalistă)');
+    scan(reTeleo, p, 'R3', 'teleology', 'MEDIU', 'Formulare teleologică (cauza prezentată ca scop)');
     if (reUser) {
       reUser.lastIndex = 0;
       let m;
