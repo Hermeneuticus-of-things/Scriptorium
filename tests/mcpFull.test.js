@@ -192,6 +192,7 @@ const PRELOAD_COVERAGE = {
   onWhisperProgress: 'gui: progresul descărcării',
   dtedStatus: 'gui: D&TED (dictare) rulează pe calculatorul autorului, cu microfonul lui',
   dtedPickAudio: 'gui: dialog de fișiere',
+  dtedSetModel: 'gui: modelul D&TED îl alege autorul în Setări',
   dtedTranscribe: 'gui: transcrierea D&TED o cere autorul din fereastră (agentul primește documentul creat)',
   dtedTranscribeMedia: 'gui: transcrierea D&TED o cere autorul din binder',
   dtedDictateStart: 'gui: dictare la microfon',
