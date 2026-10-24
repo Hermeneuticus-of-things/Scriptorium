@@ -294,6 +294,8 @@ function createWindow() {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
+      // Chromium's built-in PDF viewer, for the Print Preview dialog (blob: PDF in an iframe).
+      plugins: true,
     },
   });
   win.setMenuBarVisibility(false);

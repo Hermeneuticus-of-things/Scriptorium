@@ -45,8 +45,12 @@ export default function Ruler({ editor, zoom = 1 }) {
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   };
+  // While a marker is dragged it follows the pointer; the first-line marker moves with the left one.
   const pos = (kind, cm, index) => (drag && drag.kind === kind && drag.index === index ? drag.cm : cm);
 
+  // The ruler never takes focus: the caret stays in the paragraph being formatted (Tab keeps working).
+  const keepFocus = (e) => e.preventDefault();
+  // A plain click on the ruler (not on a marker) adds a left tab stop there.
   const addTab = (e) => {
     if (e.target !== ref.current && !e.target.classList.contains('ruler-tick')) return;
     set({ tabStops: serializeTabStops(parseTabStops([...a.tabs, cmAt(e.clientX)].join(','))) });
@@ -57,9 +61,9 @@ export default function Ruler({ editor, zoom = 1 }) {
     ticks.push(<span key={i} className={`ruler-tick ${i % 2 ? 'half' : ''}`} style={{ left: (i / 2) * scale }}>{i % 2 || !i ? '' : i / 2}</span>);
   }
   return (
-    <div className="ruler" ref={ref} onDoubleClick={addTab} title={tr('ui.ruler.dublu_clic_adauga_tab_trage')}>
+    <div className="ruler" ref={ref} onClick={addTab} onMouseDown={keepFocus} title={tr('ui.ruler.clic_adauga_tab_trage')}>
       {ticks}
-      <span className="ruler-handle first" style={{ left: (pos('first', a.left + a.first) ) * scale }} onPointerDown={startDrag('first')} title={`Indent prima linie: ${a.first} cm`} />
+      <span className="ruler-handle first" style={{ left: pos('first', pos('left', a.left) + a.first) * scale }} onPointerDown={startDrag('first')} title={tr('ui.ruler.indent_prima_linie_x_cm', { first: a.first })} />
       <span className="ruler-handle left" style={{ left: pos('left', a.left) * scale }} onPointerDown={startDrag('left')} title={tr('ui.ruler.indent_stanga_x_cm', { left: a.left })} />
       <span className="ruler-handle right" style={{ left: pos('right', widthCm - a.right) * scale }} onPointerDown={startDrag('right')} title={tr('ui.ruler.indent_dreapta_x_cm', { right: a.right })} />
       {a.tabs.map((t, i) => (

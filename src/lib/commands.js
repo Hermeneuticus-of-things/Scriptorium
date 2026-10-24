@@ -64,6 +64,8 @@ export const DEFAULT_KEYS = {
   print: 'Ctrl+P',
   fullScreen: 'Ctrl+Shift+F11',
   revealBinder: 'Ctrl+Alt+R',
+  // Scrivener's Format > Show Ruler is Ctrl+Shift+R, already Quick Reference here.
+  toggleRuler: 'Ctrl+Alt+Shift+R',
 };
 
 // Effective shortcut for a command; an empty string in settings disables it.

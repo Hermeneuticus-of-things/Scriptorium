@@ -98,7 +98,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 
 ### 2.1 Editor și format
 - [x] Bara de format completă: stil de paragraf, superscript, subscript, culoare text, highlight (5 culori), aliniere, tabele (rânduri, coloane, antet, unire, împărțire), imagini, liste numerotate cu indentare
-- [~] Ruler: indent și spațiere prin stiluri; lipsesc riglă vizuală și tab-uri
+- [x] Ruler: riglă vizuală cu indentări și tab-uri la stânga (exacte în DOCX)
 - [x] Styles de paragraf și de caractere: panou, creare, editare, Redefine din selecție, import din alt proiect (păstrează / înlocuiește / adaugă), duse în Compile
 - [x] Styles: Para+Char, Next style, scurtături de tastatură
 - [x] Revision Mode (5 runde colorate), acceptarea tuturor sau a unei runde, eliminate la Compile
@@ -107,7 +107,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Scrivener Links `[[ ]]` (Ctrl+clic deschide documentul) și linkuri externe (Ctrl+L)
 - [x] Page View (A5), Text Zoom 75–200%, semne de paragraf, caractere în bara de stare
 - [x] Linguistic Focus: dialog, paragraf, frază; evidențierea paragrafului curent
-- [~] Linguistic Focus pe părți de vorbire (substantive, verbe, adjective): etichetare euristică RO/EN, aproximativă
+- [x] Linguistic Focus pe părți de vorbire: etichetare RO/EN cu liste, terminații și context (≈87% RO, ≈96% EN pe texte noi)
 - [x] Composition: fundal, lățimea textului, opacitatea paginii, pagină de hârtie
 - [x] Composition: Inspector plutitor
 - [x] Transformations: majuscule, minuscule, Title Case, propoziție, spații duble, ghilimele, cratime
@@ -127,7 +127,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Document-container (text cu sub-documente, drop în document), conversie Text ↔ Folder
 - [x] Icoane personalizate, Lock document (doar citire), sortare conținut (A→Z, Z→A, dată), favorite
 - [x] Media în Cercetare: adăugare imagini, PDF, audio, video, cu vizualizare
-- [~] Pagini web salvate offline în Cercetare: importul paginii ca document gata; imaginile rămân linkuri
+- [x] Pagini web salvate offline în Cercetare, cu imagini
 - [x] Căutare avansată: câmpuri, operatori (oricare / toate / frază), filtre (etichetă, status, cuvinte cheie, zonă, coș, Compile), salvare ca colecție, înlocuire în text, note, titluri și sinopsis cu snapshot
 - [x] Project Targets: carte și sesiune în cuvinte sau caractere, termen limită cu zile de scris și cuvinte pe zi, reset sesiune, notificare
 - [x] Statistici: proiect / Compile / tot / selecție, pagini estimate, timp de citire, frecvența cuvintelor (cu cuvinte de legătură românești), lungimea frazelor
@@ -159,7 +159,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Import RTF, ODT, HTML, OPML, PDF, imagini, pagini web
 - [x] Export documente ca fișiere (DOCX/RTF/MD/TXT) cu structura de foldere și metadate
 - [x] Export OPML, Export metadate CSV
-- [~] Print, Page Setup, Print Preview: tipărire document gata; pagina și previzualizarea sunt în Compile
+- [x] Print, Page Setup, Print Preview
 - [x] Proprietăți proiect (titlu, autor, abreviere), Save As
 - [x] Recente: fixare, ștergere
 

@@ -107,3 +107,12 @@ Rezumat: 77 de unelte MCP (57 noi), 4 bug-uri reparate la cauză, 43 de teste no
 - [x] Preset NVIDIA NIM + scripts/ai-smoke.cjs (cheia doar din mediu)
 - [ ] Test model real: blocat de rețeaua mediului cloud; de rulat local `NVIDIA_API_KEY=… node scripts/ai-smoke.cjs nvidia`
 Rezumat: web și desktop lucrează pe același folder; sincronizarea o face clientul de cloud sau NAS-ul.
+
+### Request: roadmap pentru tot app + restul în Ajutor
+- [x] Riglă vizuală + tab-uri (DOCX exact)
+- [x] Page Setup + Print Preview
+- [x] Imagini offline în paginile web importate
+- [x] Linguistic Focus precis (gold + held-out)
+- [x] Ajutor: capitol „Ce faci tu”
+- [ ] Ce cere autorul: vezi ROADMAP secțiunea 8 și Ajutor → „Ce faci tu”
+Rezumat: tot ce se putea face fără resurse de la autor e închis.

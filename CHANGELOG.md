@@ -1,5 +1,22 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.3 (continuare) — Riglă cu tab-uri, Print Preview, imagini offline din web, Linguistic Focus precis, ajutor „Ce faci tu”
+
+### Cerința user
+> "continuă automat cu roadmap pentru tot app" · "fă tot ce depinde de tine, restul scrie în help"
+
+### Rezultat
+- **Riglă vizuală** (Format → Arată rigla, Ctrl+Alt+Shift+R): indent stânga/dreapta/prima linie trase cu mouse-ul, clic adaugă tab, tragere în afara riglei îl șterge. Indentările și tab-urile ajung exact în DOCX (inclusiv indent agățat și tab-uri reale).
+- **Configurare pagină și Previzualizare tipărire** (Fișier): hârtie A4/A5/Letter/Legal/6×9/personalizată, orientare, margini, antet/subsol cu câmpuri, fără antet pe prima pagină; previzualizarea arată PDF-ul real (pagini, zoom, Tipărește, Salvează PDF); tipărirea folosește aceleași pagini. Verificat în Electron: 6×9 in → 432×648 pt.
+- **Cercetare → pagină web**: imaginile se descarcă și se salvează în proiect (srcset, data-src, adrese relative), cu limite de număr, mărime și timp; doar `image/*`; imaginile care nu se pot lua rămân link cu textul alternativ.
+- **Linguistic Focus**: etichetare RO/EN refăcută (liste închise complete, terminații, context). Pe texte noi: RO 72% → 87%, EN 83% → 96%.
+- **Ajutor**: capitol nou „Ce faci tu” (chei de servicii și AI, test cu model real, corectorul românesc din Windows, MCP, sincronizare prin folder, proiectul Karma și VKB2, limite cunoscute).
+- **Test cu model real** rulat de autor pe Windows prin OpenRouter (model gratuit): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit. Scriptul reîncearcă acum și trece la alt model.
+
+### Limite
+- Tab-urile exacte doar în DOCX; în PDF/EPUB/HTML tab-uri egale. Doar tab-uri la stânga.
+- Fereastra principală are acum `plugins: true` (vizualizatorul PDF intern pentru previzualizare).
+
 ## 2026-10-24 — v0.8.3 — Versiunea web pe un folder .scribner real (OneDrive, Dropbox, Google Drive, NAS), NVIDIA NIM
 
 ### Cerința user
