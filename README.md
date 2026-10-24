@@ -295,6 +295,22 @@ Din pagina [Releases](../../releases/latest) descarci una dintre variante:
 - **`Scribner-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator; programul se pune în `AppData\Local\Programs\Scribner`. La dezinstalare, cărțile tale rămân.
 - **`Scribner-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
 
+**Dintr-o singură comandă.** Deschide PowerShell și lipește:
+
+```powershell
+irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex
+```
+
+Comanda ia ultima versiune din Releases, verifică amprenta SHA-256 publicată de GitHub și pornește installerul. Variante, puse înainte, pe același rând:
+
+```powershell
+$env:SCRIBNER_PATH='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex      # și comanda scribner în terminal
+$env:SCRIBNER_SILENT='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex    # fără ferestre
+$env:SCRIBNER_PORTABLE='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex  # varianta portabilă, pe Desktop
+```
+
+Poți citi scriptul înainte: [`install.ps1`](install.ps1).
+
 Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `scribner` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
 
 O versiune nouă apare în Releases de fiecare dată când iese, automat.
