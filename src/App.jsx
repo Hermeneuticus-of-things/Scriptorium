@@ -190,6 +190,22 @@ export default function App({ api }) {
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
+  // Split / reference panes: the pane last clicked or typed in is marked active (green border, see
+  // styles.css), so it is clear which text a command or the keyboard goes to.
+  useEffect(() => {
+    const mark = (ev) => {
+      const pane = ev.target?.closest?.('.workspace .pane');
+      if (!pane || pane.hasAttribute('data-active')) return;
+      for (const p of pane.parentElement?.querySelectorAll(':scope > .pane[data-active]') || []) p.removeAttribute('data-active');
+      pane.setAttribute('data-active', '');
+    };
+    document.addEventListener('focusin', mark);
+    document.addEventListener('mousedown', mark);
+    return () => {
+      document.removeEventListener('focusin', mark);
+      document.removeEventListener('mousedown', mark);
+    };
+  }, []);
   // Help → Report a problem, and the discreet "send a report?" toast for a newly captured error.
   const [reportOpen, setReportOpen] = useState(false);
   const [errorPrompt, setErrorPrompt] = useState(false);
@@ -1848,7 +1864,7 @@ export default function App({ api }) {
     ['view', 'toggleFormatBar', tr('cmd.toggleFormatBar'), () => toggleView('hideFormatBar')],
     ['view', 'toggleComments', tr('cmd.toggleComments'), () => toggleView('hideComments')],
     ['view', 'toggleRevisions', 'Aspect text: culorile reviziilor', () => toggleView('hideRevisions')],
-    ['view', 'splitHorizontal', 'Split orizontal / vertical', () => toggleView('splitHorizontal')],
+    ['view', 'splitHorizontal', tr('cmd.splitHorizontal'), () => toggleView('splitHorizontal')],
     ['view', 'swapPanes', tr('cmd.swapPanes'), swapPanes, !splitId],
     ['tools', 'lookupDict', tr('cmd.lookupDict'), () => lookupWord('dictionary')],
     ['tools', 'lookupSyn', tr('cmd.lookupSyn'), () => lookupWord('synonyms')],
@@ -2197,7 +2213,7 @@ export default function App({ api }) {
             <div className={`pane second ${editorAreaClass}`}>
               <div className="pane-head">
                 <span title={tr('ui.app.panoul_2_blocat_pe_x', { title: splitNode.title })}>{tr('ui.app.panoul_2_blocat_pe')}{splitNode.title}”</span>
-                <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? 'Split vertical' : 'Split orizontal'}</button>
+                <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? tr('ui.app.split_vertical') : tr('ui.app.split_orizontal')}</button>
                 <button className="link" onClick={swapPanes}>{tr('ui.app.inverseaza')}</button>
                 <button className="link" onClick={() => go(splitNode.id)}>{tr('ui.app.deschide_in_principal')}</button>
                 <button className="link" onClick={() => setSplitId(null)}>{tr('btn.close')}</button>

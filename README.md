@@ -26,7 +26,7 @@ Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini 
   <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
 </p>
 
-Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă. Fereastra în care scrii are un chenar verde, iar cealaltă e ușor estompată, ca să știi mereu unde ajunge textul. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
 
 <p align="center">
   <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">

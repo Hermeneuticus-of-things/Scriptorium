@@ -1,5 +1,16 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.7 (continuare) — Panoul activ evidențiat
+
+### Cerința user
+> "originalul într-o parte și traducerea în cealaltă: fereastra activă cu chenar verde, cea inactivă altfel, automat, fără setări"
+
+### Rezultat
+- Cu două panouri deschise (split sau panoul de referință), cel în care dai clic sau scrii are chenar verde; celelalte au chenar gri și textul ușor estompat. Automat, fără setare; culori potrivite și pentru tema întunecată.
+- Butonul de pe bara panoului 2 tradus („Alăturate” / „Una sub alta”), la fel comanda din meniu.
+- Imaginea „Originalul și traducerea, alături” refăcută; README și ajutorul descriu evidențierea.
+- Scenariu nou: active-pane.
+
 ## 2026-10-24 — v0.8.7 (continuare) — Instalare dintr-o comandă, 17 bug-uri în discuția cu sursele, CLI și installer
 
 - **Instalare dintr-o comandă:** `irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex` (ultima versiune, verificare SHA-256 publicată de GitHub, opțiuni pentru PATH, fără ferestre și portabil). CI pe Windows instalează silențios installerul construit, verifică programul, serverul MCP, comanda `scribner` din PATH și rulează scriptul în mod de probă.
