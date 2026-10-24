@@ -52,3 +52,11 @@ describe('EPUB robustness', () => {
     expect(all).not.toMatch(/src="data:/);
   });
 });
+
+describe('EPUB keeps image types it cannot size', () => {
+  it('packages an SVG data-URI image', async () => {
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>').toString('base64');
+    const zip = await epubFiles(`<p><img src="data:image/svg+xml;base64,${svg}" alt="v"></p>`);
+    expect(Object.keys(zip.files).some((n) => /images\/img1\.svg$/.test(n))).toBe(true);
+  });
+});
