@@ -645,7 +645,7 @@ media/                 imagini, PDF, audio, video</pre>
 <li><strong>General</strong>: redeschiderea ultimului proiect, salvarea automată, ținte implicite, căutarea actualizărilor (oprită: aplicația nu contactează rețeaua).</li>
 <li><strong>Aspect</strong>: tema (sistem, luminoasă, întunecată, sepia), fontul și mărimea editorului, interlinia, lățimea paginii, mărimea textului în binder, culoarea de accent, modul compunere.</li>
 <li><strong>Comportament</strong>: ce face Enter și dublu-clicul în binder, vederea implicită.</li>
-<li><strong>Corecturi</strong>: ghilimele, liniuțe, puncte de suspensie, majuscule automate, limbile corectorului, înlocuirile automate.</li>
+<li><strong>Corecturi</strong>: ghilimele, liniuțe, puncte de suspensie, majuscule automate, limbile corectorului, înlocuirile automate. Cu <em>Învață din corecturile mele</em> (pornit implicit), un cuvânt subliniat ca greșit pe care îl corectezi de mână (îl selectezi și scrii forma bună sau alegi o sugestie din clic dreapta) intră în înlocuiri, marcat <em>învățat</em>, și se corectează singur data viitoare, păstrând majusculele. Se învață doar greșeli apropiate (diacritice, o literă lipsă sau inversată), doar când corectorul respinge vechea formă și o acceptă pe cea nouă. O intrare învățată se șterge sau se modifică din aceeași listă.</li>
 <li><strong>Editare</strong>: defilare tip mașină de scris, indentarea și spațierea implicite, caractere invizibile.</li>
 <li><strong>Backup</strong>: la închidere, la interval, câte se păstrează, folderul.</li>
 <li><strong>Tastatură</strong>: scurtăturile (vezi capitolul Scurtături).</li>

@@ -193,7 +193,7 @@ export const MANUAL_EN = [
   {
     id: 'settings',
     title: 'Settings',
-    sections: [{ id: 'settings-tabs', title: 'Settings tabs', html: `<p>General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard, AI, Language. The portable build keeps settings in <code>Scribner-data/</code> next to the executable.</p>` }],
+    sections: [{ id: 'settings-tabs', title: 'Settings tabs', html: `<p>General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard, AI, Language. In Corrections, <em>Learn from my corrections</em> (on by default) adds a misspelled word you fix by hand (select it and type the right form, or pick a suggestion from the right-click menu) to the auto-replacements, marked <em>learned</em>, so it is fixed while typing next time. The portable build keeps settings in <code>Scribner-data/</code> next to the executable.</p>` }],
   },
   {
     id: 'shortcuts',
