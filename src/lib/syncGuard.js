@@ -54,6 +54,13 @@ export function treeIds(tree) {
  * Returns { updated: {id: html} to show, merged: {id: html} to show and save, theirs: {id: html}
  * read from disk, conflicts: [ids saved as snapshots] }.
  */
+// Text from disk that does not end on a closed block, or is empty while it was not before.
+export function incomplete(html, base) {
+  const h = String(html ?? '').trim();
+  if (!h) return Boolean(base && String(base).trim());
+  return !/(<\/(p|h[1-6]|ul|ol|li|blockquote|table|pre|div|figure)>|<(hr|img|br)\b[^>]*>)$/i.test(h);
+}
+
 export async function pullExternalDocs({ api, dir, ids, hasLocal = () => false, localHtml, baseHtml, merge, label }) {
   const updated = {};
   const merged = {};
@@ -64,6 +71,9 @@ export async function pullExternalDocs({ api, dir, ids, hasLocal = () => false, 
     // The base is taken before reading: reading may record what it read as the base.
     const base = baseHtml ? baseHtml(id) : undefined;
     const disk = await api.readDoc(dir, id, 'docs');
+    // A file the sync client is still writing (cut mid-paragraph, or empty for a moment) is not a
+    // deletion: it is left alone and read again at the next change.
+    if (incomplete(disk, base)) continue;
     theirs[id] = disk;
     if (!hasLocal(id)) {
       updated[id] = disk;

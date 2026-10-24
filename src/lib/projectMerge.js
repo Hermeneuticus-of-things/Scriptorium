@@ -38,7 +38,7 @@ const fieldsOf = (n) => {
 
 function mergeFields(b, m, t) {
   const out = {};
-  for (const k of new Set([...Object.keys(m), ...Object.keys(t), ...Object.keys(b)])) {
+  for (const k of new Set([...Object.keys(m), ...Object.keys(t), ...Object.keys(b || {})])) { // b: absent when both sides added the node
     const v = b ? pick3(b[k], m[k], t[k]) : m[k] !== undefined ? m[k] : t[k];
     if (v !== undefined) out[k] = v;
   }
@@ -74,7 +74,15 @@ export function mergeTree(baseTree, mineTree, theirsTree) {
   for (const [id, k] of kept) {
     if (k.parent === null || kept.has(k.parent)) continue;
     const alt = [T.nodes.get(id), M.nodes.get(id)].find((x) => x && (x.parent === null || kept.has(x.parent)));
-    k.parent = alt ? alt.parent : null;
+    if (alt) {
+      k.parent = alt.parent;
+      continue;
+    }
+    // Its folder was deleted on the other side: the nearest folder above it that survives,
+    // else the Draft, never the top level next to Draft and Trash.
+    let up = k.parent;
+    while (up && !kept.has(up)) up = B.nodes.get(up)?.parent;
+    k.parent = up || [...kept].find(([, x]) => x.fields.root === 'draft')?.[0] || null;
   }
 
   // 2. Order of each child list.

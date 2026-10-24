@@ -119,3 +119,32 @@ describe('a comment over mixed formatting is one comment', () => {
     expect(del).toBe('<p>plain <strong>bold</strong> tail <span data-comment="C2" class="comment">alt</span></p>');
   });
 });
+
+import { mergeTree } from '../src/lib/projectMerge.js';
+import { readPeers } from '../src/lib/team.js';
+import { incomplete } from '../src/lib/syncGuard.js';
+describe('team sync (v0.9.5)', () => {
+  const root = (children) => [{ id: 'd', root: 'draft', title: 'M', children }, { id: 't', root: 'trash', title: 'T', children: [] }];
+  it('a node both sides already have (not in base) does not crash the merge', () => {
+    const base = root([{ id: 'a', type: 'text', title: 'a' }]);
+    const both = root([{ id: 'a', type: 'text', title: 'a' }, { id: 'X', type: 'text', title: 'X' }, { id: 'W', type: 'text', title: 'W' }]);
+    const merged = mergeTree(base, both, root([{ id: 'a', type: 'text', title: 'a' }, { id: 'X', type: 'text', title: 'X' }, { id: 'W', type: 'text', title: 'W' }]));
+    expect(merged[0].children.map((n) => n.id)).toEqual(['a', 'X', 'W']);
+  });
+  it('a child added under a folder deleted on the other side lands in the Draft', () => {
+    const base = root([{ id: 'F', type: 'folder', title: 'F', children: [] }]);
+    const merged = mergeTree(base, root([]), root([{ id: 'F', type: 'folder', title: 'F', children: [{ id: 'n', type: 'text', title: 'n' }] }]));
+    expect(merged.map((n) => n.id)).toEqual(['d', 't']);
+    expect(merged[0].children.map((n) => n.id)).toContain('n');
+  });
+  it('three computers locking the same document: the smallest machine id keeps it', () => {
+    const now = new Date().toISOString();
+    const files = Object.fromEntries(['pc-c', 'pc-a', 'pc-b'].map((m) => [`presence-${m}.json`, JSON.stringify({ who: m, machine: m, locks: ['d'], time: now })]));
+    expect(readPeers(files).locks.d.machine).toBe('pc-a');
+  });
+  it('a half-written or momentarily empty file is not read as a deletion', () => {
+    expect(incomplete('<p>b0</p><p>b', '<p>b0</p>')).toBe(true);
+    expect(incomplete('', '<p>x</p>')).toBe(true);
+    expect(incomplete('<p>gata</p>', '<p>x</p>')).toBe(false);
+  });
+});
