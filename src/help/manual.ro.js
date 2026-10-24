@@ -25,7 +25,9 @@ export const MANUAL_RO = [
 <li><strong>Zona de lucru</strong> (centru): editorul, corkboard-ul sau outline-ul pentru elementul selectat. Comuți cu ${k('Ctrl+1')}, ${k('Ctrl+2')}, ${k('Ctrl+3')} sau cu butoanele <em>Editor / Corkboard / Outline</em> din bara de sus.</li>
 <li><strong>Inspectorul</strong> (dreapta): sinopsis, metadate, note, snapshot-uri, comentarii. Se arată și se ascunde cu ${k('Ctrl+Shift+I')}.</li>
 </ul>
-<p>Bara de sus mai are: ⌂ (închide proiectul), Înapoi/Înainte, <em>Split</em>, <em>Compunere</em>, <em>Compile</em>, <em>Inspector</em>, <em>I-REP</em> și meniurile <em>Document</em>, <em>Navigare</em>, <em>Proiect</em>. În aplicația desktop, comenzile sunt și în meniul nativ (Fișier, Editare, Vizualizare, Navigare, Proiect, Document, Format, Unelte, Fereastră, Ajutor).</p>
+<p>Bara de sus e aerisită: ⌂ (închide proiectul), Înapoi/Înainte, titlul proiectului, comutatorul <em>Editor / Corkboard / Outline</em>, <em>Compile</em> și <em>Inspector</em>. Restul comenzilor sunt în meniuri, ca în Scrivener 3: <em>Fișier, Editare, Vizualizare, Proiect, Documente, Navigare, Unelte, AI, Ajutor</em> (în aplicația desktop, în meniul nativ al ferestrei). Comenzile înrudite sunt grupate în submeniuri (▸), de exemplu <em>Fișier → Importă ▸ / Exportă ▸</em>; <em>Format</em> e un submeniu în <em>Editare</em>, iar <em>Fereastră</em> (layout-uri, ecran complet) unul în <em>Vizualizare</em>. Split-ul editorului e în <em>Vizualizare → Împarte editorul</em> (și pe bara documentului), Compunerea în <em>Vizualizare</em> (F11).</p>
+<p><strong>Meniul AI</strong> adună tot ce ține de AI: <em>Asistent AI</em> (panoul), <em>I-REP / I-EDIT</em>, <em>AI pe selecție ▸</em> (cercetare, explică, corectează, traduce, răspuns din cercetarea proiectului), <em>AI pe toată cartea ▸</em> (sinopsis în bloc, consistență, revizie pe niveluri), <em>NotebookLM ▸</em>, <em>Setări AI…</em> și, în aplicația desktop, <em>Conectează la Claude (MCP)…</em>. Cu AI oprit, în meniu rămân doar <em>I-REP</em> (funcționează fără AI) și <em>Setări AI…</em> (ca să-l pornești din nou).</p>
+<p><strong>Bara se personalizează</strong> din <em>Vizualizare → Personalizează bara de instrumente…</em>: pentru bara de sus și pentru bara de formatare vezi elementele disponibile și pe cele din bară; adaugi, scoți, reordonezi (tragere sau butoanele ↑/↓; în listă Alt+↑/↓), pui separatoare și spații flexibile, alegi afișarea (pictogramă și text / doar pictogramă / doar text) și poți reveni cu <em>Restabilește implicit</em>. Ce scoți din bară rămâne accesibil din meniuri. Bara de formatare mută automat în <em>»</em> ce nu încape pe un rând.</p>
 <p>Lățimea panourilor se schimbă trăgând de marginea lor; programul ține minte layout-ul pentru fiecare proiect.</p>`,
       },
       {
@@ -588,7 +590,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'irep-basics',
         title: 'I-REP: verificare, reparare, reverificare',
-        html: `<p>Butonul <em>I-REP</em> din bara de sus (sau <em>Unelte → I-REP / I-EDIT</em>) deschide panoul editorial. <strong>I-REP</strong> verifică documentul după regulile profilului, listează problemele pe niveluri de gravitate (GRAVE, MEDIU, MINOR), aplică reparațiile sigure și reverifică, în bucle, până nu mai găsește nimic de reparat automat.</p>
+        html: `<p>Meniul <em>AI → I-REP / I-EDIT</em> (cu AI oprit: <em>AI → I-REP</em>) deschide panoul editorial. <strong>I-REP</strong> verifică documentul după regulile profilului, listează problemele pe niveluri de gravitate (GRAVE, MEDIU, MINOR), aplică reparațiile sigure și reverifică, în bucle, până nu mai găsește nimic de reparat automat.</p>
 <p>I-REP funcționează complet fără AI. Cu AI pornit, o buclă suplimentară poate propune reparații pentru ce nu se poate corecta mecanic.</p>`,
       },
       {
@@ -636,7 +638,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'ai-assistant',
         title: 'Asistentul AI',
-        html: `<p>Butonul <em>Asistent AI</em> deschide panoul: corectură, sinopsis, continuare în stilul tău, critică, verificare de consistență și întrebări libere despre documentul curent. Propunerile se aplică doar când le accepți.</p>
+        html: `<p><em>AI → Asistent AI</em> deschide panoul: corectură, sinopsis, continuare în stilul tău, critică, verificare de consistență și întrebări libere despre documentul curent. Propunerile se aplică doar când le accepți.</p>
 <p>În bloc (meniul <em>Unelte</em>): <em>Sinopsis AI în bloc</em>, <em>Consistență pe toată cartea (fișe vii)</em> (fișe de personaje actualizate), <em>Revizie pe niveluri de zoom</em> (de la carte la frază).</p>`,
       },
       {

@@ -1,5 +1,19 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.4 — Interfață personalizabilă ca în Scrivener 3, meniu AI unic, Conectează la Claude (MCP)
+
+### Cerința user
+> "în UI pune tot ce e legat de AI într-un submeniu" · "interfața să nu fie aglomerată, folosește submeniuri / dropdown" · "interfața custom e mai importantă pentru useri, ca la Scrivener 3"
+
+### Rezultat
+- **Personalizează bara de instrumente** (Vizualizare): bara de sus și bara de formatare; adaugi, scoți, ordonezi (tragere, ↑/↓, Alt+↑/↓), separatoare și spațiu flexibil, iconiță+text / iconiță / text, Restabilește implicit. Salvat în setări; ce scoți rămâne în meniuri.
+- **Bara de sus aerisită:** ⌂, Înapoi/Înainte, titlul, Editor / Corkboard / Outline, Compile, Inspector; sub 1180 px doar iconițe, mereu pe un rând. Split și Compunere în Vizualizare (scurtăturile rămân).
+- **Meniuri ca în Scrivener:** Fișier, Editare, Vizualizare, Proiect, Documente, Navigare, Unelte, AI, Ajutor, cu submeniuri (▸) care rămân în fereastră și merg din tastatură; meniul nativ al aplicației desktop e construit din aceeași schemă.
+- **Meniu AI unic:** Asistent AI, I-REP / I-EDIT, AI pe selecție ▸, AI pe toată cartea ▸, NotebookLM ▸, Setări AI…, **Conectează la Claude (MCP)…** (scrie configurarea Claude Desktop cu copie de siguranță sau copiază comanda pentru Claude Code; serverul pornește din program, fără Node.js). Cu AI oprit rămân I-REP și Setări AI.
+- **Ctrl+Z după schimbarea documentului** funcționează (istoria se păstrează pe document).
+- Inspector tradus complet în engleză; eticheta/starea „fără” afișată tradus.
+- Teste: 811 + 2 sărite; scenarii noi ai-menu, toolbar-customize, undo-switch, topbar-layout (900/1366 px, luminos/întunecat), walk-invariants, snapshots, dialog-a11y; E2E Electron verifică meniul AI nativ și dialogul MCP.
+
 ## 2026-10-24 — v0.8.3 (continuare) — VKB2: I-REP repetiția apropiată și I-EDIT textul autorului; tab-uri C/R/D; 13 bug-uri de date; MCP pentru orice client
 
 ### Cerința user

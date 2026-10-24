@@ -1,9 +1,8 @@
 // Scenario 8: Script Mode Tab/Enter cycling, uppercase elements; Linguistic Focus on/off restores text.
-const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
+const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
-  await page.getByRole('button', { name: 'Format ▾' }).click();
-  await page.getByText('Mod scenariu: Scenariu de film', { exact: true }).click();
+  await menuCmd(page, 'Mod scenariu: Scenariu de film');
   await page.waitForSelector('.prose.script-mode');
   await caretEnd(page);
   const last = () => page.evaluate(() => { const ps = document.querySelectorAll('.pane .ProseMirror p'); const p = ps[ps.length - 1]; return [p.getAttribute('data-script'), p.textContent]; });

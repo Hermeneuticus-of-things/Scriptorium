@@ -1,11 +1,11 @@
 // AI assistant workflow in the demo (simulated AI): live progress, diff + Accept as one undo step at the captured range, Esc cancel + retry, insert, synopsis, Ctrl+Enter ask, history.
-const { open, ed, check, done, caretEnd } = require('./_helpers.cjs');
+const { open, ed, check, done, caretEnd, menuPick } = require('./_helpers.cjs');
 const S=process.argv[2] || require('os').tmpdir();
 (async () => {
   const { browser:b, page:p, errors } = await open();
   // Research toggled alone: does the panel appear?
   await p.evaluate(()=>0);
-  await p.getByRole('button', {name:'Asistent AI'}).first().click(); await p.waitForTimeout(300);
+  await menuPick(p, 'AI', 'Asistent AI'); await p.waitForTimeout(300);
   const panel = p.locator('.ai-panel').first();
   check('provider shown', /Model: Demo/.test(await panel.innerText()));
   // select first word and proofread

@@ -1,6 +1,6 @@
 // Every top menu opens fully inside the window, at narrow and wide sizes (menus that wrap to the
 // second toolbar row near the left edge used to open off-screen to the left).
-process.env.SCRIBNER_URL = process.env.SCRIBNER_URL || 'http://localhost:4191/?demo';
+process.env.SCRIBNER_URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
 const { open, check, done } = require('./_helpers.cjs');
 (async () => {
   for (const [w, h] of [[800, 600], [1024, 700], [1440, 900]]) {

@@ -1,5 +1,5 @@
 // Escape closes only the top-most layer: dialog over dialog, menu over editor, context menu over dialog.
-process.env.SCRIBNER_URL = process.env.SCRIBNER_URL || 'http://localhost:4191/?demo';
+process.env.SCRIBNER_URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
 const { open, ed, check, done } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();

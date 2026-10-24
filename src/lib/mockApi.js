@@ -76,6 +76,11 @@ function demoProject() {
 export function createMockApi() {
   const noKey = typeof location !== 'undefined' && /[?&]nokey\b/.test(location.search);
   const state = { settings: { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true, hasApiKey: !noKey, aiLabel: 'Demo (simulat)', aiModel: 'demo-local' }, projects: {} };
+  // Customized toolbars survive a page reload in the demo (the desktop app keeps them in settings.json).
+  try {
+    const tb = JSON.parse(localStorage.getItem('scribner-demo-toolbars') || 'null');
+    if (tb) state.settings.toolbars = tb;
+  } catch { /* storage unavailable */ }
   let pageSetupDefault = null; // File > Page Setup default (desktop: userData/page-setup.json)
   // Simulated AI: streams its answer word by word ('ai:delta'), honours cancelAi, reports bulk progress.
   const deltaFns = new Set();
@@ -180,6 +185,9 @@ export function createMockApi() {
       const { apiKey, ...rest } = patch;
       if (apiKey !== undefined) state.settings.hasApiKey = Boolean(apiKey);
       Object.assign(state.settings, rest);
+      if (rest.toolbars !== undefined) {
+        try { localStorage.setItem('scribner-demo-toolbars', JSON.stringify(rest.toolbars)); } catch { /* storage unavailable */ }
+      }
       return true;
     },
     async listTemplates() {
