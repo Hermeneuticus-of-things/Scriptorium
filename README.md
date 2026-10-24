@@ -87,7 +87,9 @@ Rigla (*Editare → Format → Arată / ascunde rigla* sau Ctrl+Alt+Shift+R) î�
 
 Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, punctuația și repetițiile, apoi le repară cu un clic.
 
-**Corecturi învățate.** Când corectezi de mână un cuvânt subliniat, programul ține minte. Data viitoare îl corectează singur, cu majusculele la locul lor. Cuvintele străine și transliterările (de exemplu cele în IAST) nu sunt atinse.
+**Corecturi învățate.** Când corectezi de mână un cuvânt subliniat, programul ține minte. Data viitoare îl corectează singur, cu majusculele la locul lor.
+
+**Cuvintele străine rămân neatinse.** Termenii din alte limbi și transliterările (de exemplu sanscrita în IAST: ā, ī, ṛ, ś) nu sunt „corectați” nici de corecturile învățate, nici de verificarea limbii.
 
 <p align="center">
   <img src="./assets/readme/repetition.png" width="100%" alt="Panoul de revizie cu secțiunea Repetiții apropiate (S70): scutul apare de două ori în fraze vecine">
@@ -123,19 +125,90 @@ Dacă lucrezi cu un agent AI, îl poți lăsa să lucreze direct în proiect: s�
 
 Merge și cu Codex, Gemini CLI, Cursor, VS Code și alți clienți MCP. Comenzile exacte, cu căile tale, sunt în *Ajutor → „Ce faci tu”*. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
 
-## La final, cartea întreagă
+## Compile: de la bucăți la carte
 
 <p align="center">
-  <img src="./assets/readme/compile.png" width="100%" alt="Fereastra în care alegi forma finală: manuscris, carte tipărită sau e-book">
+  <img src="./assets/readme/compile.png" width="100%" alt="Fereastra Compilează: formatele predefinite în stânga, formatul de ieșire și filele de setări în dreapta">
 </p>
 
-Alegi forma: manuscris pentru editură, carte tipărită sau e-book. Scribner adună bucățile într-un singur fișier Word, PDF sau EPUB, cu copertă, pagină de titlu și subtitlu, cuprins și capitole numerotate. Imaginile rămân cât le-ai făcut în text, fără să iasă din pagină; textul se desparte în silabe și nu lasă rânduri singure la capăt de pagină. Fișierele trec verificările programelor care le deschid: Word, LibreOffice, cititoarele de e-book.
+Scrii pe bucăți: scene, capitole, părți. *Compile* (*Fișier → Compilează…*) le adună într-o singură carte, gata de trimis la editură, de tipărit sau de pus pe un cititor de e-book. Pașii sunt mereu aceiași: alegi ce intră, alegi forma, apeși *Compilează*.
+
+**1. Ce intră în carte.** În fila *Conținut* alegi tot manuscrisul, un singur dosar sau doar selecția curentă, ori o colecție. Orice document poate fi scos din carte fără să-l ștergi: clic dreapta în binder și debifezi *Include în Compile* (titlul apare tăiat). Poți filtra după etichetă și după stare, de exemplu doar scenele „Final”. Tot aici adaugi materia de început (pagina de titlu automată cu titlu, subtitlu și autor, cuprinsul, un dosar cu dedicație sau prefață) și materia de final.
+
+<p align="center">
+  <img src="./assets/readme/compileContent.png" width="100%" alt="Fila Conținut: tot manuscrisul, un dosar sau selecția, materie de început și de final, pagină de titlu, cuprins, filtre după etichete și stări">
+</p>
+
+**2. Forma: formatele de Compile.** În stânga ferestrei sunt formatele gata făcute:
+
+| Format | Pentru ce |
+|---|---|
+| Manuscris standard | trimis la editură: pagină A4, rânduri largi, antet „Nume / Titlu / pagină” |
+| Carte tipărită (paperback) | carte de tipar 6 × 9 in, margini în oglindă, Garamond, capitole pe pagină nouă |
+| E-book | EPUB curat, cu cuprins de navigare și copertă |
+| Modern | aspect aerisit, capitole numerotate simplu |
+| Citire PDF A5 | PDF comod de citit pe ecran sau de tipărit acasă |
+| Implicit (Default) | punct de plecare neutru |
+| Times New Roman (dublu spațiat) | cerința clasică a multor concursuri și edituri |
+| Courier (manuscris clasic) | manuscris în stil mașină de scris |
+
+Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și o potrivești cum vrei. Formatul tău se salvează în proiect sau, cu *Salvează global*, rămâne disponibil în toate proiectele.
+
+**3. Formatul fișierului.** Același format de Compile produce oricare dintre ieșiri:
+
+| Ieșire | Când o folosești |
+|---|---|
+| Word (.docx) | pentru editură și redactor; secțiuni separate, comentarii și modificări urmărite opționale |
+| PDF | tipar sau citire; aceeași pagină ca la tipărire |
+| EPUB | e-book pentru Kobo, Apple Books, PocketBook, Calibre |
+| OpenDocument (.odt), RTF | LibreOffice și alte procesoare de text |
+| HTML | o pagină web cu toată cartea |
+| Markdown, MultiMarkdown, LaTeX | lucru tehnic, Pandoc, tipografie LaTeX |
+| Fountain, Final Draft (.fdx) | scenarii |
+| Text simplu | orice altceva |
+
+*Tipărire / previzualizare* îți arată paginile înainte de orice. Proiectul întreg se poate exporta și ca `.scriv`, din meniul *Fișier*.
+
+**4. Tipurile de secțiune.** Fiecare bucată din binder are un tip: *Parte*, *Capitol*, *Secțiune*, *Scenă*, *Pagină de titlu*. Implicit, dosarele sunt capitole, documentele cu subdocumente sunt „capitol cu text”, iar documentele simple sunt scene; poți schimba tipul oricărei bucăți din Inspector. În fila *Secțiuni* hotărăști pentru fiecare tip cum apare: cu titlu sau fără, cu un prefix ca „Capitolul <$n>” sau „Partea <$n:Words>” („Partea Unu”), cu majuscule, aliniat la centru sau la stânga, pe pagină nouă sau nu, cu text sau doar cu titlu. Scenele, de obicei, apar fără titlu, despărțite de un separator.
+
+<p align="center">
+  <img src="./assets/readme/compileSections.png" width="100%" alt="Fila Secțiuni: pentru fiecare tip de secțiune, titlu, prefix, litere, aliniere, pagină nouă, text și separator">
+</p>
+
+**5. Separatoare și înlocuiri.** În *Separatoare* alegi ce se pune între scene (rând gol, „#”, „* * *”) și între bucăți de tipuri diferite. În *Înlocuiri* schimbi la Compile un text cu altul, cu sau fără majuscule, cuvânt întreg sau expresie regulată; textul tău din proiect rămâne neatins.
+
+**6. Note și comentarii.** Notele de subsol rămân note de subsol sau devin note la finalul fiecărui capitol ori al cărții. Comentariile devin comentarii Word (în DOCX) sau dispar. Adnotările din text nu ajung în carte, iar evidențierile și culorile se pot elimina.
+
+**7. Pagina de tipar.** În fila *Pagină* alegi dimensiunea (A4, A5, Letter, 6 × 9 in sau personalizată), marginile sus, jos, interior și exterior, cu *margini în oglindă* pentru pagini față-verso. Antetul și subsolul au câte trei câmpuri (stânga, centru, dreapta), cu substituenți: titlul capitolului curent în antet, numărul paginii în subsol. Prima pagină a fiecărui capitol și paginile de la început (copertă, titlu, cuprins) rămân fără antet, iar numerotarea pornește de la textul cărții. Tot aici alegi fontul textului și al titlurilor, mărimea, spațierea și alineatul.
+
+<p align="center">
+  <img src="./assets/readme/compilePage.png" width="100%" alt="Fila Pagină: font, mărime, spațiere, dimensiunea 6 × 9 in, margini în oglindă, antet și subsol cu substituenții &lt;$projecttitle&gt; și &lt;$p&gt;">
+</p>
+
+| Substituent | Devine |
+|---|---|
+| `<$n>`, `<$n:roman>`, `<$n:words>`, `<$n:Words>` | numărul capitolului: 3, III, trei, Trei |
+| `<$t>` | titlul secțiunii; în antet, titlul capitolului curent |
+| `<$p>` | numărul paginii (în antet și subsol) |
+| `<$projecttitle>`, `<$abbr_title>`, `<$subtitle>` | titlul cărții, titlul scurt, subtitlul |
+| `<$author>`, `<$surname>`, `<$forename>` | autorul, numele, prenumele |
+| `<$wc>` | numărul de cuvinte |
+| `<$date>`, `<$year>` | data și anul compilării |
+| `<$img:Nume>` | imaginea cu acel nume din Cercetare |
+
+**8. Tipografie.** La cerere, ghilimelele drepte devin „…”, două cratime devin linie de dialog, iar legăturile interne devin text simplu. În PDF și în cartea tipărită textul se desparte în silabe și nu rămân rânduri singure la început sau la final de pagină. Imaginile își păstrează mărimea din text, dar nu ies niciodată din pagină.
+
+**9. Metadate și copertă.** În *Metadate* pui titlul, subtitlul, autorul, editura și limba. Coperta e o imagine din proiect; ajunge pe prima pagină în PDF și DOCX și drept copertă în EPUB.
+
+**10. Verificarea.** *Previzualizare* îți arată rezultatul înainte să salvezi. Fișierele ies valide: DOCX-ul se deschide fără reparații în Word și LibreOffice, EPUB-ul trece verificarea cititoarelor de e-book. *Salvează setările* ține alegerile pentru data viitoare, ca următorul Compile să fie un singur clic.
+
+### Câteva pagini pe hârtie
 
 <p align="center">
   <img src="./assets/readme/pagesetup.png" width="100%" alt="Fereastra Configurare pagină: hârtie, orientare, margini, antet și subsol">
 </p>
 
-Vrei doar câteva pagini pe hârtie? *Fișier → Tipărire → Configurare pagină* alege formatul, marginile, antetul și subsolul. În aplicația desktop, *Previzualizare tipărire* îți arată paginile înainte să le trimiți la imprimantă.
+Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire → Configurare pagină* alege formatul, marginile, antetul și subsolul. În aplicația desktop, *Previzualizare tipărire* îți arată paginile reale (zoom, Tipărește, Salvează PDF) înainte să le trimiți la imprimantă.
 
 ## Cum îl instalezi
 
@@ -171,14 +244,18 @@ La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 le
 <details>
 <summary><strong>Pentru cine vrea detalii tehnice</strong></summary>
 
-**Din cod sursă** (Node.js 22+):
+**Din cod sursă** (Node.js 22+ și git):
 
 ```bash
-npm install
+git clone https://github.com/Hermeneuticus-of-things/Scriptorium.git
+cd Scriptorium
+npm ci                   # dependințele, exact versiunile din package-lock.json
 npm start                # construiește și pornește aplicația
 npm run dist:win         # aplicația împachetată și varianta portabilă, în release/
 npm run dist:win:setup   # installerul cu wizard (Inno Setup 6, pe Windows)
 ```
+
+Pe Windows, în PowerShell, comenzile sunt aceleași (`git clone …`, `cd Scriptorium`, `npm ci`, `npm start`). Ai nevoie de Node.js 22 sau mai nou (`node -v`) și, doar pentru installer, de [Inno Setup 6](https://jrsoftware.org/isinfo.php). Dacă PowerShell refuză `npm` din cauza politicii de scripturi, folosește `npm.cmd` sau rulează o dată `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installer\build-windows.cmd` face tot: dependințele, aplicația, varianta portabilă și `Scribner-Setup-<versiune>.exe`, apoi deschide folderul `release`.
 

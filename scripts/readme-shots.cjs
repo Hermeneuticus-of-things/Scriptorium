@@ -202,6 +202,41 @@ const SHOTS = {
       await p.waitForTimeout(600);
     },
   },
+  compileContent: {
+    kicker: 'Compile · ce intră în carte',
+    title: 'Alegi formatul și bucățile',
+    sub: 'Tot manuscrisul, un dosar sau selecția, filtre după etichetă și stare, copertă, pagină de titlu și cuprins.',
+    async setup(p) {
+      await menuPick(p, 'Fișier', 'Compilează…');
+      await p.waitForSelector('.compile-dialog');
+      await p.locator('.compile-dialog .cd-formats li button', { hasText: 'Carte tipărită' }).first().click();
+      await p.waitForTimeout(400);
+    },
+  },
+  compileSections: {
+    kicker: 'Compile · tipuri de secțiune',
+    title: 'Fiecare parte își are aspectul ei',
+    sub: 'Părți, capitole și scene: titlu cu „Capitolul <$n>”, pagină nouă, aliniere, majuscule sau doar textul.',
+    async setup(p) {
+      await menuPick(p, 'Fișier', 'Compilează…');
+      await p.waitForSelector('.compile-dialog');
+      await p.locator('.compile-dialog .cd-formats li button', { hasText: 'Carte tipărită' }).first().click();
+      await p.locator('.compile-dialog .cd-tabs button').nth(1).click();
+      await p.waitForTimeout(400);
+    },
+  },
+  compilePage: {
+    kicker: 'Compile · pagina de tipar',
+    title: 'Pagina de carte, gata de tipar',
+    sub: 'Format, margini în oglindă, antet cu titlul capitolului (<$t>), număr de pagină (<$p>), fonturi și spațiere.',
+    async setup(p) {
+      await menuPick(p, 'Fișier', 'Compilează…');
+      await p.waitForSelector('.compile-dialog');
+      await p.locator('.compile-dialog .cd-formats li button', { hasText: 'Carte tipărită' }).first().click();
+      await p.locator('.compile-dialog .cd-tabs button').nth(5).click();
+      await p.waitForTimeout(400);
+    },
+  },
   customize: {
     kicker: 'Interfață pe gustul tău',
     title: 'Bara de instrumente o alegi tu',
