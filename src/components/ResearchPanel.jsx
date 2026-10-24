@@ -12,7 +12,7 @@ const KINDS = () => ([
 
 // NotebookLM-style research panel: local BM25 retrieval over the project (no AI),
 // optional answer from the chosen AI provider built only from the retrieved passages.
-export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, aiLabel = '' }) {
+export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, aiLabel = '', request = null }) {
   const [q, setQ] = useState('');
   const [kind, setKind] = useState('');
   const [results, setResults] = useState([]);
@@ -31,13 +31,15 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
   }, [api, dir]);
 
   const wrap = (label, fn) => {
-    const go = async () => {
+    // Click handlers pass an event; only a string is a query.
+    const go = async (arg) => {
+      const query = typeof arg === 'string' ? arg : undefined;
       setBusy(label);
       setError(null);
       try {
-        await fn();
+        await fn(query);
       } catch (e) {
-        setError({ message: e.message, retry: go });
+        setError({ message: e.message, retry: () => go(query) });
       } finally {
         setBusy('');
       }
@@ -45,18 +47,26 @@ export default function ResearchPanel({ api, dir, aiEnabled, onOpen, onClose, ai
     return go;
   };
 
-  const search = wrap('Caut…', async () => {
-    if (!q.trim()) return;
+  // `query` overrides the typed text when a search comes from the editor's context menu.
+  const search = wrap('Caut…', async (query = q) => {
+    if (!query.trim()) return;
     setAnswer('');
-    setResults(await api.ragQuery(dir, q, { k: 10, kinds: kind ? [kind] : undefined }));
+    setResults(await api.ragQuery(dir, query, { k: 10, kinds: kind ? [kind] : undefined }));
   });
-  const ask = wrap(t('ui.researchPanel.x_formuleaza_raspunsul', { v0: aiLabel || 'Modelul AI' }), async () => {
-    if (!q.trim()) return;
+  const ask = wrap(t('ui.researchPanel.x_formuleaza_raspunsul', { v0: aiLabel || 'Modelul AI' }), async (query = q) => {
+    if (!query.trim()) return;
     setAnswer('');
-    const res = await api.ragAsk(dir, q, { k: 6 });
+    const res = await api.ragAsk(dir, query, { k: 6 });
     setAnswer(res.answer);
     setResults(res.passages);
   });
+  useEffect(() => {
+    if (!request || !request.q) return;
+    setQ(request.q);
+    if (request.mode === 'ask' && aiEnabled && api.ragAsk) ask(request.q);
+    else if (supported) search(request.q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request && request.n]);
   const asking = busy && busy !== 'Caut…' && busy !== 'Reindexez…';
   useEffect(() => {
     if (!asking || !api.cancelAi) return undefined;

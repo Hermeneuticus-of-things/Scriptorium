@@ -3,8 +3,8 @@ import { buildRegex, findInHtml } from '../lib/search.js';
 import { flatten } from '../lib/tree.js';
 import { t } from '../lib/i18n.js';
 
-export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClose }) {
-  const [query, setQuery] = useState('');
+export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClose, initialQuery = '' }) {
+  const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
   const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, includeTrash: false });
   const [busy, setBusy] = useState(false);

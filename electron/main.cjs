@@ -216,6 +216,15 @@ function setupSpelling(win) {
           ],
         });
       }
+      items.push({
+        label: 'În proiect',
+        submenu: [
+          { label: 'Caută selecția în proiect', click: cmd('findSel') },
+          { label: 'Caută în cercetarea proiectului', click: cmd('researchSel') },
+          ...(st.aiEnabled !== false ? [{ label: 'AI: răspunde din cercetarea proiectului', click: cmd('researchAskSel') }] : []),
+          { label: 'Adaugă în glosar', click: cmd('glossaryAdd') },
+        ],
+      });
       items.push({ label: 'Întreabă NotebookLM', click: cmd('nlmAskSel') });
       items.push({ type: 'separator' });
     }
