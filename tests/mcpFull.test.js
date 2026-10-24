@@ -81,6 +81,8 @@ const NEW_READ_TOOLS = (ctx) => ({
 // Every renderer API (electron/preload.cjs) is either reachable over MCP (tool name) or GUI-only
 // (reason). A new preload function makes this test fail until it is listed here.
 const PRELOAD_COVERAGE = {
+  isMisspelled: 'gui: corectorul ortografic al ferestrei (corecturi învățate)',
+  onSpellReplaced: 'gui: sugestie aleasă din meniul nativ de clic dreapta',
   getSettings: 'gui: setările aplicației (temă, chei API); serverul citește doar backup / liste editoriale',
   setSettings: 'gui: setările aplicației și cheile API nu se schimbă din agent',
   chooseBackupDir: 'gui: dialog de folder (backup_now primește backup_dir)',

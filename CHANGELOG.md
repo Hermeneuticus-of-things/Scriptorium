@@ -1,5 +1,17 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.3 (continuare) — Corecturi învățate
+
+### Cerința user
+> "la corecțiile manuale să creeze automat în dicționar, ca să nu mai rescriu aceleași cuvinte pe viitor"
+
+### Rezultat
+- Un cuvânt subliniat ca greșit, corectat de mână (selectat și rescris sau ales din sugestiile de clic dreapta), intră automat în *Setări → Corecturi → Înlocuiri automate*, marcat „învățat”, și se corectează singur la scriere data viitoare, păstrând majusculele („fata” → „față”, „Fata” → „Față”, „FATA” → „FAȚĂ”). Confirmarea apare ca mesaj scurt.
+- Se învață doar greșeli apropiate (diacritice, literă lipsă, în plus sau inversată) și doar când corectorul ortografic respinge forma veche și o acceptă pe cea nouă; așa „casa” → „masa” (două cuvinte corecte) nu se învață. Înlocuirile scrise de tine au prioritate; o corectură inversă o anulează pe cea veche; maximum 2000 de intrări învățate.
+- Opțiunea *Învață din corecturile mele* (pornită implicit) o oprește. Înlocuirile noi se aplică imediat, fără reîncărcarea editorului.
+- În browser nu există corector de sistem, deci acolo nu se învață din rescriere.
+- `src/lib/learnCorrections.js`, `src/editor/corrections.js` (plugin), `electron/preload.cjs` (`isMisspelled`, `onSpellReplaced`), `electron/main.cjs`; 11 teste noi. Total 732 + 2 sărite; E2E Electron trece.
+
 ## 2026-10-24 — v0.8.3 (continuare) — Riglă cu tab-uri, Print Preview, imagini offline din web, Linguistic Focus precis, ajutor „Ce faci tu”
 
 ### Cerința user

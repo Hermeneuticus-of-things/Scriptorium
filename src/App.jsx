@@ -98,6 +98,7 @@ import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
 import { replaceInHtml } from './lib/search.js';
+import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 
 const SAVE_DELAY = 700;
@@ -177,6 +178,32 @@ export default function App({ api }) {
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
+  // Learned corrections: a misspelled word fixed by hand becomes an auto-replacement (Settings →
+  // Corrections), so the same typo is fixed while typing next time.
+  const replacementsNow = useCallback(() => settingsRef.current?.autoReplacements || [], []);
+  const learnPair = useCallback(async (from, to) => {
+    const cur = settingsRef.current;
+    if (!cur || cur.learnCorrections === false) return;
+    const next = learnCorrection(cur.autoReplacements, from, to);
+    if (!next) return;
+    try {
+      await api.setSettings({ autoReplacements: next });
+      setSettings(await api.getSettings());
+      setToast(tr('ui.app.corectura_invatata', { from, to }));
+    } catch {
+      /* settings not writable: nothing learned */
+    }
+  }, [api]);
+  // Typed over a selected word: learn only when the spell checker flags the old word and accepts
+  // the new one (without a checker, e.g. in the browser, nothing is learned from typing).
+  const learnFromEdit = useCallback((from, to) => {
+    if (!api.isMisspelled) return;
+    Promise.resolve()
+      .then(async () => (await api.isMisspelled(from)) && !(await api.isMisspelled(to)))
+      .then((ok) => ok && learnPair(from, to))
+      .catch(() => {});
+  }, [api, learnPair]);
+  useEffect(() => (api.onSpellReplaced ? api.onSpellReplaced(({ from, to }) => learnPair(from, to)) : undefined), [api, learnPair]);
   const [help, setHelp] = useState(null);
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
@@ -1303,7 +1330,9 @@ export default function App({ api }) {
     smartEllipsis: settings.smartEllipsis !== false,
     smartFractions: Boolean(settings.smartFractions),
     autoCapitalize: Boolean(settings.autoCapitalize),
-    replacements: settings.autoReplacements || [],
+    // Read live: new or learned replacements apply without rebuilding the editors.
+    getReplacements: replacementsNow,
+    onLearn: settings.learnCorrections === false ? null : learnFromEdit,
   };
   const corrKey = JSON.stringify(corrections);
   // AI is optional: with it off, every feature that needs Claude is hidden and nothing else changes.

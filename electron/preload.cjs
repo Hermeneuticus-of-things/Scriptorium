@@ -1,5 +1,5 @@
 'use strict';
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webFrame } = require('electron');
 
 const call = async (channel, ...args) => {
   const res = await ipcRenderer.invoke(channel, ...args);
@@ -37,6 +37,20 @@ contextBridge.exposeInMainWorld('api', {
     const listener = (_e, id) => fn(id);
     ipcRenderer.on('menu:command', listener);
     return () => ipcRenderer.removeListener('menu:command', listener);
+  },
+  // Learned corrections: is a word misspelled for the active spell checker; a suggestion picked
+  // from the native context menu ({ from, to }).
+  isMisspelled: (word) => {
+    try {
+      return webFrame.isWordMisspelled(String(word));
+    } catch {
+      return false;
+    }
+  },
+  onSpellReplaced: (fn) => {
+    const listener = (_e, info) => fn(info);
+    ipcRenderer.on('spell:replaced', listener);
+    return () => ipcRenderer.removeListener('spell:replaced', listener);
   },
   watchProject: (dir) => call('project:watch', dir),
   // Re-read project.json after an external change (no backup / recent-list side effects).

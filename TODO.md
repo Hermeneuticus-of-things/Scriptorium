@@ -116,3 +116,8 @@ Rezumat: web și desktop lucrează pe același folder; sincronizarea o face clie
 - [x] Ajutor: capitol „Ce faci tu”
 - [ ] Ce cere autorul: vezi ROADMAP secțiunea 8 și Ajutor → „Ce faci tu”
 Rezumat: tot ce se putea face fără resurse de la autor e închis.
+
+### Request: corecturile manuale învățate automat
+- [x] Învățare din rescriere și din sugestiile corectorului, cu verificare ortografică
+- [x] Potrivire fără majuscule, cu păstrarea lor; opțiune în Setări; ajutor
+Rezumat: greșelile corectate o dată se corectează singure.

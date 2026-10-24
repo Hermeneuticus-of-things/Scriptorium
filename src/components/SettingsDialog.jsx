@@ -166,7 +166,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const setEdL = (k, v) => setEdLists((all) => ({ ...all, [edBase]: { ...all[edBase], [k]: v } }));
 
   const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' ? Number(v) : d);
-  const editRepl = (i, k, v) => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
+  const editRepl = (i, k, v) => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.map((r, j) => (j === i ? { ...r, [k]: v, learned: false } : r)) }));
 
   const save = async () => {
     try {
@@ -373,10 +373,12 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         {api.listDictionaryWords && <PersonalDictionary api={api} onError={onError} />}
         <fieldset>
           <legend>{t('set.replacements')}</legend>
+          {check('learnCorrections', t('ui.settingsDialog.invata_corecturile'))}
           {s.autoReplacements.map((r, i) => (
             <div className="row" key={i}>
               <input aria-label={t('set.replaceFrom')} placeholder={t('set.replaceFrom')} value={r.from} onChange={(e) => editRepl(i, 'from', e.target.value)} />
               <input aria-label={t('set.replaceTo')} placeholder={t('set.replaceTo')} value={r.to} onChange={(e) => editRepl(i, 'to', e.target.value)} />
+              {r.learned && <span className="muted small">{t('ui.settingsDialog.invatat')}</span>}
               <button onClick={() => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.filter((_, j) => j !== i) }))}>{t('btn.remove')}</button>
             </div>
           ))}

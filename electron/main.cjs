@@ -185,7 +185,10 @@ function setupSpelling(win) {
     const items = [];
     const L = services.contextMenuLabels(readSettings().language);
     if (params.misspelledWord && !ignored.has(params.misspelledWord.toLowerCase())) {
-      for (const s of params.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => win.webContents.replaceMisspelling(s) });
+      for (const s of params.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => {
+        win.webContents.replaceMisspelling(s);
+        win.webContents.send('spell:replaced', { from: params.misspelledWord, to: s });
+      } });
       if (!params.dictionarySuggestions.length) items.push({ label: L.noSuggestions, enabled: false });
       items.push({ label: L.addToDict(params.misspelledWord), click: () => ses.addWordToSpellCheckerDictionary(params.misspelledWord) });
       items.push({ label: L.ignore(params.misspelledWord), click: () => ignored.add(params.misspelledWord.toLowerCase()) });
