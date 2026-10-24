@@ -221,3 +221,20 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Definițiile VKB2 primite și implementate
 - [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add scribner …`)
 - [ ] Pachetul de limbă română pentru corectorul ortografic al Windows (setare de sistem)
+
+## 9. Planificat: lucru în echipă (mai mulți oameni, mai multe calculatoare)
+
+Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, lucrează la același proiect; proiectul se trimite printr-un server, un NAS sau un cloud; se vede cine ce a modificat și când.
+
+- [ ] **Identitate:** fiecare instalare are un nume de utilizator și o culoare (Setări → Echipă); fiecare scriere în proiect poartă autorul, ora și calculatorul.
+- [ ] **Jurnal de modificări pe document:** `history/<id>.jsonl` cu rânduri `{autor, oră, calculator, bucăți schimbate vechi → nou, hash}` (extinde jurnalul I-EDIT `MODIFICARI_AUTOR.jsonl`); panou „Istoric” în Inspector cu filtrare pe persoană și pe perioadă, comparare și revenire la orice versiune.
+- [ ] **Transport 1, folder comun (NAS / OneDrive / Dropbox / Google Drive):** formatul `.scribner` rămâne fișiere text; fiecare calculator scrie doar fișierele lui plus un jurnal propriu (`sync/<calculator>.jsonl`), ca sincronizarea clientului de cloud să nu producă conflicte; un watcher îmbină schimbările celorlalți (îmbinarea în trei căi există deja pentru `project.json`).
+- [ ] **Transport 2, server Scribner:** un server mic (Node, în același repo, pornit din aplicație sau ca serviciu pe NAS / VPS), cu WebSocket; schimbările circulă în timp real ca operații CRDT pe documente (de ex. Yjs pentru TipTap), cu salvare pe disc în formatul `.scribner`; autentificare cu cont și parolă sau cheie de invitație; HTTPS.
+- [ ] **Prezență:** cine are deschis ce document; cursorul și selecția celorlalți, colorate; blocare opțională a unui document (Inspector → Blocat de …).
+- [ ] **Conflicte:** documente diferite se îmbină automat; același paragraf modificat offline de doi oameni → dialog cu cele două variante, alături, și alegere sau combinare; nimic nu se pierde (ambele variante rămân în snapshot-uri).
+- [ ] **Offline:** coadă locală a schimbărilor, trimisă la reconectare; indicator de stare în bara de jos (sincronizat / în așteptare / conflict).
+- [ ] **Roluri și permisiuni:** autor (tot), traducător (textul), redactor (comentarii și modificări propuse, fără scriere directă), cititor; pe proiect și pe dosar.
+- [ ] **Modificări propuse:** mod „sugestie” în care schimbările altcuiva apar marcate până le accepți sau le respingi, pe persoană.
+- [ ] **Compatibilitate:** proiectele fără echipă rămân exact ca acum; MCP vede autorul agentului ca persoană separată („agent”).
+- [ ] **Teste:** simulare cu 3 clienți și latență, deconectări, editări simultane în același paragraf, sincronizare prin folder cu întârzieri de cloud, recuperare după oprire bruscă.
+
