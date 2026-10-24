@@ -142,7 +142,9 @@ Rezumat: greșelile corectate o dată se corectează singure.
 ## Următoarele (detalii în ROADMAP.md §10)
 - [ ] server Scribner în timp real (CRDT, WebSocket, HTTPS, conturi)
 - [ ] cursorii celorlalți, colorați
-- [ ] dialog de conflict cu variantele alături
+- [x] dialog de conflict cu variantele alături (v0.9.2, `src/components/ConflictDialog.jsx`, `resolveMerge`)
+- [ ] căutare „cuvânt întreg” și `^`/`$` peste granițele de formatare (bold în mijlocul cuvântului) — `src/lib/search.js`
+- [ ] Ctrl+Z după schimbarea documentului: pași pe cuvinte, fără reluarea anulărilor — `src/components/Editor.jsx`
 - [ ] coadă offline + indicator de sincronizare
 - [ ] roluri și permisiuni
 - [ ] mod „sugestie”

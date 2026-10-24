@@ -243,7 +243,7 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 
 1. **Server Scribner în timp real** (§9, transport 2): server mic Node pe NAS / VPS, WebSocket + HTTPS, schimbări CRDT (Yjs) pe documente, salvare în formatul `.scribner`, cont și parolă sau cheie de invitație.
 2. **Cursorii și selecția celorlalți**, colorați, prin server (§9, prezență).
-3. **Dialogul de conflict cu variantele alături**: același paragraf schimbat de doi oameni, alegi sau combini (§9, conflicte).
+3. ✅ (v0.9.2) **Dialogul de conflict cu variantele alături**: același paragraf schimbat de doi oameni, alegi sau combini (§9, conflicte).
 4. **Coadă offline** a schimbărilor + indicator sincronizat / în așteptare / conflict în bara de jos (§9).
 5. **Roluri și permisiuni**: autor, traducător, redactor, cititor; pe proiect și pe dosar (§9).
 6. **Modul „sugestie”**: schimbările altcuiva marcate până le accepți sau le respingi, pe persoană (§9).

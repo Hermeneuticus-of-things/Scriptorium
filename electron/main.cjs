@@ -743,6 +743,7 @@ handle('media:read', (_e, dir, file) => {
 handle('media:openExternal', async (_e, dir, file) => {
   assertOpened(dir);
   if (!/^[A-Za-z0-9-]+\.[a-z0-9]+$/.test(file)) throw new Error(`Fișier media invalid: ${file}`);
+  if (store.mimeFor(file) === 'application/octet-stream') throw new Error(`Tip de fișier care nu se deschide în alt program: ${file}`);
   const err = await shell.openPath(path.join(dir, 'media', file));
   if (err) throw new Error(err);
   return true;
@@ -894,13 +895,15 @@ const snapPath = (dir, id, file) => {
   if (!/^[A-Za-z0-9-]+$/.test(String(id)) || !/^[\w.-]+\.json$/.test(String(file))) throw new Error('Snapshot invalid');
   return path.join(dir, 'snapshots', id, file);
 };
-handle('snap:delete', (_e, dir, id, file) => {
+handle('snap:delete', (e, dir, id, file) => {
   assertOpened(dir);
+  assertOwner(e.sender, dir);
   fs.unlinkSync(snapPath(dir, id, file));
   return true;
 });
-handle('snap:rename', (_e, dir, id, file, name) => {
+handle('snap:rename', (e, dir, id, file, name) => {
   assertOpened(dir);
+  assertOwner(e.sender, dir);
   const p = snapPath(dir, id, file);
   const data = JSON.parse(fs.readFileSync(p, 'utf8'));
   data.name = String(name || 'Snapshot');

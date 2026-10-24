@@ -59,6 +59,7 @@ export async function pullExternalDocs({ api, dir, ids, hasLocal = () => false, 
   const merged = {};
   const theirs = {};
   const conflicts = [];
+  const clashes = {}; // id -> merge pieces, for choosing paragraph by paragraph
   for (const id of ids) {
     // The base is taken before reading: reading may record what it read as the base.
     const base = baseHtml ? baseHtml(id) : undefined;
@@ -74,10 +75,11 @@ export async function pullExternalDocs({ api, dir, ids, hasLocal = () => false, 
       const r = merge(base, mine, disk);
       if (r.html !== mine) merged[id] = r.html;
       if (!r.conflicts) continue;
+      if (r.pieces) clashes[id] = r.pieces;
     }
     // takeSnapshot stores what is on disk now: the version that just arrived.
     await api.takeSnapshot(dir, id, label);
     conflicts.push(id);
   }
-  return { updated, merged, theirs, conflicts };
+  return { updated, merged, theirs, conflicts, clashes };
 }

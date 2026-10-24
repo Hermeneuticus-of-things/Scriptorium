@@ -33,7 +33,7 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 |---|---|
 | [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, cronologie, legături între documente |
 | [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic |
-| [Dictezi](#dictezi) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
+| [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
 | [Corectezi](#corectezi) | revizie fără AI, corecturi învățate, asistent AI opțional, versiuni |
 | [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri |
 | [Agenți AI](#agenți-ai) | Claude sau Codex lucrează direct în carte, dacă vrei |
@@ -106,7 +106,7 @@ Clic dreapta pe un cuvânt și ai la îndemână:
 - **Dicționare:** dexonline și sinonime, [sinonimul.ro](https://sinonimul.ro/), Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
 - **Asistent AI, În proiect, NotebookLM:** explicație sau traducere, căutare în toată cartea, glosar, întrebări despre termen în sursele tale.
 
-### Dictezi
+### Dictezi: D&TED – Dictare și transcriere
 
 <p align="center">
   <img src="./assets/readme/voice-team.svg" width="100%" alt="Scrii cu vocea: vorbești și fraza apare pe fișa scenei, fără internet. Lucrați împreună: fiecare om cu culoarea lui pe fișele aceleiași cărți, una blocată de Ana">
@@ -298,7 +298,7 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 - **Cine lucrează acum:** lângă titlul documentului apare numele celui care îl are deschis; în bara de jos vezi câți sunteți.
 - **Cine ce a schimbat și când:** *Proiect → Echipă…* arată jurnalul cu persoana, data, cuvintele adăugate și șterse și un fragment, filtrat pe document, persoană și perioadă.
 - **Blocare:** lacătul de lângă titlu blochează documentul pentru ceilalți; la ei se deschide doar pentru citire. Un calculator închis își pierde singur blocările după o jumătate de oră.
-- **Îmbinare:** schimbările făcute în paragrafe diferite se unesc singure. Același paragraf schimbat în două locuri: rămâne textul tău, iar varianta celuilalt se păstrează ca snapshot. Nu se pierde nimic.
+- **Îmbinare:** schimbările făcute în paragrafe diferite se unesc singure. Același paragraf schimbat în două locuri: se deschide o fereastră cu cele două variante alături și alegi, pentru fiecare loc, varianta ta, a celuilalt sau pe amândouă. Varianta celuilalt rămâne oricum ca snapshot. Nu se pierde nimic.
 - **Siguranță:** copiile de conflict făcute de OneDrive sau Dropbox sunt recunoscute și semnalate; dacă NAS-ul ori cloud-ul se deconectează, primești un mesaj și programul reia singur.
 - **Agenții AI** (Claude, Codex prin MCP) apar în jurnal ca persoană separată, „agent”, și nu scriu în documentele blocate.
 
@@ -312,7 +312,6 @@ Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 
 - **Scris în același timp în același document**, printr-un server Scribner pe un calculator din rețea, pe NAS sau pe internet, cu cursorul și selecția celorlalți, colorate.
 - **Lucru fără internet**, cu trimiterea schimbărilor la reconectare și un indicator „sincronizat / în așteptare / conflict”.
-- **Alegerea variantei** când același paragraf a fost schimbat de doi oameni, cu textele puse alături.
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.
@@ -376,7 +375,7 @@ La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 le
 
 **Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
 
-**Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi).
+**Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi-dted--dictare-și-transcriere).
 
 **Pot lega un agent AI, ca Claude sau Codex?** Da, prin *AI → Conectează la Claude (MCP)*, fără Node.js. Pentru Codex, Gemini CLI, Cursor sau VS Code, comenzile sunt în *Ajutor → „Ce faci tu”*.
 

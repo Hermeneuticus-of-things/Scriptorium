@@ -1,5 +1,22 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.2 — Dialog de conflict + bug hunter pe tot programul (24 de bug-uri)
+
+### Cerința user
+> "continua automat cu roadmap+ bug hunter extensiva tot app"
+
+- **Dialog de conflict:** același paragraf schimbat pe două calculatoare deschide variantele alături; alegi pe fiecare loc a mea / a lor / amândouă (`ConflictDialog.jsx`, `resolveMerge` în `team.js`). Dacă ai scris între timp, alegerea nu suprascrie nimic.
+- **Salvare sigură la pană de curent:** fișierele se scriu complet pe disc înainte de înlocuire (fsync); media se scrie atomic.
+- **Import:** notele de subsol Word (`\footnote`) rămân note, nu intră în text; datele binare (`\bin`) nu mai strică documentul; un `.scriv` modificat nu mai poate citi fișiere din afara lui.
+- **Securitate:** „Deschide în alt program” refuză tipurile necunoscute (.bat, .exe); fișierele atașate cu tip necunoscut se salvează `.bin`; ștergerea și redenumirea snapshot-urilor cer fereastra care deține proiectul.
+- **Export:** o notă legată sau un comentariu peste un cuvânt îngroșat ies o singură dată (nu de 3 ori); exportul pe documente păstrează notele legate în MD/TXT/RTF; `.scrivx` fără caractere de control.
+- **Binder:** documentele noi nu se mai creează în Coș; tragerea unui dosar împreună cu copilul lui păstrează structura; tragerea în Coș ține minte locul pentru Restaurare.
+- **Tastatură:** scurtăturile nu mai rulează în spatele unui dialog sau în câmpurile de text; înregistrarea unei scurtături nu o mai execută; Esc care închide un meniu nu mai oprește răspunsul AI.
+- **Setări:** Esc sau clic în afară întreabă înainte să renunțe la modificări.
+- **Îmbinare:** dacă îmbinarea proiectului eșuează, versiunea de pe disc se păstrează ca backup.
+- **Traducere:** tooltip-urile din Istoric și „(nimic)” din Inspector în engleză.
+- Rămase pentru o versiune viitoare (TODO): căutarea „cuvânt întreg” peste formatare, pașii Ctrl+Z după schimbarea documentului.
+
 ## 2026-10-24 — v0.9.1 — Bug hunter pe motorul de dictare încorporat (11 bug-uri)
 
 - Verificat pe codul whisper-server v1.7.6: comenzile, câmpurile cererii și răspunsul `verbose_json` sunt corecte.

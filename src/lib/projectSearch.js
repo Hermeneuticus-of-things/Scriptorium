@@ -158,10 +158,17 @@ export function searchProject(project, docs, notesById, criteria = {}) {
 
 function replacePlain(text, re, replacement) {
   let count = 0;
+  const groups = new RegExp(`${re.source}|`, re.flags).exec('').length - 1;
   re.lastIndex = 0;
   const out = String(text ?? '').replace(re, (...args) => {
     count++;
-    return replacement.replace(/\$(\d)/g, (_, d) => (typeof args[Number(d)] === 'string' ? args[Number(d)] : ''));
+    // Same $ rules as the text replace (src/lib/search.js): $$, $&, $N only up to the group count.
+    return replacement.replace(/\$(\$|&|\d)/g, (tok, k) => {
+      if (k === '$') return '$';
+      if (k === '&') return args[0];
+      const n = Number(k);
+      return n >= 1 && n <= groups ? args[n] ?? '' : tok;
+    });
   });
   re.lastIndex = 0;
   return { text: out, count };
