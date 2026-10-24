@@ -56,6 +56,7 @@ contextBridge.exposeInMainWorld('api', {
   watchProject: (dir) => call('project:watch', dir),
   // Re-read project.json after an external change (no backup / recent-list side effects).
   reloadProject: (dir) => call('project:reload', dir),
+  syncConflicts: (dir) => call('project:syncConflicts', dir),
   onProjectChanged: (fn) => {
     const listener = (_e, info) => fn(info);
     ipcRenderer.on('project:changed', listener);
@@ -114,6 +115,16 @@ contextBridge.exposeInMainWorld('api', {
   nlmExport: (dir, options) => call('nlm:export', dir, options),
   nlmOpen: () => call('nlm:open'),
   openLink: (url) => call('app:openLink', url),
+  copyText: (text) => call('app:copyText', text),
+  // Error log (Help → Report a problem): { entries, env }; new errors arrive through onAppError.
+  getErrorLog: () => call('errors:get'),
+  clearErrorLog: () => call('errors:clear'),
+  logError: (info) => call('errors:log', info),
+  onAppError: (fn) => {
+    const listener = (_e, entry) => fn(entry);
+    ipcRenderer.on('app:error', listener);
+    return () => ipcRenderer.removeListener('app:error', listener);
+  },
   servicesStatus: () => call('services:status'),
   setService: (id, values) => call('services:set', id, values),
   setAccount: (account) => call('accounts:set', account),
@@ -135,6 +146,10 @@ contextBridge.exposeInMainWorld('api', {
   ragBuild: (dir) => call('rag:build', dir),
   ragQuery: (dir, q, opts) => call('rag:query', dir, q, opts),
   ragAsk: (dir, q, opts) => call('rag:ask', dir, q, opts),
+  ragChat: (dir, q, opts) => call('rag:chat', dir, q, opts),
+  ragChats: (dir) => call('rag:chats', dir),
+  ragChatDelete: (dir, chatId) => call('rag:chatDelete', dir, chatId),
+  ragImportFiles: (dir) => call('rag:importFiles', dir),
   onRagProgress: (fn) => {
     const listener = (_e, p) => fn(p);
     ipcRenderer.on('rag:progress', listener);

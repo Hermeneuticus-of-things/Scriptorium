@@ -13,13 +13,16 @@ function lingueePair(o) {
 }
 
 export const LOOKUPS = {
-  dictionary: { group: 'dict', label: 'Dicționar (dexonline)', word: true, url: (q) => `https://dexonline.ro/definitie/${encodeURIComponent(q)}` },
-  synonyms: { group: 'dict', label: 'Sinonime (dexonline)', word: true, url: (q) => `https://dexonline.ro/definitie/${encodeURIComponent(q)}/sinonime` },
+  dictionary: { group: 'dict', label: 'Dicționar (dexonline)', labelEn: 'Dictionary (dexonline)', word: true, url: (q) => `https://dexonline.ro/definitie/${encodeURIComponent(q)}` },
+  synonyms: { group: 'dict', label: 'Sinonime (dexonline)', labelEn: 'Synonyms (dexonline)', word: true, url: (q) => `https://dexonline.ro/definitie/${encodeURIComponent(q)}/sinonime` },
+  // sinonimul.ro: its own address scheme could not be checked, so a search limited to the site
+  // ("I'm feeling lucky") opens the site's page for the word.
+  sinonimul: { group: 'dict', label: 'Sinonime (sinonimul.ro)', labelEn: 'Synonyms (sinonimul.ro)', word: true, url: (q) => `https://www.google.com/search?btnI=1&q=${encodeURIComponent(`site:sinonimul.ro ${q}`)}` },
   wiktionary: { group: 'dict', label: 'Wiktionary', word: true, url: (q) => `https://en.wiktionary.org/wiki/${encodeURIComponent(q.replace(/ /g, '_'))}` },
   cambridge: { group: 'dict', label: 'Cambridge Dictionary (EN)', word: true, url: (q) => `https://dictionary.cambridge.org/search/direct/?datasetsearch=english&q=${encodeURIComponent(q)}` },
   merriam: { group: 'dict', label: 'Merriam-Webster (EN)', word: true, url: (q) => `https://www.merriam-webster.com/dictionary/${encodeURIComponent(q)}` },
-  linguee: { group: 'dict', label: 'Linguee (exemple traduse)', word: true, url: (q, o) => `https://www.linguee.com/${lingueePair(o)}/search?query=${encodeURIComponent(q)}` },
-  iate: { group: 'dict', label: 'IATE (terminologie UE)', word: true, url: (q, o) => `https://iate.europa.eu/search/result?query=${encodeURIComponent(q)}&sourceLanguage=${!o.from || o.from === 'auto' ? 'en' : o.from}&targetLanguages=${o.to || 'ro'}` },
+  linguee: { group: 'dict', label: 'Linguee (exemple traduse)', labelEn: 'Linguee (translated examples)', word: true, url: (q, o) => `https://www.linguee.com/${lingueePair(o)}/search?query=${encodeURIComponent(q)}` },
+  iate: { group: 'dict', label: 'IATE (terminologie UE)', labelEn: 'IATE (EU terminology)', word: true, url: (q, o) => `https://iate.europa.eu/search/result?query=${encodeURIComponent(q)}&sourceLanguage=${!o.from || o.from === 'auto' ? 'en' : o.from}&targetLanguages=${o.to || 'ro'}` },
   deepl: { group: 'translate', label: 'DeepL', url: (q, o) => `https://www.deepl.com/translator#${o.from || 'auto'}/${o.to || 'ro'}/${deeplText(q)}` },
   googleTranslate: { group: 'translate', label: 'Google Translate', url: (q, o) => `https://translate.google.com/?sl=${o.from || 'auto'}&tl=${o.to || 'ro'}&op=translate&text=${encodeURIComponent(q)}` },
   wikipedia: { group: 'research', label: 'Wikipedia', url: (q) => `https://ro.wikipedia.org/w/index.php?search=${encodeURIComponent(q)}` },
@@ -31,21 +34,29 @@ export const LOOKUPS = {
 export const MAX_WORD = 80;
 export const MAX_TRANSLATE = 5000;
 
+// Cut at `max` UTF-16 units without splitting a surrogate pair (a lone half makes encodeURIComponent throw).
+function cutText(s, max) {
+  if (s.length <= max) return s;
+  const c = s.charCodeAt(max - 1);
+  return s.slice(0, c >= 0xd800 && c <= 0xdbff ? max - 1 : max);
+}
+
 /** URL for `kind` on `text`, or '' when the text does not fit that lookup. opts: { from, to, pair } */
 export function lookupUrl(kind, text, opts = {}) {
   const def = LOOKUPS[kind];
   const q = String(text || '').trim().replace(/\s+/g, ' ');
   if (!def || !q) return '';
   if (def.word && q.length > MAX_WORD) return '';
-  return def.url(def.group === 'translate' ? String(text).trim().slice(0, MAX_TRANSLATE) : q, opts);
+  return def.url(def.group === 'translate' ? cutText(String(text).trim(), MAX_TRANSLATE) : q, opts);
 }
 
-/** Lookups that apply to `text`, grouped for a menu: { dict: [...], translate: [...], research: [...] } */
+/** Lookups that apply to `text`, grouped for a menu: { dict: [...], translate: [...], research: [...] }.
+ *  opts.lang 'en' picks the English labels; kinds and URLs do not change. */
 export function lookupGroups(text, opts = {}) {
   const out = { translate: [], dict: [], research: [] };
   for (const [kind, def] of Object.entries(LOOKUPS)) {
     const url = lookupUrl(kind, text, opts);
-    if (url) out[def.group].push({ kind, label: def.label, url });
+    if (url) out[def.group].push({ kind, label: (opts.lang === 'en' && def.labelEn) || def.label, url });
   }
   return out;
 }

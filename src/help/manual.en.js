@@ -9,7 +9,7 @@ export const MANUAL_EN = [
     title: 'Getting started',
     sections: [
       { id: 'start-intro', title: 'What Scribner is', html: `<p>Scribner is a writing program for long texts. You write in <strong>small documents</strong> (scenes, chapters, sections) arranged in a tree called the <strong>binder</strong>, move them freely, and <strong>Compile</strong> them into one manuscript (DOCX, PDF, EPUB and more). It is written from scratch; <code>.scriv</code> projects can be imported and exported. AI is <strong>optional</strong> and can be switched off entirely in <em>Settings → AI</em>.</p>` },
-      { id: 'start-window', title: 'The main window', html: `<p><strong>Binder</strong> on the left (Draft, Research, Trash; toggle ${k('Ctrl+Shift+B')}), the <strong>work area</strong> in the middle (Editor ${k('Ctrl+1')}, Corkboard ${k('Ctrl+2')}, Outline ${k('Ctrl+3')}), the <strong>Inspector</strong> on the right (${k('Ctrl+Shift+I')}). The top bar is kept uncluttered: ⌂ (close project), Back/Forward, the project title, the <em>Editor / Corkboard / Outline</em> switch, <em>Compile</em> and <em>Inspector</em>. Everything else is in the menus: <em>File, Edit, View, Project, Documents, Navigate, Tools, AI, Help</em> (in the desktop app, in the window's native menu), with related commands grouped in submenus (▸) such as <em>File → Import ▸ / Export ▸</em>; <em>Format</em> is a submenu of <em>Edit</em> and <em>Window</em> one of <em>View</em>. Split editor is <em>View → Split editor</em>, Composition is in <em>View</em> (F11). Panel widths are remembered per project.</p>
+      { id: 'start-window', title: 'The main window', html: `<p><strong>Binder</strong> on the left (Draft, Research, Trash; toggle ${k('Ctrl+Shift+B')}), the <strong>work area</strong> in the middle (Editor ${k('Ctrl+1')}, Corkboard ${k('Ctrl+2')}, Outline ${k('Ctrl+3')}), the <strong>Inspector</strong> on the right (${k('Ctrl+Shift+I')}). The top bar is kept uncluttered: ⌂ (close project), Back/Forward, the project title, the <em>Editor / Corkboard / Outline</em> switch, <em>Compile</em> and <em>Inspector</em>. Everything else is in the menus: <em>File, Edit, View, Project, Documents, Navigate, Tools, AI, Help</em> (in the desktop app, in the window's native menu), with related commands grouped in submenus (▸) such as <em>File → Import ▸ / Export ▸</em>; <em>Format</em> is a submenu of <em>Edit</em> and <em>Window</em> one of <em>View</em>. Split editor is <em>View → Split editor</em>, Composition is in <em>View</em> (F11). Panel widths are remembered per project. With two panes open, the one you type in has a green border and the other is slightly faded.</p>
 <p>The <strong>AI menu</strong> holds everything AI: <em>AI assistant</em>, <em>I-REP / I-EDIT</em>, <em>AI on selection ▸</em>, <em>AI on the whole book ▸</em>, <em>NotebookLM ▸</em>, <em>AI settings…</em> and, in the desktop app, <em>Connect to Claude (MCP)…</em>. With AI turned off only <em>I-REP</em> (works without AI) and <em>AI settings…</em> remain.</p>
 <p><strong>Customize the toolbars</strong> with <em>View → Customize toolbar…</em>: for the top bar and the format bar, add, remove and reorder items (drag, or ↑/↓; Alt+↑/↓ in the list), add separators and flexible spaces, choose the display (icon and text / icon only / text only), or <em>Restore defaults</em>. Anything removed stays in the menus. The format bar moves what does not fit on one row into <em>»</em>.</p>` },
       { id: 'start-first-project', title: 'Your first project in five minutes', html: `<ol><li>On the Home screen pick a template, type a title, click Create and choose a folder.</li><li>Select a scene in the binder and write.</li><li>${k('Ctrl+N')} adds a document, ${k('Ctrl+Shift+N')} a folder.</li><li>Fill in the synopsis in the Inspector; it shows on the corkboard card.</li><li>${k('Ctrl+Shift+E')} opens Compile.</li></ol><p>Saving is automatic; ${k('Ctrl+S')} saves immediately. To learn by doing, use <em>Help → Interactive tutorial</em>.</p>` },
@@ -46,7 +46,7 @@ export const MANUAL_EN = [
       { id: 'editor-split-merge', title: 'Split and merge', html: `<p>Split at cursor ${k('Ctrl+K')}, split with selection as title ${k('Ctrl+Shift+K')}, merge ${k('Ctrl+Shift+M')}; a snapshot is taken first. <em>Append selection to document…</em> sends text elsewhere.</p>` },
       { id: 'editor-view', title: 'Zoom, page view, focus', html: `<p>Footer with counts and target, page view, typewriter scrolling, invisibles, current-line highlight, fading, linguistic focus (nouns, verbs), and text-appearance toggles for comments and revisions.</p>` },
       { id: 'editor-revisions', title: 'Revision mode and tracked changes', html: `<p>Five revision colours. Tracked changes in DOCX become revision marks on import and are written back on export.</p>` },
-      { id: 'editor-links', title: 'Links, bookmarks, look-up', html: `<p>Type <code>[[Title]]</code> to link to the project document with that title (case and diacritics are ignored; a unique start of the title is enough). With no match the text stays as typed. Internal links can also be picked from the format bar. Project bookmarks in the Project menu. Dictionary, synonyms (dexonline), Wikipedia and Google look-ups in the Tools menu. Spelling uses the system spellchecker (Romanian and English).</p><p>When text is selected, the status bar shows its word and character count.</p>` },
+      { id: 'editor-links', title: 'Links, bookmarks, look-up', html: `<p>Type <code>[[Title]]</code> to link to the project document with that title (case and diacritics are ignored; a unique start of the title is enough). With no match the app offers to create that document (in the same folder or a chosen one, remembered per project) and link it; <kbd>Esc</kbd> or <em>Cancel</em> keeps the text as typed. With <em>Settings → Editing → Add back-links automatically</em>, every new link to a document adds the current document to the target's bookmarks (not to its text). The Inspector lists <em>Links to this document</em> under the bookmarks. Internal links can also be picked from the format bar. Project bookmarks in the Project menu. Dictionary, synonyms (dexonline, sinonimul.ro), Wikipedia and Google look-ups in the Tools menu and the right-click menu. Spelling uses the system spellchecker (Romanian and English).</p><p>When text is selected, the status bar shows its word and character count.</p>` },
     ],
   },
   {
@@ -73,7 +73,7 @@ export const MANUAL_EN = [
     sections: [
       { id: 'scrivenings-basics', title: 'Scrivenings', html: `<p>Selecting a folder in Editor view shows its documents as one editable text. Also for a selection or the active collection; titles and separators can be toggled.</p>` },
       { id: 'scrivenings-split', title: 'Split editor', html: `<p>The Split button opens a second pane; ${k('Alt')}+click in the binder opens a document there. Horizontal/vertical, swap, lock.</p>` },
-      { id: 'scrivenings-quickref', title: 'Quick Reference', html: `<p>${k('Ctrl+Shift+R')} opens the current document in a small floating window.</p>` },
+      { id: 'scrivenings-quickref', title: 'Quick Reference', html: `<p>${k('Ctrl+Shift+R')} opens the current document in a small floating window.</p><p><strong>Reference pane</strong>: <em>View → Open as reference</em> or Alt+Shift+click in the binder shows a document in a pane beside the editor (and the split). Read-only unless <em>Editable</em> is ticked; the scroll position is kept and the pane is saved with the project and in layouts.</p>` },
       { id: 'scrivenings-composition', title: 'Composition mode', html: `<p>${k('F11')} hides everything but the text; options in <em>Settings → Appearance</em>. ${k('Esc')} leaves.</p>` },
       { id: 'scrivenings-nav', title: 'Navigation', html: `<p>Back/Forward ${k('Alt+←')}/${k('Alt+→')}, previous/next document ${k('Ctrl+Alt+↑')}/${k('Ctrl+Alt+↓')}, Go to ${k('Ctrl+G')}.</p>` },
     ],
@@ -83,7 +83,7 @@ export const MANUAL_EN = [
     title: 'Corkboard',
     sections: [
       { id: 'corkboard-basics', title: 'Index cards', html: `<p>${k('Ctrl+2')}: cards with title and synopsis; drag to reorder. Double-click a title to open the document; click selects a card, arrows move between cards, ${k('Enter')}/${k('F2')} edits the title, ${k('Ctrl+Enter')} opens, ${k('Ctrl+←')}/${k('Ctrl+→')} reorders; <em>+ Card</em> adds after the selected card with its title ready to type. Outline: click selects, double-click opens, ↑/↓ navigate, ←/→ collapse/expand, ${k('Enter')} renames.</p>` },
-      { id: 'corkboard-options', title: 'Size, freeform, arrange', html: `<p>Card size, ratio, spacing, columns; freeform mode with <em>Commit order</em>; arrange by label, status or keyword; several folders stacked.</p>` },
+      { id: 'corkboard-options', title: 'Size, freeform, arrange', html: `<p>Card size, ratio, spacing, columns; freeform mode with <em>Commit order</em>; arrange by label, status or keyword; several folders stacked. Card look: rounded or square corners, ruled cards, card color by label.</p>` },
     ],
   },
   {
@@ -136,7 +136,7 @@ export const MANUAL_EN = [
       { id: 'compile-sections', title: 'Sections and separators', html: `<p>Each section type gets a layout (title, prefix/suffix such as <code>Chapter &lt;$n&gt;</code>, case, alignment, page break). Separators: text, page break, blank line or none.</p>` },
       { id: 'compile-placeholders', title: 'Placeholders', html: `<p><code>&lt;$n&gt;</code> (with <code>:roman</code>, <code>:lroman</code>, <code>:words</code>, <code>:Words</code>, <code>:WORDS</code>), <code>&lt;$t&gt;</code>, <code>&lt;$wc&gt;</code>, <code>&lt;$projecttitle&gt;</code>, <code>&lt;$abbr_title&gt;</code>, <code>&lt;$author&gt;</code>, <code>&lt;$surname&gt;</code>, <code>&lt;$forename&gt;</code>, <code>&lt;$date&gt;</code>, <code>&lt;$year&gt;</code>, <code>&lt;$p&gt;</code> (headers/footers), <code>&lt;$img:Name&gt;</code>. Full list in the Placeholders tab. Number words are Romanian.</p>` },
       { id: 'compile-replacements', title: 'Replacements and transformations', html: `<p>Find → replace pairs applied only to the compiled text (regex, whole word, case); quote/dash conversion, highlight and colour removal.</p>` },
-      { id: 'compile-notes', title: 'Notes and comments', html: `<p>Footnotes, chapter endnotes or book endnotes; comments removed or exported as Word comments (DOCX).</p>` },
+      { id: 'compile-notes', title: 'Notes and comments', html: `<p>Footnotes, chapter endnotes or book endnotes; comments removed or exported as Word comments (DOCX).</p><p><em>Note numbering</em>: 1, 2, 3 · i, ii, iii · a, b, c · symbols (*, †, ‡, §); <em>Restart numbering in every chapter</em> starts again at each chapter that begins on a new page (DOCX: one Word section per chapter). RTF and ODT get the format only.</p><p><strong>Preserve formatting</strong> (<em>Format → Preserve formatting</em>): the dashed block compiles exactly as written: no replacements, quotes or dashes, no compile indent or spacing, its own font and size.</p>` },
       { id: 'compile-page', title: 'Page setup', html: `<p>Paper size, margins, font, line spacing, headers and footers (first page and odd/even can differ). For single documents: <em>File → Page setup…</em>, <em>Print preview</em>, <em>Print</em> (${k('Ctrl+P')}).</p>` },
       { id: 'compile-epub', title: 'EPUB and metadata', html: `<p>Title, author, ISBN, language, keywords, cover image; EPUB 3 with title page and generated TOC.</p>` },
       { id: 'compile-other-exports', title: 'LaTeX, Pandoc, MultiMarkdown', html: `<p>Direct exports in the File menu; <code>[@key]</code> citations use the imported bibliography.</p>` },
@@ -191,6 +191,7 @@ export const MANUAL_EN = [
     sections: [
       { id: 'ai-setup', title: 'Enabling AI', html: `<p><em>Settings → AI</em>: enable and enter an Anthropic API key, encrypted by the OS and kept in the main process.</p>` },
       { id: 'ai-assistant', title: 'The assistant', html: `<p>Proofreading, synopsis, continuation, critique, consistency and questions; bulk synopsis, living character sheets and zoom-level review in the Tools menu.</p>` },
+      { id: 'ai-research-chat', title: 'Conversation with your sources', html: `<p><em>Tools → Project research (RAG)</em> becomes, with AI enabled, a conversation about your sources: answers use only the passages found and cite them as [1], [2] (click to open the document). Follow-up questions keep the last turns in mind. <em>Choose sources…</em> picks Manuscript, Research, Notes or specific folders and documents (default: Research and Notes) and adds sources from files (PDF text, DOCX, TXT, MD, HTML), web pages or pasted text, indexed right away. Each answer can be saved as a note in Research → Notes, inserted at the cursor (citations as footnotes or links) or copied; suggested follow-up questions appear as buttons. Conversations are saved in the project (<code>research-chats.json</code>); <em>New conversation</em> starts afresh. Without AI the panel is a local search.</p>` },
       { id: 'ai-mcp', title: 'AI agents via MCP', html: `<p><code>mcp/server.mjs</code> gives an MCP client everything the app does without a window: binder, text, search, metadata, notes tabs, keywords, labels, targets, collections, comments, footnotes, split/merge, trash, snapshot compare, statistics, timeline, research, glossary, Compile in every format, import/export (including <code>.scriv</code>, NotebookLM, editor package), new projects from templates and backups; every write is snapshotted and logged in <code>agent-log.jsonl</code>. <code>--read-only</code> limits to reading. The exact command is in <em>Settings → AI → MCP connection</em>.</p>` },
     ],
   },
@@ -217,7 +218,14 @@ export const MANUAL_EN = [
       { id: 'faq-lost-text', title: 'I lost text', html: `<p>Undo, snapshots, Trash, then <em>File → Backups…</em>.</p>` },
       { id: 'faq-ai', title: 'AI commands are greyed out', html: `<p>Enable AI and enter the key in <em>Settings → AI</em>.</p>` },
       { id: 'faq-scriv', title: 'Scrivener import missed something', html: `<p>Read the import report; the original copy is in <code>scrivener-original/</code>.</p>` },
-      { id: 'faq-report', title: 'Reporting a problem', html: `<p><em>Help → Report a problem</em> opens the GitHub issues page. Include the version, OS and steps to reproduce.</p>` },
+      { id: 'faq-report', title: 'Reporting a problem', html: `<p><em>Help → Report a problem…</em> opens a simple window where you describe the problem in your own words. No technical knowledge is needed.</p>
+<ol>
+<li>Under <em>What happened?</em> write what you saw (e.g. “I clicked Compile and no file was created”).</li>
+<li>Optionally, under <em>What were you doing before?</em>, the steps before it.</li>
+<li>Click <em>Send on GitHub</em>: the project page opens with the report filled in; click <em>Submit new issue</em> there. A free GitHub account is needed. Without one, use <em>Copy report</em> and send the text any way you like.</li>
+</ol>
+<p><strong>What is sent:</strong> the program version, operating system, interface language, the latest errors recorded by the program and the names of the last commands used. You can see all of it under <em>Technical details sent</em> before sending. <strong>What is not sent:</strong> your book's text, notes, your user name, project paths (shown as <code>~</code> and <code>&lt;proiect&gt;</code>) and API keys.</p>
+<p>When the program hits an error, a discreet message appears at the bottom right: <em>Something went wrong. Send a report?</em> (once per distinct error). You can safely close it. Errors are kept in a small log in the app's data folder (<code>logs/errors.jsonl</code>, at most 200 entries).</p>` },
     ],
   },
   {
@@ -275,9 +283,40 @@ Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp
 <p>Add <code>--read-only</code> for read access only. Every write takes a snapshot first and is logged in <code>agent-log.jsonl</code>.</p>`,
       },
       {
+        id: 'yours-cli',
+        title: 'Command line (CLI)',
+        html: `<p>Scribner also has a command line: read, search, compile and export a project from a terminal or a script, without opening the window. Read-only commands never lock the project; writing commands (<code>snapshot</code>, <code>import</code>) wait until the app has finished saving.</p>
+<h4>Running it</h4>
+<p>The installed Windows app needs no Node.js. Copy <code>scribner.cmd</code> (from the source <code>installer</code> folder) next to <code>Scribner.exe</code> in <code>%LOCALAPPDATA%\\Programs\\Scribner</code> and add that folder to PATH; then type <code>scribner …</code>. Without the wrapper, in PowerShell:</p>
+<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Scribner\\Scribner.exe" "$env:LOCALAPPDATA\\Programs\\Scribner\\resources\\app\\cli\\scribner.cjs" info "D:\\Books\\Karma.scribner"</pre>
+<p>From source, with Node.js: <code>node cli/scribner.cjs help</code>.</p>
+<h4>Commands</h4>
+<pre>scribner info "D:\\Books\\Karma.scribner"              title, author, words, last modified
+scribner list "D:\\Books\\Karma.scribner" --tree       the binder, with ids
+scribner cat "D:\\Books\\Karma.scribner" "Chapter 1" --md
+scribner search "D:\\Books\\Karma.scribner" "karma" --whole
+scribner stats "D:\\Books\\Karma.scribner"             words per document, targets, history
+scribner compile "D:\\Books\\Karma.scribner" --format docx --preset paperback -o "D:\\Export"
+scribner export-docs "D:\\Books\\Karma.scribner" -o "D:\\Export\\Docs" --format md
+scribner backup "D:\\Books\\Karma.scribner"
+scribner snapshot "D:\\Books\\Karma.scribner" "Chapter 1" --name "Before revision"
+scribner import "D:\\Texts\\Novel.docx" -o "D:\\Books\\Novel.scribner" --split h1
+scribner mcp "D:\\Books\\Karma.scribner"               the MCP server for AI agents</pre>
+<p>Add <code>--json</code> for script-friendly output and <code>--lang en</code> for English messages. Exit codes: 0 ok, 1 error, 2 bad usage. PDF is made only in the app (<em>Compile → PDF</em>); from the terminal use <code>--format docx</code> or <code>html</code>.</p>
+<h4>Your book as sources for NotebookLM, Gemini, ChatGPT, Claude Projects or Manus</h4>
+<pre>scribner export-sources "D:\\Books\\Karma.scribner" -o "D:\\NotebookLM"</pre>
+<p>This writes the folder <code>Surse - Karma</code>: <code>00 - Cuprins</code> (outline with synopses), one file per chapter, research and notes, plus <code>sources.json</code> (the source list). Options: <code>--per document</code> (one file per document instead of per chapter), <code>--format txt</code> or <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (at most 50 sources; chapters are merged) or <code>gemini</code>, <code>chatgpt</code>, <code>claude</code>, <code>manus</code>.</p>
+<ol>
+<li>Run the command above.</li>
+<li>Open <a href="https://notebooklm.google.com">notebooklm.google.com</a> → <em>New notebook</em> → <em>Add sources</em> → <em>Upload</em> and select every file in the folder (not <code>sources.json</code>).</li>
+<li>Ask the notebook about the book: characters, timeline, contradictions between chapters.</li>
+</ol>
+<p>For the NotebookLM limit there is also <code>scribner export-notebooklm … -o folder</code>, which merges chapters to stay within 50 sources. The same folder can be uploaded to a Gemini Gem, a ChatGPT project, a Claude project or Manus (manus.im). After writing more, run the command again and replace the sources.</p>`,
+      },
+      {
         id: 'yours-sync',
         title: 'The same project on the desktop and in the browser',
-        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. Do not edit the same document in two places at once. Phones cannot open folders: use the .json bundle there.</p>`,
+        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. Do not edit the same document in two places at once. If it happens anyway, your text stays and the version that arrived from the other computer is kept in <em>Snapshots</em> (“Version from the other computer, &lt;time&gt;”), with a message. Conflict copies left by the sync service (such as <code>project (conflicted copy …).json</code> or <code>project-PC.json</code>) are never loaded: the app lists them when the project opens so you can compare and delete them. If the folder cannot be reached (NAS disconnected, permission withdrawn) you get a message; changes show up again when it is back. Phones cannot open folders: use the .json bundle there.</p>`,
       },
       {
         id: 'yours-karma',

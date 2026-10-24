@@ -201,7 +201,8 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'editor-links',
         title: 'Legături, semne de carte, dicționar',
-        html: `<p>Scrie <code>[[Titlu]]</code> pentru o legătură internă spre documentul din proiect cu acel titlu (nu contează majusculele și diacriticele; ajunge și începutul titlului, dacă e unic). Dacă niciun document nu se potrivește, textul rămâne așa cum l-ai scris. Legătura internă se poate alege și din bara de format. Legăturile externe se inserează și se editează din bara de format.</p>
+        html: `<p>Scrie <code>[[Titlu]]</code> pentru o legătură internă spre documentul din proiect cu acel titlu (nu contează majusculele și diacriticele; ajunge și începutul titlului, dacă e unic). Dacă niciun document nu se potrivește, aplicația îți propune să creezi documentul (în același dosar sau în dosarul ales, ținut minte pentru proiect) și să-l legi; <kbd>Esc</kbd> sau <em>Anulează</em> lasă textul așa cum l-ai scris. Legătura internă se poate alege și din bara de format. Legăturile externe se inserează și se editează din bara de format.</p>
+<p>Cu <em>Setări → Editare → Adaugă automat legătura înapoi</em>, orice legătură nouă spre un document (Ctrl+L, <code>[[Titlu]]</code>, bara de format, lipire) adaugă documentul curent în bookmark-urile documentului țintă, nu în textul lui. În Inspector, sub bookmark-uri, lista <em>Legături către acest document</em> arată toate documentele care trimit la cel curent.</p>
 <p>Semnele de carte în text și semnele de carte ale proiectului (<em>Proiect → Semne de carte ale proiectului…</em>) duc rapid la un loc anume.</p>
 <p>Din meniul contextual sau din <em>Unelte</em>: caută cuvântul în dicționar sau sinonime (dexonline), pe Wikipedia sau cu Google; se deschide browserul.</p>
 <p>Corectura ortografică folosește dicționarele sistemului (română și engleză, configurabile). Clic dreapta pe un cuvânt subliniat: sugestii, <em>Adaugă în dicționar</em>, <em>Ignoră</em>. <em>Unelte → Verifică ortografia acum</em> reverifică documentul.</p>`,
@@ -267,12 +268,13 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'scrivenings-split',
         title: 'Editorul împărțit (split)',
-        html: `<p><em>Vizualizare → Împarte editorul</em> (sau butonul de pe antetul documentului) deschide al doilea panou. ${k('Alt')}+clic în binder deschide documentul în panoul din dreapta. Panoul poate fi blocat pe un document, așezat orizontal sau vertical (<em>Vizualizare → Împarte orizontal / vertical</em>) și inversat (<em>Inversează panourile</em>). Același document poate fi deschis în ambele panouri.</p>`,
+        html: `<p><em>Vizualizare → Împarte editorul</em> (sau butonul de pe antetul documentului) deschide al doilea panou. ${k('Alt')}+clic în binder deschide documentul în panoul din dreapta. Panoul poate fi blocat pe un document, așezat orizontal sau vertical (<em>Vizualizare → Împarte orizontal / vertical</em>) și inversat (<em>Inversează panourile</em>). Același document poate fi deschis în ambele panouri. Panoul în care scrii are un chenar verde; celălalt e ușor estompat.</p>`,
       },
       {
         id: 'scrivenings-quickref',
         title: 'Quick Reference',
-        html: `<p>${k('Ctrl+Shift+R')} deschide documentul curent într-o fereastră mică, plutitoare, pe care o poți ține deschisă lângă text (o fișă de personaj, un plan). Poți deschide mai multe.</p>`,
+        html: `<p>${k('Ctrl+Shift+R')} deschide documentul curent într-o fereastră mică, plutitoare, pe care o poți ține deschisă lângă text (o fișă de personaj, un plan). Poți deschide mai multe.</p>
+<p><strong>Panoul de referință</strong>: <em>Vizualizare → Deschide ca referință</em> sau Alt+Shift+clic în binder pune un document într-un panou lângă editor (și lângă split). E doar pentru citire; bifa <em>Editabil</em> permite modificarea. Poziția de derulare se păstrează, iar panoul se salvează cu proiectul și în layout-uri.</p>`,
       },
       {
         id: 'scrivenings-composition',
@@ -310,6 +312,7 @@ media/                 imagini, PDF, audio, video</pre>
 <li><strong>Freeform</strong>: așezi fișele oriunde pe panou; <em>Fixează ordinea</em> transferă ordinea vizuală în binder.</li>
 <li>Aranjare pe linii după etichetă, status sau cuvânt cheie.</li>
 <li>Selectând mai multe dosare, corkboard-ul le afișează pe secțiuni.</li>
+<li>Aspectul fișelor (în <em>Opțiuni</em>): colțuri rotunjite sau drepte, fișe liniate, fișa colorată după etichetă.</li>
 </ul>`,
       },
     ],
@@ -468,7 +471,9 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'compile-notes',
         title: 'Note și comentarii la Compile',
-        html: `<p>Fila <em>Note</em>: notele devin note de subsol, note la finalul fiecărui capitol sau la finalul cărții. Comentariile se elimină sau, doar pentru DOCX, se exportă ca comentarii Word. Adnotările din text nu ajung niciodată în carte.</p>`,
+        html: `<p>Fila <em>Note</em>: notele devin note de subsol, note la finalul fiecărui capitol sau la finalul cărții. Comentariile se elimină sau, doar pentru DOCX, se exportă ca comentarii Word. Adnotările din text nu ajung niciodată în carte.</p>
+<p><em>Numerotarea notelor</em>: 1, 2, 3 · i, ii, iii · a, b, c · simboluri (*, †, ‡, §). <em>Reia numerotarea la fiecare capitol</em> începe din nou la fiecare capitol care pornește pe pagină nouă (în DOCX, fiecare capitol devine o secțiune Word). În RTF și ODT se aplică doar formatul.</p>
+<p><strong>Păstrează formatarea</strong> (<em>Format → Păstrează formatarea</em>): blocul marcat cu chenar punctat iese la Compile exact cum e scris, fără înlocuiri, ghilimele sau linii de dialog, fără alineatul și spațierea formatului, cu fontul și mărimea proprii.</p>`,
       },
       {
         id: 'compile-page',
@@ -643,6 +648,15 @@ media/                 imagini, PDF, audio, video</pre>
 <p>În bloc (meniul <em>Unelte</em>): <em>Sinopsis AI în bloc</em>, <em>Consistență pe toată cartea (fișe vii)</em> (fișe de personaje actualizate), <em>Revizie pe niveluri de zoom</em> (de la carte la frază).</p>`,
       },
       {
+        id: 'ai-research-chat',
+        title: 'Conversație cu sursele (Cercetare în proiect)',
+        html: `<p><em>Unelte → Cercetare în proiect (RAG)</em> devine, cu AI pornit, o conversație despre sursele tale. Pui o întrebare, AI-ul răspunde numai din pasajele găsite în surse și le citează ca [1], [2]; un clic pe o citare deschide documentul din care vine pasajul. Întrebările de continuare (de exemplu „și în capitolul 3?”) țin cont de ultimele schimburi din conversație, iar căutarea folosește și întrebarea anterioară.</p>
+<p><strong>Sursele.</strong> Butonul <em>Alege sursele…</em> arată ce poate folosi AI-ul: Manuscris, Cercetare, Note sau doar anumite foldere și documente. Implicit sunt bifate Cercetare și Note; alegerea apare ca etichete deasupra conversației și se poate scoate cu ×.</p>
+<p><strong>Adăugarea surselor.</strong> Tot acolo: <em>Din fișiere</em> (PDF cu text, DOCX, TXT, MD, HTML), <em>Pagină web</em> (cu imaginile salvate local) și <em>Lipește text ca sursă</em>. Sursele noi intră în folderul Cercetare și sunt indexate imediat. Un PDF scanat (numai imagini) nu are text de extras.</p>
+<p><strong>Folosirea răspunsurilor.</strong> Sub fiecare răspuns: <em>Salvează ca notă</em> (document nou în Cercetare → Note, cu întrebarea, răspunsul și legături către surse), <em>Inserează în document</em> (la cursor; citările devin note de subsol sau legături, după opțiunea din panoul surselor) și <em>Copiază</em>. Întrebările de continuare propuse apar ca butoane sub ultimul răspuns.</p>
+<p>Conversațiile se salvează în proiect (fișierul <code>research-chats.json</code>) și se regăsesc după redeschidere; <em>Conversație nouă</em> începe una curată. Răspunsul apare pe măsură ce e scris și se poate opri cu <em>Anulează</em> sau Esc. Fără AI, panoul rămâne căutare locală în surse.</p>`,
+      },
+      {
         id: 'ai-mcp',
         title: 'Agenți AI prin MCP',
         html: `<p>Serverul MCP Scribner (<code>mcp/server.mjs</code>) permite unui agent (Claude Code, Claude Desktop sau alt client MCP) să lucreze cu un proiect ca din program: binder, text, căutare, metadate, note pe taburi, cuvinte cheie, etichete și statusuri, ținte, colecții, comentarii și note de subsol, împărțire și unire, coș, snapshot-uri și comparare, I-REP și I-EDIT fără AI, statistici, cronologie, cercetare, glosar, Compile în toate formatele, import și export (inclusiv <code>.scriv</code>, NotebookLM, pachetul PENTRU EDITOR), proiecte noi din șabloane și backup. Fiecare scriere face snapshot înainte și se notează în <code>agent-log.jsonl</code>.</p>
@@ -749,7 +763,14 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'faq-report',
         title: 'Raportarea unei probleme',
-        html: `<p><em>Ajutor → Raportează o problemă</em> deschide pagina de probleme a proiectului pe GitHub. Scrie versiunea (din <em>Ajutor → Despre Scribner</em>), sistemul de operare, pașii care reproduc problema și ce te așteptai să se întâmple.</p>`,
+        html: `<p><em>Ajutor → Raportează o problemă…</em> deschide o fereastră simplă în care descrii problema cu cuvintele tale. Nu trebuie să știi nimic tehnic.</p>
+<ol>
+<li>Scrie la <em>Ce s-a întâmplat?</em> ce ai văzut (de exemplu „am apăsat Compile și nu s-a creat fișierul”).</li>
+<li>Opțional, la <em>Ce făceai înainte?</em>, pașii de dinainte.</li>
+<li>Apasă <em>Trimite pe GitHub</em>: se deschide pagina proiectului cu raportul completat; acolo apeși <em>Submit new issue</em>. Ai nevoie de un cont GitHub gratuit. Dacă nu ai, folosește <em>Copiază raportul</em> și trimite textul cum îți e comod.</li>
+</ol>
+<p><strong>Ce se trimite:</strong> versiunea programului, sistemul de operare, limba interfeței, ultimele erori înregistrate de program și numele ultimelor comenzi folosite. Le vezi pe toate la <em>Detalii tehnice trimise</em>, înainte de trimitere. <strong>Ce nu se trimite:</strong> textul cărții, notele, numele tău de utilizator, căile proiectelor (apar ca <code>~</code> și <code>&lt;proiect&gt;</code>) și cheile API.</p>
+<p>Când programul întâlnește o eroare, apare discret jos în dreapta mesajul <em>A apărut o problemă. Trimite raportul?</em> (o singură dată pentru fiecare eroare). Îl poți închide liniștit. Erorile se păstrează într-un jurnal mic în folderul de date al aplicației (<code>logs/errors.jsonl</code>, cel mult 200 de intrări).</p>`,
       },
     ],
   },
@@ -865,9 +886,40 @@ env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
 <p>Cere agentului: „listează documentele din proiectul Scribner”, apoi „citește primul capitol și scrie-i sinopsisul în inspector”. Fă un snapshot înainte de modificări mari. Mai multe proiecte: repetă <code>--project</code> pentru fiecare. Dacă agentul nu vede unelte: repornește clientul, verifică dublarea <code>\\</code> în JSON și că Scribner e instalat la calea scrisă.</p>`,
       },
       {
+        id: 'yours-cli',
+        title: 'Linia de comandă (CLI)',
+        html: `<p>Scribner are și o linie de comandă: citești, cauți, compilezi și exporți proiectul din terminal sau din scripturi, fără să deschizi fereastra. Comenzile care doar citesc nu blochează proiectul; cele care scriu (<code>snapshot</code>, <code>import</code>) așteaptă ca aplicația să termine salvarea.</p>
+<h4>Pornire</h4>
+<p>Programul instalat pe Windows nu are nevoie de Node.js. Copiază <code>scribner.cmd</code> (din folderul <code>installer</code> al sursei) lângă <code>Scribner.exe</code>, în <code>%LOCALAPPDATA%\\Programs\\Scribner</code>, și adaugă folderul în PATH. Apoi scrii direct <code>scribner …</code>. Fără wrapper, în PowerShell:</p>
+<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Scribner\\Scribner.exe" "$env:LOCALAPPDATA\\Programs\\Scribner\\resources\\app\\cli\\scribner.cjs" info "D:\\Carti\\Karma.scribner"</pre>
+<p>Din sursă, cu Node.js: <code>node cli/scribner.cjs help</code>.</p>
+<h4>Comenzi</h4>
+<pre>scribner info "D:\\Carti\\Karma.scribner"              titlu, autor, cuvinte, ultima modificare
+scribner list "D:\\Carti\\Karma.scribner" --tree       binderul, cu id-uri
+scribner cat "D:\\Carti\\Karma.scribner" "Capitolul 1" --md
+scribner search "D:\\Carti\\Karma.scribner" "karma" --whole
+scribner stats "D:\\Carti\\Karma.scribner"             cuvinte pe document, ținte, istoric
+scribner compile "D:\\Carti\\Karma.scribner" --format docx --preset paperback -o "D:\\Export"
+scribner export-docs "D:\\Carti\\Karma.scribner" -o "D:\\Export\\Docs" --format md
+scribner backup "D:\\Carti\\Karma.scribner"
+scribner snapshot "D:\\Carti\\Karma.scribner" "Capitolul 1" --name "Înainte de revizie"
+scribner import "D:\\Texte\\Roman.docx" -o "D:\\Carti\\Roman.scribner" --split h1
+scribner mcp "D:\\Carti\\Karma.scribner"               serverul MCP pentru agenți AI</pre>
+<p>Adaugă <code>--json</code> pentru ieșire pe care o citesc scripturile, <code>--lang en</code> pentru mesaje în engleză. Coduri de ieșire: 0 reușit, 1 eroare, 2 comandă scrisă greșit. PDF-ul se face doar din aplicație (<em>Compile → PDF</em>); din terminal folosește <code>--format docx</code> sau <code>html</code>.</p>
+<h4>Cartea ca surse pentru NotebookLM, Gemini, ChatGPT, Claude Projects sau Manus</h4>
+<pre>scribner export-sources "D:\\Carti\\Karma.scribner" -o "D:\\NotebookLM"</pre>
+<p>Rezultă folderul <code>Surse - Karma</code>: <code>00 - Cuprins</code> (cuprinsul cu sinopsisuri), câte un fișier pe capitol, cercetarea și notele, plus <code>sources.json</code> (lista surselor). Opțiuni: <code>--per document</code> (un fișier pe fiecare document, nu pe capitol), <code>--format txt</code> sau <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (cel mult 50 de surse; capitolele se unesc) sau <code>gemini</code>, <code>chatgpt</code>, <code>claude</code>, <code>manus</code>.</p>
+<ol>
+<li>Rulează comanda de mai sus.</li>
+<li>Deschide <a href="https://notebooklm.google.com">notebooklm.google.com</a> → <em>Notebook nou</em> → <em>Adaugă surse</em> → <em>Încarcă</em> și selectează toate fișierele din folder (fără <code>sources.json</code>).</li>
+<li>Întreabă notebook-ul despre carte: personaje, cronologie, contradicții între capitole.</li>
+</ol>
+<p>Pentru limita NotebookLM există și <code>scribner export-notebooklm … -o folder</code>, care unește capitole ca să nu depășească 50 de surse. Același folder se încarcă și într-un Gem Gemini, într-un proiect ChatGPT, într-un proiect Claude sau în Manus (manus.im). După ce scrii mai departe, rulează din nou comanda și înlocuiește sursele.</p>`,
+      },
+      {
         id: 'yours-sync',
         title: 'Același proiect pe desktop și în browser',
-        html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Nu edita același document în două locuri în același timp. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
+        html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Nu edita același document în două locuri în același timp. Dacă totuși se întâmplă, textul tău rămâne, iar versiunea sosită de pe celălalt calculator este păstrată în <em>Snapshot-uri</em> („Versiunea de pe celălalt calculator, &lt;oră&gt;”) și primești un mesaj. Copiile în conflict lăsate de serviciul de sincronizare (de exemplu <code>project (conflicted copy …).json</code> sau <code>project-PC.json</code>) nu sunt încărcate: aplicația ți le arată la deschidere, ca să le compari și să le ștergi. Dacă folderul nu mai e accesibil (NAS deconectat, permisiune retrasă), primești un mesaj; schimbările reapar când folderul revine. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
       },
       {
         id: 'yours-karma',

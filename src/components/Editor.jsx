@@ -20,6 +20,7 @@ const HISTORY_CACHE = new Map(); // key → { base, groups: [[stepJSON]], html }
 const HISTORY_MAX_GROUPS = 400;
 const HISTORY_MAX_DOCS = 30;
 import { buildExtensions } from '../editor/extensions.js';
+import { resolveWikiLink } from '../editor/writing.js';
 import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
@@ -51,6 +52,9 @@ const Editor = forwardRef(function Editor(
     scriptFormat = null,
     defaultFormatting = null,
     historyKey = null,
+    onCreateLinkedDoc = null,
+    linkFolders = [],
+    linkFolderDefault = '',
   },
   ref,
 ) {
@@ -61,6 +65,12 @@ const Editor = forwardRef(function Editor(
   const scenesRef = useRef([]);
   const wordsRef = useRef(words);
   wordsRef.current = words;
+  // [[Title]] with no matching document: offer to create it (wikiOffer = {label, from, folder}).
+  const [wikiOffer, setWikiOffer] = useState(null);
+  const createLinkRef = useRef(onCreateLinkedDoc);
+  createLinkRef.current = readOnly ? null : onCreateLinkedDoc;
+  const linkFolderRef = useRef(linkFolderDefault);
+  linkFolderRef.current = linkFolderDefault;
   const linkTargetsRef = useRef(linkTargets);
   linkTargetsRef.current = linkTargets;
   const scriptRef = useRef(scriptFormat);
@@ -89,7 +99,7 @@ const Editor = forwardRef(function Editor(
   };
   const editor = useEditor(
     {
-      extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current, getLinkTargets: () => linkTargetsRef.current }),
+      extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current, getLinkTargets: () => linkTargetsRef.current, onMissingLink: (label, from) => createLinkRef.current && setWikiOffer({ label, from, folder: linkFolderRef.current }) }),
       content: html || '<p></p>',
       parseOptions: PARSE_OPTIONS,
       editable: !readOnly,
@@ -271,7 +281,8 @@ const Editor = forwardRef(function Editor(
         if (!/[\r\n]/.test(t)) return editor.chain().focus().insertContent({ type: 'text', text: t }).run();
         return editor.chain().focus().insertContent(textToHtml(t)).run();
       },
-      replaceSelectionHtml: (h) => editor?.chain().focus().insertContent(h).run(),
+      // A read-only editor (locked document, snapshot view) is left alone: false tells the caller.
+      replaceSelectionHtml: (h) => Boolean(editor && !editor.isDestroyed && editor.isEditable && editor.chain().focus().insertContent(h).run()),
       // Selects the first occurrence of a text snippet (used to jump to an editorial issue).
       // opts.block (0-based textblock index, = lint paragraph) and opts.at (offset in it) pick
       // the occurrence nearest to that place, so a repeated word jumps to the right one.
@@ -415,8 +426,39 @@ const Editor = forwardRef(function Editor(
     reader.readAsDataURL(file);
   };
 
+  const acceptWikiOffer = async () => {
+    const offer = wikiOffer;
+    setWikiOffer(null);
+    if (!offer) return;
+    const node = await createLinkRef.current?.(offer.label, offer.folder);
+    if (node?.id && !editor.isDestroyed) resolveWikiLink(editor, offer.from, offer.label, node.id);
+    editor.commands.focus();
+  };
+  const dismissWikiOffer = () => {
+    setWikiOffer(null);
+    editor.commands.focus();
+  };
+
   return (
     <div className={`editor ${compact ? 'compact' : ''}`}>
+      {wikiOffer && (
+        <div
+          className="wiki-offer"
+          role="dialog"
+          aria-label={i18nT('ui.editor.wikiCreateTitle')}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); dismissWikiOffer(); }
+          }}
+        >
+          <span>{i18nT('ui.editor.wikiCreate', { title: wikiOffer.label })}</span>
+          <select aria-label={i18nT('ui.editor.wikiFolder')} value={wikiOffer.folder} onChange={(e) => setWikiOffer((o) => ({ ...o, folder: e.target.value }))}>
+            <option value="">{i18nT('ui.editor.wikiSameFolder')}</option>
+            {linkFolders.map((f) => <option key={f.id} value={f.id}>{f.title}</option>)}
+          </select>
+          <button className="primary" autoFocus onClick={acceptWikiOffer}>{i18nT('ui.editor.wikiCreateBtn')}</button>
+          <button onClick={dismissWikiOffer}>{i18nT('btn.cancel')}</button>
+        </div>
+      )}
       <input ref={imageInput} type="file" accept="image/*" hidden onChange={onImageFile} />
       {!readOnly && !compact && (
         <FormatBar
@@ -441,7 +483,7 @@ const Editor = forwardRef(function Editor(
         <h2 className="doc-title" onClick={onTitleClick}>
           {title}
         </h2>
-        {readOnly && <p className="hint">Doar citire.</p>}
+        {readOnly && <p className="hint">{i18nT('ui.editor.doar_citire')}</p>}
         {showFormatFind && <FormatFind editor={editor} styles={styles} onClose={() => { setShowFormatFind(false); editor.commands.focus(); }} />}
         {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={(view.zoom || 100) / 100} />}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}

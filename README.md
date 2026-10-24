@@ -6,6 +6,7 @@
   <a href="../../releases/latest"><strong>Descarcă pentru Windows</strong></a> ·
   <a href="#cum-îl-instalezi">Instalare</a> ·
   <a href="#întrebări">Întrebări</a> ·
+  <a href="#ai-găsit-o-problemă">Ai găsit o problemă?</a> ·
   <a href="#sub-capotă">Sub capotă</a>
 </p>
 
@@ -25,7 +26,7 @@ Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini 
   <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
 </p>
 
-Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă. Fereastra în care scrii are un chenar verde, iar cealaltă e ușor estompată, ca să știi mereu unde ajunge textul. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
 
 <p align="center">
   <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">
@@ -33,8 +34,8 @@ Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. 
 
 Clic dreapta pe un cuvânt și ai la îndemână:
 
-- **Traduce:** DeepL sau Google Translate, pe cuvânt, pe frază sau pe un paragraf întreg. Cu cheia ta DeepL, traducerea apare direct în program și o pui în text cu un clic.
-- **Dicționare:** dexonline și sinonime, Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
+- **Traduce:** DeepL sau Google Translate, pe cuvânt, pe frază sau pe un paragraf întreg. Fără cont se deschide pagina DeepL cu textul deja pus. Cu o cheie DeepL, inclusiv cea **gratuită** (DeepL API Free, 500.000 de caractere pe lună, cheia se termină în `:fx`), traducerea apare direct în program și o pui în text cu un clic.
+- **Dicționare:** dexonline și sinonime, [sinonimul.ro](https://sinonimul.ro/), Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
 - **Asistent AI:** cercetare despre termen, explicație, corectură sau traducere, cu înainte și după.
 - **În proiect:** caută termenul în toată cartea și în notele tale sau pune-l în glosar.
 - **NotebookLM:** întrebi despre termen în sursele tale.
@@ -56,6 +57,16 @@ Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-u
 Personajele, locurile și cercetarea stau lângă text. Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor.
 
 O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o citești și fără internet. *Vizualizare → Focus lingvistic* îți colorează substantivele sau verbele, ca să vezi unde se îngroașă textul.
+
+**Legături între documente.** Scrii `[[Matei]]` și textul devine legătură către fișa lui Matei. Dacă nu există încă un document cu acel titlu, de exemplu `[[Titlu nou]]`, programul îți propune să-l creeze pe loc și să-l lege. Legăturile merg și înapoi, singure: în Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el.
+
+Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, fișe liniate ca pe hârtie și fișe colorate după etichetă (din setările panoului).
+
+<p align="center">
+  <img src="./assets/readme/reference.png" width="100%" alt="Panoul de referință: scena Drumul deschisă doar pentru citire lângă scena la care scrii">
+</p>
+
+*Vizualizare → Deschide ca referință* pune alt document lângă cel la care scrii, doar de citit: planul, o scenă veche sau originalul. Bifezi *Editabil* dacă vrei totuși să-l schimbi.
 
 ## Interfață pe gustul tău
 
@@ -117,13 +128,48 @@ Dacă vrei, asistentul AI face corectură, rezumate sau o a doua părere. Vezi e
   <img src="./assets/readme/sync.svg" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
 </p>
 
-Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe calculatorul tău îl deschizi din aplicație. Pe alt calculator îl deschizi în Chrome sau Edge, cu „Deschide proiect .scribner”, fără să instalezi nimic. Ce scrii într-o parte apare în cealaltă în câteva secunde. Doar nu lucra la același document în două locuri deodată.
+Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe calculatorul tău îl deschizi din aplicație. Pe alt calculator îl deschizi în Chrome sau Edge, cu „Deschide proiect .scribner”, fără să instalezi nimic. Ce scrii într-o parte apare în cealaltă în câteva secunde. Dacă totuși ai scris în același document în două locuri, nu se pierde nimic: varianta venită de pe celălalt calculator se păstrează ca snapshot („Versiunea de pe celălalt calculator, ora …”) și primești un mesaj. Copiile de conflict făcute de OneDrive, Dropbox sau Google Drive sunt recunoscute și semnalate, iar fișierele lor ascunse sunt ignorate. Dacă NAS-ul sau cloud-ul se deconectează, programul te anunță și reia singur când folderul revine.
 
 ## Legătura cu Claude, Codex și alți agenți AI
 
 Dacă lucrezi cu un agent AI, îl poți lăsa să lucreze direct în proiect: să citească capitolele, să scrie sinopsisuri, să caute, să facă revizia sau Compile. Din meniul *AI → Conectează la Claude (MCP)* configurezi Claude Desktop cu un clic sau copiezi comanda pentru Claude Code. Nu ai nevoie de Node.js: programul instalat pornește singur legătura.
 
 Merge și cu Codex, Gemini CLI, Cursor, VS Code și alți clienți MCP. Comenzile exacte, cu căile tale, sunt în *Ajutor → „Ce faci tu”*. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
+
+## Întrebi sursele, ca într-un caiet de cercetare
+
+<p align="center">
+  <img src="./assets/readme/research.png" width="100%" alt="Panoul Cercetare în proiect: o întrebare și o întrebare de continuare, răspunsuri cu trimiteri [1], [2], sursele folosite și întrebări propuse sub răspuns">
+</p>
+
+În panoul **Cercetare → Întreabă** discuți cu sursele tale:
+
+- pui o întrebare și primești răspunsul cu trimiteri [1], [2]; un clic te duce la pasajul din document;
+- continui discuția („și în capitolul 3?”); programul ține minte ce ați vorbit, iar discuțiile se păstrează în proiect;
+- alegi ce poate folosi: manuscrisul, cercetarea, notele sau doar anumite dosare;
+- aduci surse noi dintr-un pas: PDF, Word, text, pagini web (cu imagini) sau text lipit;
+- folosești răspunsul: **Salvează ca notă**, **Inserează în document** (trimiterile devin note de subsol sau legături), **Copiază**;
+- sub fiecare răspuns apar 2–3 întrebări de continuare, pe care le alegi cu un clic.
+
+Fără AI, panoul caută doar în surse. Cartea se poate trimite și în afară: **NotebookLM**, **Gemini**, **ChatGPT** sau **Claude Projects** și **Manus** primesc aceleași surse, gata împărțite (vezi linia de comandă mai jos).
+
+## Linia de comandă
+
+Pentru cine preferă terminalul sau vrea scripturi, programul instalat are comanda `scribner` (la instalare bifezi „Comanda scribner în terminal”), fără Node.js:
+
+```powershell
+scribner info "D:\Carti\Karma.scribner"
+scribner search "D:\Carti\Karma.scribner" "faptă" --whole
+scribner compile "D:\Carti\Karma.scribner" --format docx -o "D:\Carti\Karma.docx"
+scribner export-sources "D:\Carti\Karma.scribner" -o "D:\Surse" --target notebooklm
+scribner ask "D:\Carti\Karma.scribner" "Ce spune cartea despre urmă?" --session karma
+```
+
+<p align="center">
+  <img src="./assets/readme/cli.png" width="100%" alt="Fereastră PowerShell cu scribner info, care arată titlul, autorul și numărul de cuvinte, apoi scribner export-sources pentru NotebookLM și fișierele create">
+</p>
+
+`export-sources` face un folder cu cuprinsul cu rezumate, câte un fișier pe capitol, cercetarea și notele; cu `--target` (`notebooklm`, `gemini`, `chatgpt`, `claude`, `manus`) se potrivește limitelor fiecărei unelte, de exemplu cel mult 50 de surse pentru NotebookLM. `ask` răspunde din surse cu trimiteri, iar `--session` păstrează discuția pentru întrebări de continuare. Toate comenzile sunt în Ajutor → Ce faci tu → Linia de comandă.
 
 ## Compile: de la bucăți la carte
 
@@ -177,7 +223,7 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 
 **5. Separatoare și înlocuiri.** În *Separatoare* alegi ce se pune între scene (rând gol, „#”, „* * *”) și între bucăți de tipuri diferite. În *Înlocuiri* schimbi la Compile un text cu altul, cu sau fără majuscule, cuvânt întreg sau expresie regulată; textul tău din proiect rămâne neatins.
 
-**6. Note și comentarii.** Notele de subsol rămân note de subsol sau devin note la finalul fiecărui capitol ori al cărții. Comentariile devin comentarii Word (în DOCX) sau dispar. Adnotările din text nu ajung în carte, iar evidențierile și culorile se pot elimina.
+**6. Note și comentarii.** Notele de subsol rămân note de subsol sau devin note la finalul fiecărui capitol ori al cărții. Comentariile devin comentarii Word (în DOCX) sau dispar. Adnotările din text nu ajung în carte, iar evidențierile și culorile se pot elimina. Numerotarea notelor o alegi: 1, 2, 3 · i, ii, iii · a, b, c sau simboluri (*, †, ‡, §), cu reluare de la 1 în fiecare capitol, dacă vrei.
 
 **7. Pagina de tipar.** În fila *Pagină* alegi dimensiunea (A4, A5, Letter, 6 × 9 in sau personalizată), marginile sus, jos, interior și exterior, cu *margini în oglindă* pentru pagini față-verso. Antetul și subsolul au câte trei câmpuri (stânga, centru, dreapta), cu substituenți: titlul capitolului curent în antet, numărul paginii în subsol. Prima pagină a fiecărui capitol și paginile de la început (copertă, titlu, cuprins) rămân fără antet, iar numerotarea pornește de la textul cărții. Tot aici alegi fontul textului și al titlurilor, mărimea, spațierea și alineatul.
 
@@ -196,7 +242,7 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 | `<$date>`, `<$year>` | data și anul compilării |
 | `<$img:Nume>` | imaginea cu acel nume din Cercetare |
 
-**8. Tipografie.** La cerere, ghilimelele drepte devin „…”, două cratime devin linie de dialog, iar legăturile interne devin text simplu. În PDF și în cartea tipărită textul se desparte în silabe și nu rămân rânduri singure la început sau la final de pagină. Imaginile își păstrează mărimea din text, dar nu ies niciodată din pagină.
+**8. Tipografie.** La cerere, ghilimelele drepte devin „…”, două cratime devin linie de dialog, iar legăturile interne devin text simplu. În PDF și în cartea tipărită textul se desparte în silabe și nu rămân rânduri singure la început sau la final de pagină. Imaginile își păstrează mărimea din text, dar nu ies niciodată din pagină. Un pasaj marcat cu *Format → Păstrează formatarea* (o poezie, un tabel, un citat așezat anume) trece prin Compile exact cum l-ai așezat, fără fontul și spațierea formatului.
 
 **9. Metadate și copertă.** În *Metadate* pui titlul, subtitlul, autorul, editura și limba. Coperta e o imagine din proiect; ajunge pe prima pagină în PDF și DOCX și drept copertă în EPUB.
 
@@ -210,12 +256,68 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 
 Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire → Configurare pagină* alege formatul, marginile, antetul și subsolul. În aplicația desktop, *Previzualizare tipărire* îți arată paginile reale (zoom, Tipărește, Salvează PDF) înainte să le trimiți la imprimantă.
 
+## Ce urmează
+
+**Lucru în echipă pe aceeași carte.** Mai mulți oameni, fiecare cu Scribner pe calculatorul lui, lucrează la același proiect. Proiectul stă într-un singur loc comun, la alegere:
+
+- un folder pe un **NAS** din casă sau din birou;
+- un **cloud** (OneDrive, Dropbox, Google Drive);
+- un **server** mic, pe care îl pornești pe un calculator din rețea sau pe internet.
+
+Ce vei vedea în program:
+
+- **cine a schimbat ce și când:** pentru fiecare document, istoria modificărilor, cu numele persoanei, data și ora, și textul de dinainte și de după;
+- **cine lucrează acum** la un document, ca să nu scrieți doi în același loc; documentul deschis de altcineva apare marcat;
+- **îmbinarea schimbărilor:** dacă doi oameni au scris în documente diferite, totul se unește singur; dacă au scris în același paragraf, alegi tu varianta, cu cele două texte puse unul lângă altul;
+- **lucru fără internet:** scrii liniștit, iar la reconectare schimbările pleacă și vin singure;
+- **roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor.
+
+Planul complet e în [`ROADMAP.md`](ROADMAP.md).
+
+## Ai găsit o problemă?
+
+<p align="center">
+  <img src="./assets/readme/report.png" width="100%" alt="Fereastra Raportează o problemă: descrierea cu cuvintele tale, ce făceai înainte și detaliile tehnice completate automat">
+</p>
+
+Nu trebuie să știi nimic tehnic:
+
+1. Deschide *Ajutor → Raportează o problemă…*. Dacă programul a întâlnit o eroare, îți propune singur, discret, jos în dreapta: „A apărut o problemă. Trimite raportul?”.
+2. Scrie cu cuvintele tale ce s-a întâmplat și, dacă vrei, ce făceai înainte.
+3. Apasă *Trimite pe GitHub*. Se deschide pagina proiectului cu raportul completat; acolo apeși *Submit new issue*. Ai nevoie de un cont GitHub gratuit. Fără cont, apeși *Copiază raportul* și trimiți textul cum îți e comod.
+
+**Ce se trimite:** versiunea programului, sistemul de operare, limba interfeței, ultimele erori înregistrate de program și numele ultimelor comenzi. Le vezi pe toate la *Detalii tehnice trimise*, înainte să trimiți. **Ce nu se trimite:** textul cărții și al notelor, numele tău de utilizator, căile proiectelor și cheile API; acestea sunt ascunse automat.
+
 ## Cum îl instalezi
 
 Din pagina [Releases](../../releases/latest) descarci una dintre variante:
 
 - **`Scribner-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator; programul se pune în `AppData\Local\Programs\Scribner`. La dezinstalare, cărțile tale rămân.
 - **`Scribner-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
+
+**Dintr-o singură comandă.** Deschide PowerShell și lipește:
+
+```powershell
+irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex
+```
+
+Comanda ia ultima versiune din Releases, verifică amprenta SHA-256 publicată de GitHub și pornește installerul. Variante, puse înainte, pe același rând:
+
+```powershell
+$env:SCRIBNER_PATH='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex      # și comanda scribner în terminal
+$env:SCRIBNER_SILENT='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex    # fără ferestre
+$env:SCRIBNER_PORTABLE='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex  # varianta portabilă, pe Desktop
+```
+
+Poți citi scriptul înainte: [`install.ps1`](install.ps1).
+
+Cât timp depozitul e privat, GitHub cere autentificare și pentru script, și pentru installer. Pui întâi un token personal cu drept de citire (GitHub → Settings → Developer settings → Fine-grained tokens, acces „Contents: Read” la acest depozit):
+
+```powershell
+$env:GITHUB_TOKEN='token-ul-tău'; irm -Headers @{Authorization="Bearer $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex
+```
+
+Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `scribner` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
 
 O versiune nouă apare în Releases de fiecare dată când iese, automat.
 

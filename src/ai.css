@@ -18,3 +18,20 @@
 .proposal .rejected > summary { opacity: .55; text-decoration: line-through; }
 .ai-job { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-top: 1px solid var(--line); background: var(--panel); font-size: 12px; }
 .ai-job progress { flex: 1; max-width: 240px; }
+
+/* Research conversation (ResearchPanel) */
+.research-chat .research-scope { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0; }
+.research-chat .research-chip { display: inline-flex; gap: 4px; align-items: center; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border, #ccc); font-size: 12px; }
+.research-chat .research-chip .link { padding: 0 2px; }
+.research-chat .research-sources { border: 1px solid var(--border, #ddd); border-radius: 6px; padding: 6px 8px; margin: 4px 0 8px; }
+.research-chat .research-sources fieldset { border: 0; padding: 0; margin: 0 0 4px; display: flex; flex-wrap: wrap; gap: 10px; }
+.research-chat .research-tree { list-style: none; margin: 4px 0; padding: 0; max-height: 180px; overflow: auto; font-size: 12px; }
+.research-chat .research-paste { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.research-chat .research-chatbar { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
+.research-chat .research-chatbar select { flex: 1; min-width: 0; }
+.research-chat .research-turns { list-style: none; padding: 0; margin: 6px 0; display: flex; flex-direction: column; gap: 10px; }
+.research-chat .research-turn { border-left: 3px solid var(--accent, #6a8caf); padding-left: 8px; }
+.research-chat .research-q { margin: 0 0 4px; }
+.research-chat .research-followups { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.research-chat .research-followup { text-align: left; border-radius: 10px; padding: 2px 8px; font-size: 12px; }
+.research-chat .research-ask textarea { width: 100%; box-sizing: border-box; resize: vertical; }

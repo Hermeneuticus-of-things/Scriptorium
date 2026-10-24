@@ -1,3 +1,4 @@
+import { addBacklinks, addedLinks, insertLinkedDoc } from './lib/backlinks.js';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { keyFromEvent, shortcutFor } from './lib/commands.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -40,6 +41,8 @@ import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
 import PrintPreviewDialog from './components/PrintPreviewDialog.jsx';
 import HelpWindow from './components/HelpWindow.jsx';
+import ReportProblemDialog from './components/ReportProblemDialog.jsx';
+import { errorKey, noteAction, onMemoryError } from './lib/reportProblem.js';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import AiJobBar from './components/AiJobBar.jsx';
 import McpConnectDialog from './components/McpConnectDialog.jsx';
@@ -98,6 +101,7 @@ import {
 } from './lib/tree.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
+import { applyTextEdits, replaceRangeText } from './lib/serviceApply.js';
 import { mergeBibliography } from './lib/bibMerge.js';
 import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
@@ -105,6 +109,8 @@ import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/B
 import { replaceInHtml } from './lib/search.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
+import { mergeProject } from './lib/projectMerge.js';
+import { pullExternalDocs } from './lib/syncGuard.js';
 
 const SAVE_DELAY = 700;
 const TYPED_COMMIT_DELAY = 400;
@@ -186,6 +192,35 @@ export default function App({ api }) {
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
+  // Split / reference panes: the pane last clicked or typed in is marked active (green border, see
+  // styles.css), so it is clear which text a command or the keyboard goes to.
+  useEffect(() => {
+    const mark = (ev) => {
+      const pane = ev.target?.closest?.('.workspace .pane');
+      if (!pane || pane.hasAttribute('data-active')) return;
+      for (const p of pane.parentElement?.querySelectorAll(':scope > .pane[data-active]') || []) p.removeAttribute('data-active');
+      pane.setAttribute('data-active', '');
+    };
+    document.addEventListener('focusin', mark);
+    document.addEventListener('mousedown', mark);
+    return () => {
+      document.removeEventListener('focusin', mark);
+      document.removeEventListener('mousedown', mark);
+    };
+  }, []);
+  // Help → Report a problem, and the discreet "send a report?" toast for a newly captured error.
+  const [reportOpen, setReportOpen] = useState(false);
+  const [errorPrompt, setErrorPrompt] = useState(false);
+  const seenErrors = useRef(new Set());
+  useEffect(() => {
+    const onErr = (e) => {
+      const k = errorKey(e || {});
+      if (seenErrors.current.has(k)) return;
+      seenErrors.current.add(k);
+      setErrorPrompt(true);
+    };
+    return api.onAppError ? api.onAppError(onErr) : onMemoryError(onErr);
+  }, [api]);
   // Learned corrections: a misspelled word fixed by hand becomes an auto-replacement (Settings →
   // Corrections), so the same typo is fixed while typing next time.
   const replacementsNow = useCallback(() => settingsRef.current?.autoReplacements || [], []);
@@ -226,6 +261,9 @@ export default function App({ api }) {
   const [activeCollectionId, setActiveCollectionId] = useState(null);
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
+  // Copyholder: a reference pane beside the editor (and the split), read-only unless toggled.
+  const [copyholder, setCopyholder] = useState(null); // {id, editable} | null
+  const copyScroll = useRef(new Map()); // doc id -> scrollTop of the copyholder pane
   const [searchSeed, setSearchSeed] = useState('');
   const [editorView, setEditorViewState] = useState(() => {
     try {
@@ -404,36 +442,61 @@ export default function App({ api }) {
     return () => window.removeEventListener('beforeunload', onUnload);
   }, [flush]);
 
-  // Reload documents changed outside the app (AI agents via MCP, sync clients).
-  // A document with unsaved typing keeps the local text; the agent's version is in its snapshots.
+  // Reload documents changed outside the app (AI agents via MCP, sync clients, the same folder
+  // open on another computer). A document with unsaved local edits keeps the local text; the
+  // version that arrived is kept as a snapshot and the writer is told (src/lib/syncGuard.js).
   useEffect(() => {
     if (!dir || !api.onProjectChanged) return undefined;
     api.watchProject(dir).catch(() => {});
-    return api.onProjectChanged(async ({ dir: changedDir, files }) => {
+    return api.onProjectChanged(async ({ dir: changedDir, files, offline, online }) => {
       if (changedDir !== dir) return;
+      if (offline) return setToast(tr('ui.app.folder_indisponibil'));
+      if (online) setToast(tr('ui.app.folder_din_nou_disponibil'));
       try {
         if (files.some((f) => f === 'project.json')) {
           const before = projectRef.current;
           const res = await (api.reloadProject ? api.reloadProject(dir) : api.openProject(dir));
-          // A binder edit made while reading is merged by the next save; keep it on screen.
           if (projectRef.current === before) setProject(res.project);
+          // A binder edit made while reading: the reloaded version is now the merge base, so the
+          // edit is merged onto it here (saving the older copy would undo the outside change).
+          else saveProject(mergeProject(before, projectRef.current, res.project));
         }
         const ids = files.map((f) => /^docs\/([A-Za-z0-9-]+)\.html$/.exec(f)).filter(Boolean).map((m) => m[1]);
-        const updated = {};
-        for (const id of ids) {
-          if (pending.current.has(`${id}|docs`)) continue;
-          updated[id] = await api.readDoc(dir, id, 'docs');
-        }
+        if (!ids.length) return;
+        // Typing an editor has not handed over yet counts as a local edit too.
+        for (const id of ids) for (const k of [id, `split:${id}`, `copy:${id}`]) editorRefs.current.get(k)?.flush?.();
+        const time = new Date().toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' });
+        const { updated, conflicts } = await pullExternalDocs({
+          api,
+          dir,
+          ids,
+          hasLocal: (id) => pending.current.has(`${id}|docs`),
+          localHtml: (id) => pending.current.get(`${id}|docs`),
+          label: tr('ui.app.versiunea_de_pe_celalalt_calculator', { time }),
+        });
         if (Object.keys(updated).length) {
           setDocs((d) => ({ ...d, ...updated }));
           for (const [id, html] of Object.entries(updated)) setEditorHtml(id, html);
           setSaveState(tr('ui.app.actualizat_din_exterior'));
+        }
+        if (conflicts.length) {
+          const titles = conflicts.map((id) => findNode(projectRef.current.tree, id)?.title || id);
+          setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }));
         }
       } catch (e) {
         report(e);
       }
     });
   }, [api, dir, report]);
+
+  // Conflict copies left by the sync client (OneDrive, Dropbox…) are never loaded: tell the writer.
+  useEffect(() => {
+    if (!dir || !api.syncConflicts) return;
+    api
+      .syncConflicts(dir)
+      .then((list) => list?.length && setToast(tr('ui.app.copii_in_conflict', { files: list.slice(0, 5).join(', ') + (list.length > 5 ? ', …' : '') })))
+      .catch(() => {});
+  }, [api, dir]);
 
   // "Notify when target is reached" (Project Targets): once per session and per target.
   const notified = useRef({});
@@ -454,8 +517,8 @@ export default function App({ api }) {
 
   // Remember UI state per project.
   useEffect(() => {
-    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId });
-  }, [dir, selectedId, view, widths, showInspector, splitId]);
+    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder });
+  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder]);
 
   const saveProject = useCallback(
     (next) => {
@@ -523,6 +586,7 @@ export default function App({ api }) {
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
+      setCopyholder(ui.copyholder?.id && findNode(res.project.tree, ui.copyholder.id) ? { id: ui.copyholder.id, editable: Boolean(ui.copyholder.editable) } : null);
       const openCounts = Object.fromEntries(entries.map(([id, h]) => [id, wordCount(h)]));
       const draftAtOpen = sumWords(res.project.tree[0], openCounts);
       setSessionStart(draftAtOpen);
@@ -582,6 +646,10 @@ export default function App({ api }) {
   };
 
   const onBinderSelect = (id, { ctrl, shift, alt }) => {
+    if (alt && shift) {
+      openCopyholder(id);
+      return;
+    }
     if (alt) {
       const node = findNode(project.tree, id);
       if (node && !node.root) setSplitId(id);
@@ -672,14 +740,20 @@ export default function App({ api }) {
   const setEditorHtml = (id, html) => {
     editorRefs.current.get(id)?.setHtml(html);
     editorRefs.current.get(`split:${id}`)?.setHtml(html);
+    editorRefs.current.get(`copy:${id}`)?.setHtml(html);
   };
   // Same document open in both panes: an edit in one is pushed into the other editor.
   const writeSynced = (id, html, from) => {
+    if (settings?.autoBacklinks) {
+      const added = addedLinks(docsNow()[id], html);
+      const pj = projectRef.current;
+      const tree = added.length ? addBacklinks(pj.tree, id, added) : pj.tree;
+      if (tree !== pj.tree) saveProject({ ...pj, tree });
+    }
     noteHandEdit(id);
     writeDocNow(id, html, { hand: true });
-    if (id !== splitId) return;
-    const other = from === 'split' ? editorRefs.current.get(id) : editorRefs.current.get(`split:${id}`);
-    if (other && other.getHtml() !== html) other.setHtml(html);
+    const others = [from !== 'main' && editorRefs.current.get(id), from !== 'split' && id === splitId && editorRefs.current.get(`split:${id}`), from !== 'copy' && editorRefs.current.get(`copy:${id}`)];
+    for (const other of others) if (other && other.getHtml() !== html) other.setHtml(html);
   };
 
   // New items go after the selection (inside it when it is a folder), are selected and put in
@@ -822,15 +896,17 @@ export default function App({ api }) {
     return text(from, to) === source ? { from, to } : null;
   };
   // Puts `text` in place of the range captured by runService (when it still holds the source).
-  const applyServiceText = (sr, text, after = false) => {
+  // One line keeps the formatting of the range; grammar `edits` change only the corrected spans.
+  const applyServiceText = (sr, text, after = false, edits = null) => {
     const ed = sr.handle?.editor;
     if (!ed) return;
     const { range, source } = sr;
     const ok = range && range.to <= ed.state.doc.content.size && ed.state.doc.textBetween(range.from, range.to, '\n\n') === source;
     if (!ok) return setToast(tr('ui.app.textul_s_a_schimbat'));
-    const content = /[\r\n]/.test(text) ? textToHtml(text) : { type: 'text', text: after ? ` ${text}` : text };
+    if (edits && applyTextEdits(ed, range, source, edits)) return undefined;
+    if (!/[\r\n]/.test(text)) return void replaceRangeText(ed, range, text, after);
     const at = after ? { from: range.to, to: range.to } : range;
-    ed.chain().focus().insertContentAt(at, content).run();
+    ed.chain().focus().insertContentAt(at, textToHtml(text)).run();
     return undefined;
   };
   const runService = async (kind, service) => {
@@ -936,7 +1012,7 @@ export default function App({ api }) {
   const saveLayout = async () => {
     const name = window.prompt('Numele layout-ului:', `Layout ${(settings.layouts || []).length + 1}`);
     if (!name) return;
-    const layout = { name, view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, split: Boolean(splitId) };
+    const layout = { name, view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, split: Boolean(splitId), copyholder };
     const layouts = [...(settings.layouts || []).filter((l) => l.name !== name), layout];
     await api.setSettings({ layouts });
     setSettings(await api.getSettings());
@@ -951,6 +1027,11 @@ export default function App({ api }) {
     if (l.widths) setWidths(l.widths);
     if (l.editorView) setEditorView(l.editorView);
     if (!l.split) setSplitId(null);
+    setCopyholder(l.copyholder?.id && findNode(project.tree, l.copyholder.id) ? l.copyholder : null);
+  };
+  const openCopyholder = (id) => {
+    const node = id && findNode(project.tree, id);
+    if (node && !node.root && !node.children) setCopyholder((c) => ({ id, editable: c?.id === id ? c.editable : false }));
   };
 
   // Quick Reference: floating panels with another document (Scrivener: Open in Quick Reference).
@@ -1205,6 +1286,45 @@ export default function App({ api }) {
     await api.writeDoc(dir, node.id, 'docs', page.html);
     go(node.id);
   };
+  // Research chat: new documents appended to the Research folder (or a named subfolder of it).
+  const addResearchDocs = async (items, folderTitle = '') => {
+    const pj = projectRef.current;
+    let tree = pj.tree;
+    const research = tree.find((n) => n.root === 'research');
+    if (!research) return [];
+    let parentId = research.id;
+    if (folderTitle) {
+      const existing = (research.children || []).find((n) => n.type === 'folder' && n.title === folderTitle);
+      if (existing) parentId = existing.id;
+      else {
+        const folder = { ...newNode('folder', folderTitle), children: [] };
+        tree = updateNode(tree, research.id, { children: [...(research.children || []), folder] });
+        parentId = folder.id;
+      }
+    }
+    const created = [];
+    for (const it of items) {
+      const node = newNode('text', it.title || tr('ui.app.fara_titlu'));
+      const parent = findNode(tree, parentId);
+      tree = updateNode(tree, parentId, { children: [...(parent.children || []), node] });
+      for (const m of it.media || []) tree = insertNear(tree, node.id, mediaNode(newNode, m));
+      created.push([node.id, it.html || '<p></p>']);
+    }
+    saveProject({ ...pj, tree });
+    setDocs((d) => ({ ...d, ...Object.fromEntries(created) }));
+    await Promise.all(created.map(([id, html]) => api.writeDoc(dir, id, 'docs', html)));
+    // Index the new sources right away so the next question can use them.
+    if (api.ragBuild) api.ragBuild(dir).catch(() => {});
+    return created.map(([id]) => id);
+  };
+  const importWebSource = async () => {
+    const url = window.prompt(tr('ui.researchChat.pagina_web_adresa'), 'https://');
+    if (!url || url === 'https://') return false;
+    await flush();
+    const page = await api.importWebPage(url, dir);
+    await addResearchDocs([{ title: page.title || url, html: page.html, media: page.media }]);
+    return true;
+  };
   const importFilesCmd = async (mode = 'none', separator = '#') => {
     const res = await api.importFiles(dir, mode, separator);
     if (!res) return;
@@ -1376,6 +1496,7 @@ export default function App({ api }) {
             onError={report}
           />
         )}
+        <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
         <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
       </>
     );
@@ -1395,6 +1516,7 @@ export default function App({ api }) {
   const collectionIds = activeCollection ? collectionNodes(project, activeCollection, docs).map((n) => n.id) : null;
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
   const splitNode = splitId ? findNode(project.tree, splitId) : null;
+  const copyNode = copyholder ? findNode(project.tree, copyholder.id) : null;
   const registerRef = (id, r) => {
     if (r) editorRefs.current.set(id, r);
     else editorRefs.current.delete(id);
@@ -1557,6 +1679,21 @@ export default function App({ api }) {
   const linkTargets = flatten(project.tree)
     .filter((n) => !n.root && n.type !== 'folder' && !inTrash(n.id))
     .map((n) => ({ id: n.id, title: n.title }));
+  // [[New title]] → new document (same folder as the current one, or the chosen folder, which is
+  // remembered per project as the default).
+  const linkFolders = flatten(project.tree)
+    .filter((n) => n.children && !inTrash(n.id) && n.root !== 'trash')
+    .map((n) => ({ id: n.id, title: n.title }));
+  const createLinkedDoc = (fromId) => (label, folderId) => {
+    const node = newNode('text', label);
+    const pj = projectRef.current;
+    const tree = insertLinkedDoc(pj.tree, fromId, folderId, node);
+    binderHistory.current = historyPush(binderHistory.current, pj.tree, tree);
+    saveProject({ ...pj, tree, newLinkFolderId: folderId || '' });
+    setDocs((d) => ({ ...d, [node.id]: '<p></p>' }));
+    api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
+    return node;
+  };
   const openLink = (id) => {
     if (findNode(project.tree, id)) {
       go(id);
@@ -1672,11 +1809,14 @@ export default function App({ api }) {
     }],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
+    ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
     ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
     ['ai', 'mcpConnect', tr('cmd.mcpConnect'), () => setDialog('mcp'), !api.mcpConnectInfo],
     ['view', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
+    ['view', 'copyholder', tr('cmd.copyholder'), () => openCopyholder(selected?.id), !selected || Boolean(selected.root) || Boolean(selected.children)],
+    ['view', 'copyholderClose', tr('cmd.copyholderClose'), () => setCopyholder(null), !copyholder],
     ['view', 'splitEditor', tr('cmd.splitEditor'), () => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)],
     ['view', 'floatInspector', tr('cmd.floatInspector'), () => setShowFloatInspector((v) => !v), !composition],
     ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
@@ -1720,7 +1860,7 @@ export default function App({ api }) {
     ['help', 'helpPlaceholders', tr('cmd.helpPlaceholders'), () => setHelp({ topic: null, tab: 'placeholders' })],
     ['help', 'helpSyntax', tr('cmd.helpSyntax'), () => setHelp({ topic: null, tab: 'syntax' })],
     ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
-    ['help', 'reportIssue', tr('cmd.reportIssue'), () => window.open('https://github.com/Hermeneuticus-of-things/Scriptorium/issues', '_blank')],
+    ['help', 'reportIssue', tr('cmd.reportIssue'), () => setReportOpen(true)],
     ['help', 'about', 'Despre Scribner', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
     ['tools', 'nameGen', tr('cmd.nameGen'), () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
@@ -1751,7 +1891,7 @@ export default function App({ api }) {
     ['view', 'toggleFormatBar', tr('cmd.toggleFormatBar'), () => toggleView('hideFormatBar')],
     ['view', 'toggleComments', tr('cmd.toggleComments'), () => toggleView('hideComments')],
     ['view', 'toggleRevisions', 'Aspect text: culorile reviziilor', () => toggleView('hideRevisions')],
-    ['view', 'splitHorizontal', 'Split orizontal / vertical', () => toggleView('splitHorizontal')],
+    ['view', 'splitHorizontal', tr('cmd.splitHorizontal'), () => toggleView('splitHorizontal')],
     ['view', 'swapPanes', tr('cmd.swapPanes'), swapPanes, !splitId],
     ['tools', 'lookupDict', tr('cmd.lookupDict'), () => lookupWord('dictionary')],
     ['tools', 'lookupSyn', tr('cmd.lookupSyn'), () => lookupWord('synonyms')],
@@ -1785,7 +1925,7 @@ export default function App({ api }) {
   // MCP needs the desktop app (browser mode has no api.mcpConnectInfo).
   const activeCommands = commandList.filter(([, id]) => (aiEnabled || !AI_ONLY_COMMANDS.has(id)) && (id !== 'mcpConnect' || api.mcpConnectInfo));
   const commands = Object.fromEntries(
-    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run, disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
+    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run: (...a) => (noteAction(id), run(...a)), disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
   );
   commandsRef.current = commands;
   // Menu bar (in-app menus and the native application menu share this layout).
@@ -1852,7 +1992,7 @@ export default function App({ api }) {
     const run = (id) => () => commands[id]?.run();
     const items = [];
     if (text) {
-      const g = lookupGroups(text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro' });
+      const g = lookupGroups(text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro', lang: settings.language || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, action: () => openWeb(l.url) }));
       const inApp = api.translateText ? [{ label: tr('cmd.deeplInApp'), action: run('deeplInApp') }, { label: tr('cmd.googleInApp'), action: run('googleInApp') }, '-'] : [];
       if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: [...inApp, ...links(g.translate)] });
@@ -1976,7 +2116,7 @@ export default function App({ api }) {
         <div className="resizer" onMouseDown={startResize('binder')} role="separator" aria-label={tr('ui.app.latime_binder')} />
         </>)}
 
-        <section className={`workspace ${splitNode && view === 'editor' ? 'split' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
+        <section className={`workspace ${(splitNode || copyNode) && view === 'editor' ? 'split' : ''} ${copyNode && view === 'editor' ? 'has-copyholder' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
           <div className={`pane ${editorAreaClass}`}>
             {view === 'editor' && selected && !composition && (
               <div className="sc-header-bar">
@@ -2008,6 +2148,9 @@ export default function App({ api }) {
                 onFocus={() => (activeId.current = selected.id)}
                 onChange={(html) => writeSynced(selected.id, html, 'main')}
                 linkTargets={linkTargets}
+                onCreateLinkedDoc={createLinkedDoc(selected.id)}
+                linkFolders={linkFolders}
+                linkFolderDefault={project.newLinkFolderId || ''}
                 onOpenLink={openLink}
                 words={words}
                 styles={projectStyles}
@@ -2097,7 +2240,7 @@ export default function App({ api }) {
             <div className={`pane second ${editorAreaClass}`}>
               <div className="pane-head">
                 <span title={tr('ui.app.panoul_2_blocat_pe_x', { title: splitNode.title })}>{tr('ui.app.panoul_2_blocat_pe')}{splitNode.title}”</span>
-                <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? 'Split vertical' : 'Split orizontal'}</button>
+                <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? tr('ui.app.split_vertical') : tr('ui.app.split_orizontal')}</button>
                 <button className="link" onClick={swapPanes}>{tr('ui.app.inverseaza')}</button>
                 <button className="link" onClick={() => go(splitNode.id)}>{tr('ui.app.deschide_in_principal')}</button>
                 <button className="link" onClick={() => setSplitId(null)}>{tr('btn.close')}</button>
@@ -2127,6 +2270,43 @@ export default function App({ api }) {
                   onManageStyles={() => setDialog('styles')}
                 />
               )}
+            </div>
+          )}
+          {copyNode && view === 'editor' && (
+            <div
+              className="pane copyholder"
+              ref={(el) => {
+                if (el && el.dataset.doc !== copyNode.id) {
+                  el.dataset.doc = copyNode.id;
+                  el.scrollTop = copyScroll.current.get(copyNode.id) || 0;
+                }
+              }}
+              onScroll={(e) => copyScroll.current.set(copyNode.id, e.currentTarget.scrollTop)}
+            >
+              <div className="pane-head">
+                <span title={copyNode.title}>{tr('ui.app.copyholderTitle', { title: copyNode.title })}</span>
+                <label className="check">
+                  <input type="checkbox" checked={Boolean(copyholder.editable)} onChange={(e) => setCopyholder((c) => ({ ...c, editable: e.target.checked }))} /> {tr('ui.app.copyholderEditable')}
+                </label>
+                <button className="link" onClick={() => go(copyNode.id)}>{tr('ui.app.deschide_in_principal')}</button>
+                <button className="link" onClick={() => setCopyholder(null)}>{tr('btn.close')}</button>
+              </div>
+              <Editor
+                key={`copy-${copyNode.id}-${Boolean(copyholder.editable)}-${smartQuotes}-${corrKey}`}
+                compact
+                corrections={corrections}
+                defaultFormatting={project.defaultFormatting}
+                ref={(r) => registerRef(`copy:${copyNode.id}`, r)}
+                html={docs[copyNode.id] || ''}
+                title={copyNode.title}
+                readOnly={!copyholder.editable || inTrash(copyNode.id) || Boolean(copyNode.locked)}
+                smartQuotes={smartQuotes}
+                onChange={(html) => writeSynced(copyNode.id, html, 'copy')}
+                linkTargets={linkTargets}
+                onOpenLink={openLink}
+                words={words}
+                styles={projectStyles}
+              />
             </div>
           )}
         </section>
@@ -2173,7 +2353,30 @@ export default function App({ api }) {
                 />
               )}
               {showResearch && dir && (
-                <ResearchPanel request={researchRequest} api={api} dir={dir} aiEnabled={aiEnabled} aiLabel={settings.aiLabel} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
+                <ResearchPanel
+                  request={researchRequest}
+                  api={api}
+                  dir={dir}
+                  project={project}
+                  aiEnabled={aiEnabled}
+                  aiLabel={settings.aiLabel}
+                  onOpen={(id) => go(id)}
+                  onClose={() => setShowResearch(false)}
+                  onSaveNote={async ({ title, html }) => {
+                    await flush();
+                    await addResearchDocs([{ title, html }], tr('ui.researchChat.note_folder'));
+                  }}
+                  onInsert={(html) => {
+                    const h = activeHandle();
+                    if (!h || !h.replaceSelectionHtml) return false;
+                    return h.replaceSelectionHtml(html) !== false;
+                  }}
+                  onAddSources={async (list) => {
+                    await flush();
+                    await addResearchDocs(list);
+                  }}
+                  onImportWeb={api.importWebPage ? importWebSource : undefined}
+                />
               )}
               {showAi && aiEnabled && (
                 <AiPanel
@@ -2378,7 +2581,7 @@ export default function App({ api }) {
         <ServiceResultDialog
           source={serviceResult.source}
           result={serviceResult.result}
-          onReplace={(text) => { applyServiceText(serviceResult, text); setServiceResult(null); }}
+          onReplace={(text, edits) => { applyServiceText(serviceResult, text, false, edits); setServiceResult(null); }}
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onClose={() => setServiceResult(null)}
         />
@@ -2581,6 +2784,7 @@ export default function App({ api }) {
         />
       )}
       <DialogA11y />
+      <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
       <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
     </div>
   );
@@ -2588,6 +2792,38 @@ export default function App({ api }) {
 
 // Live regions stay in the DOM all the time so screen readers announce the messages that
 // appear in them (a region inserted together with its text is often not read).
+function ReportUi({ api, open, setOpen, prompt, setPrompt, onDone }) {
+  return (
+    <>
+      {prompt && !open && (
+        <div className="report-toast" role="status">
+          <span>{tr('ui.report.toast')}</span>
+          <button
+            className="primary"
+            onClick={() => {
+              setPrompt(false);
+              setOpen(true);
+            }}
+          >
+            {tr('ui.report.toastSend')}
+          </button>
+          <button onClick={() => setPrompt(false)} aria-label={tr('btn.close')}>×</button>
+        </div>
+      )}
+      {open && (
+        <ReportProblemDialog
+          api={api}
+          onClose={() => setOpen(false)}
+          onDone={(m) => {
+            setOpen(false);
+            onDone(m);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 function Toasts({ error, onCloseError, toast, onCloseToast }) {
   return (
     <>

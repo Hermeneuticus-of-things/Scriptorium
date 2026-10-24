@@ -41,10 +41,10 @@ Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H
 | Composition mode: backdrop, width, opacity, fade, floating Inspector | present | src/lib/settingsDefaults.js:24 | – | M |
 | Internal document links from the format bar | present | src/components/FormatBar.jsx:395 | – | H |
 | Typing `[[Title]]` creates an internal link | **present (implemented now; was missing despite help)** | src/editor/writing.js (WikiLink, findLinkTarget) | S | M |
-| `[[Title]]` with no match creates a new document | missing | – | M | L |
-| Automatic back-links (bookmark added to the link target) | missing | – | M | M |
+| `[[Title]]` with no match creates a new document | **present (round 2)** | src/editor/writing.js (onMissing, resolveWikiLink); src/components/Editor.jsx (wiki-offer); src/lib/backlinks.js insertLinkedDoc | M | L |
+| Automatic back-links (bookmark added to the link target) | **present (round 2)** | src/lib/backlinks.js; src/App.jsx writeSynced; Settings → Editing; Inspector "Links to this document" | M | M |
 | In-text bookmarks, highlights, text colour | present | src/components/BookmarksPanel.jsx:4; src/components/FormatBar.jsx:14 | – | M |
-| Preserve Formatting blocks (kept verbatim in Compile) | missing | no `preserve` handling in lib/compile.cjs | M | L |
+| Preserve Formatting blocks (kept verbatim in Compile) | **present (round 2)** | src/editor/formatting.js PreserveFormat; lib/compile.cjs (mapText, parseBlocks `preserve`, DOCX paragraph) | M | L |
 | Writing direction RTL | present | src/components/FormatBar.jsx:513 | – | L |
 | Images with links, resize, alignment | present | src/components/FormatBar.jsx:317; lib/compile.cjs | – | M |
 | Equations / MathType | excluded | FEATURES-SCRIVENER3.md §R (commercial plug-in) | L | L |
@@ -55,13 +55,13 @@ Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H
 | **Corkboard** | | | | |
 | Freeform, arrange by label/status/keyword, stacked folders | present | src/components/Corkboard.jsx:10,115 | – | M |
 | Card size/ratio/spacing, stamps, pins, label tint, synopsis image | present | src/components/Corkboard.jsx | – | M |
-| Card shapes (rounded/square/ruled cards, macOS appearance) | missing | – | S | L |
+| Card shapes (rounded/square/ruled cards, colour by label) | **present (round 2)** | src/components/Corkboard.jsx corkClass; src/editor-extra.css | S | L |
 | **Outliner** | | | | |
 | Column chooser, custom metadata columns, sort, inline edit | present | src/components/Outliner.jsx:8,39 | – | M |
 | **Scrivenings / split** | | | | |
 | Scrivenings for folders, selection, collections | present | src/components/Scrivenings.jsx | – | H |
 | Split editor horizontal/vertical, lock in place, swap | present | src/App.jsx:1680,1987 | – | H |
-| Copyholders (third/fourth viewer inside an editor) | partial | Quick Reference windows substitute (src/components/QuickRef.jsx:6) | M | M |
+| Copyholders (third viewer beside editor/split) | **present (round 2)**; one copyholder pane, not one per split pane | src/App.jsx (copyholder state, `.pane.copyholder`) | M | M |
 | Quick Reference panels | present | src/components/QuickRef.jsx:6 | – | M |
 | **Inspector** | | | | |
 | Synopsis text + image, notes, metadata, keywords | present | src/components/Inspector.jsx | – | H |
@@ -88,7 +88,7 @@ Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H
 | Section layouts, separators, front/back matter, compile groups | present | lib/compile.cjs:738-860 | – | H |
 | Replacements, transformations, metadata | present | lib/compile.cjs:366 | – | H |
 | Footnotes / endnotes / endnotes per chapter | present | lib/compile.cjs:811 | – | H |
-| Footnote number format (i, a, symbols) | missing | lib/compile.cjs:66 (arabic only) | M | L |
+| Footnote number format (1, i, a, symbols) + restart per chapter | **present (round 2)**; RTF/ODT format only, EPUB already restarts per chapter file | lib/compile.cjs noteLabel, footnoteState, docxSections; lib/rtfWriter.cjs | M | L |
 | Kindle KPF | excluded | closed format; EPUB is accepted by KDP | – | L |
 | **Script writing** | | | | |
 | Screenplay / stage play / comic / radio, Tab/Enter, auto-complete | present | src/extensions/ScriptMode.js:6 | – | L |
@@ -107,9 +107,9 @@ Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H
 
 ## Counts
 
-- present: 63 (of which 4 implemented or fixed in this audit)
-- partial: 1 (copyholders)
-- missing: 7 (PDF annotations, `[[` creates new document, back-links, Preserve Formatting, card shapes, footnote number format; `[[` link itself is now present)
+- present: 69 (4 implemented in the first audit, 6 in round 2)
+- partial: 0
+- missing: 1 (PDF annotations)
 - excluded: 3 (MathType, Kindle KPF, iOS sync)
 
 ## Implemented in this audit
@@ -122,11 +122,21 @@ Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H
 
 Help: src/help/manual.ro.js and manual.en.js (snapshots-compare, links, targets/status bar).
 
+## Implemented in round 2
+
+| Item | Code | Tests |
+|---|---|---|
+| Automatic back-links (Settings → Editing, off by default): a new link from A to B adds A to B's document bookmarks (any path: Ctrl+L, `[[`, format bar, paste, drag), never into B's text; Inspector lists "Links to this document" | src/lib/backlinks.js, src/App.jsx (writeSynced), src/components/Inspector.jsx, src/components/SettingsDialog.jsx, src/lib/settingsDefaults.js | tests/gapAudit2.test.js; tests/e2e/browser/gap-audit-2.cjs |
+| `[[New title]]` with no match: offer bar (Create and link / Cancel, Esc), folder = same as current doc or chosen one (remembered as `project.newLinkFolderId`); the link replaces the typed text only if it is still there | src/editor/writing.js, src/editor/extensions.js, src/components/Editor.jsx, src/App.jsx (createLinkedDoc) | same |
+| Copyholder: View → Open as reference / Close reference pane, Alt+Shift+click in the binder; read-only unless "Editable"; edits synced with the main/split editors; scroll kept per document; saved in the project UI state and in layouts | src/App.jsx, src/editor-extra.css | tests/e2e/browser/gap-audit-2.cjs |
+| Footnote numbering 1/i/a/symbols + restart per chapter: HTML/PDF/EPUB marks and note lists, endnotes, DOCX `w:footnotePr/w:numFmt` (+ one section per chapter with `w:numRestart eachSect`), ODT citation labels, RTF `\ftnnrlc/\ftnnalc/\ftnnchi` | lib/compile.cjs, lib/rtfWriter.cjs, src/components/CompileDialog.jsx | tests/gapAudit2.test.js |
+| Corkboard card look: rounded/square corners, ruled cards, card colour by label (stacked groups already existed) | src/components/Corkboard.jsx, src/editor-extra.css | tests/gapAudit2.test.js |
+| Preserve Formatting: Format → Preserve formatting wraps the paragraphs in `<div data-preserve-format>`; Compile skips replacements/quotes/dashes inside it, drops compile indent/spacing, keeps the block's font and size (DOCX) and inline style (HTML) | src/editor/formatting.js, src/editor/extensions.js, lib/compile.cjs | tests/gapAudit2.test.js; tests/e2e/browser/gap-audit-2.cjs |
+
+Not covered: restart per chapter in RTF/ODT (format only); EPUB numbering already restarts in every
+chapter file and the "no restart" option does not continue the count there; one copyholder for the
+whole window (not one per split pane).
+
 ## Remaining (not done, with reason)
 
-- Automatic back-links (M effort, M value): needs a project-level setting and a hook on every link
-  creation path (format bar, `[[`, paste); next candidate.
-- Copyholders (M, M): Quick Reference windows already cover side-by-side reference.
-- `[[New title]]` creating a document (M, L), Preserve Formatting (M, L), footnote number formats
-  (M, L; DOCX footnote numbering needs section properties), card shapes (S, L): low value.
 - PDF annotations (L, L), MathType (excluded), iOS sync (excluded).

@@ -391,8 +391,10 @@ legend { color: var(--muted); padding: 0 4px; }
 .project-notes-tabs .tabs { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 6px; }
 .project-notes-tabs .tabs button.on { font-weight: 600; border-bottom: 2px solid var(--accent, #1565c0); }
 .home .recent li { display: flex; align-items: center; gap: 6px; }
+.home .recent li.missing > .link { opacity: 0.6; font-style: italic; }
 .home .recent .pin { border: 0; background: none; cursor: pointer; opacity: .5; }
-.home .recent .pin.on, .home .recent li:hover .pin { opacity: 1; }
+.home .recent .pin.on, .home .recent li:hover .pin, .home .recent .pin:focus-visible { opacity: 1; }
+.home .recent li > .link { min-width: 0; overflow-wrap: anywhere; text-align: left; }
 
 /* --- Batch A: scrivenings toggles, split orientation, hoist, separators, text appearance, format bar --- */
 .scrivenings.no-titles .scriv-section .doc-title { display: none; }
@@ -465,3 +467,24 @@ legend { color: var(--muted); padding: 0 4px; }
 @media (max-width: 640px) { .tb-lists { grid-template-columns: 1fr; } .tb-mid { flex-direction: row; } }
 .toolbar > button[data-tb] { min-width: 30px; justify-content: center; }
 .toolbar .tb-glyph { font-size: 15px; line-height: 1; }
+
+/* Help → Report a problem */
+.report-toast { position: fixed; bottom: 40px; right: 16px; background: var(--panel); color: var(--ink, inherit); border: 1px solid var(--line); box-shadow: 0 6px 24px rgba(0,0,0,.2); padding: 8px 12px; border-radius: 8px; display: flex; gap: 10px; align-items: center; z-index: 21; max-width: min(420px, 92vw); font-size: 13px; }
+.report-toast > button:last-child { background: none; border: none; font-size: 18px; }
+.report-problem textarea { width: 100%; box-sizing: border-box; font: inherit; }
+.report-problem label { display: flex; flex-direction: column; gap: 4px; }
+.report-tech { white-space: pre-wrap; word-break: break-word; font-size: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px; max-height: 30vh; overflow: auto; user-select: text; }
+.report-problem .small { font-size: 12px; margin: 0; }
+
+/* Render error fallback (ErrorBoundary) */
+.crash-screen { max-width: 36em; margin: 15vh auto; padding: 0 16px; }
+.crash-screen h1 { font-size: 1.4em; }
+
+/* Active / inactive pane when more than one is open (split, reference pane): the pane you type in
+   gets a green border, the others a grey one and slightly faded text. Automatic, no setting. */
+:root { --pane-active: #2e9d57; --pane-inactive: #c9c4bb; }
+:root[data-theme='dark'] { --pane-active: #4cc47a; --pane-inactive: #4a4a4a; }
+@media (prefers-color-scheme: dark) { :root[data-theme='system'] { --pane-active: #4cc47a; --pane-inactive: #4a4a4a; } }
+.workspace:has(> .pane + .pane) > .pane { box-shadow: inset 0 0 0 2px var(--pane-inactive); transition: box-shadow 0.15s, opacity 0.15s; }
+.workspace:has(> .pane + .pane) > .pane:not([data-active]) .page { opacity: 0.82; }
+.workspace:has(> .pane + .pane) > .pane[data-active] { box-shadow: inset 0 0 0 3px var(--pane-active); }

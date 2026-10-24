@@ -1,6 +1,7 @@
 // In-browser stand-in for the Electron bridge, used by `npm run dev` in a plain
 // browser. Keeps a demo project in memory so the UI can be tried without Electron.
 import { newNode } from './text.js';
+import { noteTitle } from './researchChat.js';
 
 function demoProject() {
   // A short story with dates, points of view and several characters, so every view
@@ -90,6 +91,20 @@ export function createMockApi() {
     const t = setTimeout(res, ms);
     flag.onAbort = () => { clearTimeout(t); rej(new Error('Cererea AI a fost anulată.')); };
   });
+  const demoChats = (dir) => {
+    try {
+      return JSON.parse(localStorage.getItem(`scribner-demo-chats:${dir}`) || '[]');
+    } catch {
+      return [];
+    }
+  };
+  const saveDemoChats = (dir, list) => {
+    try {
+      localStorage.setItem(`scribner-demo-chats:${dir}`, JSON.stringify(list));
+    } catch {
+      /* storage unavailable */
+    }
+  };
   const simulate = async (answer, runId, speed = 25) => {
     const flag = {};
     live.add(flag);
@@ -316,12 +331,15 @@ export function createMockApi() {
     async ragQuery(dir, q, opts = {}) {
       const words = String(q).toLowerCase().split(/\W+/u).filter((w) => w.length > 2);
       const out = [];
-      const visit = (nodes, kind) => {
+      // opts.scope: { kinds, ids } as in the desktop app (ids are folders or documents).
+      const sc = opts.scope && ((opts.scope.kinds || []).length || (opts.scope.ids || []).length) ? opts.scope : null;
+      const allowed = (kind, trail) => (sc ? (sc.kinds || []).includes(kind) || trail.some((id) => (sc.ids || []).includes(id)) : !opts.kinds || opts.kinds.includes(kind));
+      const visit = (nodes, kind, trail = []) => {
         for (const n of nodes) {
           const text = String(files[key(dir, n.id)] || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
           const score = words.filter((w) => text.toLowerCase().includes(w)).length;
-          if (score && (!opts.kinds || opts.kinds.includes(kind))) out.push({ docId: n.id, title: n.title, kind, chunk: 0, score, text });
-          if (n.children) visit(n.children, kind);
+          if (score && allowed(kind, [...trail, n.id])) out.push({ docId: n.id, title: n.title, kind, chunk: 0, score, text });
+          if (n.children) visit(n.children, kind, [...trail, n.id]);
         }
       };
       const project = load(dir);
@@ -336,6 +354,46 @@ export function createMockApi() {
       if (!passages.length) return { answer: 'Nu am găsit pasaje relevante în proiect.', passages };
       const answer = await simulate(`Conform pasajelor, ${passages[0].text.slice(0, 120)} [1]${passages[1] ? ` Vezi și [2].` : ''}`, null, 5);
       return { answer, passages };
+    },
+    // Demo research conversation: canned streamed answers with citations and follow-ups, kept in localStorage.
+    async ragChats(dir) {
+      return demoChats(dir);
+    },
+    async ragChatDelete(dir, chatId) {
+      saveDemoChats(dir, demoChats(dir).filter((c) => c.id !== chatId));
+      return true;
+    },
+    async ragImportFiles() {
+      // No file dialog in the browser demo: one sample source stands in for the chosen files.
+      return [{ title: 'Sursă demo (PDF)', html: '<p>Text extras dintr-un PDF de probă: orașul a fost fondat în anul 1400, pe malul râului.</p>', empty: false }];
+    },
+    async ragChat(dir, q, opts = {}) {
+      if (state.settings.aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
+      const chats = demoChats(dir);
+      const prev = chats.find((c) => c.id === opts.chatId);
+      const history = prev ? prev.turns : [];
+      let passages = await this.ragQuery(dir, q, { k: 4, scope: opts.scope });
+      // A follow-up („și în capitolul 3?”) also searches with the previous question.
+      if (passages.length < 2 && history.length) {
+        const more = await this.ragQuery(dir, `${q} ${history[history.length - 1].q}`, { k: 4, scope: opts.scope });
+        passages = [...passages, ...more.filter((m) => !passages.some((p) => p.docId === m.docId))].slice(0, 4);
+      }
+      passages = passages.map((p) => ({ ...p, text: p.text.slice(0, 600) }));
+      let answer;
+      let followups = [];
+      if (!passages.length) answer = 'Nu am găsit pasaje relevante în sursele alese. Bifează mai multe surse sau reformulează întrebarea.';
+      else {
+        const lead = history.length ? `Continuând discuția despre „${history[history.length - 1].q.slice(0, 60)}”: ` : 'Conform surselor, ';
+        answer = `${lead}${passages[0].text.slice(0, 140)} [1]${passages[1] ? `\n\nVezi și „${passages[1].title}” [2].` : ''}`;
+        followups = ['Ce alte detalii apar despre asta?', `Unde mai apare „${passages[0].title}”?`];
+        await simulate(`${answer}\n\n### Întrebări de continuare\n${followups.map((f) => `- ${f}`).join('\n')}`, opts.runId, 5);
+      }
+      const turn = { q: String(q).trim(), answer, followups, passages, cited: passages.length ? [1] : [], at: new Date().toISOString(), provider: 'demo', model: state.settings.aiModel };
+      // Same caps and title as lib/researchChat.cjs: 100 turns per conversation, 30 conversations.
+      const chat = prev ? { ...prev, turns: [...prev.turns, turn].slice(-100), updated: turn.at } : { id: `c${Date.now().toString(36)}`, title: noteTitle(turn.q), created: turn.at, updated: turn.at, turns: [turn] };
+      if (opts.scope) chat.scope = opts.scope;
+      saveDemoChats(dir, [chat, ...chats.filter((c) => c.id !== chat.id)].slice(0, 30));
+      return { chat, turn };
     },
     // Demo: accounts kept in memory, translation and grammar simulated.
     async servicesStatus() {
