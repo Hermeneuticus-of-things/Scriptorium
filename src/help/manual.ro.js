@@ -201,7 +201,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'editor-links',
         title: 'Legături, semne de carte, dicționar',
-        html: `<p>Scrie <code>[[</code> pentru o legătură internă spre alt document din proiect. Legăturile externe se inserează și se editează din bara de format.</p>
+        html: `<p>Scrie <code>[[Titlu]]</code> pentru o legătură internă spre documentul din proiect cu acel titlu (nu contează majusculele și diacriticele; ajunge și începutul titlului, dacă e unic). Dacă niciun document nu se potrivește, textul rămâne așa cum l-ai scris. Legătura internă se poate alege și din bara de format. Legăturile externe se inserează și se editează din bara de format.</p>
 <p>Semnele de carte în text și semnele de carte ale proiectului (<em>Proiect → Semne de carte ale proiectului…</em>) duc rapid la un loc anume.</p>
 <p>Din meniul contextual sau din <em>Unelte</em>: caută cuvântul în dicționar sau sinonime (dexonline), pe Wikipedia sau cu Google; se deschide browserul.</p>
 <p>Corectura ortografică folosește dicționarele sistemului (română și engleză, configurabile). Clic dreapta pe un cuvânt subliniat: sugestii, <em>Adaugă în dicționar</em>, <em>Ignoră</em>. <em>Unelte → Verifică ortografia acum</em> reverifică documentul.</p>`,
@@ -364,7 +364,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'snapshots-compare',
         title: 'Comparare și restaurare',
-        html: `<p>În Inspector, fila Snapshot-uri: vezi textul, compară cu textul curent sau între două snapshot-uri (diff colorat), redenumește, șterge, restaurează. Restaurarea face mai întâi snapshot textului curent, deci nu pierzi nimic.</p>`,
+        html: `<p>În Inspector, fila Snapshot-uri: vezi textul, compară cu textul curent sau între două snapshot-uri (diff colorat), redenumește, șterge, restaurează. La comparare alegi nivelul: pe cuvinte, pe sintagme (până la virgulă), pe fraze sau pe paragrafe; nivelurile mari arată mai limpede o rescriere amplă. Restaurarea face mai întâi snapshot textului curent, deci nu pierzi nimic.</p>`,
       },
     ],
   },
@@ -406,7 +406,8 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'targets-document',
         title: 'Ținta documentului',
-        html: `<p>În Inspector setezi ținta unui document, în cuvinte sau caractere. Progresul apare în bara de jos a editorului și în coloana <em>Progres</em> din Outline.</p>`,
+        html: `<p>În Inspector setezi ținta unui document, în cuvinte sau caractere. Progresul apare în bara de jos a editorului și în coloana <em>Progres</em> din Outline.</p>
+<p>Când selectezi text în editor, bara de jos arată și câte cuvinte și caractere are selecția.</p>`,
       },
       {
         id: 'targets-stats',

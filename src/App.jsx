@@ -2281,8 +2281,8 @@ export default function App({ api }) {
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>{tr('ui.app.iesi_esc')}</button>}
       {composition && settings.compShowTargets && selected && (
         <div className="comp-targets">
-          <span>Document: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
-          <span>Sesiune: {Math.max(0, totals.draft - sessionStart)}{project.targets?.session ? ` / ${project.targets.session}` : ''}</span>
+          <span>{tr('ui.statusBar.document')}: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
+          <span>{tr('ui.statusBar.session')}: {Math.max(0, totals.draft - sessionStart)}{project.targets?.session ? ` / ${project.targets.session}` : ''}</span>
         </div>
       )}
 

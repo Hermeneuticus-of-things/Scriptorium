@@ -46,7 +46,7 @@ export const MANUAL_EN = [
       { id: 'editor-split-merge', title: 'Split and merge', html: `<p>Split at cursor ${k('Ctrl+K')}, split with selection as title ${k('Ctrl+Shift+K')}, merge ${k('Ctrl+Shift+M')}; a snapshot is taken first. <em>Append selection to document…</em> sends text elsewhere.</p>` },
       { id: 'editor-view', title: 'Zoom, page view, focus', html: `<p>Footer with counts and target, page view, typewriter scrolling, invisibles, current-line highlight, fading, linguistic focus (nouns, verbs), and text-appearance toggles for comments and revisions.</p>` },
       { id: 'editor-revisions', title: 'Revision mode and tracked changes', html: `<p>Five revision colours. Tracked changes in DOCX become revision marks on import and are written back on export.</p>` },
-      { id: 'editor-links', title: 'Links, bookmarks, look-up', html: `<p>Type <code>[[</code> for an internal link. Project bookmarks in the Project menu. Dictionary, synonyms (dexonline), Wikipedia and Google look-ups in the Tools menu. Spelling uses the system spellchecker (Romanian and English).</p>` },
+      { id: 'editor-links', title: 'Links, bookmarks, look-up', html: `<p>Type <code>[[Title]]</code> to link to the project document with that title (case and diacritics are ignored; a unique start of the title is enough). With no match the text stays as typed. Internal links can also be picked from the format bar. Project bookmarks in the Project menu. Dictionary, synonyms (dexonline), Wikipedia and Google look-ups in the Tools menu. Spelling uses the system spellchecker (Romanian and English).</p><p>When text is selected, the status bar shows its word and character count.</p>` },
     ],
   },
   {
@@ -105,7 +105,7 @@ export const MANUAL_EN = [
     title: 'Snapshots',
     sections: [
       { id: 'snapshots-basics', title: 'Document versions', html: `<p>${k('Ctrl+5')} takes a snapshot. Automatic snapshots before split, merge, project replace, sync and MCP writes.</p>` },
-      { id: 'snapshots-compare', title: 'Compare and restore', html: `<p>View, diff against current text or another snapshot, rename, delete, restore (the current text is snapshotted first).</p>` },
+      { id: 'snapshots-compare', title: 'Compare and restore', html: `<p>View, diff against current text or another snapshot, rename, delete, restore (the current text is snapshotted first). Compare by word, phrase (up to a comma), sentence or paragraph; the coarser levels read better after a heavy rewrite.</p>` },
     ],
   },
   {

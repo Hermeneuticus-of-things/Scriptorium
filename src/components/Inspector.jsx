@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BookmarkIcon, CommentIcon, LockIcon, MetaIcon, NotesIcon, SnapshotIcon, UnlockIcon } from './Icons.jsx';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { diffWords } from 'diff';
+import { diffText, DIFF_LEVELS } from '../lib/snapshotDiff.js';
 import { buildExtensions } from '../editor/extensions.js';
 import { htmlToText } from '../lib/text.js';
 import { parseComments, updateComment } from '../lib/panelsExtra.js';
@@ -100,6 +100,7 @@ export default function Inspector({
   const [preview, setPreview] = useState(null);
   const [compare, setCompare] = useState(null);
   const [compareB, setCompareB] = useState(null); // second snapshot for snapshot-vs-snapshot diff
+  const [diffLevel, setDiffLevel] = useState('word');
   const [lockedId, setLockedIdState] = useState(() => (lockMemory.dir === dir && lockMemory.id && findIn(project.tree, lockMemory.id) ? lockMemory.id : null));
   const setLockedId = (id) => {
     lockMemory.dir = dir;
@@ -132,7 +133,7 @@ export default function Inspector({
   };
 
   const isRoot = Boolean(node.root);
-  const diff = compare ? diffWords(htmlToText(compare.html), htmlToText(compareB ? compareB.html : html)) : null;
+  const diff = compare ? diffText(htmlToText(compare.html), htmlToText(compareB ? compareB.html : html), diffLevel) : null;
 
   const renameSnap = async (s) => {
     const name = window.prompt(tr('ui.inspector.titlul_snapshot_ului'), s.name);
@@ -328,6 +329,12 @@ export default function Inspector({
               <p className="muted">
                 <del>{tr('ui.inspector.sters')}</del> {tr('ui.inspector.fata_de')}{compare.name}” · <ins>{tr('ui.inspector.adaugat')}</ins> {tr('ui.inspector.in')} {compareB ? `„${compareB.name}”` : tr('ui.inspector.textul_curent')}
               </p>
+              <label className="diff-level">
+                {tr('ui.inspector.diffLevel')}{' '}
+                <select value={diffLevel} onChange={(e) => setDiffLevel(e.target.value)}>
+                  {DIFF_LEVELS.map((l) => <option key={l} value={l}>{tr(`ui.inspector.diff_${l}`)}</option>)}
+                </select>
+              </label>
               {diff.map((part, i) =>
                 part.added ? <ins key={i}>{part.value}</ins> : part.removed ? <del key={i}>{part.value}</del> : <span key={i}>{part.value}</span>,
               )}

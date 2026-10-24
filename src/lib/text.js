@@ -35,3 +35,17 @@ export function textToHtml(text) {
     .map((p) => `<p>${esc(p)}</p>`)
     .join('');
 }
+
+// Word and character count of a text selection (status bar). Characters exclude line breaks.
+export function selectionStats(text) {
+  const t = String(text || '');
+  return { words: countWords(t), chars: t.replace(/[\r\n]+/g, '').length };
+}
+
+// The selected text when the DOM selection lies inside an editor (ProseMirror) area, else ''.
+export function editorSelectionText(sel = typeof window !== 'undefined' ? window.getSelection() : null) {
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return '';
+  const node = sel.anchorNode;
+  const el = node && (node.nodeType === 1 ? node : node.parentElement);
+  return el && el.closest && el.closest('.ProseMirror') ? sel.toString() : '';
+}
