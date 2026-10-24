@@ -83,7 +83,7 @@ import {
   produce,
   updateNode,
   rootOf,
-  restoreFromTrash,
+  restoreManyFromTrash,
   moveManyInto,
   moveTargets,
   ancestorIds,
@@ -426,7 +426,7 @@ export default function App({ api }) {
         }
         if (Object.keys(updated).length) {
           setDocs((d) => ({ ...d, ...updated }));
-          for (const [id, html] of Object.entries(updated)) editorRefs.current.get(id)?.setHtml(html);
+          for (const [id, html] of Object.entries(updated)) setEditorHtml(id, html);
           setSaveState(tr('ui.app.actualizat_din_exterior'));
         }
       } catch (e) {
@@ -666,6 +666,13 @@ export default function App({ api }) {
     clearTimeout(typedTimer.current);
     typedTimer.current = setTimeout(commitTyped, TYPED_COMMIT_DELAY);
   };
+  // Content changed outside the editors (replace all, merge, AI, snapshots…): push it into every
+  // open editor of that document — the main/Scrivenings one and the split pane — otherwise a
+  // stale pane writes the old text back on its next edit.
+  const setEditorHtml = (id, html) => {
+    editorRefs.current.get(id)?.setHtml(html);
+    editorRefs.current.get(`split:${id}`)?.setHtml(html);
+  };
   // Same document open in both panes: an edit in one is pushed into the other editor.
   const writeSynced = (id, html, from) => {
     noteHandEdit(id);
@@ -722,8 +729,7 @@ export default function App({ api }) {
     return n && !n.root;
   });
   const restoreSelection = () => {
-    let tree = project.tree;
-    for (const id of selectionList()) tree = restoreFromTrash(tree, id);
+    const tree = restoreManyFromTrash(project.tree, selectionList());
     if (tree !== project.tree) setTreeU(tree);
     else setToast(tr('ui.app.selectia_nu_e_in_cos'));
   };
@@ -762,8 +768,7 @@ export default function App({ api }) {
     const current = docsNow()[targetId] ?? (await api.readDoc(dir, targetId, 'docs'));
     const next = appendHtml(current, html);
     writeDocNow(targetId, next);
-    editorRefs.current.get(targetId)?.setHtml(next);
-    editorRefs.current.get(`split:${targetId}`)?.setHtml(next);
+    setEditorHtml(targetId, next);
     setToast(tr('ui.app.selectia_a_fost_adaugata_la', { v0: findNode(project.tree, targetId)?.title }));
   };
   const openScrivenings = (title, ids) => {
@@ -877,7 +882,7 @@ export default function App({ api }) {
         if (glossaryHasTerm(html, term)) return setToast(tr('ui.app.deja_in_glosar', { term }));
         const next = html + line;
         setDocs((d) => ({ ...d, [node.id]: next }));
-        editorRefs.current.get(node.id)?.setHtml(next);
+        setEditorHtml(node.id, next);
         await api.writeDoc(dir, node.id, 'docs', next);
       } else {
         node = newNode('text', tr('ui.app.glosar'));
@@ -1062,7 +1067,7 @@ export default function App({ api }) {
       list.splice(list.findIndex((n) => n.id === id) + 1, 0, second);
     });
     saveProject({ ...projectRef.current, tree });
-    handle.setHtml(parts.before);
+    setEditorHtml(id, parts.before);
     writeDocNow(id, parts.before);
     setDocs((d) => ({ ...d, [second.id]: parts.after }));
     await api.writeDoc(dir, second.id, 'docs', parts.after).catch(report);
@@ -1089,7 +1094,7 @@ export default function App({ api }) {
     writeDocNow(first.id, html);
     const mergedNotes = notes.filter((h) => htmlToText(h).trim()).join('<hr>');
     if (mergedNotes) queueWrite(first.id, 'notes', mergedNotes);
-    editorRefs.current.get(first.id)?.setHtml(html);
+    setEditorHtml(first.id, html);
     go(first.id);
   };
 
@@ -1131,7 +1136,7 @@ export default function App({ api }) {
     // Snapshots and writes above are awaited: build on the project as it is now, not as it was at the start.
     if (nodeUpdates.length) saveProject({ ...projectRef.current, tree: nodeUpdates.reduce((t, [id, patch]) => updateNode(t, id, patch), projectRef.current.tree) });
     setDocs((d) => ({ ...d, ...nextDocs }));
-    for (const [id, html] of Object.entries(nextDocs)) editorRefs.current.get(id)?.setHtml(html);
+    for (const [id, html] of Object.entries(nextDocs)) setEditorHtml(id, html);
     recordHistory();
     return total;
   };
@@ -1150,7 +1155,7 @@ export default function App({ api }) {
       total += count;
     }
     setDocs((d) => ({ ...d, ...next }));
-    for (const [id, html] of Object.entries(next)) editorRefs.current.get(id)?.setHtml(html);
+    for (const [id, html] of Object.entries(next)) setEditorHtml(id, html);
     recordHistory();
     return total;
   };
@@ -1269,7 +1274,10 @@ export default function App({ api }) {
     const onKey = (e) => {
       if (!project) return;
       if (e.key === 'Escape' && composition) {
-        setComposition(false);
+        // Esc closes only the top-most layer: a dialog, menu or find bar handles its own Esc
+        // (the target may already be detached when the layer closed, closest() still works).
+        const layer = e.target?.closest?.('.modal-backdrop, .modal, .menu-pop, .ctx-menu, .find-bar, .help-window, input, textarea, select');
+        if (!layer) setComposition(false);
         return;
       }
       const combo = keyFromEvent(e);
@@ -1889,7 +1897,7 @@ export default function App({ api }) {
           ? {
               '--comp-bg': settings.compBg || undefined,
               '--comp-width': `${settings.compWidth || 40}em`,
-              '--comp-fade': (settings.compFade || 100) / 100,
+              '--comp-fade': (settings.compFade ?? 100) / 100,
               '--comp-bg-image': settings.compBgImage ? `url("${/^(data:|https?:|file:)/.test(settings.compBgImage) ? settings.compBgImage : encodeURI(`file:///${settings.compBgImage.replace(/\\/g, '/').replace(/^\//, '')}`)}")` : undefined,
             }
           : undefined
@@ -2145,7 +2153,7 @@ export default function App({ api }) {
                   onProjectNotesChange={(html) => queueWrite('project-notes', 'notes', html)}
                   onRestore={(html) => {
                     writeDocNow(selected.id, html);
-                    editorRefs.current.get(selected.id)?.setHtml(html);
+                    setEditorHtml(selected.id, html);
                   }}
                   onError={report}
                   flush={flush}
@@ -2156,7 +2164,7 @@ export default function App({ api }) {
                   authorName={settings.authorName || project.author || ''}
                   onHtmlChange={(html, id) => {
                     writeDocNow(id, html);
-                    editorRefs.current.get(id)?.setHtml(html);
+                    setEditorHtml(id, html);
                   }}
                   onJumpToComment={(index, c, id) => {
                     go(id);
@@ -2182,7 +2190,7 @@ export default function App({ api }) {
                   onReplace={(text) => activeHandle()?.replaceSelection(text)}
                   onReplaceAll={(text) => {
                     const html = textToHtml(text);
-                    activeHandle()?.setHtml(html);
+                    setEditorHtml(aiNode.id, html);
                     writeDocNow(aiNode.id, html);
                   }}
                   onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
@@ -2238,7 +2246,7 @@ export default function App({ api }) {
                       return;
                     }
                     writeDocNow(p.id, p.after);
-                    editorRefs.current.get(p.id)?.setHtml(p.after);
+                    setEditorHtml(p.id, p.after);
                     const pj = projectRef.current;
                     const n = findNode(pj.tree, p.id);
                     const stamp = now.toISOString();
@@ -2273,8 +2281,8 @@ export default function App({ api }) {
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>{tr('ui.app.iesi_esc')}</button>}
       {composition && settings.compShowTargets && selected && (
         <div className="comp-targets">
-          <span>Document: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
-          <span>Sesiune: {Math.max(0, totals.draft - sessionStart)}{project.targets?.session ? ` / ${project.targets.session}` : ''}</span>
+          <span>{tr('ui.statusBar.document')}: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
+          <span>{tr('ui.statusBar.session')}: {Math.max(0, totals.draft - sessionStart)}{project.targets?.session ? ` / ${project.targets.session}` : ''}</span>
         </div>
       )}
 

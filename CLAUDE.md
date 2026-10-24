@@ -16,3 +16,4 @@ Tip: aplicație desktop (Electron + React + TipTap). Program de scris tip Scrive
 ## Reguli
 - Implementare proprie, fără cod sau resurse din Scrivener.
 - Tot accesul la disc și la API trece prin procesul main; renderer-ul nu are Node.
+- În textele pentru utilizator (interfață, ajutor, README, imagini) nu se menționează „Scrivener 3” și nici comparații „ca în Scrivener”; formatul de fișier `.scriv` și comanda de import rămân numite funcțional.

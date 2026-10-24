@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { cardHeight } from '../lib/panelsExtra.js';
 import { FolderIcon } from './Icons.jsx';
 import { t } from '../lib/i18n.js';
+import { NONE, noneLabel, noneStatus } from '../lib/projectSettings.js';
 
 const SIZES = { mic: 180, mediu: 230, mare: 300 };
 
@@ -104,7 +105,7 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
           ))}
         </div>
       )}
-      {n.status && n.status !== 'Fără' && <span className="stamp">{n.status}</span>}
+      {n.status && n.status !== 'Fără' && <span className="stamp">{noneStatus(n.status, t)}</span>}
     </article>
   );
 }
@@ -245,10 +246,12 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   };
 
   const groupKey = (n) => {
-    if (cork.by === 'status') return n.status && n.status !== 'Fără' ? n.status : t('ui.corkboard.fara_status');
+    if (cork.by === 'status') return n.status || NONE;
     if (cork.by === 'keyword') return (n.keywords && n.keywords[0]) || t('ui.corkboard.fara_cuvinte_cheie');
-    return n.label && n.label !== 'Fără' ? n.label : t('ui.corkboard.fara_eticheta');
+    return n.label || NONE;
   };
+  // Groups use the stored names (label colours are keyed by them); built-ins are translated on display.
+  const groupTitle = (k) => (cork.by === 'status' ? noneStatus(k, t) : cork.by === 'label' ? noneLabel(k, t) : k);
   const groups = [];
   if (cork.mode === 'lines') {
     for (const n of items) {
@@ -325,9 +328,9 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
         groups.map((g) => (
           <section key={g.key} className="cork-line">
             <h3>
-              {cork.by === 'label' && colors[g.key] && <span className="label-dot" style={{ background: colors[g.key] }} />} {g.key} <small className="muted">({g.items.length})</small>
+              {cork.by === 'label' && colors[g.key] && <span className="label-dot" style={{ background: colors[g.key] }} />} {groupTitle(g.key)} <small className="muted">({g.items.length})</small>
             </h3>
-            <div className="cards row-cards" style={{ gap }} role="grid" aria-label={g.key}>
+            <div className="cards row-cards" style={{ gap }} role="grid" aria-label={groupTitle(g.key)}>
               <div role="row" style={{ display: 'contents' }}>
                 {g.items.map((n) => (
                   <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={gridDrag(n)} className={cardClass(n)} />

@@ -91,7 +91,10 @@ export function normalizeList(saved, defaults, known, seen) {
   const seenSet = new Set(Array.isArray(seen) ? seen : saved);
   for (const id of defaults) if (!SPECIAL_ITEMS.includes(id) && !seenSet.has(id) && !out.includes(id)) out.push(id);
   // no separator/space at the edges or doubled
-  return out.filter((id, i) => !(id === SEP && (i === 0 || i === out.length - 1 || out[i - 1] === SEP)));
+  const clean = [];
+  for (const id of out) if (!(id === SEP && (!clean.length || clean[clean.length - 1] === SEP))) clean.push(id);
+  while (clean[clean.length - 1] === SEP) clean.pop();
+  return clean;
 }
 
 /** Effective toolbars from settings.toolbars. */

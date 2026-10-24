@@ -17,7 +17,7 @@ const { open, check, done, menuPick } = require('./_helpers.cjs');
   await p.locator('.menu-pop [role=menuitem]', { hasText: 'AI pe selecție' }).hover();
   await p.waitForTimeout(100);
   const sub = (await p.locator('.menu-sub [role=menuitem]').allInnerTexts()).join(' | ');
-  for (const l of ['AI: cercetare pe selecție', 'AI: explică termenul selectat', 'AI: corectează selecția', 'AI: traduce selecția']) check(`selection submenu has ${l}`, sub.includes(l), sub);
+  for (const l of ['AI: cercetare pe selecție', 'AI: explică termenul selectat', 'AI: corectează selecția', 'AI: tradu selecția']) check(`selection submenu has ${l}`, sub.includes(l), sub);
   const box = await p.locator('.menu-sub').boundingBox();
   const vw = p.viewportSize().width;
   check('submenu inside the viewport', box && box.x >= 0 && box.x + box.width <= vw, JSON.stringify(box));

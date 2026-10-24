@@ -126,6 +126,17 @@ export function restoreFromTrash(tree, id) {
   });
 }
 
+// Restores several trashed items. An item whose ancestor is also selected travels with it
+// (restoring it first would pull it out of its folder).
+export function restoreManyFromTrash(tree, ids) {
+  let t = tree;
+  for (const id of ids) {
+    if (ids.some((other) => other !== id && isDescendant(tree, other, id))) continue;
+    t = restoreFromTrash(t, id);
+  }
+  return t;
+}
+
 // Moves several items (binder order kept) inside a container ("Move To").
 export function moveManyInto(tree, ids, targetId) {
   const target = findNode(tree, targetId);

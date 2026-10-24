@@ -1,5 +1,34 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.5 (continuare) — Verificare completă a funcțiilor, legături [[Titlu]], comparare pe frază/paragraf, numărul selecției
+
+### Cerința user
+> "caută și alte funcții care nu au fost implementate sau au fost omise, în detaliu"
+
+### Rezultat
+- Raport `docs/GAP-AUDIT.md`: fiecare funcție verificată în cod, nu doar în listă; 63 prezente, 1 parțială, 6 lipsă, 3 excluse intenționat (MathType, Kindle KPF, sync iOS).
+- Lista veche marca drept gata trei lucruri care nu mergeau; acum merg:
+  - **`[[Titlu]]`**: scrii `[[` și titlul unui document, iar textul devine legătură către el (fără majuscule și diacritice; începutul unic al titlului ajunge).
+  - **Compararea snapshot-urilor** pe cuvânt, frază, propoziție sau paragraf.
+  - **Bara de jos tradusă** (rămânea în română în modul englez); la fel suprapunerea de ținte din modul compunere.
+- **Numărul cuvintelor și caracterelor din selecție** apare în bara de jos.
+- Rămân: legături înapoi automate, al treilea panou de referință (acoperit parțial de ferestrele Quick Reference), `[[Titlu nou]]` care creează documentul, blocuri cu formatare păstrată, alte formate de numerotare a notelor, forme de fișe, adnotări în PDF.
+- Teste: 854 + 2 sărite; E2E Electron trece; scenariu nou gap-audit.
+
+## 2026-10-24 — v0.8.5 — Română curată, cuvinte alogene protejate, 7 bug-uri de interfață, README nou
+
+### Cerința user
+> "bug hunter UI și română, tot app" · "atenție la cuvintele alogene din text, să nu se confunde" · "actualizare README și poze, ce ai omis"
+
+### Rezultat
+- **Limba română:** bara de formatare, căutarea și prompturile editorului erau scrise doar în română (rămâneau așa în engleză), acum traduse (peste 100 de texte); installerul trecut pe ș/ț cu virgulă (era cu sedilă); termeni unificați („Tradu selecția”, „Substituenți”, „Evidențiere”, „Aldin / cursiv”, „Împarte orizontal”, „Exponent / indice”); test nou care prinde sedilele, ghilimelele drepte, „...” și româna rămasă în modul englez.
+- **Cuvinte alogene:** corecturile învățate nu ating niciodată un cuvânt cu litere din afara alfabetului român (IAST ā ī ū ṛ ṣ ṃ ś, é); verificarea limbii nu atinge termenii sanscriți și regulile ALOGEN.
+- **Bug-uri de interfață reparate:** „Înlocuiește tot” în proiect era anulat de panoul al doilea (pierdere de date; acum toate schimbările din afara editorului ajung în ambele panouri); Esc în modul compunere închidea două straturi deodată; restaurarea din coș a unui dosar împreună cu un copil al lui rupea dosarul; opacitatea 0 a hârtiei în compunere se salva ca 100; separator dublat la capătul barei personalizate; MCP `create_document` lăsa un fișier orfan la eroare; în versiunea web pachetele pierdeau istoria scrisului și ștergerea lăsa jurnalul autorului.
+- **Engleză:** etichetele și stările implicite (Idee, Personaj, Loc; De făcut, Prima ciornă, Revizuit) apar traduse; valorile salvate rămân neschimbate.
+- **Reparații de date din runda anterioară:** restaurare din backup-uri cu `__MACOSX` sau fără folder, entități HTML numite la căutare-înlocuire, nume de fișiere invizibile sau NFD, căi lungi pe Windows.
+- **README:** toate imaginile refăcute pe interfața nouă; secțiuni noi (interfață personalizabilă, meniu AI, riglă, repetiții S70 și textul tău protejat, sync prin cloud/NAS, MCP pentru Claude/Codex/Gemini/Cursor/VS Code, pagină și tipărire); generator `scripts/readme-shots.cjs`.
+- Teste: 841 + 2 sărite; scenarii noi project-replace, composition, settings-roundtrip, split-scrivenings, scrivenings-empty-undo; test MCP care pornește serverul real.
+
 ## 2026-10-24 — v0.8.4 — Interfață personalizabilă ca în Scrivener 3, meniu AI unic, Conectează la Claude (MCP)
 
 ### Cerința user

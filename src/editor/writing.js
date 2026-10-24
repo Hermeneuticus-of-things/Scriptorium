@@ -1,7 +1,7 @@
 // Writing aids for the editor: named styles, revision mode, linguistic focus,
 // current-paragraph highlight and auto-complete. Toggled through editor.storage
 // and commands so the UI can switch them without rebuilding the editor.
-import { Extension, Mark, mergeAttributes } from '@tiptap/core';
+import { Extension, InputRule, Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { eventShortcut, isCharStyle, nextStyleId, styleForShortcut } from '../lib/styles.js';
@@ -356,3 +356,43 @@ export function projectWords(project, docs) {
   for (const [w, c] of counts) if (c >= 3) add(w, c);
   return [...words.entries()].sort((a, b) => b[1] - a[1]).map(([w]) => w);
 }
+
+// --- [[Title]] internal links ------------------------------------------------
+// Typing "[[Title]]" links the text to the project document with that title (exact title first,
+// then the only title that starts with it, case- and diacritics-insensitive). With no match the
+// typed text stays as written, so nothing is lost.
+const foldTitle = (s) => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('ro').replace(/\s+/g, ' ').trim();
+
+export function findLinkTarget(targets, text) {
+  const q = foldTitle(text);
+  if (!q) return null;
+  const list = (targets || []).filter((t) => t && t.id);
+  const exact = list.filter((t) => foldTitle(t.title) === q);
+  if (exact.length) return exact[0];
+  const starts = list.filter((t) => foldTitle(t.title).startsWith(q));
+  return starts.length === 1 ? starts[0] : null;
+}
+
+export const WikiLink = Extension.create({
+  name: 'wikiLink',
+  addOptions() {
+    return { getTargets: () => [] };
+  },
+  addInputRules() {
+    const getTargets = this.options.getTargets;
+    return [
+      new InputRule({
+        find: /\[\[([^[\]\n]{1,200})\]\]$/,
+        handler: ({ state, range, match }) => {
+          const target = findLinkTarget(getTargets(), match[1]);
+          const linkType = state.schema.marks.link;
+          if (!target || !linkType) return null;
+          const label = match[1].trim();
+          const mark = linkType.create({ href: `scribner://doc/${target.id}`, class: 'internal-link' });
+          state.tr.replaceWith(range.from, range.to, state.schema.text(label, [mark])).removeStoredMark(linkType);
+          return undefined;
+        },
+      }),
+    ];
+  },
+});

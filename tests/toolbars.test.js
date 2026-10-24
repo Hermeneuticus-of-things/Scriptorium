@@ -76,3 +76,12 @@ describe('menu layout', () => {
     for (const defs of Object.values(SUBMENUS)) for (const [k] of defs) for (const l of ['ro', 'en']) expect(dictionaries[l][k], k).toBeTruthy();
   });
 });
+
+describe('normalizeList separators (bug: doubled trailing separator survived)', () => {
+  it('drops a doubled separator at the end and after removed ids', () => {
+    const known = ['a', 'b'];
+    expect(normalizeList(['a', 'sep', 'sep'], [], known, known)).toEqual(['a']);
+    expect(normalizeList(['a', 'sep', 'gone', 'sep'], [], known, known)).toEqual(['a']);
+    expect(normalizeList(['sep', 'a', 'sep', 'sep', 'b'], [], known, known)).toEqual(['a', 'sep', 'b']);
+  });
+});
