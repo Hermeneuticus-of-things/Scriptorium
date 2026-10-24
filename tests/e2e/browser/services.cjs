@@ -45,6 +45,7 @@ const { open, ed, check, done, menuCmd } = require('./_helpers.cjs');
   check('account listed with user, password hidden', /Portal editură · ana/.test(await page.locator('.accounts').innerText()) && !/secret/.test(await page.locator('.accounts').innerText()));
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
+  page.once('dialog', (d) => d.accept()); // Settings asks before discarding edits
   if (await page.locator('.modal-backdrop').count()) await page.locator('.modal-backdrop').first().click({ position: { x: 3, y: 3 } });
   // in-app translation, replace the selection
   await page.waitForTimeout(500);
