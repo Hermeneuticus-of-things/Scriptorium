@@ -29,7 +29,7 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
       }
       const wc = owners.get(String(ev.id));
       deliver(wc, ev);
-      if (['rezultat', 'dictare_oprita', 'anulat'].includes(ev.ev) || (ev.ev === 'eroare' && String(ev.id).startsWith('t'))) owners.delete(String(ev.id));
+      if (['rezultat', 'dictare_oprita', 'anulat', 'eroare'].includes(ev.ev)) owners.delete(String(ev.id));
     },
   });
   const reqId = (e, given, prefix) => {
@@ -57,8 +57,12 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
   const applyModel = async () => {
     const want = getSettings().dtedModel || 'auto';
     if (appliedModel === want && dted.running()) return;
-    await dted.setModel(want).catch(() => {});
-    appliedModel = want;
+    try {
+      await dted.setModel(want);
+      appliedModel = want; // only when accepted: a refusal (busy) is retried at the next request
+    } catch {
+      /* the service keeps its own choice for now */
+    }
   };
   handle('dted:setModel', async (e, nume) => {
     await dted.start();
@@ -83,6 +87,8 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
   handle('dted:transcribeMedia', async (e, dir, file, id) => {
     assertOpened(dir);
     if (!/^[A-Za-z0-9-]+\.[a-z0-9]+$/.test(String(file))) throw new Error(`Fișier media invalid: ${file}`);
+    await dted.start();
+    await applyModel(); // the model chosen in Settings, as for any other transcription
     return dted.transcribe(path.join(dir, 'media', file), opts(), reqId(e, id, 't'));
   });
   handle('dted:dictateStart', async (e, id) => {

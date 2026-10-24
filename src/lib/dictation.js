@@ -11,19 +11,23 @@ const COMMON = new Set(('și,iar,dar,însă,ci,sau,ori,că,ca,să,de,la,în,pe,c
   + 'toți,toate,totul,nimic,nimeni,foarte,prea,aici,acolo,the,and,but').split(','));
 
 /** Text to insert after `before` (the text just before the cursor): spacing and a capital letter. */
+// The recogniser often writes ş/ţ with a cedilla: Romanian uses the comma below (ș/ț).
+export const cedillaToComma = (s) => s.replace(/ş/g, 'ș').replace(/Ş/g, 'Ș').replace(/ţ/g, 'ț').replace(/Ţ/g, 'Ț');
+
 export function joinFragment(before, fragment) {
-  let t = String(fragment || '').replace(/\s+/g, ' ').trim();
+  let t = cedillaToComma(String(fragment || '')).replace(/\s+/g, ' ').trim();
   if (!t) return '';
   const prev = String(before || '');
   const last = prev.slice(-1);
   const trimmed = prev.replace(/\s+$/, '');
   const sentenceStart = !trimmed || /[.!?…]["”»)]*$/.test(trimmed) || /\n$/.test(prev);
-  if (sentenceStart) t = t[0].toLocaleUpperCase('ro') + t.slice(1);
+  const lead = /^[„«"'(\[]*/.exec(t)[0]; // an opening quote before the first letter
+  if (sentenceStart) t = lead + (t[lead.length] || '').toLocaleUpperCase('ro') + t.slice(lead.length + 1);
   else {
     // The recogniser starts every ~4 s piece with a capital; in mid-sentence a common word goes
     // back to lower case ("am mers Și apoi" → "am mers și apoi"). Names keep their capital.
-    const m = /^([\p{Lu}][\p{Ll}]*)(?=[^\p{L}]|$)/u.exec(t);
-    if (m && COMMON.has(m[1].toLocaleLowerCase('ro'))) t = m[1].toLocaleLowerCase('ro') + t.slice(m[1].length);
+    const m = /^([\p{Lu}][\p{Ll}]*)(?=[^\p{L}]|$)/u.exec(t.slice(lead.length));
+    if (m && COMMON.has(m[1].toLocaleLowerCase('ro'))) t = lead + m[1].toLocaleLowerCase('ro') + t.slice(lead.length + m[1].length);
   }
   const glue = !prev || /[\s(„«"'\[—-]$/.test(last) || /^[.,;:!?…)\]»”]/.test(t) ? '' : ' ';
   return glue + t;
@@ -34,7 +38,7 @@ export function applyReplacements(text, list = []) {
   const map = new Map();
   for (const r of list || []) if (r && r.from && r.to && !/\s/.test(r.from)) map.set(r.from.toLocaleLowerCase('ro'), r.to);
   if (!map.size) return text;
-  return String(text).replace(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu, (w) => {
+  return cedillaToComma(String(text)).replace(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu, (w) => {
     const to = map.get(w.toLocaleLowerCase('ro'));
     if (to === undefined) return w;
     return w[0] === w[0].toLocaleUpperCase('ro') && w[0] !== w[0].toLocaleLowerCase('ro') ? to[0].toLocaleUpperCase('ro') + to.slice(1) : to;

@@ -103,7 +103,13 @@ export async function decodeAudio(bytes) {
   // No extra copy when the bytes already fill their buffer (a long file is large).
   const whole = bytes instanceof ArrayBuffer || (bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength);
   const buf = bytes instanceof ArrayBuffer ? bytes : whole ? bytes.buffer : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-  const ctx = new AudioContext();
+  // Decoded straight at 16 kHz: a long recording takes a third of the memory it would at 48 kHz.
+  let ctx;
+  try {
+    ctx = new AudioContext({ sampleRate: RATE });
+  } catch {
+    ctx = new AudioContext();
+  }
   let audio;
   try {
     audio = await ctx.decodeAudioData(buf);
@@ -165,7 +171,12 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
       emit({ ev: d.cancelled ? 'anulat' : 'dictare_oprita', id, text: '' });
       return id;
     };
-    const st = await api.whisperStatus();
+    let st;
+    try {
+      st = await api.whisperStatus();
+    } catch (e) {
+      return abandon(e); // a failed start never leaves dictation "already running"
+    }
     if (d.cancelled || d.stopped) return abandon();
     if (!st.installed) return abandon(new Error('Motorul de dictare nu e descărcat încă: Setări → Servicii și conturi → Dictare și transcriere → Descarcă motorul.'));
     if (!media?.getUserMedia) return abandon(new Error('Microfonul nu e disponibil aici.'));
@@ -178,9 +189,18 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
       d.stream.getTracks().forEach((t) => t.stop());
       return abandon();
     }
-    const ctx = new AudioContext();
-    const src = ctx.createMediaStreamSource(d.stream);
-    const proc = ctx.createScriptProcessor(4096, 1, 1);
+    let ctx;
+    let src;
+    let proc;
+    try {
+      ctx = new AudioContext();
+      src = ctx.createMediaStreamSource(d.stream);
+      proc = ctx.createScriptProcessor(4096, 1, 1);
+    } catch (e) {
+      d.stream.getTracks().forEach((t) => t.stop());
+      ctx?.close?.().catch(() => {});
+      return abandon(new Error(`Microfonul nu a putut fi pornit: ${e.message}`));
+    }
     const mute = ctx.createGain();
     mute.gain.value = 0;
     d.ctx = ctx;
@@ -292,6 +312,7 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
     },
     // Stops whatever is running (the engine setting changed, the window closes).
     dispose() {
+      for (const j of jobs) cancelled.add(j); // file transcriptions stop too
       const d = dict;
       if (!d) return;
       d.cancelled = true;
