@@ -369,10 +369,7 @@ const SHOTS = {
     query: '&conflict',
     async setup(p) {
       await ed(p).click();
-      await p.evaluate(() => {
-        const v = document.querySelector('.pane .ProseMirror').editor;
-        v.commands.setTextSelection(1);
-      });
+      await p.keyboard.press('Control+Home');
       await p.keyboard.type('Ploua mărunt. ');
       await p.waitForTimeout(400);
       await p.evaluate(() => {
