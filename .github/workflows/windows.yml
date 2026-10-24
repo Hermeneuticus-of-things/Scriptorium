@@ -35,6 +35,13 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # The real app on Windows: paths with drive letters and backslashes, file locks,
+      # native dialogs stubbed, every main flow (create, edit, split, snapshots, compile, import, export, backup).
+      - name: E2E (real Electron app)
+        run: |
+          npm install --no-save playwright@1.63.0
+          npm run test:e2e
+
       - name: Package app and portable
         run: npm run dist:win
         env:
