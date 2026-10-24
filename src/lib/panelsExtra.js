@@ -151,7 +151,7 @@ export function monthlyHistory(rows) {
   return [...by.values()].sort((a, b) => a.month.localeCompare(b.month));
 }
 
-const POS_LABELS = Object.fromEntries([...POS_CLASSES, ['other', 'Altele (pronume, prepoziții, articole)']]);
+const POS_LABELS = Object.fromEntries([...POS_CLASSES, ['other', 'Altele (prepoziții, articole, interjecții)']]);
 
 /** Part-of-speech distribution of a text: [{tag, label, count, percent}] sorted by count. */
 export function posDistribution(text, lang = 'ro') {

@@ -24,6 +24,7 @@ import { resolveWikiLink } from '../editor/writing.js';
 import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
+import { insertable } from '../lib/inlineInsert.js';
 import FindBar from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
 import FormatFind from './FormatFind.jsx';
@@ -282,7 +283,7 @@ const Editor = forwardRef(function Editor(
       insertText: (text) => {
         if (!editor) return;
         const { to } = editor.state.selection;
-        editor.chain().focus().setTextSelection(to).insertContent(textToHtml(text)).run();
+        editor.chain().focus().setTextSelection(to).insertContent(insertable(text)).run();
       },
       // One line goes into the current paragraph as text; several lines become paragraphs.
       replaceSelection: (text) => {
@@ -293,6 +294,13 @@ const Editor = forwardRef(function Editor(
       },
       // A read-only editor (locked document, snapshot view) is left alone: false tells the caller.
       replaceSelectionHtml: (h) => Boolean(editor && !editor.isDestroyed && editor.isEditable && editor.chain().focus().insertContent(h).run()),
+      // Inserts after the selection (never over it); a single paragraph goes inline at the caret.
+      insertHtmlAfter: (h) => {
+        if (!editor || editor.isDestroyed || !editor.isEditable) return false;
+        const { to } = editor.state.selection;
+        const one = String(h).trim().match(/^<p>((?:(?!<\/?p[\s>]).)*)<\/p>$/s);
+        return editor.chain().focus().setTextSelection(to).insertContent(one ? one[1] : h).run();
+      },
       // Selects the first occurrence of a text snippet (used to jump to an editorial issue).
       // opts.block (0-based textblock index, = lint paragraph) and opts.at (offset in it) pick
       // the occurrence nearest to that place, so a repeated word jumps to the right one.

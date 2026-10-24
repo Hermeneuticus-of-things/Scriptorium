@@ -477,10 +477,11 @@ export default function App({ api: apiProp }) {
   const projectRef = useRef(project);
   projectRef.current = project;
 
-  const recordHistory = useCallback(() => {
+  // now = record at once (before showing the history), returns the write's promise.
+  const recordHistory = useCallback((now = false) => {
     clearTimeout(historyTimer.current);
-    historyTimer.current = setTimeout(() => {
-      if (!dir || !api.recordHistory) return;
+    const write = () => {
+      if (!dir || !api.recordHistory) return Promise.resolve();
       const pj = projectRef.current;
       const ds = docsNow();
       const chars = (ids) => ids.reduce((n, id) => n + charsOf(id, ds[id]), 0);
@@ -489,8 +490,11 @@ export default function App({ api: apiProp }) {
         const trash = new Set(flatten(pj.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
         extra = { draftChars: chars(flatten(pj.tree[0].children).map((n) => n.id)), totalChars: chars(Object.keys(ds).filter((id) => !trash.has(id))) };
       }
-      api.recordHistory(dir, { ...totalsRef.current, ...extra }).catch(() => {});
-    }, HISTORY_DELAY);
+      return api.recordHistory(dir, { ...totalsRef.current, ...extra }).catch(() => {});
+    };
+    if (now === true) return write();
+    historyTimer.current = setTimeout(write, HISTORY_DELAY);
+    return undefined;
   }, [api, dir, charsOf]);
 
   const flush = useCallback(async () => {
@@ -2004,7 +2008,11 @@ export default function App({ api: apiProp }) {
     ['project', 'targets', tr('cmd.targets'), () => setDialog('targets')],
     ['project', 'stats', tr('cmd.stats'), () => setDialog('stats')],
     ['project', 'keywords', tr('cmd.keywords'), () => setDialog('keywords')],
-    ['project', 'history', tr('cmd.history'), () => setDialog('history'), !api.getHistory],
+    ['project', 'history', tr('cmd.history'), async () => {
+      await flush();
+      await recordHistory(true);
+      setDialog('history');
+    }, !api.getHistory],
     ['project', 'team', tr('cmd.team'), () => setDialog('team'), !api.teamFiles],
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],
@@ -2593,8 +2601,8 @@ export default function App({ api: apiProp }) {
                   }}
                   onInsert={(html) => {
                     const h = activeHandle();
-                    if (!h || !h.replaceSelectionHtml) return false;
-                    return h.replaceSelectionHtml(html) !== false;
+                    if (!h || !h.insertHtmlAfter) return false;
+                    return h.insertHtmlAfter(html) !== false;
                   }}
                   onAddSources={async (list) => {
                     await flush();

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { textToHtml } from '../lib/text.js';
+import { insertable } from '../lib/inlineInsert.js';
 import { actionKind, diffParts, noChange, providerText, sessionHistory } from '../lib/aiSession.js';
 import '../ai.css';
 import { t as tr, uiLocale } from '../lib/i18n.js';
@@ -143,9 +144,12 @@ export default function AiPanel({
         setError({ message: tr('ui.aiPanel.textul_s_a_schimbat_de'), action: r.action });
         return;
       }
-      const html = textToHtml(r.text);
-      if (kind === 'replace') ed.chain().focus().insertContentAt({ from: r.range.from, to: r.range.to }, html).run();
-      else ed.chain().focus().insertContentAt(r.range.whole ? r.range.caret : r.range.to, html).run();
+      if (kind === 'replace') {
+        const before = ed.state.doc.textBetween(r.range.from, r.range.to, '\n\n');
+        const sameBlock = ed.state.doc.resolve(r.range.from).sameParent(ed.state.doc.resolve(r.range.to));
+        const content = sameBlock ? insertable(r.text, before) : textToHtml(r.text);
+        ed.chain().focus().insertContentAt({ from: r.range.from, to: r.range.to }, content).run();
+      } else ed.chain().focus().insertContentAt(r.range.whole ? r.range.caret : r.range.to, insertable(r.text)).run();
     } else if (kind === 'replace') {
       // Without the editor handle, only replace when the same text is still selected.
       if (Boolean(hasSelection()) !== Boolean(r.selection) || getText() !== r.before) {

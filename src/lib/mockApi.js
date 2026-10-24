@@ -139,7 +139,7 @@ export function createMockApi() {
       case 'translate':
         return `[${payload_lang || 'română'}] ${t}`;
       case 'ask':
-        return `Răspuns demo la „${question.slice(0, 80)}”: textul are ${t.split(/\s+/).filter(Boolean).length} cuvinte.`;
+        return `Răspuns demo la „${question.slice(0, 80)}”: textul are ${((n) => (n % 100 >= 20 || n >= 100 && n % 100 === 0 ? `${n} de cuvinte` : n === 1 ? '1 cuvânt' : `${n} cuvinte`))(t.split(/\s+/).filter(Boolean).length)}.`;
       default:
         throw new Error(`Acțiune necunoscută: ${action}`);
     }

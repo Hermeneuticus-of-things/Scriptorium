@@ -2,6 +2,12 @@
 
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
+### v0.9.8, căutare L3 pe interfață
+- AI: acceptarea unei corecturi pe o parte de paragraf și „Inserează la cursor” nu mai rup paragraful (`src/lib/inlineInsert.js`); spațiile din jurul selecției rămân.
+- Cercetare: „Inserează în document” pune răspunsul după selecție, fără s-o șteargă (`insertHtmlAfter`).
+- Istoricul scrisului: înregistrează imediat la deschidere, fără întârzierea de 5 s.
+- Statistici: rândul „Altele” nu mai include pronumele; demo AI: „38 de cuvinte”.
+
 ### Cerința user
 > "extins multilevel bug hunting pe toate aplicația"
 
