@@ -1,0 +1,30 @@
+// Ctrl+Z right after an automatic correction undoes only the correction; Ctrl+Y brings it back (as in Word).
+const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
+(async () => {
+  const { browser, page, errors } = await open();
+  await caretEnd(page);
+  await page.keyboard.press('Enter');
+  const last = () => page.evaluate(() => { const ps = document.querySelectorAll('.pane .ProseMirror p'); return ps[ps.length - 1].textContent; });
+  await page.keyboard.type('El a zis "', { delay: 15 });
+  const typed = await last();
+  check('smart quote applied while typing', typed.endsWith('„'), typed);
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(100);
+  const undone = await last();
+  check('Ctrl+Z right after it reverts only the correction', undone === 'El a zis "', undone);
+  await page.keyboard.press('Control+y');
+  await page.waitForTimeout(100);
+  check('Ctrl+Y brings the correction back', (await last()) === 'El a zis „', await last());
+  await page.keyboard.press('Control+z');
+  await page.keyboard.press('Control+Shift+z');
+  await page.waitForTimeout(100);
+  check('Ctrl+Shift+Z works too', (await last()) === 'El a zis „', await last());
+  await page.keyboard.type('da');
+  await page.keyboard.type(' bine');
+  await page.keyboard.press('Control+y');
+  await page.waitForTimeout(100);
+  check('after more typing, Ctrl+Y is the normal redo (nothing to redo, text kept)', (await last()) === 'El a zis „da bine', await last());
+  check('no page errors', !errors.length, errors.join(' | '));
+  await browser.close();
+  done();
+})();
