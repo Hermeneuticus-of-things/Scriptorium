@@ -20,7 +20,7 @@ export const MANUAL_EN = [
     id: 'projects',
     title: 'Projects and templates',
     sections: [
-      { id: 'projects-home', title: 'Home screen', html: `<p>Recent projects (pin favourites, clear list), open, import from Scrivener, and new project from a template. <em>Settings → General</em> can reopen the last project at startup.</p>` },
+      { id: 'projects-home', title: 'Home screen', html: `<p>Recent projects (pin favourites, clear list), open, import a .scriv project, and new project from a template. <em>Settings → General</em> can reopen the last project at startup.</p>` },
       { id: 'projects-templates', title: 'Built-in templates', html: `<p>General: Blank. Fiction: Novel, Novel with parts, Short story collection, Short story (manuscript format), Formatted novel. Non-fiction: Non-fiction, Essay, Thesis, Lecture notes, Recipe collection. Script: Screenplay, Stage play. Poetry: Poetry collection. Some include a <em>Templates</em> folder (character and place sheets) used by <em>Document → New from template</em>.</p>` },
       { id: 'projects-user-templates', title: 'Your own templates', html: `<p><em>File → Save as template…</em> stores the current project (without snapshots and history) with a title, category, description and icon. It appears on the Home screen.</p>` },
       { id: 'projects-properties', title: 'Project properties and settings', html: `<p><em>Project → Project settings…</em>: title, author, title abbreviation, labels, statuses, custom metadata, section types, default formatting, auto-complete, template folder, backup options. Author and title feed Compile placeholders.</p>` },
@@ -69,9 +69,9 @@ export const MANUAL_EN = [
   },
   {
     id: 'scrivenings',
-    title: 'Scrivenings, split, Quick Reference, composition',
+    title: 'Continuous text, split, Quick Reference, composition',
     sections: [
-      { id: 'scrivenings-basics', title: 'Scrivenings', html: `<p>Selecting a folder in Editor view shows its documents as one editable text. Also for a selection or the active collection; titles and separators can be toggled.</p>` },
+      { id: 'scrivenings-basics', title: 'Continuous text', html: `<p>Selecting a folder in Editor view shows its documents as one editable text. Also for a selection or the active collection; titles and separators can be toggled.</p>` },
       { id: 'scrivenings-split', title: 'Split editor', html: `<p>The Split button opens a second pane; ${k('Alt')}+click in the binder opens a document there. Horizontal/vertical, swap, lock.</p>` },
       { id: 'scrivenings-quickref', title: 'Quick Reference', html: `<p>${k('Ctrl+Shift+R')} opens the current document in a small floating window.</p><p><strong>Reference pane</strong>: <em>View → Open as reference</em> or Alt+Shift+click in the binder shows a document in a pane beside the editor (and the split). Read-only unless <em>Editable</em> is ticked; the scroll position is kept and the pane is saved with the project and in layouts.</p>` },
       { id: 'scrivenings-composition', title: 'Composition mode', html: `<p>${k('F11')} hides everything but the text; options in <em>Settings → Appearance</em>. ${k('Esc')} leaves.</p>` },
@@ -115,7 +115,7 @@ export const MANUAL_EN = [
       { id: 'search-doc', title: 'Find in document', html: `<p>${k('Ctrl+F')} opens find and replace in the current document, with highlighting and next/previous.</p>` },
       { id: 'search-project', title: 'Project find and replace', html: `<p>${k('Ctrl+Shift+F')}: regex, whole words, case, trash; replace also in titles, synopses, notes, with a snapshot first.</p>` },
       { id: 'search-advanced', title: 'Advanced search', html: `<p>Search in specific fields with filters; save as a search collection.</p>` },
-      { id: 'search-collections', title: 'Collections', html: `<p>Tabs above the binder holding document lists; Scrivenings and Compile can use them.</p>` },
+      { id: 'search-collections', title: 'Collections', html: `<p>Tabs above the binder holding document lists; Continuous text and Compile can use them.</p>` },
     ],
   },
   {
@@ -144,10 +144,10 @@ export const MANUAL_EN = [
   },
   {
     id: 'import',
-    title: 'Import/export, Scrivener .scriv, sync',
+    title: 'Import/export, .scriv projects, sync',
     sections: [
       { id: 'import-files', title: 'Importing files', html: `<p>Word, RTF, ODT, text, Markdown (plus HTML, Fountain, FDX on desktop) with splitting at Heading 1, Heading 1–2 or a separator line. Also OPML, web pages, Zotero bibliographies and project bundles.</p>` },
-      { id: 'import-scrivener', title: 'Scrivener projects', html: `<p>Import Scrivener 1/2/3 from the Home screen; everything is converted and a full copy stays in <code>scrivener-original/</code>; an import report follows. <em>File → Export as Scrivener project</em> writes back.</p>` },
+      { id: 'import-scrivener', title: '.scriv projects', html: `<p>Import a .scriv project (versions 1/2/3) from the Home screen; everything is converted and a full copy stays in <code>scrivener-original/</code>; an import report follows. <em>File → Export as .scriv project</em> writes back.</p>` },
       { id: 'import-export', title: 'Exporting documents', html: `<p>Documents as DOCX/RTF/ODT/TXT/MD with folder structure, OPML, CSV metadata, editor package, web/mobile bundle.</p>` },
       { id: 'import-sync', title: 'External folder sync', html: `<p>Write documents to a folder (RTF, TXT, MD, FDX, Fountain), edit elsewhere, then read changes back (snapshots first). Can run on open/close.</p>` },
     ],
@@ -217,7 +217,7 @@ export const MANUAL_EN = [
       { id: 'faq-spelling', title: 'Romanian spelling not underlined', html: `<p>On Windows/macOS install the Romanian language pack in the OS.</p>` },
       { id: 'faq-lost-text', title: 'I lost text', html: `<p>Undo, snapshots, Trash, then <em>File → Backups…</em>.</p>` },
       { id: 'faq-ai', title: 'AI commands are greyed out', html: `<p>Enable AI and enter the key in <em>Settings → AI</em>.</p>` },
-      { id: 'faq-scriv', title: 'Scrivener import missed something', html: `<p>Read the import report; the original copy is in <code>scrivener-original/</code>.</p>` },
+      { id: 'faq-scriv', title: '.scriv import missed something', html: `<p>Read the import report; the original copy is in <code>scrivener-original/</code>.</p>` },
       { id: 'faq-report', title: 'Reporting a problem', html: `<p><em>Help → Report a problem…</em> opens a simple window where you describe the problem in your own words. No technical knowledge is needed.</p>
 <ol>
 <li>Under <em>What happened?</em> write what you saw (e.g. “I clicked Compile and no file was created”).</li>
@@ -345,8 +345,8 @@ scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP s
       },
       {
         id: 'yours-realproject',
-        title: 'Your Scrivener projects and I-REP / I-EDIT rules',
-        html: `<p>Import a real <code>.scriv</code> with <em>File → Import Scrivener project</em> and read the import report. I-REP / I-EDIT follow your VKB2 definitions: near repetitions (S70, round R8b) and protection of the text you write (see the <em>I-REP/I-EDIT review</em> chapter).</p>`,
+        title: 'Your .scriv projects and I-REP / I-EDIT rules',
+        html: `<p>Import a real <code>.scriv</code> with <em>File → Import .scriv project</em> and read the import report. I-REP / I-EDIT follow your VKB2 definitions: near repetitions (S70, round R8b) and protection of the text you write (see the <em>I-REP/I-EDIT review</em> chapter).</p>`,
       },
       {
         id: 'yours-limits',
@@ -354,7 +354,6 @@ scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP s
         html: `<ul>
 <li>Exact tab stops from the ruler are exact in DOCX; in PDF, EPUB and HTML tabs are even, after the first stop. Left tabs only.</li>
 <li>Kindle: EPUB, which Amazon accepts; KPF cannot be produced with open tools.</li>
-<li>No sync with Scrivener for iOS (closed format).</li>
 </ul>`,
       },
     ],

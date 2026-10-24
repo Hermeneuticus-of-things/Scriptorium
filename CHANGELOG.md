@@ -1,5 +1,18 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.3 — Bug hunter pe interfață și pe textele în română
+
+### Cerința user
+> "continua automat cu roadmap+ bug hunter, ui, ui si romina tot app … actualizează README-ul cu text și imagini pentru funcțiile noi"
+
+- **Sinopsis:** editat în Inspector, pe Corkboard sau în Outline, nu mai e suprascris de varianta veche dintr-o altă casetă.
+- **Corkboard liber:** fișa nu mai sare la un simplu clic; selectarea textului din titlu nu mai mută fișa; clicul fără mișcare nu mai marchează proiectul ca modificat.
+- **Caută și înlocuiește în proiect:** „Înlocuiește tot” schimbă și titlurile și sinopsisurile pe care le arată în listă; nu mai cade pe un proiect fără Coș.
+- **Numere în română:** „1 cuvânt”, „1 document blocat”, „din 1 pagină”, „25 de cuvinte”, „100 de pagini” (`pluralRo` în `src/lib/i18n.js`, aplicat oricărui text cu număr); în engleză „1 word”.
+- **Fără nume de alte programe** în interfață și în ajutor: „proiect .scriv”, „Import .scriv”, „Legături interne”, „Text continuu” (în loc de numele vechi al modului).
+- **Traduceri:** „Creat”, „Modificat”, „Origine .scriv” din Inspector, „Ține cont de majuscule” din Caută, „Selecția curentă (n elemente)” din Compile.
+- **Dialogul de conflict:** imagine în README, „Într-un loc” la un singur conflict, fără mesajul dublu de jos; scenariu de browser `conflict.cjs`.
+
 ## 2026-10-24 — v0.9.2 — Dialog de conflict + bug hunter pe tot programul (24 de bug-uri)
 
 ### Cerința user

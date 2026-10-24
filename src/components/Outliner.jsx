@@ -146,6 +146,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
             className="cell-edit"
             rows={1}
             aria-label={cellLabel(n, col)}
+            key={n.synopsis || ''}
             defaultValue={n.synopsis || ''}
             onBlur={(e) => e.target.value !== (n.synopsis || '') && onPatch(n.id, { synopsis: e.target.value })}
           />
