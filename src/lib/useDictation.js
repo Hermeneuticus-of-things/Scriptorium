@@ -31,7 +31,7 @@ export function useDictation({ api, getEditor, onTranscript, onMessage, replacem
 
   useEffect(() => {
     if (!api.onDtedEvent) return undefined;
-    return api.onDtedEvent((ev) => {
+    const off = api.onDtedEvent((ev) => {
       const d = state.current.dictation;
       const mine = d && ev.id === d.id;
       const job = ev.id != null && state.current.jobs[ev.id];
@@ -85,6 +85,15 @@ export function useDictation({ api, getEditor, onTranscript, onMessage, replacem
         default:
       }
     });
+    // Another engine (Settings): what ran on this one is over.
+    return () => {
+      off();
+      if (state.current.dictation) setDict(null);
+      if (Object.keys(state.current.jobs).length) {
+        state.current.jobs = {};
+        setJobs({});
+      }
+    };
   }, [api]);
 
   const start = useCallback(async () => {
