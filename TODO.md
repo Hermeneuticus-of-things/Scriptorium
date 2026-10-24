@@ -150,4 +150,12 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] adnotări pe PDF în Cercetare
 - [ ] sinonimul.ro cu adresă directă
 - [ ] la autor: instalare Windows, test MCP, import Karma, chei, test AI complet, depozit public?
-- [ ] plugin D&TED (https://github.com/Hermeneuticus-of-things/dted) integrat în UI: dictare la cursor, transcriere fișier audio → document, transcriere din binder; întâi mod CLI/JSON în D&TED (detalii ROADMAP §10.11)
+### Request: plugin D&TED în Scribner (spec: docs/DTED.md)
+- [x] D&TED: modul --serviciu (JSON pe linii) + teste
+- [ ] lib/dted.cjs + IPC + D&TED fals pentru teste
+- [ ] dictare: text nou la cursor; peste selecție = modificare (înlocuire), un singur Ctrl+Z
+- [ ] bara de dictare (nivel, Pauză, Stop, Anulează), Unelte → Dictare, F9
+- [ ] transcriere fișier audio → document în Cercetare; din binder
+- [ ] Setări → Servicii → D&TED (cale găsită automat, Verifică, termeni)
+- [ ] ajutor RO/EN, README + imagine, CHANGELOG, versiune
+- [ ] test real pe Windows (autorul)
