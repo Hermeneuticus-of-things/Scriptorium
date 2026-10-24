@@ -8,6 +8,7 @@ import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linked
 import { isParaStyle } from '../lib/styles.js';
 import { POS_CLASSES } from '../lib/pos.js';
 import { listBookmarks } from '../editor/formatting.js';
+import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
 
 const TEXT_COLORS = ['#b3261e', '#c77700', '#2e7d32', '#1565c0', '#6a1b9a', '#5d4037', '#757575'];
 const HIGHLIGHTS = ['#fff176', '#a5d6a7', '#90caf9', '#f8bbd0', '#ffcc80'];
@@ -318,6 +319,8 @@ export default function FormatBar({
   onFindFormatting,
   defaultFormatting = null,
 }) {
+  const [layout, setLayout] = useState(getFormatLayout);
+  useEffect(() => onFormatLayout(setLayout), []);
   const s = useEditorState({
     editor,
     selector: ({ editor: ed }) => ({
@@ -650,6 +653,19 @@ export default function FormatBar({
         {btn('↷', null, () => chain().redo().run(), 'Refă (Ctrl+Y)')}
     </>),
   ];
+  // Customized layout (View → Customize Toolbar…): groups in the chosen order, "sep" starts a
+  // separated section, "space" is a flexible space.
+  const byId = Object.fromEntries(groups.map((x, i) => [FORMAT_ITEMS[i].id, x]));
+  const laid = [];
+  let forceSep = false;
+  for (const id of layout) {
+    if (id === SEP) forceSep = true;
+    else if (id === SPACE) laid.push({ pri: 9, el: <span className="fb-space" aria-hidden="true" />, sep: false, label: '' });
+    else if (byId[id]) {
+      laid.push(forceSep ? { ...byId[id], sep: true } : byId[id]);
+      forceSep = false;
+    }
+  }
 
-  return <OverflowBar groups={groups} />;
+  return <OverflowBar groups={laid} />;
 }

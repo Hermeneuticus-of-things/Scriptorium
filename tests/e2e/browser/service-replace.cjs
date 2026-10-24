@@ -1,20 +1,10 @@
 // In-app translation / grammar replace exactly the text that was sent: a selection with a
 // trailing space keeps the space; the original range is replaced even if the caret moved.
-process.env.SCRIBNER_URL = process.env.SCRIBNER_URL || 'http://localhost:4191/?demo';
-const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
+process.env.SCRIBNER_URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
+const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
-  const cmd = async (label) => {
-    const menus = page.locator('header.toolbar .menu > button');
-    for (let i = 0; i < (await menus.count()); i++) {
-      await menus.nth(i).click();
-      await page.waitForTimeout(80);
-      const item = page.locator('.menu-pop button:not([disabled])', { hasText: label }).first();
-      if (await item.count()) { await item.click(); await page.waitForTimeout(250); return; }
-      await page.keyboard.press('Escape');
-    }
-    throw new Error(`menu item not found: ${label}`);
-  };
+  const cmd = (label) => menuCmd(page, label);
   await cmd('Setări…');
   await page.getByRole('tab', { name: 'Servicii și conturi' }).click();
   const row = page.locator('.service-row', { hasText: 'DeepL' });

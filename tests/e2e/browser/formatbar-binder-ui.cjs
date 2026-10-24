@@ -1,7 +1,7 @@
 // Format bar overflow (»), split pane header and binder context menu in the browser demo.
-// Run against `npx vite preview --port 4186`: SCRIBNER_URL=http://localhost:4186/?demo node tests/e2e/browser/formatbar-binder-ui.cjs [shotDir]
+// Run against `npx vite preview --port 4186`: SCRIBNER_URL=http://localhost:4183/?demo node tests/e2e/browser/formatbar-binder-ui.cjs [shotDir]
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const URL = process.env.SCRIBNER_URL || 'http://localhost:4186/?demo';
+const URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
 const OUT = process.argv[2] || require('os').tmpdir();
 let failures = 0;
 const check = (name, ok, info = '') => {

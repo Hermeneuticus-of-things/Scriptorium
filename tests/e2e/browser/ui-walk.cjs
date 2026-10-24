@@ -3,7 +3,7 @@
 // top-most popup in English mode, popups fully inside the viewport.
 // Usage: SEED=1 STEPS=120 node tests/e2e/browser/ui-walk.cjs
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const URL = process.env.SCRIBNER_URL || 'http://localhost:4191/?demo';
+const URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
 const STEPS = Number(process.env.STEPS || 80);
 const SEEDS = (process.env.SEED || '1,2,3').split(',').map(Number);
 const rng = (s) => () => ((s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32);

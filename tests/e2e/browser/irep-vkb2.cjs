@@ -1,7 +1,7 @@
 // VKB2 I-REP / I-EDIT in the demo: near repetitions (S70) listed as signals with jump, typed
 // paragraphs become author text (COADA_AUTOR), and „✎ Editează” on a proposal saves with the
 // 412 guard. Run: node tests/e2e/browser/irep-vkb2.cjs against `npx vite preview --port 4183`.
-const { open, ed, check, done } = require('./_helpers.cjs');
+const { open, ed, check, done, menuPick } = require('./_helpers.cjs');
 (async () => {
   const { browser, page: p, errors } = await open();
   await ed(p).click();
@@ -10,7 +10,7 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   await p.keyboard.press('Enter');
   await p.keyboard.type('Seara coboară peste sat.');
   await p.waitForTimeout(300);
-  await p.locator(`button[title^="I-REP"]`).first().click();
+  await menuPick(p, 'AI', 'I-REP');
   await p.waitForSelector('.editorial');
   const near = p.locator('.near-rep li');
   check('near repetition line', (await near.allInnerTexts()).includes('⚠ REP L1 «scutul» ×2'), JSON.stringify(await near.allInnerTexts()));
