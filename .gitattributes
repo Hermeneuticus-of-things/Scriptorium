@@ -1,0 +1,2 @@
+installer/*.isl -text
+installer/*.iss text eol=crlf
