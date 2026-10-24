@@ -1,5 +1,20 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.8 (continuare) — Dictare și transcriere cu D&TED; README refăcut
+
+### Cerința user
+> "plugin https://github.com/Hermeneuticus-of-things/dted integrat la nivel de UI în Scribner"; "să poți dicta direct, modificare și text nou"; "README cu beautify-github-readme"
+
+### Rezultat
+- **D&TED** (depozitul dted, PR #3): modul `--serviciu`, JSON pe linii (stare, transcrie, dictare_start/stop, anuleaza, iesire), merge și lângă fereastra D&TED deschisă; teste.
+- **Scribner:** `lib/dted.cjs` (găsește DTED.exe sau codul sursă, un singur proces, oprit la ieșire), `electron/dtedHandlers.cjs` (IPC), `src/lib/dictation.js` + `useDictation.js` + `DictationBar.jsx`.
+- **Dictare (F9):** text nou la cursor; peste o selecție o înlocuiește; tot textul dictat = un singur Ctrl+Z; Pauză / Stop / Anulează; majuscule și spații corecte; înlocuirile automate aplicate; documentele blocate nu primesc text.
+- **Transcriere:** Fișier → Importă → Transcrie fișier audio…; Documente → Transcrie cu D&TED pe audio din binder; document nou în Cercetare, paragrafe după pauze, marcaje [mm:ss].
+- **Setări → Servicii și conturi → Dictare și transcriere:** cale, termeni, marcaje de timp, Verifică.
+- Demo în browser: `?demo&dted` (D&TED simulat).
+- **README:** placa nouă voice-team.svg, secțiunea „Dictezi direct în carte” cu imaginea dictation.png, linkuri noi în antet, nota de instalare D&TED; ajutor RO/EN.
+- Specificație: docs/DTED.md. Teste: 1074 (+14), scenariu de browser `dictation`.
+
 ## 2026-10-24 — v0.8.8 — Lucru în echipă prin folder comun (ROADMAP §9)
 
 ### Cerința user

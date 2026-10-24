@@ -935,6 +935,18 @@ scribner mcp "D:\\Carti\\Karma.scribner"               serverul MCP pentru agen�
 <p>Fișierele echipei stau în <code>team/</code>, câte unul pentru fiecare calculator, ca serviciul de sincronizare să nu facă copii de conflict.</p>`,
       },
       {
+        id: 'yours-dictation',
+        title: 'Dictare și transcriere (D&TED)',
+        html: `<p>Dictarea folosește <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a>, un program separat care recunoaște vorbirea în română pe calculatorul tău, fără internet. Îl instalezi o dată; Scribner îl găsește singur (sau scrii unde se află în <em>Setări → Servicii și conturi → Dictare și transcriere</em>, unde ai și <em>Verifică</em>).</p>
+<ul>
+<li><strong>F9</strong> (sau <em>Unelte → Dictare</em>) pornește și oprește dictarea. Textul apare la fiecare ~4 secunde de vorbire, cu spații și majusculă la început de frază.</li>
+<li><strong>Text nou:</strong> fără selecție, intră la cursor. <strong>Modificare:</strong> peste o selecție, o înlocuiește; un singur Ctrl+Z întoarce textul vechi.</li>
+<li>În bara de jos: <em>Pauză</em> (ce spui nu se scrie), <em>Stop</em>, <em>Anulează</em> (scoate tot ce s-a dictat de la pornire).</li>
+<li><em>Fișier → Importă → Transcrie fișier audio…</em>: MP3, WAV, M4A, OGG, FLAC → document nou în Cercetare, pe paragrafe, cu ora din înregistrare [mm:ss] (se poate opri din setări). Pe un fișier audio din binder: <em>Documente → Transcrie cu D&amp;TED</em>.</li>
+<li>Numele și termenii cărții, scriși în setări, ajută recunoașterea; înlocuirile automate se aplică și textului dictat. Un document blocat nu primește text dictat.</li>
+</ul>`,
+      },
+      {
         id: 'yours-karma',
         title: 'Proiectele tale Scrivener și regulile I-REP / I-EDIT',
         html: `<p>Importul <code>.scriv</code> e testat pe proiecte de probă. Pe un proiect real (de exemplu cartea Karma), fă importul cu <em>Fișier → Importă proiect Scrivener</em>, citește raportul de import și verifică capitolele cu cele mai multe formatări, comentarii și note de subsol. Originalul rămâne neatins, iar o copie stă în <code>scrivener-original/</code>.</p>

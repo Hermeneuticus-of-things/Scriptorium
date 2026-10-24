@@ -13,7 +13,7 @@ export const AI_ONLY_COMMANDS = new Set([
 // Submenus per menu: [label key, command ids]. A submenu takes the place of its first command.
 export const SUBMENUS = {
   file: [
-    ['menu.import', ['import', 'importFiles', 'importOpml', 'importWeb', 'importZotero', 'importBib', 'importBundle']],
+    ['menu.import', ['import', 'importFiles', 'importOpml', 'importWeb', 'transcribeAudio', 'importZotero', 'importBib', 'importBundle']],
     ['menu.export', ['exportFiles', 'exportScriv', 'exportLatex', 'exportPandoc', 'exportMmd', 'exportFdx', 'exportFountain', 'exportBundle', 'editorPackage', 'saveTemplate']],
     ['menu.sync', ['syncOut', 'syncIn']],
     ['menu.print', ['pageSetup', 'printPreview', 'print']],

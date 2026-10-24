@@ -332,6 +332,18 @@ scribner mcp "D:\\Books\\Karma.scribner"               the MCP server for AI age
 <p>Team files live in <code>team/</code>, one per computer, so the sync service makes no conflict copies.</p>`,
       },
       {
+        id: 'yours-dictation',
+        title: 'Dictation and transcription (D&TED)',
+        html: `<p>Dictation uses <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a>, a separate program that recognises Romanian speech on your computer, without internet. Install it once; Scribner finds it by itself (or type where it is in <em>Settings → Services and accounts → Dictation and transcription</em>, which also has <em>Check</em>).</p>
+<ul>
+<li><strong>F9</strong> (or <em>Tools → Dictation</em>) starts and stops dictation. Text appears every ~4 seconds of speech, with spaces and a capital at sentence starts.</li>
+<li><strong>New text:</strong> with nothing selected it goes in at the cursor. <strong>Edit:</strong> over a selection it replaces it; one Ctrl+Z brings the old text back.</li>
+<li>In the bar: <em>Pause</em> (what you say is not written), <em>Stop</em>, <em>Cancel</em> (takes out everything dictated since starting).</li>
+<li><em>File → Import → Transcribe audio file…</em>: MP3, WAV, M4A, OGG, FLAC → a new document in Research, in paragraphs, with the recording time [mm:ss] (can be turned off in settings). On an audio file in the binder: <em>Documents → Transcribe with D&amp;TED</em>.</li>
+<li>The book's names and terms, typed in settings, help recognition; auto-replacements also apply to dictated text. A locked document gets no dictated text.</li>
+</ul>`,
+      },
+      {
         id: 'yours-karma',
         title: 'Your Scrivener projects and I-REP / I-EDIT rules',
         html: `<p>Import a real <code>.scriv</code> with <em>File → Import Scrivener project</em> and read the import report. I-REP / I-EDIT follow your VKB2 definitions: near repetitions (S70, round R8b) and protection of the text you write (see the <em>I-REP/I-EDIT review</em> chapter).</p>`,
