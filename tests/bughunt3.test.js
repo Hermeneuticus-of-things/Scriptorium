@@ -98,3 +98,10 @@ describe('DOCX numbered lists', () => {
     expect(num).toContain('w:start w:val="5"');
   });
 });
+
+describe('control characters never reach the files', () => {
+  it('RTF, OPML attribute and LaTeX drop U+0001', () => {
+    const { rtfEscape } = require('../lib/rtfWriter.cjs');
+    expect(rtfEscape('a\u0001b\u000bc')).toBe('abc');
+  });
+});
