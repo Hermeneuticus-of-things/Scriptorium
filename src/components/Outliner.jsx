@@ -3,6 +3,7 @@ import { binderNav } from '../lib/tree.js';
 import { htmlToText } from '../lib/text.js';
 import { DocumentIcon, FolderIcon } from './Icons.jsx';
 import { t, uiLocale } from '../lib/i18n.js';
+import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 
 // Columns the outline can show (Scrivener: Outliner > Columns).
 const BASE_COLUMNS = () => ([
@@ -153,7 +154,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
         return (
           <select aria-label={cellLabel(n, col)} value={n.label} onChange={(e) => onPatch(n.id, { label: e.target.value })}>
             {project.labels.map((l) => (
-              <option key={l.name}>{l.name}</option>
+              <option key={l.name} value={l.name}>{noneLabel(l.name, t)}</option>
             ))}
           </select>
         );
@@ -161,7 +162,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
         return (
           <select aria-label={cellLabel(n, col)} value={n.status} onChange={(e) => onPatch(n.id, { status: e.target.value })}>
             {project.statuses.map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>{noneStatus(s, t)}</option>
             ))}
           </select>
         );

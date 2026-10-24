@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Notes } from './Inspector.jsx';
 import { t } from '../lib/i18n.js';
+import { noneStatus } from '../lib/projectSettings.js';
 
 // Floating Inspector for composition (full-screen) mode: a small draggable panel
 // with synopsis, document notes, label and status of the current document.
@@ -56,7 +57,7 @@ export default function FloatingInspector({ node, project, notesHtml = '', onPat
             Status
             <select value={node.status || ''} onChange={(e) => onPatch({ status: e.target.value })}>
               {(project?.statuses || []).map((s) => (
-                <option key={s}>{s}</option>
+                <option key={s} value={s}>{noneStatus(s, t)}</option>
               ))}
             </select>
           </label>

@@ -6,6 +6,7 @@ import { buildExtensions } from '../editor/extensions.js';
 import { htmlToText } from '../lib/text.js';
 import { parseComments, updateComment } from '../lib/panelsExtra.js';
 import { t as tr, uiLocale } from '../lib/i18n.js';
+import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 
 // Survives the remount App does on every selection change (key = selected id),
 // so "Lock Inspector" keeps showing the pinned document while navigating.
@@ -207,7 +208,7 @@ export default function Inspector({
                   {tr('ui.binder.eticheta')}
                   <select value={node.label} onChange={(e) => onPatch({ label: e.target.value })}>
                     {project.labels.map((l) => (
-                      <option key={l.name}>{l.name}</option>
+                      <option key={l.name} value={l.name}>{noneLabel(l.name, tr)}</option>
                     ))}
                   </select>
                 </label>
@@ -215,7 +216,7 @@ export default function Inspector({
                   Status
                   <select value={node.status} onChange={(e) => onPatch({ status: e.target.value })}>
                     {project.statuses.map((s) => (
-                      <option key={s}>{s}</option>
+                      <option key={s} value={s}>{noneStatus(s, tr)}</option>
                     ))}
                   </select>
                 </label>
