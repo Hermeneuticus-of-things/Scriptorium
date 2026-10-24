@@ -1,5 +1,24 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.8 — Lucru în echipă prin folder comun (ROADMAP §9)
+
+### Cerința user
+> "fa ROADMAP" (§9: mai mulți oameni, mai multe calculatoare, proiect pe NAS / cloud, cine ce a modificat și când)
+
+### Rezultat
+- **Identitate:** Setări → Partajare → Echipă (nume, culoare; id de calculator generat). Fără nume, nimic nu se schimbă.
+- **Jurnal:** fiecare modificare de mână intră în `team/log-<calculator>.jsonl` (cine, calculator, oră, cuvinte +/−, fragment). Fereastra Proiect → Echipă… cu filtre pe document, persoană și perioadă.
+- **Prezență:** `team/presence-<calculator>.json` la 20 s; numele celui care are documentul deschis lângă titlu; „N în lucru” în bara de jos.
+- **Blocare:** lacăt lângă titlu; la ceilalți documentul se deschide doar pentru citire („Blocat de …”), în editor, panoul 2, referință și Scrivenings; expiră după 30 min fără semne.
+- **Îmbinare pe paragrafe** a unui document schimbat pe două calculatoare (diff3 pe blocuri); același paragraf: textul local rămâne, al celuilalt în snapshot.
+- **Agent MCP** înregistrat ca „agent” în proiectele cu `team/`; unealta nouă `team_activity`.
+- Desktop, web (folder și browser) și demo (`?demo&team`, `?demo&team=lock`).
+- README (secțiune nouă + imaginea team.png, „Ce urmează” = serverul în timp real), ajutor RO/EN, ROADMAP §9.
+- Teste: 1062 (+25), scenariu de browser nou `team`.
+
+### Fișiere
+`src/lib/team.js`, `src/lib/useTeam.js`, `lib/teamStore.cjs`, `src/components/TeamDialog.jsx`, `src/App.jsx`, `src/components/{StatusBar,SettingsDialog,Scrivenings}.jsx`, `src/lib/{syncGuard,folderKv,webApi,mockApi,i18n,i18n-ui}.js`, `electron/{main,preload}.cjs`, `mcp/{server,fullTools}.mjs`, `tests/team.test.js`, `tests/e2e/browser/team.cjs`, `scripts/readme-shots.cjs`.
+
 ## 2026-10-24 — v0.8.7 (continuare) — Sincronizare prin OneDrive, Dropbox, Google Drive și NAS: 10 bug-uri, plasă de siguranță
 
 - **Același document editat în două locuri:** nu se mai pierde nimic; textul local rămâne, varianta venită se salvează ca snapshot „Versiunea de pe celălalt calculator, HH:MM”, cu mesaj.

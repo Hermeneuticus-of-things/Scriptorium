@@ -111,6 +111,9 @@ import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 import { mergeProject } from './lib/projectMerge.js';
 import { pullExternalDocs } from './lib/syncGuard.js';
+import { mergeDoc } from './lib/team.js';
+import { useTeam } from './lib/useTeam.js';
+import TeamDialog from './components/TeamDialog.jsx';
 
 const SAVE_DELAY = 700;
 const TYPED_COMMIT_DELAY = 400;
@@ -167,6 +170,9 @@ export default function App({ api }) {
     typed.current.clear();
   };
   // Every document's newest text, for handlers (the render-time `docs` can be a few keys behind).
+  // Text of each document as last read from or written to disk: the base of the three-way merge
+  // when the same document changes on another computer (src/lib/team.js mergeDoc).
+  const diskDocs = useRef(new Map());
   const docsNow = () => (typed.current.size ? { ...docsStateRef.current, ...Object.fromEntries(typed.current) } : docsStateRef.current);
   // Render-time view: state plus pending typing, with a stable identity while neither changes
   // so the memos below are not recomputed by unrelated re-renders.
@@ -181,6 +187,7 @@ export default function App({ api }) {
   useEffect(() => () => clearTimeout(typedTimer.current), []);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const team = useTeam({ api, dir, settings, docId: selectedId });
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
@@ -415,6 +422,7 @@ export default function App({ api }) {
       for (; i < items.length; i += 1) {
         const [id, kind] = items[i][0].split('|');
         await api.writeDoc(dir, id, kind, items[i][1]);
+        if (kind === 'docs') diskDocs.current.set(id, items[i][1]);
       }
       setSaveState('salvat');
       recordHistory();
@@ -466,14 +474,25 @@ export default function App({ api }) {
         // Typing an editor has not handed over yet counts as a local edit too.
         for (const id of ids) for (const k of [id, `split:${id}`, `copy:${id}`]) editorRefs.current.get(k)?.flush?.();
         const time = new Date().toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' });
-        const { updated, conflicts } = await pullExternalDocs({
+        const { updated, merged, theirs, conflicts } = await pullExternalDocs({
           api,
           dir,
           ids,
           hasLocal: (id) => pending.current.has(`${id}|docs`),
           localHtml: (id) => pending.current.get(`${id}|docs`),
+          baseHtml: (id) => diskDocs.current.get(id),
+          merge: mergeDoc,
           label: tr('ui.app.versiunea_de_pe_celalalt_calculator', { time }),
         });
+        for (const [id, html] of Object.entries(theirs)) diskDocs.current.set(id, html);
+        if (Object.keys(merged).length) {
+          setDocs((d) => ({ ...d, ...merged }));
+          for (const [id, html] of Object.entries(merged)) {
+            setEditorHtml(id, html);
+            queueWrite(id, 'docs', html);
+          }
+          setSaveState(tr('ui.app.imbinat_cu_celalalt_calculator'));
+        }
         if (Object.keys(updated).length) {
           setDocs((d) => ({ ...d, ...updated }));
           for (const [id, html] of Object.entries(updated)) setEditorHtml(id, html);
@@ -574,6 +593,7 @@ export default function App({ api }) {
       const cache = Object.fromEntries(entries);
       const ui = loadUi(res.dir);
       dropTyped();
+      diskDocs.current = new Map(entries);
       setDocs(cache);
       setDir(res.dir);
       setProject(res.project);
@@ -705,8 +725,9 @@ export default function App({ api }) {
       const own = x && x.authorFrom !== undefined ? diffParagraphs(x.authorFrom, after) : chunks;
       const next = updateAuthorHashes(prev, after, own.flatMap((c) => c.newHashes));
       if (next.length !== prev.length || next.some((h, i) => h !== prev[i])) tree = updateNode(tree, id, { authorHashes: next });
-      events.push({ id, title: node.title, rows });
+      events.push({ id, title: node.title, rows, chunks });
     }
+    team.record(events);
     if (tree !== pj.tree) saveProject({ ...pj, tree });
     if (events.length) setAuthorEvent((e) => ({ seq: e.seq + 1, events }));
   };
@@ -1798,6 +1819,7 @@ export default function App({ api }) {
     ['project', 'stats', 'Statistici…', () => setDialog('stats')],
     ['project', 'keywords', tr('cmd.keywords'), () => setDialog('keywords')],
     ['project', 'history', 'Istoricul scrisului…', () => setDialog('history'), !api.getHistory],
+    ['project', 'team', tr('cmd.team'), () => setDialog('team'), !api.teamFiles],
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],
     ['document', 'duplicate', tr('cmd.duplicate'), () => duplicateSelection(true)],
@@ -2125,6 +2147,27 @@ export default function App({ api }) {
                 <DocumentIcon />
                 <strong style={{ flex: 1 }}>{selected.title}</strong>
                 {selected.locked && <LockIcon title="Blocat" />}
+                {team.live.filter((p) => p.doc === selected.id).map((p) => (
+                  <span key={p.machine} className="team-chip" style={{ borderColor: p.color }} title={tr('ui.team.lucreaza_acum', { name: p.who })}>
+                    <span className="team-dot" style={{ background: p.color }} /> {p.who}
+                  </span>
+                ))}
+                {team.locks[selected.id] && (
+                  <span className="team-chip locked" style={{ borderColor: team.locks[selected.id].color }}>
+                    <LockIcon /> {tr('ui.team.blocat_de', { name: team.locks[selected.id].who })}
+                  </span>
+                )}
+                {team.who && !selected.root && !team.locks[selected.id] && (
+                  <button
+                    className={team.myLocks.includes(selected.id) ? 'primary' : ''}
+                    onClick={() => team.toggleLock(selected.id)}
+                    title={team.myLocks.includes(selected.id) ? tr('ui.team.deblocheaza') : tr('ui.team.blocheaza')}
+                    aria-label={team.myLocks.includes(selected.id) ? tr('ui.team.deblocheaza') : tr('ui.team.blocheaza')}
+                    aria-pressed={team.myLocks.includes(selected.id)}
+                  >
+                    <LockIcon />
+                  </button>
+                )}
                 <button onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title="Split editor" aria-label="Split editor"><SplitIcon /></button>
               </div>
             )}
@@ -2134,7 +2177,7 @@ export default function App({ api }) {
             {view === 'editor' && !scrivListNodes && selected && selected.type !== 'file' && !selected.children && (
               <Editor
                 scriptFormat={scriptFormat}
-                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${corrKey}`}
+                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.locks[selected.id])}-${corrKey}`}
                 historyKey={selected.id}
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
@@ -2142,7 +2185,7 @@ export default function App({ api }) {
                 ref={(r) => registerRef(selected.id, r)}
                 html={docs[selected.id] || ''}
                 title={selected.title}
-                readOnly={inTrash(selected.id) || Boolean(selected.locked)}
+                readOnly={inTrash(selected.id) || Boolean(selected.locked) || Boolean(team.locks[selected.id])}
                 typewriter={settings.typewriter}
                 smartQuotes={smartQuotes}
                 onFocus={() => (activeId.current = selected.id)}
@@ -2171,7 +2214,7 @@ export default function App({ api }) {
                 sections={scrivSections}
                 docs={docs}
                 settings={settings}
-                readOnlyIds={new Set(scrivSections.filter((n) => inTrash(n.id) || n.locked).map((n) => n.id))}
+                readOnlyIds={new Set(scrivSections.filter((n) => inTrash(n.id) || n.locked || team.locks[n.id]).map((n) => n.id))}
                 registerRef={registerRef}
                 onFocusSection={(id) => (activeId.current = id)}
                 onChange={(id, html) => writeSynced(id, html, 'main')}
@@ -2250,14 +2293,14 @@ export default function App({ api }) {
               ) : (
                 <Editor
                   scriptFormat={scriptFormat}
-                  key={`split-${splitNode.id}-${smartQuotes}-${corrKey}`}
+                  key={`split-${splitNode.id}-${smartQuotes}-${Boolean(team.locks[splitNode.id])}-${corrKey}`}
                   corrections={corrections}
                   defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
                   title={splitNode.title}
-                  readOnly={inTrash(splitNode.id) || Boolean(splitNode.locked)}
+                  readOnly={inTrash(splitNode.id) || Boolean(splitNode.locked) || Boolean(team.locks[splitNode.id])}
                   smartQuotes={smartQuotes}
                   onFocus={() => (activeId.current = splitNode.id)}
                   onChange={(html) => writeSynced(splitNode.id, html, 'split')}
@@ -2292,14 +2335,14 @@ export default function App({ api }) {
                 <button className="link" onClick={() => setCopyholder(null)}>{tr('btn.close')}</button>
               </div>
               <Editor
-                key={`copy-${copyNode.id}-${Boolean(copyholder.editable)}-${smartQuotes}-${corrKey}`}
+                key={`copy-${copyNode.id}-${Boolean(copyholder.editable)}-${Boolean(team.locks[copyNode.id])}-${smartQuotes}-${corrKey}`}
                 compact
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
                 ref={(r) => registerRef(`copy:${copyNode.id}`, r)}
                 html={docs[copyNode.id] || ''}
                 title={copyNode.title}
-                readOnly={!copyholder.editable || inTrash(copyNode.id) || Boolean(copyNode.locked)}
+                readOnly={!copyholder.editable || inTrash(copyNode.id) || Boolean(copyNode.locked) || Boolean(team.locks[copyNode.id])}
                 smartQuotes={smartQuotes}
                 onChange={(html) => writeSynced(copyNode.id, html, 'copy')}
                 linkTargets={linkTargets}
@@ -2477,6 +2520,8 @@ export default function App({ api }) {
         sessionWords={Math.max(0, totals.draft - sessionStart)}
         sessionTarget={project.targets?.session || 0}
         saveState={saveState}
+        team={team.who ? team : null}
+        onTeam={() => setDialog('team')}
         zoom={editorView.zoom || 100}
         onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
       />
@@ -2572,6 +2617,24 @@ export default function App({ api }) {
             setSettings(await api.getSettings());
           }}
           onError={report}
+        />
+      )}
+      {dialog === 'team' && (
+        <TeamDialog
+          team={team}
+          currentId={selected && !selected.root && !selected.children ? selected.id : ''}
+          titleOf={(id) => findNode(project.tree, id)?.title}
+          onOpenDoc={(id) => {
+            if (!findNode(project.tree, id)) return;
+            setDialog(null);
+            go(id);
+            setView('editor');
+          }}
+          onSettings={() => {
+            setDialog(null);
+            openSettings('sharing');
+          }}
+          onClose={() => setDialog(null)}
         />
       )}
       {dialog === 'mcp' && api.mcpConnectInfo && <McpConnectDialog api={api} dir={dir} onClose={() => setDialog(null)} />}

@@ -17,6 +17,7 @@ import { diffWords } from 'diff';
 import { convertNode, duplicateNode, emptyTrash, findParent, flatten, inOrder, moveToTrash, restoreFromTrash, rootOf, updateNode } from '../src/lib/tree.js';
 import { autofix, htmlToManuscript, profileFor, ROUNDS, roundContext, roundPrompt, systemPrompt } from '../src/lib/editorial.js';
 import { authorParagraphs } from '../src/lib/authorText.js';
+import { filterLog, readLogs, readPeers } from '../src/lib/team.js';
 import { findCanonDoc, parseCanonIndex } from '../src/lib/canonIndex.js';
 import {
   addKeyword,
@@ -62,6 +63,7 @@ const importers = require('../lib/importers.cjs');
 const { splitHtml } = require('../lib/docxImport.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
 const exporters = require('../lib/exporters.cjs');
+const teamStore = require('../lib/teamStore.cjs');
 const { exportScriv } = require('../lib/scrivExport.cjs');
 const { scrivExportIo } = require('../electron/v04Handlers.cjs');
 const notebookLm = require('../lib/notebookLm.cjs');
@@ -1226,6 +1228,21 @@ export function registerFullTools(ctx) {
     'I-EDIT: jurnalul modificărilor făcute de autor de mână (editorial/MODIFICARI_AUTOR.jsonl): câte un rând pe bucată schimbată {doc, title, line, old, new, time, hashOld, hashNew}. Cu id, doar documentul acela. Paragrafele autorului nu se rescriu.',
     { project, id: z.string().optional(), limit: z.number().int().min(1).max(5000).optional() },
     (dir, { id, limit }) => store.readAuthorJournal(dir, { doc: id, limit: limit || 200 }),
+  );
+
+  tool(
+    'team_activity',
+    'Lucru în echipă (folder comun pe NAS / cloud): cine lucrează acum la proiect (și la ce document, ce a blocat) și jurnalul cine ce a modificat și când: {who, machine, doc, title, time, added, removed, sample}. Filtre: id (document), who (persoană; „agent” = agenții AI), period (day | week | month). Respectă documentele blocate de alții: nu le modifica.',
+    { project, id: z.string().optional(), who: z.string().optional(), period: z.enum(['day', 'week', 'month']).optional(), limit: z.number().int().min(1).max(2000).optional() },
+    (dir, { id, who, period, limit }) => {
+      const files = teamStore.teamFiles(dir);
+      const { live, locks } = readPeers(files);
+      return {
+        working_now: live.map(({ who: w, doc, locks: l, time }) => ({ who: w, doc, locks: l, time })),
+        locked: Object.fromEntries(Object.entries(locks).map(([d, p]) => [d, p.who])),
+        changes: filterLog(readLogs(files), { doc: id, who, period }).slice(-(limit || 200)),
+      };
+    },
   );
 
   return FULL_TOOL_NAMES;

@@ -2,6 +2,7 @@ import { LANG_NAMES } from '../lib/lookups.js';
 import ServicesPanel from './ServicesPanel.jsx';
 import React, { useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
+import { colorFor, newMachineId } from '../lib/team.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
 import AI_PRESETS from '../../lib/aiPresets.json';
 
@@ -62,6 +63,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     backupEveryMin: init.backupEveryMin || 0,
     backupKeep: init.backupKeep || 10,
     backupDir: init.backupDir || '',
+    teamName: init.team?.name || '',
+    teamColor: init.team?.color || '',
   });
   const set = (k) => (e) => {
     const v = e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e;
@@ -193,7 +196,14 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         sharingExport: sharing.export,
         backupEveryMin: Number(s.backupEveryMin) || 0,
         backupKeep: Math.max(1, Number(s.backupKeep) || 10),
+        team: {
+          name: s.teamName.trim().slice(0, 60),
+          color: s.teamColor,
+          machine: init.team?.machine || newMachineId(),
+        },
       };
+      delete patch.teamName;
+      delete patch.teamColor;
       const parseList = (txt, sep) =>
         String(txt || '').split('\n').map((ln) => ln.trim()).filter(Boolean).map((ln) => {
           const [main, ...note] = ln.split('#');
@@ -578,6 +588,20 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     ),
     sharing: (
       <>
+        <fieldset>
+          <legend>{t('ui.team.echipa')}</legend>
+          <p className="muted small">{t('ui.team.setari_explicatie')}</p>
+          <div className="row">
+            <label>
+              {t('ui.team.numele_tau')}
+              <input value={s.teamName} onChange={set('teamName')} maxLength={60} placeholder={t('ui.team.nume_exemplu')} />
+            </label>
+            <label>
+              {t('ui.team.culoarea')}
+              <input type="color" value={s.teamColor || (s.teamName.trim() ? colorFor(s.teamName.trim()) : '#2e7dd7')} onChange={set('teamColor')} />
+            </label>
+          </div>
+        </fieldset>
         <fieldset>
           <legend>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</legend>
           <div className="row">

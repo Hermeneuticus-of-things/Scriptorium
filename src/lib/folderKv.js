@@ -227,5 +227,20 @@ export function createRoutingKv(base, folders) {
   };
 }
 
+// Team files (src/lib/team.js) in <folder>/team/: { name: text } and one write (append for logs).
+const TEAM_FILE = /^(log|presence)-[A-Za-z0-9-]{1,64}\.(jsonl|json)$/;
+export async function folderTeamFiles(root) {
+  const d = await subdir(root, 'team', false);
+  const out = {};
+  if (d) for await (const [name, h] of d.entries()) if (h.kind === 'file' && TEAM_FILE.test(name)) out[name] = await (await h.getFile()).text();
+  return out;
+}
+export async function folderTeamWrite(root, name, text, append = false) {
+  if (!TEAM_FILE.test(String(name))) throw new Error(`Fișier de echipă invalid: ${name}`);
+  const d = await subdir(root, 'team', true);
+  const prev = append ? (await readText(d, name)) || '' : '';
+  await writeText(d, name, prev + String(text));
+}
+
 export const isFolderDir = (dir) => typeof dir === 'string' && dir.startsWith('fs:');
 export const folderSupported = () => typeof globalThis.showDirectoryPicker === 'function';

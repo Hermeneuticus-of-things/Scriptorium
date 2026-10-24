@@ -24,6 +24,7 @@ export default function Scrivenings({ title, folder, sections, docs, settings, r
       {sections.map((n) => (
         <div key={n.id} className="scriv-section">
           <Editor
+            key={readOnlyIds.has(n.id) ? 'ro' : 'rw'}
             ref={(r) => registerRef(n.id, r)}
             compact
             html={docs[n.id] || ''}
