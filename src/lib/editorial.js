@@ -6,8 +6,12 @@
 // different book can switch rules off or edit the word lists.
 
 import { canonContext, nodeIdFromTitle } from './canonIndex.js';
+import { detectNearRepetitions, formatRepLines } from './nearRepetition.js';
 
-export const SEVERITY = { GRAVE: 'GRAVE', MEDIU: 'MEDIU', MINOR: 'MINOR' };
+// SEMNAL is soft: shown to the author, never blocking, never autofixed, never sent to the
+// repair prompt (I-REP near repetition, S70).
+export const SEVERITY = { GRAVE: 'GRAVE', MEDIU: 'MEDIU', MINOR: 'MINOR', SEMNAL: 'SEMNAL' };
+export const isSignal = (i) => i && i.severity === SEVERITY.SEMNAL;
 
 export const ROUNDS = [
   { id: 'R0', title: 'Structură canonică', protocols: 'P1', prompt: 'Verifică structura canonică internă. Titlul intern conține doar titlul scurt. Nota de subsol editorială în formatul canonic. Corelat cu indexul de lucru.' },
@@ -22,6 +26,7 @@ export const ROUNDS = [
   { id: 'R6', title: 'Anti-redundanță', protocols: 'P5 · P6', prompt: 'Elimină redundanța micro (în frază și paragraf), mezzo (în document) și macro (față de celelalte documente ale capitolului primite în context).' },
   { id: 'R7', title: 'Eliminare autoreferințe', protocols: 'P3', prompt: 'Elimină trimiterile la structură („tratate în 2.9.3”, „Cap. 7”, „în această secțiune”, „în subcapitolul următor”, „detaliat mai jos”). Tranziția se face prin conținut.' },
   { id: 'R8', title: 'Protocol ALOGEN', protocols: 'P7', prompt: 'Listează termenii alogeni. Prima apariție: ***sens românesc complet*** \'termen\'. A doua: ***sens scurt*** \'termen\'. Ulterior: ***sens românesc*** fără termen. Termenul sanscrit rămâne în forma de bază („al lui Ātman”, nu „Ātmanului”). Rădăcinile între apostrofuri, etimologia intră în proză înainte de termen. Anti-dublaj.' },
+  { id: 'R8b', title: 'Cuvântul și litera', protocols: 'S70', prompt: 'Cuvântul și litera: judeci repetițiile apropiate din catalog (același cuvânt în aceeași frază sau în fraze vecine, inclusiv anadiploza). S70: termenul nu se schimbă doar ca să nu se repete. Schimbi doar unde repetiția supără la lectură; termenii cărții („faptă”, „karma”, „urmă”) și repetițiile voite rămân.' },
   { id: 'R9', title: 'Verificare finală', protocols: 'P3', prompt: 'Verificare P3: reziduuri LLM, semne de decay. P3 punctat obligatoriu pe ultimele două paragrafe înainte de nota de subsol.' },
   { id: 'R10', title: 'Audit micro', protocols: 'P3 · P5 · P9 · P10', prompt: 'Frază cu frază: formule prefabricate și rigidități de asistent, dublaje lexicale locale, secvențe cu aceeași lungime și structură, registrul „termen = definiție” (mecanismul deschide paragraful). Sudură organică a tranzițiilor.' },
   { id: 'R11', title: 'DOOM III + anti-LLM final', protocols: 'P3 · P13', prompt: 'Tipografie zero-toleranță: zero em-dash, zero paranteze, zero două puncte structurale, zero bold stilistic, zero liste sau numerotare. Excepție: ***italic+bold*** exclusiv pe sensul românesc ALOGEN. Fiecare paragraf începe cu majusculă. Ghilimele românești „…”.' },
@@ -53,7 +58,8 @@ export const KARMA_PROFILE = {
     llmResidue: true,
     alogen: true,
     metronome: true,
-    repetitionMicro: true,
+    // Superseded by repetitionNear (VKB2: a soft signal judged with S70, never a forced change).
+    repetitionMicro: false,
     repetitionMezzo: true,
     repetitionMacro: true,
     canvasLimit: true,
@@ -61,6 +67,7 @@ export const KARMA_PROFILE = {
     canvasFooter: false,
     attentionDecay: true,
     teleology: true,
+    repetitionNear: true,
   },
   bannedAcademic: [
     'taxonomie', 'epistemică', 'epistemic', 'epistemologică', 'epistemologic', 'sensul ontologic', 'perspectiva teleologică',
@@ -92,7 +99,7 @@ export const GENERIC_PROFILE = {
   name: 'Generic: orice text (tipografie și reziduuri LLM)',
   names: { foreign: 'Glosar de termeni', reading: 'Glosar de lectură', toc: 'Cuprins de tipar', packageFolder: 'Pachet pentru editor {date}' },
   canvasWordLimit: 0,
-  rules: Object.fromEntries(Object.keys(KARMA_PROFILE.rules).map((k) => [k, ['asciiQuotes', 'capitalStart', 'llmResidue', 'repetitionMicro', 'repetitionMezzo', 'metronome', 'attentionDecay'].includes(k)])),
+  rules: Object.fromEntries(Object.keys(KARMA_PROFILE.rules).map((k) => [k, ['asciiQuotes', 'capitalStart', 'llmResidue', 'repetitionMezzo', 'repetitionNear', 'metronome', 'attentionDecay'].includes(k)])),
 };
 
 export const PROFILES = [KARMA_PROFILE, GENERIC_PROFILE];
@@ -351,6 +358,19 @@ export function lint(html, ctx = {}) {
     }
   }
 
+  // Near repetition (I-REP, S70): SEMNAL only, one issue per group and text line.
+  if (r.repetitionNear) {
+    for (const g of detectNearRepetitions(paras.map((p) => p.plain), { lang: ctx.lang })) {
+      const seen = new Set();
+      for (const o of g.occurrences) {
+        if (seen.has(o.para)) continue;
+        seen.add(o.para);
+        const p = paras[o.para - 1];
+        add('R8b', 'repetitionNear', SEVERITY.SEMNAL, `⚠ REP L${o.para} «${g.form}» ×${g.k}`, o.para - 1, context(p.plain, o.start, o.end - o.start, 30), { match: o.text, at: o.start, line: o.para, form: g.form, k: g.k });
+      }
+    }
+  }
+
   // ALOGEN (R8): 'term' occurrences with ***sense*** anchors
   if (r.alogen) {
     const counts = new Map();
@@ -428,7 +448,7 @@ export function lint(html, ctx = {}) {
   if (r.attentionDecay && bodyParas.length >= 6) {
     const firstIdx = new Set(bodyParas.slice(0, 3).map((p) => p.idx));
     const lastIdx = new Set(bodyParas.slice(-3).map((p) => p.idx));
-    const weigh = (set) => issues.filter((i) => set.has(i.paragraph) && i.severity !== 'MINOR').length;
+    const weigh = (set) => issues.filter((i) => set.has(i.paragraph) && (i.severity === 'GRAVE' || i.severity === 'MEDIU')).length;
     const a = weigh(firstIdx);
     const b = weigh(lastIdx);
     if (b > a + 1) add('R9', 'attentionDecay', 'GRAVE', `Attention decay: ${b} probleme în ultimele 3 paragrafe față de ${a} în primele 3`, bodyParas[bodyParas.length - 1].idx, '');
@@ -443,7 +463,7 @@ function context(text, index, len, pad = 40) {
 }
 
 export function summarize(issues) {
-  const s = { GRAVE: 0, MEDIU: 0, MINOR: 0, total: issues.length, byRound: {} };
+  const s = { GRAVE: 0, MEDIU: 0, MINOR: 0, SEMNAL: 0, total: issues.length, byRound: {} };
   for (const i of issues) {
     s[i.severity]++;
     s.byRound[i.round] = (s.byRound[i.round] || 0) + 1;
@@ -452,8 +472,12 @@ export function summarize(issues) {
 }
 
 // Deterministic, safe fixes (no AI): quotes, spaces, capital at paragraph start.
-export function autofix(html) {
+// opts.skip(paragraph) -> true leaves that paragraph untouched (author text, I-EDIT); it gets
+// {tag, html, md, plain} like htmlToParagraphs.
+export function autofix(html, opts = {}) {
+  const skip = typeof opts.skip === 'function' ? opts.skip : null;
   return html.replace(/(<(p|h[1-6]|li)(\s[^>]*)?>)([\s\S]*?)(<\/\2>)/gi, (all, open, tag, attrs, inner, close) => {
+    if (skip && skip({ tag: tag.toLowerCase(), html: inner, md: inlineToMd(inner), plain: inlineToPlain(inner) })) return all;
     // only touch text between tags
     let first = true;
     const fixed = inner.replace(/(<[^>]+>)|([^<]+)/g, (m, t, text) => {
@@ -488,13 +512,28 @@ export function systemPrompt(profile) {
   ].filter(Boolean).join('\n');
 }
 
-export function repairPrompt(manuscript, issues, level) {
+// Author text (I-EDIT part 2): the paragraphs the writer changed by hand. The model sees them
+// in their own section and must hand them back byte for byte; authorGate() checks it.
+export function authorSection(authorText) {
+  const list = (authorText || []).filter((p) => p && String(p.text || '').trim());
+  if (!list.length) return '';
+  return [
+    '<text_al_autorului>',
+    'TEXT AL AUTORULUI (doar semnalezi): paragrafele de mai jos sunt scrise de autor. Le păstrezi exact, caracter cu caracter, pe locul lor și în aceeași ordine; nu le schimbi, nu le muți, nu le ștergi. Paragrafele vecine se leagă de ele fără să le atingă.',
+    ...list.map((p) => `L${p.line}: ${p.text}`),
+    '</text_al_autorului>',
+  ].join('\n');
+}
+
+export function repairPrompt(manuscript, issues, level, opts = {}) {
   const list = issues
+    .filter((i) => !isSignal(i))
     .slice(0, 120)
-    .map((i) => `- [${i.severity}] ${i.round} ${i.message}${i.excerpt ? ` — „${i.excerpt}”` : ''}`)
+    .map((i) => `- [${i.severity}] ${i.round} ${i.message}${i.excerpt ? ` — „${i.excerpt}”` : ''}${i.note ? ` (${i.note})` : ''}`)
     .join('\n');
   return [
     `I-REP (${level}): repară exact problemele de mai jos, fără să schimbi altceva în text. Păstrezi sensul, vocea, ordinea ideilor, notele de subsol și marcajele.`,
+    authorSection(opts.authorText),
     '<probleme>',
     list,
     '</probleme>',
@@ -502,14 +541,15 @@ export function repairPrompt(manuscript, issues, level) {
     manuscript,
     '</text>',
     'Întoarce textul complet reparat.',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
-export function roundPrompt(round, manuscript, context) {
+export function roundPrompt(round, manuscript, context, opts = {}) {
   return [
     `I-EDIT · runda ${round.id} ${round.title} (${round.protocols}).`,
     round.prompt,
     context ? `<context_capitol>\n${context}\n</context_capitol>` : '',
+    authorSection(opts.authorText),
     '<text>',
     manuscript,
     '</text>',
@@ -519,13 +559,27 @@ export function roundPrompt(round, manuscript, context) {
     .join('\n');
 }
 
+// Catalog point D:repetitie_apropiata (seed S70) for the R8b reader: the `⚠ REP` lines.
+export function nearRepetitionCatalog(html, lang) {
+  const lines = formatRepLines(detectNearRepetitions(htmlToParagraphs(html || '').map((p) => p.plain), { lang }));
+  if (!lines.length) return '';
+  return [
+    '<catalog punct="D:repetitie_apropiata" samanta="S70">',
+    'S70: termenul nu se schimbă doar ca să nu se repete. Judeci dacă repetiția supără; L<n> este numărul paragrafului în text.',
+    ...lines,
+    '</catalog>',
+  ].join('\n');
+}
+
 /**
  * Context for a round: R1 and R6 get the canonical index (Index_de_Lucru) for the
- * document's node plus the chapter text (macro). Other rounds get nothing.
- * opts: { chapterContext, canonNodes, nodeId, title }
+ * document's node plus the chapter text (macro). R8b gets only the near-repetition catalog
+ * (D:repetitie_apropiata) of the document (opts.html). Other rounds get nothing.
+ * opts: { chapterContext, canonNodes, nodeId, title, html, lang }
  */
 export function roundContext(round, opts = {}) {
   const id = typeof round === 'string' ? round : round.id;
+  if (id === 'R8b') return nearRepetitionCatalog(opts.html, opts.lang);
   if (id !== 'R1' && id !== 'R6') return '';
   const nid = opts.nodeId || nodeIdFromTitle(opts.title);
   const canon = canonContext(opts.canonNodes, nid, id);

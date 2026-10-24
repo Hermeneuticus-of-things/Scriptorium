@@ -1,5 +1,18 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.3 (continuare) — VKB2: I-REP repetiția apropiată și I-EDIT textul autorului; tab-uri C/R/D; 13 bug-uri de date; MCP pentru orice client
+
+### Cerința user
+> definițiile VKB2 pentru I-REP și I-EDIT, „implementează nativ în UX” · „continuă cu roadmap + bug hunter” · „scrie în help ce comandă dau la Claude, Codex etc. ca să se lege de app prin MCP”
+
+### Rezultat
+- **I-REP, repetiția apropiată** (`src/lib/nearRepetition.js`): același cuvânt cu conținut (formă sau lemă) în aceeași frază sau în fraza vecină, inclusiv anadiploza; fără cuvinte-unealtă, numerale, auxiliare și locuțiuni; reduplicatele o singură dată; termenii cărții numărați. Panoul arată `⚠ REP L<n> «formă» ×k` ca **SEMNAL** (nu blochează, nu se repară automat, nu ajunge în promptul de reparare); clic → apariția exactă în text. Runda nouă **R8b „Cuvântul și litera” (S70)** primește singura catalogul `D:repetitie_apropiata`. Vechea regulă „Repetiție apropiată” (MINOR, R6) e oprită implicit, ca să nu contrazică S70.
+- **I-EDIT, textul autorului** (`src/lib/authorText.js`): ce scrii de mână devine text al autorului (hash pe paragraf în proiect) și se notează în `editorial/MODIFICARI_AUTOR.jsonl` (doc, rând, vechi, nou, oră, hash-uri). Poarta HARD `fraza_autor_atinsa` respinge orice propunere care schimbă, mută sau șterge un paragraf al tău (cu rândul și motivul). Problemele de pe textul tău vin în COADA_AUTOR; cele vecine merg la model cu nota „leagă de textul autorului, fără să-l schimbi”; modelul primește „TEXT AL AUTORULUI (doar semnalezi)”. „✎ Editează” pe propunere, cu refuz 409 (s-a schimbat între timp), 412 (sub 20%, „Salvează oricum”) și snapshot `.bak-autor-<dată>`. Jurnalul buclei: `MODIFICARE_AUTOR`; raportul: „Modificările tale în text”; deciziile expiră când textul se schimbă. Reverificare a textului din memorie și de pe disc înainte de orice scriere.
+- **Tab-uri centrat / la dreapta / zecimal** pe riglă (selector L/C/R/D, dublu clic schimbă tipul), exacte în DOCX.
+- **13 bug-uri de date, import și export:** RTF românesc din Word (cp1250) cu ș/ă/ț greșite, RTF cu BOM, entități numerice în .scrivx și la căutare-înlocuire, BOM și UTF-16 la TXT/MD/Fountain, import ODT/OPML oprit de o entitate invalidă, text pierdut la împărțirea pe titluri, emoji tăiat în numele de fișier, note de subsol pierdute în DOCX/ODT/RTF când conțin „>”, DOCX/EPUB/ODT care nu se deschideau din cauza caracterelor de control, un snapshot stricat ascundea toate snapshot-urile, backup cu lock care bloca salvarea după restaurare, nume NFC/NFD suprapuse la export.
+- **MCP pentru orice client:** programul instalat pornește singur serverul MCP (fără Node.js). Ajutor → „Ce faci tu” are comenzile pentru Claude Code, Codex, Gemini CLI și configurările pentru Claude Desktop, Cursor, Windsurf, LM Studio, VS Code. `lib/mcpConfig.cjs` scrie configurarea Claude Desktop (cu copie) și generează comanda Claude Code; testat cu serverul pornit prin executabilul programului.
+- Total 798 teste + 2 sărite; E2E Electron trece; scenarii browser noi: irep-vkb2, ruler.
+
 ## 2026-10-24 — v0.8.3 (continuare) — Corecturi învățate
 
 ### Cerința user

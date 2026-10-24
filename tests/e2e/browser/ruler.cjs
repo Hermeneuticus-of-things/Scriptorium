@@ -1,5 +1,5 @@
 // Ruler: Ctrl+Alt+Shift+R shows it; dragging the left-indent marker indents the paragraph,
-// a click adds a tab stop, dragging a tab off the ruler removes it, Tab inserts a tab.
+// a click adds a tab stop, the type selector / double-click set center/right/decimal, dragging a tab off the ruler removes it, Tab inserts a tab.
 const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
@@ -46,6 +46,35 @@ const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
   await page.waitForTimeout(100);
   p = await para();
   check('tab dragged off is removed', p && !p.tabs && (await ruler.locator('.ruler-tab').count()) === 0, JSON.stringify(p));
+  // tab type selector: one click → center; a click on the ruler adds a center stop at 6 cm
+  const sel = ruler.locator('.ruler-tabtype');
+  check('tab type selector starts at left', (await sel.getAttribute('class')).includes('tab-left'));
+  await sel.click();
+  await page.waitForTimeout(50);
+  check('selector cycles to center', (await sel.getAttribute('class')).includes('tab-center'));
+  await page.mouse.click(box.x + 6 * cmPx, box.y + 3);
+  await page.waitForTimeout(100);
+  p = await para();
+  check('click adds a center stop', p && p.tabs === '6c' && (await ruler.locator('.ruler-tab.tab-center').count()) === 1, JSON.stringify(p));
+  // double-click the stop cycles center → right → decimal
+  const stop = ruler.locator('.ruler-tab').first();
+  await stop.dblclick();
+  await page.waitForTimeout(100);
+  p = await para();
+  check('double-click makes it right', p && p.tabs === '6r' && (await ruler.locator('.ruler-tab.tab-right').count()) === 1, JSON.stringify(p));
+  await ruler.locator('.ruler-tab').first().dblclick();
+  await page.waitForTimeout(100);
+  p = await para();
+  check('double-click again makes it decimal', p && p.tabs === '6d', JSON.stringify(p));
+  // dragging a typed stop keeps its type
+  const d = await ruler.locator('.ruler-tab').first().boundingBox();
+  await page.mouse.move(d.x + d.width / 2, d.y + d.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 7 * cmPx, d.y + d.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await page.waitForTimeout(100);
+  p = await para();
+  check('dragged stop keeps its type', p && p.tabs === '7d', JSON.stringify(p));
   await page.keyboard.press('Control+Alt+Shift+R');
   await page.waitForTimeout(100);
   check('shortcut hides the ruler', (await page.locator('.pane .ruler').count()) === 0);

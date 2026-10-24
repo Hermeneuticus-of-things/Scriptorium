@@ -179,6 +179,8 @@ export const MANUAL_EN = [
       { id: 'irep-basics', title: 'I-REP', html: `<p>Check, apply safe fixes, re-check, in loops; works without AI.</p>` },
       { id: 'irep-iedit', title: 'I-EDIT', html: `<p>Editorial rounds run by the AI, previewed before applying, with a snapshot first.</p>` },
       { id: 'irep-profiles', title: 'Profiles: Generic and Romanian', html: `<p><strong>Generic</strong> (default): typography and LLM residue for any text. <strong>Romanian</strong>: DOOM III, P1–P13, R0–R11, foreign terms. Set in <em>Settings → AI</em>; stored per project.</p>` },
+      { id: 'irep-near', title: 'Near repetitions (S70)', html: `<p>The panel's <em>Near repetitions (S70)</em> section lists the same content word (same lemma or form) in one sentence or in two neighbouring sentences, anadiplosis „…scutul. Scutul…” included: one line <code>⚠ REP L&lt;n&gt; «form» ×k</code> per paragraph (L = paragraph number) where the group occurs; a click selects it in the editor. Function words, locutions („în fața”) are not counted and reduplicates („pas cu pas”) count once; the book's own terms are counted. It is a <strong>signal</strong>: it never stops the loop, is never fixed automatically and never goes to the repair prompt (S70: a term is not changed only to avoid repeating it). The list goes only to I-EDIT round <strong>R8b The word and the letter</strong>.</p>` },
+      { id: 'irep-author', title: 'Your text: editing a proposal and protecting your paragraphs', html: `<p>What you write by hand is a decision. Paragraphs you change in the editor become <strong>author text</strong> (after a short pause) and every save is journaled in <code>editorial/MODIFICARI_AUTOR.jsonl</code>, one row per changed chunk. In a proposal, <em>✎ Edit</em> lets you correct the proposed text; <em>Save</em> takes a <code>.bak-autor-&lt;date-time&gt;</code> snapshot first and refuses when the document changed meanwhile (409) or the new text is under 20% of the old one (412, with <em>Save anyway</em>). The loop never rewrites author text: the <code>fraza_autor_atinsa</code> gate rejects any result that changes, moves or deletes it, showing the line and why. The model sees your paragraphs under „TEXT AL AUTORULUI (doar semnalezi)”; issues on them come to you in <em>COADA_AUTOR</em>, issues next to them go to the repair with a note, and safe fixes skip them. A save during a loop is logged as <code>MODIFICARE_AUTOR</code>, the report lists „Your changes in the text”, and the text is re-checked right before any write. A rejected proposal stays rejected only while the document text is unchanged.</p>` },
     ],
   },
   {
@@ -252,8 +254,23 @@ node scripts\ai-smoke.cjs openrouter</pre>
       },
       {
         id: 'yours-mcp',
-        title: 'Claude Code in the project (MCP)',
-        html: `<p>From the program folder: <code>claude mcp add scribner -- node "C:\\path\\Scribner\\mcp\\server.mjs" --project "C:\\path\\My book.scribner"</code>. Take a snapshot before large changes.</p>`,
+        title: 'Connecting Claude, Codex and other AI agents (MCP)',
+        html: `<p>Scribner ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>Help → Connect to Claude (MCP)</em>. Installer paths on Windows (current user):</p>
+<pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
+Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs</pre>
+<p><strong>Claude Code:</strong></p>
+<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<p><strong>OpenAI Codex:</strong></p>
+<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<p><strong>Gemini CLI:</strong></p>
+<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<p><strong>Claude Desktop, Cursor, Windsurf, LM Studio</strong> (<code>mcpServers</code> JSON; double every backslash), and <strong>VS Code</strong> (<code>.vscode\\mcp.json</code>, key <code>servers</code>, <code>"type": "stdio"</code>):</p>
+<pre>"scribner": {
+  "command": "&lt;Program&gt;",
+  "args": ["&lt;Server&gt;", "--project", "D:\\\\Books\\\\My book.scribner"],
+  "env": { "ELECTRON_RUN_AS_NODE": "1" }
+}</pre>
+<p>Add <code>--read-only</code> for read access only. Every write takes a snapshot first and is logged in <code>agent-log.jsonl</code>.</p>`,
       },
       {
         id: 'yours-sync',
@@ -263,7 +280,7 @@ node scripts\ai-smoke.cjs openrouter</pre>
       {
         id: 'yours-karma',
         title: 'Your Scrivener projects and I-REP / I-EDIT rules',
-        html: `<p>Import a real <code>.scriv</code> with <em>File → Import Scrivener project</em> and read the import report. I-REP / I-EDIT use the built-in rules; your own VKB2 definitions are not in the program yet: send them through <em>Help → Report a problem</em> so they can be added.</p>`,
+        html: `<p>Import a real <code>.scriv</code> with <em>File → Import Scrivener project</em> and read the import report. I-REP / I-EDIT follow your VKB2 definitions: near repetitions (S70, round R8b) and protection of the text you write (see the <em>I-REP/I-EDIT review</em> chapter).</p>`,
       },
       {
         id: 'yours-limits',

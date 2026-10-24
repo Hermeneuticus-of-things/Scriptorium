@@ -720,6 +720,12 @@ handle('import:file', async (e, mode, separator) => {
   }
   return parts;
 });
+// I-EDIT: journal of the author's own changes. Only the window that owns the project writes.
+handle('editorial:appendAuthorJournal', (e, dir, rows) => {
+  assertOpened(dir);
+  assertOwner(e.sender, dir);
+  return store.appendAuthorJournal(dir, rows);
+});
 handle('snap:take', (_e, dir, id, name) => {
   assertOpened(dir);
   return store.takeSnapshot(dir, id, name);
@@ -917,6 +923,15 @@ handle('zotero:import', async (_e, { collection } = {}) => {
   const zt = services.getService(readSettings(), 'zotero', safeStorage);
   return { entries: await require('../lib/zotero.cjs').fetchZoteroLibrary({ userId: zt.userId, apiKey: zt.apiKey, collection }) };
 });
+// Ajutor → Conectează la Claude (MCP): the installed app runs the MCP server itself (no Node.js needed).
+const mcpEntry = ({ projects = [], readOnly = false } = {}) =>
+  require('../lib/mcpConfig.cjs').serverEntry({ execPath: process.execPath, serverPath: path.join(app.getAppPath(), 'mcp', 'server.mjs'), projects, readOnly });
+handle('mcp:connectInfo', async (_e, opts = {}) => {
+  const mc = require('../lib/mcpConfig.cjs');
+  const entry = mcpEntry(opts);
+  return { entry, command: mc.claudeCodeCommand(entry), desktopConfig: mc.claudeDesktopConfigPath() };
+});
+handle('mcp:connectDesktop', async (_e, opts = {}) => require('../lib/mcpConfig.cjs').writeClaudeDesktopConfig(mcpEntry(opts)));
 handle('tts:speak', async (_e, { text } = {}) => {
   const sp = services.getService(readSettings(), 'speechify', safeStorage);
   return translate.speechifySpeak({ apiKey: sp.apiKey, voiceId: sp.voiceId, text });

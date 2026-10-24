@@ -148,6 +148,7 @@ export function createMockApi() {
   const history = {};
   const files = {};
   const snaps = {};
+  const authorJournal = {}; // dir -> I-EDIT journal rows
   const key = (dir, id, kind) => `${dir}|${kind || 'docs'}|${id}`;
   const load = (dir) => {
     if (!state.projects[dir]) {
@@ -242,6 +243,15 @@ export function createMockApi() {
     },
     async listSnapshots(_dir, id) {
       return snaps[id] || [];
+    },
+    // I-EDIT journal of the author's changes (MODIFICARI_AUTOR.jsonl on the desktop).
+    async appendAuthorJournal(dir, rows) {
+      const list = (Array.isArray(rows) ? rows : [rows]).filter((r) => r && r.doc && r.old !== r.new);
+      (authorJournal[dir] ||= []).push(...list.map((r) => ({ ...r })));
+      return list.length;
+    },
+    async readAuthorJournal(dir) {
+      return (authorJournal[dir] || []).map((r) => ({ ...r }));
     },
     async importScriv() {
       throw new Error('Importul .scriv funcționează doar în aplicația desktop.');

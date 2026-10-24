@@ -76,11 +76,14 @@ const NEW_READ_TOOLS = (ctx) => ({
   lookup_url: { text: 'karma' },
   list_backups: {},
   editorial_round: {},
+  author_journal: {},
 });
 
 // Every renderer API (electron/preload.cjs) is either reachable over MCP (tool name) or GUI-only
 // (reason). A new preload function makes this test fail until it is listed here.
 const PRELOAD_COVERAGE = {
+  mcpConnectInfo: 'gui: legarea programului la Claude se face din interfață (Ajutor)',
+  mcpConnectDesktop: 'gui: scrie configurarea Claude Desktop la cererea autorului',
   isMisspelled: 'gui: corectorul ortografic al ferestrei (corecturi învățate)',
   onSpellReplaced: 'gui: sugestie aleasă din meniul nativ de clic dreapta',
   getSettings: 'gui: setările aplicației (temă, chei API); serverul citește doar backup / liste editoriale',
@@ -172,6 +175,7 @@ const PRELOAD_COVERAGE = {
   releaseProject: 'gui: ferestre',
   exportBundle: 'export_bundle',
   importBundle: 'import_bundle',
+  appendAuthorJournal: 'gui: jurnalul MODIFICARI_AUTOR se scrie de fereastra în care autorul salvează (author_journal îl citește)',
   ragBuild: 'research_search',
   ragQuery: 'research_search',
   ragAsk: 'research_search',
