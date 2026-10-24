@@ -267,54 +267,69 @@ const same = (x, y) => x.length === y.length && x.every((v, i) => v === y[i]);
  * Returns { html, conflicts }.
  */
 export function mergeDoc(base, mine, theirs) {
-  if (mine === theirs) return { html: mine, conflicts: 0 };
-  if (base === theirs) return { html: mine, conflicts: 0 };
-  if (base === mine) return { html: theirs, conflicts: 0 };
+  if (mine === theirs) return { html: mine, conflicts: 0, pieces: [mine] };
+  if (base === theirs) return { html: mine, conflicts: 0, pieces: [mine] };
+  if (base === mine) return { html: theirs, conflicts: 0, pieces: [theirs] };
   const B = splitBlocks(base);
   const A = splitBlocks(mine);
   const T = splitBlocks(theirs);
   const pa = lcsPairs(B, A);
   const pt = lcsPairs(B, T);
-  if (!pa || !pt) return { html: mine, conflicts: 1 };
+  if (!pa || !pt) return { html: mine, conflicts: 1, pieces: [{ mine: A, theirs: T }] };
   const inA = new Map(pa);
   const inT = new Map(pt);
   // Base blocks kept unchanged on both sides anchor the merge.
   const anchors = B.map((_, i) => i).filter((i) => inA.has(i) && inT.has(i));
-  const out = [];
+  // Settled blocks as strings; each clash as { mine: [...], theirs: [...] } (see resolveMerge).
+  const pieces = [];
   let conflicts = 0;
   let bi = 0;
   let ai = 0;
   let ti = 0;
+  const clash = (a, t) => {
+    pieces.push({ mine: a, theirs: t });
+    conflicts++;
+  };
   const chunk = (bEnd, aEnd, tEnd) => {
     const b = B.slice(bi, bEnd);
     const a = A.slice(ai, aEnd);
     const t = T.slice(ti, tEnd);
-    if (same(a, b)) out.push(...t);
-    else if (same(t, b) || same(a, t)) out.push(...a);
+    if (same(a, b)) pieces.push(...t);
+    else if (same(t, b) || same(a, t)) pieces.push(...a);
     else if (a.length === b.length && t.length === b.length) {
       // Neighbouring paragraphs edited in place on both sides: decided one paragraph at a time.
       b.forEach((x, i) => {
-        if (a[i] === x) out.push(t[i]);
-        else {
-          out.push(a[i]);
-          if (t[i] !== x && t[i] !== a[i]) conflicts++;
-        }
+        if (a[i] === x) pieces.push(t[i]);
+        else if (t[i] === x || t[i] === a[i]) pieces.push(a[i]);
+        else clash([a[i]], [t[i]]);
       });
-    } else {
-      out.push(...a);
-      conflicts++;
-    }
+    } else clash(a, t);
   };
   for (const k of anchors) {
     const ak = inA.get(k);
     const tk = inT.get(k);
     if (ak < ai || tk < ti) continue;
     chunk(k, ak, tk);
-    out.push(B[k]);
+    pieces.push(B[k]);
     bi = k + 1;
     ai = ak + 1;
     ti = tk + 1;
   }
   chunk(B.length, A.length, T.length);
-  return { html: out.join(''), conflicts };
+  return { html: resolveMerge(pieces), conflicts, pieces };
+}
+
+/**
+ * The document from merge pieces and the writer's choices for the clashes, in order:
+ * 'mine' (default), 'theirs' or 'both' (mine, then theirs).
+ */
+export function resolveMerge(pieces, choices = []) {
+  let k = 0;
+  return pieces
+    .map((p) => {
+      if (typeof p === 'string') return p;
+      const c = choices[k++] || 'mine';
+      return (c === 'theirs' ? p.theirs : c === 'both' ? [...p.mine, ...p.theirs] : p.mine).join('');
+    })
+    .join('');
 }

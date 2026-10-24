@@ -205,10 +205,13 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
   useEffect(() => {
     if (!asking || !api.cancelAi) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape') api.cancelAi().catch(() => {});
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      // Esc that closes a menu, dialog or find bar is not a request to stop the answer.
+      if (e.target?.closest?.('.modal-backdrop, .modal, .menu-pop, .ctx-menu, .find-bar')) return;
+      api.cancelAi().catch(() => {});
     };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [asking, api]);
 
   const openPassage = (p) => p && onOpen && onOpen(p.docId, p);

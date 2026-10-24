@@ -511,3 +511,12 @@ legend { color: var(--muted); padding: 0 4px; }
 .dictation-level { width: 90px; }
 @keyframes dictation-pulse { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .dictation-mic { animation: none; } }
+
+/* Conflict dialog: the two versions of a paragraph side by side. */
+.conflict-clash { margin-bottom: 10px; }
+.conflict-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.conflict-side { display: flex; flex-direction: column; gap: 6px; border: 2px solid var(--border, #ccc); border-radius: 8px; padding: 8px; cursor: pointer; }
+.conflict-side.chosen { border-color: var(--pane-active, #2e9d57); }
+.conflict-head { font-weight: 600; }
+.conflict-text { white-space: pre-wrap; font-family: var(--editor-font, Georgia, serif); max-height: 220px; overflow: auto; }
+@media (max-width: 700px) { .conflict-cols { grid-template-columns: 1fr; } }
