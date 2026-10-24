@@ -22,6 +22,17 @@ contextBridge.exposeInMainWorld('api', {
   appendAuthorJournal: (dir, rows) => call('editorial:appendAuthorJournal', dir, rows),
   teamFiles: (dir) => call('team:files', dir),
   dtedStatus: (opts) => call('dted:status', opts),
+  whisperStatus: () => call('whisper:status'),
+  whisperInstall: (variant) => call('whisper:install', variant),
+  whisperRemove: () => call('whisper:remove'),
+  whisperTranscribePcm: (pcm, opts) => call('whisper:transcribePcm', pcm, opts),
+  whisperReadAudio: (file) => call('whisper:readAudio', file),
+  whisperReadMedia: (dir, file) => call('whisper:readMedia', dir, file),
+  onWhisperProgress: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('whisper:progress', listener);
+    return () => ipcRenderer.removeListener('whisper:progress', listener);
+  },
   dtedPickAudio: () => call('dted:pickAudio'),
   dtedTranscribe: (file, id) => call('dted:transcribe', file, id),
   dtedTranscribeMedia: (dir, file, id) => call('dted:transcribeMedia', dir, file, id),

@@ -114,6 +114,7 @@ import { pullExternalDocs } from './lib/syncGuard.js';
 import { mergeDoc } from './lib/team.js';
 import { useTeam } from './lib/useTeam.js';
 import { useDictation } from './lib/useDictation.js';
+import { createLocalSpeech } from './lib/localSpeech.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
 import TeamDialog from './components/TeamDialog.jsx';
@@ -213,8 +214,14 @@ export default function App({ api: apiProp }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const team = useTeam({ api, dir, settings, docId: selectedId });
   // D&TED dictation (text at the cursor, or replacing the selection) and audio transcription.
+  // The built-in recogniser (default, desktop) or the separate D&TED program (Settings).
+  const speechMode = settings?.speechEngine === 'dted' || !api.whisperStatus ? 'dted' : 'local';
+  const speechApi = useMemo(
+    () => (speechMode === 'local' ? createLocalSpeech(api, { terms: () => settingsRef.current?.dtedTerms || '' }) : api),
+    [api, speechMode],
+  );
   const dict = useDictation({
-    api,
+    api: speechApi,
     getEditor: () => activeHandle()?.editor,
     replacements: settings?.autoReplacements,
     switchedMessage: tr('ui.dted.oprita_la_schimbare'),
@@ -1832,10 +1839,10 @@ export default function App({ api: apiProp }) {
     ['file', 'importOpml', tr('cmd.importOpml'), () => importOpmlOutline().catch(report), !api.importOpml],
     ['file', 'importWeb', tr('cmd.importWeb'), () => importWeb().catch(report), !api.importWebPage],
     ['file', 'transcribeAudio', tr('cmd.transcribeAudio'), async () => {
-      const file = await api.dtedPickAudio();
-      if (file) dict.transcribe({ title: file.split(/[\\/]/).pop() }, (id) => api.dtedTranscribe(file, id));
-    }, !api.dtedTranscribe],
-    ['document', 'transcribeMedia', tr('cmd.transcribeMedia'), () => dict.transcribe({ title: selected.title }, (id) => api.dtedTranscribeMedia(dir, selected.media, id)), !api.dtedTranscribeMedia || !selected || selected.type !== 'file' || !AUDIO_EXT.test(selected.media || '')],
+      const file = await speechApi.dtedPickAudio();
+      if (file) dict.transcribe({ title: file.split(/[\\/]/).pop() }, (id) => speechApi.dtedTranscribe(file, id));
+    }, !speechApi.dtedTranscribe],
+    ['document', 'transcribeMedia', tr('cmd.transcribeMedia'), () => dict.transcribe({ title: selected.title }, (id) => speechApi.dtedTranscribeMedia(dir, selected.media, id)), !speechApi.dtedTranscribeMedia || !selected || selected.type !== 'file' || !AUDIO_EXT.test(selected.media || '')],
     ['tools', 'dictate', tr('cmd.dictate'), () => (dict.dictation ? dict.stop() : dict.start()), !dict.available],
     ['file', 'exportFiles', tr('cmd.exportFiles'), () => flush().then(() => setDialog('export'))],
     ['file', 'saveAs', tr('cmd.saveAs'), () => saveAs().catch(report), !api.saveProjectAs],

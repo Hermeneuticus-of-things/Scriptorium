@@ -259,4 +259,4 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
     - în binder, pe un fișier audio: „Transcrie cu D&TED” → nota sau un document legat;
     - fără D&TED instalat, comenzile apar cu un link de instalare; nimic nu pleacă pe internet; procesul rulează din main, renderer-ul nu pornește programe;
     - teste: protocolul JSON simulat, anularea, erori (lipsă model, fără microfon), scenariu de browser cu un D&TED fals.
-
+12. **[x] v0.9.0 — Motorul de recunoaștere a vorbirii încorporat în Scribner** (whisper.cpp + large-v3-turbo, descărcat din Setări; detalii în docs/DTED.md §7). Rămâne: proba reală pe Windows (descărcare, microfon, NVIDIA).

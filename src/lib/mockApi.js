@@ -209,6 +209,7 @@ export function createMockApi() {
   };
   return {
     ...(typeof location !== 'undefined' && /[?&]dted\b/.test(location.search) ? fakeDted() : {}),
+    ...(typeof location !== 'undefined' && /[?&]whisper\b/.test(location.search) ? fakeWhisper(/[?&]whisper=missing\b/.test(location.search)) : {}),
     isMock: true,
     async getSettings() {
       return structuredClone(state.settings);
@@ -560,6 +561,73 @@ function fakeDted() {
       if (dict && dict.id === id) stopDict(true);
       else emit({ ev: 'anulat', id });
       return true;
+    },
+  };
+}
+
+// ?demo&whisper: a simulated built-in recogniser (docs/DTED.md §7) — every piece of speech becomes
+// the next demo phrase; ?demo&whisper=missing starts with the engine not downloaded.
+function fakeWhisper(missing) {
+  let installed = !missing;
+  const progress = new Set();
+  const phrases = ['ceața se ridica încet din vale', 'și drumul urca pe lângă pârâu.', 'Andrei s-a oprit la marginea pădurii.'];
+  let n = 0;
+  let fileNext = false;
+  const status = () => ({ installed, model: installed, variants: installed ? ['cpu'] : [], supported: true, running: installed, sizes: { cpu: 16, cuda: 423, model: 574 } });
+  // One second of a quiet tone, as the "audio file" the demo transcribes.
+  const wav = () => {
+    const rate = 16000;
+    const pcm = new Int16Array(rate * 3);
+    for (let i = 0; i < pcm.length; i++) pcm[i] = Math.round(6000 * Math.sin(i / 8));
+    const b = new ArrayBuffer(44 + pcm.byteLength);
+    const v = new DataView(b);
+    const str = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+    str(0, 'RIFF'); v.setUint32(4, 36 + pcm.byteLength, true); str(8, 'WAVEfmt '); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, 'data'); v.setUint32(40, pcm.byteLength, true);
+    new Int16Array(b, 44).set(pcm);
+    return new Uint8Array(b);
+  };
+  return {
+    whisperStatus: async () => status(),
+    onWhisperProgress(fn) {
+      progress.add(fn);
+      return () => progress.delete(fn);
+    },
+    async whisperInstall() {
+      for (const mb of [100, 300, 590]) {
+        await new Promise((r) => setTimeout(r, 150));
+        progress.forEach((f) => f({ what: mb < 300 ? 'motor' : 'model', mb, totalMb: 590 }));
+      }
+      installed = true;
+      return status();
+    },
+    async whisperRemove() {
+      installed = false;
+      return status();
+    },
+    async whisperTranscribePcm(pcm) {
+      if (!installed) throw new Error('Motorul de recunoaștere a vorbirii nu e descărcat încă.');
+      const len = pcm?.byteLength || 0;
+      if (!len) return { text: '', segmente: [] };
+      const sec = len / 2 / 16000;
+      if (fileNext) {
+        fileNext = false;
+        return { text: 'Când eram mică, iarna venea devreme.', segmente: [{ start: 0, end: sec, text: 'Când eram mică, iarna venea devreme.' }] };
+      }
+      const text = phrases[n++ % phrases.length];
+      return { text, segmente: [{ start: 0, end: sec, text }] };
+    },
+    async dtedPickAudio() {
+      return 'amintiri.wav';
+    },
+    async whisperReadAudio() {
+      fileNext = true;
+      return wav();
+    },
+    async whisperReadMedia() {
+      fileNext = true;
+      return wav();
     },
   };
 }

@@ -1,5 +1,16 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.0 — Recunoașterea vorbirii încorporată în Scribner
+
+### Cerința user
+> "implementează motoarele D&TED … în UI Scribner" (motorul în Scribner, fără program separat)
+
+### Rezultat
+- Motor încorporat (whisper.cpp v1.7.6 + Whisper large-v3-turbo), ales implicit: Setări → Servicii și conturi → Dictare și transcriere → Descarcă motorul (~590 MB o dată; varianta NVIDIA opțională), cu progres, verificare SHA-256 și Șterge.
+- F9 dictează cu microfonul direct în Scribner (bucăți tăiate la pauze, fără liniște și texte inventate), „Transcrie fișier audio” decodează MP3/WAV/M4A/OGG/FLAC în fereastră; D&TED rămâne opțiune.
+- Bug UI reparat: mesajele de jos nu mai acoperă butoanele dialogurilor (Salvează).
+- `lib/whisperEngine.cjs`, `electron/whisperHandlers.cjs`, `src/lib/localSpeech.js`, Setări; docs/DTED.md §7; README, ajutor RO/EN. Teste: 1087 + scenariul de browser `whisper`.
+
 ## 2026-10-24 — v0.8.9 — Fără date personale
 
 - Exemplele din ajutor, README, CLI și MCP folosesc proiectul inventat „Drumul spre munte” și `C:\Users\Nume`; profilul românesc are id-ul `ro` (proiectele vechi se citesc la fel); „.scriv” numit funcțional peste tot; nicio cheie sau token real în depozit (verificat în tot istoricul).

@@ -113,3 +113,24 @@ Pe Linux sau macOS doar varianta din codul sursă, cu `python3`.
 - [x] Scribner: Setări → Servicii → D&TED (cale, Verifică, termeni)
 - [x] ajutor RO/EN, README cu imagine, CHANGELOG, versiune nouă
 - [ ] test real pe Windows (autorul)
+
+## 7. Motorul încorporat (v0.9.0)
+
+Dictarea și transcrierea merg acum și fără D&TED. Scribner are propriul motor, ales implicit: *Setări → Servicii și conturi → Dictare și transcriere → Încorporat în Scribner*. D&TED rămâne a doua opțiune.
+
+- **Ce se descarcă, o singură dată**, în `<userData>/whisper`:
+  - whisper.cpp **v1.7.6**, arhiva oficială `whisper-blas-bin-x64.zip` (16 MB) sau `whisper-cublas-12.4.0-bin-x64.zip` (423 MB, pentru NVIDIA), verificată cu amprenta SHA-256 publicată de GitHub;
+  - modelul `ggml-large-v3-turbo-q5_0.bin` (~547 MiB), verificat prin mărime și antetul ggml.
+- **Cum rulează:** `whisper-server` pornește la prima cerere, ascultă doar pe `127.0.0.1` pe un port liber, păstrează modelul încărcat și e oprit la ieșire. Nimic nu pleacă pe internet după descărcare.
+- **Ce face fereastra** (`src/lib/localSpeech.js`):
+  - citește microfonul (Web Audio) și îl aduce la 16 kHz mono;
+  - taie vorbirea în bucăți de 3–6 s, în cel mai liniștit moment, și le trimite pe rând prin `whisper:transcribePcm`;
+  - sare peste liniște și peste textele inventate de model („Mulțumesc pentru vizionare”);
+  - dă modelului ca context numele din setări și ultimele cuvinte dictate.
+- **Fișiere audio:** le decodează browserul (MP3, WAV, M4A, OGG, FLAC), apoi le trimite în bucăți de cel mult 2 minute, cu timpii păstrați.
+- **Pentru ce rămâne la fel:** produce aceleași evenimente ca serviciul D&TED (§2), deci bara de dictare, F9, „Transcrie fișier audio” și „Transcrie cu D&TED” din binder nu s-au schimbat.
+- **Securitate:** fereastra poate citi doar fișierul audio ales în dialog sau un fișier media din proiectul deschis. Arhiva se despachetează fără căi care ies din folder.
+- **Teste:**
+  - `tests/whisper.test.js`: descărcarea cu amprente, arhiva falsificată, modelul trunchiat, serverul simulat (`tests/fixtures/fake-whisper-server.cjs`), tăierea pe pauze, filtrele;
+  - `tests/e2e/browser/whisper.cjs`: descărcarea din Setări, microfonul fals din Chromium, fișierul audio.
+- **Rămâne la autor:** proba pe Windows, cu descărcarea reală și cu microfonul.
