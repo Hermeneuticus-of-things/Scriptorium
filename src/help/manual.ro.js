@@ -735,6 +735,82 @@ media/                 imagini, PDF, audio, video</pre>
       },
     ],
   },
+  {
+    id: 'yours',
+    title: 'Ce faci tu (pași care țin de contul și calculatorul tău)',
+    sections: [
+      {
+        id: 'yours-overview',
+        title: 'Pe scurt',
+        html: `<p>Programul e complet, dar câteva lucruri depind de conturile, cheile și setările tale. Fără ele funcțiile respective rămân oprite, restul merge normal.</p>
+<ul>
+<li>cheile serviciilor externe (traducere, gramatică, voce, bibliografie);</li>
+<li>cheia unui model AI;</li>
+<li>pachetul de limbă română pentru corectorul din Windows;</li>
+<li>legătura cu Claude Code (MCP), dacă vrei ca un agent să lucreze direct în proiect;</li>
+<li>folderul de sincronizare (OneDrive, Dropbox, Google Drive sau NAS), dacă scrii și din browser.</li>
+</ul>`,
+      },
+      {
+        id: 'yours-services',
+        title: 'Cheile serviciilor: DeepL, Google, LanguageTool, Speechify, Zotero',
+        html: `<p>Deschide <em>Setări → Servicii și conturi</em>. Fiecare serviciu are linkul <em>Unde găsesc cheia</em>. Lipești cheia, apeși <em>Salvează</em>; cheia e criptată pe calculatorul tău și nu mai poate fi citită din interfață.</p>
+<ul>
+<li><strong>DeepL</strong>: contul gratuit dă 500.000 de caractere pe lună.</li>
+<li><strong>Google Cloud Translation</strong>: cheie din Google Cloud Console, cu Cloud Translation API activat.</li>
+<li><strong>LanguageTool</strong>: merge fără cont; cu Premium pui e-mailul și cheia API.</li>
+<li><strong>Speechify</strong>: cheia din consola Speechify API și ID-ul vocii (de exemplu <code>george</code>).</li>
+<li><strong>Zotero</strong>: ID-ul numeric de utilizator și o cheie din <em>zotero.org/settings/keys</em>; apoi <em>Fișier → Importă bibliografia din Zotero</em>.</li>
+</ul>
+<p>Verificare: selectezi un paragraf, clic dreapta, <em>În program: DeepL</em> sau <em>Verifică gramatica</em>.</p>`,
+      },
+      {
+        id: 'yours-ai',
+        title: 'Cheia AI și testul cu un model real',
+        html: `<p>În <em>Setări → AI</em> alegi furnizorul (Anthropic, OpenAI, OpenRouter, NVIDIA NIM, Mistral, Groq, DeepSeek, xAI, Gemini, Ollama local, LM Studio local sau un server compatibil OpenAI), lipești cheia și scrii id-ul modelului. Modelele se retrag des: dacă primești <em>modelul a fost retras</em>, alege altul din lista furnizorului.</p>
+<p>Fără bani: pe OpenRouter, modelele terminate în <code>:free</code>; pe <em>build.nvidia.com</em>, cheia <code>nvapi-…</code> vine cu credite gratuite; local, Ollama sau LM Studio nu cer cheie.</p>
+<p>Test rapid din folderul programului, în PowerShell:</p>
+<pre>$env:OPENROUTER_API_KEY = "sk-or-…"
+node scripts\ai-smoke.cjs openrouter
+
+$env:NVIDIA_API_KEY = "nvapi-…"
+node scripts\ai-smoke.cjs nvidia</pre>
+<p>Scriptul alege singur un model care răspunde și încearcă corectura, traducerea și explicarea unui termen. Modelele gratuite sunt uneori supraîncărcate; scriptul reîncearcă și trece la alt model. Nu scrie cheile în fișiere sau în mesaje; dacă una a ajuns undeva public, regenereaz-o.</p>`,
+      },
+      {
+        id: 'yours-spelling',
+        title: 'Corectorul ortografic românesc pe Windows',
+        html: `<p>Pe Windows programul folosește corectorul sistemului. Instalează limba: <em>Setări Windows → Oră și limbă → Limbă și regiune → Adăugare limbă → Română</em>, cu opțiunea de verificare ortografică bifată. Repornește Scribner. Pe Linux și macOS dicționarul vine cu programul.</p>`,
+      },
+      {
+        id: 'yours-mcp',
+        title: 'Claude Code în proiect (MCP)',
+        html: `<p>Un agent Claude Code poate citi și scrie proiectul prin serverul MCP inclus (77 de unelte: binder, documente, metadate, snapshot-uri, Compile). În terminal, din folderul programului:</p>
+<pre>claude mcp add scribner -- node "C:\\cale\\Scribner\\mcp\\server.mjs" --project "C:\\cale\\Cartea mea.scribner"</pre>
+<p>Apoi, în Claude Code, cere de exemplu „deschide proiectul X și fă un sinopsis pentru fiecare capitol”. Fă un snapshot înainte de modificări mari.</p>`,
+      },
+      {
+        id: 'yours-sync',
+        title: 'Același proiect pe desktop și în browser',
+        html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Nu edita același document în două locuri în același timp. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
+      },
+      {
+        id: 'yours-karma',
+        title: 'Proiectele tale Scrivener și regulile I-REP / I-EDIT',
+        html: `<p>Importul <code>.scriv</code> e testat pe proiecte de probă. Pe un proiect real (de exemplu cartea Karma), fă importul cu <em>Fișier → Importă proiect Scrivener</em>, citește raportul de import și verifică capitolele cu cele mai multe formatări, comentarii și note de subsol. Originalul rămâne neatins, iar o copie stă în <code>scrivener-original/</code>.</p>
+<p>I-REP / I-EDIT merg acum cu regulile incluse în program. Definițiile tale proprii (VKB2) nu există încă în program: trimite fișierele lor ca problemă nouă din <em>Ajutor → Raportează o problemă</em>, ca să fie adăugate.</p>`,
+      },
+      {
+        id: 'yours-limits',
+        title: 'Limite cunoscute',
+        html: `<ul>
+<li>Tab-urile cu poziții exacte (din riglă) apar exact în DOCX; în PDF, EPUB și HTML tab-urile sunt egale, după prima poziție. Doar tab-uri la stânga.</li>
+<li>Kindle: programul produce EPUB, pe care Amazon îl acceptă direct; formatul KPF nu se poate produce cu unelte deschise.</li>
+<li>Sincronizarea cu aplicația Scrivener pentru iOS nu e posibilă (format închis); folosește folderul sincronizat de mai sus.</li>
+</ul>`,
+      },
+    ],
+  },
 ];
 
 export default MANUAL_RO;

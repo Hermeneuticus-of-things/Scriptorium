@@ -216,6 +216,66 @@ export const MANUAL_EN = [
       { id: 'faq-report', title: 'Reporting a problem', html: `<p><em>Help → Report a problem</em> opens the GitHub issues page. Include the version, OS and steps to reproduce.</p>` },
     ],
   },
+  {
+    id: 'yours',
+    title: 'What you do (steps that depend on your accounts and computer)',
+    sections: [
+      {
+        id: 'yours-overview',
+        title: 'In short',
+        html: `<p>The program is complete, but a few things depend on your accounts, keys and settings. Without them those features stay off; everything else works.</p>
+<ul>
+<li>keys for outside services (translation, grammar, voice, bibliography);</li>
+<li>a key for an AI model;</li>
+<li>the Romanian language pack for the Windows spell checker;</li>
+<li>the Claude Code connection (MCP), if you want an agent to work in the project;</li>
+<li>a synced folder (OneDrive, Dropbox, Google Drive or a NAS), if you also write in the browser.</li>
+</ul>`,
+      },
+      {
+        id: 'yours-services',
+        title: 'Service keys: DeepL, Google, LanguageTool, Speechify, Zotero',
+        html: `<p>Open <em>Settings → Services and accounts</em>. Each service has a <em>Where do I find the key</em> link. Paste the key and press <em>Save</em>; it is encrypted on your computer and cannot be read back from the interface. Zotero needs your numeric user ID too; then use <em>File → Import bibliography from Zotero</em>.</p>`,
+      },
+      {
+        id: 'yours-ai',
+        title: 'AI key and a test with a real model',
+        html: `<p>In <em>Settings → AI</em> choose the provider, paste the key and type the model id. Models are retired often: if you see <em>the model was retired</em>, pick another one. Free options: OpenRouter models ending in <code>:free</code>, the free credits of a <code>nvapi-…</code> key from build.nvidia.com, or Ollama / LM Studio locally.</p>
+<pre>$env:OPENROUTER_API_KEY = "sk-or-…"
+node scripts\ai-smoke.cjs openrouter</pre>
+<p>The script picks a model that answers and tries proofreading, translation and a definition. Never put keys in files or messages; regenerate any key that leaked.</p>`,
+      },
+      {
+        id: 'yours-spelling',
+        title: 'Romanian spell checking on Windows',
+        html: `<p>Windows uses the system spell checker: <em>Windows Settings → Time &amp; language → Language &amp; region → Add a language → Romanian</em>, with spell checking. Restart Scribner.</p>`,
+      },
+      {
+        id: 'yours-mcp',
+        title: 'Claude Code in the project (MCP)',
+        html: `<p>From the program folder: <code>claude mcp add scribner -- node "C:\\path\\Scribner\\mcp\\server.mjs" --project "C:\\path\\My book.scribner"</code>. Take a snapshot before large changes.</p>`,
+      },
+      {
+        id: 'yours-sync',
+        title: 'The same project on the desktop and in the browser',
+        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. Do not edit the same document in two places at once. Phones cannot open folders: use the .json bundle there.</p>`,
+      },
+      {
+        id: 'yours-karma',
+        title: 'Your Scrivener projects and I-REP / I-EDIT rules',
+        html: `<p>Import a real <code>.scriv</code> with <em>File → Import Scrivener project</em> and read the import report. I-REP / I-EDIT use the built-in rules; your own VKB2 definitions are not in the program yet: send them through <em>Help → Report a problem</em> so they can be added.</p>`,
+      },
+      {
+        id: 'yours-limits',
+        title: 'Known limits',
+        html: `<ul>
+<li>Exact tab stops from the ruler are exact in DOCX; in PDF, EPUB and HTML tabs are even, after the first stop. Left tabs only.</li>
+<li>Kindle: EPUB, which Amazon accepts; KPF cannot be produced with open tools.</li>
+<li>No sync with Scrivener for iOS (closed format).</li>
+</ul>`,
+      },
+    ],
+  },
 ];
 
 export default MANUAL_EN;
