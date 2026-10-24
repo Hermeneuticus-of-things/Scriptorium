@@ -500,3 +500,12 @@ legend { color: var(--muted); padding: 0 4px; }
 .team-delta .add { color: #2e9d57; }
 .team-delta .del { color: #c94040; }
 .team-sample { margin-left: 15px; font-style: italic; }
+
+/* D&TED dictation bar (docs/DTED.md). */
+.dictation-bar { position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 40; min-width: 460px; max-width: 92vw; background: var(--panel, #fff); border: 1px solid var(--border, #ccc); border-radius: 10px; box-shadow: 0 6px 24px #0003; padding: 6px 10px; }
+.dictation-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.dictation-mic { width: 12px; height: 12px; border-radius: 50%; background: #c94040; animation: dictation-pulse 1.2s ease-in-out infinite; }
+.dictation-mic.paused { background: #999; animation: none; }
+.dictation-level { width: 90px; }
+@keyframes dictation-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .dictation-mic { animation: none; } }

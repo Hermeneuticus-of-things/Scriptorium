@@ -107,9 +107,9 @@ Pe Linux sau macOS doar varianta din codul sursă, cu `python3`.
 ## 6. Pași (stare)
 
 - [x] D&TED: modul `--serviciu` + teste (`dictare_transcriere_romana/serviciu.py`, `teste/test_serviciu.py`)
-- [ ] Scribner: `lib/dted.cjs` + IPC + D&TED fals pentru teste
-- [ ] Scribner: dictare la cursor / peste selecție, bara de dictare, F9
-- [ ] Scribner: transcriere fișier audio → document; din binder
-- [ ] Scribner: Setări → Servicii → D&TED (cale, Verifică, termeni)
-- [ ] ajutor RO/EN, README cu imagine, CHANGELOG, versiune nouă
+- [x] Scribner: `lib/dted.cjs` + IPC + D&TED fals pentru teste
+- [x] Scribner: dictare la cursor / peste selecție, bara de dictare, F9
+- [x] Scribner: transcriere fișier audio → document; din binder
+- [x] Scribner: Setări → Servicii → D&TED (cale, Verifică, termeni)
+- [x] ajutor RO/EN, README cu imagine, CHANGELOG, versiune nouă
 - [ ] test real pe Windows (autorul)

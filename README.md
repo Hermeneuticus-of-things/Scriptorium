@@ -5,6 +5,8 @@
 <p align="center">
   <a href="../../releases/latest"><strong>Descarcă pentru Windows</strong></a> ·
   <a href="#cum-îl-instalezi">Instalare</a> ·
+  <a href="#dictezi-direct-în-carte">Dictare</a> ·
+  <a href="#lucru-în-echipă">Echipă</a> ·
   <a href="#întrebări">Întrebări</a> ·
   <a href="#ai-găsit-o-problemă">Ai găsit o problemă?</a> ·
   <a href="#sub-capotă">Sub capotă</a>
@@ -18,6 +20,10 @@ Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini 
 
 <p align="center">
   <img src="./assets/readme/for-whom.svg" width="100%" alt="Pentru cine e: scrii o carte, traduci o carte, scrii o lucrare">
+</p>
+
+<p align="center">
+  <img src="./assets/readme/voice-team.svg" width="100%" alt="Scrii cu vocea: vorbești și fraza apare pe fișa scenei, fără internet. Lucrați împreună: fiecare om cu culoarea lui pe fișele aceleiași cărți, una blocată de Ana">
 </p>
 
 ## Pentru traducători
@@ -67,6 +73,22 @@ Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, 
 </p>
 
 *Vizualizare → Deschide ca referință* pune alt document lângă cel la care scrii, doar de citit: planul, o scenă veche sau originalul. Bifezi *Editabil* dacă vrei totuși să-l schimbi.
+
+## Dictezi direct în carte
+
+<p align="center">
+  <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Scribner: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
+</p>
+
+Apeși **F9** și vorbești. Textul apare în carte pe măsură ce vorbești, cam la fiecare patru secunde, cu spații și majusculă la început de frază.
+
+- **Text nou:** fără nimic selectat, textul intră la cursor.
+- **Modificare:** selectezi un cuvânt, o frază sau un paragraf și dictezi. Ce spui înlocuiește selecția, iar un singur Ctrl+Z te întoarce la textul vechi.
+- **Pauză** oprește scrierea fără să închidă microfonul, **Stop** încheie, iar **Anulează** scoate tot ce ai dictat de la pornire.
+- **Fișier → Importă → Transcrie fișier audio…** face din MP3, WAV, M4A, OGG sau FLAC un document nou în Cercetare, pe paragrafe, cu ora din înregistrare la fiecare paragraf. Pe un fișier audio din binder ai *Transcrie cu D&TED*.
+- Numele din carte (Ilinca, Apuseni…) le scrii o dată în *Setări → Servicii și conturi*, ca să fie recunoscute corect. Înlocuirile tale automate se aplică și textului dictat.
+
+Recunoașterea vorbirii o face [D&TED](https://github.com/Hermeneuticus-of-things/dted), un program separat, gratuit, care lucrează **pe calculatorul tău, fără internet**. Îl instalezi o dată, iar Scribner îl găsește singur. Fără D&TED, restul programului merge la fel.
 
 ## Interfață pe gustul tău
 
@@ -328,6 +350,8 @@ $env:GITHUB_TOKEN='token-ul-tău'; irm -Headers @{Authorization="Bearer $env:GIT
 ```
 
 Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `scribner` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
+
+Pentru dictare instalezi, dacă vrei, și [D&TED](https://github.com/Hermeneuticus-of-things/dted), separat. Modelul de recunoaștere a vorbirii are în jur de 1,6 GB, așa că nu e inclus în Scribner.
 
 O versiune nouă apare în Releases de fiecare dată când iese, automat.
 

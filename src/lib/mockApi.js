@@ -208,6 +208,7 @@ export function createMockApi() {
     return `<h1>${project.title}</h1>${out.join('')}`;
   };
   return {
+    ...(typeof location !== 'undefined' && /[?&]dted\b/.test(location.search) ? fakeDted() : {}),
     isMock: true,
     async getSettings() {
       return structuredClone(state.settings);
@@ -497,6 +498,68 @@ export function createMockApi() {
         await simulate(text, payload.runId, 2);
         return { text, provider: state.settings.aiLabel, model: state.settings.aiModel };
       }
+    },
+  };
+}
+
+// ?demo&dted: a simulated D&TED (docs/DTED.md) — dictation sends a few Romanian phrases, an
+// audio file "transcribes" into two paragraphs — so dictation can be tried in the browser.
+function fakeDted() {
+  const listeners = new Set();
+  const emit = (ev) => setTimeout(() => listeners.forEach((f) => f(ev)), 0);
+  const phrases = ['ceața se ridica încet din vale', 'și drumul urca pe lângă pârâu.', 'Andrei s-a oprit la marginea pădurii'];
+  let seq = 0;
+  let dict = null;
+  const stopDict = (cancelled) => {
+    if (!dict) return;
+    clearInterval(dict.timer);
+    emit(cancelled ? { ev: 'anulat', id: dict.id } : { ev: 'dictare_oprita', id: dict.id, text: dict.sent.join(' ') });
+    dict = null;
+  };
+  return {
+    onDtedEvent(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
+    async dtedStatus() {
+      return { found: true, source: 'D&TED simulat (demo)', running: true };
+    },
+    async dtedPickAudio() {
+      return 'interviu-bunica.mp3';
+    },
+    async dtedTranscribe(file) {
+      const id = `t${++seq}`;
+      emit({ ev: 'faza', id, text: 'Transcriu…' });
+      setTimeout(() => emit({ ev: 'progres', id, p: 0.6 }), 200);
+      setTimeout(() => emit({ ev: 'rezultat', id, text: '', secunde_audio: 70, segmente: [{ start: 0, end: 4, text: 'Când eram mică, iarna venea devreme.' }, { start: 4.5, end: 8, text: 'Tata tăia lemne în curte.' }, { start: 62, end: 66, text: 'Apoi am plecat la oraș.' }] }), 700);
+      return id;
+    },
+    async dtedTranscribeMedia(_dir, file) {
+      return this.dtedTranscribe(file);
+    },
+    async dtedDictateStart() {
+      if (dict) throw new Error('Dictarea este deja pornită.');
+      const id = `d${++seq}`;
+      dict = { id, n: 0, sent: [] };
+      emit({ ev: 'dictare_pornita', id });
+      dict.timer = setInterval(() => {
+        emit({ ev: 'nivel', id, nivel: 0.2 + Math.random() * 0.5 });
+        if (dict && dict.n < phrases.length) {
+          const text = phrases[dict.n++];
+          dict.sent.push(text);
+          emit({ ev: 'fragment', id, text });
+        }
+      }, 700);
+      return id;
+    },
+    async dtedDictateStop() {
+      stopDict(false);
+      return true;
+    },
+    async dtedCancel(id) {
+      if (dict && dict.id === id) stopDict(true);
+      else emit({ ev: 'anulat', id });
+      return true;
     },
   };
 }

@@ -45,6 +45,7 @@ export const DEFAULT_KEYS = {
   newFolder: 'Ctrl+Shift+N',
   findProject: 'Ctrl+Shift+F',
   composition: 'F11',
+  dictate: 'F9',
   split: 'Ctrl+K',
   splitTitle: 'Ctrl+Shift+K',
   duplicate: 'Ctrl+D',

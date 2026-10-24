@@ -131,7 +131,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 
 ### Request: roadmap lucru în echipă (server / NAS / cloud, cine ce a modificat și când)
 - [x] Scris în README („Ce urmează”) și în ROADMAP.md secțiunea 9
-- [ ] Implementare (planificată)
+- [x] Implementare etapa 1, folder comun (v0.8.8); etapa 2, server, în listă mai jos
 
 ## Session 2026-10-24 (echipă)
 ### Request: ROADMAP §9 — lucru în echipă
@@ -152,10 +152,10 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] la autor: instalare Windows, test MCP, import Karma, chei, test AI complet, depozit public?
 ### Request: plugin D&TED în Scribner (spec: docs/DTED.md)
 - [x] D&TED: modul --serviciu (JSON pe linii) + teste
-- [ ] lib/dted.cjs + IPC + D&TED fals pentru teste
-- [ ] dictare: text nou la cursor; peste selecție = modificare (înlocuire), un singur Ctrl+Z
-- [ ] bara de dictare (nivel, Pauză, Stop, Anulează), Unelte → Dictare, F9
-- [ ] transcriere fișier audio → document în Cercetare; din binder
-- [ ] Setări → Servicii → D&TED (cale găsită automat, Verifică, termeni)
-- [ ] ajutor RO/EN, README + imagine, CHANGELOG, versiune
+- [x] lib/dted.cjs + IPC + D&TED fals pentru teste
+- [x] dictare: text nou la cursor; peste selecție = modificare (înlocuire), un singur Ctrl+Z
+- [x] bara de dictare (nivel, Pauză, Stop, Anulează), Unelte → Dictare, F9
+- [x] transcriere fișier audio → document în Cercetare; din binder
+- [x] Setări → Servicii → D&TED (cale găsită automat, Verifică, termeni)
+- [x] ajutor RO/EN, README + imagine, CHANGELOG, versiune
 - [ ] test real pe Windows (autorul)

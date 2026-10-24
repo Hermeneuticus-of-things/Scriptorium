@@ -64,6 +64,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     backupKeep: init.backupKeep || 10,
     backupDir: init.backupDir || '',
     teamName: init.team?.name || '',
+    dtedPath: init.dtedPath || '',
+    dtedTerms: init.dtedTerms || '',
+    dtedTimestamps: init.dtedTimestamps !== false,
     teamColor: init.team?.color || '',
   });
   const set = (k) => (e) => {
@@ -76,7 +79,19 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   });
   const [aiKeys, setAiKeys] = useState({}); // provider -> key typed in this session (never read back)
   const [hasKeys, setHasKeys] = useState(() => ({ ...(init.hasKeys || {}), ...(init.hasKeys ? {} : { anthropic: Boolean(init.hasApiKey) }) }));
-  const [aiTest, setAiTest] = useState(null); // {busy} | {ok, text}
+  const [aiTest, setAiTest] = useState(null);
+  const [dtedCheck, setDtedCheck] = useState('');
+  // Saves the D&TED path first, so the check uses what was typed.
+  const checkDted = async () => {
+    setDtedCheck(t('ui.dted.verific'));
+    try {
+      await api.setSettings({ dtedPath: s.dtedPath.trim() });
+      const r = await api.dtedStatus({ check: true });
+      setDtedCheck(r.found ? t('ui.dted.gasit', { source: r.source }) : t('ui.dted.negasit'));
+    } catch (e) {
+      setDtedCheck(e.message);
+    }
+  }; // {busy} | {ok, text}
   const aiPreset = AI_PRESETS[ai.provider] || AI_PRESETS.custom;
   const setAiProvider = (provider) => {
     const same = provider === (AI_PRESETS[init.aiProvider] ? init.aiProvider : 'anthropic');
@@ -202,6 +217,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           machine: init.team?.machine || newMachineId(),
         },
       };
+      patch.dtedPath = s.dtedPath.trim();
       delete patch.teamName;
       delete patch.teamColor;
       const parseList = (txt, sep) =>
@@ -647,6 +663,25 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     ),
     services: (
       <>
+      {api.dtedStatus && (
+        <fieldset>
+          <legend>{t('ui.dted.setari_titlu')}</legend>
+          <p className="muted small">{t('ui.dted.setari_explicatie')}</p>
+          <label>
+            {t('ui.dted.cale')}
+            <input value={s.dtedPath} onChange={set('dtedPath')} placeholder={t('ui.dted.cale_automata')} />
+          </label>
+          <label>
+            {t('ui.dted.termeni')}
+            <input value={s.dtedTerms} onChange={set('dtedTerms')} placeholder="Ilinca, Apuseni, Matei" />
+          </label>
+          <label className="check"><input type="checkbox" checked={s.dtedTimestamps} onChange={set('dtedTimestamps')} /> {t('ui.dted.marcaje_timp')}</label>
+          <div className="row">
+            <button onClick={checkDted}>{t('ui.dted.verifica')}</button>
+            {dtedCheck && <span className="muted small" role="status">{dtedCheck}</span>}
+          </div>
+        </fieldset>
+      )}
       <fieldset>
         <legend>{t('ui.settingsDialog.traducere_dictionare')}</legend>
         <label>

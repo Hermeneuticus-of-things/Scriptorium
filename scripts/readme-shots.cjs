@@ -336,6 +336,18 @@ const SHOTS = {
       await noCaret(p);
     },
   },
+  dictation: {
+    kicker: 'Dictare · D&TED',
+    title: 'Vorbești, iar textul apare în carte',
+    sub: 'F9 pornește dictarea. Fără selecție, textul intră la cursor; peste o frază selectată, o înlocuiește. Recunoașterea vorbirii se face pe calculatorul tău, fără internet.',
+    query: '&dted',
+    async setup(p) {
+      await caretEnd(p);
+      await p.keyboard.press('F9');
+      await p.waitForFunction(() => document.querySelector('.pane .ProseMirror').innerText.includes('drumul urca'), null, { timeout: 6000 });
+      await p.waitForTimeout(250);
+    },
+  },
   team: {
     kicker: 'Lucru în echipă',
     title: 'Vezi cine lucrează acum și cine ce a schimbat',

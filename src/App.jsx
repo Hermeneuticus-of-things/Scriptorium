@@ -113,6 +113,9 @@ import { mergeProject } from './lib/projectMerge.js';
 import { pullExternalDocs } from './lib/syncGuard.js';
 import { mergeDoc } from './lib/team.js';
 import { useTeam } from './lib/useTeam.js';
+import { useDictation } from './lib/useDictation.js';
+import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
+import DictationBar from './components/DictationBar.jsx';
 import TeamDialog from './components/TeamDialog.jsx';
 
 const SAVE_DELAY = 700;
@@ -188,6 +191,22 @@ export default function App({ api }) {
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const team = useTeam({ api, dir, settings, docId: selectedId });
+  // D&TED dictation (text at the cursor, or replacing the selection) and audio transcription.
+  const dict = useDictation({
+    api,
+    getEditor: () => activeHandle()?.editor,
+    replacements: settings?.autoReplacements,
+    onMessage: (m) => setToast(m),
+    onTranscript: (r, job) => {
+      const html = transcriptHtml(r, { timestamps: settings?.dtedTimestamps !== false });
+      addResearchDocs([{ title: tr('ui.dted.titlu_transcriere', { title: job.title }), html }])
+        .then((ids) => {
+          if (ids[0]) go(ids[0]);
+          setToast(tr('ui.dted.transcriere_gata', { title: job.title }));
+        })
+        .catch(report);
+    },
+  });
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
@@ -1791,6 +1810,12 @@ export default function App({ api }) {
     ['file', 'importFiles', tr('cmd.importFiles'), () => setDialog('importSplit'), !api.importFiles],
     ['file', 'importOpml', tr('cmd.importOpml'), () => importOpmlOutline().catch(report), !api.importOpml],
     ['file', 'importWeb', tr('cmd.importWeb'), () => importWeb().catch(report), !api.importWebPage],
+    ['file', 'transcribeAudio', tr('cmd.transcribeAudio'), async () => {
+      const file = await api.dtedPickAudio();
+      if (file) dict.transcribe({ title: file.split(/[\\/]/).pop() }, () => api.dtedTranscribe(file));
+    }, !api.dtedTranscribe],
+    ['document', 'transcribeMedia', tr('cmd.transcribeMedia'), () => dict.transcribe({ title: selected.title }, () => api.dtedTranscribeMedia(dir, selected.media)), !api.dtedTranscribeMedia || !selected || selected.type !== 'file' || !AUDIO_EXT.test(selected.media || '')],
+    ['tools', 'dictate', tr('cmd.dictate'), () => (dict.dictation ? dict.stop() : dict.start()), !dict.available],
     ['file', 'exportFiles', tr('cmd.exportFiles'), () => flush().then(() => setDialog('export'))],
     ['file', 'saveAs', tr('cmd.saveAs'), () => saveAs().catch(report), !api.saveProjectAs],
     ['file', 'print', tr('cmd.print'), printCurrent, !api.printDocument && !api.printDocuments],
@@ -2510,6 +2535,7 @@ export default function App({ api }) {
         )}
       </div>
 
+      <DictationBar dict={dict} />
       <StatusBar
         node={selected}
         words={selected ? (isFolderView ? scrivSections.reduce((s, n) => s + (counts[n.id] || 0), 0) : counts[selected.id] || 0) : 0}
