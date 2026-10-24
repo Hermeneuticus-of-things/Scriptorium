@@ -1,5 +1,5 @@
 'use strict';
-// Import / export IPC handlers (Scrivener 3-style File > Import / Export / Save As / Print).
+// Import / export IPC handlers (File > Import / Export / Save As / Print).
 //
 // main.cjs registration (one line, after `handle`, `assertOpened`, `rememberRecent`, `noteSelfWrite` are defined):
 //   require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });

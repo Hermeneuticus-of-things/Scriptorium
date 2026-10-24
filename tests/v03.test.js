@@ -67,11 +67,11 @@ describe('auto-complete words', () => {
         { id: 'draft', root: 'draft', children: [{ id: 'x', title: 'X', keywords: ['vipāka'] }] },
         { id: 'research', root: 'research', children: [{ id: 'r', title: 'Personaj: Andrei Popescu' }] },
       ],
-      keywordDefs: [{ name: 'karman' }],
+      keywordDefs: [{ name: 'drumuln' }],
     };
     const docs = { x: '<p>Ieri Mihaela a plecat. Azi Mihaela revine. Mâine Mihaela pleacă iar.</p>' };
     const w = projectWords(p, docs);
-    expect(w).toEqual(expect.arrayContaining(['Andrei', 'Popescu', 'vipāka', 'karman', 'Mihaela']));
+    expect(w).toEqual(expect.arrayContaining(['Andrei', 'Popescu', 'vipāka', 'drumuln', 'Mihaela']));
     expect(w).not.toContain('Personaj');
   });
 });

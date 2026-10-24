@@ -1,4 +1,4 @@
-// Toolbar registry (View → Customize Toolbar…, as in Scrivener 3).
+// Toolbar registry (View → Customize Toolbar…).
 // Every toolbar item names the command it runs (command ids of the registry in App.jsx /
 // src/lib/commands.js), so menus and toolbars share one set of actions. Saved in
 // settings.toolbars = { top: [ids], format: [ids], display, seen: { top: [ids], format: [ids] } }.

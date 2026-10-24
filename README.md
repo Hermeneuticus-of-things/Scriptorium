@@ -408,10 +408,10 @@ Nu trebuie să știi nimic tehnic:
 **Agenți AI și linia de comandă.** Un agent AI poate lucra direct în proiect: citește capitolele, scrie sinopsisuri, caută, face revizia sau Compile. Din *AI → Conectează la Claude (MCP)* configurezi Claude Desktop cu un clic sau copiezi comanda pentru Claude Code; merge și cu Codex, Gemini CLI, Cursor și VS Code. Nu ai nevoie de Node.js. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
 
 ```powershell
-scribner info "D:\Carti\Karma.scribner"
-scribner compile "D:\Carti\Karma.scribner" --format docx -o "D:\Carti\Karma.docx"
-scribner export-sources "D:\Carti\Karma.scribner" -o "D:\Surse" --target notebooklm
-scribner ask "D:\Carti\Karma.scribner" "Ce spune cartea despre urmă?" --session karma
+scribner info "D:\Carti\Drumul spre munte.scribner"
+scribner compile "D:\Carti\Drumul spre munte.scribner" --format docx -o "D:\Carti\Drumul spre munte.docx"
+scribner export-sources "D:\Carti\Drumul spre munte.scribner" -o "D:\Surse" --target notebooklm
+scribner ask "D:\Carti\Drumul spre munte.scribner" "Ce culoare au ochii lui Andrei?" --session drum
 ```
 
 <p align="center">

@@ -3,6 +3,7 @@ import ServicesPanel from './ServicesPanel.jsx';
 import React, { useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
 import { colorFor, newMachineId } from '../lib/team.js';
+import { listsFor, profileId } from '../lib/editorial.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
 import AI_PRESETS from '../../lib/aiPresets.json';
 
@@ -162,7 +163,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   };
   const [draft, setDraft] = useState(project?.targets?.draft || 0);
   const [session, setSession] = useState(project?.targets?.session || 0);
-  const [edBase, setEdBase] = useState(project?.editorialProfile?.base || 'generic');
+  const [edBase, setEdBase] = useState(profileId(project?.editorialProfile?.base || 'generic'));
   const [edRules, setEdRules] = useState(project?.editorialProfile?.rules || {});
   const [edLimit, setEdLimit] = useState(project?.editorialProfile?.canvasWordLimit ?? 3000);
   const [mcp, setMcp] = useState(null);
@@ -170,8 +171,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [edLists, setEdLists] = useState(() => {
     const src = settings.editorialLists || {};
     const out = {};
-    for (const id of ['karma', 'generic']) {
-      const l = src[id] || (src.forbidden || src.preferred ? src : {});
+    for (const id of ['ro', 'generic']) {
+      const l = listsFor(src, id) || {};
       out[id] = {
         forbidden: (l.forbidden || []).map((e) => `${e.word}${e.replacement ? ` => ${e.replacement}` : ''}${e.note ? ` # ${e.note}` : ''}`).join('\n'),
         preferred: (l.preferred || []).map((e) => `${e.word}${e.replacement ? ` <= ${e.replacement}` : ''}${e.note ? ` # ${e.note}` : ''}`).join('\n'),
@@ -181,7 +182,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     }
     return out;
   });
-  const edL = edLists[edBase] || edLists.karma;
+  const edL = edLists[edBase] || edLists.ro;
   const setEdL = (k, v) => setEdLists((all) => ({ ...all, [edBase]: { ...all[edBase], [k]: v } }));
 
   const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' ? Number(v) : d);
@@ -537,7 +538,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <label>
               {t('set.edBase')}
               <select value={edBase} onChange={(e) => setEdBase(e.target.value)}>
-                <option value="karma">{t('set.edBase.karma')}</option>
+                <option value="ro">{t('set.edBase.ro')}</option>
                 <option value="generic">{t('set.edBase.generic')}</option>
               </select>
             </label>

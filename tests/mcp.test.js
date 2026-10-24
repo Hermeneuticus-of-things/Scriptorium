@@ -24,11 +24,11 @@ const call = async (name, args = {}) => {
 
 beforeAll(async () => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-'));
-  dir = store.projectDirFor(tmp, 'Karma');
-  store.createProject(dir, 'Karma', 'novel');
-  // This test exercises the Karma profile rules (R3, R11); the default profile is generic.
+  dir = store.projectDirFor(tmp, 'Drumul');
+  store.createProject(dir, 'Drumul', 'novel');
+  // This test exercises the Drumul profile rules (R3, R11); the default profile is generic.
   const pj = path.join(dir, 'project.json');
-  fs.writeFileSync(pj, JSON.stringify({ ...JSON.parse(fs.readFileSync(pj, 'utf8')), editorialProfile: { base: 'karma' } }));
+  fs.writeFileSync(pj, JSON.stringify({ ...JSON.parse(fs.readFileSync(pj, 'utf8')), editorialProfile: { base: 'ro' } }));
   client = new Client({ name: 'test', version: '1.0.0' });
   await client.connect(
     new StdioClientTransport({ command: process.execPath, args: [path.resolve('mcp/server.mjs'), '--project', dir], stderr: 'ignore' }),
@@ -49,30 +49,30 @@ describe('Scribner MCP server', () => {
 
   it('reads, writes (with snapshot and log), comments, lints and compiles', async () => {
     const info = await call('project_info');
-    expect(info.title).toBe('Karma');
+    expect(info.title).toBe('Drumul');
     const binder = await call('list_binder');
     const ch1 = binder[0].children[0];
     expect(ch1.title).toBe('Capitolul 1');
 
-    const created = await call('create_document', { title: 'Sub 1.2', parent_id: ch1.id, content: 'Karma nu este o pedeapsă, ci un mecanism (cauzal).\n\nA doua frază.' });
+    const created = await call('create_document', { title: 'Sub 1.2', parent_id: ch1.id, content: 'Drumul nu este o pedeapsă, ci un mecanism (cauzal).\n\nA doua frază.' });
     expect(created.path).toBe('Manuscris / Capitolul 1 / Sub 1.2');
 
     const doc = await call('read_document', { id: created.id });
-    expect(doc.content).toBe('Karma nu este o pedeapsă, ci un mecanism (cauzal).\n\nA doua frază.');
+    expect(doc.content).toBe('Drumul nu este o pedeapsă, ci un mecanism (cauzal).\n\nA doua frază.');
 
     const issues = await call('lint', { id: created.id, severity: 'GRAVE' });
     expect(issues[0].issues.map((i) => i.round)).toEqual(expect.arrayContaining(['R3', 'R11']));
 
     await call('add_comment', { id: created.id, quote: 'A doua frază', comment: 'Verifică' });
-    const msg = await call('write_document', { id: created.id, content: 'Karma lucrează ca mecanism cauzal.\n\nA doua frază, rescrisă.' });
+    const msg = await call('write_document', { id: created.id, content: 'Drumul lucrează ca mecanism cauzal.\n\nA doua frază, rescrisă.' });
     expect(msg).toContain('Snapshot salvat');
     const html = store.readDoc(dir, created.id);
-    expect(html).toContain('<p>Karma lucrează ca mecanism cauzal.</p>');
+    expect(html).toContain('<p>Drumul lucrează ca mecanism cauzal.</p>');
     expect(html).toContain('data-comment="Verifică"');
     expect((await call('list_snapshots', { id: created.id })).length).toBe(2);
 
     await call('add_footnote', { id: created.id, after_quote: 'cauzal', note: 'Tattvārtha 8.1' });
-    await call('set_metadata', { id: created.id, status: 'Revizuit', keywords: ['karman'], synopsis: 'Mecanismul.' });
+    await call('set_metadata', { id: created.id, status: 'Revizuit', keywords: ['drumuln'], synopsis: 'Mecanismul.' });
     const after = await call('read_document', { id: created.id });
     expect(after.status).toBe('Revizuit');
     expect(after.content).toContain('[^Tattvārtha 8.1]');

@@ -49,7 +49,7 @@ const NEW_WRITE_TOOLS = (ctx) => ({
   restore_from_trash: { id: ctx.a },
   empty_trash: {},
   manage_snapshot: { id: ctx.a, file: 'x.json', action: 'delete' },
-  glossary_add: { term: 'karman' },
+  glossary_add: { term: 'drumuln' },
   backup_now: {},
   restore_backup: { name: 'x' },
   editorial_autofix: { id: ctx.a },
@@ -73,7 +73,7 @@ const NEW_READ_TOOLS = (ctx) => ({
   research_search: { query: 'text' },
   glossary_list: {},
   build_glossaries: {},
-  lookup_url: { text: 'karma' },
+  lookup_url: { text: 'drumul' },
   list_backups: {},
   editorial_round: {},
   author_journal: {},
@@ -487,12 +487,12 @@ describe('MCP integral: project settings', () => {
 
   it('list_keywords / manage_keyword', async () => {
     await call('set_metadata', { id: ids.a, keywords: ['dharma'] });
-    await call('manage_keyword', { action: 'add', name: 'karma', color: '#ff0000' });
-    await call('manage_keyword', { action: 'set_parent', name: 'dharma', parent: 'karma' });
-    await expect(call('manage_keyword', { action: 'set_parent', name: 'karma', parent: 'dharma' })).rejects.toThrow(/ciclu/);
+    await call('manage_keyword', { action: 'add', name: 'drumul', color: '#ff0000' });
+    await call('manage_keyword', { action: 'set_parent', name: 'dharma', parent: 'drumul' });
+    await expect(call('manage_keyword', { action: 'set_parent', name: 'drumul', parent: 'dharma' })).rejects.toThrow(/ciclu/);
     await call('manage_keyword', { action: 'rename', name: 'dharma', new_name: 'dharman' });
     const list = await call('list_keywords');
-    expect(list.find((k) => k.name === 'dharman')).toMatchObject({ parent: 'karma', count: 1 });
+    expect(list.find((k) => k.name === 'dharman')).toMatchObject({ parent: 'drumul', count: 1 });
     expect(store.findNode(store.loadProject(dir).tree, ids.a).keywords).toEqual(['dharman']);
     await call('manage_keyword', { action: 'delete', name: 'dharman' });
     expect(store.findNode(store.loadProject(dir).tree, ids.a).keywords).toEqual([]);
@@ -703,29 +703,29 @@ describe('MCP integral: analysis, research, glossary, lookups, backups, editoria
 
   it('glossary_add / glossary_list (creates "Glosar" in Research once, no duplicates)', async () => {
     expect((await call('glossary_list')).document).toBe(null);
-    const first = await call('glossary_add', { term: 'karman', definition: 'faptă' });
+    const first = await call('glossary_add', { term: 'drumuln', definition: 'faptă' });
     expect(first.created).toBe(true);
     const second = await call('glossary_add', { term: 'dharma' });
     expect(second.id).toBe(first.id);
-    await expect(call('glossary_add', { term: 'Karman' })).rejects.toThrow(/deja în glosar/);
+    await expect(call('glossary_add', { term: 'Drumuln' })).rejects.toThrow(/deja în glosar/);
     const g = await call('glossary_list');
     expect(g.document.title).toBe('Glosar');
-    expect(g.entries).toEqual([{ term: 'karman', definition: 'faptă' }, { term: 'dharma', definition: '' }]);
-    expect(store.readDoc(dir, first.id)).toBe('<p><strong>karman</strong> — faptă</p><p><strong>dharma</strong> — </p>');
+    expect(g.entries).toEqual([{ term: 'drumuln', definition: 'faptă' }, { term: 'dharma', definition: '' }]);
+    expect(store.readDoc(dir, first.id)).toBe('<p><strong>drumuln</strong> — faptă</p><p><strong>dharma</strong> — </p>');
     expect((await call('list_binder', { root_id: 'research' }))[0].children.filter((n) => n.title === 'Glosar').length).toBe(1);
   });
 
   it('build_glossaries', async () => {
-    store.writeDoc(dir, ids.b, 'docs', "<p>Fapta, <strong><em>faptă</em></strong> 'karman', rămâne.</p>");
+    store.writeDoc(dir, ids.b, 'docs', "<p>Fapta, <strong><em>faptă</em></strong> 'drumuln', rămâne.</p>");
     const g = await call('build_glossaries');
-    expect(g.alogen.terms.map((t) => t.term)).toContain('karman');
+    expect(g.alogen.terms.map((t) => t.term)).toContain('drumuln');
     expect(Array.isArray(g.toc.entries)).toBe(true);
   });
 
   it('lookup_url (DeepL, dictionaries, research sites)', async () => {
     const deepl = await call('lookup_url', { text: 'a/b', kind: 'deepl', to: 'en' });
     expect(deepl.url).toBe('https://www.deepl.com/translator#auto/en/a%5C%2Fb');
-    const groups = await call('lookup_url', { text: 'karma' });
+    const groups = await call('lookup_url', { text: 'drumul' });
     expect(groups.dict.map((x) => x.kind)).toContain('dictionary');
     expect(groups.research.map((x) => x.kind)).toContain('wikipedia');
     await expect(call('lookup_url', { text: 'x'.repeat(200), kind: 'dictionary' })).rejects.toThrow(/prea lung/);

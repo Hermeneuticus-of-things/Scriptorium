@@ -1,4 +1,4 @@
-// Automatic glossaries and print table of contents for the Karma book flow.
+// Automatic glossaries and print table of contents for the book flow.
 // Pure module (no DOM, no Node APIs). Every builder returns { title, html, ... } where
 // `html` is a TipTap-compatible document ready to be inserted into the binder.
 //

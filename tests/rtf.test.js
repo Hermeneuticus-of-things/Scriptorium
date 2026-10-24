@@ -91,7 +91,7 @@ describe('rtfToHtml v2', () => {
   });
 
   it('inline note groups scope \\uc: no stray "?" after a footnote or annotation (as Scrivener writes them)', () => {
-    // Scrivener 3 content.rtf: \uc0 is set inside the note group; after the group the outer \uc1 applies again
+    // .scriv content.rtf: \uc0 is set inside the note group; after the group the outer \uc1 applies again
     const fn = rtfToHtml(String.raw`{\rtf1\ansi\ansicpg1252\uc1 a{\Scrv_fn=\uc0 not\u259 \end_Scrv_fn} \u259?b\u351?\par}`);
     expect(fn).toBe('<p>a<span data-footnote="notă" class="footnote"></span> ăbş</p>');
     const an = rtfToHtml(String.raw`{\rtf1\ansi\uc1 x{\Scrv_annot \color={\R=0\G=0\B=1}\text=de \u351?ters\end_Scrv_annot} \u259?\par}`);

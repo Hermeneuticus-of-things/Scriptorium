@@ -39,14 +39,14 @@ describe('I-REP near repetition (VKB2 O13)', () => {
     expect(forms(['Urcă pas cu pas. Fiecare pas doare.'])).toEqual([['pas', 2]]);
   });
 
-  it('book terms are counted (faptă, karma, urmă)', () => {
-    expect(forms(['Karma lucrează. Karma nu uită.'])).toEqual([['karm', 2]]);
+  it('book terms are counted (faptă, pădure, urmă)', () => {
+    expect(forms(['Pădurea tace. Pădurea nu uită.'])).toEqual([['padur', 2]]);
     expect(forms(['Urma rămâne. Urmele cresc.'])).toEqual([['urme', 2]]);
     expect(forms(['Fapta e grea, faptele cântăresc.'])).toEqual([['fapt', 2]]);
   });
 
   it('Romanian inflection merges, diacritics-insensitive', () => {
-    for (const set of [['scutul', 'scut', 'scuturile', 'scutului'], ['faptă', 'fapta', 'faptele', 'faptelor', 'faptei', 'fapte'], ['lume', 'lumea', 'lumii'], ['karma', 'karmei']]) {
+    for (const set of [['scutul', 'scut', 'scuturile', 'scutului'], ['faptă', 'fapta', 'faptele', 'faptelor', 'faptei', 'fapte'], ['lume', 'lumea', 'lumii'], ['pădurea', 'pădurii']]) {
       expect(new Set(set.map((w) => lemma(w))).size).toBe(1);
     }
     expect(lemma('faptă')).toBe(lemma('fapta'));

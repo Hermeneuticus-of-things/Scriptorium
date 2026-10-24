@@ -32,7 +32,7 @@ beforeEach(() => {
 });
 
 function makeProject() {
-  const scriv = path.join(tmp, 'Karma.scriv');
+  const scriv = path.join(tmp, 'Drumul.scriv');
   const data = path.join(scriv, 'Files', 'Data');
   const put = (uuid, file, content) => {
     fs.mkdirSync(path.join(data, uuid), { recursive: true });
@@ -43,7 +43,7 @@ function makeProject() {
   fs.writeFileSync(path.join(scriv, 'Files', 'version.txt'), '23');
   fs.writeFileSync(path.join(scriv, 'Settings', 'compile.xml'), '<Compile/>');
   fs.writeFileSync(
-    path.join(scriv, 'Karma.scrivx'),
+    path.join(scriv, 'Drumul.scrivx'),
     `<?xml version="1.0" encoding="UTF-8"?>
 <ScrivenerProject Identifier="X" Version="2.0" Creator="SCRWIN-3.1" Author="Ion Pop">
  <Binder>
@@ -74,13 +74,13 @@ function makeProject() {
  <Collections><Collection Type="Arbitrary" ID="c1" Color="1 0 0"><Title>De revizuit</Title><BinderUUIDs>${U.s1},${U.s2}</BinderUUIDs></Collection></Collections>
  <LabelSettings><Title>POV</Title><Labels><Label ID="-1">No Label</Label><Label ID="1" Color="0.2 0.4 0.8">Doctrină</Label></Labels></LabelSettings>
  <StatusSettings><StatusItems><Status ID="2">Revizuit</Status></StatusItems></StatusSettings>
- <Keywords><Keyword ID="10" Color="0 0.5 0"><Title>karman</Title></Keyword><Keyword ID="11"><Title>vipāka</Title></Keyword></Keywords>
+ <Keywords><Keyword ID="10" Color="0 0.5 0"><Title>drumuln</Title></Keyword><Keyword ID="11"><Title>vipāka</Title></Keyword></Keywords>
  <CustomMetaDataSettings>
   <MetaDataField Type="List" ID="pov"><Title>Voce</Title><ListOptions><Option ID="o1">primară</Option><Option ID="o2">secundară</Option></ListOptions></MetaDataField>
   <MetaDataField Type="Checkbox" ID="gata"><Title>Gata</Title></MetaDataField>
  </CustomMetaDataSettings>
  <ProjectTargets><DraftTarget Type="Words">90000</DraftTarget><SessionTarget Type="Words">1200</SessionTarget><Deadline>2026-12-31 00:00:00 +0200</Deadline></ProjectTargets>
- <ProjectProperties><ProjectTitle>Karma: Arhitectura Subtilă a Destinului</ProjectTitle><FullName>Ion Pop</FullName></ProjectProperties>
+ <ProjectProperties><ProjectTitle>Drumul: Arhitectura Subtilă a Destinului</ProjectTitle><FullName>Ion Pop</FullName></ProjectProperties>
 </ScrivenerProject>`,
   );
   put(
@@ -134,17 +134,17 @@ const find = (tree, title) => {
   return f;
 };
 
-describe('lossless Scrivener 3 import', () => {
+describe('lossless .scriv import', () => {
   it('imports everything and reports it', () => {
     const { dir, project, stats } = importScriv(makeProject(), tmp);
 
-    expect(project.title).toBe('Karma: Arhitectura Subtilă a Destinului');
+    expect(project.title).toBe('Drumul: Arhitectura Subtilă a Destinului');
     expect(project.author).toBe('Ion Pop');
     expect(project.targets).toMatchObject({ draft: 90000, session: 1200 });
     expect(project.targets.deadline).toMatch(/^2026-12-30T22:00/);
     expect(project.labelTitle).toBe('POV');
     expect(project.labels.find((l) => l.name === 'Doctrină').color).toBe('#3366cc');
-    expect(project.keywordDefs.map((k) => k.name)).toEqual(['karman', 'vipāka']);
+    expect(project.keywordDefs.map((k) => k.name)).toEqual(['drumuln', 'vipāka']);
     expect(project.customFields.map((f) => [f.title, f.type])).toEqual([['Voce', 'list'], ['Gata', 'checkbox']]);
 
     const s1 = find(project.tree, 'Sub 1.1');
@@ -152,7 +152,7 @@ describe('lossless Scrivener 3 import', () => {
     expect(s1.label).toBe('Doctrină');
     expect(s1.status).toBe('Revizuit');
     expect(s1.icon).toBe('Flag');
-    expect(s1.keywords).toEqual(['karman', 'vipāka']);
+    expect(s1.keywords).toEqual(['drumuln', 'vipāka']);
     expect(s1.custom).toEqual({ Voce: 'secundară', Gata: true });
     expect(s1.target).toBe(1500);
     expect(s1.created).toBe('2024-01-03T07:15:00.000Z');
@@ -196,7 +196,7 @@ describe('lossless Scrivener 3 import', () => {
     const rows = history.summarize(history.readHistory(dir));
     expect(rows[0]).toMatchObject({ date: '2024-01-03', draft: 850, total: 970, imported: true });
 
-    expect(fs.existsSync(path.join(dir, 'scrivener-original', 'Karma.scrivx'))).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'scrivener-original', 'Drumul.scrivx'))).toBe(true);
     expect(fs.existsSync(path.join(dir, 'scrivener-original', 'Settings', 'compile.xml'))).toBe(true);
 
     expect(stats).toMatchObject({ documents: 5, media: 2, comments: 1, footnotes: 2, annotations: 2, snapshots: 1, links: 1, collections: 1, historyDays: 2, projectNotes: true });
