@@ -1477,7 +1477,7 @@ export default function App({ api: apiProp }) {
         return;
       }
       const combo = keyFromEvent(e);
-      if (!combo || e.defaultPrevented) return;
+      if (!combo) return;
       // A dialog is open: only Save still works behind it.
       const inDialog = document.querySelector('.modal-backdrop');
       // Typing in a field outside the editor: plain, Shift- or Alt-only keys belong to the field.
