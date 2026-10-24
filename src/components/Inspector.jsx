@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { incomingLinks } from '../lib/backlinks.js';
 import { BookmarkIcon, CommentIcon, LockIcon, MetaIcon, NotesIcon, SnapshotIcon, UnlockIcon } from './Icons.jsx';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { diffText, DIFF_LEVELS } from '../lib/snapshotDiff.js';
@@ -249,7 +250,7 @@ export default function Inspector({
             </>
           )}
           {!isRoot && <CustomFields project={project} node={node} onPatch={onPatch} />}
-          {!isRoot && <DocumentExtras project={project} node={node} onPatch={onPatch} linkTargets={linkTargets} onOpen={onOpen} />}
+          {!isRoot && <DocumentExtras project={project} node={node} onPatch={onPatch} linkTargets={linkTargets} onOpen={onOpen} docs={docs} />}
           <MetaTable project={project} node={node} />
           <p className="muted">{words.toLocaleString(uiLocale())} {tr('ui.inspector.cuvinte_in_acest_document')}</p>
         </div>
@@ -470,8 +471,9 @@ function CustomFields({ project, node, onPatch }) {
 const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥', '🧭', '🗝️', '📌', '🕯️', '🌿', '🌊', '⛰️', '🏛️', '👤', '👥', '🗺️', '📅', '🔬', '📚', '✉️', '🎭'];
 
 // Icon, section type, lock, favorite and bookmarks (Scrivener: Inspector > Bookmarks).
-function DocumentExtras({ project, node, onPatch, linkTargets, onOpen }) {
+function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs }) {
   const bookmarks = node.bookmarks || [];
+  const incoming = incomingLinks(docs || {}, node.id);
   const types = project.sectionTypes || [];
   const setBookmarks = (b) => onPatch({ bookmarks: b });
   return (
@@ -544,6 +546,20 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen }) {
           </button>
         </div>
       </label>
+      <div className="incoming-links">
+        {tr('ui.inspector.incomingLinks')}
+        {incoming.length ? (
+          <ul className="bookmarks">
+            {incoming.map((id) => (
+              <li key={id}>
+                <button className="link" onClick={() => onOpen?.(id)}>{linkTargets.find((t) => t.id === id)?.title || tr('ui.inspector.document_sters')}</button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted small">{tr('ui.inspector.noIncomingLinks')}</p>
+        )}
+      </div>
     </div>
   );
 }

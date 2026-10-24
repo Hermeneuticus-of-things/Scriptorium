@@ -1,3 +1,4 @@
+import { addBacklinks, addedLinks, insertLinkedDoc } from './lib/backlinks.js';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { keyFromEvent, shortcutFor } from './lib/commands.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -226,6 +227,9 @@ export default function App({ api }) {
   const [activeCollectionId, setActiveCollectionId] = useState(null);
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
+  // Copyholder: a reference pane beside the editor (and the split), read-only unless toggled.
+  const [copyholder, setCopyholder] = useState(null); // {id, editable} | null
+  const copyScroll = useRef(new Map()); // doc id -> scrollTop of the copyholder pane
   const [searchSeed, setSearchSeed] = useState('');
   const [editorView, setEditorViewState] = useState(() => {
     try {
@@ -454,8 +458,8 @@ export default function App({ api }) {
 
   // Remember UI state per project.
   useEffect(() => {
-    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId });
-  }, [dir, selectedId, view, widths, showInspector, splitId]);
+    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder });
+  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder]);
 
   const saveProject = useCallback(
     (next) => {
@@ -523,6 +527,7 @@ export default function App({ api }) {
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
+      setCopyholder(ui.copyholder?.id && findNode(res.project.tree, ui.copyholder.id) ? { id: ui.copyholder.id, editable: Boolean(ui.copyholder.editable) } : null);
       const openCounts = Object.fromEntries(entries.map(([id, h]) => [id, wordCount(h)]));
       const draftAtOpen = sumWords(res.project.tree[0], openCounts);
       setSessionStart(draftAtOpen);
@@ -582,6 +587,10 @@ export default function App({ api }) {
   };
 
   const onBinderSelect = (id, { ctrl, shift, alt }) => {
+    if (alt && shift) {
+      openCopyholder(id);
+      return;
+    }
     if (alt) {
       const node = findNode(project.tree, id);
       if (node && !node.root) setSplitId(id);
@@ -672,14 +681,20 @@ export default function App({ api }) {
   const setEditorHtml = (id, html) => {
     editorRefs.current.get(id)?.setHtml(html);
     editorRefs.current.get(`split:${id}`)?.setHtml(html);
+    editorRefs.current.get(`copy:${id}`)?.setHtml(html);
   };
   // Same document open in both panes: an edit in one is pushed into the other editor.
   const writeSynced = (id, html, from) => {
+    if (settings?.autoBacklinks) {
+      const added = addedLinks(docsNow()[id], html);
+      const pj = projectRef.current;
+      const tree = added.length ? addBacklinks(pj.tree, id, added) : pj.tree;
+      if (tree !== pj.tree) saveProject({ ...pj, tree });
+    }
     noteHandEdit(id);
     writeDocNow(id, html, { hand: true });
-    if (id !== splitId) return;
-    const other = from === 'split' ? editorRefs.current.get(id) : editorRefs.current.get(`split:${id}`);
-    if (other && other.getHtml() !== html) other.setHtml(html);
+    const others = [from !== 'main' && editorRefs.current.get(id), from !== 'split' && id === splitId && editorRefs.current.get(`split:${id}`), from !== 'copy' && editorRefs.current.get(`copy:${id}`)];
+    for (const other of others) if (other && other.getHtml() !== html) other.setHtml(html);
   };
 
   // New items go after the selection (inside it when it is a folder), are selected and put in
@@ -936,7 +951,7 @@ export default function App({ api }) {
   const saveLayout = async () => {
     const name = window.prompt('Numele layout-ului:', `Layout ${(settings.layouts || []).length + 1}`);
     if (!name) return;
-    const layout = { name, view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, split: Boolean(splitId) };
+    const layout = { name, view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, split: Boolean(splitId), copyholder };
     const layouts = [...(settings.layouts || []).filter((l) => l.name !== name), layout];
     await api.setSettings({ layouts });
     setSettings(await api.getSettings());
@@ -951,6 +966,11 @@ export default function App({ api }) {
     if (l.widths) setWidths(l.widths);
     if (l.editorView) setEditorView(l.editorView);
     if (!l.split) setSplitId(null);
+    setCopyholder(l.copyholder?.id && findNode(project.tree, l.copyholder.id) ? l.copyholder : null);
+  };
+  const openCopyholder = (id) => {
+    const node = id && findNode(project.tree, id);
+    if (node && !node.root && !node.children) setCopyholder((c) => ({ id, editable: c?.id === id ? c.editable : false }));
   };
 
   // Quick Reference: floating panels with another document (Scrivener: Open in Quick Reference).
@@ -1395,6 +1415,7 @@ export default function App({ api }) {
   const collectionIds = activeCollection ? collectionNodes(project, activeCollection, docs).map((n) => n.id) : null;
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
   const splitNode = splitId ? findNode(project.tree, splitId) : null;
+  const copyNode = copyholder ? findNode(project.tree, copyholder.id) : null;
   const registerRef = (id, r) => {
     if (r) editorRefs.current.set(id, r);
     else editorRefs.current.delete(id);
@@ -1557,6 +1578,21 @@ export default function App({ api }) {
   const linkTargets = flatten(project.tree)
     .filter((n) => !n.root && n.type !== 'folder' && !inTrash(n.id))
     .map((n) => ({ id: n.id, title: n.title }));
+  // [[New title]] → new document (same folder as the current one, or the chosen folder, which is
+  // remembered per project as the default).
+  const linkFolders = flatten(project.tree)
+    .filter((n) => n.children && !inTrash(n.id) && n.root !== 'trash')
+    .map((n) => ({ id: n.id, title: n.title }));
+  const createLinkedDoc = (fromId) => (label, folderId) => {
+    const node = newNode('text', label);
+    const pj = projectRef.current;
+    const tree = insertLinkedDoc(pj.tree, fromId, folderId, node);
+    binderHistory.current = historyPush(binderHistory.current, pj.tree, tree);
+    saveProject({ ...pj, tree, newLinkFolderId: folderId || '' });
+    setDocs((d) => ({ ...d, [node.id]: '<p></p>' }));
+    api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
+    return node;
+  };
   const openLink = (id) => {
     if (findNode(project.tree, id)) {
       go(id);
@@ -1672,11 +1708,14 @@ export default function App({ api }) {
     }],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
+    ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
     ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
     ['ai', 'mcpConnect', tr('cmd.mcpConnect'), () => setDialog('mcp'), !api.mcpConnectInfo],
     ['view', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
+    ['view', 'copyholder', tr('cmd.copyholder'), () => openCopyholder(selected?.id), !selected || Boolean(selected.root) || Boolean(selected.children)],
+    ['view', 'copyholderClose', tr('cmd.copyholderClose'), () => setCopyholder(null), !copyholder],
     ['view', 'splitEditor', tr('cmd.splitEditor'), () => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)],
     ['view', 'floatInspector', tr('cmd.floatInspector'), () => setShowFloatInspector((v) => !v), !composition],
     ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
@@ -1976,7 +2015,7 @@ export default function App({ api }) {
         <div className="resizer" onMouseDown={startResize('binder')} role="separator" aria-label={tr('ui.app.latime_binder')} />
         </>)}
 
-        <section className={`workspace ${splitNode && view === 'editor' ? 'split' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
+        <section className={`workspace ${(splitNode || copyNode) && view === 'editor' ? 'split' : ''} ${copyNode && view === 'editor' ? 'has-copyholder' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
           <div className={`pane ${editorAreaClass}`}>
             {view === 'editor' && selected && !composition && (
               <div className="sc-header-bar">
@@ -2008,6 +2047,9 @@ export default function App({ api }) {
                 onFocus={() => (activeId.current = selected.id)}
                 onChange={(html) => writeSynced(selected.id, html, 'main')}
                 linkTargets={linkTargets}
+                onCreateLinkedDoc={createLinkedDoc(selected.id)}
+                linkFolders={linkFolders}
+                linkFolderDefault={project.newLinkFolderId || ''}
                 onOpenLink={openLink}
                 words={words}
                 styles={projectStyles}
@@ -2127,6 +2169,43 @@ export default function App({ api }) {
                   onManageStyles={() => setDialog('styles')}
                 />
               )}
+            </div>
+          )}
+          {copyNode && view === 'editor' && (
+            <div
+              className="pane copyholder"
+              ref={(el) => {
+                if (el && el.dataset.doc !== copyNode.id) {
+                  el.dataset.doc = copyNode.id;
+                  el.scrollTop = copyScroll.current.get(copyNode.id) || 0;
+                }
+              }}
+              onScroll={(e) => copyScroll.current.set(copyNode.id, e.currentTarget.scrollTop)}
+            >
+              <div className="pane-head">
+                <span title={copyNode.title}>{tr('ui.app.copyholderTitle', { title: copyNode.title })}</span>
+                <label className="check">
+                  <input type="checkbox" checked={Boolean(copyholder.editable)} onChange={(e) => setCopyholder((c) => ({ ...c, editable: e.target.checked }))} /> {tr('ui.app.copyholderEditable')}
+                </label>
+                <button className="link" onClick={() => go(copyNode.id)}>{tr('ui.app.deschide_in_principal')}</button>
+                <button className="link" onClick={() => setCopyholder(null)}>{tr('btn.close')}</button>
+              </div>
+              <Editor
+                key={`copy-${copyNode.id}-${Boolean(copyholder.editable)}-${smartQuotes}-${corrKey}`}
+                compact
+                corrections={corrections}
+                defaultFormatting={project.defaultFormatting}
+                ref={(r) => registerRef(`copy:${copyNode.id}`, r)}
+                html={docs[copyNode.id] || ''}
+                title={copyNode.title}
+                readOnly={!copyholder.editable || inTrash(copyNode.id) || Boolean(copyNode.locked)}
+                smartQuotes={smartQuotes}
+                onChange={(html) => writeSynced(copyNode.id, html, 'copy')}
+                linkTargets={linkTargets}
+                onOpenLink={openLink}
+                words={words}
+                styles={projectStyles}
+              />
             </div>
           )}
         </section>

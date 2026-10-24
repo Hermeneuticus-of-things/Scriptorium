@@ -54,6 +54,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     paragraphSpacing: init.paragraphSpacing,
     defaultView: init.defaultView,
     showInvisibles: Boolean(init.showInvisibles),
+    autoBacklinks: Boolean(init.autoBacklinks),
     aiEnabled: init.aiEnabled !== false,
     backupOnClose: init.backupOnClose !== false,
     backupOnOpen: Boolean(init.backupOnOpen),
@@ -407,6 +408,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </select>
         </label>
         {check('showInvisibles', t('set.showInvisibles'))}
+        {check('autoBacklinks', t('set.autoBacklinks'))}
       </>
     ),
     backup: api.chooseBackupDir ? (

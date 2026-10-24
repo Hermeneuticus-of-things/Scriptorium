@@ -464,6 +464,31 @@ export const PageBreak = Node.create({
   },
 });
 
+// --- Preserve Formatting block ---------------------------------------------------------
+// <div data-preserve-format class="preserve-format">…paragraphs…</div>: Compile keeps the text
+// verbatim (no replacements, quotes, dashes) and the block's own font, size and indents.
+
+export const PreserveFormat = Node.create({
+  name: 'preserveFormat',
+  group: 'block',
+  content: 'block+',
+  defining: true,
+  parseHTML() {
+    return [{ tag: 'div[data-preserve-format]', priority: 60 }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-preserve-format': 'true', class: 'preserve-format' }), 0];
+  },
+  addCommands() {
+    return {
+      togglePreserveFormat:
+        () =>
+        ({ editor, commands }) =>
+          editor.isActive(this.name) ? commands.lift(this.name) : commands.wrapIn(this.name),
+    };
+  },
+});
+
 // --- Image with width and alignment ----------------------------------------------
 
 const ALIGN_CSS = {

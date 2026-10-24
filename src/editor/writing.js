@@ -373,20 +373,44 @@ export function findLinkTarget(targets, text) {
   return starts.length === 1 ? starts[0] : null;
 }
 
+/**
+ * Turns the plain "[[label]]" typed at `from` into a link to document `id`. Returns false
+ * when the text there changed meanwhile (undo, more typing), leaving it untouched.
+ */
+export function resolveWikiLink(editor, from, label, id) {
+  const { state } = editor;
+  if (from < 0 || from >= state.doc.content.size) return false;
+  const text = state.doc.textBetween(from, Math.min(state.doc.content.size, from + 210), '\n');
+  const m = /^\[\[([^[\]\n]{1,200})\]\]/.exec(text);
+  if (!m || m[1].trim() !== label) return false;
+  const linkType = state.schema.marks.link;
+  const mark = linkType.create({ href: `scribner://doc/${id}`, class: 'internal-link' });
+  editor.view.dispatch(state.tr.replaceWith(from, from + m[0].length, state.schema.text(label, [mark])).removeStoredMark(linkType));
+  return true;
+}
+
 export const WikiLink = Extension.create({
   name: 'wikiLink',
   addOptions() {
-    return { getTargets: () => [] };
+    // onMissing(label, from): no document has that title; the typed "[[label]]" stays as text
+    // starting at `from` and the editor can offer to create the document (resolveWikiLink).
+    return { getTargets: () => [], onMissing: null };
   },
   addInputRules() {
     const getTargets = this.options.getTargets;
+    const onMissing = this.options.onMissing;
     return [
       new InputRule({
         find: /\[\[([^[\]\n]{1,200})\]\]$/,
         handler: ({ state, range, match }) => {
           const target = findLinkTarget(getTargets(), match[1]);
           const linkType = state.schema.marks.link;
-          if (!target || !linkType) return null;
+          if (!linkType) return null;
+          if (!target) {
+            const label = match[1].trim();
+            if (label && onMissing) setTimeout(() => onMissing(label, range.from), 0);
+            return null;
+          }
           const label = match[1].trim();
           const mark = linkType.create({ href: `scribner://doc/${target.id}`, class: 'internal-link' });
           state.tr.replaceWith(range.from, range.to, state.schema.text(label, [mark])).removeStoredMark(linkType);

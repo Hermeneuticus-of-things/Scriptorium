@@ -1,5 +1,17 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.6 — Legături înapoi, panou de referință, numerotarea notelor, fișe personalizate, formatare păstrată
+
+### Rezultat
+- **Legături înapoi automate** (Setări → Editare, oprit implicit): când un document primește o legătură către altul, sursa apare în semnele de carte ale țintei; Inspectorul arată „Legături către acest document”.
+- **`[[Titlu nou]]`** fără potrivire: bară cu „Creează și leagă” / „Anulează” și alegerea dosarului.
+- **Panou de referință** (Vizualizare → Deschide ca referință, Alt+Shift+clic în binder): un document alături de editor și de split, doar citire până bifezi „Editabil”; păstrează derularea și se salvează în layout.
+- **Numerotarea notelor de subsol** în Compile: 1, 2, 3 / i, ii, iii / a, b, c / *, †, ‡, §, cu reluare pe capitol (DOCX, HTML/PDF; EPUB format; ODT/RTF format fără reluare).
+- **Fișe pe corkboard:** colțuri rotunjite sau drepte, fișe liniate, culoare după etichetă.
+- **Păstrează formatarea** (Format): blocuri pe care Compile nu le reformatează (fără înlocuiri, ghilimele, alineat; DOCX își păstrează fontul și indentările).
+- Verificarea funcțiilor (`docs/GAP-AUDIT.md`): 69 prezente, 1 lipsă (adnotări în PDF).
+- Teste: 882 + 2 sărite; E2E Electron trece.
+
 ## 2026-10-24 — v0.8.5 (continuare) — Verificare completă a funcțiilor, legături [[Titlu]], comparare pe frază/paragraf, numărul selecției
 
 ### Cerința user
