@@ -268,7 +268,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'scrivenings-split',
         title: 'Editorul împărțit (split)',
-        html: `<p><em>Vizualizare → Împarte editorul</em> (sau butonul de pe antetul documentului) deschide al doilea panou. ${k('Alt')}+clic în binder deschide documentul în panoul din dreapta. Panoul poate fi blocat pe un document, așezat orizontal sau vertical (<em>Vizualizare → Împarte orizontal / vertical</em>) și inversat (<em>Inversează panourile</em>). Același document poate fi deschis în ambele panouri.</p>`,
+        html: `<p><em>Vizualizare → Împarte editorul</em> (sau butonul de pe antetul documentului) deschide al doilea panou. ${k('Alt')}+clic în binder deschide documentul în panoul din dreapta. Panoul poate fi blocat pe un document, așezat orizontal sau vertical (<em>Vizualizare → Împarte orizontal / vertical</em>) și inversat (<em>Inversează panourile</em>). Același document poate fi deschis în ambele panouri. Panoul în care scrii are un chenar verde; celălalt e ușor estompat.</p>`,
       },
       {
         id: 'scrivenings-quickref',
