@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { sanitizeHtml } from '../lib/sanitize.js';
 import { t } from '../lib/i18n.js';
 
 // Project bookmarks with preview (Scrivener: Project Bookmarks).
@@ -56,7 +57,7 @@ export default function BookmarksPanel({ bookmarks = [], nodeTitle = () => undef
       </ul>
       {sel && (
         // Preview is the project's own stored HTML (written by our editor), shown read-only.
-        <div className="bookmark-preview prose" dangerouslySetInnerHTML={{ __html: preview || t('ui.bookmarksPanel.p_class_muted_gol_p') }} />
+        <div className="bookmark-preview prose" dangerouslySetInnerHTML={{ __html: preview ? sanitizeHtml(preview) : t('ui.bookmarksPanel.p_class_muted_gol_p') }} />
       )}
     </div>
   );

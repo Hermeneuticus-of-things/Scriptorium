@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { tabKeys } from '../lib/tabKeys.js';
 import { styleCss, stylesOf } from '../lib/styles.js';
 // The presets live in lib/compileFormats.cjs (used by the main process). The
 // renderer has no Node and no eval, so it reads the JSON block from the source.
@@ -420,9 +421,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                 </select>
               </label>
             </div>
-            <nav className="cd-tabs" role="tablist">
+            <nav className="cd-tabs" role="tablist" onKeyDown={tabKeys(TABS().map(([id]) => id), tab, setTab)}>
               {TABS().map(([id, label]) => (
-                <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
+                <button key={id} type="button" role="tab" aria-selected={tab === id} tabIndex={tab === id ? 0 : -1} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
                   {label}
                 </button>
               ))}

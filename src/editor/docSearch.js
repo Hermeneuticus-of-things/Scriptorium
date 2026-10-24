@@ -29,6 +29,9 @@ export function findRanges(doc, re) {
       }
       const from = map[m.index];
       const to = map[m.index + m[0].length - 1];
+      // A match that contains a footnote, image or annotation is skipped: replacing it would
+      // delete the note (regex "." matches the placeholder character).
+      if (map.slice(m.index, m.index + m[0].length).includes(-1)) continue;
       if (from >= 0 && to >= 0) ranges.push({ from, to: to + 1, match: m });
     }
     return false;
@@ -58,7 +61,8 @@ export function replaceRanges(editor, ranges, replacement, { regex = false } = {
   const { tr } = editor.state;
   for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
     const text = expandReplacement(replacement, r.match, regex);
-    const marks = editor.state.doc.resolve(r.from).marks();
+    // The formatting of the replaced text itself (bold, italic, comment), not of the text before it.
+    const marks = editor.state.doc.nodeAt(r.from)?.marks ?? editor.state.doc.resolve(r.from).marks();
     if (text) tr.replaceWith(r.from, r.to, editor.schema.text(text, marks));
     else tr.delete(r.from, r.to);
   }

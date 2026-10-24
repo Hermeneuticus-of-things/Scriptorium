@@ -284,7 +284,7 @@ describe('Scrivener export -> import round trip', () => {
     expect(html).toContain(`<img src="data:image/gif;base64,${GIF}">`);
     expect(html).toContain('<blockquote><p>Citat lung</p></blockquote>');
     expect(html).toContain('<p>Rând<br>nou</p>');
-    expect(html).toMatch(/<hr class="page-break"><p>După pauză<\/p>/);
+    expect(html).toMatch(/<hr data-page-break="true" class="page-break"><p>După pauză<\/p>/);
     // named styles come back by name as Scribner styles, with their definitions
     expect(html).toContain('<p data-style="motto" style="text-align: right">Un motto</p>');
     expect(html).toContain('<p>Un <span data-char-style="termen">termen</span>.</p>');

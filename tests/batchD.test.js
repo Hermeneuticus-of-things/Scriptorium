@@ -76,7 +76,7 @@ describe('templates', () => {
     templates.deleteUserTemplate(tdir, info.id);
     expect(templates.listUserTemplates(tdir).map((t) => t.id)).toEqual(['user:roman-politist-2']);
     expect(() => templates.saveUserTemplate(src, tdir, { title: ' ' })).toThrow();
-  });
+  }, 20000); // many synced (fsync) file writes: slow on a busy disk
 });
 
 describe('backup', () => {

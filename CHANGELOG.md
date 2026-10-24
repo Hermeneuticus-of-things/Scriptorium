@@ -1,5 +1,30 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.4 — Bug hunter din TODO: căutare, tastatură, siguranță
+
+### Cerința user
+> "continua automat cu roadmap + bug hunter, ALL TYPE"
+
+- **Căutare „cuvânt întreg”** și `^`/`$` văd literele de lângă un cuvânt îngroșat sau cursiv: „pre**fix**” nu mai e găsit ca „fix”, iar `^` înseamnă începutul paragrafului (`src/lib/search.js`).
+- **Tastatură:** taburile din Compile și din Inspector se schimbă cu ←/→/Home/End și sunt un singur pas de Tab; pe Corkboard tot panoul e un singur pas de Tab, iar săgețile trec de la o fișă la alta.
+- **Siguranță:** previzualizarea semnelor de carte, notele din Inspectorul plutitor și snapshot-urile trec printr-un filtru comun care păstrează doar formatarea (fără scripturi, formulare, redirecționări sau imagini de pe internet); legăturile se deschid în browser.
+- **Restaurarea unei copii de siguranță** refuză arhivele cu peste 200 000 de fișiere sau peste 4 GB despachetat.
+- **Drumul textului (căutare divergentă pe date):**
+  - exportul `.scriv` păstrează tab-urile și spațiile repetate;
+  - saltul de pagină rămâne salt de pagină după oricâte drumuri `.scriv` (nu se mai transformă în „* * *”);
+  - pachetul de proiect (export/import) duce cu el și istoricul scrisului;
+- **Editor (căutare divergentă pe funcțiile editorului):**
+  - Caută și înlocuiește (Ctrl+F) nu mai poate șterge o notă de subsol, o imagine sau o adnotare aflată în mijlocul unei potriviri;
+  - textul înlocuit își păstrează aldinul, cursivul și comentariul;
+  - după „Înlocuiește”, selecția și contorul trec corect la potrivirea următoare;
+  - o notă de subsol golită la editare se șterge, nu mai rămâne numerotată și goală;
+  - o imagine din clipboard (captură de ecran, imagine copiată) se lipește direct în text.
+- **Ecran îngust (mod browser):** bara de meniuri trece pe două rânduri, iar meniurile nu mai ies din pagină.
+  - caracterele de control (din text lipit) nu mai ajung în RTF, comentariile `.scriv`, OPML și LaTeX, care ieșeau invalide;
+  - listele numerotate care încep de la alt număr („5.”) încep tot de acolo în DOCX;
+  - „Unește documentele” nu mai trimite în Coș documentele așezate sub cele unite (trec sub primul) și păstrează cuvintele-cheie ale tuturor.
+- **Viteză:** numărul de caractere (ținte pe caractere, istoric) se calculează doar pentru documentele schimbate.
+
 ## 2026-10-24 — v0.9.3 — Bug hunter pe interfață și pe textele în română
 
 ### Cerința user

@@ -527,3 +527,9 @@ legend { color: var(--muted); padding: 0 4px; }
 .sync-pending .sync-dot { background: #d9822b; }
 .sync-conflict .sync-dot { background: #c62828; }
 .sync-conflict { color: #c62828; font-weight: 600; }
+
+/* Narrow windows (browser mode on a phone): the menu bar scrolls instead of widening the page,
+   and a dropdown never runs past the right edge. */
+@media (max-width: 600px) { .menubar { flex-wrap: wrap; } } /* wraps, never clips the dropdowns */
+.menu-pop { max-width: calc(100vw - 8px); }
+.menu-pop button span { white-space: normal; }
