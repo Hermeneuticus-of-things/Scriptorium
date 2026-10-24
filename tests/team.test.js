@@ -339,3 +339,16 @@ describe('clock skew and double locks', () => {
     expect((await api.teamFiles('p'))['log-pc-ana.jsonl'].split('\n').filter(Boolean).sort()).toEqual(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
   });
 });
+
+describe('the api wrapper of App over a read-only desktop api', () => {
+  it('Object.create with defineProperty works where assignment throws (contextBridge objects are frozen)', () => {
+    const frozen = Object.freeze({ writeDoc: async () => true, readDoc: async () => '' });
+    expect(() => {
+      'use strict';
+      const w = Object.create(frozen);
+      w.writeDoc = () => {};
+    }).toThrow();
+    const ok = Object.create(frozen, { writeDoc: { value: async () => 'x' } });
+    return ok.writeDoc().then((v) => expect(v).toBe('x'));
+  });
+});

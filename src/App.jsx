@@ -147,18 +147,24 @@ export default function App({ api: apiProp }) {
   // of a document goes through this api, so no save path can leave the base stale.
   const diskDocs = useRef(new Map());
   const api = useMemo(() => {
-    const w = Object.create(apiProp);
-    w.writeDoc = async (d, id, kind, html) => {
-      const r = await apiProp.writeDoc(d, id, kind, html);
-      if (kind !== 'notes') diskDocs.current.set(id, String(html ?? ''));
-      return r;
-    };
-    w.readDoc = async (d, id, kind) => {
-      const html = await apiProp.readDoc(d, id, kind);
-      if (kind !== 'notes' && !diskDocs.current.has(id)) diskDocs.current.set(id, html);
-      return html;
-    };
-    return w;
+    // defineProperty: the desktop api (contextBridge) has read-only properties, so plain
+    // assignment over the inherited ones throws.
+    return Object.create(apiProp, {
+      writeDoc: {
+        value: async (d, id, kind, html) => {
+          const r = await apiProp.writeDoc(d, id, kind, html);
+          if (kind !== 'notes') diskDocs.current.set(id, String(html ?? ''));
+          return r;
+        },
+      },
+      readDoc: {
+        value: async (d, id, kind) => {
+          const html = await apiProp.readDoc(d, id, kind);
+          if (kind !== 'notes' && !diskDocs.current.has(id)) diskDocs.current.set(id, html);
+          return html;
+        },
+      },
+    });
   }, [apiProp]);
   const [settings, setSettings] = useState(null);
   const settingsRef = useRef(null);
