@@ -513,7 +513,7 @@ export default function App({ api: apiProp }) {
       queuedRef.current = pending.current.size;
       setQueued(pending.current.size);
       // Kept on this computer too: closing the app while the folder is away loses nothing.
-      saveQueue(dir, Object.fromEntries(pending.current));
+      saveQueue(dir, queueEntries());
       clearTimeout(retryTimer.current);
       retryTimer.current = setTimeout(() => flushRef.current?.(), RETRY_DELAY);
     }
@@ -521,6 +521,20 @@ export default function App({ api: apiProp }) {
 
   const flushRef = useRef(null);
   flushRef.current = flush;
+  // What the queue stores: the text and the disk version it was written over (for merging later).
+  const queueEntries = () =>
+    Object.fromEntries([...pending.current].map(([k, html]) => [k, { html, base: k.endsWith('|docs') ? diskDocs.current.get(k.split('|')[0]) : undefined }]));
+  // Leaving a project: its unsent edits stay stored under its own folder and never follow into
+  // the next project.
+  const parkQueue = (fromDir) => {
+    if (fromDir && pending.current.size) saveQueue(fromDir, queueEntries());
+    pending.current.clear();
+    clearTimeout(retryTimer.current);
+    queuedRef.current = 0;
+    setQueued(0);
+  };
+  const dirNowRef = useRef(null);
+  dirNowRef.current = dir;
   useEffect(() => {
     const back = () => flushRef.current?.();
     window.addEventListener('online', back);
@@ -702,17 +716,36 @@ export default function App({ api: apiProp }) {
       dropTyped();
       diskDocs.current = new Map(entries);
       // A queue left from a session closed while the folder was away: shown and sent now.
+      if (dirNowRef.current && dirNowRef.current !== res.dir) parkQueue(dirNowRef.current);
       const left = loadQueue(res.dir);
       if (left) {
-        for (const [k, html] of Object.entries(left)) {
+        const ids = new Set(all.map((n) => n.id));
+        let n = 0;
+        for (const [k, item] of Object.entries(left)) {
           const [id, kind] = k.split('|');
-          if (kind === 'docs' && id in cache) cache[id] = html;
+          if (!ids.has(id)) continue; // deleted meanwhile: not recreated
+          let html = typeof item === 'string' ? item : item?.html;
+          if (typeof html !== 'string') continue;
+          const base = typeof item === 'object' ? item.base : undefined;
+          if (kind === 'docs') {
+            // Changed on disk since (another computer): merged, never overwritten blindly.
+            const disk = cache[id] ?? '';
+            if (base !== undefined && disk !== base && disk !== html) {
+              const r = mergeDoc(base, html, disk);
+              html = r.html;
+              if (r.conflicts) api.takeSnapshot(res.dir, id, tr('ui.app.versiunea_de_pe_celalalt_calculator', { time: '' })).catch(() => {});
+            }
+            cache[id] = html;
+          }
           pending.current.set(k, html);
+          n++;
         }
-        queuedRef.current = Object.keys(left).length; // cleared (with the stored copy) once written
-        setQueued(queuedRef.current);
-        setToast(tr('ui.sync.recuperat', { n: Object.keys(left).length }));
-        setTimeout(() => flushRef.current?.(), 0);
+        if (n) {
+          queuedRef.current = n; // cleared (with the stored copy) once written
+          setQueued(n);
+          setToast(tr('ui.sync.recuperat', { n }));
+          setTimeout(() => flushRef.current?.(), 0);
+        } else saveQueue(res.dir, null);
       }
       setDocs(cache);
       setDir(res.dir);
@@ -746,6 +779,7 @@ export default function App({ api: apiProp }) {
 
   const closeProject = async () => {
     await flush();
+    parkQueue(dir);
     if (project?.syncFolder && (project.syncAuto || settings?.sharingSync?.syncOnClose)) await api.syncAuto?.(dir, { ...withSyncDefaults(project), syncAuto: true }, 'close').catch(() => {});
     api.releaseProject?.().catch(() => {});
     setProject(null);

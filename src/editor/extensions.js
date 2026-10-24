@@ -210,7 +210,7 @@ export const RomanianQuotes = Extension.create({
         handler: ({ state, range, match }) => {
           const $from = state.doc.resolve(range.from);
           if ($from.parent.type.spec.code || $from.marks().some((m) => m.type.spec.code)) return null;
-          const before = $from.parent.textBetween(0, $from.parentOffset, undefined, '\ufffc');
+          const before = $from.parent.textBetween(Math.max(0, $from.parentOffset - 256), $from.parentOffset, undefined, '\ufffc');
           state.tr.insertText(romanianQuote(before, match[0]), range.from, range.to);
           return undefined;
         },

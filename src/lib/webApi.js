@@ -153,7 +153,8 @@ export function parseBundle(text) {
 
 // Daily word history, same summary shape as lib/history.cjs summarize().
 export function recordDay(hist, counts, date = new Date()) {
-  const day = date.toISOString().slice(0, 10);
+  const p2 = (n) => String(n).padStart(2, '0');
+  const day = `${date.getFullYear()}-${p2(date.getMonth() + 1)}-${p2(date.getDate())}`; // local day, as on desktop
   const h = { ...(hist || {}) };
   const d = h[day] ? { ...h[day] } : { draftStart: counts.draft, totalStart: counts.total };
   d.draftEnd = counts.draft;

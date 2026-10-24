@@ -254,7 +254,7 @@ export function createMockApi() {
       ];
     },
     async recordHistory(dir, counts) {
-      const day = new Date().toISOString().slice(0, 10);
+      const day = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
       const h = (history[dir] ||= {});
       if (!h[day]) h[day] = { draftStart: counts.draft, totalStart: counts.total };
       Object.assign(h[day], { draftEnd: counts.draft, totalEnd: counts.total });
