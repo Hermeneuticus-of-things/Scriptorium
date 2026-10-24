@@ -92,7 +92,7 @@ Rezumat: 77 de unelte MCP (57 noi), 4 bug-uri reparate la cauză, 43 de teste no
 
 ### Request: bug hunter deep (încrucișat, divergent, convergent)
 - [x] Editor, date, Compile, interfață: 25+ bug-uri reparate la cauză, fiecare cu test
-- [ ] DOCX: fără antet pe pagina de titlu și cuprins (în PDF e deja rezolvat)
+- [x] DOCX: pagina de titlu și cuprinsul într-o secțiune fără antet; corpul de la pagina 1 (verificat în LibreOffice)
 - [ ] Antet/subsol: <$t> (titlul capitolului) și <$wc> în antet
 - [ ] Ctrl+Z după o corectură automată nu se poate reface cu Ctrl+Y (comportament ales, diferit de Word)
 - [ ] Verificat cu LanguageTool real: poziții după emoji
