@@ -1,5 +1,15 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.7.1 — Clic dreapta: „În proiect” (căutare, cercetare, glosar)
+
+### Cerința user
+> "trimitere ... la AI pentru cercetare ... sau căutare în baza de date ... pe cuvânt sau pe frază"
+
+### Rezultat
+- Meniul contextual are „În proiect”: caută selecția în tot proiectul, caută în cercetarea proiectului, răspuns AI din cercetarea proiectului, adaugă în glosar (documentul „Glosar…” din Cercetare, creat dacă lipsește, fără dubluri).
+- Bug la cauză: butoanele panoului de cercetare primeau evenimentul click ca text de căutare când funcția accepta un argument; acum doar un șir e interogare, iar „Reîncearcă” păstrează interogarea.
+- Test în browser extins (context-actions): 13 verificări.
+
 ## 2026-10-23 — v0.7.0 — Clic dreapta pe cuvânt sau frază: traducere, dicționare, cercetare, AI, NotebookLM
 
 ### Cerința user

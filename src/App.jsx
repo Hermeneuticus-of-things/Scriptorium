@@ -167,7 +167,9 @@ export default function App({ api }) {
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
-  const [aiRequest, setAiRequest] = useState(null); // { action, n } run by AiPanel
+  const [aiRequest, setAiRequest] = useState(null);
+  const [researchRequest, setResearchRequest] = useState(null); // { q, mode, n } run by ResearchPanel
+  const [findSeed, setFindSeed] = useState(''); // { action, n } run by AiPanel
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
@@ -699,6 +701,53 @@ export default function App({ api }) {
       await navigator.clipboard.writeText(text);
       await api.nlmOpen();
       setToast(tr('ui.app.nlm_lipeste'));
+    } catch (e) {
+      report(e);
+    }
+    return undefined;
+  };
+  const searchProjectFor = () => {
+    const text = selectedText().trim();
+    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    setFindSeed(text.slice(0, 200));
+    setDialog('find');
+    return undefined;
+  };
+  // Research panel: passages from the project's own documents and notes; with AI, an answer citing them.
+  const researchSelection = (mode) => {
+    const text = selectedText().trim();
+    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    setShowResearch(true);
+    setResearchRequest((r) => ({ q: text.slice(0, 500), mode, n: (r?.n || 0) + 1 }));
+    return undefined;
+  };
+  // Translator's glossary: the term goes to the "Glosar…" research document (created when missing).
+  const addToGlossary = async () => {
+    const term = selectedText().trim().replace(/\s+/g, ' ');
+    if (!term) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (term.length > 120) return setToast(tr('ui.app.selectie_prea_lunga'));
+    const research = project.tree.find((n) => n.root === 'research') || project.tree[1];
+    const all = [];
+    const walk = (list) => list.forEach((n) => { all.push(n); if (n.children) walk(n.children); });
+    walk(research.children || []);
+    let node = all.find((n) => n.type === 'text' && /^(glosar|glossary)\b/i.test(n.title || ''));
+    const esc = term.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const line = `<p><strong>${esc}</strong> — </p>`;
+    try {
+      if (node) {
+        const html = docsNow()[node.id] ?? ((await api.readDoc(dir, node.id, 'docs')) || '');
+        if (htmlToText(html).split('\n').some((l) => l.trim().toLowerCase().startsWith(`${term.toLowerCase()} —`))) return setToast(tr('ui.app.deja_in_glosar', { term }));
+        const next = html + line;
+        setDocs((d) => ({ ...d, [node.id]: next }));
+        editorRefs.current.get(node.id)?.setHtml(next);
+        await api.writeDoc(dir, node.id, 'docs', next);
+      } else {
+        node = newNode('text', tr('ui.app.glosar'));
+        setTree(updateNode(project.tree, research.id, { children: [...(research.children || []), node] }));
+        setDocs((d) => ({ ...d, [node.id]: line }));
+        await api.writeDoc(dir, node.id, 'docs', line);
+      }
+      setToast(tr('ui.app.adaugat_in_glosar', { term, title: node.title }));
     } catch (e) {
       report(e);
     }
@@ -1441,7 +1490,7 @@ export default function App({ api }) {
     ['file', 'backups', 'Backup-uri…', () => setDialog('backup'), !api.listBackups],
     ['file', 'closeProject', tr('cmd.closeProject'), closeProject],
     ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
-    ['edit', 'findProject', tr('cmd.findProject'), () => setDialog('find')],
+    ['edit', 'findProject', tr('cmd.findProject'), () => { setFindSeed(''); setDialog('find'); }],
     ['edit', 'advSearch', tr('cmd.advSearch'), () => { setSearchSeed(''); setDialog('advsearch'); }],
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
@@ -1562,6 +1611,10 @@ export default function App({ api }) {
     ['tools', 'aiDefineSel', tr('cmd.aiDefineSel'), () => aiOnSelection('define'), !aiEnabled],
     ['tools', 'aiTranslateSel', tr('cmd.aiTranslateSel'), () => aiOnSelection('translate'), !aiEnabled],
     ['tools', 'aiProofreadSel', tr('cmd.aiProofreadSel'), () => aiOnSelection('proofread'), !aiEnabled],
+    ['tools', 'findSel', tr('cmd.findSel'), searchProjectFor],
+    ['tools', 'researchSel', tr('cmd.researchSel'), () => researchSelection('search'), !api.ragQuery],
+    ['tools', 'researchAskSel', tr('cmd.researchAskSel'), () => researchSelection('ask'), !api.ragAsk || !aiEnabled],
+    ['tools', 'glossaryAdd', tr('cmd.glossaryAdd'), addToGlossary],
     ['tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
@@ -1598,6 +1651,15 @@ export default function App({ api }) {
           ],
         });
       }
+      items.push({
+        label: tr('ui.ctx.in_proiect'),
+        submenu: [
+          { label: tr('cmd.findSel'), action: run('findSel') },
+          ...(api.ragQuery ? [{ label: tr('cmd.researchSel'), action: run('researchSel') }] : []),
+          ...(api.ragAsk && aiEnabled ? [{ label: tr('cmd.researchAskSel'), action: run('researchAskSel') }] : []),
+          { label: tr('cmd.glossaryAdd'), action: run('glossaryAdd') },
+        ],
+      });
       if (api.nlmOpen) items.push({ label: tr('cmd.nlmAskSel'), action: askNotebookLm });
       items.push('-');
     }
@@ -1912,7 +1974,7 @@ export default function App({ api }) {
                 />
               )}
               {showResearch && dir && (
-                <ResearchPanel api={api} dir={dir} aiEnabled={aiEnabled} aiLabel={settings.aiLabel} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
+                <ResearchPanel request={researchRequest} api={api} dir={dir} aiEnabled={aiEnabled} aiLabel={settings.aiLabel} onOpen={(id) => go(id)} onClose={() => setShowResearch(false)} />
               )}
               {showAi && aiEnabled && (
                 <AiPanel
@@ -2096,6 +2158,7 @@ export default function App({ api }) {
       )}
       {dialog === 'find' && (
         <FindDialog
+          initialQuery={findSeed}
           project={project}
           docs={docs}
           onOpen={(id) => {

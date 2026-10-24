@@ -16,7 +16,7 @@ Scrii o carte, traduci una sau lucrezi la o teză? Un singur fișier Word de 300
 
 - Pui fișierul Word primit de la editură și Scribner îl împarte singur pe capitole.
 - Ții originalul la stânga și traducerea la dreapta, pe același ecran.
-- Clic dreapta pe un cuvânt sau o frază: o trimiți la DeepL, o cauți în dexonline, Linguee sau IATE, ori ceri AI-ului o explicație.
+- Clic dreapta pe un cuvânt sau o frază: o trimiți la DeepL, o cauți în dexonline, Linguee sau IATE, ori ceri AI-ului o explicație. Termenul ajunge cu un clic în glosarul tău.
 - Notezi termenii grei în Cercetare, ca glosar, și îi ai mereu la un clic distanță.
 - La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
 
