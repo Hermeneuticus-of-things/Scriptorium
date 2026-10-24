@@ -77,7 +77,8 @@ export function moveNode(tree, id, targetId, position) {
 // Inserts node after the selected item (or inside it when it is a folder).
 export function insertNear(tree, selectedId, node) {
   return produce(tree, (t) => {
-    const sel = selectedId ? findNode(t, selectedId) : null;
+    // Never into the Trash: "Empty Trash" would delete the new writing.
+    const sel = selectedId && rootOf(t, selectedId)?.root !== 'trash' ? findNode(t, selectedId) : null;
     if (!sel) {
       t[0].children.push(node);
     } else if (sel.children) {
@@ -289,6 +290,24 @@ export function siblingInOrder(tree, id, dir) {
   if (i < 0) return null;
   const next = order[i + dir];
   return next ? next.id : null;
+}
+
+// Drag of several items: binder order, children of a selected folder travel with it,
+// a drop on the Trash goes through moveToTrash (so Restore knows where they came from).
+export function dropMany(tree, ids, targetId, pos) {
+  const set = new Set(ids);
+  const hasSelectedAncestor = (id) => {
+    for (let p = findParent(tree, id); p; p = findParent(tree, p.id)) if (set.has(p.id)) return true;
+    return false;
+  };
+  const top = inOrder(tree, ids).map((n) => n.id).filter((id) => !hasSelectedAncestor(id));
+  let t = tree;
+  if (rootOf(tree, targetId)?.root === 'trash') {
+    top.forEach((id) => (t = moveToTrash(t, id)));
+    return t;
+  }
+  (pos === 'after' ? [...top].reverse() : top).forEach((id) => (t = moveNode(t, id, targetId, pos)));
+  return t;
 }
 
 // Binder order of the given ids.

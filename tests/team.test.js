@@ -7,7 +7,7 @@ import os from 'os';
 import path from 'path';
 import {
   AGENT, LOCK_STALE_MS, PRESENCE_STALE_MS, appendLog, colorFor, filterLog, lastChanges, logRow, mergeDoc, newMachineId,
-  parseLog, people, presenceOf, publishPresence, readLogs, readPeers, splitBlocks, teamFiles, teamIdentity, wordDelta,
+  parseLog, people, presenceOf, resolveMerge, publishPresence, readLogs, readPeers, splitBlocks, teamFiles, teamIdentity, wordDelta,
 } from '../src/lib/team.js';
 import { pullExternalDocs } from '../src/lib/syncGuard.js';
 import { createMockApi } from '../src/lib/mockApi.js';
@@ -103,20 +103,24 @@ describe('merge of one document by paragraphs', () => {
   it('different paragraphs changed on two computers: both kept', () => {
     const mine = '<p>Unu, aici.</p><p>Doi.</p><p>Trei.</p>';
     const theirs = '<p>Unu.</p><p>Doi.</p><p>Trei, acolo.</p>';
-    expect(mergeDoc(base, mine, theirs)).toEqual({ html: '<p>Unu, aici.</p><p>Doi.</p><p>Trei, acolo.</p>', conflicts: 0 });
+    expect(mergeDoc(base, mine, theirs)).toMatchObject({ html: '<p>Unu, aici.</p><p>Doi.</p><p>Trei, acolo.</p>', conflicts: 0 });
   });
   it('paragraphs added and deleted on either side', () => {
     const mine = '<p>Zero.</p><p>Unu.</p><p>Doi.</p><p>Trei.</p>';
     const theirs = '<p>Unu.</p><p>Trei.</p><p>Patru.</p>';
-    expect(mergeDoc(base, mine, theirs)).toEqual({ html: '<p>Zero.</p><p>Unu.</p><p>Trei.</p><p>Patru.</p>', conflicts: 0 });
+    expect(mergeDoc(base, mine, theirs)).toMatchObject({ html: '<p>Zero.</p><p>Unu.</p><p>Trei.</p><p>Patru.</p>', conflicts: 0 });
   });
   it('the same paragraph changed differently: this computer wins, a conflict is counted', () => {
     const r = mergeDoc(base, '<p>Unu.</p><p>Doi A.</p><p>Trei.</p>', '<p>Unu.</p><p>Doi B.</p><p>Trei, acolo.</p>');
-    expect(r).toEqual({ html: '<p>Unu.</p><p>Doi A.</p><p>Trei, acolo.</p>', conflicts: 1 });
+    expect(r).toMatchObject({ html: '<p>Unu.</p><p>Doi A.</p><p>Trei, acolo.</p>', conflicts: 1 });
+    // the writer chooses: theirs, both
+    expect(resolveMerge(r.pieces, ['theirs'])).toBe('<p>Unu.</p><p>Doi B.</p><p>Trei, acolo.</p>');
+    expect(resolveMerge(r.pieces, ['both'])).toBe('<p>Unu.</p><p>Doi A.</p><p>Doi B.</p><p>Trei, acolo.</p>');
+    expect(resolveMerge(r.pieces)).toBe(r.html);
   });
   it('the same change on both sides is not a conflict', () => {
     const both = '<p>Unu.</p><p>Doi!</p><p>Trei.</p>';
-    expect(mergeDoc(base, both, both)).toEqual({ html: both, conflicts: 0 });
+    expect(mergeDoc(base, both, both)).toMatchObject({ html: both, conflicts: 0 });
     expect(mergeDoc(base, `${both}<p>Patru.</p>`, both).conflicts).toBe(0);
   });
 });

@@ -28,6 +28,7 @@ const FONTS = [
 
 export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, initialTab }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
+  const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
   const [tab, setTab] = useState(() => (TABS.includes(initialTab) ? initialTab : 'general'));
   const [s, setS] = useState({
     language: init.language,
@@ -733,8 +734,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const visibleTabs = TABS.filter((k) => panes[k]);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal settings-dialog" role="dialog" aria-label={t('set.title')} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={() => (!dirty || window.confirm(t('ui.settingsDialog.renunti'))) && onClose()}>
+      <div className="modal settings-dialog" role="dialog" aria-label={t('set.title')} onClick={(e) => e.stopPropagation()} onChangeCapture={() => setDirty(true)}>
         <h2>{t('set.title')}</h2>
         <div className="tabs" role="tablist">
           {visibleTabs.map((k) => (
