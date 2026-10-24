@@ -201,7 +201,8 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'editor-links',
         title: 'Legături, semne de carte, dicționar',
-        html: `<p>Scrie <code>[[Titlu]]</code> pentru o legătură internă spre documentul din proiect cu acel titlu (nu contează majusculele și diacriticele; ajunge și începutul titlului, dacă e unic). Dacă niciun document nu se potrivește, textul rămâne așa cum l-ai scris. Legătura internă se poate alege și din bara de format. Legăturile externe se inserează și se editează din bara de format.</p>
+        html: `<p>Scrie <code>[[Titlu]]</code> pentru o legătură internă spre documentul din proiect cu acel titlu (nu contează majusculele și diacriticele; ajunge și începutul titlului, dacă e unic). Dacă niciun document nu se potrivește, aplicația îți propune să creezi documentul (în același dosar sau în dosarul ales, ținut minte pentru proiect) și să-l legi; <kbd>Esc</kbd> sau <em>Anulează</em> lasă textul așa cum l-ai scris. Legătura internă se poate alege și din bara de format. Legăturile externe se inserează și se editează din bara de format.</p>
+<p>Cu <em>Setări → Editare → Adaugă automat legătura înapoi</em>, orice legătură nouă spre un document (Ctrl+L, <code>[[Titlu]]</code>, bara de format, lipire) adaugă documentul curent în bookmark-urile documentului țintă, nu în textul lui. În Inspector, sub bookmark-uri, lista <em>Legături către acest document</em> arată toate documentele care trimit la cel curent.</p>
 <p>Semnele de carte în text și semnele de carte ale proiectului (<em>Proiect → Semne de carte ale proiectului…</em>) duc rapid la un loc anume.</p>
 <p>Din meniul contextual sau din <em>Unelte</em>: caută cuvântul în dicționar sau sinonime (dexonline), pe Wikipedia sau cu Google; se deschide browserul.</p>
 <p>Corectura ortografică folosește dicționarele sistemului (română și engleză, configurabile). Clic dreapta pe un cuvânt subliniat: sugestii, <em>Adaugă în dicționar</em>, <em>Ignoră</em>. <em>Unelte → Verifică ortografia acum</em> reverifică documentul.</p>`,
@@ -272,7 +273,8 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'scrivenings-quickref',
         title: 'Quick Reference',
-        html: `<p>${k('Ctrl+Shift+R')} deschide documentul curent într-o fereastră mică, plutitoare, pe care o poți ține deschisă lângă text (o fișă de personaj, un plan). Poți deschide mai multe.</p>`,
+        html: `<p>${k('Ctrl+Shift+R')} deschide documentul curent într-o fereastră mică, plutitoare, pe care o poți ține deschisă lângă text (o fișă de personaj, un plan). Poți deschide mai multe.</p>
+<p><strong>Panoul de referință</strong>: <em>Vizualizare → Deschide ca referință</em> sau Alt+Shift+clic în binder pune un document într-un panou lângă editor (și lângă split). E doar pentru citire; bifa <em>Editabil</em> permite modificarea. Poziția de derulare se păstrează, iar panoul se salvează cu proiectul și în layout-uri.</p>`,
       },
       {
         id: 'scrivenings-composition',
@@ -310,6 +312,7 @@ media/                 imagini, PDF, audio, video</pre>
 <li><strong>Freeform</strong>: așezi fișele oriunde pe panou; <em>Fixează ordinea</em> transferă ordinea vizuală în binder.</li>
 <li>Aranjare pe linii după etichetă, status sau cuvânt cheie.</li>
 <li>Selectând mai multe dosare, corkboard-ul le afișează pe secțiuni.</li>
+<li>Aspectul fișelor (în <em>Opțiuni</em>): colțuri rotunjite sau drepte, fișe liniate, fișa colorată după etichetă.</li>
 </ul>`,
       },
     ],
@@ -468,7 +471,9 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'compile-notes',
         title: 'Note și comentarii la Compile',
-        html: `<p>Fila <em>Note</em>: notele devin note de subsol, note la finalul fiecărui capitol sau la finalul cărții. Comentariile se elimină sau, doar pentru DOCX, se exportă ca comentarii Word. Adnotările din text nu ajung niciodată în carte.</p>`,
+        html: `<p>Fila <em>Note</em>: notele devin note de subsol, note la finalul fiecărui capitol sau la finalul cărții. Comentariile se elimină sau, doar pentru DOCX, se exportă ca comentarii Word. Adnotările din text nu ajung niciodată în carte.</p>
+<p><em>Numerotarea notelor</em>: 1, 2, 3 · i, ii, iii · a, b, c · simboluri (*, †, ‡, §). <em>Reia numerotarea la fiecare capitol</em> începe din nou la fiecare capitol care pornește pe pagină nouă (în DOCX, fiecare capitol devine o secțiune Word). În RTF și ODT se aplică doar formatul.</p>
+<p><strong>Păstrează formatarea</strong> (<em>Format → Păstrează formatarea</em>): blocul marcat cu chenar punctat iese la Compile exact cum e scris, fără înlocuiri, ghilimele sau linii de dialog, fără alineatul și spațierea formatului, cu fontul și mărimea proprii.</p>`,
       },
       {
         id: 'compile-page',

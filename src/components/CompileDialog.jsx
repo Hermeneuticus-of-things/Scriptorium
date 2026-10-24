@@ -665,6 +665,17 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     </select>
                   </label>
                   <label>
+                    {tr('ui.compileDialog.noteNumbering')}
+                    <select value={xf.noteNumbering || 'arabic'} onChange={(e) => setIn(['transforms', 'noteNumbering'], e.target.value)}>
+                      {['arabic', 'roman', 'alpha', 'symbols'].map((k) => (
+                        <option key={k} value={k}>{tr(`ui.compileDialog.noteNumbering.${k}`)}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="check">
+                    <input type="checkbox" checked={Boolean(xf.noteRestart)} onChange={(e) => setIn(['transforms', 'noteRestart'], e.target.checked)} /> {tr('ui.compileDialog.noteRestart')}
+                  </label>
+                  <label>
                     Comentarii
                     <select value={xf.comments || 'strip'} onChange={(e) => setIn(['transforms', 'comments'], e.target.value)}>
                       <option value="strip">{tr('ui.compileDialog.se_elimina')}</option>

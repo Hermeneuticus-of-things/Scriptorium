@@ -90,3 +90,20 @@
 .translate-pair p { white-space: pre-wrap; margin: 4px 0 0; }
 .grammar-list li { margin: 6px 0; }
 .grammar-list .row-inline { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+
+/* Copyholder: reference pane beside the editor (and the split). */
+.workspace .pane.copyholder { flex: 0 0 34%; max-width: 45%; background: var(--panel); }
+.workspace.split-h .pane.copyholder { flex: 0 0 34%; max-width: none; }
+.pane.copyholder .pane-head .check { display: inline-flex; align-items: center; gap: 4px; }
+.pane.copyholder .page { padding: 24px 22px; }
+/* [[New title]]: offer to create the document. */
+.wiki-offer { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; background: var(--accent-soft, var(--panel)); border-bottom: 1px solid var(--line); font-size: 13px; }
+.wiki-offer span { flex: 1 1 220px; }
+.incoming-links { margin-top: 8px; }
+/* Corkboard card look: shape, ruled index cards, card colour by label. */
+.corkboard.cards-square .card { border-radius: 0; }
+.corkboard.cards-ruled .card textarea { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.5em - 1px), color-mix(in srgb, #6b8fc7 35%, transparent) calc(1.5em - 1px), color-mix(in srgb, #6b8fc7 35%, transparent) 1.5em); background-attachment: local; line-height: 1.5em; }
+.corkboard.cards-label-fill .card { background: color-mix(in srgb, var(--label-color, var(--paper)) 22%, var(--paper)); }
+/* Preserve Formatting block: Compile keeps its text and look as written. */
+.prose .preserve-format { border: 1px dashed var(--muted); border-radius: 4px; padding: 4px 8px; margin: .4em 0; background: color-mix(in srgb, var(--accent-soft, #eef) 40%, transparent); }
+.prose .preserve-format p { text-indent: 0; }

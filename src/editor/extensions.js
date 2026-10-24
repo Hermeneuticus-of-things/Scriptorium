@@ -12,7 +12,7 @@ import { Subscript } from '@tiptap/extension-subscript';
 import { LinguisticFocus } from '../extensions/LinguisticFocus.js';
 import { Corrections } from './corrections.js';
 import { Invisibles } from './invisibles.js';
-import { AllCaps, Bookmark, ListStyle, PageBreak, ParagraphFormat, ScaledImage, SmallCaps } from './formatting.js';
+import { AllCaps, Bookmark, ListStyle, PageBreak, ParagraphFormat, PreserveFormat, ScaledImage, SmallCaps } from './formatting.js';
 import { LineHighlight } from './lineHighlight.js';
 import { AutoComplete, CharStyle, ParagraphStyle, Revision, WikiLink, WritingFocus } from './writing.js';
 
@@ -235,7 +235,7 @@ export const RedoKeys = Extension.create({
   },
 });
 
-export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], getLinkTargets = () => [], corrections = null, showInvisibles = false } = {}) {
+export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], getLinkTargets = () => [], onMissingLink = null, corrections = null, showInvisibles = false } = {}) {
   // corrections: {smartDashes, smartEllipsis, autoCapitalize, replacements}; null keeps the
   // historical behaviour (dashes/ellipsis only through Typography when smartQuotes is on).
   const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [], ...corrections } : null;
@@ -246,7 +246,7 @@ export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuo
     Revision,
     WritingFocus,
     AutoComplete.configure({ getWords }),
-    WikiLink.configure({ getTargets: getLinkTargets }),
+    WikiLink.configure({ getTargets: getLinkTargets, onMissing: onMissingLink }),
     StarterKit.configure({ link: { openOnClick: false, protocols: ['scribner', 'scriptorium'] } }),
     Placeholder.configure({ placeholder }),
     Comment,
@@ -268,6 +268,7 @@ export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuo
     AllCaps,
     Bookmark,
     PageBreak,
+    PreserveFormat,
     ParagraphFormat,
     ListStyle,
     LineHighlight,

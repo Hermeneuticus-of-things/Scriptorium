@@ -35,6 +35,7 @@ export const DEFAULT_SETTINGS = {
   paragraphSpacing: 0.6,
   defaultView: 'editor',
   showInvisibles: false,
+  autoBacklinks: false,
   // Backup
   backupOnClose: true,
   backupEveryMin: 0,
