@@ -299,6 +299,10 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 - **Cine ce a schimbat și când:** *Proiect → Echipă…* arată jurnalul cu persoana, data, cuvintele adăugate și șterse și un fragment, filtrat pe document, persoană și perioadă.
 - **Blocare:** lacătul de lângă titlu blochează documentul pentru ceilalți; la ei se deschide doar pentru citire. Un calculator închis își pierde singur blocările după o jumătate de oră.
 - **Îmbinare:** schimbările făcute în paragrafe diferite se unesc singure. Același paragraf schimbat în două locuri: se deschide o fereastră cu cele două variante alături și alegi, pentru fiecare loc, varianta ta, a celuilalt sau pe amândouă. Varianta celuilalt rămâne oricum ca snapshot. Nu se pierde nimic.
+<p align="center">
+  <img src="./assets/readme/conflict.png" width="100%" alt="Același paragraf schimbat pe două calculatoare: cele două variante alături, cu alegerea a mea, a celuilalt sau amândouă">
+</p>
+
 - **Siguranță:** copiile de conflict făcute de OneDrive sau Dropbox sunt recunoscute și semnalate; dacă NAS-ul ori cloud-ul se deconectează, primești un mesaj și programul reia singur.
 - **Agenții AI** (Claude, Codex prin MCP) apar în jurnal ca persoană separată, „agent”, și nu scriu în documentele blocate.
 

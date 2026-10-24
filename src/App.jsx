@@ -552,9 +552,9 @@ export default function App({ api: apiProp }) {
         }
         if (conflicts.length) {
           const titles = conflicts.map((id) => findNode(projectRef.current.tree, id)?.title || id);
-          setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }));
-          // Paragraph-level clashes: the writer chooses, one document at a time.
+          // Paragraph-level clashes: the writer chooses in the dialog, one document at a time.
           const first = conflicts.find((id) => clashes?.[id]);
+          if (!first) setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }));
           if (first) setConflict({ id: first, title: findNode(projectRef.current.tree, first)?.title || first, pieces: clashes[first], html: merged[first] ?? docsNow()[first] });
         }
       } catch (e) {
