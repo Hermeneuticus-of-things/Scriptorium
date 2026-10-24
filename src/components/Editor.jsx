@@ -112,7 +112,12 @@ const Editor = forwardRef(function Editor(
             return true;
           }
           // Paste and Match Style: the next paste keeps only the text.
-          if (mod && e.shiftKey && e.key.toLowerCase() === 'v') plainPaste.current = true;
+          // Ctrl+Shift+V arms the next paste only for a moment: if no paste follows (shortcut taken
+          // by the OS, empty clipboard), a later normal paste must keep its formatting.
+          if (mod && e.shiftKey && e.key.toLowerCase() === 'v') {
+            plainPaste.current = true;
+            setTimeout(() => { plainPaste.current = false; }, 1000);
+          }
           if (mod && !e.shiftKey && e.key.toLowerCase() === 'l') {
             e.preventDefault();
             const href = window.prompt('Adresa linkului:', editor?.getAttributes('link').href || 'https://');
@@ -137,7 +142,7 @@ const Editor = forwardRef(function Editor(
           plainPaste.current = false;
           const text = event.clipboardData?.getData('text/plain') || '';
           if (!text) return false;
-          editor?.chain().focus().insertContent(text.includes('\n') ? textToHtml(text) : text).run();
+          editor?.chain().focus().insertContent(/[\r\n]/.test(text) ? textToHtml(text) : text).run();
           return true;
         },
         handleDoubleClickOn: (_view, _pos, node, nodePos) => {

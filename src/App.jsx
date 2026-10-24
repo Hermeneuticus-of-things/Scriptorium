@@ -1835,7 +1835,12 @@ export default function App({ api }) {
             )}
             {isFolderView && (
               <Scrivenings
-                key={`${scrivList ? scrivList.ids.join(',') : selected?.id}-${smartQuotes}`}
+                key={`${scrivList ? scrivList.ids.join(',') : selected?.id}-${smartQuotes}-${corrKey}`}
+                corrections={corrections}
+                styles={projectStyles}
+                defaultFormatting={project.defaultFormatting}
+                linkTargets={linkTargets}
+                onOpenLink={openLink}
                 title={scrivList ? scrivList.title : selected?.title}
                 sections={scrivSections}
                 docs={docs}

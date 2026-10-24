@@ -508,6 +508,7 @@ export const ScaledImage = Image.extend({
         img.src = cur.attrs.src;
         img.alt = cur.attrs.alt || '';
         if (cur.attrs.title) img.title = cur.attrs.title;
+        else img.removeAttribute('title');
         img.style.width = cur.attrs.width ? (/^\d+$/.test(String(cur.attrs.width)) ? `${cur.attrs.width}px` : cur.attrs.width) : '';
         frame.dataset.align = cur.attrs.align || '';
         frame.style.cssText = ALIGN_CSS[cur.attrs.align] || '';

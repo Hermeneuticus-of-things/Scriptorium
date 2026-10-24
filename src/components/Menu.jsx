@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 // Top menu (menu bar). Keyboard: Enter/Space/↓ on the button opens it on the first item;
 // ↑/↓/Home/End move; Enter activates; Esc or Tab closes it (Esc from inside the menu puts
@@ -16,6 +16,23 @@ export default function Menu({ label, items }) {
     if (restore === 'before' && before.current?.isConnected) before.current.focus();
     else if (restore === 'button') btnRef.current?.focus();
   };
+
+  // The popup is right-aligned to its button; when the menu bar wraps (narrow windows) a menu near
+  // the left edge would open off-screen. Shift it back inside the window (and cap its height).
+  useLayoutEffect(() => {
+    const pop = open && ref.current?.querySelector(':scope > .menu-pop');
+    if (!pop) return;
+    pop.style.left = '';
+    pop.style.right = '';
+    const r = pop.getBoundingClientRect();
+    const box = ref.current.getBoundingClientRect(); // .menu is the positioning parent
+    if (r.left < 4) {
+      pop.style.right = 'auto';
+      pop.style.left = `${4 - box.left}px`;
+    }
+    const top = pop.getBoundingClientRect().top;
+    if (top + pop.offsetHeight > window.innerHeight - 4) pop.style.maxHeight = `${Math.max(120, window.innerHeight - top - 8)}px`;
+  }, [open]);
 
   useEffect(() => {
     if (!open) return undefined;
