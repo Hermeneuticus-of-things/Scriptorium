@@ -63,7 +63,7 @@ O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o cit
   <img src="./assets/readme/customize.png" width="100%" alt="Fereastra Personalizează bara de instrumente: elementele disponibile în stânga, cele din bară în dreapta">
 </p>
 
-Sus vezi doar ce folosești des: meniurile, titlul, Editor / Corkboard / Outline, Compile și Inspector. Restul stă în meniuri ordonate ca în Scrivener: Fișier, Editare, Vizualizare, Proiect, Documente, Navigare, Unelte, AI și Ajutor.
+Sus vezi doar ce folosești des: meniurile, titlul, Editor / Corkboard / Outline, Compile și Inspector. Restul stă în meniuri ordonate: Fișier, Editare, Vizualizare, Proiect, Documente, Navigare, Unelte, AI și Ajutor.
 
 Din *Vizualizare → Personalizează bara de instrumente* alegi singur butoanele, pentru bara de sus și pentru bara de formatare. Le adaugi, le scoți, le muți cu mouse-ul. Ce scoți din bară rămâne în meniuri. Dacă te-ai încurcat, apeși „Restabilește implicit”.
 

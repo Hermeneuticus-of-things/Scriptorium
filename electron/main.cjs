@@ -635,7 +635,7 @@ handle('menu:set', (e, spec) => {
   // The renderer sends its own Help menu; About and developer tools are appended to it.
   const extra = [
     { type: 'separator' },
-    { label: 'Despre Scribner', click: () => dialog.showMessageBox(win, { message: `Scribner ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi, inspirat de Scrivener 3.' }) },
+    { label: 'Despre Scribner', click: () => dialog.showMessageBox(win, { message: `Scribner ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi.' }) },
     { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools' },
   ];
   const helpMenu = template.find((m, i) => spec[i] && spec[i].items.some((it) => it !== '-' && it.id === 'help'));

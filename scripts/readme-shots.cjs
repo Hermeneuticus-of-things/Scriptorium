@@ -205,7 +205,7 @@ const SHOTS = {
   customize: {
     kicker: 'Interfață pe gustul tău',
     title: 'Bara de instrumente o alegi tu',
-    sub: 'Adaugi, scoți și muți butoanele, ca în Scrivener 3. Ce scoți rămâne în meniuri.',
+    sub: 'Adaugi, scoți și muți butoanele. Ce scoți rămâne în meniuri.',
     async setup(p) {
       await menuPick(p, 'Vizualizare', 'Personalizează bara de instrumente…');
       await p.waitForSelector('.tb-customize');
