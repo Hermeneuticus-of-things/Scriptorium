@@ -30,9 +30,9 @@ import { projectWords } from './editor/writing.js';
 import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
-import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc } from './lib/glossary.js';
+import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc, findGlossaryDoc, glossaryEntryHtml, glossaryHasTerm } from './lib/glossary.js';
 import { BackIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, OutlineIcon, ScriveningsIcon, SplitIcon } from './components/Icons.jsx';
-import { targetCrossed } from './lib/panelsExtra.js';
+import { mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
 import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
 import HelpWindow from './components/HelpWindow.jsx';
@@ -93,6 +93,7 @@ import {
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
 import ContextMenu from './components/ContextMenu.jsx';
+import ServiceResultDialog from './components/ServiceResultDialog.jsx';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
 import { replaceInHtml } from './lib/search.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
@@ -169,7 +170,8 @@ export default function App({ api }) {
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
   const [aiRequest, setAiRequest] = useState(null);
   const [researchRequest, setResearchRequest] = useState(null); // { q, mode, n } run by ResearchPanel
-  const [findSeed, setFindSeed] = useState(''); // { action, n } run by AiPanel
+  const [findSeed, setFindSeed] = useState('');
+  const [serviceResult, setServiceResult] = useState(null); // { source, result, handle } from DeepL / Google / LanguageTool // { action, n } run by AiPanel
   const [showEditorial, setShowEditorial] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
@@ -706,6 +708,26 @@ export default function App({ api }) {
     }
     return undefined;
   };
+  // In-app translation (DeepL / Google) and grammar check (LanguageTool) of the selection; the
+  // keys stay in the main process. The editor that held the selection receives the result.
+  const runService = async (kind, service) => {
+    const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+    const source = (handle?.getSelectionText() || '').trim();
+    if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    const label = kind === 'grammar' ? 'LanguageTool' : service === 'google' ? 'Google Translate' : 'DeepL';
+    setToast(tr('ui.services.lucrez', { service: label }));
+    try {
+      const result = kind === 'grammar'
+        ? { kind, ...(await api.checkGrammar({ text: source, language: settings.grammarLanguage || 'auto' })) }
+        : { kind, ...(await api.translateText({ service, text: source })) };
+      setServiceResult({ source, result, handle });
+    } catch (e) {
+      report(e);
+    } finally {
+      setToast('');
+    }
+    return undefined;
+  };
   const searchProjectFor = () => {
     const text = selectedText().trim();
     if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
@@ -726,17 +748,14 @@ export default function App({ api }) {
     const term = selectedText().trim().replace(/\s+/g, ' ');
     if (!term) return setToast(tr('ui.app.selecteaza_un_cuvant'));
     if (term.length > 120) return setToast(tr('ui.app.selectie_prea_lunga'));
-    const research = project.tree.find((n) => n.root === 'research') || project.tree[1];
-    const all = [];
-    const walk = (list) => list.forEach((n) => { all.push(n); if (n.children) walk(n.children); });
-    walk(research.children || []);
-    let node = all.find((n) => n.type === 'text' && /^(glosar|glossary)\b/i.test(n.title || ''));
-    const esc = term.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    const line = `<p><strong>${esc}</strong> — </p>`;
+    const found = findGlossaryDoc(project);
+    const research = found.research;
+    let node = found.node;
+    const line = glossaryEntryHtml(term);
     try {
       if (node) {
         const html = docsNow()[node.id] ?? ((await api.readDoc(dir, node.id, 'docs')) || '');
-        if (htmlToText(html).split('\n').some((l) => l.trim().toLowerCase().startsWith(`${term.toLowerCase()} —`))) return setToast(tr('ui.app.deja_in_glosar', { term }));
+        if (glossaryHasTerm(html, term)) return setToast(tr('ui.app.deja_in_glosar', { term }));
         const next = html + line;
         setDocs((d) => ({ ...d, [node.id]: next }));
         editorRefs.current.get(node.id)?.setHtml(next);
@@ -848,7 +867,7 @@ export default function App({ api }) {
       const research = project.tree.find((n) => n.root === 'research');
       let tree = project.tree;
       for (const it of items) {
-        const node = { ...newNode('text', it.title), id: it.id, type: 'file', media: it.media, includeInCompile: false };
+        const node = mediaNode(newNode, it);
         if (/^image\//.test(it.media.mime)) node.synopsisImage = it.media.file;
         tree = insertNear(tree, research.id, node);
       }
@@ -1038,22 +1057,9 @@ export default function App({ api }) {
   const importOpmlOutline = async () => {
     const items = await api.importOpml();
     if (!items || !items.length) return;
-    const byName = (list, name) => (name ? (list || []).find((x) => x.name === name)?.id : undefined);
-    const build = (it) => {
-      const kids = (it.children || []).map(build);
-      const node = newNode(kids.length ? 'folder' : 'text', it.title || tr('ui.app.fara_titlu'));
-      if (it.synopsis) node.synopsis = it.synopsis;
-      const lab = byName(project.labels, it.label);
-      const st = byName(project.statuses, it.status);
-      if (lab) node.label = lab;
-      if (st) node.status = st;
-      if (kids.length) node.children = kids;
-      return node;
-    };
     let tree = project.tree;
     let anchor = selectedId;
-    for (const it of items) {
-      const node = build(it);
+    for (const node of opmlToNodes(items, project, newNode, tr('ui.app.fara_titlu'))) {
       tree = insertNear(tree, anchor, node);
       anchor = node.id;
     }
@@ -1069,7 +1075,7 @@ export default function App({ api }) {
     // The download can take seconds; the binder may have changed meanwhile.
     const pj = projectRef.current;
     let tree = insertNear(pj.tree, selectedId, node);
-    for (const m of page.media || []) tree = insertNear(tree, node.id, { ...newNode('media', m.title), id: m.id, media: m.media });
+    for (const m of page.media || []) tree = insertNear(tree, node.id, mediaNode(newNode, m));
     saveProject({ ...pj, tree });
     setDocs((d) => ({ ...d, [node.id]: page.html }));
     await api.writeDoc(dir, node.id, 'docs', page.html);
@@ -1083,7 +1089,7 @@ export default function App({ api }) {
     const pj = projectRef.current;
     let tree = pj.tree;
     for (const m of res.media) {
-      const node = { ...newNode('media', m.title), id: m.id, media: m.media };
+      const node = mediaNode(newNode, m);
       tree = insertNear(tree, selectedId, node);
     }
     if (res.texts.length) importParts(res.texts, tree);
@@ -1615,6 +1621,9 @@ export default function App({ api }) {
     ['tools', 'researchSel', tr('cmd.researchSel'), () => researchSelection('search'), !api.ragQuery],
     ['tools', 'researchAskSel', tr('cmd.researchAskSel'), () => researchSelection('ask'), !api.ragAsk || !aiEnabled],
     ['tools', 'glossaryAdd', tr('cmd.glossaryAdd'), addToGlossary],
+    ['tools', 'deeplInApp', tr('cmd.deeplInApp'), () => runService('translate', 'deepl'), !api.translateText],
+    ['tools', 'googleInApp', tr('cmd.googleInApp'), () => runService('translate', 'google'), !api.translateText],
+    ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
     ['tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
@@ -1637,7 +1646,9 @@ export default function App({ api }) {
     if (text) {
       const g = lookupGroups(text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, action: () => openWeb(l.url) }));
-      if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: links(g.translate) });
+      const inApp = api.translateText ? [{ label: tr('cmd.deeplInApp'), action: run('deeplInApp') }, { label: tr('cmd.googleInApp'), action: run('googleInApp') }, '-'] : [];
+      if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: [...inApp, ...links(g.translate)] });
+      if (api.checkGrammar) items.push({ label: tr('cmd.grammarSel'), action: run('grammarSel') });
       if (g.dict.length) items.push({ label: tr('ui.ctx.dictionare'), submenu: links(g.dict) });
       items.push({ label: tr('ui.ctx.cercetare_web'), submenu: links(g.research) });
       if (aiEnabled) {
@@ -2135,8 +2146,17 @@ export default function App({ api }) {
       {dialog === 'pageSetup' && <PageSetupDialog api={api} dir={dir} project={project} previewIds={selectedId ? [selectedId] : []} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
       {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || tr('ui.app.din_scratchpad')); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(tr('ui.app.trimis_in_x', { title: parent.title })); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
+      {serviceResult && (
+        <ServiceResultDialog
+          source={serviceResult.source}
+          result={serviceResult.result}
+          onReplace={(text) => { serviceResult.handle?.replaceSelection(text); setServiceResult(null); }}
+          onInsertAfter={(text) => { const ed = serviceResult.handle?.editor; if (ed) ed.chain().focus().setTextSelection(ed.state.selection.to).insertContent(` ${text}`).run(); setServiceResult(null); }}
+          onClose={() => setServiceResult(null)}
+        />
+      )}
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
-      {showSpeech && <SpeechBar getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
+      {showSpeech && <SpeechBar api={api} getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (

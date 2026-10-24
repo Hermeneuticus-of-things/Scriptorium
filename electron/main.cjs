@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell, clipboard } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
@@ -11,6 +11,8 @@ const ai = require('../lib/ai.cjs');
 const aiRuns = require('../lib/aiRuns.cjs');
 const aiProviders = require('../lib/aiProviders.cjs');
 const aiKeys = require('../lib/aiKeys.cjs');
+const services = require('../lib/services.cjs');
+const translate = require('../lib/translate.cjs');
 const notebookLm = require('../lib/notebookLm.cjs');
 const backup = require('../lib/backup.cjs');
 const history = require('../lib/history.cjs');
@@ -200,7 +202,13 @@ function setupSpelling(win) {
       const g = lookupGroups(text, { from: st.translateFrom || 'auto', to: st.translateTo || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, click: () => lookup(l.url) }));
       const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
-      if (g.translate.length) items.push({ label: 'Traduce', submenu: links(g.translate) });
+      const sv = services.serviceStatus(st, safeStorage);
+      const inApp = [
+        ...(sv.deepl.configured ? [{ label: 'În program: DeepL', click: cmd('deeplInApp') }] : []),
+        ...(sv.googleTranslate.configured ? [{ label: 'În program: Google', click: cmd('googleInApp') }] : []),
+      ];
+      if (g.translate.length) items.push({ label: 'Traduce', submenu: [...inApp, ...(inApp.length ? [{ type: 'separator' }] : []), ...links(g.translate)] });
+      items.push({ label: 'Verifică gramatica (LanguageTool)', click: cmd('grammarSel') });
       if (g.dict.length) items.push({ label: 'Dicționare', submenu: links(g.dict) });
       items.push({ label: 'Cercetare pe web', submenu: links(g.research) });
       if (st.aiEnabled !== false) {
@@ -866,6 +874,46 @@ handle('app:openLink', async (_e, url) => {
   if (typeof url !== 'string' || !/^https:\/\/[^\s]+$/.test(url) || url.length > 20000) throw new Error('Link invalid.');
   await shell.openExternal(url);
   return true;
+});
+// Outside services and other accounts (lib/services.cjs). Secrets stay in this process:
+// the window gets only which services are set up and the non-secret fields.
+handle('services:status', () => ({ services: services.serviceStatus(readSettings(), safeStorage), accounts: services.listAccounts(readSettings()) }));
+handle('services:set', (_e, id, values) => {
+  writeSettings(services.setService(readSettings(), id, values || {}, safeStorage));
+  return services.serviceStatus(readSettings(), safeStorage)[id];
+});
+handle('accounts:set', (_e, account) => {
+  const r = services.setAccount(readSettings(), account || {}, safeStorage);
+  writeSettings(r.settings);
+  return r.id;
+});
+handle('accounts:delete', (_e, id) => {
+  writeSettings(services.deleteAccount(readSettings(), id));
+  return true;
+});
+// The password goes to the clipboard and is cleared after 30 s if still there; never to the window.
+handle('accounts:copyPassword', (_e, id) => {
+  const pw = services.accountPassword(readSettings(), id, safeStorage);
+  if (!pw) throw new Error('Contul nu are parolă salvată.');
+  clipboard.writeText(pw);
+  setTimeout(() => {
+    if (clipboard.readText() === pw) clipboard.writeText('');
+  }, 30000);
+  return true;
+});
+handle('translate:run', async (_e, { service = 'deepl', text, from, to } = {}) => {
+  const st = readSettings();
+  const opts = { text, from: from || st.translateFrom || 'auto', to: to || st.translateTo || 'ro' };
+  if (service === 'google') return translate.googleTranslate({ ...opts, apiKey: services.getService(st, 'googleTranslate', safeStorage).apiKey });
+  return translate.deeplTranslate({ ...opts, apiKey: services.getService(st, 'deepl', safeStorage).apiKey });
+});
+handle('tts:speak', async (_e, { text } = {}) => {
+  const sp = services.getService(readSettings(), 'speechify', safeStorage);
+  return translate.speechifySpeak({ apiKey: sp.apiKey, voiceId: sp.voiceId, text });
+});
+handle('grammar:check', async (_e, { text, language } = {}) => {
+  const lt = services.getService(readSettings(), 'languagetool', safeStorage);
+  return translate.languageToolCheck({ text, language: language || 'auto', username: lt.username, apiKey: lt.apiKey });
 });
 handle('nlm:open', async () => {
   const url = notebookLm.notebookUrl(readSettings().notebookLmUrl);

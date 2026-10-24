@@ -33,7 +33,7 @@ Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. 
 
 Clic dreapta pe un cuvânt și ai la îndemână:
 
-- **Traduce:** DeepL sau Google Translate, pe cuvânt, pe frază sau pe un paragraf întreg.
+- **Traduce:** DeepL sau Google Translate, pe cuvânt, pe frază sau pe un paragraf întreg. Cu cheia ta DeepL, traducerea apare direct în program și o pui în text cu un clic.
 - **Dicționare:** dexonline și sinonime, Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
 - **Asistent AI:** cercetare despre termen, explicație, corectură sau traducere, cu înainte și după.
 - **În proiect:** caută termenul în toată cartea și în notele tale sau pune-l în glosar.
@@ -81,7 +81,7 @@ Dacă vrei, asistentul AI face corectură, rezumate sau o a doua părere. Vezi e
   <img src="./assets/readme/compile.png" width="100%" alt="Fereastra în care alegi forma finală: manuscris, carte tipărită sau e-book">
 </p>
 
-Alegi forma: manuscris pentru editură, carte tipărită sau e-book. Scribner adună bucățile într-un singur fișier Word, PDF sau EPUB, cu pagină de titlu, cuprins și capitole numerotate. Fișierele trec verificările programelor care le deschid: Word, LibreOffice, cititoarele de e-book.
+Alegi forma: manuscris pentru editură, carte tipărită sau e-book. Scribner adună bucățile într-un singur fișier Word, PDF sau EPUB, cu copertă, pagină de titlu și subtitlu, cuprins și capitole numerotate. Imaginile rămân cât le-ai făcut în text, fără să iasă din pagină; textul se desparte în silabe și nu lasă rânduri singure la capăt de pagină. Fișierele trec verificările programelor care le deschid: Word, LibreOffice, cititoarele de e-book.
 
 ## Cum îl instalezi
 
@@ -99,6 +99,8 @@ La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 le
 **Pot aduce ce am scris deja?** Da: Word, RTF, ODT, Markdown, pagini web, scenarii Fountain sau Final Draft și proiecte `.scriv`.
 
 **Trebuie să folosesc AI?** Nu. Programul e complet fără el.
+
+**Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Da. În Setări → Servicii și conturi pui cheile: traduci în program cu DeepL sau Google, verifici gramatica cu LanguageTool, asculți textul cu vocile Speechify. Tot acolo îți ții și alte conturi cu parolă. Totul se păstrează criptat pe calculatorul tău.
 
 **În ce limbă e?** Română sau engleză, la alegere.
 
@@ -126,7 +128,7 @@ npm run dist:win:setup   # installerul cu wizard (Inno Setup 6, pe Windows)
 
 **NotebookLM.** „Exportă pentru NotebookLM” pregătește cartea ca surse: un fișier pe capitol, cercetarea și notele separat, cuprins cu rezumate.
 
-**Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea.
+**Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
 
 ```bash
 claude mcp add scribner -- node "/cale/Scribner/mcp/server.mjs" --project "/cale/Cartea mea.scribner"

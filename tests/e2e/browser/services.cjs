@@ -1,0 +1,97 @@
+// Settings → Servicii și conturi: DeepL key, then in-app translation and grammar check on a selection.
+const { open, ed, check, done } = require('./_helpers.cjs');
+(async () => {
+  const { browser, page, errors } = await open();
+  // Runs a command from the menu bar (whichever top menu holds it).
+  const cmd = async (label) => {
+    const menus = page.locator('header.toolbar .menu > button');
+    for (let i = 0; i < (await menus.count()); i++) {
+      await menus.nth(i).click();
+      await page.waitForTimeout(80);
+      const item = page.locator('.menu-pop button:not([disabled])', { hasText: label }).first();
+      if (await item.count()) {
+        await item.click();
+        await page.waitForTimeout(300);
+        return;
+      }
+      await page.keyboard.press('Escape');
+    }
+    throw new Error(`menu item not found: ${label}`);
+  };
+  // translation without a key: a clear message, no crash
+  await page.locator('.binder-row', { hasText: 'Căutarea' }).first().click();
+  await ed(page).click({ delay: 60 });
+  await page.waitForTimeout(120);
+  await page.keyboard.press('Control+a');
+  await cmd('Traduce selecția în program (DeepL)');
+  await page.waitForTimeout(300);
+  const toast = (await page.locator('.toast').allInnerTexts()).join(' | ');
+  check('without a key: tells where to put it', /Setări/.test(toast), toast);
+  while (await page.locator('.toast button').count()) await page.locator('.toast button').first().click();
+  // save a DeepL key in Settings
+  await cmd('Setări…');
+  await page.getByRole('tab', { name: 'Servicii și conturi' }).click();
+  const row = page.locator('.service-row', { hasText: 'DeepL' });
+  await row.locator('input').first().fill('demo-key:fx');
+  await row.getByRole('button', { name: 'Salvează' }).click();
+  await page.waitForTimeout(200);
+  check('DeepL shows as set up', /configurat/.test(await row.innerText()) && !/neconfigurat/.test(await row.innerText()));
+  const sp = page.locator('.service-row', { hasText: 'Speechify' });
+  await sp.locator('input').nth(0).fill('sp-key');
+  await sp.locator('input').nth(1).fill('george');
+  await sp.getByRole('button', { name: 'Salvează' }).click();
+  await page.waitForTimeout(200);
+  check('Speechify set up with a visible voice id', (await sp.locator('input').nth(1).inputValue()) === 'george' && /configurat/.test(await sp.innerText()));
+  check('the key is not shown back', (await row.locator('input').first().inputValue()) === '');
+  // account with password
+  await page.getByRole('button', { name: 'Adaugă un cont' }).click();
+  const form = page.locator('.account-form');
+  await form.locator('input').nth(0).fill('Portal editură');
+  await form.locator('input').nth(1).fill('https://portal.example.ro');
+  await form.locator('input').nth(2).fill('ana');
+  await form.locator('input').nth(3).fill('secret');
+  await form.getByRole('button', { name: 'Salvează' }).click();
+  await page.waitForTimeout(200);
+  check('account listed with user, password hidden', /Portal editură · ana/.test(await page.locator('.accounts').innerText()) && !/secret/.test(await page.locator('.accounts').innerText()));
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  if (await page.locator('.modal-backdrop').count()) await page.locator('.modal-backdrop').first().click({ position: { x: 3, y: 3 } });
+  // in-app translation, replace the selection
+  await page.waitForTimeout(500);
+  await ed(page).click({ delay: 60 });
+  await page.waitForTimeout(120);
+  await page.keyboard.press('Control+a');
+  await cmd('Traduce selecția în program (DeepL)');
+  await page.waitForSelector('.translate-pair', { timeout: 5000 });
+  check('translation dialog shows original and result', /\[ro\]/.test(await page.locator('.translate-pair').innerText()));
+  await page.getByRole('button', { name: 'Înlocuiește selecția' }).click();
+  await page.waitForTimeout(200);
+  check('selection replaced by the translation', /^\[ro\]/.test((await ed(page).innerText()).trim()));
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(200);
+  // grammar check, apply the corrections
+  await ed(page).click({ delay: 60 });
+  await page.waitForTimeout(120);
+  await page.keyboard.press('Control+a');
+  await cmd('Verifică gramatica selecției');
+  await page.waitForSelector('.grammar-list');
+  const n = await page.locator('.grammar-list li').count();
+  check('grammar issues listed', n >= 5, String(n));
+  await page.getByRole('button', { name: 'Aplică corecturile' }).click();
+  await page.waitForTimeout(200);
+  const txt = await ed(page).innerText();
+  check('corrections applied', /dimineață/.test(txt) && /și Ilinca/.test(txt) && /munte,/.test(txt), txt.slice(0, 120));
+  // read aloud with Speechify
+  await cmd('Citire cu voce tare');
+  await page.waitForSelector('.speech-bar');
+  await page.waitForTimeout(300);
+  const engine = await page.locator('.speech-bar select').first().inputValue();
+  check('read-aloud bar offers Speechify and picks it', engine === 'speechify', engine);
+  await page.locator('.speech-bar button', { hasText: 'Citește' }).click();
+  await page.waitForTimeout(800);
+  const barMsg = await page.locator('.speech-bar').innerText();
+  check('Speechify plays without an error', !/Pune cheia|eroare|Error/i.test(barMsg), barMsg);
+  check('no page errors', !errors.length, errors.join(' | '));
+  await browser.close();
+  done();
+})();

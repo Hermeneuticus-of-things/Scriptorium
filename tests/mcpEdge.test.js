@@ -91,11 +91,12 @@ describe('MCP --read-only', () => {
     for (const [name, args] of Object.entries(writes)) {
       await expect(call(name, args), name).rejects.toThrow(/doar-citire/);
     }
-    // The read tools still work.
-    for (const t of tools.map((x) => x.name).filter((n) => !writes[n])) {
-      const args = { list_binder: {}, project_info: {}, read_document: { id: a.id }, search: { query: 'text' }, get_notes: { id: a.id }, lint: { id: a.id }, list_snapshots: { id: a.id }, writing_history: {} }[t];
-      expect(args, `read tool not covered: ${t}`).toBeDefined();
-      await call(t, args);
+    // The read tools still work (the tools added later are covered in tests/mcpFull.test.js,
+    // which also fails for any tool not classified as read or write).
+    const reads = { list_binder: {}, project_info: {}, read_document: { id: a.id }, search: { query: 'text' }, get_notes: { id: a.id }, lint: { id: a.id }, list_snapshots: { id: a.id }, writing_history: {} };
+    for (const t of Object.keys(reads)) {
+      expect(tools.some((x) => x.name === t), t).toBe(true);
+      await call(t, reads[t]);
     }
     await client.readResource({ uri: 'scribner://binder' });
     expect(snapshotTree(dir)).toEqual(before);
