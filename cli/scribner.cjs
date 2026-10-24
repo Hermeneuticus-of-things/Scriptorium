@@ -383,6 +383,25 @@ function outPath(o, fallbackName) {
   return endsWithSep(o) || (fs.existsSync(p) && fs.statSync(p).isDirectory()) ? path.join(p, fallbackName) : p;
 }
 
+// Output never lands inside the project folder (it would overwrite project.json or documents).
+function notInside(dir, out) {
+  const real = (x) => {
+    let r = path.resolve(x);
+    for (let probe = r, rest = ''; ; ) {
+      try { r = path.join(fs.realpathSync.native(probe), rest); break; } catch { /* not there yet */ }
+      const up = path.dirname(probe);
+      if (up === probe) break;
+      rest = path.join(path.basename(probe), rest);
+      probe = up;
+    }
+    return process.platform === 'win32' || process.platform === 'darwin' ? r.toLowerCase() : r;
+  };
+  const o = real(out);
+  const d = real(dir);
+  if (o === d || o.startsWith(d + path.sep)) throw new UsageError('Ieșirea (-o) nu poate fi în folderul proiectului: ar suprascrie fișierele lui. Alege alt folder.');
+  return out;
+}
+
 function needOut(opt) {
   if (!opt['-o'] || !cleanPath(opt['-o'])) throw new UsageError(T.needOut);
   return path.resolve(cleanPath(opt['-o']));
@@ -544,7 +563,7 @@ const commands = {
     }
     const info = compile.OUTPUT_FORMATS[format];
     const data = await compile.compile(project, reader(dir), format, options);
-    const file = outPath(opt['-o'], `${store.projectDirFor('', project.title || 'Proiect').replace(/\.scribner$/, '')}.${info.ext}`);
+    const file = notInside(dir, outPath(opt['-o'], `${store.projectDirFor('', project.title || 'Proiect').replace(/\.scribner$/, '')}.${info.ext}`));
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, data);
     if (opt['--json']) return json({ file, format, bytes: fs.statSync(file).size });
@@ -553,7 +572,7 @@ const commands = {
 
   'export-notebooklm'(pos, opt) {
     const dir = resolveProject(pos[0]);
-    const outDir = needOut(opt);
+    const outDir = notInside(dir, needOut(opt));
     const { exportNotebookLm } = require('../lib/notebookLm.cjs');
     const res = exportNotebookLm({ project: open(dir), readDoc: reader(dir), outDir });
     if (opt['--json']) return json(res);
@@ -563,7 +582,7 @@ const commands = {
 
   async 'export-sources'(pos, opt) {
     const dir = resolveProject(pos[0]);
-    const outDir = needOut(opt);
+    const outDir = notInside(dir, needOut(opt));
     const format = oneOf('--format', opt['--format'], ['md', 'txt', 'docx'], 'md');
     const per = oneOf('--per', opt['--per'], ['chapter', 'document'], 'chapter');
     // --target only sets the source limit: NotebookLM takes at most 50 sources (chapters are merged).
@@ -577,7 +596,7 @@ const commands = {
 
   async 'export-docs'(pos, opt) {
     const dir = resolveProject(pos[0]);
-    const outDir = needOut(opt);
+    const outDir = notInside(dir, needOut(opt));
     const ex = require('../lib/exporters.cjs');
     const format = oneOf('--format', opt['--format'], ex.FORMATS, 'docx');
     const read = reader(dir);

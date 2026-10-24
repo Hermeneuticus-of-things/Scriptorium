@@ -1,5 +1,22 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.5 — Bucle divergente/convergente (runda 2)
+
+### Cerința user
+> "continua automat cu roadmap + bug hunter, ALL TYPE în bucle mai multe divergent și bucle mai multe convergente"
+
+- **Lucru în echipă (simulare cu 2–3 calculatoare, 500 de rulări aleatoare):**
+  - un document adăugat pe celălalt calculator nu mai dispare din binder după două salvări (îmbinarea binderului cădea când ambele părți aveau un nod nou);
+  - trei calculatoare care blochează același document în aceeași secundă: unul singur poate scrie (cel cu id-ul cel mai mic);
+  - un fișier pe care clientul de sincronizare încă îl scrie (tăiat la jumătate sau gol o clipă) nu mai e luat drept ștergere;
+  - un document adăugat într-un dosar șters pe celălalt calculator ajunge în Manuscris, nu lângă Manuscris și Coș.
+- **Agenți AI (MCP) și linia de comandă:**
+  - `compile -o` și exporturile din linia de comandă refuză un fișier sau folder din interiorul proiectului (puteau suprascrie `project.json`);
+  - împărțirea unui document, comentariile și notele adăugate de agent caută doar în text, nu și în atributele HTML (stricau documentul);
+  - un document blocat de un coleg e refuzat de toate uneltele care scriu, înainte de orice snapshot sau document nou; „replace” sare documentele blocate și le numește;
+  - numele proiectului e acceptat și cu extensia (`Carte.scribner`); titlul nu mai poate fi gol.
+- **Comentarii:** un comentariu pus peste text cu formatare amestecată (o parte aldin) apare în Inspector ca un singur comentariu; editarea și ștergerea îl schimbă în întregime (`src/lib/panelsExtra.js`).
+
 ## 2026-10-24 — v0.9.4 — Bug hunter din TODO: căutare, tastatură, siguranță
 
 ### Cerința user
