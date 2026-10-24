@@ -3,6 +3,7 @@ const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell, clipboard
 const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
+const { loadHtml } = require('../lib/loadHtml.cjs');
 const teamStore = require('../lib/teamStore.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
 const compile = require('../lib/compile.cjs');
@@ -40,16 +41,26 @@ function backupSettings() {
   return { ...BACKUP_DEFAULTS, ...readSettings() };
 }
 
+let backupRunning = null;
 async function backupAll() {
   const s = backupSettings();
-  for (const dir of dirtyDirs) {
-    try {
-      await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, { zip: s.backupZip !== false });
-    } catch (err) {
-      console.error('Backup eșuat pentru', dir, err);
-    }
-  }
+  if (backupRunning) return backupRunning;
+  // Taken first: a project edited during the backup stays marked for the next one.
+  const list = [...dirtyDirs];
   dirtyDirs.clear();
+  backupRunning = (async () => {
+    for (const dir of list) {
+      try {
+        await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, { zip: s.backupZip !== false });
+      } catch (err) {
+        console.error('Backup eșuat pentru', dir, err);
+        dirtyDirs.add(path.resolve(dir));
+      }
+    }
+  })().finally(() => {
+    backupRunning = null;
+  });
+  return backupRunning;
 }
 
 function scheduleBackups() {
@@ -58,11 +69,30 @@ function scheduleBackups() {
   if (min > 0) backupTimer = setInterval(backupAll, min * 60 * 1000);
 }
 
+const SETTINGS_DEFAULTS = { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true };
 function readSettings() {
+  let text;
   try {
-    return JSON.parse(fs.readFileSync(settingsFile(), 'utf8'));
+    text = fs.readFileSync(settingsFile(), 'utf8');
   } catch {
-    return { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true };
+    return { ...SETTINGS_DEFAULTS }; // first start
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Unreadable: kept aside (never overwritten by defaults) and the last good copy is used.
+    try {
+      fs.renameSync(settingsFile(), `${settingsFile()}.corrupt-${Date.now()}`);
+    } catch {
+      /* best effort */
+    }
+    try {
+      const good = JSON.parse(fs.readFileSync(`${settingsFile()}.bak`, 'utf8'));
+      store.writeAtomic(settingsFile(), JSON.stringify(good, null, 2));
+      return good;
+    } catch {
+      return { ...SETTINGS_DEFAULTS };
+    }
   }
 }
 
@@ -71,6 +101,11 @@ function writeSettings(s) {
   // Write to a temp file and rename it over the old one, so a crash mid-write never leaves
   // a truncated settings.json (API key and recent projects would be lost).
   store.writeAtomic(settingsFile(), JSON.stringify(s, null, 2));
+  try {
+    store.writeAtomic(`${settingsFile()}.bak`, JSON.stringify(s, null, 2)); // the last good copy
+  } catch {
+    /* best effort */
+  }
 }
 
 // AI provider + per-provider keys (lib/aiKeys.cjs). Keys never leave the main process.
@@ -289,7 +324,7 @@ function recheckSpelling(win) {
 }
 
 function createWindow() {
-  const offset = BrowserWindow.getAllWindows().length * 30;
+  const offset = BrowserWindow.getAllWindows().filter((w) => w.isVisible()).length * 30; // hidden PDF windows do not count
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -312,7 +347,10 @@ function createWindow() {
   win.on('closed', () => releaseWindow(wcId));
   // A crashed or reloaded renderer has lost its project: free it for other windows.
   win.webContents.on('render-process-gone', () => releaseWindow(wcId));
-  win.webContents.on('did-navigate', () => releaseWindow(wcId));
+  win.webContents.on('did-navigate', () => {
+    releaseWindow(wcId);
+    win.setMenu(null); // the reloaded page sends its own menu; the old one pointed at the old project
+  });
   // The window only ever shows the app: a link or a dropped file must not load another page,
   // which would get window.api. Web links open in the browser instead.
   const guard = (e, url) => {
@@ -534,7 +572,7 @@ handle('project:save', (e, dir, project) => {
   // save merges again, and tell it to reload the merged project.
   if (!res.merged) bases.set(key, res.raw);
   else if (!e.sender.isDestroyed()) e.sender.send('project:changed', { dir, files: ['project.json'], merged: true });
-  dirtyDirs.add(dir);
+  dirtyDirs.add(path.resolve(dir));
   return true;
 });
 
@@ -547,7 +585,7 @@ handle('doc:write', (e, dir, id, kind, html) => {
   assertOwner(e.sender, dir);
   noteSelfWrite(path.join(dir, kind === 'notes' ? 'notes' : 'docs', `${id}.html`), html);
   store.writeDoc(dir, id, kind === 'notes' ? 'notes' : 'docs', html);
-  dirtyDirs.add(dir);
+  dirtyDirs.add(path.resolve(dir));
   return true;
 });
 
@@ -879,7 +917,7 @@ handle('compile:export', async (e, dir, project, format, options) => {
     renderPdf: async (html, pdfOpts) => {
       const pdfWin = new BrowserWindow({ show: false, webPreferences: { sandbox: true, javascript: false } });
       try {
-        await pdfWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+        await loadHtml(pdfWin, html);
         return await pdfWin.webContents.printToPDF(pdfOpts);
       } finally {
         pdfWin.destroy();
@@ -1079,7 +1117,7 @@ if (!gotLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+    const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows().find((w) => w.isVisible());
     if (win) {
       if (win.isMinimized()) win.restore();
       win.focus();
@@ -1097,7 +1135,7 @@ app.whenReady().then(() => {
   scheduleBackups();
   createWindow();
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (!BrowserWindow.getAllWindows().some((w) => w.isVisible())) createWindow();
   });
 });
 app.on('window-all-closed', () => {

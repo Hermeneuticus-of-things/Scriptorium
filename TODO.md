@@ -153,6 +153,9 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] (v0.9.7) eek din D&TED în dictarea Scribner: listă modele, alegere, „Folosit acum”, mesaj pentru D&TED vechi, imagine README
 - [ ] D&TED 0.4.2: construit și publicat pe Windows (PyInstaller + instalator + amprente) — la autor
 - [ ] probă reală pe Windows: dictare cu eek prin D&TED în Scribner — la autor
+- [ ] deschiderea unui proiect cu dublu clic / din linia de comandă (argv, second-instance, open-file, fileAssociations)
+- [ ] la ieșire: ferestrele salvează înainte de backup (before-quit → flush din renderer)
+- [ ] watcher: folder dispărut pe Linux (rename) tratat ca offline; un singur retry pe proiect
 - [ ] echipă: ordonarea jurnalului cu ceasuri decalate; copiile de conflict ale jurnalelor de echipă
 - [ ] `mergeDoc` re-ancorare după inserții (conflicte false)
 - [x] (v0.9.4) căutare „cuvânt întreg” și `^`/`$` peste granițele de formatare (bold în mijlocul cuvântului) — `src/lib/search.js`

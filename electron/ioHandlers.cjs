@@ -29,6 +29,7 @@
 //   saveGlobalFormats: (list) => call('io:saveGlobalFormats', list),
 const fs = require('fs');
 const os = require('os');
+const { loadHtml } = require('../lib/loadHtml.cjs');
 const path = require('path');
 const { fileToHtml, classifyFile, importOpml, importWebPage, TEXT_EXTS } = require('../lib/importers.cjs');
 const { splitHtml } = require('../lib/docxImport.cjs');
@@ -200,7 +201,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   const renderPdf = async (html, pdfOpts) => {
     const render = hiddenWindow();
     try {
-      await render.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+      await loadHtml(render, html);
       return await render.webContents.printToPDF(pdfOpts);
     } finally {
       render.destroy();

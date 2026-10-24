@@ -1,5 +1,19 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
+
+### Cerința user
+> "extins multilevel bug hunting pe toate aplicația"
+
+- **PDF și tipărire pentru o carte întreagă:** pagina se încarcă dintr-un fișier temporar; înainte, peste ~1,2 MB (o carte de ~100 000 de cuvinte) exportul PDF și Print Preview cădeau (verificat în Electron: 5 MB merg).
+- **Setări stricate:** un `settings.json` ilizibil nu mai e înlocuit cu valorile implicite (pierdeai cheile și proiectele recente): e păstrat deoparte și se folosește ultima copie bună (`settings.json.bak`).
+- **Backup:** un proiect modificat în timpul unui backup intră în următorul; aceeași cale scrisă diferit nu mai face două backup-uri; două backup-uri nu mai rulează deodată.
+- **Ferestre:** ferestrele ascunse pentru PDF nu mai sunt luate drept ferestre de lucru; meniul nativ se golește la reîncărcarea paginii.
+- **Dictare (motorul încorporat):** o pornire eșuată nu mai blochează dictarea până la repornirea ferestrei; oprirea în timpul pornirii nu mai dă eroare; mesaj în română când motorul cade în mijlocul transcrierii; fișierele lungi se decodează la 16 kHz (de ~3 ori mai puțină memorie); la schimbarea motorului, cel vechi se oprește (D&TED nu mai ține microfonul).
+- **Dictare (text):** ş/ţ cu sedilă devin ș/ț; majuscula după „ sau « la început de frază; înlocuirile tale se aplică și pe varianta cu sedilă.
+- **D&TED în Scribner:** cererile de stare/model se potrivesc după id; modelul se reîncearcă dacă D&TED era ocupat; transcrierea fișierelor din binder folosește și ea modelul ales.
+- **D&TED (repo separat):** serviciul nu mai moare la un caracter care nu se poate scrie sau la o comandă greșită; „Stop” al unei ferestre nu mai oprește dictarea alteia; id dublu refuzat; schimbarea modelului refuzată cât timp așteaptă transcrieri; anularea merge și cât se încarcă modelul.
+
 ## 2026-10-24 — v0.9.7 — Modelul eek de la D&TED în Scribner
 
 ### Cerința user
