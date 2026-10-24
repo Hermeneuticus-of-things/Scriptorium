@@ -142,6 +142,12 @@ describe('pullExternalDocs with the merge', () => {
     expect(r.conflicts).toEqual(['d']);
     expect(a.snaps).toEqual([['d', 'L']]);
   });
+  it('the base is taken before reading (a reader that records the base cannot hide their change)', async () => {
+    const bases = new Map();
+    const a = { readDoc: async () => { if (!bases.has('d')) bases.set('d', '<p>Al lor.</p>'); return '<p>Al lor.</p>'; }, takeSnapshot: async () => {} };
+    const r = await pullExternalDocs({ api: a, dir: 'x', ids: ['d'], hasLocal: () => true, localHtml: () => '<p>Al meu.</p>', baseHtml: (id) => bases.get(id), merge: mergeDoc, label: 'L' });
+    expect(r.conflicts).toEqual(['d']);
+  });
   it('without a known base it falls back to the snapshot', async () => {
     const a = api('<p>Altceva.</p>');
     const r = await pullExternalDocs({ api: a, dir: 'x', ids: ['d'], hasLocal: () => true, localHtml: () => '<p>Al meu.</p>', baseHtml: () => undefined, merge: mergeDoc, label: 'L' });
@@ -256,7 +262,7 @@ describe('MCP agent in a team project', () => {
     const dir = store.projectDirFor(tmp, 'Echipa');
     store.createProject(dir, 'Echipa', 'novel');
     const doc = store.loadProject(dir).tree[0].children.flatMap((n) => [n, ...(n.children || [])]).find((n) => n.type === 'text');
-    teamStore.teamWrite(dir, 'presence-pc-ana.json', JSON.stringify(presenceOf(ana, { doc: doc.id, locks: [doc.id] })));
+    teamStore.teamWrite(dir, 'presence-pc-ana.json', JSON.stringify(presenceOf(ana, { doc: doc.id })));
     const client = new Client({ name: 'test', version: '1.0.0' });
     await client.connect(new StdioClientTransport({ command: process.execPath, args: [path.resolve('mcp/server.mjs'), '--project', dir], stderr: 'ignore' }));
     try {
@@ -264,9 +270,15 @@ describe('MCP agent in a team project', () => {
       await client.callTool({ name: 'write_document', arguments: { id: doc.id, content: 'Text scris de agent.' } });
       const act = await call('team_activity', { project: dir });
       expect(act.working_now.map((p) => p.who)).toEqual(['Ana']);
-      expect(act.locked[doc.id]).toBe('Ana');
+      expect(act.locked).toEqual({});
       expect(act.changes.at(-1)).toMatchObject({ who: AGENT, doc: doc.id, machine: AGENT });
       expect(act.changes.at(-1).added).toBeGreaterThan(0);
+      // a document Ana locked is not written by the agent
+      teamStore.teamWrite(dir, 'presence-pc-ana.json', JSON.stringify(presenceOf(ana, { doc: doc.id, locks: [doc.id] })));
+      const refused = await client.callTool({ name: 'write_document', arguments: { id: doc.id, content: 'Altceva.' } });
+      expect(refused.isError).toBe(true);
+      expect(refused.content[0].text).toMatch(/blocat de Ana/);
+      expect(store.readDoc(dir, doc.id)).toContain('Text scris de agent');
     } finally {
       await client.close();
       fs.rmSync(tmp, { recursive: true, force: true });
@@ -291,4 +303,39 @@ describe('MCP agent in a team project', () => {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
   }, 30000);
+});
+
+describe('clock skew and double locks', () => {
+  it('a computer whose clock runs ahead is judged by this one\'s clock', async () => {
+    const { seenTimes } = await import('../src/lib/team.js');
+    const now = Date.parse('2026-10-24T12:00:00Z');
+    const ahead = JSON.stringify(presenceOf(ana, { now: now + 3600e3, locks: ['d'] }));
+    const seen = new Map();
+    let r = readPeers(seenTimes({ 'presence-pc-ana.json': ahead }, seen, now), { now });
+    expect(r.live.map((p) => p.who)).toEqual(['Ana']);
+    expect(r.locks.d.who).toBe('Ana');
+    // the same file, 3 minutes later and unchanged: gone quiet
+    r = readPeers(seenTimes({ 'presence-pc-ana.json': ahead }, seen, now + 180e3), { now: now + 180e3 });
+    expect(r.live).toEqual([]);
+    // a computer running behind, but writing again: alive
+    const behind1 = JSON.stringify(presenceOf(ion, { now: now - 3600e3 }));
+    const behind2 = JSON.stringify(presenceOf(ion, { now: now - 3600e3 + 20e3 }));
+    seenTimes({ 'presence-pc-ion.json': behind1 }, seen, now);
+    r = readPeers(seenTimes({ 'presence-pc-ion.json': behind2 }, seen, now + 20e3), { now: now + 20e3 });
+    expect(r.live.map((p) => p.who)).toEqual(['Ion']);
+  });
+  it('two computers lock the same document: the smaller machine id keeps it', async () => {
+    const { lockFor } = await import('../src/lib/team.js');
+    const anaLock = { who: 'Ana', machine: 'pc-ana' };
+    const ionLock = { who: 'Ion', machine: 'pc-ion' };
+    expect(lockFor({ d: ionLock }, ['d'], ana, 'd')).toBe(null); // Ana writes
+    expect(lockFor({ d: anaLock }, ['d'], ion, 'd')).toBe(anaLock); // Ion reads, can unlock
+    expect(lockFor({ d: anaLock }, [], ion, 'd')).toBe(anaLock);
+    expect(lockFor({}, ['d'], ion, 'd')).toBe(null);
+  });
+  it('web: overlapping appends keep every row', async () => {
+    const api = createWebApi({ kv: createMemoryKv(), channel: null });
+    await Promise.all(Array.from({ length: 10 }, (_, i) => api.teamWrite('p', 'log-pc-ana.jsonl', `${i}\n`, { append: true })));
+    expect((await api.teamFiles('p'))['log-pc-ana.jsonl'].split('\n').filter(Boolean).sort()).toEqual(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
+  });
 });

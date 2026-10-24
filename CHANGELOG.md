@@ -1,5 +1,13 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.8 (continuare) — Bug hunter: 19 bug-uri în echipă și dictare
+
+- **Dictare:** id-urile cererilor se fac în fereastră și se înregistrează înainte de trimitere (rezultatul unei transcrieri rapide nu se mai pierde, bara nu mai rămâne blocată după o eroare); evenimentele merg la fereastra care a cerut; dictarea se oprește la schimbarea documentului (nu mai scrie în altul); „Și apoi” la mijloc de frază devine „și apoi”; scrierea către un D&TED căzut nu mai oprește aplicația; D&TED de altă versiune e închis.
+- **D&TED (serviciu):** anularea oprește doar cererea ei; un singur model chiar cu cereri simultane; dictare nouă imediat după Stop; ieșirea oprește transcrierea în curs.
+- **Echipă:** blocare dublă (doi oameni în aceeași clipă) rezolvată (id-ul mai mic păstrează documentul, celălalt își poate scoate lacătul); ceasuri diferite între calculatoare nu mai ascund oameni sau blocări; blocările proprii nu se mai pierd la deschidere; echipa oprită își retrage imediat prezența; baza îmbinării ținută la zi de orice salvare (înlocuiri, glosar, împărțire, documente noi); scrieri suprapuse în varianta web nu mai pierd rânduri; agentul MCP nu mai scrie în documente blocate; jurnalul reîncearcă dacă OneDrive ține fișierul.
+- Rămas: liste / tabele editate de doi oameni în elemente diferite trec încă prin snapshot (nimic pierdut).
+- Teste: 1078.
+
 ## 2026-10-24 — v0.8.8 (continuare) — Dictare și transcriere cu D&TED; README refăcut
 
 ### Cerința user

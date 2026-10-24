@@ -23,9 +23,9 @@ contextBridge.exposeInMainWorld('api', {
   teamFiles: (dir) => call('team:files', dir),
   dtedStatus: (opts) => call('dted:status', opts),
   dtedPickAudio: () => call('dted:pickAudio'),
-  dtedTranscribe: (file) => call('dted:transcribe', file),
-  dtedTranscribeMedia: (dir, file) => call('dted:transcribeMedia', dir, file),
-  dtedDictateStart: () => call('dted:dictateStart'),
+  dtedTranscribe: (file, id) => call('dted:transcribe', file, id),
+  dtedTranscribeMedia: (dir, file, id) => call('dted:transcribeMedia', dir, file, id),
+  dtedDictateStart: (id) => call('dted:dictateStart', id),
   dtedDictateStop: (id) => call('dted:dictateStop', id),
   dtedCancel: (id) => call('dted:cancel', id),
   onDtedEvent: (fn) => {

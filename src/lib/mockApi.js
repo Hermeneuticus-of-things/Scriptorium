@@ -527,19 +527,19 @@ function fakeDted() {
     async dtedPickAudio() {
       return 'interviu-bunica.mp3';
     },
-    async dtedTranscribe(file) {
-      const id = `t${++seq}`;
+    async dtedTranscribe(file, given) {
+      const id = given || `t${++seq}`;
       emit({ ev: 'faza', id, text: 'Transcriu…' });
       setTimeout(() => emit({ ev: 'progres', id, p: 0.6 }), 200);
       setTimeout(() => emit({ ev: 'rezultat', id, text: '', secunde_audio: 70, segmente: [{ start: 0, end: 4, text: 'Când eram mică, iarna venea devreme.' }, { start: 4.5, end: 8, text: 'Tata tăia lemne în curte.' }, { start: 62, end: 66, text: 'Apoi am plecat la oraș.' }] }), 700);
       return id;
     },
-    async dtedTranscribeMedia(_dir, file) {
-      return this.dtedTranscribe(file);
+    async dtedTranscribeMedia(_dir, file, id) {
+      return this.dtedTranscribe(file, id);
     },
-    async dtedDictateStart() {
+    async dtedDictateStart(given) {
       if (dict) throw new Error('Dictarea este deja pornită.');
-      const id = `d${++seq}`;
+      const id = given || `d${++seq}`;
       dict = { id, n: 0, sent: [] };
       emit({ ev: 'dictare_pornita', id });
       dict.timer = setInterval(() => {

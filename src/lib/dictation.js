@@ -3,6 +3,13 @@
 // it replaces the selection (an edit). The whole dictation is one undo step while nothing else is
 // typed in between.
 
+// Romanian function words and frequent sentence openers that are never names.
+const COMMON = new Set(('și,iar,dar,însă,ci,sau,ori,că,ca,să,de,la,în,pe,cu,din,prin,spre,pentru,fără,după,până,'
+  + 'despre,către,lângă,sub,peste,între,care,ce,cine,cum,când,unde,cât,dacă,deși,pentru,apoi,atunci,acum,'
+  + 'deja,încă,mai,tot,doar,chiar,nu,da,el,ea,ei,ele,eu,tu,noi,voi,îl,o,îi,le,ne,vă,mă,te,se,și-a,s-a,'
+  + 'a,am,ai,au,are,era,erau,fost,este,e,sunt,un,o,niște,acest,această,acel,acea,asta,aceea,fiecare,'
+  + 'toți,toate,totul,nimic,nimeni,foarte,prea,aici,acolo,the,and,but').split(','));
+
 /** Text to insert after `before` (the text just before the cursor): spacing and a capital letter. */
 export function joinFragment(before, fragment) {
   let t = String(fragment || '').replace(/\s+/g, ' ').trim();
@@ -12,6 +19,12 @@ export function joinFragment(before, fragment) {
   const trimmed = prev.replace(/\s+$/, '');
   const sentenceStart = !trimmed || /[.!?…]["”»)]*$/.test(trimmed) || /\n$/.test(prev);
   if (sentenceStart) t = t[0].toLocaleUpperCase('ro') + t.slice(1);
+  else {
+    // The recogniser starts every ~4 s piece with a capital; in mid-sentence a common word goes
+    // back to lower case ("am mers Și apoi" → "am mers și apoi"). Names keep their capital.
+    const m = /^([\p{Lu}][\p{Ll}]*)(?=[^\p{L}]|$)/u.exec(t);
+    if (m && COMMON.has(m[1].toLocaleLowerCase('ro'))) t = m[1].toLocaleLowerCase('ro') + t.slice(m[1].length);
+  }
   const glue = !prev || /[\s(„«"'\[—-]$/.test(last) || /^[.,;:!?…)\]»”]/.test(t) ? '' : ' ';
   return glue + t;
 }

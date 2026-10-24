@@ -19,7 +19,7 @@ import { styleCss, stylesOf } from '../src/lib/styles.js';
 import { projectNoteTabs } from '../src/lib/projectNotes.js';
 import { registerFullTools } from './fullTools.mjs';
 import { diffParagraphs } from '../src/lib/authorText.js';
-import { AGENT, logRow } from '../src/lib/team.js';
+import { AGENT, logRow, readPeers } from '../src/lib/team.js';
 
 const require = createRequire(import.meta.url);
 const store = require('../lib/store.cjs');
@@ -34,6 +34,11 @@ const AGENT_WHO = { name: AGENT, color: '#7a7a7a', machine: AGENT };
 const writeDocPlain = store.writeDoc;
 store.writeDoc = (dir, id, kind, html) => {
   const logged = kind === 'docs' && fs.existsSync(path.join(dir, 'team'));
+  // A document a person locked (Scribner, lock button) is not written by the agent either.
+  if (logged) {
+    const lock = readPeers(teamStore.teamFiles(dir)).locks[id];
+    if (lock) throw new Error(`Documentul e blocat de ${lock.who} (lucru în echipă); nu l-am modificat. Cere-i să-l deblocheze sau lucrează la alt document.`);
+  }
   let before = '';
   if (logged) {
     try {
