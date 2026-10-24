@@ -143,9 +143,10 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] server Scribner în timp real (CRDT, WebSocket, HTTPS, conturi)
 - [ ] cursorii celorlalți, colorați
 - [x] dialog de conflict cu variantele alături (v0.9.2, `src/components/ConflictDialog.jsx`, `resolveMerge`)
-- [ ] rămase din bug hunt v0.9.3: taburile din Compile și Inspector cu săgeți și roluri ARIA; Outline la 1024 px (Inspector strâns automat); termeni: Binder/Corkboard/Outline/Compile/Layout/bookmark în română unitară; categoriile de șabloane ca id-uri traduse; fragmente de propoziție lipite în JSX → chei întregi
-- [ ] din bug hunt v0.9.3: fișele Corkboard cu un singur Tab (roving tabindex); numărul de caractere pentru ținte în cache; `mergeDoc` re-ancorare după inserții (conflicte false); `restoreBackup` limită de mărime; sanitizer unic pentru HTML afișat în Inspector/Bookmarks
-- [ ] căutare „cuvânt întreg” și `^`/`$` peste granițele de formatare (bold în mijlocul cuvântului) — `src/lib/search.js`
+- [ ] rămase din bug hunt v0.9.3: Outline la 1024 px (Inspector strâns automat); termeni: Binder/Corkboard/Outline/Compile/Layout/bookmark în română unitară; categoriile de șabloane ca id-uri traduse; fragmente de propoziție lipite în JSX → chei întregi
+- [x] din bug hunt v0.9.3: Corkboard un singur Tab, caractere în cache, `restoreBackup` limită, sanitizer unic (v0.9.4)
+- [ ] `mergeDoc` re-ancorare după inserții (conflicte false)
+- [x] (v0.9.4) căutare „cuvânt întreg” și `^`/`$` peste granițele de formatare (bold în mijlocul cuvântului) — `src/lib/search.js`
 - [ ] Ctrl+Z după schimbarea documentului: pași pe cuvinte, fără reluarea anulărilor — `src/components/Editor.jsx`
 - [ ] coadă offline + indicator de sincronizare
 - [ ] roluri și permisiuni

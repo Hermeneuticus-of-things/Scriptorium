@@ -441,13 +441,22 @@ export default function App({ api: apiProp }) {
     }
     return map;
   }, [docs]);
+  // Character counts, cached the same way (character targets, history): never the whole book again.
+  const charCache = useRef(new Map());
+  const charsOf = useCallback((id, html) => {
+    const hit = charCache.current.get(id);
+    if (hit && hit.html === html) return hit.n;
+    const n = htmlToText(html || '').length;
+    charCache.current.set(id, { html, n });
+    return n;
+  }, []);
 
   // Notification when a document reaches its target (Project Targets → notify documents).
   useEffect(() => {
     if (!project || project.targets?.notifyDocuments === false) return;
     for (const n of flatten(project.tree)) {
       if (!n.target || n.targetNotify === false) continue;
-      const cur = n.targetType === 'Characters' ? htmlToText(docs[n.id] || '').length : counts[n.id] || 0;
+      const cur = n.targetType === 'Characters' ? charsOf(n.id, docs[n.id]) : counts[n.id] || 0;
       const prev = prevTargetCounts.current[n.id];
       if (prev != null && targetCrossed(prev, cur, n.target) && typeof Notification !== 'undefined') new Notification(tr('ui.app.tinta_atinsa'), { body: `„${n.title}”: ${n.target}` });
       prevTargetCounts.current[n.id] = cur;
@@ -474,7 +483,7 @@ export default function App({ api: apiProp }) {
       if (!dir || !api.recordHistory) return;
       const pj = projectRef.current;
       const ds = docsNow();
-      const chars = (ids) => ids.reduce((n, id) => n + htmlToText(ds[id] || '').length, 0);
+      const chars = (ids) => ids.reduce((n, id) => n + charsOf(id, ds[id]), 0);
       let extra = {};
       if (pj) {
         const trash = new Set(flatten(pj.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
@@ -482,7 +491,7 @@ export default function App({ api: apiProp }) {
       }
       api.recordHistory(dir, { ...totalsRef.current, ...extra }).catch(() => {});
     }, HISTORY_DELAY);
-  }, [api, dir]);
+  }, [api, dir, charsOf]);
 
   const flush = useCallback(async () => {
     for (const h of editorRefs.current.values()) h.flush?.();

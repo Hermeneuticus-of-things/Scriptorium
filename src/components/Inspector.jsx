@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { tabKeys } from '../lib/tabKeys.js';
 import { incomingLinks } from '../lib/backlinks.js';
 import { findNode, rootOf } from '../lib/tree.js';
 import { BookmarkIcon, CommentIcon, LockIcon, MetaIcon, NotesIcon, SnapshotIcon, UnlockIcon } from './Icons.jsx';
@@ -8,6 +9,7 @@ import { buildExtensions } from '../editor/extensions.js';
 import { htmlToText } from '../lib/text.js';
 import { parseComments, updateComment } from '../lib/panelsExtra.js';
 import { t as tr, uiLocale } from '../lib/i18n.js';
+import { sanitizeHtml } from '../lib/sanitize.js';
 import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 
 // Survives the remount App does on every selection change (key = selected id),
@@ -167,7 +169,7 @@ export default function Inspector({
         {lockedId && <span className="muted small">{tr('ui.inspector.blocat_pe')} <strong>{node.title}</strong></span>}
         {pinnedOther && onOpen && <button className="link" onClick={() => onOpen(node.id)}>{tr('ui.app.deschide')}</button>}
       </div>
-      <div className="tabs">
+      <div className="tabs" role="tablist" aria-label={tr('ui.inspector.taburi')} onKeyDown={tabKeys(['meta', 'notes', 'project', 'annot', 'snapshots'], tab, setTab)}>
         {[
           ['meta', tr('ui.inspector.tab_detalii'), MetaIcon],
           ['notes', tr('ui.advancedSearchDialog.note'), NotesIcon],
@@ -175,7 +177,7 @@ export default function Inspector({
           ['annot', `${tr('ui.inspector.tab_comentarii')}${notes.comments.length + notes.footnotes.length ? ` (${notes.comments.length + notes.footnotes.length})` : ''}`, CommentIcon],
           ['snapshots', tr('ui.inspector.tab_snapshots'), SnapshotIcon],
         ].map(([id, label, Ico]) => (
-          <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)} title={label} aria-label={label}>
+          <button key={id} role="tab" aria-selected={tab === id} tabIndex={tab === id ? 0 : -1} className={tab === id ? 'on' : ''} onClick={() => setTab(id)} title={label} aria-label={label}>
             <Ico />
           </button>
         ))}
@@ -602,11 +604,4 @@ function titleOf(project, id) {
 }
 
 // Snapshot HTML is our own editor output, but strip anything executable anyway.
-function sanitize(html) {
-  const doc = new DOMParser().parseFromString(html || '', 'text/html');
-  doc.querySelectorAll('script,style,iframe,object,embed').forEach((n) => n.remove());
-  doc.querySelectorAll('*').forEach((el) => {
-    for (const a of [...el.attributes]) if (a.name.startsWith('on') || /^javascript:/i.test(a.value)) el.removeAttribute(a.name);
-  });
-  return doc.body.innerHTML;
-}
+const sanitize = sanitizeHtml;
