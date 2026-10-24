@@ -450,7 +450,7 @@ function CustomFields({ project, node, onPatch }) {
             <label key={f.id}>
               {f.title}
               <select value={v || ''} onChange={(e) => set(f.title, e.target.value)}>
-                <option value="">(nimic)</option>
+                <option value="">{tr('ui.inspector.nimic')}</option>
                 {f.options.map((o) => (
                   <option key={o.id || o.title}>{o.title}</option>
                 ))}

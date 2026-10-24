@@ -35,6 +35,7 @@ export default function ShortcutsDialog({ commands, settings, onSave, onClose })
                       onBlur={() => setRecording(null)}
                       onKeyDown={(e) => {
                         e.preventDefault();
+                        e.stopPropagation(); // recording a shortcut must not also run it
                         if (e.key === 'Escape') return e.currentTarget.blur();
                         if (e.key === 'Backspace' || e.key === 'Delete') {
                           setMap((m) => ({ ...m, [c.id]: '' }));

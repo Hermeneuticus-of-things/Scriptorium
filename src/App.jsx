@@ -74,6 +74,7 @@ import {
   findParent,
   flatten,
   inOrder,
+  dropMany,
   insertNear,
   keyMove,
   duplicateNode,
@@ -111,13 +112,14 @@ import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 import { mergeProject } from './lib/projectMerge.js';
 import { pullExternalDocs } from './lib/syncGuard.js';
-import { mergeDoc } from './lib/team.js';
+import { mergeDoc, resolveMerge } from './lib/team.js';
 import { useTeam } from './lib/useTeam.js';
 import { useDictation } from './lib/useDictation.js';
 import { createLocalSpeech } from './lib/localSpeech.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
 import TeamDialog from './components/TeamDialog.jsx';
+import ConflictDialog from './components/ConflictDialog.jsx';
 
 const SAVE_DELAY = 700;
 const TYPED_COMMIT_DELAY = 400;
@@ -212,6 +214,7 @@ export default function App({ api: apiProp }) {
   useEffect(() => () => clearTimeout(typedTimer.current), []);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [conflict, setConflict] = useState(null); // { id, title, pieces, html } (ConflictDialog)
   const team = useTeam({ api, dir, settings, docId: selectedId });
   // D&TED dictation (text at the cursor, or replacing the selection) and audio transcription.
   // The built-in recogniser (default, desktop) or the separate D&TED program (Settings).
@@ -523,7 +526,7 @@ export default function App({ api: apiProp }) {
         // Typing an editor has not handed over yet counts as a local edit too.
         for (const id of ids) for (const k of [id, `split:${id}`, `copy:${id}`]) editorRefs.current.get(k)?.flush?.();
         const time = new Date().toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' });
-        const { updated, merged, theirs, conflicts } = await pullExternalDocs({
+        const { updated, merged, theirs, conflicts, clashes } = await pullExternalDocs({
           api,
           dir,
           ids,
@@ -550,6 +553,9 @@ export default function App({ api: apiProp }) {
         if (conflicts.length) {
           const titles = conflicts.map((id) => findNode(projectRef.current.tree, id)?.title || id);
           setToast(tr('ui.app.editat_in_doua_locuri', { titles: titles.join(', '), time }));
+          // Paragraph-level clashes: the writer chooses, one document at a time.
+          const first = conflicts.find((id) => clashes?.[id]);
+          if (first) setConflict({ id: first, title: findNode(projectRef.current.tree, first)?.title || first, pieces: clashes[first], html: merged[first] ?? docsNow()[first] });
         }
       } catch (e) {
         report(e);
@@ -1471,8 +1477,14 @@ export default function App({ api: apiProp }) {
         return;
       }
       const combo = keyFromEvent(e);
-      if (!combo) return;
+      if (!combo || e.defaultPrevented) return;
+      // A dialog is open: only Save still works behind it.
+      const inDialog = document.querySelector('.modal-backdrop');
+      // Typing in a field outside the editor: plain, Shift- or Alt-only keys belong to the field.
+      const field = e.target?.closest?.('input, textarea, select, [contenteditable="true"]');
+      const inField = field && !field.closest('.ProseMirror') && !(e.ctrlKey || e.metaKey) && !/^F\d+$/.test(e.key);
       for (const [id, cmd] of Object.entries(commandsRef.current)) {
+        if ((inDialog && id !== 'save') || inField) continue;
         if (cmd.key && cmd.key === combo && !cmd.disabled) {
           e.preventDefault();
           cmd.run();
@@ -2166,12 +2178,8 @@ export default function App({ api: apiProp }) {
           onSelect={onBinderSelect}
           onAdd={addItem}
           onRename={(id, title) => patchNode(id, { title })}
-          onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
-          onMoveMany={(ids, targetId, pos) => {
-            let t = project.tree;
-            (pos === 'after' ? [...ids].reverse() : ids).forEach((id) => (t = moveNode(t, id, targetId, pos)));
-            setTreeU(t);
-          }}
+          onMove={(id, targetId, pos) => setTreeU(dropMany(project.tree, [id], targetId, pos))}
+          onMoveMany={(ids, targetId, pos) => setTreeU(dropMany(project.tree, [...ids], targetId, pos))}
           onKeyMove={(dir2) => selectedId && setTreeU(keyMoveMany(project.tree, selectedIds.size ? [...selectedIds] : [selectedId], dir2))}
           onUndo={undoBinder}
           renameId={renameId}
@@ -2673,6 +2681,22 @@ export default function App({ api: apiProp }) {
             setSettings(await api.getSettings());
           }}
           onError={report}
+        />
+      )}
+      {conflict && (
+        <ConflictDialog
+          conflict={conflict}
+          onClose={() => setConflict(null)}
+          onApply={(choices) => {
+            const now = docsNow()[conflict.id];
+            setConflict(null);
+            // Typed on meanwhile: the choice would overwrite it; their version is in the snapshots.
+            if (now !== undefined && now !== conflict.html) return setToast(tr('ui.conflict.schimbat_intre_timp'));
+            const html = resolveMerge(conflict.pieces, choices);
+            setDocs((d) => ({ ...d, [conflict.id]: html }));
+            setEditorHtml(conflict.id, html);
+            queueWrite(conflict.id, 'docs', html);
+          }}
         />
       )}
       {dialog === 'team' && (
