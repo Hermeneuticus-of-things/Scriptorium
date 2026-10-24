@@ -311,6 +311,12 @@ $env:SCRIBNER_PORTABLE='1'; irm https://raw.githubusercontent.com/Hermeneuticus-
 
 Poți citi scriptul înainte: [`install.ps1`](install.ps1).
 
+Cât timp depozitul e privat, GitHub cere autentificare și pentru script, și pentru installer. Pui întâi un token personal cu drept de citire (GitHub → Settings → Developer settings → Fine-grained tokens, acces „Contents: Read” la acest depozit):
+
+```powershell
+$env:GITHUB_TOKEN='token-ul-tău'; irm -Headers @{Authorization="Bearer $env:GITHUB_TOKEN"} https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex
+```
+
 Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `scribner` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
 
 O versiune nouă apare în Releases de fiecare dată când iese, automat.
