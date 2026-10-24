@@ -115,7 +115,7 @@ try {
 
 function projectDir(project) {
   if (!project) return projects[0];
-  const hit = projects.find((p) => p === path.resolve(project) || path.basename(p).replace(/\.(scribner|scriptorium)$/i, '') === project);
+  const hit = projects.find((p) => p === path.resolve(project) || path.basename(p) === project || path.basename(p).replace(/\.(scribner|scriptorium)$/i, '') === project);
   if (!hit) throw new Error(`Proiect necunoscut: ${project}. Disponibile: ${projects.map((p) => path.basename(p)).join(', ')}`);
   return hit;
 }
@@ -169,11 +169,30 @@ const text = (s) => ({ content: [{ type: 'text', text: typeof s === 'string' ? s
 
 // global: the tool does not work on an open project (create / import a new one); its
 // write is logged in the project it creates (result.dir), or in the first project.
+// A document a person locked is refused before anything is written (no stray snapshot or new
+// document left behind by a half-run tool).
+function assertUnlocked(dir, id) {
+  if (!dir || !id || !fs.existsSync(path.join(dir, 'team'))) return;
+  const lock = readPeers(teamStore.teamFiles(dir)).locks[id];
+  if (lock) throw new Error(`Documentul e blocat de ${lock.who} (lucru în echipă); nu l-am modificat. Cere-i să-l deblocheze sau lucrează la alt document.`);
+}
+const lockedIds = (dir) => (dir && fs.existsSync(path.join(dir, 'team')) ? readPeers(teamStore.teamFiles(dir)).locks : {});
+
+// Position of `target` in the HTML text, never inside a tag or an attribute value
+// (a quote like "comment" must not match data-comment="…").
+function textIndexOf(html, target, from = 0) {
+  for (let i = html.indexOf(target, from); i >= 0; i = html.indexOf(target, i + 1)) {
+    if (html.lastIndexOf('<', i) <= html.lastIndexOf('>', i) && !target.includes('<')) return i;
+  }
+  return -1;
+}
+
 function tool(name, description, shape, handler, { writes = false, global = false } = {}) {
   server.registerTool(name, { title: name, description, inputSchema: shape }, async (input) => {
     try {
       if (writes) requireWritable();
       const dir = global ? null : projectDir(input.project);
+      if (writes && dir) for (const id of [input.id, ...(Array.isArray(input.ids) && name !== 'replace' ? input.ids : [])]) assertUnlocked(dir, id);
       const result = await handler(dir, input);
       if (writes) log(dir || (result && typeof result === 'object' && result.dir) || projects[0], name, input, result);
       return text(result);
@@ -375,7 +394,7 @@ tool(
   {
     project,
     id: z.string(),
-    title: z.string().optional(),
+    title: z.string().trim().min(1, "Titlul nu poate fi gol.").optional(),
     synopsis: z.string().optional(),
     label: z.string().optional(),
     status: z.string().optional(),
@@ -453,7 +472,11 @@ tool(
     const targets = ids ? ids.map((id) => nodeOrThrow(p, id)) : flatten(p.tree).filter((n) => !n.root && n.type === 'text' && !trash.has(n.id));
     let total = 0;
     const changed = [];
+    // Documents a person locked are skipped (and named), never half-changed with an error.
+    const locks = lockedIds(dir);
+    const skipped = targets.filter((n) => locks[n.id]);
     for (const n of targets) {
+      if (locks[n.id]) continue;
       const { html, count } = replaceInHtml(store.readDoc(dir, n.id), re, replacement);
       if (!count) continue;
       store.takeSnapshot(dir, n.id, 'Înainte de înlocuirea unui agent AI');
@@ -461,7 +484,8 @@ tool(
       total += count;
       changed.push(`${n.title} (${count})`);
     }
-    return `${total} înlocuiri în ${changed.length} documente: ${changed.join(', ')}`;
+    const skip = skipped.length ? ` Sărite (blocate de colegi): ${skipped.map((n) => n.title).join(', ')}.` : '';
+    return `${total} înlocuiri în ${changed.length} documente: ${changed.join(', ')}${skip}`;
   },
   { writes: true },
 );
@@ -498,7 +522,7 @@ tool(
     const html = store.readDoc(dir, id);
     const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const target = esc(quote);
-    const idx = html.indexOf(target);
+    const idx = textIndexOf(html, target);
     if (idx < 0) throw new Error('Fragmentul nu a fost găsit exact (în interiorul unui singur paragraf, fără formatare la mijloc).');
     store.takeSnapshot(dir, id, 'Înainte de comentariul unui agent AI');
     // data-comment-author / -date: the attributes the editor and the Inspector read.
@@ -518,7 +542,7 @@ tool(
     const html = store.readDoc(dir, id);
     const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const target = esc(after_quote);
-    const idx = html.indexOf(target);
+    const idx = textIndexOf(html, target);
     if (idx < 0) throw new Error('Fragmentul nu a fost găsit exact.');
     store.takeSnapshot(dir, id, 'Înainte de nota unui agent AI');
     const end = idx + target.length;
@@ -614,6 +638,7 @@ tool('writing_history', 'Istoricul scrisului pe zile (cuvinte în manuscris și 
 
 registerFullTools({
   tool,
+  textIndexOf,
   z,
   project,
   projects,

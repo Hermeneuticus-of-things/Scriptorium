@@ -78,7 +78,7 @@ const { parseBibliography } = require('../lib/bibliography.cjs');
 export const FULL_TOOL_NAMES = [];
 
 export function registerFullTools(ctx) {
-  const { z, project, store, load, mutate, trashIds, nodeOrThrow, textNodeOrThrow, pathOf, outsideProjects, addProject, appSettings, userData } = ctx;
+  const { z, project, store, textIndexOf, load, mutate, trashIds, nodeOrThrow, textNodeOrThrow, pathOf, outsideProjects, addProject, appSettings, userData } = ctx;
   const tool = (name, ...rest) => {
     FULL_TOOL_NAMES.push(name);
     return ctx.tool(name, ...rest);
@@ -887,7 +887,7 @@ export function registerFullTools(ctx) {
     (dir, { id, at_text, new_title }) => {
       const n = textNodeOrThrow(dir, id);
       const html = store.readDoc(dir, id);
-      const idx = html.indexOf(at_text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+      const idx = textIndexOf(html, at_text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
       if (idx < 0) throw new Error('Textul nu a fost găsit exact (în interiorul unui singur paragraf, fără formatare la mijloc).');
       const { before, after } = splitHtmlAt(html, idx);
       if (!store.htmlToText(before).trim()) throw new Error('Prima parte ar rămâne goală.');

@@ -29,28 +29,52 @@ function findCommentSpans(html) {
   return out;
 }
 
+// A comment over mixed formatting is stored as sibling spans with the same attributes
+// ("<span c>plain </span><strong><span c>bold</span></strong>"): those spans are one comment.
+const SAME_ATTRS = ['data-comment', 'data-comment-color', 'data-comment-author', 'data-author', 'data-comment-date'];
+const ONLY_FORMATTING = /^(?:<\/?(?:strong|b|em|i|u|s|sub|sup|mark|code|span)(?:\s[^>]*)?>)*$/;
+function commentGroups(src) {
+  const groups = [];
+  for (const sp of findCommentSpans(src)) {
+    const last = groups[groups.length - 1];
+    const prev = last && last[last.length - 1];
+    if (prev && sp.start >= prev.end && ONLY_FORMATTING.test(src.slice(prev.end, sp.start)) && SAME_ATTRS.every((a) => attr(prev.open, a) === attr(sp.open, a))) last.push(sp);
+    else groups.push([sp]);
+  }
+  return groups;
+}
+
 /** Comments in a document: [{index, text, on, color, author, date}]. */
 export function parseComments(html) {
   const src = String(html || '');
-  return findCommentSpans(src).map((s, index) => ({
-    index,
-    text: attr(s.open, 'data-comment'),
-    on: stripTags(src.slice(s.openEnd, s.closeStart)),
-    color: attr(s.open, 'data-comment-color'),
-    // data-author: written by older versions (and the MCP server before 0.7.2); the editor reads both.
-    author: attr(s.open, 'data-comment-author') || attr(s.open, 'data-author'),
-    date: attr(s.open, 'data-comment-date'),
-  }));
+  return commentGroups(src).map((g, index) => {
+    const s = g[0];
+    return {
+      index,
+      text: attr(s.open, 'data-comment'),
+      on: g.map((x) => stripTags(src.slice(x.openEnd, x.closeStart))).join(''),
+      color: attr(s.open, 'data-comment-color'),
+      // data-author: written by older versions (and the MCP server before 0.7.2); the editor reads both.
+      author: attr(s.open, 'data-comment-author') || attr(s.open, 'data-author'),
+      date: attr(s.open, 'data-comment-date'),
+    };
+  });
 }
 
 /**
  * Edit (patch = {text?, color?, author?, date?}) or delete (patch = null, keeps the
- * commented text) the comment number `index`. Returns the new HTML.
+ * commented text) the comment number `index` (every span it is made of). Returns the new HTML.
  */
 export function updateComment(html, index, patch) {
-  const src = String(html || '');
-  const s = findCommentSpans(src)[index];
-  if (!s) return src;
+  let src = String(html || '');
+  const group = commentGroups(src)[index];
+  if (!group) return src;
+  // Last span first: earlier offsets stay valid.
+  for (const s of [...group].reverse()) src = updateSpan(src, s, patch);
+  return src;
+}
+
+function updateSpan(src, s, patch) {
   if (patch === null) return src.slice(0, s.start) + src.slice(s.openEnd, s.closeStart) + src.slice(s.end);
   let open = s.open;
   const map = { text: 'data-comment', color: 'data-comment-color', author: 'data-comment-author', date: 'data-comment-date' };
