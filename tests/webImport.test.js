@@ -153,3 +153,13 @@ describe('image limits', () => {
     expect(saved).toEqual(['https://x/a.png', 'https://x/b.png']);
   });
 });
+
+describe('atribute fără ghilimele (HTML valid)', () => {
+  it('imaginea cu src fără ghilimele rămâne, cu textul alternativ', async () => {
+    const { webPageToHtml } = await import('../lib/importers.cjs');
+    const h = "<html><body><article><p>Text lung de articol aici pentru extragere.</p><img src='/a.png' alt=x><img src=http://e.com/b.png alt='Un câine'></article></body></html>";
+    const out = webPageToHtml(h, 'https://site.ro/p/').html;
+    expect(out).toContain('<img src="https://site.ro/a.png" alt="x">');
+    expect(out).toContain('<img src="http://e.com/b.png" alt="Un câine">');
+  });
+});
