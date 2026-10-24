@@ -877,6 +877,37 @@ env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
 <p>Cere agentului: „listează documentele din proiectul Scribner”, apoi „citește primul capitol și scrie-i sinopsisul în inspector”. Fă un snapshot înainte de modificări mari. Mai multe proiecte: repetă <code>--project</code> pentru fiecare. Dacă agentul nu vede unelte: repornește clientul, verifică dublarea <code>\\</code> în JSON și că Scribner e instalat la calea scrisă.</p>`,
       },
       {
+        id: 'yours-cli',
+        title: 'Linia de comandă (CLI)',
+        html: `<p>Scribner are și o linie de comandă: citești, cauți, compilezi și exporți proiectul din terminal sau din scripturi, fără să deschizi fereastra. Comenzile care doar citesc nu blochează proiectul; cele care scriu (<code>snapshot</code>, <code>import</code>) așteaptă ca aplicația să termine salvarea.</p>
+<h4>Pornire</h4>
+<p>Programul instalat pe Windows nu are nevoie de Node.js. Copiază <code>scribner.cmd</code> (din folderul <code>installer</code> al sursei) lângă <code>Scribner.exe</code>, în <code>%LOCALAPPDATA%\\Programs\\Scribner</code>, și adaugă folderul în PATH. Apoi scrii direct <code>scribner …</code>. Fără wrapper, în PowerShell:</p>
+<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Scribner\\Scribner.exe" "$env:LOCALAPPDATA\\Programs\\Scribner\\resources\\app\\cli\\scribner.cjs" info "D:\\Carti\\Karma.scribner"</pre>
+<p>Din sursă, cu Node.js: <code>node cli/scribner.cjs help</code>.</p>
+<h4>Comenzi</h4>
+<pre>scribner info "D:\\Carti\\Karma.scribner"              titlu, autor, cuvinte, ultima modificare
+scribner list "D:\\Carti\\Karma.scribner" --tree       binderul, cu id-uri
+scribner cat "D:\\Carti\\Karma.scribner" "Capitolul 1" --md
+scribner search "D:\\Carti\\Karma.scribner" "karma" --whole
+scribner stats "D:\\Carti\\Karma.scribner"             cuvinte pe document, ținte, istoric
+scribner compile "D:\\Carti\\Karma.scribner" --format docx --preset paperback -o "D:\\Export"
+scribner export-docs "D:\\Carti\\Karma.scribner" -o "D:\\Export\\Docs" --format md
+scribner backup "D:\\Carti\\Karma.scribner"
+scribner snapshot "D:\\Carti\\Karma.scribner" "Capitolul 1" --name "Înainte de revizie"
+scribner import "D:\\Texte\\Roman.docx" -o "D:\\Carti\\Roman.scribner" --split h1
+scribner mcp "D:\\Carti\\Karma.scribner"               serverul MCP pentru agenți AI</pre>
+<p>Adaugă <code>--json</code> pentru ieșire pe care o citesc scripturile, <code>--lang en</code> pentru mesaje în engleză. Coduri de ieșire: 0 reușit, 1 eroare, 2 comandă scrisă greșit. PDF-ul se face doar din aplicație (<em>Compile → PDF</em>); din terminal folosește <code>--format docx</code> sau <code>html</code>.</p>
+<h4>Cartea ca surse pentru NotebookLM, Gemini, ChatGPT, Claude Projects sau Manus</h4>
+<pre>scribner export-sources "D:\\Carti\\Karma.scribner" -o "D:\\NotebookLM"</pre>
+<p>Rezultă folderul <code>Surse - Karma</code>: <code>00 - Cuprins</code> (cuprinsul cu sinopsisuri), câte un fișier pe capitol, cercetarea și notele, plus <code>sources.json</code> (lista surselor). Opțiuni: <code>--per document</code> (un fișier pe fiecare document, nu pe capitol), <code>--format txt</code> sau <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (cel mult 50 de surse; capitolele se unesc) sau <code>gemini</code>, <code>chatgpt</code>, <code>claude</code>, <code>manus</code>.</p>
+<ol>
+<li>Rulează comanda de mai sus.</li>
+<li>Deschide <a href="https://notebooklm.google.com">notebooklm.google.com</a> → <em>Notebook nou</em> → <em>Adaugă surse</em> → <em>Încarcă</em> și selectează toate fișierele din folder (fără <code>sources.json</code>).</li>
+<li>Întreabă notebook-ul despre carte: personaje, cronologie, contradicții între capitole.</li>
+</ol>
+<p>Pentru limita NotebookLM există și <code>scribner export-notebooklm … -o folder</code>, care unește capitole ca să nu depășească 50 de surse. Același folder se încarcă și într-un Gem Gemini, într-un proiect ChatGPT, într-un proiect Claude sau în Manus (manus.im). După ce scrii mai departe, rulează din nou comanda și înlocuiește sursele.</p>`,
+      },
+      {
         id: 'yours-sync',
         title: 'Același proiect pe desktop și în browser',
         html: `<p>Pune folderul <code>.scribner</code> în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe desktop îl deschizi normal; în Chrome sau Edge, versiunea web deschide <em>același folder</em> (butonul <em>Deschide proiect .scribner</em>) și scrie direct în el. Schimbările făcute de cealaltă parte apar în câteva secunde. Nu edita același document în două locuri în același timp. Pe telefon browserele nu pot deschide foldere: acolo folosești <em>Exportă pachet</em> / <em>Importă pachet .json</em>.</p>`,
