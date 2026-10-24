@@ -70,7 +70,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] Clic pe o problemă selectează textul în editor
 - [x] Bucla verificată în browser cu simulator de AI
 - [x] Editarea listelor de cuvinte interzise din Setări
-- [ ] Test end-to-end cu Claude real
+- [~] Test end-to-end cu un model real: lanțul aplicației (setări → furnizor → răspuns) verificat cu OpenRouter; cu Claude real încă nu
 - [x] Glosare generate automat: `Glosar_Alogeni_Indieni`, `Glosar_de_lectură`, `Cuprins_de_tipar`
 - [x] Index canonic (`Index_de_Lucru`, noduri N.N.N cu tip/greutate/dependențe) ca sursă pentru R1 și R6 macro
 - [ ] „VKB2” și definițiile tale exacte pentru I-REP / I-EDIT (nu le am; aștept fișierele)
@@ -217,7 +217,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 
 - [ ] Proiectul Karma real (`.scriv`) pentru proba de import fără pierderi
 - [ ] Cheile reale DeepL / Google / LanguageTool Premium / Speechify / Zotero pentru o probă cap-coadă (codul e testat cu răspunsuri simulate)
-- [ ] O cheie AI pentru testul cap-coadă cu un model real
+- [~] Test cu model real: rulat de autor pe Windows prin OpenRouter (model gratuit `nvidia/nemotron-3.5-super-vl:free`): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit („Provider returned error”); scriptul reîncearcă acum și trece la alt model. Rămâne o rulare completă verde.
 - [ ] Definițiile VKB2 pentru I-REP / I-EDIT
 - [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add scribner …`)
 - [ ] Pachetul de limbă română pentru corectorul ortografic al Windows (setare de sistem)
