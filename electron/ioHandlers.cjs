@@ -20,15 +20,17 @@
 //   newFromTemplate: (title, templateId) => call('io:newFromTemplate', title, templateId),
 //   importText: (mode, separator) => call('io:importText', mode, separator),
 //   importWebPage: (url, dir) => call('io:importWebPage', url, dir),
-//   getPageSetup: () => call('io:getPageSetup'),
+//   getPageSetup: (project) => call('io:getPageSetup', project),
 //   setPageSetup: (setup) => call('io:setPageSetup', setup),
 //   printPreview: (dir, project, options) => call('io:printPreview', dir, project, options),
+//   printDocuments: (dir, project, options) => call('io:printDocuments', dir, project, options),
+//   savePrintPdf: (token) => call('io:savePrintPdf', token),
 //   listGlobalFormats: () => call('io:listGlobalFormats'),
 //   saveGlobalFormats: (list) => call('io:saveGlobalFormats', list),
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { fileToHtml, classifyFile, importOpml, webPageToHtml, localizeImages, TEXT_EXTS } = require('../lib/importers.cjs');
+const { fileToHtml, classifyFile, importOpml, importWebPage, TEXT_EXTS } = require('../lib/importers.cjs');
 const { splitHtml } = require('../lib/docxImport.cjs');
 const exporters = require('../lib/exporters.cjs');
 const templates = require('../lib/templates.cjs');
@@ -56,7 +58,6 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   };
   const pageSetupFile = () => path.join(userData(), 'page-setup.json');
   const formatsFile = () => path.join(userData(), 'compile-formats.json');
-  const pageSetup = () => printSetup.normalizePageSetup(readJson(pageSetupFile(), {}));
   try {
     compileFormats.setGlobalFormats(readJson(formatsFile(), []));
   } catch {
@@ -106,35 +107,21 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   // With `dir` (an opened project) the page's images are downloaded into media/ and embedded (offline copy);
   // the result then has `media` items to add to Research.
   handle('io:importWebPage', async (_e, url, dir) => {
-    let u;
-    try {
-      u = new URL(String(url));
-    } catch {
-      throw new Error('Adresă web invalidă.');
-    }
-    if (!/^https?:$/.test(u.protocol)) throw new Error('Sunt acceptate doar adrese http(s).');
-    const r = await fetch(u.href, { redirect: 'follow' });
-    if (!r.ok) throw new Error(`Pagina nu a putut fi descărcată (HTTP ${r.status}).`);
-    const page = webPageToHtml(await r.text(), r.url || u.href);
+    if (dir) assertOpened(dir);
+    const saveMedia = dir
+      ? ({ data, ext, name }) => {
+          const id = store.newId();
+          noteSelfWrite(path.join(dir, 'media', `${id}.${ext}`));
+          const file = store.writeMedia(dir, id, ext, data);
+          return { id, title: name.replace(/\.[^.]+$/, '') || 'Imagine', file, mime: store.mimeFor(file), name };
+        }
+      : null;
+    const page = await importWebPage(url, { saveMedia });
     if (!dir) return page;
-    assertOpened(dir);
-    const local = await localizeImages(page.html, {
-      fetchImage: async (src) => {
-        const res = await fetch(src, { redirect: 'follow' });
-        if (!res.ok) return null;
-        return { data: Buffer.from(await res.arrayBuffer()), mime: res.headers.get('content-type') || '' };
-      },
-      saveMedia: ({ data, ext, name }) => {
-        const id = store.newId();
-        noteSelfWrite(path.join(dir, 'media', `${id}.${ext}`));
-        const file = store.writeMedia(dir, id, ext, data);
-        return { id, title: name.replace(/\.[^.]+$/, '') || 'Imagine', file, mime: store.mimeFor(file), name };
-      },
-    });
     return {
       title: page.title,
-      html: local.html,
-      media: local.media.map((m) => ({ id: m.id, title: m.title, media: { file: m.file, mime: m.mime, name: m.name } })),
+      html: page.html,
+      media: page.media.map((m) => ({ id: m.id, title: m.title, media: { file: m.file, mime: m.mime, name: m.name } })),
     };
   });
 
@@ -185,54 +172,92 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   });
 
   // ---------------------------------------------------------------- page setup / print preview
-  handle('io:getPageSetup', () => pageSetup());
+  // The Page Setup lives in the project (project.pageSetup); userData/page-setup.json is the
+  // default for projects without one (the last setup saved).
+  const setupFor = (project, options = {}) => printSetup.normalizePageSetup(options.pageSetup || (project && project.pageSetup) || readJson(pageSetupFile(), {}));
+  handle('io:getPageSetup', (_e, project) => setupFor(project));
   handle('io:setPageSetup', (_e, setup) => {
     const clean = printSetup.normalizePageSetup(setup || {});
     writeJson(pageSetupFile(), clean);
     return clean;
   });
 
-  // options.ids: documents to preview (current document / selection); without ids the whole manuscript.
-  // options.compiled: true = use the Compile format (Compile > Print); otherwise Page Setup is applied.
-  handle('io:printPreview', async (_e, dir, project, options = {}) => {
-    assertOpened(dir);
-    const read = (id) => {
-      try {
-        return store.readDoc(dir, id);
-      } catch {
-        return '';
-      }
-    };
-    const setup = pageSetup();
-    let html;
-    let pdfOpts;
-    if (options.compiled) {
-      html = compile.compileHtml(project, read, { ...options, projectDir: dir, target: 'pdf' });
-      pdfOpts = compile.pdfOptions(options, project);
-    } else {
-      const ids = Array.isArray(options.ids) && options.ids.length ? options.ids : null;
-      html = compile.compileHtml(project, read, { ids, documentTitles: true, folderHeadings: true, titlePage: false, separator: '', projectDir: dir, target: 'pdf' });
-      html = html.replace('</head>', `<style>${printSetup.printCss(setup)}</style></head>`);
-      pdfOpts = printSetup.pdfPrintOptions(setup);
+  const readerFor = (dir) => (id) => {
+    try {
+      return store.readDoc(dir, id);
+    } catch {
+      return '';
     }
-    const render = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, javascript: false } });
-    let file;
+  };
+  // Current document / selection (options.ids) or the whole Draft, through the Compile HTML
+  // pipeline, with the Page Setup's page box and running header/footer (compile.pageCss).
+  const printHtml = (dir, project, options, setup) => {
+    const ids = Array.isArray(options.ids) && options.ids.length ? options.ids : null;
+    const html = compile.compileHtml(project, readerFor(dir), { ids, documentTitles: true, folderHeadings: true, titlePage: false, separator: '', projectDir: dir, target: 'pdf' });
+    return printSetup.applyToHtml(html, setup, project);
+  };
+  const hiddenWindow = () => new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, javascript: false } });
+  const renderPdf = async (html, pdfOpts) => {
+    const render = hiddenWindow();
     try {
       await render.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-      const pdf = await render.webContents.printToPDF(pdfOpts);
-      file = path.join(os.tmpdir(), `scribner-preview-${Date.now()}.pdf`);
-      fs.writeFileSync(file, pdf);
+      return await render.webContents.printToPDF(pdfOpts);
     } finally {
       render.destroy();
     }
-    // Chromium's PDF viewer: page view, zoom and a Print button.
-    const preview = new BrowserWindow({ width: 900, height: 1000, title: `Previzualizare tipărire — ${project.title || ''}`, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, plugins: true } });
-    preview.setMenuBarVisibility(false);
-    preview.on('closed', () => fs.rm(file, { force: true }, () => {}));
-    await preview.loadURL(`file://${file}`);
-    return { file };
+  };
+  const previews = new Map(); // token -> { pdf, title }; the last few previews, for Save PDF
+  let previewSeq = 0;
+
+  // options.ids: documents to preview (current document / selection); without ids the whole manuscript.
+  // options.compiled: true = use the Compile format (Compile > Print) in a separate window.
+  // Otherwise the Page Setup is applied and the PDF is returned for the preview dialog:
+  //   { token, data: Uint8Array, pageCount, pageSize: {width, height} (pt), setup }
+  handle('io:printPreview', async (_e, dir, project, options = {}) => {
+    assertOpened(dir);
+    if (options.compiled) {
+      const html = compile.compileHtml(project, readerFor(dir), { ...options, projectDir: dir, target: 'pdf' });
+      const pdf = await renderPdf(html, compile.pdfOptions(options, project));
+      const file = path.join(os.tmpdir(), `scribner-preview-${Date.now()}.pdf`);
+      fs.writeFileSync(file, pdf);
+      // Chromium's PDF viewer: page view, zoom and a Print button.
+      const preview = new BrowserWindow({ width: 900, height: 1000, title: `Previzualizare tipărire — ${project.title || ''}`, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, plugins: true } });
+      preview.setMenuBarVisibility(false);
+      preview.on('closed', () => fs.rm(file, { force: true }, () => {}));
+      await preview.loadURL(`file://${file}`);
+      return { file };
+    }
+    const setup = setupFor(project, options);
+    const pdf = await renderPdf(printHtml(dir, project, options, setup), printSetup.pdfPrintOptions(setup));
+    const token = `p${++previewSeq}`;
+    previews.set(token, { pdf, title: project.title || 'Scribner' });
+    while (previews.size > 3) previews.delete(previews.keys().next().value);
+    return { token, data: new Uint8Array(pdf), pageCount: printSetup.pdfPageCount(pdf), pageSize: printSetup.pdfPageSize(pdf), setup };
   });
 
+  // Prints the same pages as Print Preview (system print dialog).
+  handle('io:printDocuments', async (_e, dir, project, options = {}) => {
+    assertOpened(dir);
+    const setup = setupFor(project, options);
+    const win = hiddenWindow();
+    await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(printHtml(dir, project, options, setup))}`);
+    return new Promise((resolve) => {
+      win.webContents.print(printSetup.printOptions(setup), (success, reason) => {
+        win.destroy();
+        resolve({ success, reason: success ? '' : reason });
+      });
+    });
+  });
+
+  // Save PDF from the preview dialog.
+  handle('io:savePrintPdf', async (e, token) => {
+    const p = previews.get(token);
+    if (!p) throw new Error('Previzualizarea a expirat; deschide-o din nou.');
+    const res = await dialog.showSaveDialog(winOf(e), { title: 'Salvează PDF', defaultPath: `${exporters.safeName(p.title)}.pdf`, filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+    if (res.canceled || !res.filePath) return null;
+    fs.writeFileSync(res.filePath, p.pdf);
+    return res.filePath;
+  });
 
   handle('io:exportDocuments', async (e, dir, project, ids, options = {}) => {
     assertOpened(dir);
@@ -289,8 +314,8 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   });
 
   handle('io:printDocument', async (_e, html, title = 'Scribner') => {
-    const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, javascript: false } });
-    const setup = pageSetup();
+    const win = hiddenWindow();
+    const setup = setupFor(null);
     const page = printSetup.printPage(html, title, setup);
     await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(page)}`);
     return new Promise((resolve) => {
