@@ -12,12 +12,24 @@ export function buildRegex({ query, regex, caseSensitive, wholeWord }) {
   }
 }
 
+// Named character references worth decoding (HTML5 names, the common typographic subset).
+const NAMED = {
+  lt: '<', gt: '>', quot: '"', apos: "'",
+  mdash: '—', ndash: '–', hellip: '…', laquo: '«', raquo: '»', bdquo: '„', ldquo: '“', rdquo: '”',
+  lsquo: '‘', rsquo: '’', sbquo: '‚', lsaquo: '‹', rsaquo: '›', copy: '©', reg: '®', trade: '™',
+  deg: '°', middot: '·', bull: '•', sect: '§', para: '¶', times: '×', divide: '÷', plusmn: '±',
+  minus: '−', shy: '­', thinsp: ' ', ensp: ' ', emsp: ' ', zwj: '‍',
+  zwnj: '‌', euro: '€', pound: '£', yen: '¥', cent: '¢', dagger: '†', Dagger: '‡', prime: '′',
+  Prime: '″', iexcl: '¡', iquest: '¿', ordm: 'º', ordf: 'ª', frac12: '½', frac14: '¼', frac34: '¾',
+  sup1: '¹', sup2: '²', sup3: '³', micro: 'µ', larr: '←', rarr: '→', uarr: '↑', darr: '↓',
+};
+
 function decode(s) {
   return s
     .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
+    // Named references (&lt; &mdash; &laquo; …; pasted/imported HTML) must become text too, or a
+    // replace re-encodes them as "&amp;mdash;". Unknown names stay literal; &amp; goes last.
+    .replace(/&([A-Za-z][A-Za-z0-9]*);/g, (ref, name) => (name !== 'amp' && NAMED[name] !== undefined ? NAMED[name] : ref))
     .replace(/&#39;/g, "'")
     // Numeric references (imported HTML: &#8217; &#x2019;) must become text, or a replace
     // re-encodes them as "&amp;#8217;" and matches inside them ("x" in "&#x2019;").
