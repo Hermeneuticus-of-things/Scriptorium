@@ -908,6 +908,10 @@ handle('translate:run', async (_e, { service = 'deepl', text, from, to } = {}) =
   if (service === 'google') return translate.googleTranslate({ ...opts, apiKey: services.getService(st, 'googleTranslate', safeStorage).apiKey });
   return translate.deeplTranslate({ ...opts, apiKey: services.getService(st, 'deepl', safeStorage).apiKey });
 });
+handle('zotero:import', async (_e, { collection } = {}) => {
+  const zt = services.getService(readSettings(), 'zotero', safeStorage);
+  return { entries: await require('../lib/zotero.cjs').fetchZoteroLibrary({ userId: zt.userId, apiKey: zt.apiKey, collection }) };
+});
 handle('tts:speak', async (_e, { text } = {}) => {
   const sp = services.getService(readSettings(), 'speechify', safeStorage);
   return translate.speechifySpeak({ apiKey: sp.apiKey, voiceId: sp.voiceId, text });
