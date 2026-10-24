@@ -27,7 +27,7 @@ const ids = {};
 beforeAll(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-cli-'));
   P = path.join(tmp, 'Carte.scribner');
-  const project = store.createProject(P, 'Țara mea — „Karma”');
+  const project = store.createProject(P, 'Țara mea — „Drumul”');
   project.author = 'Ion Pop';
   const draft = project.tree[0];
   const research = project.tree[1];
@@ -38,12 +38,12 @@ beforeAll(() => {
   const s2 = store.newNode('text', 'Scena doi');
   ch1.children.push(s1, s2);
   const ch2 = store.newNode('text', 'Capitolul 2 😀');
-  const r1 = store.newNode('text', 'Notițe despre Karma');
+  const r1 = store.newNode('text', 'Notițe despre Drumul');
   draft.children = [ch1, ch2];
   research.children = [r1];
   Object.assign(ids, { ch1: ch1.id, s1: s1.id, s2: s2.id, ch2: ch2.id, r1: r1.id });
-  store.writeDoc(P, s1.id, 'docs', '<p>Pădurea era <strong>întunecată</strong> și liniștită.</p><p>Karma veghea.</p>');
-  store.writeDoc(P, s2.id, 'docs', '<p>A doua scenă, cu karma mică.</p>');
+  store.writeDoc(P, s1.id, 'docs', '<p>Pădurea era <strong>întunecată</strong> și liniștită.</p><p>Drumul veghea.</p>');
+  store.writeDoc(P, s2.id, 'docs', '<p>A doua scenă, cu drumul mică.</p>');
   store.writeDoc(P, ch2.id, 'docs', '<p>Final fericit pentru toți.</p>');
   store.writeDoc(P, r1.id, 'docs', '<p>Legea cauzei și efectului.</p>');
   store.writeDoc(P, s1.id, 'notes', '<p>De verificat numele pădurii.</p>');
@@ -87,7 +87,7 @@ describe('cli: read commands', () => {
   it('info --json has a stable shape', () => {
     const s = runJson(['info', P]);
     expect(Object.keys(s)).toEqual(['title', 'author', 'path', 'format', 'counts', 'words', 'targets', 'created', 'modified']);
-    expect(s.title).toBe('Țara mea — „Karma”');
+    expect(s.title).toBe('Țara mea — „Drumul”');
     expect(s.author).toBe('Ion Pop');
     expect(s.counts).toMatchObject({ documents: 4, folders: 1, manuscript: 4, research: 1, trash: 0, snapshots: 0 });
     expect(s.words.manuscript).toBe(7 + 6 + 4);
@@ -108,7 +108,7 @@ describe('cli: read commands', () => {
   });
 
   it('cat by title or id, as text, markdown, html and notes', () => {
-    expect(run(['cat', P, 'scena ĂÎȘȚ']).out).toMatch(/Pădurea era întunecată și liniștită\.\n+Karma veghea\./);
+    expect(run(['cat', P, 'scena ĂÎȘȚ']).out).toMatch(/Pădurea era întunecată și liniștită\.\n+Drumul veghea\./);
     expect(run(['cat', P, ids.s1, '--md']).out).toMatch(/\*\*întunecată\*\*/);
     expect(run(['cat', P, ids.s1, '--html']).out).toContain('<strong>întunecată</strong>');
     expect(run(['cat', P, ids.s1, '--notes']).out).toMatch(/numele pădurii/);
@@ -116,14 +116,14 @@ describe('cli: read commands', () => {
   });
 
   it('search: plain, case, whole word, regex', () => {
-    const all = runJson(['search', P, 'karma']);
+    const all = runJson(['search', P, 'drumul']);
     expect(all.results.map((r) => r.id).sort()).toEqual([ids.s1, ids.s2, ids.r1].sort());
     expect(all.results[0]).toHaveProperty('snippets');
-    expect(runJson(['search', P, 'Karma', '--case']).results.map((r) => r.id).sort()).toEqual([ids.s1, ids.r1].sort());
+    expect(runJson(['search', P, 'Drumul', '--case']).results.map((r) => r.id).sort()).toEqual([ids.s1, ids.r1].sort());
     expect(runJson(['search', P, 'scen', '--whole']).results.length).toBe(0);
     expect(runJson(['search', P, 'p.dur', '--regex']).total).toBe(2); // text + notes
     expect(run(['search', P, 'zzzz']).out).toMatch(/Niciun rezultat/);
-    expect(run(['search', P, 'karma']).err).toBe(''); // no Node warnings on stderr
+    expect(run(['search', P, 'drumul']).err).toBe(''); // no Node warnings on stderr
   });
 
   it('stats --json: per document words, targets, history', () => {
@@ -181,7 +181,7 @@ describe('cli: compile and exports', () => {
 
   it('export-sources per chapter (md): index + chapters + research + notes + manifest', () => {
     const res = runJson(['export-sources', P, '-o', path.join(tmp, 'src')]);
-    expect(res.files).toEqual(['00 - Cuprins.md', '01 - Capitolul 1_ Început.md', '02 - Capitolul 2 😀.md', 'Cercetare - Notițe despre Karma.md', 'Note proiect.md']);
+    expect(res.files).toEqual(['00 - Cuprins.md', '01 - Capitolul 1_ Început.md', '02 - Capitolul 2 😀.md', 'Cercetare - Notițe despre Drumul.md', 'Note proiect.md']);
     expect(fs.readdirSync(res.dir).sort()).toEqual([...res.files, 'sources.json'].sort());
     expect(fs.readFileSync(path.join(res.dir, '00 - Cuprins.md'), 'utf8')).toMatch(/Eroul pleacă de acasă/);
     expect(fs.readFileSync(path.join(res.dir, '01 - Capitolul 1_ Început.md'), 'utf8')).toMatch(/Scena doi/);
@@ -233,7 +233,7 @@ describe('cli: write commands', () => {
     const snap = runJson(['snapshot', P, 'Scena doi', '--name', 'Înainte']);
     expect(snap).toMatchObject({ id: ids.s2, title: 'Scena doi', name: 'Înainte' });
     const list = store.listSnapshots(P, ids.s2);
-    expect(list[0].html).toMatch(/karma mică/);
+    expect(list[0].html).toMatch(/drumul mică/);
   });
 
   it('write commands respect the project lock', () => {

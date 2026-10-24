@@ -7,7 +7,7 @@ Primite de la autor la 2026-10-24. Sursa de adevăr pentru implementarea din Scr
 
 - **Ce este:** un detector determinist (în VKB2: `00_MOTOR/vkb2/det_repetitie_apropiata.py`) care semnalează același cuvânt cu conținut (aceeași lemă sau formă) repetat în aceeași frază sau în două fraze vecine, inclusiv anadiploza „…scutul. Scutul…”.
 - **Ce dă:** câte un rând `⚠ REP L<n> «formă» ×k` pe fiecare rând al textului unde are apariții un grup; fără direcție, fără propunere. SOFT: nu oprește nimic.
-- **Unde intră în buclă:** punct de catalog `D:repetitie_apropiata`, legat de sămânța S70 („termenul nu se schimbă doar ca să nu se repete”), deci ajunge numai la cititorul R8b (cuvântul și litera), nu la rece și nu la rece2. Cititorul judecă cu S70 dacă repetiția supără; termenii cărții („faptă”, „karma”, „urmă”) nu sunt excluși.
+- **Unde intră în buclă:** punct de catalog `D:repetitie_apropiata`, legat de sămânța S70 („termenul nu se schimbă doar ca să nu se repete”), deci ajunge numai la cititorul R8b (cuvântul și litera), nu la rece și nu la rece2. Cititorul judecă cu S70 dacă repetiția supără; termenii cărții (de exemplu numele personajelor sau termenii-cheie) nu sunt excluși.
 - **Ce nu numără:** cuvintele-unealtă (pronume, prepoziții, numerale, auxiliare), locuțiunile („în fața”); reduplicatele („pas cu pas”) contează o singură apariție.
 - **Măsurat pe carte:** 3.604 grupuri (24 pe 0.1, 27 pe 0.2).
 

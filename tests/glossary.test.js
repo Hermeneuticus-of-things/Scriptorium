@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildAlogenGlossary, buildReadingGlossary, buildPrintToc, buildGlossaries } from '../src/lib/glossary.js';
 
 const project = {
-  title: 'Karma',
+  title: 'Drumul',
   tree: [
     { id: 'draft', root: 'draft', type: 'folder', title: 'Manuscris', children: [
       { id: 'c1', type: 'folder', title: 'Cap 1 Rădăcinile', children: [

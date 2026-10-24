@@ -59,9 +59,9 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 - [x] Corecturi automate, comportament binder, autosave
 - [x] Mai multe ferestre de proiect, panou NotebookLM/RAG, PWA
 - [x] 1.2: listă cuvinte interzise în Setări, glosare automate, index canonic
-- [x] Aspect Scrivener 3 pe toate paginile
+- [x] Aspect clasic pe toate paginile
 - [x] Profil generic implicit; profilul cărții = „Română”
-- [ ] Verificare pe Windows în Electron real; proiect Karma real; Claude real
+- [ ] Verificare pe Windows în Electron real; proiect real mare; Claude real
 
 ### Request: clic dreapta pe cuvânt/frază → DeepL, dicționare, AI, NotebookLM; README nou
 - [x] Meniu contextual (Electron nativ + web) cu traducere, dicționare, cercetare web, AI, NotebookLM, extindere selecție
@@ -127,7 +127,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] Bara de sus fără aglomerare: butoanele rare mutate în meniuri derulante; grupare pe Fișier / Editare / Vizualizare / Proiect / Document / Unelte / AI / Ajutor, ca în Scrivener
 - [x] FormatBar: comenzile rare în meniuri derulante; ce nu încape trece în „Mai mult ▾”
 - [x] Verificat la 900 px și 1366 px, temă luminoasă și întunecată; scurtăturile neschimbate
-- [x] Personalizează bara de instrumente (ca Scrivener 3) — v0.8.4
+- [x] Personalizează bara de instrumente — v0.8.4
 
 ### Request: roadmap lucru în echipă (server / NAS / cloud, cine ce a modificat și când)
 - [x] Scris în README („Ce urmează”) și în ROADMAP.md secțiunea 9
@@ -149,7 +149,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] comparare direct din jurnalul echipei
 - [ ] adnotări pe PDF în Cercetare
 - [ ] sinonimul.ro cu adresă directă
-- [ ] la autor: instalare Windows, test MCP, import Karma, chei, test AI complet, depozit public?
+- [ ] la autor: instalare Windows, test MCP, import proiect real, chei, test AI complet, depozit public?
 ### Request: plugin D&TED în Scribner (spec: docs/DTED.md)
 - [x] D&TED: modul --serviciu (JSON pe linii) + teste
 - [x] lib/dted.cjs + IPC + D&TED fals pentru teste

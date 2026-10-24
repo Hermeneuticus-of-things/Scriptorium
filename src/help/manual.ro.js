@@ -618,7 +618,7 @@ media/                 imagini, PDF, audio, video</pre>
         id: 'irep-near',
         title: 'Repetiții apropiate (S70)',
         html: `<p>Panoul are secțiunea <em>Repetiții apropiate (S70)</em>: același cuvânt cu conținut (aceeași lemă sau formă) în aceeași frază sau în două fraze vecine, inclusiv anadiploza „…scutul. Scutul…”. Câte un rând <code>⚠ REP L&lt;n&gt; «formă» ×k</code> pe fiecare paragraf (L = numărul paragrafului în document) unde grupul are apariții; un clic selectează apariția în editor.</p>
-<p>Nu se numără cuvintele-unealtă (pronume, prepoziții, conjuncții, numerale, auxiliare), locuțiunile („în fața”, „pe lângă”, „de-a lungul”…), iar reduplicatele („pas cu pas”, „zi de zi”) contează o singură apariție. Termenii cărții („faptă”, „karma”, „urmă”) se numără.</p>
+<p>Nu se numără cuvintele-unealtă (pronume, prepoziții, conjuncții, numerale, auxiliare), locuțiunile („în fața”, „pe lângă”, „de-a lungul”…), iar reduplicatele („pas cu pas”, „zi de zi”) contează o singură apariție. Termenii cărții (de exemplu numele personajelor sau termenii-cheie) se numără.</p>
 <p>Este un <strong>semnal</strong>, nu o problemă: nu oprește bucla, nu se repară automat și nu ajunge în promptul de reparare. Regula S70: termenul nu se schimbă doar ca să nu se repete. Lista intră doar la runda <strong>R8b Cuvântul și litera</strong> din I-EDIT, unde cititorul judecă dacă repetiția supără.</p>`,
       },
       {
@@ -826,13 +826,13 @@ node scripts\ai-smoke.cjs nvidia</pre>
         title: 'Legarea de Claude, Codex și alți agenți AI (MCP)',
         html: `<p>Scribner are un server MCP inclus (peste 70 de unelte: binder, documente, note, metadate, snapshot-uri, căutare, Compile). Orice agent AI care știe MCP îl poate folosi. <strong>Nu ai nevoie de Node.js</strong>: programul instalat pornește serverul singur, cu variabila <code>ELECTRON_RUN_AS_NODE=1</code>. Agentul vede doar proiectele puse după <code>--project</code>; cu <code>--read-only</code> doar citește. Fiecare scriere face întâi un snapshot și se notează în <code>agent-log.jsonl</code> din proiect.</p>
 <p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>AI → Conectează la Claude (MCP)…</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
-<p>Căile de mai jos sunt cele ale installerului pe Windows (instalare pentru utilizatorul curent). Înlocuiește <code>Ionut</code> cu numele tău de utilizator și calea proiectului cu a ta. Varianta portabilă: folosește calea unde ai pus-o.</p>
-<pre>Program:  C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
-Server:   C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs
-Proiect:  D:\\Carti\\Karma.scribner</pre>
+<p>Căile de mai jos sunt cele ale installerului pe Windows (instalare pentru utilizatorul curent). Înlocuiește <code>Nume</code> cu numele tău de utilizator și calea proiectului cu a ta. Varianta portabilă: folosește calea unde ai pus-o.</p>
+<pre>Program:  C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
+Server:   C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs
+Proiect:  D:\\Carti\\Drumul spre munte.scribner</pre>
 
 <h4>Claude Code (terminal și fila Code din Claude Desktop)</h4>
-<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Drumul spre munte.scribner"</pre>
 <p>Verificare: <code>claude mcp list</code> arată <em>scribner: connected</em>. În sesiune, <code>/mcp</code> arată uneltele.</p>
 
 <h4>Claude Desktop (chat)</h4>
@@ -840,9 +840,9 @@ Proiect:  D:\\Carti\\Karma.scribner</pre>
 <pre>{
   "mcpServers": {
     "scribner": {
-      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
-      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
-               "--project", "D:\\\\Carti\\\\Karma.scribner"],
+      "command": "C:\\\\Users\\\\Nume\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
+      "args": ["C:\\\\Users\\\\Nume\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
+               "--project", "D:\\\\Carti\\\\Drumul spre munte.scribner"],
       "env": { "ELECTRON_RUN_AS_NODE": "1" }
     }
   }
@@ -850,16 +850,16 @@ Proiect:  D:\\Carti\\Karma.scribner</pre>
 <p>În JSON, fiecare <code>\\</code> din cale se scrie dublat.</p>
 
 <h4>OpenAI Codex (CLI și extensia de editor)</h4>
-<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Drumul spre munte.scribner"</pre>
 <p>Sau direct în <code>%USERPROFILE%\\.codex\\config.toml</code>:</p>
 <pre>[mcp_servers.scribner]
-command = 'C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe'
-args = ['C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Carti\\Karma.scribner']
+command = 'C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\Scribner.exe'
+args = ['C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Carti\\Drumul spre munte.scribner']
 env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
 <p>Verificare: <code>codex mcp list</code>.</p>
 
 <h4>Gemini CLI</h4>
-<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Drumul spre munte.scribner"</pre>
 <p>Sau în <code>%USERPROFILE%\\.gemini\\settings.json</code>, același bloc <code>mcpServers</code> ca la Claude Desktop.</p>
 
 <h4>Cursor, Windsurf, LM Studio și alți clienți cu <code>mcpServers</code></h4>
@@ -871,16 +871,16 @@ env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
   "servers": {
     "scribner": {
       "type": "stdio",
-      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
-      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
-               "--project", "D:\\\\Carti\\\\Karma.scribner"],
+      "command": "C:\\\\Users\\\\Nume\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
+      "args": ["C:\\\\Users\\\\Nume\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
+               "--project", "D:\\\\Carti\\\\Drumul spre munte.scribner"],
       "env": { "ELECTRON_RUN_AS_NODE": "1" }
     }
   }
 }</pre>
 
 <h4>Din sursă (fără installer, cu Node.js)</h4>
-<pre>claude mcp add scribner -- node "C:\\cale\\Scriptorium\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<pre>claude mcp add scribner -- node "C:\\cale\\Scriptorium\\mcp\\server.mjs" --project "D:\\Carti\\Drumul spre munte.scribner"</pre>
 
 <h4>Probă</h4>
 <p>Cere agentului: „listează documentele din proiectul Scribner”, apoi „citește primul capitol și scrie-i sinopsisul în inspector”. Fă un snapshot înainte de modificări mari. Mai multe proiecte: repetă <code>--project</code> pentru fiecare. Dacă agentul nu vede unelte: repornește clientul, verifică dublarea <code>\\</code> în JSON și că Scribner e instalat la calea scrisă.</p>`,
@@ -891,24 +891,24 @@ env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
         html: `<p>Scribner are și o linie de comandă: citești, cauți, compilezi și exporți proiectul din terminal sau din scripturi, fără să deschizi fereastra. Comenzile care doar citesc nu blochează proiectul; cele care scriu (<code>snapshot</code>, <code>import</code>) așteaptă ca aplicația să termine salvarea.</p>
 <h4>Pornire</h4>
 <p>Programul instalat pe Windows nu are nevoie de Node.js. Copiază <code>scribner.cmd</code> (din folderul <code>installer</code> al sursei) lângă <code>Scribner.exe</code>, în <code>%LOCALAPPDATA%\\Programs\\Scribner</code>, și adaugă folderul în PATH. Apoi scrii direct <code>scribner …</code>. Fără wrapper, în PowerShell:</p>
-<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Scribner\\Scribner.exe" "$env:LOCALAPPDATA\\Programs\\Scribner\\resources\\app\\cli\\scribner.cjs" info "D:\\Carti\\Karma.scribner"</pre>
+<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Scribner\\Scribner.exe" "$env:LOCALAPPDATA\\Programs\\Scribner\\resources\\app\\cli\\scribner.cjs" info "D:\\Carti\\Drumul spre munte.scribner"</pre>
 <p>Din sursă, cu Node.js: <code>node cli/scribner.cjs help</code>.</p>
 <h4>Comenzi</h4>
-<pre>scribner info "D:\\Carti\\Karma.scribner"              titlu, autor, cuvinte, ultima modificare
-scribner list "D:\\Carti\\Karma.scribner" --tree       binderul, cu id-uri
-scribner cat "D:\\Carti\\Karma.scribner" "Capitolul 1" --md
-scribner search "D:\\Carti\\Karma.scribner" "karma" --whole
-scribner stats "D:\\Carti\\Karma.scribner"             cuvinte pe document, ținte, istoric
-scribner compile "D:\\Carti\\Karma.scribner" --format docx --preset paperback -o "D:\\Export"
-scribner export-docs "D:\\Carti\\Karma.scribner" -o "D:\\Export\\Docs" --format md
-scribner backup "D:\\Carti\\Karma.scribner"
-scribner snapshot "D:\\Carti\\Karma.scribner" "Capitolul 1" --name "Înainte de revizie"
+<pre>scribner info "D:\\Carti\\Drumul spre munte.scribner"              titlu, autor, cuvinte, ultima modificare
+scribner list "D:\\Carti\\Drumul spre munte.scribner" --tree       binderul, cu id-uri
+scribner cat "D:\\Carti\\Drumul spre munte.scribner" "Capitolul 1" --md
+scribner search "D:\\Carti\\Drumul spre munte.scribner" "pădure" --whole
+scribner stats "D:\\Carti\\Drumul spre munte.scribner"             cuvinte pe document, ținte, istoric
+scribner compile "D:\\Carti\\Drumul spre munte.scribner" --format docx --preset paperback -o "D:\\Export"
+scribner export-docs "D:\\Carti\\Drumul spre munte.scribner" -o "D:\\Export\\Docs" --format md
+scribner backup "D:\\Carti\\Drumul spre munte.scribner"
+scribner snapshot "D:\\Carti\\Drumul spre munte.scribner" "Capitolul 1" --name "Înainte de revizie"
 scribner import "D:\\Texte\\Roman.docx" -o "D:\\Carti\\Roman.scribner" --split h1
-scribner mcp "D:\\Carti\\Karma.scribner"               serverul MCP pentru agenți AI</pre>
+scribner mcp "D:\\Carti\\Drumul spre munte.scribner"               serverul MCP pentru agenți AI</pre>
 <p>Adaugă <code>--json</code> pentru ieșire pe care o citesc scripturile, <code>--lang en</code> pentru mesaje în engleză. Coduri de ieșire: 0 reușit, 1 eroare, 2 comandă scrisă greșit. PDF-ul se face doar din aplicație (<em>Compile → PDF</em>); din terminal folosește <code>--format docx</code> sau <code>html</code>.</p>
 <h4>Cartea ca surse pentru NotebookLM, Gemini, ChatGPT, Claude Projects sau Manus</h4>
-<pre>scribner export-sources "D:\\Carti\\Karma.scribner" -o "D:\\NotebookLM"</pre>
-<p>Rezultă folderul <code>Surse - Karma</code>: <code>00 - Cuprins</code> (cuprinsul cu sinopsisuri), câte un fișier pe capitol, cercetarea și notele, plus <code>sources.json</code> (lista surselor). Opțiuni: <code>--per document</code> (un fișier pe fiecare document, nu pe capitol), <code>--format txt</code> sau <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (cel mult 50 de surse; capitolele se unesc) sau <code>gemini</code>, <code>chatgpt</code>, <code>claude</code>, <code>manus</code>.</p>
+<pre>scribner export-sources "D:\\Carti\\Drumul spre munte.scribner" -o "D:\\NotebookLM"</pre>
+<p>Rezultă folderul <code>Surse - Drumul spre munte</code>: <code>00 - Cuprins</code> (cuprinsul cu sinopsisuri), câte un fișier pe capitol, cercetarea și notele, plus <code>sources.json</code> (lista surselor). Opțiuni: <code>--per document</code> (un fișier pe fiecare document, nu pe capitol), <code>--format txt</code> sau <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (cel mult 50 de surse; capitolele se unesc) sau <code>gemini</code>, <code>chatgpt</code>, <code>claude</code>, <code>manus</code>.</p>
 <ol>
 <li>Rulează comanda de mai sus.</li>
 <li>Deschide <a href="https://notebooklm.google.com">notebooklm.google.com</a> → <em>Notebook nou</em> → <em>Adaugă surse</em> → <em>Încarcă</em> și selectează toate fișierele din folder (fără <code>sources.json</code>).</li>
@@ -947,9 +947,9 @@ scribner mcp "D:\\Carti\\Karma.scribner"               serverul MCP pentru agen�
 </ul>`,
       },
       {
-        id: 'yours-karma',
+        id: 'yours-realproject',
         title: 'Proiectele tale Scrivener și regulile I-REP / I-EDIT',
-        html: `<p>Importul <code>.scriv</code> e testat pe proiecte de probă. Pe un proiect real (de exemplu cartea Karma), fă importul cu <em>Fișier → Importă proiect Scrivener</em>, citește raportul de import și verifică capitolele cu cele mai multe formatări, comentarii și note de subsol. Originalul rămâne neatins, iar o copie stă în <code>scrivener-original/</code>.</p>
+        html: `<p>Importul <code>.scriv</code> e testat pe proiecte de probă. Pe un proiect real (de exemplu cartea ta), fă importul cu <em>Fișier → Importă proiect Scrivener</em>, citește raportul de import și verifică capitolele cu cele mai multe formatări, comentarii și note de subsol. Originalul rămâne neatins, iar o copie stă în <code>scrivener-original/</code>.</p>
 <p>I-REP / I-EDIT urmează definițiile tale VKB2: repetițiile apropiate (S70, runda R8b) și protecția textului scris de tine (vezi capitolul <em>Revizie I-REP/I-EDIT</em>).</p>`,
       },
       {

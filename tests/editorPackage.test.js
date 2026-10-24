@@ -7,8 +7,8 @@ const require = createRequire(import.meta.url);
 const { buildEditorPackage } = require('../lib/editorPackage.cjs');
 
 const project = {
-  editorialProfile: { base: 'karma' },
-  title: 'Karma',
+  editorialProfile: { base: 'ro' },
+  title: 'Drumul',
   author: 'Autor',
   tree: [
     { id: 'draft', root: 'draft', type: 'folder', title: 'Manuscris', children: [

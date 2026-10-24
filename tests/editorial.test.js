@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { lint, summarize, autofix, htmlToManuscript, manuscriptToHtml, reattach, KARMA_PROFILE, GENERIC_PROFILE } from '../src/lib/editorial.js';
+import { lint, summarize, autofix, htmlToManuscript, manuscriptToHtml, reattach, ROMANIAN_PROFILE, GENERIC_PROFILE } from '../src/lib/editorial.js';
 
 const rules = (issues) => [...new Set(issues.map((i) => i.rule))].sort();
 
-describe('lint (Karma profile)', () => {
+describe('lint (Drumul profile)', () => {
   it('detects DOOM III typography', () => {
-    const html = '<p>Karma — mecanism (cauzal): se vede. Un "citat".</p><p>apoi un paragraf mic.</p><ul><li><p>listă</p></li></ul><p><strong>bold</strong> și <strong><em>sens</em></strong> \'karman\'.</p>';
+    const html = '<p>Drumul — mecanism (cauzal): se vede. Un "citat".</p><p>apoi un paragraf mic.</p><ul><li><p>listă</p></li></ul><p><strong>bold</strong> și <strong><em>sens</em></strong> \'drumuln\'.</p>';
     const r = rules(lint(html));
     expect(r).toEqual(expect.arrayContaining(['emDash', 'parentheses', 'colon', 'asciiQuotes', 'capital', 'list', 'bold']));
     expect(lint(html).filter((i) => i.rule === 'bold')).toHaveLength(1);
   });
   it('detects binary constructions, passives, transitions, self-references, LLM residue, teleology', () => {
-    const html = '<p>Karma nu este o pedeapsă, ci un mecanism. Se observă apoi efectul. Deci revenim. Desigur, merită menționat.</p><p>În această secțiune vorbim despre fapte. Fapta acționează cu scopul de a elibera.</p>';
+    const html = '<p>Drumul nu este o pedeapsă, ci un mecanism. Se observă apoi efectul. Deci revenim. Desigur, merită menționat.</p><p>În această secțiune vorbim despre fapte. Fapta acționează cu scopul de a elibera.</p>';
     expect(rules(lint(html))).toEqual(expect.arrayContaining(['binary', 'passive', 'transition', 'llm', 'selfReference', 'teleology']));
   });
   it('limits explicit „noi”', () => {
@@ -19,7 +19,7 @@ describe('lint (Karma profile)', () => {
     expect(issues).toHaveLength(2);
   });
   it('checks the ALOGEN schema', () => {
-    const ok = "<p>Vorbim despre <strong><em>fapta legată de lume</em></strong> 'karman' aici.</p><p>Apoi <strong><em>fapta</em></strong> 'karman' revine.</p><p>Apoi 'karman' a treia oară și 'Ātman'-ului.</p>";
+    const ok = "<p>Vorbim despre <strong><em>fapta legată de lume</em></strong> 'drumuln' aici.</p><p>Apoi <strong><em>fapta</em></strong> 'drumuln' revine.</p><p>Apoi 'drumuln' a treia oară și 'Ātman'-ului.</p>";
     const r = lint(ok).filter((i) => i.round === 'R8');
     expect(r.map((i) => i.rule).sort()).toEqual(['alogenAnchor', 'alogenRepeat', 'alogenSuffix']);
   });
@@ -32,7 +32,7 @@ describe('lint (Karma profile)', () => {
     expect(issues.some((i) => i.rule === 'repetitionMacro')).toBe(true);
   });
   it('generic profile only checks typography basics', () => {
-    const issues = lint('<p>Karma nu este X, ci Y — (a).</p>', { profile: GENERIC_PROFILE });
+    const issues = lint('<p>Drumul nu este X, ci Y — (a).</p>', { profile: GENERIC_PROFILE });
     expect(rules(issues)).not.toContain('binary');
     expect(rules(issues)).not.toContain('emDash');
   });

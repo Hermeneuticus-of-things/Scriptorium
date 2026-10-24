@@ -2,7 +2,7 @@
 // Scribner MCP server: lets AI agents (Claude Code, Claude Desktop, any MCP
 // client) read and edit Scribner projects.
 //
-//   node mcp/server.mjs --project "D:\Carti\Karma.scribner" [--project …] [--read-only]
+//   node mcp/server.mjs --project "D:\Carti\Drumul spre munte.scribner" [--project …] [--read-only]
 //
 // Safety: only the projects passed on the command line are reachable; every write
 // takes a snapshot first and is appended to <project>/agent-log.jsonl.

@@ -137,7 +137,7 @@ describe('cli', () => {
     const p = store.createProject(P, 'Carte ș');
     const n = store.newNode('text', 'Scena „unu”');
     p.tree[0].children = [n];
-    store.writeDoc(P, n.id, 'docs', '<p>Karma veghea pădurea.</p>');
+    store.writeDoc(P, n.id, 'docs', '<p>Drumul veghea pădurea.</p>');
     store.saveProject(P, p);
     // One part with 45 scenes and 30 research documents: per-document export for NotebookLM.
     B = path.join(tmp, 'B.scribner');
@@ -172,13 +172,13 @@ describe('cli', () => {
       ['export-sources', P, '-o', path.join(tmp, 'x'), '--max-sources', 'abc'],
       ['snapshot', P, 'Scena „unu”', '--lock-timeout', 'mult'],
       ['backup', P, '--keep', '-3'],
-      ['ask', P, 'karma?', '-k', 'zece'],
+      ['ask', P, 'drumul?', '-k', 'zece'],
     ]) {
       const r = run(args, FAKE);
       expect(r.code, `${args.join(' ')}: ${r.err}`).toBe(2);
       expect(r.err).toMatch(/Valoare invalidă/);
     }
-    expect(run(['ask', P, 'karma?', '-k', 'zece', '--lang', 'en'], FAKE).err).toMatch(/Invalid value for -k/);
+    expect(run(['ask', P, 'drumul?', '-k', 'zece', '--lang', 'en'], FAKE).err).toMatch(/Invalid value for -k/);
   });
 
   it('a Windows-style trailing quote on the project path (cmd "C:\\Carte\\") is tolerated', () => {
@@ -201,7 +201,7 @@ describe('cli', () => {
     fs.writeFileSync(path.join(chats, 's1.json'), '{"id":"s1","turns":[{"question":"a"');
     fs.writeFileSync(path.join(chats, 's2.json'), '[]');
     for (const s of ['s1', 's2']) {
-      const r = run(['ask', P, 'karma?', '--session', s, '--json'], FAKE);
+      const r = run(['ask', P, 'drumul?', '--session', s, '--json'], FAKE);
       expect(r.code, r.err).toBe(0);
       expect(JSON.parse(r.out).turn).toBe(1);
       const saved = JSON.parse(fs.readFileSync(path.join(chats, `${s}.json`), 'utf8'));
@@ -215,7 +215,7 @@ describe('cli', () => {
   });
 
   it('ask --sources with nothing in it is bad usage', () => {
-    const r = run(['ask', P, 'karma?', '--sources', ','], FAKE);
+    const r = run(['ask', P, 'drumul?', '--sources', ','], FAKE);
     expect(r.code).toBe(2);
   });
 });

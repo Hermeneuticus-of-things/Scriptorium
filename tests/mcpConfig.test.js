@@ -12,23 +12,23 @@ const store = require('../lib/store.cjs');
 
 describe('mcpConfig', () => {
   it('calea config-ului Claude Desktop pe fiecare sistem', () => {
-    expect(m.claudeDesktopConfigPath({ platform: 'win32', env: { APPDATA: 'C:\\Users\\Ionut\\AppData\\Roaming' }, home: 'C:\\Users\\Ionut' })).toBe('C:\\Users\\Ionut\\AppData\\Roaming\\Claude\\claude_desktop_config.json');
+    expect(m.claudeDesktopConfigPath({ platform: 'win32', env: { APPDATA: 'C:\\Users\\Nume\\AppData\\Roaming' }, home: 'C:\\Users\\Nume' })).toBe('C:\\Users\\Nume\\AppData\\Roaming\\Claude\\claude_desktop_config.json');
     expect(m.claudeDesktopConfigPath({ platform: 'darwin', env: {}, home: '/Users/i' })).toBe('/Users/i/Library/Application Support/Claude/claude_desktop_config.json');
     expect(m.claudeDesktopConfigPath({ platform: 'linux', env: {}, home: '/home/i' })).toBe('/home/i/.config/Claude/claude_desktop_config.json');
   });
   it('păstrează celelalte servere și setări; refuză un fișier stricat', () => {
-    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Scribner\\Scribner.exe', serverPath: 'C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Karma.scribner'] });
+    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Scribner\\Scribner.exe', serverPath: 'C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Drumul.scribner'] });
     const out = JSON.parse(m.mergeDesktopConfig('{"theme":"dark","mcpServers":{"altul":{"command":"x"}}}', entry));
     expect(out.theme).toBe('dark');
     expect(out.mcpServers.altul).toEqual({ command: 'x' });
     expect(out.mcpServers.scribner.env).toEqual({ ELECTRON_RUN_AS_NODE: '1' });
-    expect(out.mcpServers.scribner.args).toEqual(['C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Cărți\\Karma.scribner']);
+    expect(out.mcpServers.scribner.args).toEqual(['C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Cărți\\Drumul.scribner']);
     expect(JSON.parse(m.mergeDesktopConfig('', entry)).mcpServers.scribner.command).toContain('Scribner.exe');
     expect(() => m.mergeDesktopConfig('{nu e json', entry)).toThrow(/nu l-am modificat/);
   });
   it('comanda claude mcp add, cu spații și diacritice puse între ghilimele', () => {
-    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Scribner\\Scribner.exe', serverPath: 'C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Karma.scribner'] });
-    expect(m.claudeCodeCommand(entry, { platform: 'win32' })).toBe('claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Program Files\\Scribner\\Scribner.exe" "C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Cărți\\Karma.scribner"');
+    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Scribner\\Scribner.exe', serverPath: 'C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Drumul.scribner'] });
+    expect(m.claudeCodeCommand(entry, { platform: 'win32' })).toBe('claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Program Files\\Scribner\\Scribner.exe" "C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Cărți\\Drumul.scribner"');
     expect(m.claudeCodeCommand(entry, { platform: 'linux' })).toContain("'C:\\Program Files\\Scribner\\Scribner.exe'");
   });
   it('scrie config-ul cu copie de siguranță, atomic', () => {

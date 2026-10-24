@@ -269,15 +269,15 @@ node scripts\ai-smoke.cjs openrouter</pre>
 <pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
 Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs</pre>
 <p><strong>Claude Code:</strong></p>
-<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
 <p><strong>OpenAI Codex:</strong></p>
-<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
 <p><strong>Gemini CLI:</strong></p>
-<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
 <p><strong>Claude Desktop, Cursor, Windsurf, LM Studio</strong> (<code>mcpServers</code> JSON; double every backslash), and <strong>VS Code</strong> (<code>.vscode\\mcp.json</code>, key <code>servers</code>, <code>"type": "stdio"</code>):</p>
 <pre>"scribner": {
   "command": "&lt;Program&gt;",
-  "args": ["&lt;Server&gt;", "--project", "D:\\\\Books\\\\My book.scribner"],
+  "args": ["&lt;Server&gt;", "--project", "D:\\\\\\Carti\\\\\\My book.scribner"],
   "env": { "ELECTRON_RUN_AS_NODE": "1" }
 }</pre>
 <p>Add <code>--read-only</code> for read access only. Every write takes a snapshot first and is logged in <code>agent-log.jsonl</code>.</p>`,
@@ -288,24 +288,24 @@ Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp
         html: `<p>Scribner also has a command line: read, search, compile and export a project from a terminal or a script, without opening the window. Read-only commands never lock the project; writing commands (<code>snapshot</code>, <code>import</code>) wait until the app has finished saving.</p>
 <h4>Running it</h4>
 <p>The installed Windows app needs no Node.js. Copy <code>scribner.cmd</code> (from the source <code>installer</code> folder) next to <code>Scribner.exe</code> in <code>%LOCALAPPDATA%\\Programs\\Scribner</code> and add that folder to PATH; then type <code>scribner …</code>. Without the wrapper, in PowerShell:</p>
-<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Scribner\\Scribner.exe" "$env:LOCALAPPDATA\\Programs\\Scribner\\resources\\app\\cli\\scribner.cjs" info "D:\\Books\\Karma.scribner"</pre>
+<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Scribner\\Scribner.exe" "$env:LOCALAPPDATA\\Programs\\Scribner\\resources\\app\\cli\\scribner.cjs" info "D:\\\\Carti\\\\Drumul spre munte.scribner"</pre>
 <p>From source, with Node.js: <code>node cli/scribner.cjs help</code>.</p>
 <h4>Commands</h4>
-<pre>scribner info "D:\\Books\\Karma.scribner"              title, author, words, last modified
-scribner list "D:\\Books\\Karma.scribner" --tree       the binder, with ids
-scribner cat "D:\\Books\\Karma.scribner" "Chapter 1" --md
-scribner search "D:\\Books\\Karma.scribner" "karma" --whole
-scribner stats "D:\\Books\\Karma.scribner"             words per document, targets, history
-scribner compile "D:\\Books\\Karma.scribner" --format docx --preset paperback -o "D:\\Export"
-scribner export-docs "D:\\Books\\Karma.scribner" -o "D:\\Export\\Docs" --format md
-scribner backup "D:\\Books\\Karma.scribner"
-scribner snapshot "D:\\Books\\Karma.scribner" "Chapter 1" --name "Before revision"
-scribner import "D:\\Texts\\Novel.docx" -o "D:\\Books\\Novel.scribner" --split h1
-scribner mcp "D:\\Books\\Karma.scribner"               the MCP server for AI agents</pre>
+<pre>scribner info "D:\\\\Carti\\\\Drumul spre munte.scribner"              title, author, words, last modified
+scribner list "D:\\\\Carti\\\\Drumul spre munte.scribner" --tree       the binder, with ids
+scribner cat "D:\\\\Carti\\\\Drumul spre munte.scribner" "Chapter 1" --md
+scribner search "D:\\\\Carti\\\\Drumul spre munte.scribner" "pădure" --whole
+scribner stats "D:\\\\Carti\\\\Drumul spre munte.scribner"             words per document, targets, history
+scribner compile "D:\\\\Carti\\\\Drumul spre munte.scribner" --format docx --preset paperback -o "D:\\Export"
+scribner export-docs "D:\\\\Carti\\\\Drumul spre munte.scribner" -o "D:\\Export\\Docs" --format md
+scribner backup "D:\\\\Carti\\\\Drumul spre munte.scribner"
+scribner snapshot "D:\\\\Carti\\\\Drumul spre munte.scribner" "Chapter 1" --name "Before revision"
+scribner import "D:\\Texts\\Novel.docx" -o "D:\\\\Carti\\\\Novel.scribner" --split h1
+scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP server for AI agents</pre>
 <p>Add <code>--json</code> for script-friendly output and <code>--lang en</code> for English messages. Exit codes: 0 ok, 1 error, 2 bad usage. PDF is made only in the app (<em>Compile → PDF</em>); from the terminal use <code>--format docx</code> or <code>html</code>.</p>
 <h4>Your book as sources for NotebookLM, Gemini, ChatGPT, Claude Projects or Manus</h4>
-<pre>scribner export-sources "D:\\Books\\Karma.scribner" -o "D:\\NotebookLM"</pre>
-<p>This writes the folder <code>Surse - Karma</code>: <code>00 - Cuprins</code> (outline with synopses), one file per chapter, research and notes, plus <code>sources.json</code> (the source list). Options: <code>--per document</code> (one file per document instead of per chapter), <code>--format txt</code> or <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (at most 50 sources; chapters are merged) or <code>gemini</code>, <code>chatgpt</code>, <code>claude</code>, <code>manus</code>.</p>
+<pre>scribner export-sources "D:\\\\Carti\\\\Drumul spre munte.scribner" -o "D:\\NotebookLM"</pre>
+<p>This writes the folder <code>Surse - Drumul spre munte</code>: <code>00 - Cuprins</code> (outline with synopses), one file per chapter, research and notes, plus <code>sources.json</code> (the source list). Options: <code>--per document</code> (one file per document instead of per chapter), <code>--format txt</code> or <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (at most 50 sources; chapters are merged) or <code>gemini</code>, <code>chatgpt</code>, <code>claude</code>, <code>manus</code>.</p>
 <ol>
 <li>Run the command above.</li>
 <li>Open <a href="https://notebooklm.google.com">notebooklm.google.com</a> → <em>New notebook</em> → <em>Add sources</em> → <em>Upload</em> and select every file in the folder (not <code>sources.json</code>).</li>
@@ -344,7 +344,7 @@ scribner mcp "D:\\Books\\Karma.scribner"               the MCP server for AI age
 </ul>`,
       },
       {
-        id: 'yours-karma',
+        id: 'yours-realproject',
         title: 'Your Scrivener projects and I-REP / I-EDIT rules',
         html: `<p>Import a real <code>.scriv</code> with <em>File → Import Scrivener project</em> and read the import report. I-REP / I-EDIT follow your VKB2 definitions: near repetitions (S70, round R8b) and protection of the text you write (see the <em>I-REP/I-EDIT review</em> chapter).</p>`,
       },

@@ -58,7 +58,7 @@ export const DEFAULT_KEYS = {
   viewEditor: 'Ctrl+1',
   viewCorkboard: 'Ctrl+2',
   viewOutline: 'Ctrl+3',
-  // Scrivener 3 (Windows) View > Inspector / Binder. Ctrl+Shift avoids Ctrl+Alt (= AltGr on
+  // View > Inspector / Binder. Ctrl+Shift avoids Ctrl+Alt (= AltGr on
   // Romanian and other European layouts, used to type characters).
   toggleInspector: 'Ctrl+Shift+I',
   toggleBinder: 'Ctrl+Shift+B',

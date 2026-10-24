@@ -1,5 +1,5 @@
 /* ============================================================
-   "Clasic Scrivener" UI theme — Scrivener 3 for Windows look.
+   "Clasic" UI theme.
    Own implementation; no third-party assets. Activated by
    <html data-ui="classic">. Dark variant via data-theme="dark"
    (or data-theme="system" + OS dark).
@@ -470,7 +470,7 @@
    segmented view control got clipped ("Edito") and menu labels broke over 3 lines.
    Items keep their natural width; the row wraps (menus drop to a second row, like
    Scrivener's menubar + toolbar), and below 1280px the big buttons go icon-only
-   (Scrivener 3 for Windows shows icons only; labels stay as tooltips). */
+   (icons only; labels stay as tooltips). */
 [data-ui='classic'] .toolbar { flex-wrap: wrap; row-gap: 2px; }
 [data-ui='classic'] .toolbar > *, [data-ui='classic'] .toolbar .menu > button { flex-shrink: 0; white-space: nowrap; }
 [data-ui='classic'] .toolbar .project-title { flex-shrink: 1; min-width: 4ch; }

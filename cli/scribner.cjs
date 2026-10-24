@@ -231,7 +231,7 @@ function intOpt(opt, name, min, fallback) {
   return n;
 }
 
-// cmd.exe passes "C:\Carti\Karma.scribner\" as C:\Carti\Karma.scribner" (the \" escapes the
+// cmd.exe passes "C:\Carti\Drumul spre munte.scribner\" as C:\Carti\Drumul spre munte.scribner" (the \" escapes the
 // quote): a stray trailing quote on a path is dropped.
 const cleanPath = (p) => String(p).replace(/^"|"$/g, '').replace(/^\s+|\s+$/g, '');
 const endsWithSep = (p) => /[\\/]$/.test(cleanPath(p));
