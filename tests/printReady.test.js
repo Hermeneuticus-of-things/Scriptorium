@@ -201,3 +201,43 @@ describe('DOCX front matter without running header', () => {
     expect((xml.match(/<w:sectPr/g) || []).length).toBe(1);
   });
 });
+
+describe('chapter title in the running header (<$t>)', () => {
+  const proj = {
+    title: 'Drumul spre munte', author: 'I',
+    tree: [{ id: 'draft', root: 'draft', type: 'folder', title: 'M', children: [
+      { id: 'c1', type: 'folder', title: 'Plecarea', includeInCompile: true, children: [{ id: 's1', type: 'text', title: 'S', includeInCompile: true }] },
+      { id: 'c2', type: 'folder', title: 'Drumul', includeInCompile: true, children: [{ id: 's2', type: 'text', title: 'S2', includeInCompile: true }] },
+    ] }],
+  };
+  const fmt = () => {
+    const pb = F.allFormats().find((f) => f.id === 'paperback');
+    return { ...pb, page: { ...pb.page, header: { left: '', center: '<$t> · <$wc>', right: '' } } };
+  };
+  it('PDF: each chapter is a named page whose header shows its title; <$wc> is the word count (4 items × 3 words)', () => {
+    const html = compile.compileHtml(proj, () => '<p>unu doi trei</p>', { target: 'pdf', titlePage: true, toc: true, format: fmt() });
+    expect(html).toContain('<div class="ch1">');
+    expect(html).toContain('<div class="ch2">');
+    expect(html).toMatch(/@page ch1:right\{[^\n]*@top-center\{content:"Plecarea · 12"/);
+    expect(html).toMatch(/@page ch2:left\{[^\n]*@top-center\{content:"Drumul · 12"/);
+    // every chapter wrapper is closed: the body ends with </div> before </body>
+    expect(html).toMatch(/<\/div><\/body>/);
+  });
+  it('DOCX: front section without header, then one section per chapter with its title', async () => {
+    const buf = await compile.compileDocx(proj, () => '<p>Text.</p>', { titlePage: true, toc: true, format: fmt() });
+    const zip = await JSZip.loadAsync(buf);
+    const xml = await zip.file('word/document.xml').async('string');
+    expect((xml.match(/<w:sectPr/g) || []).length).toBe(3);
+    const headers = await Promise.all(Object.keys(zip.files).filter((n) => /^word\/header\d+\.xml$/.test(n)).map((n) => zip.file(n).async('string')));
+    const all = headers.join('\n');
+    expect(all).toContain('Plecarea');
+    expect(all).toContain('Drumul');
+  });
+  it('without <$t> nothing changes (single body section, no named chapter pages)', async () => {
+    const pb = F.allFormats().find((f) => f.id === 'paperback');
+    const html = compile.compileHtml(proj, () => '<p>x</p>', { target: 'pdf', titlePage: true, format: pb });
+    expect(html).not.toContain('class="ch1"');
+    const xml = await (await JSZip.loadAsync(await compile.compileDocx(proj, () => '<p>x</p>', { titlePage: true, format: pb }))).file('word/document.xml').async('string');
+    expect((xml.match(/<w:sectPr/g) || []).length).toBe(2);
+  });
+});

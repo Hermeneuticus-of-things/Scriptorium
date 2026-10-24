@@ -1,5 +1,81 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.3 (continuare) — VKB2: I-REP repetiția apropiată și I-EDIT textul autorului; tab-uri C/R/D; 13 bug-uri de date; MCP pentru orice client
+
+### Cerința user
+> definițiile VKB2 pentru I-REP și I-EDIT, „implementează nativ în UX” · „continuă cu roadmap + bug hunter” · „scrie în help ce comandă dau la Claude, Codex etc. ca să se lege de app prin MCP”
+
+### Rezultat
+- **I-REP, repetiția apropiată** (`src/lib/nearRepetition.js`): același cuvânt cu conținut (formă sau lemă) în aceeași frază sau în fraza vecină, inclusiv anadiploza; fără cuvinte-unealtă, numerale, auxiliare și locuțiuni; reduplicatele o singură dată; termenii cărții numărați. Panoul arată `⚠ REP L<n> «formă» ×k` ca **SEMNAL** (nu blochează, nu se repară automat, nu ajunge în promptul de reparare); clic → apariția exactă în text. Runda nouă **R8b „Cuvântul și litera” (S70)** primește singura catalogul `D:repetitie_apropiata`. Vechea regulă „Repetiție apropiată” (MINOR, R6) e oprită implicit, ca să nu contrazică S70.
+- **I-EDIT, textul autorului** (`src/lib/authorText.js`): ce scrii de mână devine text al autorului (hash pe paragraf în proiect) și se notează în `editorial/MODIFICARI_AUTOR.jsonl` (doc, rând, vechi, nou, oră, hash-uri). Poarta HARD `fraza_autor_atinsa` respinge orice propunere care schimbă, mută sau șterge un paragraf al tău (cu rândul și motivul). Problemele de pe textul tău vin în COADA_AUTOR; cele vecine merg la model cu nota „leagă de textul autorului, fără să-l schimbi”; modelul primește „TEXT AL AUTORULUI (doar semnalezi)”. „✎ Editează” pe propunere, cu refuz 409 (s-a schimbat între timp), 412 (sub 20%, „Salvează oricum”) și snapshot `.bak-autor-<dată>`. Jurnalul buclei: `MODIFICARE_AUTOR`; raportul: „Modificările tale în text”; deciziile expiră când textul se schimbă. Reverificare a textului din memorie și de pe disc înainte de orice scriere.
+- **Tab-uri centrat / la dreapta / zecimal** pe riglă (selector L/C/R/D, dublu clic schimbă tipul), exacte în DOCX.
+- **13 bug-uri de date, import și export:** RTF românesc din Word (cp1250) cu ș/ă/ț greșite, RTF cu BOM, entități numerice în .scrivx și la căutare-înlocuire, BOM și UTF-16 la TXT/MD/Fountain, import ODT/OPML oprit de o entitate invalidă, text pierdut la împărțirea pe titluri, emoji tăiat în numele de fișier, note de subsol pierdute în DOCX/ODT/RTF când conțin „>”, DOCX/EPUB/ODT care nu se deschideau din cauza caracterelor de control, un snapshot stricat ascundea toate snapshot-urile, backup cu lock care bloca salvarea după restaurare, nume NFC/NFD suprapuse la export.
+- **MCP pentru orice client:** programul instalat pornește singur serverul MCP (fără Node.js). Ajutor → „Ce faci tu” are comenzile pentru Claude Code, Codex, Gemini CLI și configurările pentru Claude Desktop, Cursor, Windsurf, LM Studio, VS Code. `lib/mcpConfig.cjs` scrie configurarea Claude Desktop (cu copie) și generează comanda Claude Code; testat cu serverul pornit prin executabilul programului.
+- Total 798 teste + 2 sărite; E2E Electron trece; scenarii browser noi: irep-vkb2, ruler.
+
+## 2026-10-24 — v0.8.3 (continuare) — Corecturi învățate
+
+### Cerința user
+> "la corecțiile manuale să creeze automat în dicționar, ca să nu mai rescriu aceleași cuvinte pe viitor"
+
+### Rezultat
+- Un cuvânt subliniat ca greșit, corectat de mână (selectat și rescris sau ales din sugestiile de clic dreapta), intră automat în *Setări → Corecturi → Înlocuiri automate*, marcat „învățat”, și se corectează singur la scriere data viitoare, păstrând majusculele („fata” → „față”, „Fata” → „Față”, „FATA” → „FAȚĂ”). Confirmarea apare ca mesaj scurt.
+- Se învață doar greșeli apropiate (diacritice, literă lipsă, în plus sau inversată) și doar când corectorul ortografic respinge forma veche și o acceptă pe cea nouă; așa „casa” → „masa” (două cuvinte corecte) nu se învață. Înlocuirile scrise de tine au prioritate; o corectură inversă o anulează pe cea veche; maximum 2000 de intrări învățate.
+- Opțiunea *Învață din corecturile mele* (pornită implicit) o oprește. Înlocuirile noi se aplică imediat, fără reîncărcarea editorului.
+- În browser nu există corector de sistem, deci acolo nu se învață din rescriere.
+- `src/lib/learnCorrections.js`, `src/editor/corrections.js` (plugin), `electron/preload.cjs` (`isMisspelled`, `onSpellReplaced`), `electron/main.cjs`; 11 teste noi. Total 732 + 2 sărite; E2E Electron trece.
+
+## 2026-10-24 — v0.8.3 (continuare) — Riglă cu tab-uri, Print Preview, imagini offline din web, Linguistic Focus precis, ajutor „Ce faci tu”
+
+### Cerința user
+> "continuă automat cu roadmap pentru tot app" · "fă tot ce depinde de tine, restul scrie în help"
+
+### Rezultat
+- **Riglă vizuală** (Format → Arată rigla, Ctrl+Alt+Shift+R): indent stânga/dreapta/prima linie trase cu mouse-ul, clic adaugă tab, tragere în afara riglei îl șterge. Indentările și tab-urile ajung exact în DOCX (inclusiv indent agățat și tab-uri reale).
+- **Configurare pagină și Previzualizare tipărire** (Fișier): hârtie A4/A5/Letter/Legal/6×9/personalizată, orientare, margini, antet/subsol cu câmpuri, fără antet pe prima pagină; previzualizarea arată PDF-ul real (pagini, zoom, Tipărește, Salvează PDF); tipărirea folosește aceleași pagini. Verificat în Electron: 6×9 in → 432×648 pt.
+- **Cercetare → pagină web**: imaginile se descarcă și se salvează în proiect (srcset, data-src, adrese relative), cu limite de număr, mărime și timp; doar `image/*`; imaginile care nu se pot lua rămân link cu textul alternativ.
+- **Linguistic Focus**: etichetare RO/EN refăcută (liste închise complete, terminații, context). Pe texte noi: RO 72% → 87%, EN 83% → 96%.
+- **Ajutor**: capitol nou „Ce faci tu” (chei de servicii și AI, test cu model real, corectorul românesc din Windows, MCP, sincronizare prin folder, proiectul Karma și VKB2, limite cunoscute).
+- **Test cu model real** rulat de autor pe Windows prin OpenRouter (model gratuit): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit. Scriptul reîncearcă acum și trece la alt model.
+
+### Limite
+- Tab-urile exacte doar în DOCX; în PDF/EPUB/HTML tab-uri egale. Doar tab-uri la stânga.
+- Fereastra principală are acum `plugins: true` (vizualizatorul PDF intern pentru previzualizare).
+
+## 2026-10-24 — v0.8.3 — Versiunea web pe un folder .scribner real (OneDrive, Dropbox, Google Drive, NAS), NVIDIA NIM
+
+### Cerința user
+> "continuă automat cu roadmap" · "sincronizare între web și desktop prin OneDrive, Dropbox sau Google Drive sau personal NAS" · "o cheie AI pentru testul cu un model real: NVIDIA sau OpenRouter"
+
+### Decizii
+- Versiunea web (Chrome / Edge pe desktop) deschide un folder `.scribner` real prin File System Access API și scrie exact formatul aplicației desktop (`project.json`, `docs/`, `notes/`, `snapshots/`, `history.json`). Sincronizarea o face clientul de cloud sau NAS-ul; programul nu are server propriu.
+- Schimbările făcute de desktop sau de sincronizare se văd în web printr-un watcher care verifică fișierele la 3 secunde; scrierile proprii nu sunt raportate înapoi.
+- „Șterge” din lista web doar uită folderul; fișierele de pe disc rămân.
+- Cheia AI nu e scrisă nicăieri în repo; testul cu model real citește cheia din variabila de mediu.
+
+### Rezultat
+- `src/lib/folderKv.js` (nou): stocare pe folder + rutare `fs:` în `src/lib/webApi.js`; permisiunea se cere din nou după reîncărcare; același folder deschis de două ori rămâne o singură intrare; id-urile cu `../` sunt respinse.
+- Home în web: „Deschide proiect .scribner” alege un folder, „Importă pachet .json” rămâne separat.
+- Furnizor nou **NVIDIA NIM** (`integrate.api.nvidia.com`, compatibil OpenAI, cheie `nvapi-…`). Fără model implicit fix: primul test real pe Windows a arătat că `meta/llama-3.3-70b-instruct` a fost retras (HTTP 410). Scriptul de test alege singur un model activ din lista serverului; aplicația explică eroarea 410 („modelul a fost retras, alege alt model”).
+- `scripts/ai-smoke.cjs`: `NVIDIA_API_KEY=… node scripts/ai-smoke.cjs nvidia` (sau `openrouter` cu `OPENROUTER_API_KEY`) rulează corectura, traducerea și explicarea unui termen pe modelul real.
+- `tests/webFolder.test.js`: 7 teste pe un folder real, cu aplicația desktop (`lib/store.cjs`) de cealaltă parte. Total 692 teste + 2 sărite.
+
+### Neverificat aici
+- Testul cu modelul NVIDIA real: mediul cloud blochează `integrate.api.nvidia.com` și `openrouter.ai` (403 la proxy). Rulează local scriptul de mai sus.
+
+## 2026-10-24 — v0.8.2 — Titlul capitolului în antet, Ctrl+Y după o corectură automată, versiune publicată
+
+### Cerința user
+> "fă tot" (punctele rămase din TODO)
+
+### Rezultat
+- **Titlul capitolului în antet:** `<$t>` în antet sau subsol arată titlul capitolului de pe pagina respectivă. În PDF fiecare capitol e o pagină numită cu antetul ei (paginile oglindite rămân corecte); în Word fiecare capitol e o secțiune cu antetul ei, numerotarea continuă, iar prima pagină a capitolului rămâne fără antet. `<$wc>` din antet arată acum numărul real de cuvinte și în PDF. Verificat pe PDF-ul din Electron și pe Word deschis în LibreOffice.
+- **Ctrl+Y / Ctrl+Shift+Z** după Ctrl+Z pe o corectură automată (ghilimele, liniuță, …) readuce corectura, ca în Word; după alte tastări redo-ul obișnuit rămâne neschimbat.
+- **Zotero:** „Fișier → Importă bibliografia din Zotero” aduce toată biblioteca din contul tău (ID și cheie din Setări → Servicii și conturi), cu chei de citare lizibile; titlurile cu aceeași cheie se actualizează, celelalte rămân.
+- Manualul și dialogul Compile descriu `<$t>` și `<$subtitle>`.
+- `installer\\build-windows.cmd`: pe un Windows cu Node.js și Inno Setup, dublu clic construiește aplicația, varianta portabilă și installerul cu wizard, apoi deschide folderul `release`.
+- Release `v0.8.2` pe GitHub cu `Scribner-Setup-0.8.2.exe` (wizard) și varianta portabilă.
+
 ## 2026-10-24 — v0.8.1 — Vânătoare de bug-uri: încrucișat, divergent și convergent
 
 ### Cerința user

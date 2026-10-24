@@ -179,6 +179,8 @@ export const MANUAL_EN = [
       { id: 'irep-basics', title: 'I-REP', html: `<p>Check, apply safe fixes, re-check, in loops; works without AI.</p>` },
       { id: 'irep-iedit', title: 'I-EDIT', html: `<p>Editorial rounds run by the AI, previewed before applying, with a snapshot first.</p>` },
       { id: 'irep-profiles', title: 'Profiles: Generic and Romanian', html: `<p><strong>Generic</strong> (default): typography and LLM residue for any text. <strong>Romanian</strong>: DOOM III, P1–P13, R0–R11, foreign terms. Set in <em>Settings → AI</em>; stored per project.</p>` },
+      { id: 'irep-near', title: 'Near repetitions (S70)', html: `<p>The panel's <em>Near repetitions (S70)</em> section lists the same content word (same lemma or form) in one sentence or in two neighbouring sentences, anadiplosis „…scutul. Scutul…” included: one line <code>⚠ REP L&lt;n&gt; «form» ×k</code> per paragraph (L = paragraph number) where the group occurs; a click selects it in the editor. Function words, locutions („în fața”) are not counted and reduplicates („pas cu pas”) count once; the book's own terms are counted. It is a <strong>signal</strong>: it never stops the loop, is never fixed automatically and never goes to the repair prompt (S70: a term is not changed only to avoid repeating it). The list goes only to I-EDIT round <strong>R8b The word and the letter</strong>.</p>` },
+      { id: 'irep-author', title: 'Your text: editing a proposal and protecting your paragraphs', html: `<p>What you write by hand is a decision. Paragraphs you change in the editor become <strong>author text</strong> (after a short pause) and every save is journaled in <code>editorial/MODIFICARI_AUTOR.jsonl</code>, one row per changed chunk. In a proposal, <em>✎ Edit</em> lets you correct the proposed text; <em>Save</em> takes a <code>.bak-autor-&lt;date-time&gt;</code> snapshot first and refuses when the document changed meanwhile (409) or the new text is under 20% of the old one (412, with <em>Save anyway</em>). The loop never rewrites author text: the <code>fraza_autor_atinsa</code> gate rejects any result that changes, moves or deletes it, showing the line and why. The model sees your paragraphs under „TEXT AL AUTORULUI (doar semnalezi)”; issues on them come to you in <em>COADA_AUTOR</em>, issues next to them go to the repair with a note, and safe fixes skip them. A save during a loop is logged as <code>MODIFICARE_AUTOR</code>, the report lists „Your changes in the text”, and the text is re-checked right before any write. A rejected proposal stays rejected only while the document text is unchanged.</p>` },
     ],
   },
   {
@@ -193,7 +195,7 @@ export const MANUAL_EN = [
   {
     id: 'settings',
     title: 'Settings',
-    sections: [{ id: 'settings-tabs', title: 'Settings tabs', html: `<p>General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard, AI, Language. The portable build keeps settings in <code>Scribner-data/</code> next to the executable.</p>` }],
+    sections: [{ id: 'settings-tabs', title: 'Settings tabs', html: `<p>General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard, AI, Language. In Corrections, <em>Learn from my corrections</em> (on by default) adds a misspelled word you fix by hand (select it and type the right form, or pick a suggestion from the right-click menu) to the auto-replacements, marked <em>learned</em>, so it is fixed while typing next time. The portable build keeps settings in <code>Scribner-data/</code> next to the executable.</p>` }],
   },
   {
     id: 'shortcuts',
@@ -214,6 +216,81 @@ export const MANUAL_EN = [
       { id: 'faq-ai', title: 'AI commands are greyed out', html: `<p>Enable AI and enter the key in <em>Settings → AI</em>.</p>` },
       { id: 'faq-scriv', title: 'Scrivener import missed something', html: `<p>Read the import report; the original copy is in <code>scrivener-original/</code>.</p>` },
       { id: 'faq-report', title: 'Reporting a problem', html: `<p><em>Help → Report a problem</em> opens the GitHub issues page. Include the version, OS and steps to reproduce.</p>` },
+    ],
+  },
+  {
+    id: 'yours',
+    title: 'What you do (steps that depend on your accounts and computer)',
+    sections: [
+      {
+        id: 'yours-overview',
+        title: 'In short',
+        html: `<p>The program is complete, but a few things depend on your accounts, keys and settings. Without them those features stay off; everything else works.</p>
+<ul>
+<li>keys for outside services (translation, grammar, voice, bibliography);</li>
+<li>a key for an AI model;</li>
+<li>the Romanian language pack for the Windows spell checker;</li>
+<li>the Claude Code connection (MCP), if you want an agent to work in the project;</li>
+<li>a synced folder (OneDrive, Dropbox, Google Drive or a NAS), if you also write in the browser.</li>
+</ul>`,
+      },
+      {
+        id: 'yours-services',
+        title: 'Service keys: DeepL, Google, LanguageTool, Speechify, Zotero',
+        html: `<p>Open <em>Settings → Services and accounts</em>. Each service has a <em>Where do I find the key</em> link. Paste the key and press <em>Save</em>; it is encrypted on your computer and cannot be read back from the interface. Zotero needs your numeric user ID too; then use <em>File → Import bibliography from Zotero</em>.</p>`,
+      },
+      {
+        id: 'yours-ai',
+        title: 'AI key and a test with a real model',
+        html: `<p>In <em>Settings → AI</em> choose the provider, paste the key and type the model id. Models are retired often: if you see <em>the model was retired</em>, pick another one. Free options: OpenRouter models ending in <code>:free</code>, the free credits of a <code>nvapi-…</code> key from build.nvidia.com, or Ollama / LM Studio locally.</p>
+<pre>$env:OPENROUTER_API_KEY = "sk-or-…"
+node scripts\ai-smoke.cjs openrouter</pre>
+<p>The script picks a model that answers and tries proofreading, translation and a definition. Never put keys in files or messages; regenerate any key that leaked.</p>`,
+      },
+      {
+        id: 'yours-spelling',
+        title: 'Romanian spell checking on Windows',
+        html: `<p>Windows uses the system spell checker: <em>Windows Settings → Time &amp; language → Language &amp; region → Add a language → Romanian</em>, with spell checking. Restart Scribner.</p>`,
+      },
+      {
+        id: 'yours-mcp',
+        title: 'Connecting Claude, Codex and other AI agents (MCP)',
+        html: `<p>Scribner ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>Help → Connect to Claude (MCP)</em>. Installer paths on Windows (current user):</p>
+<pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
+Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs</pre>
+<p><strong>Claude Code:</strong></p>
+<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<p><strong>OpenAI Codex:</strong></p>
+<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<p><strong>Gemini CLI:</strong></p>
+<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<p><strong>Claude Desktop, Cursor, Windsurf, LM Studio</strong> (<code>mcpServers</code> JSON; double every backslash), and <strong>VS Code</strong> (<code>.vscode\\mcp.json</code>, key <code>servers</code>, <code>"type": "stdio"</code>):</p>
+<pre>"scribner": {
+  "command": "&lt;Program&gt;",
+  "args": ["&lt;Server&gt;", "--project", "D:\\\\Books\\\\My book.scribner"],
+  "env": { "ELECTRON_RUN_AS_NODE": "1" }
+}</pre>
+<p>Add <code>--read-only</code> for read access only. Every write takes a snapshot first and is logged in <code>agent-log.jsonl</code>.</p>`,
+      },
+      {
+        id: 'yours-sync',
+        title: 'The same project on the desktop and in the browser',
+        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. Do not edit the same document in two places at once. Phones cannot open folders: use the .json bundle there.</p>`,
+      },
+      {
+        id: 'yours-karma',
+        title: 'Your Scrivener projects and I-REP / I-EDIT rules',
+        html: `<p>Import a real <code>.scriv</code> with <em>File → Import Scrivener project</em> and read the import report. I-REP / I-EDIT follow your VKB2 definitions: near repetitions (S70, round R8b) and protection of the text you write (see the <em>I-REP/I-EDIT review</em> chapter).</p>`,
+      },
+      {
+        id: 'yours-limits',
+        title: 'Known limits',
+        html: `<ul>
+<li>Exact tab stops from the ruler are exact in DOCX; in PDF, EPUB and HTML tabs are even, after the first stop. Left tabs only.</li>
+<li>Kindle: EPUB, which Amazon accepts; KPF cannot be produced with open tools.</li>
+<li>No sync with Scrivener for iOS (closed format).</li>
+</ul>`,
+      },
     ],
   },
 ];

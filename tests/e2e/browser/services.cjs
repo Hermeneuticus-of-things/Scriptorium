@@ -42,6 +42,11 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   await sp.getByRole('button', { name: 'Salvează' }).click();
   await page.waitForTimeout(200);
   check('Speechify set up with a visible voice id', (await sp.locator('input').nth(1).inputValue()) === 'george' && /configurat/.test(await sp.innerText()));
+  const zr = page.locator('.service-row', { hasText: 'Zotero' });
+  await zr.locator('input').nth(0).fill('1234567');
+  await zr.locator('input').nth(1).fill('zot-key');
+  await zr.getByRole('button', { name: 'Salvează' }).click();
+  await page.waitForTimeout(200);
   check('the key is not shown back', (await row.locator('input').first().inputValue()) === '');
   // account with password
   await page.getByRole('button', { name: 'Adaugă un cont' }).click();
@@ -81,6 +86,12 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   await page.waitForTimeout(200);
   const txt = await ed(page).innerText();
   check('corrections applied', /dimineață/.test(txt) && /și Ilinca/.test(txt) && /munte,/.test(txt), txt.slice(0, 120));
+  // bibliography from Zotero
+  await cmd('Importă bibliografia din Zotero');
+  await page.waitForTimeout(300);
+  const zt = (await page.locator('.toast').allInnerTexts()).join(' | ');
+  check('Zotero import adds the titles to the bibliography', /2 titluri importate/.test(zt), zt);
+  while (await page.locator('.toast button').count()) await page.locator('.toast button').first().click();
   // read aloud with Speechify
   await cmd('Citire cu voce tare');
   await page.waitForSelector('.speech-bar');

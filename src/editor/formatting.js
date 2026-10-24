@@ -25,13 +25,40 @@ function styleValue(el, prop) {
 
 export const PARA_FORMAT_ATTRS = ['lineHeight', 'spaceBefore', 'spaceAfter', 'firstIndent', 'indentLeft', 'indentRight', 'tabStops', 'dir'];
 
-/** "2,4.5" ↔ [2, 4.5] (cm, sorted, unique). */
+// Tab stop types (Scrivener/Word): left, center, right, decimal.
+export const TAB_TYPES = ['left', 'center', 'right', 'decimal'];
+const TAB_LETTER = { left: '', center: 'c', right: 'r', decimal: 'd' };
+const TAB_BY_LETTER = { l: 'left', c: 'center', r: 'right', d: 'decimal' };
+
+/** Parses tab stops into [{pos, type}] (cm, sorted, unique by position; the last one wins).
+ * Accepts the attribute string ("2,4.5c,8r,10d"; legacy "2,4.5" = all left) or an array of
+ * numbers / {pos, type}. A suffix c/r/d marks center/right/decimal; no suffix (or l) is left. */
 export function parseTabStops(s) {
-  if (!s) return null;
-  const out = [...new Set(String(s).split(/[,\s]+/).map(num).filter((n) => n !== null && n > 0))].sort((a, b) => a - b);
+  if (s === null || s === undefined || s === '') return null;
+  const items = Array.isArray(s) ? s : String(s).split(/[,\s]+/);
+  const byPos = new Map();
+  for (const it of items) {
+    let pos = null;
+    let type = 'left';
+    if (it && typeof it === 'object') {
+      pos = num(it.pos);
+      if (TAB_TYPES.includes(it.type)) type = it.type;
+    } else {
+      const m = /^(\d*\.?\d+)\s*([lcrd])?$/i.exec(String(it).trim());
+      if (m) {
+        pos = num(m[1]);
+        type = TAB_BY_LETTER[(m[2] || 'l').toLowerCase()];
+      }
+    }
+    if (pos !== null && pos > 0) byPos.set(pos, { pos, type });
+  }
+  const out = [...byPos.values()].sort((a, b) => a.pos - b.pos);
   return out.length ? out : null;
 }
-export const serializeTabStops = (stops) => (stops && stops.length ? stops.join(',') : null);
+/** [{pos, type}] → "2,4.5c,8r,10d" (left stops stay plain numbers, readable by older versions). */
+export const serializeTabStops = (stops) => (stops && stops.length ? stops.map((t) => (typeof t === 'object' ? `${t.pos}${TAB_LETTER[t.type] || ''}` : String(t))).join(',') : null);
+/** Next type in the L → C → R → D cycle (ruler type selector, double-click on a stop). */
+export const nextTabType = (type) => TAB_TYPES[(TAB_TYPES.indexOf(type) + 1) % TAB_TYPES.length];
 
 /** CSS declarations for a paragraph's format attributes (used by renderHTML and tests). */
 export function paragraphCss(a = {}) {
@@ -43,7 +70,9 @@ export function paragraphCss(a = {}) {
   if (a.indentLeft) d.push(`margin-left: ${a.indentLeft}cm`);
   if (a.indentRight) d.push(`margin-right: ${a.indentRight}cm`);
   const tabs = parseTabStops(a.tabStops);
-  if (tabs) d.push(`tab-size: ${tabs[0]}cm`);
+  // Editor/HTML/PDF/EPUB approximation: only the first stop's position sets the tab width;
+  // stop types (center/right/decimal) are honoured exactly only in DOCX.
+  if (tabs) d.push(`tab-size: ${tabs[0].pos}cm`);
   return d.join('; ');
 }
 
@@ -84,7 +113,7 @@ export const ParagraphFormat = Extension.create({
             renderHTML: (a) => {
               const tabs = parseTabStops(a.tabStops);
               if (!tabs) return {};
-              return { 'data-tabs': serializeTabStops(tabs), style: `tab-size: ${tabs[0]}cm` };
+              return { 'data-tabs': serializeTabStops(tabs), style: `tab-size: ${tabs[0].pos}cm` };
             },
           },
           dir: {

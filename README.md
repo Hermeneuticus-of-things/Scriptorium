@@ -120,6 +120,8 @@ npm run dist:win         # aplicația împachetată și varianta portabilă, în
 npm run dist:win:setup   # installerul cu wizard (Inno Setup 6, pe Windows)
 ```
 
+Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installer\build-windows.cmd` face tot: dependințele, aplicația, varianta portabilă și `Scribner-Setup-<versiune>.exe`, apoi deschide folderul `release`.
+
 `npm run dev` deschide interfața în browser; cu `?demo` la finalul adresei pornește proiectul demonstrativ din capturi.
 
 **Asistent AI.** Furnizori: Anthropic, OpenAI, Google Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Ollama și LM Studio local, sau orice serviciu compatibil OpenAI. Cheia e criptată de sistemul de operare și rămâne în procesul principal; interfața nu o vede. Răspunsul se scrie în timp real și se poate anula.

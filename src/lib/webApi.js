@@ -3,6 +3,7 @@
 // sync with the desktop app through a single-file bundle (same shape as lib/bundle.cjs).
 import { newNode } from './text.js';
 import { mergeProject } from './projectMerge.js';
+import { createRoutingKv, createFolderStore, folderSupported, isFolderDir } from './folderKv.js';
 
 export const BUNDLE_FORMAT = 'scribner-bundle';
 export const BUNDLE_VERSION = 1;
@@ -98,6 +99,7 @@ const K = {
   snaps: (dir, id) => `s:${dir}|${id}`,
   snapPrefix: (dir) => `s:${dir}|`,
   history: (dir) => `h:${dir}`,
+  authorJournal: (dir) => `aj:${dir}`,
 };
 
 export function newWebDir() {
@@ -230,8 +232,63 @@ function defaultChannel() {
   }
 }
 
-export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChannel() } = {}) {
+// Folder projects ("fs:…"): a real .scribner folder on disk, opened with the File System Access API
+// (Chrome / Edge on desktop). The folder can live in OneDrive, Dropbox, Google Drive or on a NAS share:
+// the desktop app opens the same folder, and the polling watcher below picks up its changes.
+const WATCH_MS = 3000;
+
+// Snapshot file ids: folder projects list them as "<ts>.json" (the desktop's file names), while
+// takeSnapshot hands out "<ts>"; both name the same snapshot.
+const sameSnap = (a, b) => String(a).replace(/\.json$/, '') === String(b).replace(/\.json$/, '');
+
+export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChannel(), pickDirectory, watchMs = WATCH_MS } = {}) {
+  const canPick = () => Boolean(pickDirectory) || folderSupported();
+  const pick = pickDirectory || (() => globalThis.showDirectoryPicker({ mode: 'readwrite' }));
+  const folders = new Map(); // dir -> FileSystemDirectoryHandle
+  const rawKv = createRoutingKv(baseKv, folders);
   const kv = guardKv(rawKv);
+  const watchers = new Map(); // dir -> { timer, stamps, own }
+  // Own writes are not reported back as outside changes: the next change seen on that file is ours.
+  const touched = (dir, file) => {
+    const w = watchers.get(dir);
+    if (w) w.own.set(file, Date.now() + 2 * watchMs + 1000);
+  };
+  // Handle of a folder project, from memory or from IndexedDB (handles survive reloads; the
+  // browser asks the user again for permission once per session).
+  async function folderHandle(dir) {
+    if (folders.has(dir)) return folders.get(dir);
+    const h = await baseKv.get(`fh:${dir}`);
+    if (!h) throw new Error('Folderul proiectului nu mai e cunoscut în acest browser. Deschide-l din nou.');
+    if (h.queryPermission && (await h.queryPermission({ mode: 'readwrite' })) !== 'granted') {
+      if (!h.requestPermission || (await h.requestPermission({ mode: 'readwrite' })) !== 'granted') throw new Error('Fără acces la folderul proiectului.');
+    }
+    folders.set(dir, h);
+    return h;
+  }
+  async function openFolder() {
+    let h;
+    try {
+      h = await pick();
+    } catch (e) {
+      if (e && e.name === 'AbortError') return null;
+      throw e;
+    }
+    const project = await createFolderStore(h).get({ kind: 'project' });
+    if (!project) throw new Error('Folderul ales nu e un proiect Scribner (lipsește project.json).');
+    // Same folder opened again -> same dir (no duplicate entries in "recent").
+    let dir = null;
+    for (const r of (await settings()).recent || []) {
+      if (!isFolderDir(r.dir)) continue;
+      const old = folders.get(r.dir) || (await baseKv.get(`fh:${r.dir}`));
+      if (old && old.isSameEntry && (await old.isSameEntry(h).catch(() => false))) dir = r.dir;
+    }
+    dir = dir || `fs:${String(h.name || 'proiect').replace(/[|:]/g, '_').slice(0, 60)}-${Date.now().toString(36)}`;
+    folders.set(dir, h);
+    await baseKv.put(`fh:${dir}`, h);
+    bases.set(dir, structuredClone(project));
+    await remember(dir, project.title);
+    return { dir, project };
+  }
   const tabId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const listeners = new Set();
   const emit = (info) => {
@@ -339,9 +396,10 @@ export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChann
     },
     async openProject(dir) {
       if (!dir) {
-        // No folder dialog in the browser: "open" means importing a bundle file.
-        return this.importBundle();
+        // Chrome / Edge: a real .scribner folder. Other browsers: import a bundle file.
+        return canPick() ? openFolder() : this.importBundle();
       }
+      if (isFolderDir(dir)) await folderHandle(dir);
       const project = await need(dir);
       if (!bases.has(dir)) bases.set(dir, structuredClone(project));
       await remember(dir, project.title);
@@ -349,9 +407,44 @@ export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChann
     },
     // Re-read after another tab changed the project (merge base unchanged).
     async reloadProject(dir) {
+      if (isFolderDir(dir)) await folderHandle(dir);
       return { dir, project: await need(dir) };
     },
-    async watchProject() {
+    // Folder projects: poll the files' modification times (no change events for folders in
+    // browsers); changes made by the desktop app or a sync client are reported like a desktop watcher.
+    async watchProject(dir) {
+      for (const [d, w] of watchers) {
+        clearInterval(w.timer);
+        watchers.delete(d);
+      }
+      if (!isFolderDir(dir) || !folders.has(dir)) return true;
+      const store = createFolderStore(folders.get(dir));
+      const w = { stamps: await store.stamps().catch(() => ({})), own: new Map(), busy: false };
+      w.timer = setInterval(async () => {
+        if (w.busy) return;
+        w.busy = true;
+        try {
+          const now = await store.stamps();
+          const t = Date.now();
+          for (const [f, until] of w.own) if (until < t) w.own.delete(f);
+          const changed = [...new Set([...Object.keys(now), ...Object.keys(w.stamps)])].filter((f) => now[f] !== w.stamps[f]);
+          const files = changed.filter((f) => !w.own.delete(f));
+          w.stamps = now;
+          if (files.length) emit({ dir, files, external: true });
+        } catch {
+          /* folder briefly unavailable (sync client, NAS offline): try again next tick */
+        } finally {
+          w.busy = false;
+        }
+      }, watchMs);
+      watchers.set(dir, w);
+      return true;
+    },
+    async unwatchProject() {
+      for (const [d, w] of watchers) {
+        clearInterval(w.timer);
+        watchers.delete(d);
+      }
       return true;
     },
     onProjectChanged(fn) {
@@ -376,15 +469,27 @@ export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChann
         out = apply(await kv.get(K.project(dir)));
         await kv.put(K.project(dir), out);
       }
+      touched(dir, 'project.json');
       if (!merged) bases.set(dir, structuredClone(project));
       else emit({ dir, files: ['project.json'], merged: true });
       announce(dir, ['project.json']);
       return true;
     },
     async deleteProject(dir) {
+      if (isFolderDir(dir)) {
+        // A folder on the user's disk is only forgotten here, never deleted.
+        await baseKv.del(`fh:${dir}`);
+        folders.delete(dir);
+        bases.delete(dir);
+        const s = await settings();
+        await putSettings({ recent: (s.recent || []).filter((r) => r.dir !== dir) });
+        return true;
+      }
       for (const k of [...(await kv.keys(K.docPrefix(dir))), ...(await kv.keys(K.snapPrefix(dir)))]) await kv.del(k);
       await kv.del(K.project(dir));
       await kv.del(K.history(dir));
+      if (isFolderDir(dir)) await baseKv.del(`fh:${dir}`);
+      folders.delete(dir);
       bases.delete(dir);
       const s = await settings();
       await putSettings({ recent: (s.recent || []).filter((r) => r.dir !== dir) });
@@ -395,6 +500,7 @@ export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChann
     },
     async writeDoc(dir, id, kind, html) {
       await kv.put(K.doc(dir, kind, id), html);
+      touched(dir, `${kind === 'notes' ? 'notes' : 'docs'}/${id}.html`);
       announce(dir, [`${kind === 'notes' ? 'notes' : 'docs'}/${id}.html`]);
       return true;
     },
@@ -406,7 +512,7 @@ export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChann
         const prev = Array.isArray(list) ? list : [];
         // Unique file id even for two snapshots in the same millisecond.
         let file = String(Date.now());
-        for (let n = 2; prev.some((x) => x.file === file); n++) file = `${Date.now()}-${n}`;
+        for (let n = 2; prev.some((x) => sameSnap(x.file, file)); n++) file = `${Date.now()}-${n}`;
         s = { file, name: name || 'Snapshot', date, html };
         return [s, ...prev];
       };
@@ -419,12 +525,12 @@ export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChann
     },
     async deleteSnapshot(dir, id, file) {
       const list = (await kv.get(K.snaps(dir, id))) || [];
-      await kv.put(K.snaps(dir, id), list.filter((x) => x.file !== file));
+      await kv.put(K.snaps(dir, id), list.filter((x) => !sameSnap(x.file, file)));
       return true;
     },
     async renameSnapshot(dir, id, file, name) {
       const list = (await kv.get(K.snaps(dir, id))) || [];
-      await kv.put(K.snaps(dir, id), list.map((x) => (x.file === file ? { ...x, name: String(name || 'Snapshot') } : x)));
+      await kv.put(K.snaps(dir, id), list.map((x) => (sameSnap(x.file, file) ? { ...x, name: String(name || 'Snapshot') } : x)));
       return true;
     },
     async recordHistory(dir, counts) {
@@ -433,6 +539,15 @@ export function createWebApi({ kv: rawKv = createIdbKv(), channel = defaultChann
     },
     async getHistory(dir) {
       return summarizeHistory(await kv.get(K.history(dir)));
+    },
+    // I-EDIT journal (MODIFICARI_AUTOR.jsonl on the desktop): rows kept in the browser store, capped.
+    async appendAuthorJournal(dir, rows) {
+      const list = (Array.isArray(rows) ? rows : [rows]).filter((r) => r && r.doc && r.old !== r.new);
+      if (!list.length) return 0;
+      const add = (prev) => [...(Array.isArray(prev) ? prev : []), ...list].slice(-5000);
+      if (kv.update) await kv.update(K.authorJournal(dir), add);
+      else await kv.put(K.authorJournal(dir), add(await kv.get(K.authorJournal(dir))));
+      return list.length;
     },
     exportBundleData,
     importBundleData,

@@ -19,6 +19,12 @@ function decode(s) {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    // Numeric references (imported HTML: &#8217; &#x2019;) must become text, or a replace
+    // re-encodes them as "&amp;#8217;" and matches inside them ("x" in "&#x2019;").
+    .replace(/&#(?:x([0-9a-f]+)|(\d+));/gi, (ref, h, d) => {
+      const cp = h ? parseInt(h, 16) : Number(d);
+      return cp > 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : ref;
+    })
     .replace(/&amp;/g, '&');
 }
 
