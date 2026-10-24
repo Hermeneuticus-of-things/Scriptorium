@@ -15,6 +15,9 @@ function lingueePair(o) {
 export const LOOKUPS = {
   dictionary: { group: 'dict', label: 'Dicționar (dexonline)', word: true, url: (q) => `https://dexonline.ro/definitie/${encodeURIComponent(q)}` },
   synonyms: { group: 'dict', label: 'Sinonime (dexonline)', word: true, url: (q) => `https://dexonline.ro/definitie/${encodeURIComponent(q)}/sinonime` },
+  // sinonimul.ro: its own address scheme could not be checked, so a search limited to the site
+  // ("I'm feeling lucky") opens the site's page for the word.
+  sinonimul: { group: 'dict', label: 'Sinonime (sinonimul.ro)', word: true, url: (q) => `https://www.google.com/search?btnI=1&q=${encodeURIComponent(`site:sinonimul.ro ${q}`)}` },
   wiktionary: { group: 'dict', label: 'Wiktionary', word: true, url: (q) => `https://en.wiktionary.org/wiki/${encodeURIComponent(q.replace(/ /g, '_'))}` },
   cambridge: { group: 'dict', label: 'Cambridge Dictionary (EN)', word: true, url: (q) => `https://dictionary.cambridge.org/search/direct/?datasetsearch=english&q=${encodeURIComponent(q)}` },
   merriam: { group: 'dict', label: 'Merriam-Webster (EN)', word: true, url: (q) => `https://www.merriam-webster.com/dictionary/${encodeURIComponent(q)}` },
