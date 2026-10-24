@@ -14,7 +14,7 @@
 ### Rezultat
 - `src/lib/folderKv.js` (nou): stocare pe folder + rutare `fs:` în `src/lib/webApi.js`; permisiunea se cere din nou după reîncărcare; același folder deschis de două ori rămâne o singură intrare; id-urile cu `../` sunt respinse.
 - Home în web: „Deschide proiect .scribner” alege un folder, „Importă pachet .json” rămâne separat.
-- Furnizor nou **NVIDIA NIM** (`integrate.api.nvidia.com`, compatibil OpenAI, model implicit `meta/llama-3.3-70b-instruct`, cheie `nvapi-…`).
+- Furnizor nou **NVIDIA NIM** (`integrate.api.nvidia.com`, compatibil OpenAI, cheie `nvapi-…`). Fără model implicit fix: primul test real pe Windows a arătat că `meta/llama-3.3-70b-instruct` a fost retras (HTTP 410). Scriptul de test alege singur un model activ din lista serverului; aplicația explică eroarea 410 („modelul a fost retras, alege alt model”).
 - `scripts/ai-smoke.cjs`: `NVIDIA_API_KEY=… node scripts/ai-smoke.cjs nvidia` (sau `openrouter` cu `OPENROUTER_API_KEY`) rulează corectura, traducerea și explicarea unui termen pe modelul real.
 - `tests/webFolder.test.js`: 7 teste pe un folder real, cu aplicația desktop (`lib/store.cjs`) de cealaltă parte. Total 692 teste + 2 sărite.
 

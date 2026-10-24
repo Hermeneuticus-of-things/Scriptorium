@@ -5,7 +5,7 @@ const ai = require('../lib/ai.cjs');
 const PRESETS = require('../lib/aiPresets.json');
 
 const provider = process.argv[2] || 'nvidia';
-const model = process.argv[3];
+let model = process.argv[3];
 const pre = PRESETS[provider];
 if (!pre) {
   console.error(`Furnizor necunoscut: ${provider}. Disponibili: ${Object.keys(PRESETS).join(', ')}`);
@@ -22,8 +22,35 @@ const CASES = [
   { action: 'translate', text: TEXT, lang: 'en' },
   { action: 'define', text: 'palimpsest' },
 ];
+// Without a model: ask the server for its list (OpenAI-compatible /models) and take a current
+// instruct/chat model, so the test does not depend on a model id that may be retired.
+const PREFER = [/llama-3\.\d.*(70b|405b).*instruct/i, /nemotron.*(super|ultra)/i, /qwen.*instruct/i, /mistral.*(large|medium)/i, /instruct|chat/i];
+const SKIP = /embed|rerank|guard|safety|reward|vision|vlm|clip|parse|ocr|retriev|coder|tts|asr|whisper|nv-?ingest|deplot|kosmos|fuyu|paligemma|neva/i;
+async function pickModel() {
+  if (model || pre.kind !== 'openai' || !pre.baseUrl) return;
+  const res = await fetch(`${pre.baseUrl}/models`, { headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {} });
+  if (!res.ok) throw new Error(`Lista de modele: HTTP ${res.status}`);
+  const ids = ((await res.json()).data || []).map((m) => m.id).filter((id) => !SKIP.test(id));
+  for (const re of PREFER) {
+    const hit = ids.filter((id) => re.test(id)).sort().reverse()[0];
+    if (hit) {
+      model = hit;
+      break;
+    }
+  }
+  model = model || ids[0];
+  if (!model) throw new Error('Serverul nu a dat niciun model de chat.');
+  console.log(`Model ales automat: ${model} (din ${ids.length}; altul: node scripts/ai-smoke.cjs ${provider} <model>)`);
+}
+
 (async () => {
   let fails = 0;
+  try {
+    await pickModel();
+  } catch (e) {
+    console.log(`FAIL models     ${e.message}`);
+    process.exit(1);
+  }
   for (const c of CASES) {
     const t0 = Date.now();
     try {
