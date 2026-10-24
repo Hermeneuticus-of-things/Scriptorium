@@ -61,6 +61,8 @@ const Editor = forwardRef(function Editor(
   const scenesRef = useRef([]);
   const wordsRef = useRef(words);
   wordsRef.current = words;
+  const linkTargetsRef = useRef(linkTargets);
+  linkTargetsRef.current = linkTargets;
   const scriptRef = useRef(scriptFormat);
   scriptRef.current = scriptFormat;
   const charsRef = useRef([]);
@@ -87,7 +89,7 @@ const Editor = forwardRef(function Editor(
   };
   const editor = useEditor(
     {
-      extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current }),
+      extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current, getLinkTargets: () => linkTargetsRef.current }),
       content: html || '<p></p>',
       parseOptions: PARSE_OPTIONS,
       editable: !readOnly,

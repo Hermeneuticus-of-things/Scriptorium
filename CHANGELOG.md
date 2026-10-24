@@ -1,5 +1,20 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.5 (continuare) — Verificare completă a funcțiilor, legături [[Titlu]], comparare pe frază/paragraf, numărul selecției
+
+### Cerința user
+> "caută și alte funcții care nu au fost implementate sau au fost omise, în detaliu"
+
+### Rezultat
+- Raport `docs/GAP-AUDIT.md`: fiecare funcție verificată în cod, nu doar în listă; 63 prezente, 1 parțială, 6 lipsă, 3 excluse intenționat (MathType, Kindle KPF, sync iOS).
+- Lista veche marca drept gata trei lucruri care nu mergeau; acum merg:
+  - **`[[Titlu]]`**: scrii `[[` și titlul unui document, iar textul devine legătură către el (fără majuscule și diacritice; începutul unic al titlului ajunge).
+  - **Compararea snapshot-urilor** pe cuvânt, frază, propoziție sau paragraf.
+  - **Bara de jos tradusă** (rămânea în română în modul englez); la fel suprapunerea de ținte din modul compunere.
+- **Numărul cuvintelor și caracterelor din selecție** apare în bara de jos.
+- Rămân: legături înapoi automate, al treilea panou de referință (acoperit parțial de ferestrele Quick Reference), `[[Titlu nou]]` care creează documentul, blocuri cu formatare păstrată, alte formate de numerotare a notelor, forme de fișe, adnotări în PDF.
+- Teste: 854 + 2 sărite; E2E Electron trece; scenariu nou gap-audit.
+
 ## 2026-10-24 — v0.8.5 — Română curată, cuvinte alogene protejate, 7 bug-uri de interfață, README nou
 
 ### Cerința user
