@@ -1,5 +1,5 @@
 // Help → Report a problem: a captured error shows the toast once, the dialog fills the technical
-// details (sanitized), and "Send on GitHub" builds the issue URL (window.open intercepted).
+// details (sanitized), and "Send via GitHub" builds the issue URL (window.open intercepted).
 const { open, check, done, menuCmd } = require('./_helpers.cjs');
 (async () => {
   const { browser, page } = await open();

@@ -129,7 +129,7 @@ describe('footnote number formats', () => {
     expect(compile.NOTE_FORMATS).toEqual(['arabic', 'roman', 'alpha', 'symbols']);
     expect([1, 4, 9, 14].map((n) => compile.noteLabel(n, 'roman'))).toEqual(['i', 'iv', 'ix', 'xiv']);
     expect([1, 2, 26, 27].map((n) => compile.noteLabel(n, 'alpha'))).toEqual(['a', 'b', 'z', 'aa']);
-    expect([1, 2, 3, 4, 7].map((n) => compile.noteLabel(n, 'symbols'))).toEqual(['*', '†', '‡', '§', '**']);
+    expect([1, 2, 3, 4, 7].map((n) => compile.noteLabel(n, 'symbols'))).toEqual(['*', '†', '‡', '§', '‡‡']);
     expect(compile.noteLabel(3)).toBe('3');
   });
   for (const [format, want] of [['arabic', ['1', '2', '3']], ['roman', ['i', 'ii', 'iii']], ['alpha', ['a', 'b', 'c']], ['symbols', ['*', '†', '‡']]]) {

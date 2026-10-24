@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { incomingLinks } from '../lib/backlinks.js';
+import { findNode, rootOf } from '../lib/tree.js';
 import { BookmarkIcon, CommentIcon, LockIcon, MetaIcon, NotesIcon, SnapshotIcon, UnlockIcon } from './Icons.jsx';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { diffText, DIFF_LEVELS } from '../lib/snapshotDiff.js';
@@ -473,7 +474,9 @@ const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥', '�
 // Icon, section type, lock, favorite and bookmarks (Scrivener: Inspector > Bookmarks).
 function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs }) {
   const bookmarks = node.bookmarks || [];
-  const incoming = incomingLinks(docs || {}, node.id);
+  // Trashed or deleted documents keep their text in `docs`, but no longer count as links here.
+  const liveNode = (id) => (findNode(project.tree || [], id) && rootOf(project.tree || [], id)?.root !== 'trash' ? findNode(project.tree, id) : null);
+  const incoming = incomingLinks(docs || {}, node.id, (id) => Boolean(liveNode(id)));
   const types = project.sectionTypes || [];
   const setBookmarks = (b) => onPatch({ bookmarks: b });
   return (
@@ -538,11 +541,11 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs }) {
           </select>
           <button
             onClick={() => {
-              const url = window.prompt('Adresa web:', 'https://');
+              const url = window.prompt(tr('ui.inspector.adresa_web'), 'https://');
               if (url && /^https?:\/\//.test(url)) setBookmarks([...bookmarks, { url }]);
             }}
           >
-            + link web
+            {tr('ui.inspector.link_web')}
           </button>
         </div>
       </label>
@@ -552,7 +555,7 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs }) {
           <ul className="bookmarks">
             {incoming.map((id) => (
               <li key={id}>
-                <button className="link" onClick={() => onOpen?.(id)}>{linkTargets.find((t) => t.id === id)?.title || tr('ui.inspector.document_sters')}</button>
+                <button className="link" onClick={() => onOpen?.(id)}>{liveNode(id)?.title || linkTargets.find((t) => t.id === id)?.title || tr('ui.inspector.document_sters')}</button>
               </li>
             ))}
           </ul>

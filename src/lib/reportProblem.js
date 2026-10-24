@@ -19,15 +19,19 @@ export function sanitize(text, { home = '', user = '', projectDirs = [] } = {}) 
     for (const v of new Set([home, home.replace(/\\/g, '/'), home.replace(/\//g, '\\')])) s = s.replace(new RegExp(esc(v), 'gi'), '~');
   }
   // Paths with the user folder that did not match `home` (another drive, file:// URLs).
-  s = s.replace(/([\\/](?:Users|home)[\\/])[^\\/\s'"<>]+/gi, '$1~');
-  if (user && user.length > 2) s = s.replace(new RegExp(`\\b${esc(user)}\\b`, 'gi'), '~');
+  // A folder name may contain spaces ("C:\\Users\\Ion Popescu\\…") when a separator follows it.
+  s = s.replace(/([\\/](?:Users|home)[\\/])[^\\/\n'"<>]+?(?=[\\/])/gi, '$1~');
+  s = s.replace(/([\\/](?:Users|home)[\\/])(?!~[\\/])[^\\/\s'"<>]+/gi, '$1~');
+  // Letter boundaries that also work for names with diacritics (\\b is ASCII-only).
+  if (user && user.length > 2) s = s.replace(new RegExp(`(?<![\\p{L}\\p{N}_])${esc(user)}(?![\\p{L}\\p{N}_])`, 'giu'), '~');
+  s = s.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/g, '[e-mail ascuns]');
   s = s
     .replace(/\bBearer\s+[A-Za-z0-9._~+/=-]+/g, 'Bearer [cheie ascunsă]')
     .replace(/\bsk-or-[A-Za-z0-9_-]{6,}/g, '[cheie ascunsă]')
     .replace(/\bsk-[A-Za-z0-9_-]{6,}/g, '[cheie ascunsă]')
     .replace(/\bnvapi-[A-Za-z0-9_-]{6,}/g, '[cheie ascunsă]')
     .replace(/\bAIza[0-9A-Za-z_-]{10,}/g, '[cheie ascunsă]')
-    .replace(/\b(api[_-]?key|token|password|parola|secret)(["']?\s*[:=]\s*["']?)[^\s"',}]+/gi, '$1$2[ascuns]');
+    .replace(/\b([A-Za-z_-]*?(?:api[_-]?key|key|token|password|parola|secret))(["']?\s*[:=]\s*["']?)[^\s"',}&]+/gi, '$1$2[ascuns]');
   // Document text: HTML markup and long quoted strings are replaced; an error message never needs them.
   s = s.replace(/<(p|h[1-6]|li|div|span|blockquote|em|strong)\b[^>]*>[\s\S]*?<\/\1>/gi, '[text]');
   s = s.replace(/(["'„“«])([^"'„“”«»\n]{40,})(["'”»])/g, '$1[text]$3');
@@ -109,7 +113,7 @@ export function technicalDetails({ env = {}, errors = [], actions = [], lastN = 
 }
 
 export function buildReport({ what = '', before = '', details = '', labels = {} }) {
-  const L = { what: 'Ce s-a întâmplat', before: 'Ce făceam înainte', details: 'Detalii tehnice', ...labels };
+  const L = { what: 'Ce s-a întâmplat', before: 'Ce făceam înainte de problemă', details: 'Detalii tehnice', ...labels };
   const parts = [`### ${L.what}\n${what.trim() || '-'}`];
   if (before.trim()) parts.push(`### ${L.before}\n${before.trim()}`);
   parts.push(`### ${L.details}\n${details}`);

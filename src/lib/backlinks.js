@@ -2,7 +2,7 @@
 // (Ctrl+L, [[Title]], the format bar, a pasted or dragged link). With the "add back-link"
 // setting on, a new link from A to B adds A to B's document bookmarks (Inspector), never into
 // B's text. "Links to this document" are computed from every document's text.
-import { findNode, findParent, produce, updateNode } from './tree.js';
+import { findNode, findParent, produce, rootOf, updateNode } from './tree.js';
 
 const LINK_RE = /scribner:\/\/doc\/([A-Za-z0-9_-]+)/g;
 
@@ -37,22 +37,23 @@ export function addBacklinks(tree, sourceId, targetIds) {
   return out;
 }
 
-/** Ids of the documents whose text links to `id`. */
-export function incomingLinks(docs, id) {
+/** Ids of the documents whose text links to `id` (only those `isLive` accepts: not trashed or deleted). */
+export function incomingLinks(docs, id, isLive = () => true) {
   if (!id) return [];
   return Object.entries(docs || {})
-    .filter(([src, html]) => src !== id && docLinks(html).includes(id))
+    .filter(([src, html]) => src !== id && isLive(src) && docLinks(html).includes(id))
     .map(([src]) => src);
 }
 
 /**
  * Places the document created from "[[New title]]": inside `folderId` when it exists, else right
- * after the current document in its folder (the Draft when the current one is unknown).
+ * after the current document in its folder (the Draft when the current one is unknown). A remembered
+ * folder that has since gone to the trash is ignored.
  */
 export function insertLinkedDoc(tree, currentId, folderId, node) {
   return produce(tree, (t) => {
     const folder = folderId ? findNode(t, folderId) : null;
-    if (folder) {
+    if (folder && folder.children && rootOf(t, folderId)?.root !== 'trash') {
       folder.children = [...(folder.children || []), node];
       return;
     }
