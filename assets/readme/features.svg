@@ -59,8 +59,8 @@
       <circle cx="135" cy="0" r="8" fill="#e9b07a"/>
       <text x="24" y="62" font-family="ui-monospace, 'Cascadia Mono', Consolas, monospace" font-size="26" fill="#e9b07a">&gt;_</text>
       <text x="24" y="104" font-size="27" font-weight="700" fill="#fbf7ef">Agenți AI</text>
-      <text x="24" y="146" font-size="20" fill="#e6dccb">Claude, Codex (MCP)</text>
-      <text x="24" y="174" font-size="20" fill="#e6dccb">și comanda scribner.</text>
+      <text x="24" y="146" font-size="20" fill="#e6dccb">Claude sau Codex</text>
+      <text x="24" y="174" font-size="20" fill="#e6dccb">lucrează în carte.</text>
     </g>
     <g transform="translate(900 350)">
       <rect width="270" height="220" rx="16" fill="#fffdf6" stroke="#e5dccb"/>
