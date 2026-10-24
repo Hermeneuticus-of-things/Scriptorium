@@ -1,0 +1,44 @@
+// Images in the editor: insert, select, resize by dragging a corner, align with the image bar.
+const path = require('path');
+const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
+const IMG = process.env.TEST_IMAGE || path.join(__dirname, '..', '..', 'fixtures', 'image-800x500.png');
+(async () => {
+  const { browser, page, errors } = await open();
+  await caretEnd(page);
+  await page.keyboard.press('Enter');
+  await page.locator('.pane input[type="file"][accept="image/*"]').first().setInputFiles(IMG);
+  await page.waitForSelector('.pane .img-frame img');
+  const frame = page.locator('.pane .img-frame').first();
+  await frame.locator('img').click();
+  await page.waitForTimeout(150);
+  check('selected image shows handles and bar', await frame.locator('.img-bar').isVisible() && await frame.locator('.img-se').isVisible());
+  const before = (await frame.locator('img').boundingBox()).width;
+  const h = await frame.locator('.img-se').boundingBox();
+  await page.mouse.move(h.x + 6, h.y + 6);
+  await page.mouse.down();
+  await page.mouse.move(h.x - 150, h.y + 6, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  const after = (await frame.locator('img').boundingBox()).width;
+  check('dragging the corner makes it smaller', after < before - 100, `${before} -> ${after}`);
+  const html = await ed(page).innerHTML();
+  check('new width stored in the document', /<img[^>]*width="\d+"/.test(await page.evaluate(() => document.querySelector('.pane .ProseMirror').innerHTML)) || /width/.test(html));
+  await frame.locator('img').click();
+  await frame.locator('.img-bar button[title="Dreapta, cu text în jur"]').click();
+  await page.waitForTimeout(150);
+  check('wrap right applied', (await frame.getAttribute('data-align')) === 'right' && /float: right/.test(await frame.getAttribute('style')));
+  await page.waitForTimeout(700); // separate undo step (history groups edits closer than 500 ms)
+  await frame.locator('img').click();
+  await frame.locator('.img-bar button[title="Lățime 50%"]').click();
+  await page.waitForTimeout(150);
+  const col = await page.evaluate(() => document.querySelector('.pane .ProseMirror').clientWidth);
+  const w50 = (await frame.locator('img').boundingBox()).width;
+  check('50% of the column', Math.abs(w50 - col / 2) < col * 0.08, `${w50} of ${col}`);
+  await page.waitForTimeout(700);
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(150);
+  check('undo restores the previous width', Math.abs((await frame.locator('img').boundingBox()).width - w50) > 5);
+  check('no page errors', !errors.length, errors.join(' | '));
+  await browser.close();
+  done();
+})();

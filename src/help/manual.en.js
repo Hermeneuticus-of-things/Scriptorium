@@ -187,7 +187,7 @@ export const MANUAL_EN = [
     sections: [
       { id: 'ai-setup', title: 'Enabling AI', html: `<p><em>Settings → AI</em>: enable and enter an Anthropic API key, encrypted by the OS and kept in the main process.</p>` },
       { id: 'ai-assistant', title: 'The assistant', html: `<p>Proofreading, synopsis, continuation, critique, consistency and questions; bulk synopsis, living character sheets and zoom-level review in the Tools menu.</p>` },
-      { id: 'ai-mcp', title: 'AI agents via MCP', html: `<p><code>mcp/server.mjs</code> gives an MCP client read/write access to a project; every write is snapshotted and logged in <code>agent-log.jsonl</code>. <code>--read-only</code> limits to reading. The exact command is in <em>Settings → AI → MCP connection</em>.</p>` },
+      { id: 'ai-mcp', title: 'AI agents via MCP', html: `<p><code>mcp/server.mjs</code> gives an MCP client everything the app does without a window: binder, text, search, metadata, notes tabs, keywords, labels, targets, collections, comments, footnotes, split/merge, trash, snapshot compare, statistics, timeline, research, glossary, Compile in every format, import/export (including <code>.scriv</code>, NotebookLM, editor package), new projects from templates and backups; every write is snapshotted and logged in <code>agent-log.jsonl</code>. <code>--read-only</code> limits to reading. The exact command is in <em>Settings → AI → MCP connection</em>.</p>` },
     ],
   },
   {

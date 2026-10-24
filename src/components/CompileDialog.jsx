@@ -3,7 +3,7 @@ import { styleCss, stylesOf } from '../lib/styles.js';
 // The presets live in lib/compileFormats.cjs (used by the main process). The
 // renderer has no Node and no eval, so it reads the JSON block from the source.
 import formatsSource from '../../lib/compileFormats.cjs?raw';
-import { t as tr } from '../lib/i18n.js';
+import { t as tr, builtinName } from '../lib/i18n.js';
 
 function readPresets() {
   try {
@@ -266,7 +266,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     if (toc !== null) opts.toc = toc;
     if (scope === 'folder' && rootId) opts.rootId = rootId;
     if (scope === 'selection' && selectionIds.length) opts.ids = [...selectionIds];
-    if (output === 'epub' && coverId && api.readMedia) {
+    if (['epub', 'pdf', 'docx'].includes(output) && coverId && api.readMedia) {
       const node = images.find((n) => n.id === coverId);
       if (node) opts.coverImage = await toBase64Image(await api.readMedia(dir, node.media.file));
     }
@@ -388,7 +388,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               {all.map((f) => (
                 <li key={f.id}>
                   <button type="button" className={f.id === formatId ? 'active' : ''} onClick={() => setFormatId(f.id)}>
-                    {f.name}
+                    {builtinName('format', f)}
                     {f.builtin ? '' : f.global && !formats.some((x) => x.id === f.id) ? ' 🌐' : ' ✎'}
                   </button>
                 </li>
@@ -472,6 +472,17 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   <label className="check">
                     <input type="checkbox" checked={titlePage ?? Boolean(format.titlePage)} onChange={(e) => setTitlePage(e.target.checked)} /> {tr('ui.compileDialog.pagina_de_titlu_automata_titlu')}
                   </label>
+                  {(output === 'pdf' || output === 'docx') && images.length > 0 && (
+                    <label>
+                      {tr('ui.compileDialog.coperta_prima_pagina')}
+                      <select value={coverId} onChange={(e) => setCoverId(e.target.value)}>
+                        <option value="">{tr('ui.compileDialog.fara_coperta')}</option>
+                        {images.map((n) => (
+                          <option key={n.id} value={n.id}>{n.title}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   <label className="check">
                     <input type="checkbox" checked={toc ?? Boolean(format.toc)} onChange={(e) => setToc(e.target.checked)} /> {tr('ui.compileDialog.cuprins')}
                     {output === 'epub' && <span className="muted"> {tr('ui.compileDialog.in_epub_cuprinsul_de_navigare')}</span>}

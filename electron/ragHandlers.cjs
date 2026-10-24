@@ -5,23 +5,7 @@
 const rag = require('../lib/rag.cjs');
 const aiRuns = require('../lib/aiRuns.cjs');
 
-function collectSources(store, dir) {
-  const project = store.loadProject(dir);
-  const sources = [];
-  const roots = project.tree || [];
-  for (const root of roots) {
-    if (root.root === 'trash') continue;
-    const kind = root.root === 'research' ? 'research' : 'docs';
-    store.walk(root.children || [], (n) => {
-      const text = rag.htmlToText(store.readDoc(dir, n.id, 'docs'));
-      const extra = [n.synopsis].filter(Boolean).join('\n');
-      if (text.trim() || extra) sources.push({ id: n.id, title: n.title, kind, text: `${extra}\n${text}` });
-      const note = rag.htmlToText(store.readDoc(dir, n.id, 'notes'));
-      if (note.trim()) sources.push({ id: n.id, title: `${n.title} (note)`, kind: 'notes', text: note });
-    });
-  }
-  return sources;
-}
+const collectSources = rag.collectSources;
 
 module.exports = function register({ handle, store, assertOpened, getSettings, getApiKey, getAiConfig, ai, makeRun }) {
   const indexes = new Map(); // dir -> index

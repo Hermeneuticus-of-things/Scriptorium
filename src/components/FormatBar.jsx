@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { useEditorState } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import Menu from './Menu.jsx';
+import { builtinName } from '../lib/i18n.js';
 import { htmlToManuscript } from '../lib/editorial.js';
 import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linkedToFootnotes } from '../lib/noteConvert.js';
 import { isParaStyle } from '../lib/styles.js';
@@ -452,8 +453,8 @@ export default function FormatBar({
   };
 
   const styleItems = [
-    ...styles.filter(isParaStyle).map((st) => ({ label: `${st.type === 'both' ? '¶a' : '¶'} ${st.name}`, shortcut: st.shortcut || undefined, action: () => chain().setParagraphStyle(st.id).run() })),
-    ...styles.filter((st) => st.type === 'char').map((st) => ({ label: `a ${st.name}`, shortcut: st.shortcut || undefined, action: () => chain().setCharStyle(st.id).run(), disabled: !s.hasSelection })),
+    ...styles.filter(isParaStyle).map((st) => ({ label: `${st.type === 'both' ? '¶a' : '¶'} ${builtinName('style', st)}`, shortcut: st.shortcut || undefined, action: () => chain().setParagraphStyle(st.id).run() })),
+    ...styles.filter((st) => st.type === 'char').map((st) => ({ label: `a ${builtinName('style', st)}`, shortcut: st.shortcut || undefined, action: () => chain().setCharStyle(st.id).run(), disabled: !s.hasSelection })),
     '-',
     { label: 'Fără stil de paragraf', action: () => chain().setParagraphStyle(null).run() },
     { label: 'Fără stil de caractere', action: () => chain().setCharStyle(null).run() },

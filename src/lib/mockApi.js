@@ -308,6 +308,58 @@ export function createMockApi() {
       const answer = await simulate(`Conform pasajelor, ${passages[0].text.slice(0, 120)} [1]${passages[1] ? ` Vezi și [2].` : ''}`, null, 5);
       return { answer, passages };
     },
+    // Demo: accounts kept in memory, translation and grammar simulated.
+    async servicesStatus() {
+      const st = state.services || (state.services = {});
+      const accounts = state.accounts || (state.accounts = []);
+      const defs = {
+        deepl: ['DeepL', [['apiKey', 'Cheie API', true]]],
+        googleTranslate: ['Google Cloud Translation', [['apiKey', 'Cheie API', true]]],
+        languagetool: ['LanguageTool', [['username', 'E-mail cont', false], ['apiKey', 'Cheie API', true]]],
+        speechify: ['Speechify', [['apiKey', 'Cheie API', true], ['voiceId', 'Voce (ID)', false]]],
+        zotero: ['Zotero', [['userId', 'ID utilizator', false], ['apiKey', 'Cheie API', true]]],
+      };
+      const services = Object.fromEntries(Object.entries(defs).map(([id, [label, fields]]) => {
+        const v = st[id] || {};
+        return [id, { label, help: '', url: '', configured: fields.filter((f) => f[2]).every((f) => v[f[0]]), fields: fields.map(([fid, fl, secret]) => ({ id: fid, label: fl, secret, set: Boolean(v[fid]), value: secret ? '' : v[fid] || '' })) }];
+      }));
+      return { services, accounts: accounts.map(({ password, ...a }) => ({ ...a, hasPassword: Boolean(password) })) };
+    },
+    async setService(id, values) {
+      const st = state.services || (state.services = {});
+      st[id] = { ...(st[id] || {}) };
+      for (const [k, v] of Object.entries(values || {})) if (String(v).trim()) st[id][k] = String(v).trim(); else delete st[id][k];
+      return (await this.servicesStatus()).services[id];
+    },
+    async setAccount(a) {
+      const list = state.accounts || (state.accounts = []);
+      if (!String(a.name || '').trim()) throw new Error('Numele contului lipsește.');
+      const i = list.findIndex((x) => x.id === a.id);
+      const next = { id: a.id || `acc-${Date.now()}`, name: a.name.trim(), url: a.url || '', username: a.username || '', password: a.password === undefined && i >= 0 ? list[i].password : a.password || '' };
+      if (i >= 0) list[i] = next; else list.push(next);
+      return next.id;
+    },
+    async deleteAccount(id) { state.accounts = (state.accounts || []).filter((a) => a.id !== id); return true; },
+    async copyAccountPassword() { return true; },
+    async translateText({ text, to }) {
+      if (!(state.services && state.services.deepl && state.services.deepl.apiKey)) throw new Error('Pune cheia DeepL în Setări → Servicii și conturi.');
+      return { text: `[${to || 'ro'}] ${text}`, detected: 'en', service: 'DeepL (demo)' };
+    },
+    async speakCloud() {
+      if (!(state.services && state.services.speechify && state.services.speechify.apiKey)) throw new Error('Pune cheia Speechify în Setări → Servicii și conturi.');
+      // 0.1 s of silence as MP3 frames is not needed for the demo: an empty WAV plays and ends at once.
+      const wav = 'UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+      return { format: 'wav', chunks: [wav] };
+    },
+    async checkGrammar({ text }) {
+      const matches = [];
+      const re = /\b(si|dimineata|scoala|copiata|gasit|cotitura)\b/g;
+      const fix = { si: 'și', dimineata: 'dimineață', scoala: 'școală', copiata: 'copiată', gasit: 'găsit', cotitura: 'cotitură' };
+      let m;
+      while ((m = re.exec(text))) matches.push({ offset: m.index, length: m[0].length, message: 'Lipsesc diacriticele.', short: 'Diacritice', found: m[0], replacements: [fix[m[0]]], rule: 'DEMO' });
+      for (const sp of text.matchAll(/ ,/g)) matches.push({ offset: sp.index, length: 2, message: 'Spațiu înainte de virgulă.', short: 'Punctuație', found: ' ,', replacements: [','], rule: 'DEMO' });
+      return { language: 'Romanian (demo)', matches: matches.sort((a, b) => a.offset - b.offset), premium: false };
+    },
     async runAi(payload) {
       if (state.settings.aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
       if (!state.settings.hasApiKey) throw new Error('Setează cheia API în Setări.');

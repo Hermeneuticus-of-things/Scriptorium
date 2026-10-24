@@ -1,106 +1,134 @@
 <p align="center">
-  <img src="./assets/readme/hero.svg" width="100%" alt="Scribner, locul în care cartea ta prinde formă: scrii pe bucăți, le muți cum vrei și la final primești cartea în Word, PDF sau e-book">
+  <img src="./assets/readme/hero.png" width="100%" alt="Scribner, program de scris gratuit: cartea ta pe bucăți, apoi întreagă. Captură cu panoul de fișe al unui roman.">
 </p>
 
-Scrii o carte, traduci una sau lucrezi la o teză? Un singur fișier Word de 300 de pagini devine greu de stăpânit. În Scribner, textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol, pe care le vezi, le muți și le găsești ușor. Când ai terminat, apeși un buton și primești cartea întreagă, gata de trimis.
+<p align="center">
+  <a href="../../releases/latest"><strong>Descarcă pentru Windows</strong></a> ·
+  <a href="#cum-îl-instalezi">Instalare</a> ·
+  <a href="#întrebări">Întrebări</a> ·
+  <a href="#sub-capotă">Sub capotă</a>
+</p>
+
+Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. În Scribner textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. Când ai terminat, apeși un buton și primești cartea întreagă.
+
+<p align="center">
+  <img src="./assets/readme/workflow.svg" width="100%" alt="Patru pași: aduci textul, scrii pe fișe, verifici, primești cartea întreagă în DOCX, PDF sau EPUB">
+</p>
 
 <p align="center">
   <img src="./assets/readme/for-whom.svg" width="100%" alt="Pentru cine e: scrii o carte, traduci o carte, scrii o lucrare">
 </p>
 
-## Traduci o carte
+## Pentru traducători
 
 <p align="center">
-  <img src="./assets/readme/translate.png" width="100%" alt="Scribner cu originalul englez în stânga și traducerea în română în dreapta">
+  <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
 </p>
 
-- Pui fișierul Word primit de la editură și Scribner îl împarte singur pe capitole.
-- Ții originalul la stânga și traducerea la dreapta, pe același ecran.
-- Clic dreapta pe un cuvânt sau o frază: o trimiți la DeepL, o cauți în dexonline, Linguee sau IATE, ori ceri AI-ului o explicație.
-- Notezi termenii grei în Cercetare, ca glosar, și îi ai mereu la un clic distanță.
-- La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
-
-## Scrii o carte
+Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
 
 <p align="center">
-  <img src="./assets/readme/corkboard.png" width="100%" alt="Fișele unui capitol pe un panou de plută, fiecare cu titlul și rezumatul scenei">
+  <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">
 </p>
 
-- Fiecare scenă are fișa ei, cu un rezumat de două rânduri.
-- Le muți cu mouse-ul până când povestea curge cum vrei.
-- Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris.
-- Înainte de o schimbare mare faci o „poză” a textului și te poți întoarce oricând la ea.
+Clic dreapta pe un cuvânt și ai la îndemână:
+
+- **Traduce:** DeepL sau Google Translate, pe cuvânt, pe frază sau pe un paragraf întreg. Cu cheia ta DeepL, traducerea apare direct în program și o pui în text cu un clic.
+- **Dicționare:** dexonline și sinonime, Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
+- **Asistent AI:** cercetare despre termen, explicație, corectură sau traducere, cu înainte și după.
+- **În proiect:** caută termenul în toată cartea și în notele tale sau pune-l în glosar.
+- **NotebookLM:** întrebi despre termen în sursele tale.
+
+Nu trebuie să selectezi nimic înainte: clic dreapta pe un cuvânt îl selectează singur, iar meniul extinde selecția la frază sau la paragraf.
+
+## Pentru scriitori
+
+<p align="center">
+  <img src="./assets/readme/corkboard.png" width="100%" alt="Panoul de fișe: fiecare scenă cu titlul, rezumatul și starea ei">
+</p>
+
+Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-ul și textul se mută odată cu ea. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris.
+
+<p align="center">
+  <img src="./assets/readme/timeline.png" width="100%" alt="Cronologia: scenele pe zile, câte un fir pentru fiecare personaj">
+</p>
+
+Personajele, locurile și cercetarea stau lângă text. Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor.
+
+## Corectezi fără grijă
+
+<p align="center">
+  <img src="./assets/readme/irep.png" width="100%" alt="Revizia automată găsește ghilimele, spații și punctuație greșite">
+</p>
+
+Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, punctuația și repetițiile, apoi le repară cu un clic.
+
+<p align="center">
+  <img src="./assets/readme/ai.png" width="100%" alt="Asistentul AI arată corectura cuvânt cu cuvânt, cu înainte și după">
+</p>
+
+Dacă vrei, asistentul AI face corectură, rezumate sau o a doua părere. Vezi exact ce schimbă și accepți doar ce îți place. Merge cu furnizorul tău, de la Anthropic și OpenAI la un model care rulează pe calculatorul tău. Poți opri AI-ul complet din Setări.
+
+<p align="center">
+  <img src="./assets/readme/snapshots.png" width="100%" alt="Două versiuni ale aceluiași text, comparate una lângă alta">
+</p>
+
+Înainte de o rescriere mare faci o „poză” a textului. Mai târziu compari versiunile și te întorci la cea bună. Totul se salvează singur, iar copiile de siguranță se fac automat.
 
 ## La final, cartea întreagă
 
 <p align="center">
-  <img src="./assets/readme/compile.png" width="100%" alt="Fereastra în care alegi forma finală a cărții: manuscris, carte tipărită sau e-book">
+  <img src="./assets/readme/compile.png" width="100%" alt="Fereastra în care alegi forma finală: manuscris, carte tipărită sau e-book">
 </p>
 
-Alegi forma (manuscris pentru editură, carte tipărită sau e-book) și Scribner adună totul într-un singur fișier: Word, PDF, EPUB și altele. Pagina de titlu, cuprinsul și numerotarea capitolelor se fac singure.
+Alegi forma: manuscris pentru editură, carte tipărită sau e-book. Scribner adună bucățile într-un singur fișier Word, PDF sau EPUB, cu copertă, pagină de titlu și subtitlu, cuprins și capitole numerotate. Imaginile rămân cât le-ai făcut în text, fără să iasă din pagină; textul se desparte în silabe și nu lasă rânduri singure la capăt de pagină. Fișierele trec verificările programelor care le deschid: Word, LibreOffice, cititoarele de e-book.
 
-## Ce mai poate
+## Cum îl instalezi
 
-<p align="center">
-  <img src="./assets/readme/ai.png" width="100%" alt="Asistentul AI arată corectura cu înainte și după, cuvânt cu cuvânt">
-</p>
+Din pagina [Releases](../../releases/latest) descarci una dintre variante:
 
-<p align="center">
-  <img src="./assets/readme/irep.png" width="100%" alt="Revizia fără AI găsește ghilimele, spații și diacritice greșite">
-</p>
+- **`Scribner-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator. La dezinstalare, cărțile tale rămân.
+- **`Scribner-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
 
-<p align="center">
-  <img src="./assets/readme/snapshots.png" width="100%" alt="Compararea a două versiuni ale aceluiași text">
-</p>
+La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 lecții scurte, în care înveți lucrând. Manualul complet se deschide oricând cu F1.
 
-<p align="center">
-  <img src="./assets/readme/timeline.png" width="100%" alt="Cronologia scenelor pe firul fiecărui personaj">
-</p>
+## Întrebări
 
-<p align="center">
-  <img src="./assets/readme/composition.png" width="100%" alt="Modul pe tot ecranul, doar textul">
-</p>
+**Am nevoie de internet?** Nu. Scribner merge pe calculatorul tău și textele rămân la tine. Internetul îți trebuie doar pentru DeepL, dicționarele online și AI.
 
-## Întrebări pe care le ai probabil
+**Pot aduce ce am scris deja?** Da: Word, RTF, ODT, Markdown, pagini web, scenarii Fountain sau Final Draft și proiecte `.scriv`.
 
-**Am nevoie de internet?** Nu. Scribner merge pe calculatorul tău, iar textele rămân la tine.
+**Trebuie să folosesc AI?** Nu. Programul e complet fără el.
 
-**Se poate pierde ceva?** Totul se salvează singur, pe măsură ce scrii. Ai și copii de siguranță automate și „poze” ale fiecărui document.
-
-**Pot aduce ce am scris deja?** Da: Word, RTF, ODT, Markdown, pagini web și proiecte `.scriv`.
-
-**Trebuie să folosesc inteligență artificială?** Nu. Programul e complet fără ea. Dacă vrei, o pornești din Setări cu furnizorul tău, pentru corectură, rezumate sau o a doua părere. O poți opri oricând.
+**Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Da. În Setări → Servicii și conturi pui cheile: traduci în program cu DeepL sau Google, verifici gramatica cu LanguageTool, asculți textul cu vocile Speechify. Tot acolo îți ții și alte conturi cu parolă. Totul se păstrează criptat pe calculatorul tău.
 
 **În ce limbă e?** Română sau engleză, la alegere.
 
-## Cum îl pornești
-
-Pe Windows: descarci arhiva din pagina [Releases](../../releases), o dezarhivezi oriunde (merge și de pe stick) și pornești `Scribner.exe`. Nu trebuie instalat.
-
-La prima pornire poți deschide **Tutorialul interactiv** din ecranul de start: 15 lecții scurte în care înveți făcând. Manualul complet e mereu la F1.
+**Cât costă?** Nimic. E gratuit și cu cod deschis.
 
 ## Sub capotă
 
 <details>
 <summary><strong>Pentru cine vrea detalii tehnice</strong></summary>
 
-**Construit din cod sursă** (ai nevoie de Node.js 22+):
+**Din cod sursă** (Node.js 22+):
 
 ```bash
 npm install
-npm start          # construiește și pornește aplicația
-npm run dist:win   # creează Scribner.exe portabil în release/
+npm start                # construiește și pornește aplicația
+npm run dist:win         # aplicația împachetată și varianta portabilă, în release/
+npm run dist:win:setup   # installerul cu wizard (Inno Setup 6, pe Windows)
 ```
 
-`npm run dev` deschide interfața în browser; cu `?demo` la finalul adresei pornește un proiect demonstrativ.
+`npm run dev` deschide interfața în browser; cu `?demo` la finalul adresei pornește proiectul demonstrativ din capturi.
 
-**Asistent AI.** Furnizori: Anthropic, OpenAI, Google Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Ollama și LM Studio local, sau orice serviciu compatibil OpenAI. Cheia e criptată de sistemul de operare și rămâne în procesul principal; interfața nu o vede. Face corectură cu diferențe înainte/după, rezumate, continuare în stilul tău, critică, verificare de consistență, fișe de personaje și revizie pe niveluri. Răspunsul se scrie în timp real și se poate anula.
+**Asistent AI.** Furnizori: Anthropic, OpenAI, Google Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Ollama și LM Studio local, sau orice serviciu compatibil OpenAI. Cheia e criptată de sistemul de operare și rămâne în procesul principal; interfața nu o vede. Răspunsul se scrie în timp real și se poate anula.
 
-**Revizie fără AI.** I-REP găsește și repară problemele de tipografie și stil, apoi reverifică; I-EDIT rulează runde editoriale. Profilul „Generic” merge pe orice text; profilul „Română” aplică DOOM III și regulile P1–P13 / R0–R11.
+**Revizie.** I-REP găsește și repară problemele de tipografie și stil, apoi reverifică; I-EDIT rulează runde editoriale. Profilul „Generic” merge pe orice text; profilul „Română” aplică DOOM III și regulile P1–P13 / R0–R11.
 
-**NotebookLM.** „Exportă pentru NotebookLM” pregătește cartea ca surse (un fișier pe capitol, cercetarea și notele separat, cuprins cu rezumate), în limitele NotebookLM.
+**NotebookLM.** „Exportă pentru NotebookLM” pregătește cartea ca surse: un fișier pe capitol, cercetarea și notele separat, cuprins cu rezumate.
 
-**Agenți AI prin MCP.** Serverul `mcp/server.mjs` dă acces oricărui client MCP la un proiect: citire și scriere, binder, căutare, metadate, note, comentarii, I-REP, snapshot-uri, Compile. Fiecare scriere face snapshot înainte și se notează în `agent-log.jsonl`. `--read-only` permite doar citirea.
+**Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
 
 ```bash
 claude mcp add scribner -- node "/cale/Scribner/mcp/server.mjs" --project "/cale/Cartea mea.scribner"
@@ -108,7 +136,7 @@ claude mcp add scribner -- node "/cale/Scribner/mcp/server.mjs" --project "/cale
 
 **Formate.** Import: DOCX, RTF, ODT, HTML, Markdown, Fountain, Final Draft, OPML, pagini web, BibTeX/CSL-JSON, `.scriv`. Export și Compile: DOCX, PDF, EPUB, HTML, RTF, ODT, Markdown, MultiMarkdown, text, LaTeX, Fountain, Final Draft, `.scriv`.
 
-**Formatul proiectului.** Un folder cu fișiere text simple, ușor de versionat cu git sau de sincronizat cu orice cloud:
+**Formatul proiectului.** Un folder cu fișiere text simple, ușor de pus în git sau de sincronizat cu orice cloud. Schimbările făcute din afară se îmbină cu cele din aplicație.
 
 ```text
 Cartea mea.scribner/
@@ -119,7 +147,7 @@ Cartea mea.scribner/
   media/                 imagini, PDF, audio
 ```
 
-**Teste.** `npm test` rulează testele bibliotecilor; `npm run test:e2e` pornește aplicația reală în Electron și parcurge fluxurile principale. Ambele rulează în CI la fiecare schimbare. Verificat pe Linux; neverificat încă pe Windows. Planul complet e în [`ROADMAP.md`](ROADMAP.md).
+**Teste.** `npm test` rulează peste 540 de teste ale bibliotecilor. `npm run test:e2e` pornește aplicația reală în Electron și parcurge fluxurile principale. În CI rulează pe Linux și pe Windows, unde se construiesc și installerul și varianta portabilă. Planul complet e în [`ROADMAP.md`](ROADMAP.md).
 
 </details>
 

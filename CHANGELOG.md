@@ -1,5 +1,64 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.1 — Vânătoare de bug-uri: încrucișat, divergent și convergent
+
+### Cerința user
+> "testează încrucișat și divergent, convergent, BUG HUNTER DEEP"
+
+### Rezultat
+Patru vânători de bug-uri în paralel, pe zone separate (editor, integritatea datelor, Compile, interfață): sesiuni aleatoare cu semințe reproductibile (divergent) și cazuri cu risc mare (convergent); fiecare bug reprodus întâi cu un test care pică, apoi reparat la cauză.
+- **Editor:** tab-urile, spațiile duble și cele de la început de paragraf se pierdeau la redeschiderea documentului și în split; lipirea fără formatare lăsa `\r`; Ctrl+Shift+V rămânea armat; inserarea unui singur rând (generator de nume, dictare, traduceri) rupea paragraful; Scrivenings nu aplica corecturile, stilurile și linkurile; titlul imaginii nu se ștergea.
+- **Date:** îmbinarea binderului cu mutări încrucișate bloca salvarea; fișier temporar rămas după o scriere eșuată; două snapshot-uri în aceeași milisecundă se suprascriau; backup-uri parțiale (disc plin) socotite valide; restaurarea unui zip gol; pachet cu id invalid lăsa un proiect pe jumătate; cursă la preluarea unui lock vechi (acum lock cu token, test cu 6 procese) și erorile trecătoare de lock pe Windows.
+- **Compile:** caractere de control stricau capitole EPUB; imagini stricate puse în EPUB/DOCX/ODT/RTF (acum textul alternativ); lățimi în procente respinse de epubcheck; imaginile din DOCX tăiate la un rând în LibreOffice (inclusiv coperta); subtitlurile lipseau din LaTeX. Matrice: 8 formate × 12 ieșiri × 2 seturi de opțiuni, validate cu epubcheck, validatorul OOXML, LibreOffice, pandoc și PDF-ul real privit pagină cu pagină.
+- **Interfață:** meniurile ieșeau din ecran în ferestre mici; „Înlocuiește” după traducere rupea paragraful și pierdea spațiile; citirea Speechify continua după Stop; meniul de clic dreapta din aplicația desktop rămânea în română în modul englez; numele formatelor de Compile, ale stilurilor și ale modurilor de scenariu rămâneau în română în modul englez; erorile din Servicii și conturi erau tăcute; corecturile LanguageTool suprapuse stricau textul.
+- **Word ca o carte:** coperta, pagina de titlu și cuprinsul stau într-o secțiune fără antet și fără număr; corpul cărții începe de la pagina 1 (verificat cu LibreOffice).
+- Scenarii noi în browser: editor-fuzz, ui-walk, keyboard-only, drag-drop, escape-stack, menu-viewport, service-replace, replace-inline. Total 677 teste unitare + 2 sărite; E2E Electron trece; CI pe Linux și Windows.
+
+## 2026-10-24 — v0.8.0 — Carte gata de tipar și digital, imagini redimensionabile, servicii și conturi, Speechify, bug-uri Windows și meniuri
+
+### Cerința user
+> "să formateze cartea gata de tipar și digital, cu imagini în text și carte, titlu, subtitlu, caractere speciale" · "imaginile să se încadreze și să se redimensioneze în text, ca în grafică" · "cheile pe lângă AI, ex. DeepL, și alte servicii care au nevoie de user și parolă" · "https://speechify.com/" · "testează încrucișat, divergent și convergent, bug hunter deep" · "Windows: caută bug-uri reale"
+
+### Rezultat
+- **Carte gata de tipar și digital (Compile):** subtitlu de carte (Setări proiect) și subtitlu de capitol (Inspector) în toate formatele (HTML/PDF, DOCX cu stilul Word „Subtitle”, EPUB, ODT, RTF, Markdown); placeholder `<$subtitle>`; copertă ca primă pagină și în PDF/DOCX (pe lângă EPUB); tipar: despărțire în silabe, fără rânduri orfane/văduve, titlul nu rămâne singur la capăt de pagină, imaginile și tabelele nu se rup; limba ro-RO în DOCX; caractere speciale (ș ț „” «» — … ½ © € grecești, chirilice) verificate în toate formatele.
+- **Imagini:** în editor au colțuri de tras (redimensionare cu proporții păstrate) și o bară pe imaginea selectată: stânga/dreapta cu text în jur, în rând, centrată, 25/50/75/100%, mărimea originală. În cartea finală lățimea aleasă (px sau % din coloană) și alinierea se păstrează; nicio imagine nu mai depășește pagina (bug: în DOCX/ODT lățimea maximă era fixă la 6 in, deci ieșea din pagină la formatul 5×8).
+- **Servicii și conturi (filă nouă în Setări):** DeepL și Google Translate (traducere direct în program, cu dialog Înlocuiește / Inserează după / Copiază), LanguageTool (gramatică, gratuit fără cont sau Premium cu e-mail + cheie; corecturile se aleg una câte una), Speechify (citire cu voce tare cu vocile lor în bara „Citește”), Zotero; plus „Alte conturi” cu utilizator și parolă (parola se copiază și se șterge din clipboard după 30 s). Totul criptat de sistemul de operare, rămâne în procesul principal.
+- **Bug-uri găsite prin testare încrucișată (93 de comenzi din meniu parcurse în demo + scenarii noi):** meniurile din bara de sus nu se închideau cu Escape și rămâneau deschise peste editor, așa că următorul clic nimerea o comandă în loc de text; acum Escape închide, săgețile navighează, comenzile rulează cu focusul înapoi în editor (fără conflict cu navigarea din bara de formatare). Mesajul „… lucrează” rămânea afișat după o eroare de serviciu.
+- **Windows:** nume de fișiere/foldere sigure peste tot (CON, NUL, COM1, punct sau spațiu la final, lungime), salvare atomică cu reîncercare când antivirusul/OneDrive țin fișierul deschis (și pentru setări și cache-ul AI), „Salvează ca” cu copiere explicită (cpSync eșua pe Windows), traducerea română a wizardului Inno Setup inclusă, E2E cu aplicația reală rulat și pe Windows în CI.
+- **PDF ca o carte tipărită:** antetul și subsolul sunt desenate de pagină (CSS page-margin boxes), deci urmează paginile oglindite (numărul pe marginea exterioară) și lipsesc pe copertă, pagina de titlu și cuprins (bug: înainte apăreau pe toate paginile, iar ruperea dublă lăsa pagini goale); paragraful cu imagine înconjurată de text nu mai e centrat (regula CSS `:only-child` ignora textul). Verificat pe un PDF real randat de Electron, 6×9 in, fonturi încorporate.
+- Teste noi: printReady (12), services (10), windowsFs (18), browser: image-resize, services, menu-keyboard. Total 627 unitare + 2 sărite; E2E Electron și 21 de scenarii în browser trec.
+
+## 2026-10-24 — v0.7.2 — MCP integral: agentul poate folosi tot programul
+
+### Cerința user
+> serverul MCP să permită oricărui client MCP să folosească programul integral (tot ce face aplicația fără ferestre)
+
+### Rezultat
+- `mcp/fullTools.mjs`: 57 de unelte noi (77 în total), toate prin aceleași gărzi (`--read-only`, snapshot/backup înainte, lock pe project.json, id-uri validate, ieșiri doar la căi date de client și niciodată în proiect, `agent-log.jsonl`): proiecte și șabloane, import (fișiere text/OPML/media, pagini web, bibliografie, `.scriv`, pachet), export (documente, OPML/CSV, `.scriv`, NotebookLM, PENTRU EDITOR, pachet, Salvează ca), Compile în toate formatele (fără PDF; `print` = HTML de tipar) cu format, colecție, dosar sau documente, note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, semne de carte, comentarii, note de subsol, duplicare/împărțire/unire/transformare, coș, comparare și gestiune snapshot-uri, statistici, cronologie, ritm, relații, cercetare în proiect, glosar, linkuri de dicționare/traducere, backup, I-EDIT fără AI.
+- Bug-uri la cauză: importul OPML pierdea eticheta și statusul (căuta `.id` pe nume); fișierele media importate (Import fișiere, imaginile paginilor web) primeau tipul `media` în loc de `file` și erau tratate ca text de binder/Compile; exportul NotebookLM nu includea notele proiectului (căuta `project.notes`); comentariile adăugate prin MCP aveau `data-author` (Inspectorul citește `data-comment-author`).
+- Logica mutată în biblioteci partajate de aplicație și MCP: `opmlToNodes`, `mediaNode`, `parseFootnotes` (panelsExtra), glosarul traducătorului (glossary.js), `collectSources` (rag.cjs).
+- Teste: `tests/mcpFull.test.js` (43): câte o probă pe unealtă, refuz `--read-only` pentru fiecare unealtă nouă de scriere, lista completă de unelte și o gardă care pică pentru orice funcție nouă din `preload.cjs` fără unealtă MCP sau motiv „doar GUI”.
+
+## 2026-10-24 — v0.7.1 — Installer Windows cu wizard (Inno Setup)
+
+### Cerința user
+> "programul să aibă wizard de instalare, adică .exe" · "Inno Setup cu wizard"
+
+### Rezultat
+- `installer/scribner.iss`: wizard Inno Setup 6 în română și engleză (licență, folder, grup în Start, scurtătură pe Desktop, pornire la final); instalare per utilizator fără drepturi de admin sau pentru toți utilizatorii; dezinstalarea păstrează proiectele și setările.
+- `npm run dist:win` împachetează aplicația și varianta portabilă; `npm run dist:win:setup` face `Scribner-Setup-<versiune>.exe`.
+- Workflow `Windows` pe GitHub (windows-latest): teste, pachet, installer; artefactele se descarcă din Actions, iar un tag `v*` publică automat un Release cu ambele `.exe`.
+
+## 2026-10-24 — v0.7.1 — Clic dreapta: „În proiect” (căutare, cercetare, glosar)
+
+### Cerința user
+> "trimitere ... la AI pentru cercetare ... sau căutare în baza de date ... pe cuvânt sau pe frază"
+
+### Rezultat
+- Meniul contextual are „În proiect”: caută selecția în tot proiectul, caută în cercetarea proiectului, răspuns AI din cercetarea proiectului, adaugă în glosar (documentul „Glosar…” din Cercetare, creat dacă lipsește, fără dubluri).
+- Bug la cauză: butoanele panoului de cercetare primeau evenimentul click ca text de căutare când funcția accepta un argument; acum doar un șir e interogare, iar „Reîncearcă” păstrează interogarea.
+- Test în browser extins (context-actions): 13 verificări.
+
 ## 2026-10-23 — v0.7.0 — Clic dreapta pe cuvânt sau frază: traducere, dicționare, cercetare, AI, NotebookLM
 
 ### Cerința user

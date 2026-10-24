@@ -7,9 +7,9 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 // newest text (blur, unmount, getHtml/setHtml, window unload, App flush) flushes first.
 export const SERIALIZE_DELAY = 300;
 import { EditorContent, useEditor } from '@tiptap/react';
-import { createDocument, getHTMLFromFragment } from '@tiptap/core';
+import { getHTMLFromFragment } from '@tiptap/core';
 import { buildExtensions } from '../editor/extensions.js';
-import { replaceChangedRange } from '../editor/syncDoc.js';
+import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
 import FindBar from './FindBar.jsx';
@@ -75,6 +75,7 @@ const Editor = forwardRef(function Editor(
     {
       extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current }),
       content: html || '<p></p>',
+      parseOptions: PARSE_OPTIONS,
       editable: !readOnly,
       onUpdate: ({ editor: ed }) => {
         dirty.current = { doc: ed.state.doc, schema: ed.schema };
@@ -111,7 +112,12 @@ const Editor = forwardRef(function Editor(
             return true;
           }
           // Paste and Match Style: the next paste keeps only the text.
-          if (mod && e.shiftKey && e.key.toLowerCase() === 'v') plainPaste.current = true;
+          // Ctrl+Shift+V arms the next paste only for a moment: if no paste follows (shortcut taken
+          // by the OS, empty clipboard), a later normal paste must keep its formatting.
+          if (mod && e.shiftKey && e.key.toLowerCase() === 'v') {
+            plainPaste.current = true;
+            setTimeout(() => { plainPaste.current = false; }, 1000);
+          }
           if (mod && !e.shiftKey && e.key.toLowerCase() === 'l') {
             e.preventDefault();
             const href = window.prompt('Adresa linkului:', editor?.getAttributes('link').href || 'https://');
@@ -136,7 +142,7 @@ const Editor = forwardRef(function Editor(
           plainPaste.current = false;
           const text = event.clipboardData?.getData('text/plain') || '';
           if (!text) return false;
-          editor?.chain().focus().insertContent(text.includes('\n') ? textToHtml(text) : text).run();
+          editor?.chain().focus().insertContent(/[\r\n]/.test(text) ? textToHtml(text) : text).run();
           return true;
         },
         handleDoubleClickOn: (_view, _pos, node, nodePos) => {
@@ -181,7 +187,7 @@ const Editor = forwardRef(function Editor(
         flushRef.current();
         if (!editor || editor.isDestroyed) return;
         const tr = editor.state.tr;
-        if (replaceChangedRange(tr, createDocument(h || '<p></p>', editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true));
+        if (replaceChangedRange(tr, htmlToDoc(h, editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true));
       },
       selectAround: (kind) => Boolean(editor && !editor.isDestroyed && selectAround(editor.view, undefined, kind)),
       getSelectionText: () => {
@@ -194,7 +200,13 @@ const Editor = forwardRef(function Editor(
         const { to } = editor.state.selection;
         editor.chain().focus().setTextSelection(to).insertContent(textToHtml(text)).run();
       },
-      replaceSelection: (text) => editor?.chain().focus().insertContent(textToHtml(text)).run(),
+      // One line goes into the current paragraph as text; several lines become paragraphs.
+      replaceSelection: (text) => {
+        if (!editor) return false;
+        const t = String(text ?? '');
+        if (!/[\r\n]/.test(t)) return editor.chain().focus().insertContent({ type: 'text', text: t }).run();
+        return editor.chain().focus().insertContent(textToHtml(t)).run();
+      },
       replaceSelectionHtml: (h) => editor?.chain().focus().insertContent(h).run(),
       // Selects the first occurrence of a text snippet (used to jump to an editorial issue).
       findText: (snippet) => {

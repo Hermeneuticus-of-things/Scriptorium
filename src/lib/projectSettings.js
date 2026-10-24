@@ -119,6 +119,7 @@ export function makeDraft(project) {
     authorFirst: p.authorFirst || '',
     authorLast: p.authorLast || '',
     titleAbbreviation: p.titleAbbreviation || '',
+    subtitle: p.subtitle || '',
     labelTitle: p.labelTitle || DEFAULT_LABEL_TITLE,
     statusTitle: p.statusTitle || DEFAULT_STATUS_TITLE,
     labels,
@@ -209,7 +210,7 @@ export function applyProjectSettings(project, draft) {
   const lv = d.sectionTypeLevels || {};
   p.sectionTypeLevels = Object.fromEntries(['folders', 'containers', 'files'].map((k) => [k, valid.has(lv[k]) ? lv[k] : null]));
 
-  for (const k of ['title', 'author', 'authorFirst', 'authorLast', 'titleAbbreviation']) p[k] = (d[k] ?? '').toString();
+  for (const k of ['title', 'subtitle', 'author', 'authorFirst', 'authorLast', 'titleAbbreviation']) p[k] = (d[k] ?? '').toString();
   p.labelTitle = (d.labelTitle || '').trim() || DEFAULT_LABEL_TITLE;
   p.statusTitle = (d.statusTitle || '').trim() || DEFAULT_STATUS_TITLE;
   p.templateFolder = d.templateFolder || null;

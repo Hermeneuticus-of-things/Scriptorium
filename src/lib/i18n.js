@@ -65,6 +65,13 @@ const ro = {
   'cmd.aiTranslateSel': 'AI: traduce selecția',
   'cmd.aiProofreadSel': 'AI: corectează selecția',
   'cmd.nlmAskSel': 'Întreabă NotebookLM despre selecție',
+  'cmd.deeplInApp': 'Traduce selecția în program (DeepL)',
+  'cmd.googleInApp': 'Traduce selecția în program (Google)',
+  'cmd.grammarSel': 'Verifică gramatica selecției (LanguageTool)',
+  'cmd.findSel': 'Caută selecția în proiect',
+  'cmd.researchSel': 'Caută în cercetarea proiectului',
+  'cmd.researchAskSel': 'AI: răspunde din cercetarea proiectului',
+  'cmd.glossaryAdd': 'Adaugă în glosar',
   'cmd.print': 'Tipărește documentul…', 'cmd.backups': 'Backup-uri…', 'cmd.closeProject': 'Închide proiectul',
   'cmd.findDoc': 'Caută în document', 'cmd.findProject': 'Caută și înlocuiește în proiect…', 'cmd.advSearch': 'Căutare avansată…',
   'cmd.viewEditor': 'Editor', 'cmd.viewCorkboard': 'Corkboard', 'cmd.viewOutline': 'Outline', 'cmd.composition': 'Mod compunere',
@@ -82,7 +89,7 @@ const ro = {
   // settings
   'set.title': 'Setări',
   'set.tab.general': 'General', 'set.tab.appearance': 'Aspect', 'set.tab.behaviors': 'Comportament', 'set.tab.corrections': 'Corecturi',
-  'set.tab.editing': 'Editare', 'set.tab.sharing': 'Partajare', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Tastatură', 'set.tab.ai': 'AI', 'set.tab.language': 'Limbă',
+  'set.tab.editing': 'Editare', 'set.tab.sharing': 'Partajare', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Tastatură', 'set.tab.ai': 'AI', 'set.tab.services': 'Servicii și conturi', 'set.tab.language': 'Limbă',
   'set.reopenLast': 'La pornire, redeschide ultimul proiect', 'set.autosave': 'Salvare automată după (secunde de inactivitate)',
   'set.checkUpdates': 'Caută actualizări (dezactivat: aplicația nu contactează rețeaua)',
   'set.targetDraft': 'Țintă carte (cuvinte)', 'set.targetSession': 'Țintă sesiune (cuvinte)',
@@ -229,6 +236,13 @@ const en = {
   'cmd.aiTranslateSel': 'AI: translate the selection',
   'cmd.aiProofreadSel': 'AI: proofread the selection',
   'cmd.nlmAskSel': 'Ask NotebookLM about the selection',
+  'cmd.deeplInApp': 'Translate the selection in the app (DeepL)',
+  'cmd.googleInApp': 'Translate the selection in the app (Google)',
+  'cmd.grammarSel': 'Check grammar of the selection (LanguageTool)',
+  'cmd.findSel': 'Find the selection in the project',
+  'cmd.researchSel': 'Search the project research',
+  'cmd.researchAskSel': 'AI: answer from the project research',
+  'cmd.glossaryAdd': 'Add to glossary',
   'cmd.print': 'Print document…', 'cmd.backups': 'Backups…', 'cmd.closeProject': 'Close project',
   'cmd.findDoc': 'Find in document', 'cmd.findProject': 'Project find and replace…', 'cmd.advSearch': 'Advanced search…',
   'cmd.viewEditor': 'Editor', 'cmd.viewCorkboard': 'Corkboard', 'cmd.viewOutline': 'Outline', 'cmd.composition': 'Composition mode',
@@ -244,7 +258,7 @@ const en = {
   'btn.default': 'Default', 'btn.add': 'Add', 'btn.remove': 'Remove', 'btn.delete': 'Delete', 'btn.apply': 'Apply',
   'set.title': 'Settings',
   'set.tab.general': 'General', 'set.tab.appearance': 'Appearance', 'set.tab.behaviors': 'Behaviors', 'set.tab.corrections': 'Corrections',
-  'set.tab.editing': 'Editing', 'set.tab.sharing': 'Sharing', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Keyboard', 'set.tab.ai': 'AI', 'set.tab.language': 'Language',
+  'set.tab.editing': 'Editing', 'set.tab.sharing': 'Sharing', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Keyboard', 'set.tab.ai': 'AI', 'set.tab.services': 'Services and accounts', 'set.tab.language': 'Language',
   'set.reopenLast': 'On startup, reopen last project', 'set.autosave': 'Autosave after (seconds of inactivity)',
   'set.checkUpdates': 'Check for updates (off: the app never contacts the network)',
   'set.targetDraft': 'Book target (words)', 'set.targetSession': 'Session target (words)',
@@ -360,5 +374,22 @@ export function cmdLabel(id, fallback) {
   return has(key) ? t(key) : fallback ?? id;
 }
 /** Displayed name of a template category (stored values stay as they are). */
+// Built-in Compile formats and styles keep their stored (Romanian) names; only the display is
+// translated, and only while the user has not renamed them.
+const BUILTIN_EN = {
+  format: { manuscris: 'Standard manuscript', paperback: 'Printed book (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'A5 PDF for reading', implicit: 'Default', times: 'Times New Roman (double-spaced)', courier: 'Courier (classic manuscript)' },
+  style: { ilustratie: 'Illustration', accent: 'Accent', sanscrit: 'Sanskrit term', 'citat-bloc': 'Block quote', motto: 'Epigraph', scrisoare: 'Letter', centrat: 'Centered', separator: 'Scene separator' },
+};
+const BUILTIN_RO = {
+  format: { manuscris: 'Manuscris standard', paperback: 'Carte tipărită (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'Citire PDF A5', implicit: 'Implicit (Default)', times: 'Times New Roman (dublu spațiat)', courier: 'Courier (manuscris clasic)' },
+  style: { ilustratie: 'Ilustrație', accent: 'Accent', sanscrit: 'Termen sanscrit', 'citat-bloc': 'Citat bloc', motto: 'Motto', scrisoare: 'Scrisoare', centrat: 'Centrat', separator: 'Separator de scenă' },
+};
+/** Display name of a built-in format/style ({ id, name }); renamed or user items show their own name. */
+export function builtinName(kind, item) {
+  if (!item) return '';
+  const ro0 = BUILTIN_RO[kind] && BUILTIN_RO[kind][item.id];
+  if (current !== 'en' || !ro0 || item.name !== ro0) return item.name;
+  return BUILTIN_EN[kind][item.id] || item.name;
+}
 export const categoryLabel = (c) => (has(`tplcat.${c}`) ? t(`tplcat.${c}`) : c);
 export const groupLabel = (group) => (has(`group.${group}`) ? t(`group.${group}`) : group);

@@ -190,6 +190,17 @@ export default function Inspector({
           </label>
           {!isRoot && <SynopsisImagePicker api={api} dir={dir} node={node} onPatch={onPatch} onError={onError} />}
           {!isRoot && (
+            <label>
+              {tr('ui.inspector.subtitlu')}
+              <input
+                key={`sub-${node.id}`}
+                defaultValue={node.subtitle || ''}
+                placeholder={tr('ui.inspector.subtitlu_tip')}
+                onBlur={(e) => e.target.value.trim() !== (node.subtitle || '') && onPatch({ subtitle: e.target.value.trim() })}
+              />
+            </label>
+          )}
+          {!isRoot && (
             <>
               <div className="row">
                 <label>

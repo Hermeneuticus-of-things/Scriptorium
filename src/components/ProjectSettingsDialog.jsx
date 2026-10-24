@@ -171,6 +171,10 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               <input value={d.title} onChange={(e) => set({ title: e.target.value })} />
             </label>
             <label>
+              {tr('ui.projectSettingsDialog.subtitlu')}
+              <input value={d.subtitle} placeholder={tr('ui.projectSettingsDialog.subtitlu_exemplu')} onChange={(e) => set({ subtitle: e.target.value })} />
+            </label>
+            <label>
               {tr('ui.projectSettingsDialog.titlu_prescurtat')}
               <input value={d.titleAbbreviation} onChange={(e) => set({ titleAbbreviation: e.target.value })} />
             </label>
