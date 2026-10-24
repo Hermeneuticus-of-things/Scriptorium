@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { citationParts } from '../lib/aiSession.js';
-import { DEFAULT_SCOPE, scopeChips, toggleScope, turnToInsertHtml, turnToNoteHtml, turnToPlain, visibleAnswer } from '../lib/researchChat.js';
+import { DEFAULT_SCOPE, noteTitle, scopeChips, toggleScope, turnToInsertHtml, turnToNoteHtml, turnToPlain, visibleAnswer } from '../lib/researchChat.js';
 import '../ai.css';
 import { t } from '../lib/i18n.js';
 
@@ -227,7 +227,7 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
 
   const saveNote = async (turn) => {
     if (!onSaveNote) return;
-    await onSaveNote({ title: turn.q.slice(0, 80), html: turnToNoteHtml(turn, { sourcesLabel: t('ui.researchChat.surse') }) });
+    await onSaveNote({ title: noteTitle(turn.q), html: turnToNoteHtml(turn, { sourcesLabel: t('ui.researchChat.surse') }) });
     setToast(t('ui.researchChat.salvat_ca_nota'));
   };
   const insert = (turn) => {
@@ -443,11 +443,14 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey && canChat && e.target.tagName === 'TEXTAREA') {
             e.preventDefault();
-            ask();
+            // Enter while an answer is still coming would start a second question without the
+            // first one in its history (and a second new conversation).
+            if (!busy && !e.nativeEvent.isComposing) ask();
           }
         }}
         onSubmit={(e) => {
           e.preventDefault();
+          if (busy) return;
           if (canChat) ask();
           else search();
         }}

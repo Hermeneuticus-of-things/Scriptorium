@@ -61,6 +61,7 @@ const MSG = {
     imported: (n, d) => `Importat ${n} documente în ${d}`,
     locked: 'Proiectul e ocupat (blocat de aplicație sau de alt proces). Încearcă din nou.',
     warnings: 'Avertismente',
+    badSession: (f) => `Sesiunea salvată era deteriorată; am pus-o deoparte (${f}) și am început una nouă.`,
     help: HELP_RO(),
   },
   en: {
@@ -102,6 +103,7 @@ const MSG = {
     imported: (n, d) => `Imported ${n} documents into ${d}`,
     locked: 'The project is busy (locked by the app or another process). Try again.',
     warnings: 'Warnings',
+    badSession: (f) => `The saved session was damaged; it was set aside (${f}) and a new one started.`,
     help: HELP_EN(),
   },
 };
@@ -220,6 +222,20 @@ function pickLang(argv, env = process.env) {
   return /^en/i.test(sys) ? 'en' : 'ro';
 }
 
+/** Whole number option >= min; a missing option gives `fallback`, anything else is bad usage. */
+function intOpt(opt, name, min, fallback) {
+  const v = opt[name];
+  if (v === undefined) return fallback;
+  const n = Number(v);
+  if (!/^\s*\d+\s*$/.test(String(v)) || !Number.isSafeInteger(n) || n < min) throw new UsageError(T.badValue(name, v, `${min}…`));
+  return n;
+}
+
+// cmd.exe passes "C:\Carti\Karma.scribner\" as C:\Carti\Karma.scribner" (the \" escapes the
+// quote): a stray trailing quote on a path is dropped.
+const cleanPath = (p) => String(p).replace(/^"|"$/g, '').replace(/^\s+|\s+$/g, '');
+const endsWithSep = (p) => /[\\/]$/.test(cleanPath(p));
+
 function oneOf(name, value, allowed, fallback) {
   const v = value === undefined ? fallback : String(value).toLowerCase();
   if (!allowed.includes(v)) throw new UsageError(T.badValue(name, value, allowed.join('|')));
@@ -228,8 +244,8 @@ function oneOf(name, value, allowed, fallback) {
 
 // ---------------------------------------------------------------- project helpers
 function resolveProject(p) {
-  if (!p) throw new UsageError(T.needProject);
-  let dir = path.resolve(p);
+  if (!p || !cleanPath(p)) throw new UsageError(T.needProject);
+  let dir = path.resolve(cleanPath(p));
   if (path.basename(dir) === 'project.json') dir = path.dirname(dir);
   if (!fs.existsSync(path.join(dir, 'project.json'))) {
     const e = new Error(T.notProject(dir));
@@ -361,16 +377,17 @@ const json = (v) => out(JSON.stringify(v, null, 2));
 
 function outPath(o, fallbackName) {
   if (!o) return path.resolve(fallbackName);
-  const p = path.resolve(o);
-  return fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, fallbackName) : p;
+  const p = path.resolve(cleanPath(o));
+  // "-o out/" (or out\\ on Windows) is a folder even before it exists.
+  return endsWithSep(o) || (fs.existsSync(p) && fs.statSync(p).isDirectory()) ? path.join(p, fallbackName) : p;
 }
 
 function needOut(opt) {
-  if (!opt['-o']) throw new UsageError(T.needOut);
-  return path.resolve(opt['-o']);
+  if (!opt['-o'] || !cleanPath(opt['-o'])) throw new UsageError(T.needOut);
+  return path.resolve(cleanPath(opt['-o']));
 }
 
-const lockOpts = (opt) => (opt['--lock-timeout'] ? { timeoutMs: Math.max(0, Number(opt['--lock-timeout']) || 0) } : undefined);
+const lockOpts = (opt) => (opt['--lock-timeout'] !== undefined ? { timeoutMs: intOpt(opt, '--lock-timeout', 0) } : undefined);
 
 // ---------------------------------------------------------------- commands
 const commands = {
@@ -550,7 +567,7 @@ const commands = {
     const per = oneOf('--per', opt['--per'], ['chapter', 'document'], 'chapter');
     // --target only sets the source limit: NotebookLM takes at most 50 sources (chapters are merged).
     const target = oneOf('--target', opt['--target'], Object.keys(TARGET_LIMITS), 'generic');
-    const maxSources = opt['--max-sources'] ? Math.max(2, Number(opt['--max-sources']) || 0) : TARGET_LIMITS[target];
+    const maxSources = intOpt(opt, '--max-sources', 2, TARGET_LIMITS[target]);
     const res = { target, ...(await exportSources(dir, open(dir), outDir, { format, per, maxSources })) };
     if (opt['--json']) return json(res);
     out(T.files(res.files.length, res.dir));
@@ -571,8 +588,8 @@ const commands = {
   async backup(pos, opt) {
     const dir = resolveProject(pos[0]);
     const backup = require('../lib/backup.cjs');
-    const keep = opt['--keep'] ? Math.max(1, Number(opt['--keep']) || 10) : 10;
-    const file = await backup.backupProject(dir, opt['-o'] ? path.resolve(opt['-o']) : undefined, keep, { zip: !opt['--no-zip'] });
+    const keep = intOpt(opt, '--keep', 1, 10);
+    const file = await backup.backupProject(dir, opt['-o'] ? path.resolve(cleanPath(opt['-o'])) : undefined, keep, { zip: !opt['--no-zip'] });
     if (opt['--json']) return json({ file });
     out(T.backupDone(file));
   },
@@ -581,7 +598,8 @@ const commands = {
     const dir = resolveProject(pos[0]);
     const { node } = findItem(open(dir), pos[1]);
     const name = opt['--name'] || 'Snapshot';
-    const snap = store.withProjectLock(dir, () => store.takeSnapshot(dir, node.id, name), lockOpts(opt));
+    const lock = lockOpts(opt);
+    const snap = store.withProjectLock(dir, () => store.takeSnapshot(dir, node.id, name), lock);
     if (opt['--json']) return json({ id: node.id, title: node.title || '', ...snap });
     out(T.snapshotTaken(node.title || node.id, snap.name));
   },
@@ -589,7 +607,7 @@ const commands = {
   async import(pos, opt) {
     const src = pos[0];
     if (!src) throw new UsageError(T.needArg('file'));
-    const srcPath = path.resolve(src);
+    const srcPath = path.resolve(cleanPath(src));
     if (!fs.existsSync(srcPath)) throw new Error(T.notFound(srcPath));
     const target = needOut(opt);
     if (/\.scriv$/i.test(srcPath) || fs.statSync(srcPath).isDirectory()) {
@@ -608,6 +626,7 @@ const commands = {
       return out(T.imported(count, finalDir));
     }
     const split = oneOf('--split', opt['--split'], ['none', 'h1', 'h2'], 'none');
+    const lock = lockOpts(opt);
     const to = oneOf('--to', opt['--to'], ['draft', 'research'], 'draft');
     const { fileToHtml } = require('../lib/importers.cjs');
     const { splitHtml } = require('../lib/docxImport.cjs');
@@ -638,7 +657,7 @@ const commands = {
         store.backupFile(target, 'project.json', raw);
         store.saveProject(target, project);
       },
-      lockOpts(opt),
+      lock,
     );
     if (opt['--json']) return json({ project: target, documents: added.length, added });
     out(T.imported(added.length, target));
@@ -655,21 +674,39 @@ const commands = {
     const ai = require('../lib/aiProviders.cjs');
     const PRESETS = require('../lib/aiPresets.json');
     const KINDS = { manuscript: 'docs', research: 'research', notes: 'notes' };
-    const wanted = String(opt['--sources'] || 'manuscript,research,notes').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+    const wanted = String(opt['--sources'] ?? 'manuscript,research,notes').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+    if (!wanted.length) throw new UsageError(T.badValue('--sources', opt['--sources'], Object.keys(KINDS).join(',')));
     for (const w of wanted) if (!KINDS[w]) throw new UsageError(T.badValue('--sources', w, Object.keys(KINDS).join(',')));
     const kinds = new Set(wanted.map((w) => KINDS[w]));
     const session = opt['--session'];
     if (session !== undefined && !/^[\w-]{1,64}$/.test(session)) throw new UsageError(T.badValue('--session', session, '[A-Za-z0-9_-]'));
     const chatFile = session ? path.join(dir, 'research', 'chats', `${session}.json`) : null;
+    const k = intOpt(opt, '-k', 1, 6);
     let chat = { id: session || null, created: new Date().toISOString(), turns: [] };
-    if (chatFile && fs.existsSync(chatFile)) chat = JSON.parse(fs.readFileSync(chatFile, 'utf8'));
+    if (chatFile && fs.existsSync(chatFile)) {
+      try {
+        const saved = JSON.parse(fs.readFileSync(chatFile, 'utf8').replace(/^\ufeff/, ''));
+        if (!saved || !Array.isArray(saved.turns)) throw new Error('turns');
+        chat = { ...chat, ...saved, turns: saved.turns.filter((t) => t && typeof t.question === 'string') };
+      } catch {
+        // Damaged session (crash while saving, edited by hand): kept aside, a new one starts.
+        const bad = `${chatFile}.bad-${Date.now()}`;
+        try {
+          fs.renameSync(chatFile, bad);
+        } catch {
+          /* replaced by the next save */
+        }
+        process.stderr.write(`${T.badSession(path.basename(bad))}\n`);
+      }
+    }
 
     const index = rag.createIndex();
     index.update(rag.collectSources(store, dir).filter((x) => kinds.has(x.kind)));
     // Follow-ups ("and in chapter 3?") retrieve with the previous question too.
     const prev = chat.turns.length ? chat.turns[chat.turns.length - 1].question : '';
-    const k = opt['-k'] ? Math.max(1, Number(opt['-k']) || 6) : 6;
-    const history = chat.turns.slice(-6).map((t) => `Întrebare: ${t.question}\nRăspuns: ${t.answer}`).join('\n\n');
+    // Same budget as the app's research conversation: the last 6 turns, long answers shortened.
+    const past = require('../lib/researchChat.cjs').trimHistory(chat.turns.map((t) => ({ q: t.question, answer: t.answer })));
+    const history = past.map((t) => `Întrebare: ${t.q}\nRăspuns: ${t.answer}`).join('\n\n');
 
     const provider = opt['--provider'] || Object.keys(PRESETS).find((p) => PRESETS[p].envKey && process.env[PRESETS[p].envKey]) || 'anthropic';
     if (!PRESETS[provider]) throw new UsageError(T.badValue('--provider', provider, Object.keys(PRESETS).join('|')));
@@ -735,7 +772,8 @@ async function exportSources(dir, project, outRoot, { format, per, maxSources })
       if (n.type !== 'file') flat.push({ ...n, children: undefined });
     });
     const fake = { ...project, tree: [{ ...draft, children: flat }] };
-    const docs = buildSources(fake, read, { maxSources, includeNotes: false, includeResearch: false });
+    // The research and notes sources of `base` come on top: the documents get the slots left.
+    const docs = buildSources(fake, read, { maxSources: Math.max(2, maxSources - base.research.length - base.notes.length), includeNotes: false, includeResearch: false });
     chapters = docs.chapters;
     for (const w of docs.warnings) if (!warnings.includes(w)) warnings.push(w);
   }

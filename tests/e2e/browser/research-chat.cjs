@@ -82,6 +82,24 @@ const { open, check, done, menuCmd } = require('./_helpers.cjs');
   check('new conversation is empty', (await p.locator('.research-turn').count()) === 0);
   check('saved conversation listed', (await p.locator('.research-chatbar select option').count()) >= 2);
 
+  // 8. Enter pressed again while the answer streams does not send a second question;
+  //    a multi-line question becomes a one-line conversation and note title.
+  const ta = p.locator('.research-chat textarea');
+  await ta.fill('Ce ochi\nare   Andrei acum?');
+  await ta.press('Enter');
+  await p.waitForSelector('.research-live', { timeout: 3000 });
+  await ta.fill('A doua întrebare trimisă prea devreme');
+  await ta.press('Enter');
+  await p.waitForSelector('.research-live', { state: 'detached', timeout: 10000 });
+  await p.waitForTimeout(200);
+  check('Enter while busy sends nothing', (await p.locator('.research-turn').count()) === 1, String(await p.locator('.research-turn').count()));
+  const opts = await p.locator('.research-chatbar select option').allInnerTexts();
+  check('conversation title is one line', opts.includes('Ce ochi are Andrei acum?'), JSON.stringify(opts));
+  await p.locator('.research-turn').first().getByRole('button', { name: 'Salvează ca notă' }).click();
+  await p.waitForTimeout(400);
+  const binder2 = await p.locator('.binder').first().innerText();
+  check('note title is one line', binder2.includes('Ce ochi are Andrei acum?'), binder2.slice(-200));
+
   check('no page errors', errors.length === 0, errors.join(' | ').slice(0, 300));
   done();
   await browser.close();

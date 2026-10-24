@@ -30,14 +30,22 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 ShowLanguageDialog=auto
 CloseApplications=yes
+; The optional PATH entry: running terminals are told about the change (install and uninstall).
+ChangesEnvironment=yes
 
 [Languages]
 Name: "ro"; MessagesFile: "Romanian.isl"
 Name: "en"; MessagesFile: "compiler:Default.isl"
 
+[CustomMessages]
+ro.AddToPath=Comanda „scribner” în terminal (adaugă folderul programului în PATH)
+ro.CommandLine=Linia de comandă:
+en.AddToPath=The "scribner" command in a terminal (adds the program folder to PATH)
+en.CommandLine=Command line:
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-Name: "addtopath"; Description: "Comanda „scribner” în terminal (adaugă folderul programului în PATH)"; GroupDescription: "Linia de comandă:"; Flags: unchecked
+Name: "addtopath"; Description: "{cm:AddToPath}"; GroupDescription: "{cm:CommandLine}"; Flags: unchecked
 
 [Files]
 Source: "..\release\win-unpacked\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -53,19 +61,93 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 ; Projects and settings stay on uninstall: they live in the user's folders and %APPDATA%\Scribner.
 
-[Registry]
-; Optional: the install folder on the user's PATH, so "scribner" works in any terminal.
-Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Tasks: addtopath; Check: NeedsAddPath(ExpandConstant('{app}'))
-
 [Code]
-function NeedsAddPath(Dir: string): Boolean;
+// Optional PATH entry (HKCU\Environment\Path), written here rather than in [Registry] so that:
+// an entry already there (also with a trailing backslash, other case or quotes) is not added
+// twice, an empty or ";"-ending PATH gets no empty entries, and uninstall removes it again.
+const
+  EnvKey = 'Environment';
+
+function NormPath(P: string): string;
+begin
+  Result := Uppercase(Trim(RemoveQuotes(Trim(P))));
+  while (Length(Result) > 3) and (Result[Length(Result)] = '\') do
+    Delete(Result, Length(Result), 1);
+end;
+
+function SamePathEntry(A, B: string): Boolean;
+begin
+  Result := (NormPath(A) <> '') and (NormPath(A) = NormPath(B));
+end;
+
+// PATH without the entries equal to Dir (Found tells whether there was one); empty entries go too.
+function PathWithout(OrigPath, Dir: string; var Found: Boolean): string;
+var
+  Rest, Entry: string;
+  P: Integer;
+begin
+  Result := '';
+  Found := False;
+  Rest := OrigPath;
+  while Rest <> '' do
+  begin
+    P := Pos(';', Rest);
+    if P = 0 then
+    begin
+      Entry := Rest;
+      Rest := '';
+    end
+    else
+    begin
+      Entry := Copy(Rest, 1, P - 1);
+      Rest := Copy(Rest, P + 1, Length(Rest));
+    end;
+    if SamePathEntry(Entry, Dir) then
+      Found := True
+    else if Trim(Entry) <> '' then
+    begin
+      if Result <> '' then
+        Result := Result + ';';
+      Result := Result + Entry;
+    end;
+  end;
+end;
+
+procedure AddToPath(Dir: string);
 var
   OrigPath: string;
+  Found: Boolean;
 begin
-  if not RegQueryStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', OrigPath) then
-  begin
-    Result := True;
+  if not RegQueryStringValue(HKEY_CURRENT_USER, EnvKey, 'Path', OrigPath) then
+    OrigPath := '';
+  PathWithout(OrigPath, Dir, Found);
+  if Found then
     exit;
-  end;
-  Result := Pos(';' + Uppercase(Dir) + ';', ';' + Uppercase(OrigPath) + ';') = 0;
+  if (OrigPath <> '') and (OrigPath[Length(OrigPath)] <> ';') then
+    OrigPath := OrigPath + ';';
+  RegWriteExpandStringValue(HKEY_CURRENT_USER, EnvKey, 'Path', OrigPath + Dir);
+end;
+
+procedure RemoveFromPath(Dir: string);
+var
+  OrigPath, NewPath: string;
+  Found: Boolean;
+begin
+  if not RegQueryStringValue(HKEY_CURRENT_USER, EnvKey, 'Path', OrigPath) then
+    exit;
+  NewPath := PathWithout(OrigPath, Dir, Found);
+  if Found then
+    RegWriteExpandStringValue(HKEY_CURRENT_USER, EnvKey, 'Path', NewPath);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if (CurStep = ssPostInstall) and WizardIsTaskSelected('addtopath') then
+    AddToPath(ExpandConstant('{app}'));
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+    RemoveFromPath(ExpandConstant('{app}'));
 end;

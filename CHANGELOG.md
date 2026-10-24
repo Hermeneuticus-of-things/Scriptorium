@@ -1,5 +1,15 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.8.7 (continuare) — Instalare dintr-o comandă, 17 bug-uri în discuția cu sursele, CLI și installer
+
+- **Instalare dintr-o comandă:** `irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex` (ultima versiune, verificare SHA-256 publicată de GitHub, opțiuni pentru PATH, fără ferestre și portabil). CI pe Windows instalează silențios installerul construit, verifică programul, serverul MCP, comanda `scribner` din PATH și rulează scriptul în mod de probă.
+- **Discuția cu sursele:** întrebări foarte lungi încap în buget; mai multe titluri de „întrebări de continuare” recunoscute; răspunsul nu mai e tăiat în timp ce curge; un fișier de discuții stricat e păstrat ca `.bad-<oră>`, nu suprascris; titluri pe un rând; Enter în timpul răspunsului nu mai trimite a doua întrebare; „Inserează în document” refuză documentele doar-citire.
+- **Import PDF:** ghilimelele românești, liniuțele și „…” apar corect; șiruri mari nu mai opresc importul; dicționare imbricate; PDF-urile criptate apar ca „Fără text”.
+- **Linia de comandă:** NotebookLM rămâne sub 50 de surse și cu `--per document`; valorile numerice greșite opresc comanda cu mesaj; căile Windows cu ghilimele la final și folderele noi `-o dir\` merg; o sesiune `ask` stricată se pune deoparte; `scribner.cmd` păstrează codul de ieșire și argumentele cu paranteze.
+- **Installer:** PATH fără dubluri și fără `;` goale, scos la dezinstalare, terminalele deschise anunțate; textul opțiunii în română și engleză.
+- „Doar citire.” tradus; importul arată și ODT/RTF.
+- Teste: 1014 + 2 sărite; E2E Electron trece.
+
 ## 2026-10-24 — v0.8.7 — Discuție cu sursele (ca într-un caiet de cercetare), linia de comandă „scribner”, 13 bug-uri
 
 ### Cerința user
