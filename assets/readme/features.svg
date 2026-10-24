@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+  <title id="title">Ce face Scribner</title>
+  <desc id="desc">Opt fișe: scrii pe fișe, traduci, dictezi, corectezi, cercetezi, lucrați împreună, legi agenți AI, compilezi cartea întreagă.</desc>
+  <rect width="1200" height="600" rx="24" fill="#f6f1e6"/>
+  <text x="600" y="64" text-anchor="middle" font-family="Georgia, serif" font-size="40" fill="#1f1b16">Ce face</text>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <!-- row 1 -->
+    <g transform="translate(30 100)">
+      <rect width="270" height="220" rx="16" fill="#fffdf6" stroke="#e5dccb"/>
+      <circle cx="135" cy="0" r="8" fill="#c2413a"/>
+      <g transform="translate(24 30)"><rect width="34" height="26" rx="3" fill="#f4e3d3" stroke="#c2413a" stroke-width="2"/><rect x="10" y="8" width="34" height="26" rx="3" fill="#fffdf6" stroke="#c2413a" stroke-width="2"/></g>
+      <text x="24" y="104" font-size="27" font-weight="700" fill="#1f1b16">Scrii pe fișe</text>
+      <text x="24" y="146" font-size="20" fill="#3d362d">Fiecare scenă e o fișă;</text>
+      <text x="24" y="174" font-size="20" fill="#3d362d">o muți cu mouse-ul.</text>
+    </g>
+    <g transform="translate(320 100)">
+      <rect width="270" height="220" rx="16" fill="#1f1b16"/>
+      <circle cx="135" cy="0" r="8" fill="#e9b07a"/>
+      <text x="24" y="58" font-size="30" font-weight="700" fill="#fbf7ef">A</text><text x="46" y="66" font-size="30" font-weight="700" fill="#e9b07a">Ă</text>
+      <text x="24" y="104" font-size="27" font-weight="700" fill="#fbf7ef">Traduci</text>
+      <text x="24" y="146" font-size="20" fill="#e6dccb">Originalul lângă text,</text>
+      <text x="24" y="174" font-size="20" fill="#e6dccb">DeepL la un clic.</text>
+    </g>
+    <g transform="translate(610 100)">
+      <rect width="270" height="220" rx="16" fill="#fffdf6" stroke="#e5dccb"/>
+      <circle cx="135" cy="0" r="8" fill="#c2413a"/>
+      <g transform="translate(36 44)"><rect x="-8" y="-16" width="16" height="26" rx="8" fill="#c2413a"/><path d="M-14 2 a14 14 0 0 0 28 0" fill="none" stroke="#c2413a" stroke-width="3"/><line x1="0" y1="16" x2="0" y2="22" stroke="#c2413a" stroke-width="3"/></g>
+      <text x="24" y="104" font-size="27" font-weight="700" fill="#1f1b16">Dictezi</text>
+      <text x="24" y="146" font-size="20" fill="#3d362d">Vorbești, textul apare;</text>
+      <text x="24" y="174" font-size="20" fill="#3d362d">fără internet.</text>
+    </g>
+    <g transform="translate(900 100)">
+      <rect width="270" height="220" rx="16" fill="#fffdf6" stroke="#e5dccb"/>
+      <circle cx="135" cy="0" r="8" fill="#3f8f5a"/>
+      <path d="M26 44 l10 10 l20 -22" fill="none" stroke="#3f8f5a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="24" y="104" font-size="27" font-weight="700" fill="#1f1b16">Corectezi</text>
+      <text x="24" y="146" font-size="20" fill="#3d362d">Revizie, corecturi</text>
+      <text x="24" y="174" font-size="20" fill="#3d362d">învățate, versiuni.</text>
+    </g>
+    <!-- row 2 -->
+    <g transform="translate(30 350)">
+      <rect width="270" height="220" rx="16" fill="#fffdf6" stroke="#e5dccb"/>
+      <circle cx="135" cy="0" r="8" fill="#2b6fd6"/>
+      <text x="24" y="62" font-family="Georgia, serif" font-size="30" fill="#2b6fd6">[1]</text>
+      <text x="24" y="104" font-size="27" font-weight="700" fill="#1f1b16">Cercetezi</text>
+      <text x="24" y="146" font-size="20" fill="#3d362d">Întrebi sursele, cu</text>
+      <text x="24" y="174" font-size="20" fill="#3d362d">trimiteri la pasaj.</text>
+    </g>
+    <g transform="translate(320 350)">
+      <rect width="270" height="220" rx="16" fill="#fffdf6" stroke="#e5dccb"/>
+      <circle cx="135" cy="0" r="8" fill="#d9822b"/>
+      <g transform="translate(34 46)"><circle r="10" fill="#2e7dd7"/><circle cx="22" r="10" fill="#d9822b"/><circle cx="44" r="10" fill="#7a7a7a"/></g>
+      <text x="24" y="104" font-size="27" font-weight="700" fill="#1f1b16">Lucrați împreună</text>
+      <text x="24" y="146" font-size="20" fill="#3d362d">NAS sau cloud; cine</text>
+      <text x="24" y="174" font-size="20" fill="#3d362d">ce a schimbat și când.</text>
+    </g>
+    <g transform="translate(610 350)">
+      <rect width="270" height="220" rx="16" fill="#1f1b16"/>
+      <circle cx="135" cy="0" r="8" fill="#e9b07a"/>
+      <text x="24" y="62" font-family="ui-monospace, 'Cascadia Mono', Consolas, monospace" font-size="26" fill="#e9b07a">&gt;_</text>
+      <text x="24" y="104" font-size="27" font-weight="700" fill="#fbf7ef">Agenți AI</text>
+      <text x="24" y="146" font-size="20" fill="#e6dccb">Claude sau Codex</text>
+      <text x="24" y="174" font-size="20" fill="#e6dccb">lucrează în carte.</text>
+    </g>
+    <g transform="translate(900 350)">
+      <rect width="270" height="220" rx="16" fill="#fffdf6" stroke="#e5dccb"/>
+      <circle cx="135" cy="0" r="8" fill="#c2413a"/>
+      <g transform="translate(26 30)"><rect width="26" height="34" rx="3" fill="#c2413a"/><rect x="6" y="0" width="3" height="34" fill="#8f2a25"/></g>
+      <text x="24" y="104" font-size="27" font-weight="700" fill="#1f1b16">Compilezi</text>
+      <text x="24" y="146" font-size="20" fill="#3d362d">Cartea întreagă: Word,</text>
+      <text x="24" y="174" font-size="20" fill="#3d362d">PDF sau EPUB.</text>
+    </g>
+  </g>
+</svg>

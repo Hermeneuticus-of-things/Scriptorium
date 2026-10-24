@@ -31,7 +31,7 @@ function Progress({ value, max, label }) {
   );
 }
 
-export default function StatusBar({ node, words, chars = 0, selectionCount = 1, totalDraft, draftTarget, sessionWords, sessionTarget, saveState, zoom, onZoom }) {
+export default function StatusBar({ node, words, chars = 0, selectionCount = 1, totalDraft, draftTarget, sessionWords, sessionTarget, saveState, team, onTeam, zoom, onZoom }) {
   const sel = useEditorSelection();
   return (
     <footer className="statusbar">
@@ -43,6 +43,16 @@ export default function StatusBar({ node, words, chars = 0, selectionCount = 1, 
       <span>{t('ui.statusBar.draft')}: {totalDraft.toLocaleString(uiLocale())} {t('ui.inspector.cuvinte')}</span>
       <Progress value={totalDraft} max={draftTarget} label={t('ui.statusBar.carte')} />
       <Progress value={sessionWords} max={sessionTarget} label={t('ui.statusBar.session')} />
+      {team && (
+        <button className="team-status" onClick={onTeam} title={t('ui.team.titlu')}>
+          {team.live.length ? (
+            team.live.map((p) => <span key={p.machine} className="team-dot" style={{ background: p.color }} title={p.who} />)
+          ) : (
+            <span className="team-dot" style={{ background: team.who.color }} />
+          )}{' '}
+          {team.live.length ? t('ui.team.in_lucru', { n: team.live.length + 1 }) : t('ui.team.doar_tu')}
+        </button>
+      )}
       {onZoom && (
         <select className="zoom-select" value={zoom} onChange={(e) => onZoom(Number(e.target.value))} title={t('ui.statusBar.zoom')} aria-label={t('ui.statusBar.zoom')}>
           {[...new Set([75, 100, 125, 150, 175, 200, 250, 300, zoom])].sort((a, b) => a - b).map((z) => (

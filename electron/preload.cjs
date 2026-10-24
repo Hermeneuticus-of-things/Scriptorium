@@ -20,6 +20,20 @@ contextBridge.exposeInMainWorld('api', {
   takeSnapshot: (dir, id, name) => call('snap:take', dir, id, name),
   listSnapshots: (dir, id) => call('snap:list', dir, id),
   appendAuthorJournal: (dir, rows) => call('editorial:appendAuthorJournal', dir, rows),
+  teamFiles: (dir) => call('team:files', dir),
+  dtedStatus: (opts) => call('dted:status', opts),
+  dtedPickAudio: () => call('dted:pickAudio'),
+  dtedTranscribe: (file, id) => call('dted:transcribe', file, id),
+  dtedTranscribeMedia: (dir, file, id) => call('dted:transcribeMedia', dir, file, id),
+  dtedDictateStart: (id) => call('dted:dictateStart', id),
+  dtedDictateStop: (id) => call('dted:dictateStop', id),
+  dtedCancel: (id) => call('dted:cancel', id),
+  onDtedEvent: (fn) => {
+    const listener = (_e, ev) => fn(ev);
+    ipcRenderer.on('dted:event', listener);
+    return () => ipcRenderer.removeListener('dted:event', listener);
+  },
+  teamWrite: (dir, name, text, opts) => call('team:write', dir, name, text, opts),
   importScriv: () => call('import:scriv'),
   importFile: (mode, separator) => call('import:file', mode, separator),
   readMedia: (dir, file) => call('media:read', dir, file),

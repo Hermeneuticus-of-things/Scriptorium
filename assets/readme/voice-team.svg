@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
+  <title id="title">Scrii cu vocea, lucrați împreună</title>
+  <desc id="desc">Stânga: vorbești la microfon și fraza apare pe fișa scenei, fără internet. Dreapta: trei oameni, fiecare cu culoarea lui, lucrează la fișele aceleiași cărți; una e blocată de Ana.</desc>
+  <rect width="1200" height="440" rx="24" fill="#f6f1e6"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <!-- Voice -->
+    <g transform="translate(40 36)">
+      <rect width="548" height="368" rx="18" fill="#1f1b16"/>
+      <text x="36" y="66" font-family="Georgia, serif" font-size="40" fill="#fbf7ef">Scrii cu vocea</text>
+      <text x="36" y="104" font-size="21" fill="#e6dccb">F9, vorbești, iar textul intră la cursor.</text>
+      <text x="36" y="134" font-size="21" fill="#e6dccb">Peste o selecție, o înlocuiește.</text>
+      <!-- microphone -->
+      <g transform="translate(70 204)">
+        <circle r="44" fill="#3a332b"/>
+        <rect x="-13" y="-28" width="26" height="40" rx="13" fill="#c2413a"/>
+        <path d="M-22 4 a22 22 0 0 0 44 0" fill="none" stroke="#e9b07a" stroke-width="4"/>
+        <line x1="0" y1="26" x2="0" y2="36" stroke="#e9b07a" stroke-width="4"/>
+      </g>
+      <!-- sound wave -->
+      <g stroke="#e9b07a" stroke-width="5" stroke-linecap="round">
+        <line x1="138" y1="196" x2="138" y2="212"/>
+        <line x1="154" y1="184" x2="154" y2="224"/>
+        <line x1="170" y1="174" x2="170" y2="234"/>
+        <line x1="186" y1="188" x2="186" y2="220"/>
+        <line x1="202" y1="180" x2="202" y2="228"/>
+        <line x1="218" y1="194" x2="218" y2="214"/>
+      </g>
+      <path d="M236 204 h26" stroke="#e9b07a" stroke-width="4"/>
+      <path d="M258 196 l10 8 l-10 8" fill="none" stroke="#e9b07a" stroke-width="4"/>
+      <!-- card receiving the text -->
+      <g transform="translate(284 156) rotate(-2)">
+        <rect width="236" height="132" rx="10" fill="#fffdf6"/>
+        <circle cx="118" cy="10" r="8" fill="#c2413a"/>
+        <text x="18" y="44" font-size="20" font-weight="700" fill="#1f1b16">Drumul</text>
+        <text x="18" y="76" font-family="Georgia, serif" font-size="19" fill="#3d362d">Ceața se ridica încet</text>
+        <text x="18" y="104" font-family="Georgia, serif" font-size="19" fill="#3d362d">din vale<tspan fill="#c2413a">|</tspan></text>
+      </g>
+      <text x="36" y="338" font-size="19" font-weight="600" fill="#e9b07a">D&amp;TED · română · pe calculatorul tău, fără internet</text>
+    </g>
+    <!-- Team -->
+    <g transform="translate(612 36)">
+      <rect width="548" height="368" rx="18" fill="#fffdf6" stroke="#e5dccb"/>
+      <text x="36" y="66" font-family="Georgia, serif" font-size="40" fill="#1f1b16">Lucrați împreună</text>
+      <text x="36" y="104" font-size="21" fill="#3d362d">Proiectul pe NAS sau în cloud. Vezi cine</text>
+      <text x="36" y="134" font-size="21" fill="#3d362d">lucrează acum și cine ce a schimbat.</text>
+      <g transform="translate(36 160)">
+        <g transform="rotate(-3)">
+          <rect width="148" height="120" rx="10" fill="#f6f1e6" stroke="#e5dccb"/>
+          <text x="14" y="36" font-size="20" font-weight="700" fill="#1f1b16">Cap. 1</text>
+          <circle cx="22" cy="78" r="9" fill="#2e7dd7"/>
+          <text x="38" y="85" font-size="19" fill="#3d362d">Ion</text>
+        </g>
+        <g transform="translate(166 4) rotate(2)">
+          <rect width="148" height="120" rx="10" fill="#f6f1e6" stroke="#d9822b" stroke-width="3"/>
+          <text x="14" y="36" font-size="20" font-weight="700" fill="#1f1b16">Cap. 2</text>
+          <circle cx="22" cy="78" r="9" fill="#d9822b"/>
+          <text x="38" y="85" font-size="19" fill="#3d362d">Ana</text>
+          <g transform="translate(118 22)">
+            <rect x="-10" y="-2" width="20" height="16" rx="3" fill="#d9822b"/>
+            <path d="M-6 -2 v-5 a6 6 0 0 1 12 0 v5" fill="none" stroke="#d9822b" stroke-width="3"/>
+          </g>
+        </g>
+        <g transform="translate(332 0) rotate(-1)">
+          <rect width="148" height="120" rx="10" fill="#f6f1e6" stroke="#e5dccb"/>
+          <text x="14" y="36" font-size="20" font-weight="700" fill="#1f1b16">Glosar</text>
+          <circle cx="22" cy="78" r="9" fill="#7a7a7a"/>
+          <text x="38" y="85" font-size="19" fill="#3d362d">agent AI</text>
+        </g>
+      </g>
+      <text x="36" y="338" font-size="19" font-weight="600" fill="#3f8f5a">jurnal · blocare · îmbinare pe paragrafe</text>
+    </g>
+  </g>
+</svg>

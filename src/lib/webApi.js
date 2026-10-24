@@ -3,7 +3,7 @@
 // sync with the desktop app through a single-file bundle (same shape as lib/bundle.cjs).
 import { newNode } from './text.js';
 import { mergeProject } from './projectMerge.js';
-import { createRoutingKv, createFolderStore, folderSupported, isFolderDir, projectText } from './folderKv.js';
+import { createRoutingKv, createFolderStore, folderSupported, isFolderDir, projectText, folderTeamFiles, folderTeamWrite } from './folderKv.js';
 import { findConflictCopies, treeIds } from './syncGuard.js';
 
 export const BUNDLE_FORMAT = 'scribner-bundle';
@@ -101,6 +101,7 @@ const K = {
   snapPrefix: (dir) => `s:${dir}|`,
   history: (dir) => `h:${dir}`,
   authorJournal: (dir) => `aj:${dir}`,
+  team: (dir) => `tm:${dir}`,
 };
 
 export function newWebDir() {
@@ -249,6 +250,7 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
   const rawKv = createRoutingKv(baseKv, folders);
   const kv = guardKv(rawKv);
   const watchers = new Map(); // dir -> { timer, stamps, own, fails }
+  const teamQueue = new Map(); // dir -> last team write (see teamWrite)
   // Own writes are not reported back as outside changes. They are recognised by content (as on the
   // desktop): a change whose file holds the text this tab wrote is ours; any other text is an outside
   // change, even when it lands right after an own write of the same file. Noted before writing, so a
@@ -527,6 +529,7 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       await kv.del(K.project(dir));
       await kv.del(K.history(dir));
       await kv.del(K.authorJournal(dir));
+      await baseKv.del(K.team(dir));
       folders.delete(dir);
       bases.delete(dir);
       const s = await settings();
@@ -586,6 +589,29 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       if (kv.update) await kv.update(K.authorJournal(dir), add);
       else await kv.put(K.authorJournal(dir), add(await kv.get(K.authorJournal(dir))));
       return list.length;
+    },
+    // Team files: in the folder's team/ for folder projects (shared through a cloud / NAS folder),
+    // in the browser store otherwise.
+    async teamFiles(dir) {
+      if (isFolderDir(dir) && folders.has(dir)) return folderTeamFiles(folders.get(dir));
+      return { ...((await baseKv.get(K.team(dir))) || {}) };
+    },
+    // Writes of one project run one after another: an append reads the file and writes it back,
+    // so two overlapping writes would lose one of them.
+    teamWrite(dir, name, text, { append = false } = {}) {
+      const run = async () => {
+        if (isFolderDir(dir) && folders.has(dir)) {
+          await folderTeamWrite(folders.get(dir), name, text, append);
+          return true;
+        }
+        const all = { ...((await baseKv.get(K.team(dir))) || {}) };
+        all[name] = (append ? all[name] || '' : '') + String(text);
+        await baseKv.put(K.team(dir), all);
+        return true;
+      };
+      const next = (teamQueue.get(dir) || Promise.resolve()).catch(() => {}).then(run);
+      teamQueue.set(dir, next);
+      return next;
     },
     exportBundleData,
     importBundleData,

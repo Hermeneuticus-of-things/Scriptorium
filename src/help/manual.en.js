@@ -316,7 +316,32 @@ scribner mcp "D:\\Books\\Karma.scribner"               the MCP server for AI age
       {
         id: 'yours-sync',
         title: 'The same project on the desktop and in the browser',
-        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. Do not edit the same document in two places at once. If it happens anyway, your text stays and the version that arrived from the other computer is kept in <em>Snapshots</em> (“Version from the other computer, &lt;time&gt;”), with a message. Conflict copies left by the sync service (such as <code>project (conflicted copy …).json</code> or <code>project-PC.json</code>) are never loaded: the app lists them when the project opens so you can compare and delete them. If the folder cannot be reached (NAS disconnected, permission withdrawn) you get a message; changes show up again when it is back. Phones cannot open folders: use the .json bundle there.</p>`,
+        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. If the same document was changed in two places, the changes are merged paragraph by paragraph. When the same paragraph was changed on both sides, your text stays and the version that arrived from the other computer is kept in <em>Snapshots</em> (“Version from the other computer, &lt;time&gt;”), with a message. Conflict copies left by the sync service (such as <code>project (conflicted copy …).json</code> or <code>project-PC.json</code>) are never loaded: the app lists them when the project opens so you can compare and delete them. If the folder cannot be reached (NAS disconnected, permission withdrawn) you get a message; changes show up again when it is back. Phones cannot open folders: use the .json bundle there.</p>`,
+      },
+      {
+        id: 'yours-team',
+        title: 'Team work: several people, one project',
+        html: `<p>Put the project in a shared folder (NAS, OneDrive, Dropbox, Google Drive). On each computer, in <em>Settings → Sharing → Team</em>, type your name and pick a color. With no name nothing changes from working alone.</p>
+<ul>
+<li><strong>Who is working now:</strong> the name of whoever has the document open shows next to its title; the status bar shows how many of you are working (click it for the <em>Team</em> window).</li>
+<li><strong>Who changed what:</strong> <em>Project → Team…</em> shows the log: person, date and time, words added and removed, a sample. Filters: the open document or the whole project, the person, the last day, week or month. Click a title to open the document.</li>
+<li><strong>Lock:</strong> the padlock button next to the title locks the document for the others; on their computers it opens read-only, with “Locked by …”. Click again to unlock. A computer silent for 30 minutes loses its locks.</li>
+<li><strong>Merge:</strong> changes made by two people in different paragraphs are merged by themselves; the same paragraph: your text stays, theirs is in <em>Inspector → Snapshots</em>.</li>
+<li><strong>AI agents:</strong> writes through MCP appear in the log as “AI agent (MCP)”; the <code>team_activity</code> tool shows agents who is working and what is locked.</li>
+</ul>
+<p>Team files live in <code>team/</code>, one per computer, so the sync service makes no conflict copies.</p>`,
+      },
+      {
+        id: 'yours-dictation',
+        title: 'Dictation and transcription (D&TED)',
+        html: `<p>Dictation uses <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a>, a separate program that recognises Romanian speech on your computer, without internet. Install it once; Scribner finds it by itself (or type where it is in <em>Settings → Services and accounts → Dictation and transcription</em>, which also has <em>Check</em>).</p>
+<ul>
+<li><strong>F9</strong> (or <em>Tools → Dictation</em>) starts and stops dictation. Text appears every ~4 seconds of speech, with spaces and a capital at sentence starts.</li>
+<li><strong>New text:</strong> with nothing selected it goes in at the cursor. <strong>Edit:</strong> over a selection it replaces it; one Ctrl+Z brings the old text back.</li>
+<li>In the bar: <em>Pause</em> (what you say is not written), <em>Stop</em>, <em>Cancel</em> (takes out everything dictated since starting).</li>
+<li><em>File → Import → Transcribe audio file…</em>: MP3, WAV, M4A, OGG, FLAC → a new document in Research, in paragraphs, with the recording time [mm:ss] (can be turned off in settings). On an audio file in the binder: <em>Documents → Transcribe with D&amp;TED</em>.</li>
+<li>The book's names and terms, typed in settings, help recognition; auto-replacements also apply to dictated text. A locked document gets no dictated text.</li>
+</ul>`,
       },
       {
         id: 'yours-karma',
