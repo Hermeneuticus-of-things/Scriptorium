@@ -9,12 +9,13 @@
 // Each image: the app is captured at 1440×900 (device scale 2), then placed in a framed
 // composite (kicker, serif headline, subtitle, macOS-style window) rendered from an HTML
 // template and saved at 2400×1910 (hero: 2400×1200). If pngquant is installed, the PNGs are
-// compressed with it. Env: SCRIBNER_URL (default http://localhost:4183/?demo).
+// compressed with it. Env: SCRIBNER_URL (default http://localhost:4183/?demo; e.g. http://localhost:4199/?demo for a
+// second preview server).
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const { menuPick } = require('../tests/e2e/browser/_helpers.cjs');
+const { menuPick, menuCmd } = require('../tests/e2e/browser/_helpers.cjs');
 
 const URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
 const OUT = path.join(__dirname, '..', 'assets', 'readme');
@@ -308,6 +309,30 @@ const SHOTS = {
       await pick(p, 'Drumul');
       await menuPick(p, 'Vizualizare', 'Deschide ca referință');
       await pick(p, 'Începutul');
+      await noCaret(p);
+    },
+  },
+  research: {
+    kicker: 'Cercetare · Întreabă',
+    title: 'Întrebi sursele, primești răspuns cu trimiteri',
+    sub: 'Răspunsul arată de unde vine fiecare idee [1], [2]. Continui discuția sau alegi una dintre întrebările propuse.',
+    async setup(p) {
+      await p.locator('header.toolbar button', { hasText: 'Inspector' }).first().click();
+      await p.waitForTimeout(200);
+      await menuCmd(p, 'Cercetare în proiect');
+      await p.waitForSelector('.research-chat .research-ask');
+      const box = p.locator('.research-chat .research-ask textarea, .research-chat .research-ask input').first();
+      const askQ = async (q) => {
+        await box.fill(q);
+        await p.locator('.research-chat .research-ask-btn').first().click();
+        await p.waitForFunction(() => !document.querySelector('.research-live'), null, { timeout: 15000 });
+        await p.waitForTimeout(400);
+      };
+      await askQ('Ce culoare au ochii lui Andrei?');
+      await askQ('Și Ilinca, cum arată?');
+      await p.locator('.research-chat .research-turn-sources').last().evaluate((d) => { d.open = true; });
+      await p.locator('.research-chat .research-followups').last().scrollIntoViewIfNeeded();
+      await p.waitForTimeout(300);
       await noCaret(p);
     },
   },
