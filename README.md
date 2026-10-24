@@ -138,6 +138,10 @@ Merge și cu Codex, Gemini CLI, Cursor, VS Code și alți clienți MCP. Comenzil
 
 ## Întrebi sursele, ca într-un caiet de cercetare
 
+<p align="center">
+  <img src="./assets/readme/research.png" width="100%" alt="Panoul Cercetare în proiect: o întrebare și o întrebare de continuare, răspunsuri cu trimiteri [1], [2], sursele folosite și întrebări propuse sub răspuns">
+</p>
+
 În panoul **Cercetare → Întreabă** discuți cu sursele tale:
 
 - pui o întrebare și primești răspunsul cu trimiteri [1], [2]; un clic te duce la pasajul din document;
@@ -160,6 +164,10 @@ scribner compile "D:\Carti\Karma.scribner" --format docx -o "D:\Carti\Karma.docx
 scribner export-sources "D:\Carti\Karma.scribner" -o "D:\Surse" --target notebooklm
 scribner ask "D:\Carti\Karma.scribner" "Ce spune cartea despre urmă?" --session karma
 ```
+
+<p align="center">
+  <img src="./assets/readme/cli.png" width="100%" alt="Fereastră PowerShell cu scribner info, care arată titlul, autorul și numărul de cuvinte, apoi scribner export-sources pentru NotebookLM și fișierele create">
+</p>
 
 `export-sources` face un folder cu cuprinsul cu rezumate, câte un fișier pe capitol, cercetarea și notele; cu `--target` (`notebooklm`, `gemini`, `chatgpt`, `claude`, `manus`) se potrivește limitelor fiecărei unelte, de exemplu cel mult 50 de surse pentru NotebookLM. `ask` răspunde din surse cu trimiteri, iar `--session` păstrează discuția pentru întrebări de continuare. Toate comenzile sunt în Ajutor → Ce faci tu → Linia de comandă.
 
@@ -286,6 +294,8 @@ Din pagina [Releases](../../releases/latest) descarci una dintre variante:
 
 - **`Scribner-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator; programul se pune în `AppData\Local\Programs\Scribner`. La dezinstalare, cărțile tale rămân.
 - **`Scribner-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
+
+Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `scribner` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
 
 O versiune nouă apare în Releases de fiecare dată când iese, automat.
 
