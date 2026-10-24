@@ -146,3 +146,68 @@ describe('window side: audio and pieces', () => {
     expect(usefulText(' Ceața se ridica  (râsete) încet. ')).toBe('Ceața se ridica încet.');
   });
 });
+
+describe('bug hunt fixes (v0.9.1)', () => {
+  it('two requests at once start one server; the prompt is always sent; a server error is an error', async () => {
+    const spawned = [];
+    const seen = [];
+    const request = async (port, wav, opts) => {
+      if (opts.probe) return {};
+      seen.push(opts);
+      return seen.length === 3 ? { error: 'failed to read WAV file' } : { text: 'ok', segments: [] };
+    };
+    const e = createWhisperEngine({ root: installedRoot(), platform: 'win32', request, spawnFn: (...a) => { spawned.push(a); return { on() {}, once() {}, kill() {}, stderr: null }; } });
+    await Promise.all([e.transcribePcm(new Int16Array(10)), e.transcribePcm(new Int16Array(10), { format: 'json' })]);
+    expect(spawned).toHaveLength(1);
+    expect(seen.map((o) => [o.prompt, o.format])).toEqual([['', 'verbose_json'], ['', 'json']]);
+    await expect(e.transcribePcm(new Int16Array(10))).rejects.toThrow(/failed to read WAV/);
+  });
+  it('a crashed server is started again on the next request', async () => {
+    const procs = [];
+    const spawnFn = () => {
+      const handlers = {};
+      const p = { on: (ev, f) => (handlers[ev] = f), once() {}, kill() {}, stderr: null, die: () => handlers.exit?.() };
+      procs.push(p);
+      return p;
+    };
+    const e = createWhisperEngine({ root: installedRoot(), platform: 'win32', spawnFn, request: async () => ({ text: 'x', segments: [] }) });
+    await e.transcribePcm(new Int16Array(4));
+    procs[0].die();
+    expect(e.status().running).toBe(false);
+    await e.transcribePcm(new Int16Array(4));
+    expect(procs).toHaveLength(2);
+  });
+  it('the real HTTP client talks multipart to the server (fake whisper-server)', async () => {
+    const e = createWhisperEngine({ root: installedRoot(), platform: 'win32', spawnFn: fakeServerSpawn, threads: 1 });
+    engines.push(e);
+    const r = await e.transcribePcm(new Int16Array(3 * 16000), { prompt: 'Ilinca\nApuseni', format: 'json' });
+    expect(r.text).toBe('Am auzit 3 secunde.');
+  }, 20000);
+});
+
+describe('window side: stop and cancel while starting', () => {
+  const fakeApi = () => ({ whisperStatus: () => new Promise((r) => setTimeout(() => r({ installed: true }), 30)), whisperTranscribePcm: async () => ({ text: '' }) });
+  const tracks = [];
+  const media = { getUserMedia: async () => ({ getTracks: () => [{ stop: () => tracks.push('stop') }] }) };
+  it('cancel before the microphone is open: nothing records, F9 works again', async () => {
+    const { createLocalSpeech } = await import('../src/lib/localSpeech.js');
+    const sp = createLocalSpeech(fakeApi(), { media });
+    const evs = [];
+    sp.onDtedEvent((e) => evs.push(e.ev));
+    const started = sp.dtedDictateStart('d1');
+    await sp.dtedCancel('d1');
+    await started;
+    expect(evs).toEqual(['anulat']);
+    // free again
+    const again = sp.dtedDictateStart('d2');
+    await sp.dtedDictateStop('d2');
+    await again;
+    expect(evs).toEqual(['anulat', 'dictare_oprita']);
+  });
+  it('cancelling an unknown or finished job leaves nothing behind', async () => {
+    const { createLocalSpeech } = await import('../src/lib/localSpeech.js');
+    const sp = createLocalSpeech(fakeApi(), { media });
+    await sp.dtedCancel('t-gone');
+    expect(sp.dispose()).toBe(undefined);
+  });
+});

@@ -10,17 +10,30 @@ const SILENCE_RMS = 0.012;
 // What the recogniser "hears" in silence or noise (subtitle credits it learned): never inserted.
 const HALLUCINATIONS = /^(mulțumesc pentru vizionare|mulțumim pentru vizionare|abonează-te|subtitrare|subtitrarea|vă mulțumesc|[.…\s]*)[.!]*$/i;
 
-/** Float32 samples at `inRate` → Int16 at 16 kHz (linear interpolation, clipped). */
+/**
+ * Float32 samples at `inRate` → Int16 at 16 kHz, clipped. Going down (48 / 44.1 kHz microphones),
+ * each output sample averages the input samples it covers: a simple low-pass against aliasing.
+ */
 export function toPcm16(input, inRate) {
   const ratio = inRate / RATE;
   const n = Math.floor(input.length / ratio);
   const out = new Int16Array(n);
   for (let i = 0; i < n; i++) {
-    const x = i * ratio;
-    const j = Math.floor(x);
-    const a = input[j] || 0;
-    const b = input[j + 1] ?? a;
-    const v = Math.max(-1, Math.min(1, a + (b - a) * (x - j)));
+    let v;
+    if (ratio > 1) {
+      const from = Math.floor(i * ratio);
+      const to = Math.min(input.length, Math.max(from + 1, Math.floor((i + 1) * ratio)));
+      let sum = 0;
+      for (let j = from; j < to; j++) sum += input[j];
+      v = sum / (to - from);
+    } else {
+      const x = i * ratio;
+      const j = Math.floor(x);
+      const a = input[j] || 0;
+      const b = input[j + 1] ?? a;
+      v = a + (b - a) * (x - j);
+    }
+    v = Math.max(-1, Math.min(1, v));
     out[i] = v < 0 ? v * 0x8000 : v * 0x7fff;
   }
   return out;
@@ -84,8 +97,12 @@ export function filePieces(pcm, size = FILE_PIECE) {
 const b64ToBytes = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
 /** 16 kHz mono PCM of an encoded audio file (MP3, WAV, M4A, OGG, FLAC…), decoded by the browser. */
+export const MAX_FILE_SECONDS = 3 * 3600;
+
 export async function decodeAudio(bytes) {
-  const buf = bytes instanceof ArrayBuffer ? bytes : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  // No extra copy when the bytes already fill their buffer (a long file is large).
+  const whole = bytes instanceof ArrayBuffer || (bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength);
+  const buf = bytes instanceof ArrayBuffer ? bytes : whole ? bytes.buffer : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
   const ctx = new AudioContext();
   let audio;
   try {
@@ -95,6 +112,7 @@ export async function decodeAudio(bytes) {
   } finally {
     ctx.close().catch(() => {});
   }
+  if (audio.duration > MAX_FILE_SECONDS) throw new Error('Înregistrarea e mai lungă de 3 ore. Împarte-o în bucăți mai scurte.');
   const off = new OfflineAudioContext(1, Math.ceil(audio.duration * RATE), RATE);
   const src = off.createBufferSource();
   src.buffer = audio;
@@ -114,11 +132,12 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
   const emit = (ev) => listeners.forEach((f) => f(ev));
   let dict = null;
   const cancelled = new Set();
+  const jobs = new Set(); // file transcriptions running
 
   async function sendPiece(d, pcm) {
     if (rms(pcm) < SILENCE_RMS) return;
     const prompt = [terms(), d.text.slice(-200)].filter(Boolean).join('. ');
-    const r = await api.whisperTranscribePcm(new Uint8Array(pcm.buffer, pcm.byteOffset, pcm.byteLength), { prompt });
+    const r = await api.whisperTranscribePcm(new Uint8Array(pcm.buffer, pcm.byteOffset, pcm.byteLength), { prompt, format: 'json' });
     const text = usefulText(r.text);
     if (text && !d.cancelled) {
       d.text += (d.text ? ' ' : '') + text;
@@ -129,29 +148,44 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
   // Pieces go to the engine one after another, in order.
   function queue(d, pcm) {
     d.chain = d.chain.then(() => sendPiece(d, pcm)).catch((e) => {
-      emit({ ev: 'eroare', id: d.id, mesaj: e.message, ce_fac: '' });
+      if (!d.cancelled) emit({ ev: 'eroare', id: d.id, mesaj: e.message, ce_fac: '' });
     });
     return d.chain;
   }
 
   async function dictateStart(id) {
     if (dict) throw new Error('Dictarea este deja pornită.');
+    // Claimed at once: Stop or Cancel while the engine and the microphone are being opened
+    // reaches this dictation (it ends before recording anything) instead of finding nothing.
+    const d = { id, starting: true, buf: [], len: 0, text: '', chain: Promise.resolve(), lastLevel: 0 };
+    dict = d;
+    const abandon = (err) => {
+      if (dict === d) dict = null;
+      if (err) throw err;
+      emit({ ev: d.cancelled ? 'anulat' : 'dictare_oprita', id, text: '' });
+      return id;
+    };
     const st = await api.whisperStatus();
-    if (!st.installed) throw new Error('Motorul de dictare nu e descărcat încă: Setări → Servicii și conturi → Dictare și transcriere → Descarcă motorul.');
-    if (!media?.getUserMedia) throw new Error('Microfonul nu e disponibil aici.');
-    let stream;
+    if (d.cancelled || d.stopped) return abandon();
+    if (!st.installed) return abandon(new Error('Motorul de dictare nu e descărcat încă: Setări → Servicii și conturi → Dictare și transcriere → Descarcă motorul.'));
+    if (!media?.getUserMedia) return abandon(new Error('Microfonul nu e disponibil aici.'));
     try {
-      stream = await media.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      d.stream = await media.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
     } catch {
-      throw new Error('Nu găsesc microfonul. Verifică dacă e conectat și permis în Windows (Confidențialitate → Microfon).');
+      return abandon(new Error('Nu găsesc microfonul. Verifică dacă e conectat și permis în Windows (Confidențialitate → Microfon).'));
+    }
+    if (d.cancelled || d.stopped) {
+      d.stream.getTracks().forEach((t) => t.stop());
+      return abandon();
     }
     const ctx = new AudioContext();
-    const src = ctx.createMediaStreamSource(stream);
+    const src = ctx.createMediaStreamSource(d.stream);
     const proc = ctx.createScriptProcessor(4096, 1, 1);
     const mute = ctx.createGain();
     mute.gain.value = 0;
-    const d = { id, stream, ctx, proc, buf: [], len: 0, text: '', chain: Promise.resolve(), lastLevel: 0 };
-    dict = d;
+    d.ctx = ctx;
+    d.proc = proc;
+    d.starting = false;
     proc.onaudioprocess = (e) => {
       if (dict !== d) return;
       const pcm = toPcm16(e.inputBuffer.getChannelData(0), ctx.sampleRate);
@@ -181,9 +215,9 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
 
   function release(d) {
     try {
-      d.proc.disconnect();
-      d.stream.getTracks().forEach((t) => t.stop());
-      d.ctx.close().catch(() => {});
+      d.proc?.disconnect();
+      d.stream?.getTracks().forEach((t) => t.stop());
+      d.ctx?.close().catch(() => {});
     } catch {
       /* already closed */
     }
@@ -192,6 +226,10 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
   async function dictateStop(id) {
     const d = dict;
     if (!d || (id && d.id !== id)) return true;
+    if (d.starting) {
+      d.stopped = true; // dictateStart ends it once the microphone is open
+      return true;
+    }
     dict = null;
     release(d);
     const rest = concatPcm(d.buf);
@@ -203,6 +241,7 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
   }
 
   async function transcribeBytes(id, bytes) {
+    jobs.add(id);
     try {
       emit({ ev: 'faza', id, text: 'Citesc fișierul…' });
       const pcm = await decodeAudio(bytes);
@@ -213,7 +252,7 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
         if (cancelled.has(id)) throw Object.assign(new Error('anulat'), { cancelled: true });
         const prompt = [terms(), segmente.slice(-3).map((s) => s.text).join(' ')].filter(Boolean).join('. ').slice(-400);
         const p = pieces[i];
-        const r = await api.whisperTranscribePcm(new Uint8Array(p.pcm.buffer, p.pcm.byteOffset, p.pcm.byteLength), { prompt });
+        const r = await api.whisperTranscribePcm(new Uint8Array(p.pcm.buffer, p.pcm.byteOffset, p.pcm.byteLength), { prompt, format: 'verbose_json' });
         for (const s of r.segmente || []) {
           const text = usefulText(s.text);
           if (text) segmente.push({ start: p.start + s.start, end: p.start + s.end, text });
@@ -226,6 +265,7 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
       emit(e.cancelled ? { ev: 'anulat', id } : { ev: 'eroare', id, mesaj: e.message, ce_fac: '' });
     } finally {
       cancelled.delete(id);
+      jobs.delete(id);
     }
   }
 
@@ -243,11 +283,22 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
       if (dict && dict.id === id) {
         const d = dict;
         d.cancelled = true;
+        if (d.starting) return true; // dictateStart ends it
         dict = null;
         release(d);
         emit({ ev: 'anulat', id });
-      } else cancelled.add(id);
+      } else if (jobs.has(id)) cancelled.add(id);
       return true;
+    },
+    // Stops whatever is running (the engine setting changed, the window closes).
+    dispose() {
+      const d = dict;
+      if (!d) return;
+      d.cancelled = true;
+      if (d.starting) return;
+      dict = null;
+      release(d);
+      emit({ ev: 'anulat', id: d.id });
     },
     async dtedTranscribe(file, id) {
       const bytes = await api.whisperReadAudio(file);

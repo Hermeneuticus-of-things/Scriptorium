@@ -220,6 +220,8 @@ export default function App({ api: apiProp }) {
     () => (speechMode === 'local' ? createLocalSpeech(api, { terms: () => settingsRef.current?.dtedTerms || '' }) : api),
     [api, speechMode],
   );
+  // The previous engine's dictation ends with it (microphone released, bar cleared).
+  useEffect(() => () => speechApi.dispose?.(), [speechApi]);
   const dict = useDictation({
     api: speechApi,
     getEditor: () => activeHandle()?.editor,
