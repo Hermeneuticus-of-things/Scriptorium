@@ -2,6 +2,9 @@
 // project; inputs are never mutated.
 
 export const NONE = 'Fără';
+// The stored "none" value is Romanian; show it in the UI language (option value stays NONE).
+export const noneLabel = (name, t) => (name === NONE ? t('ui.corkboard.fara_eticheta') : name);
+export const noneStatus = (name, t) => (name === NONE ? t('ui.corkboard.fara_status') : name);
 export const DEFAULT_LABEL_TITLE = 'Etichetă';
 export const DEFAULT_STATUS_TITLE = 'Status';
 export const FIELD_TYPES = ['text', 'checkbox', 'list', 'date'];
