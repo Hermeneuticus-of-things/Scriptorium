@@ -7,27 +7,41 @@ const fs = require('fs');
 const path = require('path');
 const { createWhisperEngine } = require('../lib/whisperEngine.cjs');
 
-const MAX_AUDIO = 600 * 1024 * 1024;
+// Compressed audio, read whole into the window and decoded there: ~2–3 hours of MP3.
+const MAX_AUDIO = 150 * 1024 * 1024;
 
 module.exports = function register({ handle, app, net, assertOpened, store, pickedAudio, engineFactory = createWhisperEngine }) {
+  // Streams url to file. A write error (disk full) rejects instead of crashing the main process;
+  // a failed download leaves no partial file behind.
   async function download(url, file, onBytes) {
     const res = await net.fetch(url);
     if (!res.ok) throw new Error(`Descărcarea a eșuat (${res.status}). Verifică internetul și încearcă din nou.`);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const out = fs.createWriteStream(file);
+    let failed = null;
+    const failure = new Promise((_, reject) => out.on('error', (e) => {
+      failed = e;
+      reject(e);
+    }));
+    failure.catch(() => {});
     let bytes = 0;
     let last = 0;
     try {
       for await (const chunk of res.body) {
+        if (failed) throw failed;
         bytes += chunk.length;
-        if (!out.write(chunk)) await new Promise((r) => out.once('drain', r));
+        if (!out.write(chunk)) await Promise.race([new Promise((r) => out.once('drain', r)), failure]);
         if (bytes - last > 4 * 1048576) {
           last = bytes;
           onBytes(bytes);
         }
       }
-    } finally {
-      await new Promise((r) => out.end(r));
+      await Promise.race([new Promise((r) => out.end(r)), failure]);
+      if (failed) throw failed;
+    } catch (e) {
+      out.destroy();
+      fs.rmSync(file, { force: true });
+      throw e.code === 'ENOSPC' ? new Error('Nu e destul loc pe disc pentru motor (în jur de 1 GB).') : e;
     }
     onBytes(bytes);
   }
@@ -58,12 +72,14 @@ module.exports = function register({ handle, app, net, assertOpened, store, pick
   // file attached to the open project, for decoding in the window.
   handle('whisper:readAudio', (_e, file) => {
     if (!pickedAudio.has(String(file))) throw new Error('Fișierul nu a fost ales din dialog.');
-    if (fs.statSync(file).size > MAX_AUDIO) throw new Error('Fișierul audio e prea mare (peste 600 MB). Împarte-l în bucăți.');
+    if (fs.statSync(file).size > MAX_AUDIO) throw new Error('Fișierul audio e prea mare (peste 150 MB). Împarte-l în bucăți de cel mult două ore.');
     return fs.readFileSync(file);
   });
   handle('whisper:readMedia', (_e, dir, file) => {
     assertOpened(dir);
-    return store.readMedia(dir, file).data;
+    const { data } = store.readMedia(dir, file);
+    if (data.length > MAX_AUDIO) throw new Error('Fișierul audio e prea mare (peste 150 MB). Împarte-l în bucăți de cel mult două ore.');
+    return data;
   });
   if (app) app.on('will-quit', () => engine.stop());
   return engine;

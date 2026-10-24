@@ -1,5 +1,18 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.1 — Bug hunter pe motorul de dictare încorporat (11 bug-uri)
+
+- Verificat pe codul whisper-server v1.7.6: comenzile, câmpurile cererii și răspunsul `verbose_json` sunt corecte.
+- **Dictare de două ori mai rapidă:** bucățile cer doar textul (`json`); varianta cu timpi (`verbose_json`, care în 1.7.6 face încă o trecere prin model) rămâne doar pentru fișiere.
+- **Contextul nu mai trece de la o cerere la alta:** prompt-ul și limba se trimit la fiecare cerere (serverul le păstra pe cele de dinainte).
+- **Anulare / Stop în timp ce pornește dictarea:** microfonul nu mai rămâne deschis, iar F9 merge din nou.
+- **Schimbarea motorului în timpul dictării** eliberează microfonul și închide bara.
+- **Un singur server** și la două cereri simultane; serverul căzut repornește la cererea următoare; varianta NVIDIA intră în lucru imediat după descărcare.
+- **Fișiere audio:** cel mult 150 MB sau 3 ore (o înregistrare foarte lungă putea închide fereastra); fără limită de 300 s pe cerere (bucăți lungi pe procesoare lente); erorile serverului apar ca erori, nu ca transcriere goală.
+- **Descărcare:** disc plin = mesaj clar, fără căderea aplicației și fără fișiere parțiale.
+- **Microfon:** filtru la reeșantionare (fără distorsiuni de aliasing); erorile după anulare nu mai apar.
+- Teste: 1092; scenariile `whisper`, `dictation`, `settings-roundtrip`, `team`; E2E Electron.
+
 ## 2026-10-24 — v0.9.0 — Recunoașterea vorbirii încorporată în Scribner
 
 ### Cerința user
