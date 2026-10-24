@@ -362,6 +362,26 @@ const SHOTS = {
       await p.waitForTimeout(300);
     },
   },
+  conflict: {
+    kicker: 'Lucru în echipă · conflict',
+    title: 'Același paragraf, schimbat pe două calculatoare',
+    sub: 'Variantele stau alături. Pentru fiecare loc alegi varianta ta, a celuilalt sau pe amândouă; varianta celuilalt rămâne oricum în Snapshot-uri.',
+    query: '&conflict',
+    async setup(p) {
+      await ed(p).click();
+      await p.evaluate(() => {
+        const v = document.querySelector('.pane .ProseMirror').editor;
+        v.commands.setTextSelection(1);
+      });
+      await p.keyboard.type('Ploua mărunt. ');
+      await p.waitForTimeout(400);
+      await p.evaluate(() => {
+        window.__demoExternalEdit((h) => h.replace('rece de octombrie', 'cețoasă de noiembrie'));
+      });
+      await p.waitForSelector('.conflict-dialog');
+      await p.waitForTimeout(300);
+    },
+  },
   report: {
     kicker: 'Ai găsit o problemă?',
     title: 'Descrii problema, restul vine singur',

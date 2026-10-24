@@ -13,7 +13,7 @@ export default function ConflictDialog({ conflict, onApply, onClose }) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal wide conflict-dialog" role="dialog" aria-label={t('ui.conflict.titlu', { title: conflict.title })} onClick={(e) => e.stopPropagation()}>
         <h2>{t('ui.conflict.titlu', { title: conflict.title })}</h2>
-        <p className="muted small">{t('ui.conflict.explicatie', { n: clashes.length })}</p>
+        <p className="muted small">{t(clashes.length === 1 ? 'ui.conflict.explicatie_unu' : 'ui.conflict.explicatie', { n: clashes.length })}</p>
         {clashes.map((c, i) => (
           <fieldset key={i} className="conflict-clash">
             <legend>{t('ui.conflict.locul', { n: i + 1 })}</legend>
