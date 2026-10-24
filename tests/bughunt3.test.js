@@ -48,3 +48,16 @@ describe('bug hunt 3', () => {
     expect(rtfToHtml('{\\rtf1 {\\*\\objdata \\bin3 }}}x}after\\par}')).not.toContain('x');
   });
 });
+
+import { buildRegex, findInHtml, replaceInHtml } from '../src/lib/search.js';
+describe('search across formatting', () => {
+  it('whole word sees the letters around bold', () => {
+    const re = buildRegex({ query: 'fix', wholeWord: true });
+    expect(replaceInHtml('<p>pre<strong>fix</strong> fix</p>', re, 'Z').html).toBe('<p>pre<strong>fix</strong> Z</p>');
+    expect(findInHtml('<p>pre<strong>fix</strong></p>', re)).toHaveLength(0);
+  });
+  it('^ is the start of the paragraph, not of the italic word', () => {
+    const re = buildRegex({ query: '^Cap', regex: true });
+    expect(replaceInHtml('<p>Cap <em>Cap</em></p><p><em>Cap</em></p>', re, 'X').html).toBe('<p>X <em>Cap</em></p><p><em>X</em></p>');
+  });
+});

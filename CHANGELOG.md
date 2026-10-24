@@ -1,5 +1,16 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.4 — Bug hunter din TODO: căutare, tastatură, siguranță
+
+### Cerința user
+> "continua automat cu roadmap + bug hunter, ALL TYPE"
+
+- **Căutare „cuvânt întreg”** și `^`/`$` văd literele de lângă un cuvânt îngroșat sau cursiv: „pre**fix**” nu mai e găsit ca „fix”, iar `^` înseamnă începutul paragrafului (`src/lib/search.js`).
+- **Tastatură:** taburile din Compile și din Inspector se schimbă cu ←/→/Home/End și sunt un singur pas de Tab; pe Corkboard tot panoul e un singur pas de Tab, iar săgețile trec de la o fișă la alta.
+- **Siguranță:** previzualizarea semnelor de carte, notele din Inspectorul plutitor și snapshot-urile trec printr-un filtru comun care păstrează doar formatarea (fără scripturi, formulare, redirecționări sau imagini de pe internet); legăturile se deschid în browser.
+- **Restaurarea unei copii de siguranță** refuză arhivele cu peste 200 000 de fișiere sau peste 4 GB despachetat.
+- **Viteză:** numărul de caractere (ținte pe caractere, istoric) se calculează doar pentru documentele schimbate.
+
 ## 2026-10-24 — v0.9.3 — Bug hunter pe interfață și pe textele în română
 
 ### Cerința user
