@@ -1323,7 +1323,7 @@ export default function App({ api: apiProp }) {
     if (!parts) return;
     await flush();
     await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_impartire')).catch(report);
-    const second = newNode('text', parts.title || `${node.title} (continuare)`);
+    const second = newNode('text', parts.title || tr('ui.app.x_continuare', { title: node.title }));
     second.label = node.label;
     second.status = node.status;
     const tree = produce(projectRef.current.tree, (t) => {
@@ -1950,12 +1950,12 @@ export default function App({ api: apiProp }) {
     { label: tr('cmd.keywords'), action: () => setDialog('keywords') },
     { label: tr('cmd.import'), action: () => setDialog('import') },
     '-',
-    { label: 'Istoricul scrisului…', action: () => setDialog('history'), disabled: !api.getHistory },
-    { label: 'Backup-uri…', action: () => setDialog('backup'), disabled: !api.listBackups },
+    { label: tr('cmd.history'), action: () => setDialog('history'), disabled: !api.getHistory },
+    { label: tr('cmd.backups'), action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
     { label: tr('ui.app.setarile_proiectului_etichete_statusuri_metadate'), action: () => setDialog('projectSettings') },
     { label: tr('cmd.targets'), action: () => setDialog('targets') },
-    { label: 'Statistici…', action: () => setDialog('stats') },
+    { label: tr('cmd.stats'), action: () => setDialog('stats') },
     { label: tr('cmd.styles'), action: () => setDialog('styles') },
     { label: tr('cmd.compile'), action: () => flush().then(() => setDialog('compile')) },
     { label: tr('cmd.settings'), action: () => setDialog('settings') },
@@ -1980,7 +1980,7 @@ export default function App({ api: apiProp }) {
     ['file', 'exportFiles', tr('cmd.exportFiles'), () => flush().then(() => setDialog('export'))],
     ['file', 'saveAs', tr('cmd.saveAs'), () => saveAs().catch(report), !api.saveProjectAs],
     ['file', 'print', tr('cmd.print'), printCurrent, !api.printDocument && !api.printDocuments],
-    ['file', 'backups', 'Backup-uri…', () => setDialog('backup'), !api.listBackups],
+    ['file', 'backups', tr('cmd.backups'), () => setDialog('backup'), !api.listBackups],
     ['file', 'closeProject', tr('cmd.closeProject'), closeProject],
     ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
     ['edit', 'findProject', tr('cmd.findProject'), () => { setFindSeed(''); setDialog('find'); }],
@@ -2002,9 +2002,9 @@ export default function App({ api: apiProp }) {
     ['project', 'newFolder', tr('cmd.newFolder'), () => addItem('folder')],
     ['project', 'projectSettings', tr('cmd.projectSettings'), () => setDialog('projectSettings')],
     ['project', 'targets', tr('cmd.targets'), () => setDialog('targets')],
-    ['project', 'stats', 'Statistici…', () => setDialog('stats')],
+    ['project', 'stats', tr('cmd.stats'), () => setDialog('stats')],
     ['project', 'keywords', tr('cmd.keywords'), () => setDialog('keywords')],
-    ['project', 'history', 'Istoricul scrisului…', () => setDialog('history'), !api.getHistory],
+    ['project', 'history', tr('cmd.history'), () => setDialog('history'), !api.getHistory],
     ['project', 'team', tr('cmd.team'), () => setDialog('team'), !api.teamFiles],
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],

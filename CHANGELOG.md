@@ -1,5 +1,14 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-24 — v0.9.6 — Bucle divergente/convergente (runda 3)
+
+- **Interfața în engleză și Ajutorul (căutare divergentă):**
+  - Ajutorul (RO și EN) descrie conflictul nou („Conflict” în bara de jos, alegere pe paragraf) și coada fără conexiune;
+  - fără nume de alte programe: „Exportă scenariu .fdx…”;
+  - în engleză: „saved” în bara de jos (și culoarea roșie la eroare), Statistici, Istoric, Backup-uri, Import, Semne de carte, documentele noi („New document”), copii și părți împărțite („(copy)”, „(continued)”);
+  - plurale în engleză: „1 locked document”, „1 error”, „1 book page”.
+- **Lucru în echipă, mai puține conflicte false:** un paragraf adăugat sau șters de un om chiar lângă unul editat de altul se unește singur (înainte cerea alegere). Simularea cu 500 de rulări: conflictele scad de la 379 la 304, fără text pierdut. Ștergerea unui paragraf pe care celălalt l-a editat rămâne o alegere.
+
 ## 2026-10-24 — v0.9.5 — Bucle divergente/convergente (runda 2)
 
 ### Cerința user
