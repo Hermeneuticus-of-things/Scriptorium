@@ -8,6 +8,16 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 export const SERIALIZE_DELAY = 300;
 import { EditorContent, useEditor } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
+import { Step } from '@tiptap/pm/transform';
+import { closeHistory } from '@tiptap/pm/history';
+
+// Undo history per document across document switches: the editor is rebuilt for every document
+// (new schema), so the history itself cannot be kept. Instead the document's base HTML and its
+// edits (step JSON, one group per transaction) are kept and replayed into the new editor when
+// the text is unchanged since; Ctrl+Z then works after switching back.
+const HISTORY_CACHE = new Map(); // key → { base, groups: [[stepJSON]], html }
+const HISTORY_MAX_GROUPS = 400;
+const HISTORY_MAX_DOCS = 30;
 import { buildExtensions } from '../editor/extensions.js';
 import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
@@ -39,9 +49,12 @@ const Editor = forwardRef(function Editor(
     onTitleClick,
     scriptFormat = null,
     defaultFormatting = null,
+    historyKey = null,
   },
   ref,
 ) {
+  const histRef = useRef(null); // { base, groups } recorded for historyKey
+  const replaying = useRef(false);
   const [showFind, setShowFind] = useState(false);
   const [showFormatFind, setShowFormatFind] = useState(false);
   const scenesRef = useRef([]);
@@ -77,7 +90,14 @@ const Editor = forwardRef(function Editor(
       content: html || '<p></p>',
       parseOptions: PARSE_OPTIONS,
       editable: !readOnly,
+      onTransaction: ({ transaction: tr }) => {
+        const h = histRef.current;
+        if (!h || replaying.current || !tr.docChanged || tr.getMeta('addToHistory') === false) return;
+        h.groups.push(tr.steps.map((st) => st.toJSON()));
+        if (h.groups.length > HISTORY_MAX_GROUPS) histRef.current = null; // too long: stop keeping it
+      },
       onUpdate: ({ editor: ed }) => {
+        if (replaying.current) return;
         dirty.current = { doc: ed.state.doc, schema: ed.schema };
         clearTimeout(dirtyTimer.current);
         dirtyTimer.current = setTimeout(() => flushRef.current(), SERIALIZE_DELAY);
@@ -170,6 +190,47 @@ const Editor = forwardRef(function Editor(
     view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start + r[0], start + r[1])));
     return true;
   }
+
+  // Restore (replay) the kept history on creation; keep it when the editor goes away.
+  useEffect(() => {
+    if (!editor || !historyKey) return undefined;
+    const startHtml = editor.getHTML();
+    const kept = HISTORY_CACHE.get(historyKey);
+    histRef.current = { base: startHtml, groups: [] };
+    if (kept && kept.html === startHtml && kept.groups.length) {
+      try {
+        replaying.current = true;
+        const { view } = editor;
+        const sel = view.state.selection.toJSON();
+        let tr = view.state.tr.replaceWith(0, view.state.doc.content.size, htmlToDoc(kept.base, editor.schema).content).setMeta('addToHistory', false);
+        view.dispatch(tr);
+        for (const g of kept.groups) {
+          tr = closeHistory(view.state.tr);
+          for (const js of g) tr.step(Step.fromJSON(editor.schema, js));
+          view.dispatch(tr);
+        }
+        if (editor.getHTML() !== startHtml) throw new Error('history replay mismatch');
+        view.dispatch(closeHistory(view.state.tr)); // new typing starts its own undo step
+        try {
+          view.dispatch(view.state.tr.setSelection(TextSelection.fromJSON(view.state.doc, sel)).setMeta('addToHistory', false));
+        } catch { /* selection outside the doc */ }
+        histRef.current = { base: kept.base, groups: [...kept.groups] };
+      } catch {
+        // Could not replay: start clean from the current text.
+        editor.commands.setContent(startHtml, { emitUpdate: false, parseOptions: PARSE_OPTIONS });
+        histRef.current = { base: editor.getHTML(), groups: [] };
+      } finally {
+        replaying.current = false;
+      }
+    }
+    return () => {
+      const h = histRef.current;
+      HISTORY_CACHE.delete(historyKey);
+      if (!h || !h.groups.length) return;
+      HISTORY_CACHE.set(historyKey, { ...h, html: getHTMLFromFragment(editor.state.doc.content, editor.schema) });
+      while (HISTORY_CACHE.size > HISTORY_MAX_DOCS) HISTORY_CACHE.delete(HISTORY_CACHE.keys().next().value);
+    };
+  }, [editor, historyKey]);
 
   useImperativeHandle(
     ref,

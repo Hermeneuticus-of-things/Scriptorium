@@ -30,4 +30,33 @@ function check(name, ok, info = '') {
   console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${info ? ' — ' + info : ''}`);
 }
 function done() { console.log(failures ? `${failures} failing` : 'all passing'); process.exitCode = failures ? 1 : 0; }
-module.exports = { open, ed, caretEnd, check, done };
+// Menu bar: open the menu `menu` and click the item path (submenu labels, then the item).
+async function menuPick(page, menu, ...path) {
+  await page.locator('header.toolbar .menu > button').filter({ hasText: new RegExp(`^${menu}`) }).first().click();
+  for (let i = 0; i < path.length; i++) {
+    const it = page.locator('.menu-pop [role="menuitem"]').filter({ hasText: path[i] }).first();
+    if (i < path.length - 1) await it.hover();
+    await it.click();
+    await page.waitForTimeout(80);
+  }
+}
+// Runs a menu-bar command by its label, wherever it is (top level or inside a submenu).
+async function menuCmd(page, label, { wait = 300 } = {}) {
+  const menus = page.locator('header.toolbar .menu > button');
+  for (let i = 0; i < (await menus.count()); i++) {
+    await menus.nth(i).click();
+    await page.waitForTimeout(60);
+    const direct = page.locator('.menu-pop:not(.menu-sub) > button[role=menuitem]:not([disabled])', { hasText: label }).first();
+    if (await direct.count()) { await direct.click(); await page.waitForTimeout(wait); return; }
+    const subs = page.locator('.menu-pop > .menu-subwrap > [role=menuitem]:not([disabled])');
+    for (let j = 0; j < (await subs.count()); j++) {
+      await subs.nth(j).hover();
+      await page.waitForTimeout(40);
+      const it = page.locator('.menu-sub button[role=menuitem]:not([disabled])', { hasText: label }).first();
+      if (await it.count()) { await it.click(); await page.waitForTimeout(wait); return; }
+    }
+    await page.keyboard.press('Escape');
+  }
+  throw new Error(`menu item not found: ${label}`);
+}
+module.exports = { open, ed, caretEnd, check, done, menuPick, menuCmd };

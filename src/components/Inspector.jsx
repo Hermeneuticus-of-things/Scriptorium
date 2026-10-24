@@ -166,11 +166,11 @@ export default function Inspector({
       </div>
       <div className="tabs">
         {[
-          ['meta', 'Detalii', MetaIcon],
+          ['meta', tr('ui.inspector.tab_detalii'), MetaIcon],
           ['notes', tr('ui.advancedSearchDialog.note'), NotesIcon],
           ['project', tr('group.project'), BookmarkIcon],
-          ['annot', `Comentarii${notes.comments.length + notes.footnotes.length ? ` (${notes.comments.length + notes.footnotes.length})` : ''}`, CommentIcon],
-          ['snapshots', 'Snapshot-uri', SnapshotIcon],
+          ['annot', `${tr('ui.inspector.tab_comentarii')}${notes.comments.length + notes.footnotes.length ? ` (${notes.comments.length + notes.footnotes.length})` : ''}`, CommentIcon],
+          ['snapshots', tr('ui.inspector.tab_snapshots'), SnapshotIcon],
         ].map(([id, label, Ico]) => (
           <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)} title={label} aria-label={label}>
             <Ico />
@@ -300,8 +300,8 @@ export default function Inspector({
                   <br />
                   <small>{new Date(s.date).toLocaleString(uiLocale())}</small>
                 </div>
-                <button className="link" onClick={() => { setCompare(null); setPreview(preview === s ? null : s); }}>{preview === s ? 'Ascunde' : 'Vezi'}</button>
-                <button className="link" onClick={() => { setPreview(null); setCompareB(null); setCompare(compare === s ? null : s); }} title={tr('ui.inspector.compara_cu_textul_curent')}>{compare === s && !compareB ? 'Ascunde' : tr('ui.inspector.compara')}</button>
+                <button className="link" onClick={() => { setCompare(null); setPreview(preview === s ? null : s); }}>{preview === s ? tr('ui.inspector.ascunde') : tr('ui.inspector.vezi')}</button>
+                <button className="link" onClick={() => { setPreview(null); setCompareB(null); setCompare(compare === s ? null : s); }} title={tr('ui.inspector.compara_cu_textul_curent')}>{compare === s && !compareB ? tr('ui.inspector.ascunde') : tr('ui.inspector.compara')}</button>
                 {compare && compare !== s && (
                   <button className="link" onClick={() => setCompareB(compareB === s ? null : s)} title={tr('ui.inspector.compara_cele_doua_snapshot_uri')}>{compareB === s ? tr('ui.inspector.cu_textul_curent') : tr('ui.inspector.cu_acesta')}</button>
                 )}

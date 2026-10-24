@@ -1,23 +1,8 @@
 // Settings → Servicii și conturi: DeepL key, then in-app translation and grammar check on a selection.
-const { open, ed, check, done } = require('./_helpers.cjs');
+const { open, ed, check, done, menuCmd } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
-  // Runs a command from the menu bar (whichever top menu holds it).
-  const cmd = async (label) => {
-    const menus = page.locator('header.toolbar .menu > button');
-    for (let i = 0; i < (await menus.count()); i++) {
-      await menus.nth(i).click();
-      await page.waitForTimeout(80);
-      const item = page.locator('.menu-pop button:not([disabled])', { hasText: label }).first();
-      if (await item.count()) {
-        await item.click();
-        await page.waitForTimeout(300);
-        return;
-      }
-      await page.keyboard.press('Escape');
-    }
-    throw new Error(`menu item not found: ${label}`);
-  };
+  const cmd = (label) => menuCmd(page, label);
   // translation without a key: a clear message, no crash
   await page.locator('.binder-row', { hasText: 'Căutarea' }).first().click();
   await ed(page).click({ delay: 60 });
