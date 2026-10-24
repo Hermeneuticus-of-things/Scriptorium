@@ -61,3 +61,28 @@ describe('search across formatting', () => {
     expect(replaceInHtml('<p>Cap <em>Cap</em></p><p><em>Cap</em></p>', re, 'X').html).toBe('<p>X <em>Cap</em></p><p><em>X</em></p>');
   });
 });
+
+describe('data round trips (v0.9.4)', () => {
+  it('.scriv keeps tabs and repeated spaces, and every <hr> is a page break', () => {
+    const { htmlToScrivRtf } = require('../lib/scrivRtf.cjs');
+    const r = htmlToScrivRtf('<p>tab\taici   trei</p><hr><p>x</p>');
+    const rtf = typeof r === 'string' ? r : r.rtf;
+    const back = rtfToHtml(rtf);
+    expect(back).toContain('tab\taici   trei');
+    expect(back).toContain('<hr data-page-break="true" class="page-break">');
+  });
+  it('the bundle carries the writing history', () => {
+    const fs = require('node:fs');
+    const os = require('node:os');
+    const path = require('node:path');
+    const store = require('../lib/store.cjs');
+    const bundle = require('../lib/bundle.cjs');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bh3-'));
+    const dir = store.projectDirFor(tmp, 'Istoric');
+    store.createProject(dir, 'Istoric');
+    fs.writeFileSync(path.join(dir, 'history.json'), JSON.stringify({ '2026-10-24': { draftStart: 1 } }));
+    const b = bundle.exportBundle(dir);
+    const out = bundle.importBundle(JSON.parse(JSON.stringify(b)), path.join(tmp, 'copie'));
+    expect(JSON.parse(fs.readFileSync(path.join(out.dir, 'history.json'), 'utf8'))['2026-10-24'].draftStart).toBe(1);
+  });
+});

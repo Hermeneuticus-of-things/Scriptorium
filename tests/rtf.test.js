@@ -60,7 +60,7 @@ describe('rtfToHtml v2', () => {
 \pard Final}`;
     const html = rtfToHtml(rtf);
     expect(html).toContain('<ul><li><p>Unu</p></li><li><p>Doi</p></li></ul>');
-    expect(html).toContain('<hr class="page-break">');
+    expect(html).toContain('<hr data-page-break="true" class="page-break">');
     expect(html).toContain('<table><tbody><tr><td><p>A</p></td><td><p>B</p></td></tr></tbody></table>');
     expect(html).toContain('<p>Final</p>');
   });
