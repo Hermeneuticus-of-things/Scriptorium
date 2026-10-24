@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-labelledby="t d">
+  <title id="t">Același proiect pe calculator și în browser</title>
+  <desc id="d">Folderul proiectului stă în OneDrive, Dropbox, Google Drive sau pe un NAS. Aplicația de pe calculator și browserul de pe alt calculator deschid același folder.</desc>
+  <rect width="1200" height="330" rx="24" fill="#f6f1e6"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <g fill="none" stroke="#c19466" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round">
+      <path d="M302 165 H440"/><path d="M760 165 H898"/>
+    </g>
+    <g fill="#c19466"><path d="M440 165 l-12 -7 v14 z"/><path d="M302 165 l12 -7 v14 z"/><path d="M898 165 l-12 -7 v14 z"/><path d="M760 165 l12 -7 v14 z"/></g>
+    <g transform="translate(40 52)">
+      <rect width="262" height="226" rx="6" fill="#fffdf6" stroke="#e5dccb"/><rect y="62" width="262" height="3" fill="#c2413a"/>
+      <circle cx="131" cy="-2" r="10" fill="#2b6fd6"/>
+      <text x="20" y="44" font-size="26" font-weight="700" fill="#1f1b16">Pe calculator</text>
+      <text x="20" y="104" font-size="20" fill="#3d362d">Aplicația Scribner</text>
+      <text x="20" y="134" font-size="20" fill="#3d362d">deschide proiectul</text>
+      <text x="20" y="164" font-size="20" fill="#3d362d">din folder.</text>
+      <text x="20" y="206" font-size="18" fill="#2b6fd6" font-weight="600">Windows, fără internet</text>
+    </g>
+    <g transform="translate(440 40)">
+      <rect width="320" height="250" rx="6" fill="#1f1b16"/><rect y="66" width="320" height="3" fill="#e9b07a"/>
+      <circle cx="160" cy="-2" r="10" fill="#e9b07a"/>
+      <text x="20" y="46" font-size="26" font-weight="700" fill="#fbf7ef">Cartea mea.scribner</text>
+      <text x="20" y="108" font-size="20" fill="#e6dccb">Un folder sincronizat:</text>
+      <g font-size="17" font-weight="700" fill="#fff">
+        <rect x="20" y="128" width="112" height="30" rx="5" fill="#2b5797"/><text x="76" y="149" text-anchor="middle">OneDrive</text>
+        <rect x="142" y="128" width="102" height="30" rx="5" fill="#3d6fd6"/><text x="193" y="149" text-anchor="middle">Dropbox</text>
+        <rect x="20" y="168" width="150" height="30" rx="5" fill="#3f8f5a"/><text x="95" y="189" text-anchor="middle">Google Drive</text>
+        <rect x="180" y="168" width="64" height="30" rx="5" fill="#8a5a2b"/><text x="212" y="189" text-anchor="middle">NAS</text>
+      </g>
+      <text x="20" y="232" font-size="18" fill="#e9b07a" font-weight="600">se sincronizează singur</text>
+    </g>
+    <g transform="translate(898 52)">
+      <rect width="262" height="226" rx="6" fill="#fffdf6" stroke="#e5dccb"/><rect y="62" width="262" height="3" fill="#c2413a"/>
+      <circle cx="131" cy="-2" r="10" fill="#3f8f5a"/>
+      <text x="20" y="44" font-size="26" font-weight="700" fill="#1f1b16">În browser</text>
+      <text x="20" y="104" font-size="20" fill="#3d362d">Chrome sau Edge,</text>
+      <text x="20" y="134" font-size="20" fill="#3d362d">pe alt calculator,</text>
+      <text x="20" y="164" font-size="20" fill="#3d362d">același folder.</text>
+      <text x="20" y="206" font-size="18" fill="#3f8f5a" font-weight="600">fără instalare</text>
+    </g>
+  </g>
+</svg>
