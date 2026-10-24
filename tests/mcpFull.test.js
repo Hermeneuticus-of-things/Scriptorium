@@ -159,6 +159,7 @@ const PRELOAD_COVERAGE = {
   copyAccountPassword: 'gui: parolele nu ies spre agent',
   translateText: 'gui: cheia DeepL/Google e criptată cu safeStorage (agentul traduce singur sau folosește lookup_url)',
   checkGrammar: 'gui: serviciu extern cu cont din Setări (agentul corectează singur; lint pentru I-REP)',
+  importZotero: 'gui: contul Zotero e criptat cu safeStorage, pe care serverul MCP nu îl poate citi; agentul folosește import_bibliography cu un fișier',
   speakCloud: 'gui: citire cu voce tare (Speechify) redată în fereastră; un agent nu are difuzoare',
   newWindow: 'gui: ferestre',
   toggleFullScreen: 'gui: ferestre',

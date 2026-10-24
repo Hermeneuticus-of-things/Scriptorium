@@ -105,6 +105,7 @@ contextBridge.exposeInMainWorld('api', {
   translateText: (req) => call('translate:run', req),
   checkGrammar: (req) => call('grammar:check', req),
   speakCloud: (req) => call('tts:speak', req),
+  importZotero: (req) => call('zotero:import', req),
   newWindow: () => call('window:new'),
   toggleFullScreen: (on) => call('window:fullScreen', on),
   recheckSpelling: () => call('spell:recheck'),

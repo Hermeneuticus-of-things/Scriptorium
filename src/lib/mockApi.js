@@ -345,6 +345,14 @@ export function createMockApi() {
       if (!(state.services && state.services.deepl && state.services.deepl.apiKey)) throw new Error('Pune cheia DeepL în Setări → Servicii și conturi.');
       return { text: `[${to || 'ro'}] ${text}`, detected: 'en', service: 'DeepL (demo)' };
     },
+    async importZotero() {
+      const z = state.services && state.services.zotero;
+      if (!(z && z.userId && z.apiKey)) throw new Error('Pune ID-ul de utilizator Zotero și cheia în Setări → Servicii și conturi.');
+      return { entries: [
+        { key: 'Blaga1937', type: 'book', title: 'Trilogia culturii', authors: [{ family: 'Blaga', given: 'Lucian' }], editors: [], year: '1937', container: '', publisher: 'Fundația pentru Literatură și Artă', place: 'București', volume: '', issue: '', pages: '', edition: '', doi: '', url: '' },
+        { key: 'Eliade1949', type: 'book', title: 'Le mythe de l’éternel retour', authors: [{ family: 'Eliade', given: 'Mircea' }], editors: [], year: '1949', container: '', publisher: 'Gallimard', place: 'Paris', volume: '', issue: '', pages: '', edition: '', doi: '', url: '' },
+      ] };
+    },
     async speakCloud() {
       if (!(state.services && state.services.speechify && state.services.speechify.apiKey)) throw new Error('Pune cheia Speechify în Setări → Servicii și conturi.');
       // 0.1 s of silence as MP3 frames is not needed for the demo: an empty WAV plays and ends at once.

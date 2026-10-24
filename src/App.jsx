@@ -92,6 +92,7 @@ import {
 } from './lib/tree.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
+import { mergeBibliography } from './lib/bibMerge.js';
 import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
@@ -1566,6 +1567,11 @@ export default function App({ api }) {
     ['file', 'exportScriv', tr('cmd.exportScriv'), () => exportScrivCmd().catch(report), !api.exportScriv],
     ['file', 'syncOut', tr('cmd.syncOut'), () => syncOutCmd().catch(report), !api.syncOut],
     ['file', 'syncIn', tr('cmd.syncIn'), () => syncInCmd().catch(report), !api.syncIn || !project?.syncFolder],
+    ['file', 'importZotero', tr('cmd.importZotero'), () => api.importZotero({}).then((r) => {
+      const merged = mergeBibliography(project.bibliography || [], r.entries || []);
+      saveProject({ ...project, bibliography: merged });
+      setToast(tr('ui.app.zotero_importat', { n: (r.entries || []).length }));
+    }).catch(report), !api.importZotero],
     ['file', 'importBib', tr('cmd.importBib'), () => api.importBibliography().then((r) => r && saveProject({ ...project, bibliography: r.entries })).catch(report), !api.importBibliography],
     ['file', 'exportLatex', tr('cmd.exportLatex'), () => flush().then(() => api.exportLatex(dir, project)).catch(report), !api.exportLatex],
     ['file', 'exportPandoc', tr('cmd.exportPandoc'), () => flush().then(() => api.exportPandoc(dir, project)).catch(report), !api.exportPandoc],

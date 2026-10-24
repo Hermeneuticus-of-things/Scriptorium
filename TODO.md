@@ -88,7 +88,7 @@ Rezumat: 77 de unelte MCP (57 noi), 4 bug-uri reparate la cauză, 43 de teste no
 - [x] Setări → Servicii și conturi: DeepL, Google, LanguageTool, Speechify, Zotero, alte conturi (criptat)
 - [x] Bug meniuri (Escape, focus), bug Windows (nume rezervate, fișiere blocate, Salvează ca, wizard RO)
 - [ ] Verificat cu chei reale DeepL / Google / LanguageTool Premium / Speechify (codul urmează documentația lor; testat cu răspunsuri simulate)
-- [ ] Zotero: importul bibliografiei direct din cont (cheia se salvează deja)
+- [x] Zotero: importul bibliografiei direct din cont
 
 ### Request: bug hunter deep (încrucișat, divergent, convergent)
 - [x] Editor, date, Compile, interfață: 25+ bug-uri reparate la cauză, fiecare cu test
