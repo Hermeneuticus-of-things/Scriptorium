@@ -25,7 +25,7 @@ export default function ImportDialog({ api, target, onImported, onClose, onError
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" role="dialog" aria-label={t('ui.importDialog.importa_text')} onClick={(e) => e.stopPropagation()}>
         <h2>{t('ui.importDialog.importa_word_rtf_odt_text')}</h2>
-        <p className="muted">{t('ui.importDialog.documentele_noi_se_adauga_langa')}{target}”. Formate: .docx, .rtf, .odt, .txt, .md{api.importText ? ', .html, .fountain, .fdx' : ''}{t('ui.importDialog.modificarile_urmarite_din_word_devin')}</p>
+        <p className="muted">{t('ui.importDialog.documentele_noi_se_adauga_langa')}{target}”. {t('ui.import.formate')} .docx, .rtf, .odt, .txt, .md{api.importText ? ', .html, .fountain, .fdx' : ''}{t('ui.importDialog.modificarile_urmarite_din_word_devin')}</p>
         <label>
           {t('ui.importDialog.imparte_in_documente')}
           <select value={mode} onChange={(e) => setMode(e.target.value)}>

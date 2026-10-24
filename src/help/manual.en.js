@@ -158,7 +158,7 @@ export const MANUAL_EN = [
     sections: [
       { id: 'script-basics', title: 'Scripts', html: `<p><em>Format → Script mode</em>: Screenplay, Stage play, Stage play (UK), Comic, BBC radio drama. Each paragraph has an element.</p>` },
       { id: 'script-keys', title: 'Tab and Enter', html: `<p><kbd>Tab</kbd> changes the element, ${k('Shift+Tab')} goes back, <kbd>Enter</kbd> picks the next element. See the Syntax tab. Character names and scene headings auto-complete.</p>` },
-      { id: 'script-export', title: 'Final Draft and Fountain', html: `<p>Export .fdx and .fountain from the File menu or Compile; both can be imported.</p>` },
+      { id: 'script-export', title: '.fdx and Fountain', html: `<p>Export .fdx and .fountain from the File menu or Compile; both can be imported.</p>` },
     ],
   },
   {
@@ -316,7 +316,7 @@ scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP s
       {
         id: 'yours-sync',
         title: 'The same project on the desktop and in the browser',
-        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. If the same document was changed in two places, the changes are merged paragraph by paragraph. When the same paragraph was changed on both sides, your text stays and the version that arrived from the other computer is kept in <em>Snapshots</em> (“Version from the other computer, &lt;time&gt;”), with a message. Conflict copies left by the sync service (such as <code>project (conflicted copy …).json</code> or <code>project-PC.json</code>) are never loaded: the app lists them when the project opens so you can compare and delete them. If the folder cannot be reached (NAS disconnected, permission withdrawn) you get a message; changes show up again when it is back. Phones cannot open folders: use the .json bundle there.</p>`,
+        html: `<p>Keep the <code>.scribner</code> folder in OneDrive, Dropbox, Google Drive or on a NAS. In Chrome or Edge the web version opens that same folder and writes into it; changes from the other side show up within seconds. If the same document was changed in two places, the changes are merged paragraph by paragraph. When the same paragraph was changed on both sides, <strong>Conflict</strong> appears in the status bar: click it to see both versions side by side and choose, for each place, <em>mine</em>, <em>theirs</em> or <em>both</em>. The other version also stays in <em>Snapshots</em>, and text you wrote meanwhile is never overwritten. If the project folder is unreachable, what you write waits in a queue (status bar: <em>Waiting: n documents</em>), is retried every 15 s and sent as soon as the folder is back, even after closing the app; <em>Synced</em> means everything reached the folder. Conflict copies left by the sync service (such as <code>project (conflicted copy …).json</code> or <code>project-PC.json</code>) are never loaded: the app lists them when the project opens so you can compare and delete them. If the folder cannot be reached (NAS disconnected, permission withdrawn) you get a message; changes show up again when it is back. Phones cannot open folders: use the .json bundle there.</p>`,
       },
       {
         id: 'yours-team',
@@ -326,7 +326,7 @@ scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP s
 <li><strong>Who is working now:</strong> the name of whoever has the document open shows next to its title; the status bar shows how many of you are working (click it for the <em>Team</em> window).</li>
 <li><strong>Who changed what:</strong> <em>Project → Team…</em> shows the log: person, date and time, words added and removed, a sample. Filters: the open document or the whole project, the person, the last day, week or month. Click a title to open the document.</li>
 <li><strong>Lock:</strong> the padlock button next to the title locks the document for the others; on their computers it opens read-only, with “Locked by …”. Click again to unlock. A computer silent for 30 minutes loses its locks.</li>
-<li><strong>Merge:</strong> changes made by two people in different paragraphs are merged by themselves; the same paragraph: your text stays, theirs is in <em>Inspector → Snapshots</em>.</li>
+<li><strong>Merge:</strong> changes made by two people in different paragraphs are merged by themselves; the same paragraph: <strong>Conflict</strong> appears in the status bar and a click lets you choose mine, theirs or both; theirs also stays in <em>Inspector → Snapshots</em>.</li>
 <li><strong>AI agents:</strong> writes through MCP appear in the log as “AI agent (MCP)”; the <code>team_activity</code> tool shows agents who is working and what is locked.</li>
 </ul>
 <p>Team files live in <code>team/</code>, one per computer, so the sync service makes no conflict copies.</p>`,

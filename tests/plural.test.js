@@ -17,3 +17,9 @@ describe('counts in Romanian and English', () => {
     expect(pluralEn('1 words · 11 words')).toBe('1 word · 11 words');
   });
 });
+
+describe('English singular with an adjective', () => {
+  it('1 locked document, 1 error, 1 book page', () => {
+    expect(pluralEn('1 locked documents · 1 errors · 1 book pages · 2 errors')).toBe('1 locked document · 1 error · 1 book page · 2 errors');
+  });
+});
