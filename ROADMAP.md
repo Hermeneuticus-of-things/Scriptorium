@@ -184,7 +184,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 
 ## 4. v1.0: paritate completă + extra
 
-- [ ] Toate rândurile `[ ]` din `FEATURES-SCRIVENER3.md` închise sau mutate explicit la `[-]`
+- [x] Toate rândurile `[ ]` din `FEATURES-SCRIVENER3.md` închise sau mutate explicit la `[-]` (0 rămase)
 - [x] Sinopsis AI în bloc, consistență pe toată cartea, fișe vii
 - [x] Cronologie, hartă de relații, analiză de ritm
 - [x] Panou NotebookLM / RAG cu cozi asincrone și cache pe concept (fluxul NLM din workspace)
@@ -209,5 +209,15 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 ## 7. Verificare în Electron real
 
 - [x] Test cap-coadă `npm run test:e2e` (Electron real, dialoguri simulate): proiect nou, text cu corecturi automate salvat pe disc, meniu nativ complet, Compile DOCX/PDF/EPUB, export `.scriv` și reimport; trece pe Linux
-- [ ] Același test pe Windows; import pe proiectul Karma real
+- [x] Același test pe Windows: rulează în CI pe windows-latest la fiecare PR (E2E cu aplicația reală, installer, portabil)
+- [ ] Import pe proiectul Karma real (aștept proiectul)
 
+
+## 8. Așteaptă ceva de la autor (nu se pot face fără)
+
+- [ ] Proiectul Karma real (`.scriv`) pentru proba de import fără pierderi
+- [ ] Cheile reale DeepL / Google / LanguageTool Premium / Speechify / Zotero pentru o probă cap-coadă (codul e testat cu răspunsuri simulate)
+- [ ] O cheie AI pentru testul cap-coadă cu un model real
+- [ ] Definițiile VKB2 pentru I-REP / I-EDIT
+- [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add scribner …`)
+- [ ] Pachetul de limbă română pentru corectorul ortografic al Windows (setare de sistem)
