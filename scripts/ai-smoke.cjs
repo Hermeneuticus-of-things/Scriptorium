@@ -24,7 +24,7 @@ const CASES = [
 ];
 // Without a model: ask the server for its list (OpenAI-compatible /models) and take a current
 // instruct/chat model, so the test does not depend on a model id that may be retired.
-const PREFER = [/llama-3\.\d.*(70b|405b).*instruct/i, /nemotron.*(super|ultra)/i, /qwen.*instruct/i, /mistral.*(large|medium)/i, /instruct|chat/i];
+const PREFER = [/llama-3\.3-70b.*:free/i, /deepseek.*:free/i, /qwen3.*:free/i, /gemma.*:free/i, /llama-3\.\d.*(70b|405b).*instruct/i, /nemotron.*(super|ultra)/i, /qwen.*instruct/i, /mistral.*(large|medium)/i, /instruct|chat/i];
 const SKIP = /embed|rerank|guard|safety|reward|vision|vlm|clip|parse|ocr|retriev|coder|tts|asr|whisper|nv-?ingest|deplot|kosmos|fuyu|paligemma|neva/i;
 // The list also holds models not deployed for every account (404 "Function … not found"):
 // each candidate gets a tiny request, and the first one that answers is used.
@@ -40,7 +40,12 @@ async function pickModel() {
   if (model || pre.kind !== 'openai' || !pre.baseUrl) return;
   const res = await fetch(`${pre.baseUrl}/models`, { headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {} });
   if (!res.ok) throw new Error(`Lista de modele: HTTP ${res.status}`);
-  const ids = ((await res.json()).data || []).map((m) => m.id).filter((id) => !SKIP.test(id));
+  const all = (await res.json()).data || [];
+  // OpenRouter: only free models (id ending in ":free", or zero price), so the test costs nothing.
+  const free = (m) => /:free$/.test(m.id) || (m.pricing && Number(m.pricing.prompt) === 0 && Number(m.pricing.completion) === 0);
+  const pool = provider === 'openrouter' ? all.filter(free) : all;
+  const ids = pool.map((m) => m.id).filter((id) => !SKIP.test(id));
+  if (provider === 'openrouter') console.log(`     modele gratuite pe OpenRouter: ${ids.length}`);
   const ranked = [];
   for (const re of PREFER) for (const id of ids.filter((x) => re.test(x)).sort().reverse()) if (!ranked.includes(id)) ranked.push(id);
   for (const id of ids) if (!ranked.includes(id)) ranked.push(id);

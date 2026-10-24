@@ -1,7 +1,7 @@
 {
   "anthropic": { "label": "Anthropic (Claude)", "kind": "anthropic", "baseUrl": "", "needsKey": true, "defaultModel": "claude-opus-5-5", "modelHint": "claude-opus-5-5", "keyHint": "sk-ant-…", "envKey": "ANTHROPIC_API_KEY" },
   "openai": { "label": "OpenAI", "kind": "openai", "baseUrl": "https://api.openai.com/v1", "needsKey": true, "defaultModel": "", "modelHint": "id-ul modelului, ex. gpt-4o", "keyHint": "sk-…", "envKey": "OPENAI_API_KEY" },
-  "openrouter": { "label": "OpenRouter", "kind": "openai", "baseUrl": "https://openrouter.ai/api/v1", "needsKey": true, "defaultModel": "", "modelHint": "furnizor/model, ex. meta-llama/…", "keyHint": "sk-or-…", "envKey": "OPENROUTER_API_KEY" },
+  "openrouter": { "label": "OpenRouter", "kind": "openai", "baseUrl": "https://openrouter.ai/api/v1", "needsKey": true, "defaultModel": "", "modelHint": "furnizor/model; gratuite: cele terminate în :free, ex. meta-llama/llama-3.3-70b-instruct:free", "keyHint": "sk-or-…", "envKey": "OPENROUTER_API_KEY" },
   "mistral": { "label": "Mistral", "kind": "openai", "baseUrl": "https://api.mistral.ai/v1", "needsKey": true, "defaultModel": "", "modelHint": "id-ul modelului, ex. mistral-large-latest", "keyHint": "", "envKey": "MISTRAL_API_KEY" },
   "groq": { "label": "Groq", "kind": "openai", "baseUrl": "https://api.groq.com/openai/v1", "needsKey": true, "defaultModel": "", "modelHint": "id-ul modelului din consola Groq", "keyHint": "gsk_…", "envKey": "GROQ_API_KEY" },
   "deepseek": { "label": "DeepSeek", "kind": "openai", "baseUrl": "https://api.deepseek.com/v1", "needsKey": true, "defaultModel": "", "modelHint": "id-ul modelului, ex. deepseek-chat", "keyHint": "sk-…", "envKey": "DEEPSEEK_API_KEY" },
