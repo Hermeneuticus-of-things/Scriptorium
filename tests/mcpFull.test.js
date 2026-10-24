@@ -141,6 +141,8 @@ const PRELOAD_COVERAGE = {
   getPageSetup: 'gui: Page Setup pentru imprimantă',
   setPageSetup: 'gui: Page Setup pentru imprimantă',
   printPreview: 'compile',
+  printDocuments: 'gui: tipărire la imprimantă (dialogul sistemului)',
+  savePrintPdf: 'gui: salvează PDF-ul din previzualizare (dialog de salvare)',
   listGlobalFormats: 'list_compile_formats',
   saveGlobalFormats: 'gui: editorul de formate Compile',
   listDictionaryWords: 'gui: dicționarul ortografic al lui Chromium',

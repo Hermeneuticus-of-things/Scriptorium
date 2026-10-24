@@ -295,8 +295,8 @@ describe('page setup', () => {
     const s = ps.normalizePageSetup({ size: 'Letter', orientation: 'landscape', margins: { top: 50, left: 'x' }, fontFamily: 'Times New Roman";}' });
     expect(s.margins).toEqual({ top: 10, bottom: 2.5, left: 2.5, right: 2.5 });
     expect(s.fontFamily).toBe('Times New Roman');
-    expect(ps.printCss(s)).toContain('@page{size:Letter landscape;margin:10cm 2.5cm 2.5cm 2.5cm}');
-    expect(ps.pdfPrintOptions(s)).toMatchObject({ pageSize: 'Letter', landscape: true });
+    expect(ps.printCss(s)).toContain('@page{size:11in 8.5in;margin:3.937in 0.984in 0.984in 0.984in}');
+    expect(ps.pdfPrintOptions(s)).toMatchObject({ pageSize: { width: 11, height: 8.5 }, landscape: false });
     expect(ps.printOptions({ size: 'A4' }).pageSize).toEqual({ width: 210000, height: 297000 });
     expect(ps.printPage('<p>x</p>', 'T<i>')).toContain('<title>Ti></title>');
     expect(ps.normalizePageSetup({ size: 'B9' }).size).toBe('A4');

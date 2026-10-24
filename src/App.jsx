@@ -35,6 +35,7 @@ import { BackIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, Forwar
 import { mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
 import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
+import PrintPreviewDialog from './components/PrintPreviewDialog.jsx';
 import HelpWindow from './components/HelpWindow.jsx';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import AiJobBar from './components/AiJobBar.jsx';
@@ -210,6 +211,7 @@ export default function App({ api }) {
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
+  const [printOpts, setPrintOpts] = useState(null); // File > Print Preview: { ids, pageSetup? }
   const [composition, setComposition] = useState(false);
   const [error, setError] = useState('');
   const [saveState, setSaveStateRaw] = useState('salvat');
@@ -1126,7 +1128,19 @@ export default function App({ api }) {
     const copy = await api.saveProjectAs(dir, title);
     if (copy) await openResult(copy);
   };
+  // File > Print Preview / Print: current document or selected binder documents, with the Page Setup.
+  const openPrintPreview = (pageSetup) =>
+    flush()
+      .then(() => {
+        setPrintOpts({ ids: selectionList(), ...(pageSetup ? { pageSetup } : {}) });
+        setDialog('printPreview');
+      })
+      .catch(report);
   const printCurrent = () => {
+    if (api.printDocuments && dir) {
+      flush().then(() => api.printDocuments(dir, projectRef.current, { ids: selectionList() })).catch(report);
+      return;
+    }
     const html = docsNow()[selectedId];
     if (html == null) return;
     api.printDocument(`<h1>${(selected?.title || '').replace(/</g, '&lt;')}</h1>${html}`, selected?.title).catch(report);
@@ -1516,7 +1530,7 @@ export default function App({ api }) {
     ['file', 'importWeb', tr('cmd.importWeb'), () => importWeb().catch(report), !api.importWebPage],
     ['file', 'exportFiles', tr('cmd.exportFiles'), () => flush().then(() => setDialog('export'))],
     ['file', 'saveAs', tr('cmd.saveAs'), () => saveAs().catch(report), !api.saveProjectAs],
-    ['file', 'print', tr('cmd.print'), printCurrent, !api.printDocument],
+    ['file', 'print', tr('cmd.print'), printCurrent, !api.printDocument && !api.printDocuments],
     ['file', 'backups', 'Backup-uri…', () => setDialog('backup'), !api.listBackups],
     ['file', 'closeProject', tr('cmd.closeProject'), closeProject],
     ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
@@ -1552,6 +1566,7 @@ export default function App({ api }) {
       setToast('Snapshot salvat.');
     }],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
+    ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['tools', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['tools', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
     ['view', 'floatInspector', tr('cmd.floatInspector'), () => setShowFloatInspector((v) => !v), !composition],
@@ -1589,7 +1604,7 @@ export default function App({ api }) {
     ['file', 'editorPackage', tr('cmd.editorPackage'), () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(tr('ui.app.pachet_creat_in_x_x', { dir: r.dir, length: r.files.length }))).catch(report), !api.editorPackage],
     ['file', 'saveTemplate', tr('cmd.saveTemplate'), () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
     ['file', 'pageSetup', tr('cmd.pageSetup'), () => setDialog('pageSetup'), !api.getPageSetup],
-    ['file', 'printPreview', tr('cmd.printPreview'), () => flush().then(() => api.printPreview(dir, project, { ids: selectedId ? [selectedId] : [] })).catch(report), !api.printPreview],
+    ['file', 'printPreview', tr('cmd.printPreview'), () => openPrintPreview(), !api.printPreview],
     ['help', 'help', 'Manualul Scribner', () => setHelp({ topic: null, tab: 'manual' })],
     ['help', 'helpContext', tr('cmd.helpContext'), () => setHelp({ topic: helpContext(), tab: 'manual' })],
     ['help', 'helpShortcuts', tr('cmd.helpShortcuts'), () => setHelp({ topic: null, tab: 'shortcuts' })],
@@ -2177,7 +2192,17 @@ export default function App({ api }) {
       )}
       {help && <HelpWindow initialTopic={help.topic} initialTab={help.tab} settings={settings} onClose={() => setHelp(null)} onStartTutorial={startTutorial} />}
       {dialog === 'saveTemplate' && <SaveTemplateDialog api={api} dir={dir} project={project} onSaved={(t) => setToast(tr('ui.app.sablon_salvat_x', { title: t.title }))} onClose={() => setDialog(null)} onError={report} />}
-      {dialog === 'pageSetup' && <PageSetupDialog api={api} dir={dir} project={project} previewIds={selectedId ? [selectedId] : []} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'pageSetup' && (
+        <PageSetupDialog
+          api={api}
+          project={project}
+          onSave={(pageSetup) => saveProject({ ...projectRef.current, pageSetup })}
+          onPreview={dir ? (pageSetup) => openPrintPreview(pageSetup) : null}
+          onClose={() => setDialog(null)}
+          onError={report}
+        />
+      )}
+      {dialog === 'printPreview' && printOpts && <PrintPreviewDialog api={api} dir={dir} project={project} options={printOpts} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
       {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || tr('ui.app.din_scratchpad')); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(tr('ui.app.trimis_in_x', { title: parent.title })); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
       {serviceResult && (

@@ -76,6 +76,7 @@ function demoProject() {
 export function createMockApi() {
   const noKey = typeof location !== 'undefined' && /[?&]nokey\b/.test(location.search);
   const state = { settings: { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true, hasApiKey: !noKey, aiLabel: 'Demo (simulat)', aiModel: 'demo-local' }, projects: {} };
+  let pageSetupDefault = null; // File > Page Setup default (desktop: userData/page-setup.json)
   // Simulated AI: streams its answer word by word ('ai:delta'), honours cancelAi, reports bulk progress.
   const deltaFns = new Set();
   const progressFns = new Set();
@@ -244,6 +245,16 @@ export function createMockApi() {
     },
     async importScriv() {
       throw new Error('Importul .scriv funcționează doar în aplicația desktop.');
+    },
+    // File > Page Setup / Print Preview: the setup is kept in memory (the project keeps its own
+    // copy in project.pageSetup). printPreview / printDocuments / savePrintPdf are left out on
+    // purpose: the PDF preview needs the desktop app, so those menu items stay disabled here.
+    async getPageSetup(project) {
+      return project?.pageSetup || pageSetupDefault;
+    },
+    async setPageSetup(setup) {
+      pageSetupDefault = { ...(setup || {}) };
+      return pageSetupDefault;
     },
     async exportCompiled(dir, project, format) {
       if (format !== 'html') throw new Error('În browser se poate exporta doar HTML. DOCX/EPUB/PDF merg în aplicația desktop.');
