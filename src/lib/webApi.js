@@ -344,7 +344,8 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       const list = ((await kv.get(k)) || []).map(({ name, date, html }) => ({ name, date, html }));
       if (list.length) snapshots[id] = list;
     }
-    return { format: BUNDLE_FORMAT, version: BUNDLE_VERSION, exported: new Date().toISOString(), project, docs, notes, snapshots };
+    const history = await kv.get(K.history(dir));
+    return { format: BUNDLE_FORMAT, version: BUNDLE_VERSION, exported: new Date().toISOString(), project, docs, notes, snapshots, ...(history ? { history } : {}) };
   }
 
   async function importBundleData(bundle) {
@@ -358,6 +359,7 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       // Bundles carry no file ids: give each snapshot a unique one (index), never the incoming `file`.
       entries.push([K.snaps(dir, id), (Array.isArray(list) ? list : []).map((s, i) => ({ name: s.name || 'Snapshot', date: s.date, html: String(s.html || ''), file: `${Date.parse(s.date) || Date.now()}-${i}` }))]);
     }
+    if (bundle.history && typeof bundle.history === 'object') entries.push([K.history(dir), structuredClone(bundle.history)]);
     // project.json last: a failed (quota) import never leaves a half project that opens.
     entries.push([K.project(dir), project]);
     try {
@@ -488,7 +490,7 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       for (const k of [...(await kv.keys(K.docPrefix(dir))), ...(await kv.keys(K.snapPrefix(dir)))]) await kv.del(k);
       await kv.del(K.project(dir));
       await kv.del(K.history(dir));
-      if (isFolderDir(dir)) await baseKv.del(`fh:${dir}`);
+      await kv.del(K.authorJournal(dir));
       folders.delete(dir);
       bases.delete(dir);
       const s = await settings();

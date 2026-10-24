@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { t } from '../lib/i18n.js';
 
-// Ajutor → Conectează la Claude (MCP): gives Claude Desktop / Claude Code access to the open project
+// AI → Conectează la Claude (MCP): gives Claude Desktop / Claude Code access to the open project
 // through the MCP server shipped with the app (Scribner runs it itself; no Node.js needed).
 export default function McpConnectDialog({ api, dir, onClose }) {
   const [readOnly, setReadOnly] = useState(false);

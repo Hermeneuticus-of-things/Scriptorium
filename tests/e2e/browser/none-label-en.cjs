@@ -47,6 +47,16 @@ async function toEnglish(p) {
   const oopts = await page.locator('select option').allTextContents();
   check('outline selects show no raw "Fără"', !oopts.includes('Fără'));
 
+  // Built-in demo statuses / labels are shown in English (stored values unchanged).
+  check('outline shows built-in statuses in English', oopts.includes('Revised') && oopts.includes('First Draft') && !oopts.includes('Prima ciornă'), oopts.slice(0, 12).join(' | '));
+  const stored = await page.locator('select option').evaluateAll((os) => os.map((o) => o.value));
+  check('option values keep the stored names', stored.includes('Prima ciornă'));
+  await page.locator('.binder-row', { hasText: 'Partea întâi' }).first().click();
+  await page.keyboard.press('Control+2');
+  await page.waitForTimeout(400);
+  const stamps = await page.locator('.stamp').allTextContents();
+  check('corkboard status stamps in English', stamps.length > 0 && stamps.every((s) => !/Prima ciornă|Revizuit/.test(s)), stamps.join(' | '));
+
   check('no page errors', errors.length === 0, errors.join(' | '));
   await browser.close();
   done();

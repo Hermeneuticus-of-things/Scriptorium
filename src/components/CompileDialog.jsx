@@ -4,6 +4,7 @@ import { styleCss, stylesOf } from '../lib/styles.js';
 // renderer has no Node and no eval, so it reads the JSON block from the source.
 import formatsSource from '../../lib/compileFormats.cjs?raw';
 import { t as tr, builtinName } from '../lib/i18n.js';
+import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 
 function readPresets() {
   try {
@@ -498,7 +499,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <span className="muted">{tr('ui.compileDialog.etichete')}</span>
                       {labelNames.map((l) => (
                         <label key={l} className="check">
-                          <input type="checkbox" checked={labels.includes(l)} onChange={() => toggleIn(labels, setLabels, l)} /> {l}
+                          <input type="checkbox" checked={labels.includes(l)} onChange={() => toggleIn(labels, setLabels, l)} /> {noneLabel(l, tr)}
                         </label>
                       ))}
                     </div>
@@ -517,7 +518,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <span className="muted">{tr('ui.compileDialog.stari')}</span>
                       {statusNames.map((s) => (
                         <label key={s} className="check">
-                          <input type="checkbox" checked={statuses.includes(s)} onChange={() => toggleIn(statuses, setStatuses, s)} /> {s}
+                          <input type="checkbox" checked={statuses.includes(s)} onChange={() => toggleIn(statuses, setStatuses, s)} /> {noneStatus(s, tr)}
                         </label>
                       ))}
                     </div>

@@ -1,3 +1,4 @@
+import { t as i18nT } from '../lib/i18n.js';
 import { TextSelection } from '@tiptap/pm/state';
 import { sentenceAt, wordAt } from '../lib/textRange.js';
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -140,7 +141,7 @@ const Editor = forwardRef(function Editor(
           }
           if (mod && !e.shiftKey && e.key.toLowerCase() === 'l') {
             e.preventDefault();
-            const href = window.prompt('Adresa linkului:', editor?.getAttributes('link').href || 'https://');
+            const href = window.prompt(i18nT('ui.formatBar.linkPrompt'), editor?.getAttributes('link').href || 'https://');
             if (href) editor?.chain().focus().extendMarkRange('link').setLink({ href }).run();
             return true;
           }
@@ -167,7 +168,7 @@ const Editor = forwardRef(function Editor(
         },
         handleDoubleClickOn: (_view, _pos, node, nodePos) => {
           if (node.type.name !== 'footnote' || readOnly) return false;
-          const text = window.prompt('Nota de subsol:', node.attrs.text);
+          const text = window.prompt(i18nT('ui.editor.footnotePrompt'), node.attrs.text);
           if (text !== null) editor?.chain().setNodeSelection(nodePos).updateAttributes('footnote', { text }).run();
           return true;
         },
@@ -391,15 +392,15 @@ const Editor = forwardRef(function Editor(
   const chain = () => editor.chain().focus();
 
   const addComment = () => {
-    const text = window.prompt('Comentariu:');
+    const text = window.prompt(i18nT('ui.editor.commentPrompt'));
     if (text) chain().setComment(text).run();
   };
   const addFootnote = () => {
-    const text = window.prompt('Nota de subsol:');
+    const text = window.prompt(i18nT('ui.editor.footnotePrompt'));
     if (text) chain().insertFootnote(text).run();
   };
   const addAnnotation = () => {
-    const text = window.prompt('Adnotare inline (nu intră în Compile):');
+    const text = window.prompt(i18nT('ui.formatBar.annotationBtn') + ':');
     if (text) chain().insertAnnotation(text).run();
   };
   const insertImage = () => imageInput.current?.click();

@@ -274,20 +274,27 @@ tool(
     if (synopsis) node.synopsis = synopsis;
     // The text first: when the app sees the new binder item its document already exists.
     if (type === 'text') store.writeDoc(dir, node.id, 'docs', content ? manuscriptToHtml(content) : '<p></p>');
-    const p = mutate(dir, (p) => {
-    if (after_id) {
-      // "after" means sibling: insertNear would nest the item inside a folder anchor.
-      const after = nodeOrThrow(p, after_id);
-      if (after.root) throw new Error('after_id nu poate fi o rădăcină; folosește parent_id.');
-      const list = findParent(p.tree, after_id).children;
-      list.splice(list.findIndex((n) => n.id === after_id) + 1, 0, node);
-    } else {
-      const anchor = parent_id || p.tree[0].id;
-      const anchorNode = nodeOrThrow(p, anchor);
-      if (!anchorNode.children) throw new Error('parent_id trebuie să fie un dosar.');
-      p.tree = insertNear(p.tree, anchor, node);
+    let p;
+    try {
+      p = mutate(dir, (p) => {
+        if (after_id) {
+          // "after" means sibling: insertNear would nest the item inside a folder anchor.
+          const after = nodeOrThrow(p, after_id);
+          if (after.root) throw new Error('after_id nu poate fi o rădăcină; folosește parent_id.');
+          const list = findParent(p.tree, after_id).children;
+          list.splice(list.findIndex((n) => n.id === after_id) + 1, 0, node);
+        } else {
+          const anchor = parent_id || p.tree[0].id;
+          const anchorNode = nodeOrThrow(p, anchor);
+          if (!anchorNode.children) throw new Error('parent_id trebuie să fie un dosar.');
+          p.tree = insertNear(p.tree, anchor, node);
+        }
+      });
+    } catch (err) {
+      // the binder item was not added: do not leave its document behind as an orphan file
+      if (type === 'text') fs.rmSync(path.join(dir, 'docs', `${node.id}.html`), { force: true });
+      throw err;
     }
-    });
     return { id: node.id, path: pathOf(p, node.id) };
   },
   { writes: true },

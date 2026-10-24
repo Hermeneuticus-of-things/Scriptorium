@@ -121,7 +121,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     }
   };
   const [comp, setComp] = useState({
-    bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade || 100,
+    bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade ?? 100,
     bgImage: settings.compBgImage || '', bgImageFit: settings.compBgImageFit || 'cover', showTargets: Boolean(settings.compShowTargets),
   });
   const [sharing, setSharing] = useState({
@@ -184,7 +184,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         compBg: comp.bg,
         compWidth: Number(comp.width) || 40,
         compPaper: comp.paper,
-        compFade: Number(comp.fade) || 100,
+        compFade: Math.max(0, Math.min(100, num(comp.fade, 100))), // 0 = transparent paper, a valid value
         compBgImage: comp.bgImage,
         compBgImageFit: comp.bgImageFit,
         compShowTargets: comp.showTargets,

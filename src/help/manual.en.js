@@ -257,7 +257,7 @@ node scripts\ai-smoke.cjs openrouter</pre>
       {
         id: 'yours-mcp',
         title: 'Connecting Claude, Codex and other AI agents (MCP)',
-        html: `<p>Scribner ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>Help → Connect to Claude (MCP)</em>. Installer paths on Windows (current user):</p>
+        html: `<p>Scribner ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>AI → Connect to Claude (MCP)…</em>. Installer paths on Windows (current user):</p>
 <pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
 Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs</pre>
 <p><strong>Claude Code:</strong></p>
