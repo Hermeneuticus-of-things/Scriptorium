@@ -12,6 +12,15 @@
 - **Fără nume de alte programe** în interfață și în ajutor: „proiect .scriv”, „Import .scriv”, „Legături interne”, „Text continuu” (în loc de numele vechi al modului).
 - **Traduceri:** „Creat”, „Modificat”, „Origine .scriv” din Inspector, „Ține cont de majuscule” din Caută, „Selecția curentă (n elemente)” din Compile.
 - **Lucru fără conexiune (roadmap §9):** textul care nu se poate scrie în folder rămâne în coadă, se reîncearcă singur la 15 s și imediat când revine folderul; coada se păstrează și dacă închizi programul. Bara de jos arată „Sincronizat” / „În așteptare: n documente” / „Conflict” (scenariu `offline.cjs`).
+- **Securitate:**
+  - fereastra programului nu mai poate fi dusă pe alt site de o legătură sau de un fișier tras peste ea; legăturile web se deschid în browser, iar doar pagina programului mai poate cere ceva procesului principal;
+  - cheia AI pleacă doar la furnizorul ei (adresa se poate alege numai pentru serverele proprii: personalizat, Ollama, LM Studio);
+  - lista de proiecte recente poate doar să scadă din fereastră, iar folderul de backup vine doar din dialogul de alegere;
+  - transcrierea D&TED primește doar fișiere alese în dialog; snapshot-ul cere fereastra care deține proiectul;
+  - serverul MCP nu mai poate fi păcălit să scrie în proiect prin litere mari/mici sau legături simbolice.
+- **Coada fără conexiune:** textul unui proiect nu mai poate ajunge în alt proiect deschis după; la recuperare, ce s-a schimbat între timp pe disc se îmbină (conflictul păstrează varianta de pe disc ca snapshot), iar documentele șterse nu se recreează.
+- **Viteză:** scrisul într-un paragraf uriaș (1 MB) nu mai încetinește: corecturile, ghilimelele și completarea automată citesc doar ultimele 256 de caractere.
+- **Data:** istoricul scrisului în browser și data din Compile LaTeX/Pandoc folosesc ziua locală, nu ora UTC.
 - **Conflictul nu mai deschide fereastra peste textul în care scrii:** apare „Conflict” în bara de jos, iar clicul deschide alegerea.
 - **Dialogul de conflict:** imagine în README, „Într-un loc” la un singur conflict, fără mesajul dublu de jos; scenariu de browser `conflict.cjs`.
 

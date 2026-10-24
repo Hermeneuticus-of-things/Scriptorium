@@ -188,8 +188,20 @@ const project = z.string().optional().describe('Numele sau calea proiectului (im
 // Files the server writes for a client (compile, exports, backups of new projects) never
 // land inside a project folder: a client cannot overwrite project files through an export.
 function outsideProjects(p, what = 'output_path') {
-  const out = path.resolve(p);
-  if (projects.some((pd) => out === pd || out.startsWith(pd + path.sep))) throw new Error(`${what} nu poate fi în interiorul unui proiect.`);
+  // Real path, case-folded where the file system ignores case: no way around it by C:/c: or a link.
+  const norm = (x) => {
+    let r = path.resolve(x);
+    for (let probe = r, rest = ''; ; ) {
+      try { r = path.join(fs.realpathSync.native(probe), rest); break; } catch { /* not there yet */ }
+      const up = path.dirname(probe);
+      if (up === probe) break;
+      rest = path.join(path.basename(probe), rest);
+      probe = up;
+    }
+    return process.platform === 'win32' || process.platform === 'darwin' ? r.toLowerCase() : r;
+  };
+  const out = norm(p);
+  if (projects.map(norm).some((pd) => out === pd || out.startsWith(pd + path.sep))) throw new Error(`${what} nu poate fi în interiorul unui proiect.`);
   return out;
 }
 // A project created / imported / restored by a tool becomes reachable in this session.

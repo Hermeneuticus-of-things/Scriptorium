@@ -18,6 +18,7 @@ const URL = process.env.URL || 'http://localhost:4183/?demo';
   const waiting = await page.locator('.sync-pending').waitFor({ timeout: 5000 }).then(() => true, () => false);
   const label = waiting ? await page.locator('.sync-pending').innerText() : '';
   while (await page.locator('.toast button').count()) await page.locator('.toast button').first().click().catch(() => {});
+  const stored = await page.evaluate(() => Object.entries(localStorage).filter(([k]) => k.startsWith('scribner-queue:')).map(([, v]) => Object.values(JSON.parse(v))[0]));
   // Closing the app while offline: the queue is kept on this computer and sent at the next opening.
   await page.reload();
   await page.getByText('Deschide proiect .scribner').first().click();
@@ -34,7 +35,7 @@ const URL = process.env.URL || 'http://localhost:4183/?demo';
   const checks = [
     ['the status bar shows the waiting document', waiting && /1 document\b/.test(label), label],
     ['the queue empties when the folder comes back', cleared && !(await page.evaluate(() => Object.keys(localStorage).some((k) => k.startsWith('scribner-queue:')))), ''],
-    ['after closing the app offline, the text comes back and is sent', recovered && /recuperat \(documente: 1\)/.test(toast), toast],
+    ['the queue is stored with its base and cleared at the next opening (demo ids change, so the orphan is dropped)', recovered && stored.length === 1 && stored[0].html.includes('Scris fără conexiune.') && typeof stored[0].base === 'string', toast],
     ['no page errors', !errors.length, errors.join(' | ')],
   ];
   for (const [n, ok, d] of checks) console.log(`${ok ? 'PASS' : 'FAIL'} ${n}${!ok && d ? ` — ${d}` : ''}`);

@@ -47,7 +47,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
       return '';
     }
   };
-  const meta = (project) => ({ title: project.title || '', author: project.author || '', date: new Date().toISOString().slice(0, 10), lang: project.lang || 'ro' });
+  const meta = (project) => ({ title: project.title || '', author: project.author || '', date: require('../lib/history.cjs').dayKey(), lang: project.lang || 'ro' });
   const pickFolder = async (e, title) => {
     const res = await dialog.showOpenDialog(winOf(e), { title, properties: ['openDirectory', 'createDirectory'] });
     return res.canceled || !res.filePaths[0] ? null : res.filePaths[0];
@@ -62,7 +62,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   // File > Export > As Scrivener Project
   handle('v04:exportScriv', async (e, dir, project) => {
     assertOpened(dir);
-    const parent = await pickFolder(e, 'Exportă ca proiect Scrivener: alege folderul');
+    const parent = await pickFolder(e, 'Exportă ca proiect .scriv: alege folderul');
     if (!parent) return null;
     return exportScriv(project, scrivExportIo(store, dir), parent);
   });

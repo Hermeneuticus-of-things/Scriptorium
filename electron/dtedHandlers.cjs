@@ -58,6 +58,7 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
   });
   handle('dted:transcribe', async (e, file, id) => {
     if (!file || !AUDIO.includes(path.extname(String(file)).slice(1).toLowerCase())) throw new Error('Alege un fișier audio (MP3, WAV, M4A, OGG, FLAC).');
+    if (!pickedAudio.has(file)) throw new Error('Alege fișierul audio din fereastra de deschidere.'); // only files the user picked
     return dted.transcribe(file, opts(), reqId(e, id, 't'));
   });
   // An audio file attached to the project (media/<file>), from the binder.
