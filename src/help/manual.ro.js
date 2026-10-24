@@ -754,7 +754,14 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'faq-report',
         title: 'Raportarea unei probleme',
-        html: `<p><em>Ajutor → Raportează o problemă</em> deschide pagina de probleme a proiectului pe GitHub. Scrie versiunea (din <em>Ajutor → Despre Scribner</em>), sistemul de operare, pașii care reproduc problema și ce te așteptai să se întâmple.</p>`,
+        html: `<p><em>Ajutor → Raportează o problemă…</em> deschide o fereastră simplă în care descrii problema cu cuvintele tale. Nu trebuie să știi nimic tehnic.</p>
+<ol>
+<li>Scrie la <em>Ce s-a întâmplat?</em> ce ai văzut (de exemplu „am apăsat Compile și nu s-a creat fișierul”).</li>
+<li>Opțional, la <em>Ce făceai înainte?</em>, pașii de dinainte.</li>
+<li>Apasă <em>Trimite pe GitHub</em>: se deschide pagina proiectului cu raportul completat; acolo apeși <em>Submit new issue</em>. Ai nevoie de un cont GitHub gratuit. Dacă nu ai, folosește <em>Copiază raportul</em> și trimite textul cum îți e comod.</li>
+</ol>
+<p><strong>Ce se trimite:</strong> versiunea programului, sistemul de operare, limba interfeței, ultimele erori înregistrate de program și numele ultimelor comenzi folosite. Le vezi pe toate la <em>Detalii tehnice trimise</em>, înainte de trimitere. <strong>Ce nu se trimite:</strong> textul cărții, notele, numele tău de utilizator, căile proiectelor (apar ca <code>~</code> și <code>&lt;proiect&gt;</code>) și cheile API.</p>
+<p>Când programul întâlnește o eroare, apare discret jos în dreapta mesajul <em>A apărut o problemă. Trimite raportul?</em> (o singură dată pentru fiecare eroare). Îl poți închide liniștit. Erorile se păstrează într-un jurnal mic în folderul de date al aplicației (<code>logs/errors.jsonl</code>, cel mult 200 de intrări).</p>`,
       },
     ],
   },

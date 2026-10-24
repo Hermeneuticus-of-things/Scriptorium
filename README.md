@@ -6,6 +6,7 @@
   <a href="../../releases/latest"><strong>Descarcă pentru Windows</strong></a> ·
   <a href="#cum-îl-instalezi">Instalare</a> ·
   <a href="#întrebări">Întrebări</a> ·
+  <a href="#ai-găsit-o-problemă">Ai găsit o problemă?</a> ·
   <a href="#sub-capotă">Sub capotă</a>
 </p>
 
@@ -56,6 +57,16 @@ Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-u
 Personajele, locurile și cercetarea stau lângă text. Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor.
 
 O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o citești și fără internet. *Vizualizare → Focus lingvistic* îți colorează substantivele sau verbele, ca să vezi unde se îngroașă textul.
+
+**Legături între documente.** Scrii `[[Matei]]` și textul devine legătură către fișa lui Matei. Dacă nu există încă un document cu acel titlu, de exemplu `[[Titlu nou]]`, programul îți propune să-l creeze pe loc și să-l lege. Legăturile merg și înapoi, singure: în Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el.
+
+Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, fișe liniate ca pe hârtie și fișe colorate după etichetă (din setările panoului).
+
+<p align="center">
+  <img src="./assets/readme/reference.png" width="100%" alt="Panoul de referință: scena Drumul deschisă doar pentru citire lângă scena la care scrii">
+</p>
+
+*Vizualizare → Deschide ca referință* pune alt document lângă cel la care scrii, doar de citit: planul, o scenă veche sau originalul. Bifezi *Editabil* dacă vrei totuși să-l schimbi.
 
 ## Interfață pe gustul tău
 
@@ -177,7 +188,7 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 
 **5. Separatoare și înlocuiri.** În *Separatoare* alegi ce se pune între scene (rând gol, „#”, „* * *”) și între bucăți de tipuri diferite. În *Înlocuiri* schimbi la Compile un text cu altul, cu sau fără majuscule, cuvânt întreg sau expresie regulată; textul tău din proiect rămâne neatins.
 
-**6. Note și comentarii.** Notele de subsol rămân note de subsol sau devin note la finalul fiecărui capitol ori al cărții. Comentariile devin comentarii Word (în DOCX) sau dispar. Adnotările din text nu ajung în carte, iar evidențierile și culorile se pot elimina.
+**6. Note și comentarii.** Notele de subsol rămân note de subsol sau devin note la finalul fiecărui capitol ori al cărții. Comentariile devin comentarii Word (în DOCX) sau dispar. Adnotările din text nu ajung în carte, iar evidențierile și culorile se pot elimina. Numerotarea notelor o alegi: 1, 2, 3 · i, ii, iii · a, b, c sau simboluri (*, †, ‡, §), cu reluare de la 1 în fiecare capitol, dacă vrei.
 
 **7. Pagina de tipar.** În fila *Pagină* alegi dimensiunea (A4, A5, Letter, 6 × 9 in sau personalizată), marginile sus, jos, interior și exterior, cu *margini în oglindă* pentru pagini față-verso. Antetul și subsolul au câte trei câmpuri (stânga, centru, dreapta), cu substituenți: titlul capitolului curent în antet, numărul paginii în subsol. Prima pagină a fiecărui capitol și paginile de la început (copertă, titlu, cuprins) rămân fără antet, iar numerotarea pornește de la textul cărții. Tot aici alegi fontul textului și al titlurilor, mărimea, spațierea și alineatul.
 
@@ -196,7 +207,7 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 | `<$date>`, `<$year>` | data și anul compilării |
 | `<$img:Nume>` | imaginea cu acel nume din Cercetare |
 
-**8. Tipografie.** La cerere, ghilimelele drepte devin „…”, două cratime devin linie de dialog, iar legăturile interne devin text simplu. În PDF și în cartea tipărită textul se desparte în silabe și nu rămân rânduri singure la început sau la final de pagină. Imaginile își păstrează mărimea din text, dar nu ies niciodată din pagină.
+**8. Tipografie.** La cerere, ghilimelele drepte devin „…”, două cratime devin linie de dialog, iar legăturile interne devin text simplu. În PDF și în cartea tipărită textul se desparte în silabe și nu rămân rânduri singure la început sau la final de pagină. Imaginile își păstrează mărimea din text, dar nu ies niciodată din pagină. Un pasaj marcat cu *Format → Păstrează formatarea* (o poezie, un tabel, un citat așezat anume) trece prin Compile exact cum l-ai așezat, fără fontul și spațierea formatului.
 
 **9. Metadate și copertă.** În *Metadate* pui titlul, subtitlul, autorul, editura și limba. Coperta e o imagine din proiect; ajunge pe prima pagină în PDF și DOCX și drept copertă în EPUB.
 
@@ -227,6 +238,20 @@ Ce vei vedea în program:
 - **roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor.
 
 Planul complet e în [`ROADMAP.md`](ROADMAP.md).
+
+## Ai găsit o problemă?
+
+<p align="center">
+  <img src="./assets/readme/report.png" width="100%" alt="Fereastra Raportează o problemă: descrierea cu cuvintele tale, ce făceai înainte și detaliile tehnice completate automat">
+</p>
+
+Nu trebuie să știi nimic tehnic:
+
+1. Deschide *Ajutor → Raportează o problemă…*. Dacă programul a întâlnit o eroare, îți propune singur, discret, jos în dreapta: „A apărut o problemă. Trimite raportul?”.
+2. Scrie cu cuvintele tale ce s-a întâmplat și, dacă vrei, ce făceai înainte.
+3. Apasă *Trimite pe GitHub*. Se deschide pagina proiectului cu raportul completat; acolo apeși *Submit new issue*. Ai nevoie de un cont GitHub gratuit. Fără cont, apeși *Copiază raportul* și trimiți textul cum îți e comod.
+
+**Ce se trimite:** versiunea programului, sistemul de operare, limba interfeței, ultimele erori înregistrate de program și numele ultimelor comenzi. Le vezi pe toate la *Detalii tehnice trimise*, înainte să trimiți. **Ce nu se trimite:** textul cărții și al notelor, numele tău de utilizator, căile proiectelor și cheile API; acestea sunt ascunse automat.
 
 ## Cum îl instalezi
 

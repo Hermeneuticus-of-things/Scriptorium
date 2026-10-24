@@ -114,6 +114,16 @@ contextBridge.exposeInMainWorld('api', {
   nlmExport: (dir, options) => call('nlm:export', dir, options),
   nlmOpen: () => call('nlm:open'),
   openLink: (url) => call('app:openLink', url),
+  copyText: (text) => call('app:copyText', text),
+  // Error log (Help → Report a problem): { entries, env }; new errors arrive through onAppError.
+  getErrorLog: () => call('errors:get'),
+  clearErrorLog: () => call('errors:clear'),
+  logError: (info) => call('errors:log', info),
+  onAppError: (fn) => {
+    const listener = (_e, entry) => fn(entry);
+    ipcRenderer.on('app:error', listener);
+    return () => ipcRenderer.removeListener('app:error', listener);
+  },
   servicesStatus: () => call('services:status'),
   setService: (id, values) => call('services:set', id, values),
   setAccount: (account) => call('accounts:set', account),

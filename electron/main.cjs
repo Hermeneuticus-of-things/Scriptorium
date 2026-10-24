@@ -608,6 +608,53 @@ handle('media:add', async (e, dir) => {
   });
 });
 
+// Error log for Help → Report a problem (logs/errors.jsonl in userData, rotated).
+const errorLog = require('../lib/errorLog.cjs');
+const errorLogFile = () => path.join(app.getPath('userData'), 'logs', 'errors.jsonl');
+function logAppError(info) {
+  try {
+    const entry = errorLog.appendEntry(errorLogFile(), errorLog.makeEntry({ version: app.getVersion(), ...info }));
+    for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send('app:error', entry);
+    return entry;
+  } catch (err) {
+    console.error('Jurnalul de erori nu poate fi scris', err);
+    return null;
+  }
+}
+process.on('uncaughtException', (error) => {
+  console.error(error);
+  logAppError({ process: 'main', kind: 'uncaughtException', error });
+});
+process.on('unhandledRejection', (error) => {
+  console.error(error);
+  logAppError({ process: 'main', kind: 'unhandledRejection', error });
+});
+app.on('render-process-gone', (_e, _wc, d) => logAppError({ process: 'renderer', kind: 'render-process-gone', message: `Fereastra s-a oprit: ${d.reason} (cod ${d.exitCode})` }));
+app.on('child-process-gone', (_e, d) => {
+  if (d.reason !== 'clean-exit') logAppError({ process: d.type, kind: 'child-process-gone', message: `${d.type}${d.name ? ' ' + d.name : ''}: ${d.reason} (cod ${d.exitCode})` });
+});
+handle('errors:get', () => ({
+  entries: errorLog.readEntries(errorLogFile()),
+  env: {
+    appVersion: app.getVersion(),
+    os: `${process.platform} ${require('os').release()}`,
+    arch: process.arch,
+    electron: process.versions.electron,
+    chrome: process.versions.chrome,
+    home: require('os').homedir(),
+    user: (() => { try { return require('os').userInfo().username; } catch { return ''; } })(),
+    projectDirs: (readSettings().recent || []).map((r) => (typeof r === 'string' ? r : r && r.dir)).filter(Boolean),
+  },
+}));
+handle('errors:clear', () => errorLog.clear(errorLogFile()));
+handle('errors:log', (_e, info = {}) => {
+  logAppError({ process: 'renderer', kind: String(info.kind || 'error').slice(0, 40), message: String(info.message || '').slice(0, 1000), stack: String(info.stack || '').slice(0, 4000) });
+  return true;
+});
+handle('app:copyText', (_e, text) => {
+  clipboard.writeText(String(text || ''));
+  return true;
+});
 require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
 require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai });
