@@ -10,6 +10,7 @@
 #   $env:SCRIBNER_PORTABLE = '1'   descarcă varianta portabilă pe Desktop, fără instalare
 #   $env:SCRIBNER_VERSION = 'v0.8.7'  o anumită versiune în loc de ultima
 #   $env:SCRIBNER_DRYRUN = '1'     doar verifică (descarcă și controlează amprenta), fără instalare
+#   $env:GITHUB_TOKEN = 'ghp_…'    necesar cât timp depozitul e privat (token cu drept de citire)
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'   # Invoke-WebRequest e mult mai rapid fără bara de progres
@@ -24,7 +25,14 @@ if ($env:OS -ne 'Windows_NT') { throw 'Scriptul de instalare e doar pentru Windo
 $tag = $env:SCRIBNER_VERSION
 $api = if ($tag) { "https://api.github.com/repos/$Repo/releases/tags/$tag" } else { "https://api.github.com/repos/$Repo/releases/latest" }
 Say 'caut ultima versiune...'
-$release = Invoke-RestMethod -Uri $api -Headers @{ 'User-Agent' = 'scribner-install'; 'Accept' = 'application/vnd.github+json' }
+$headers = @{ 'User-Agent' = 'scribner-install'; 'Accept' = 'application/vnd.github+json' }
+if ($env:GITHUB_TOKEN) { $headers['Authorization'] = "Bearer $($env:GITHUB_TOKEN)" }
+try {
+  $release = Invoke-RestMethod -Uri $api -Headers $headers
+} catch {
+  if ("$_" -match '404|Not Found') { throw 'Nu găsesc versiunea publicată. Dacă depozitul e privat, pune înainte $env:GITHUB_TOKEN = ''token-ul tău''.' }
+  throw
+}
 
 $portable = $env:SCRIBNER_PORTABLE -eq '1'
 $pattern = if ($portable) { '^Scribner-.*-portabil\.exe$' } else { '^Scribner-Setup-.*\.exe$' }
@@ -36,7 +44,13 @@ New-Item -ItemType Directory -Force -Path $dir | Out-Null
 $file = Join-Path $dir $asset.name
 
 Say "descarc $($asset.name) ($([math]::Round($asset.size / 1MB)) MB)..."
-Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $file -UseBasicParsing
+if ($env:GITHUB_TOKEN) {
+  # Private repository: the asset comes from the API with the token, as a binary stream.
+  $dl = @{ 'User-Agent' = 'scribner-install'; 'Accept' = 'application/octet-stream'; 'Authorization' = "Bearer $($env:GITHUB_TOKEN)" }
+  Invoke-WebRequest -Uri $asset.url -Headers $dl -OutFile $file -UseBasicParsing
+} else {
+  Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $file -UseBasicParsing
+}
 
 # Amprenta publicată de GitHub pentru fișier ("sha256:..."); fără ea nu pornim nimic.
 $expected = "$($asset.digest)" -replace '^sha256:', ''
