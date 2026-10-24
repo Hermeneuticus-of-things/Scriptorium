@@ -459,6 +459,108 @@ export const ScaledImage = Image.extend({
       },
     };
   },
+  // Node view: the image inside a frame with resize handles (drag a corner, aspect ratio kept)
+  // and a small toolbar while selected: wrap left / inline / center / wrap right, quick widths.
+  addNodeView() {
+    return ({ node, getPos, editor }) => {
+      let cur = node;
+      const frame = document.createElement('span');
+      frame.className = 'img-frame';
+      frame.contentEditable = 'false';
+      const img = document.createElement('img');
+      frame.append(img);
+      const bar = document.createElement('span');
+      bar.className = 'img-bar';
+      const tools = [
+        ['⇤', 'Stânga, cu text în jur', { align: 'left' }],
+        ['▭', 'În rând cu textul', { align: null }],
+        ['☰', 'Centrată, pe rândul ei', { align: 'center' }],
+        ['⇥', 'Dreapta, cu text în jur', { align: 'right' }],
+        ['¼', 'Lățime 25%', { width: '25%' }],
+        ['½', 'Lățime 50%', { width: '50%' }],
+        ['¾', 'Lățime 75%', { width: '75%' }],
+        ['1:1', 'Toată lățimea paginii', { width: '100%' }],
+        ['⟲', 'Mărimea originală', { width: null }],
+      ];
+      for (const [label, title, attrs] of tools) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = label;
+        b.title = title;
+        b.setAttribute('aria-label', title);
+        b.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!editor.isEditable || typeof getPos !== 'function') return;
+          editor.chain().setNodeSelection(getPos()).updateAttributes('image', attrs).run();
+        });
+        bar.append(b);
+      }
+      frame.append(bar);
+      const handles = ['nw', 'ne', 'sw', 'se'].map((corner) => {
+        const h = document.createElement('span');
+        h.className = `img-handle img-${corner}`;
+        h.dataset.corner = corner;
+        frame.append(h);
+        return h;
+      });
+      const paint = () => {
+        img.src = cur.attrs.src;
+        img.alt = cur.attrs.alt || '';
+        if (cur.attrs.title) img.title = cur.attrs.title;
+        img.style.width = cur.attrs.width ? (/^\d+$/.test(String(cur.attrs.width)) ? `${cur.attrs.width}px` : cur.attrs.width) : '';
+        frame.dataset.align = cur.attrs.align || '';
+        frame.style.cssText = ALIGN_CSS[cur.attrs.align] || '';
+        // A percentage width is relative to the page, so the frame takes it and the image fills the frame.
+        if (cur.attrs.width && /%$/.test(String(cur.attrs.width))) {
+          frame.style.width = cur.attrs.width;
+          img.style.width = '100%';
+        }
+      };
+      paint();
+      // Drag a corner: new width in px from the pointer, capped at the text column.
+      for (const h of handles) {
+        h.addEventListener('pointerdown', (e) => {
+          if (!editor.isEditable || typeof getPos !== 'function') return;
+          e.preventDefault();
+          e.stopPropagation();
+          h.setPointerCapture(e.pointerId);
+          const startX = e.clientX;
+          const startW = img.getBoundingClientRect().width;
+          const column = (editor.view.dom.clientWidth || startW) - 4;
+          const dir = h.dataset.corner.endsWith('w') ? -1 : 1;
+          let w = startW;
+          const move = (ev) => {
+            w = Math.round(Math.min(column, Math.max(32, startW + dir * (ev.clientX - startX))));
+            frame.style.width = '';
+            img.style.width = `${w}px`;
+          };
+          const up = () => {
+            h.removeEventListener('pointermove', move);
+            h.removeEventListener('pointerup', up);
+            h.removeEventListener('pointercancel', up);
+            if (Math.abs(w - startW) >= 2) editor.chain().setNodeSelection(getPos()).updateAttributes('image', { width: String(w) }).run();
+          };
+          h.addEventListener('pointermove', move);
+          h.addEventListener('pointerup', up);
+          h.addEventListener('pointercancel', up);
+        });
+      }
+      return {
+        dom: frame,
+        update: (n) => {
+          if (n.type !== cur.type) return false;
+          cur = n;
+          paint();
+          return true;
+        },
+        selectNode: () => frame.classList.add('selected'),
+        deselectNode: () => frame.classList.remove('selected'),
+        stopEvent: (e) => Boolean(e.target && e.target.closest && e.target.closest('.img-bar, .img-handle')),
+        ignoreMutation: () => true,
+      };
+    };
+  },
   addCommands() {
     return {
       ...this.parent?.(),

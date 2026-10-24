@@ -57,3 +57,29 @@
 .script-stageplay-uk p[data-script="parenthetical"] { margin-bottom: 0; margin-left: 25%; font-style: italic; }
 .script-stageplay-uk p[data-script="dialogue"] { margin-bottom: 0; margin-left: 25%; }
 .script-stageplay-uk p[data-script="transition"] { margin-bottom: 0; margin-top: 1em; text-align: right; text-transform: uppercase; }
+
+/* Images: frame with resize handles and a format bar while selected */
+.prose .img-frame { position: relative; display: inline-block; max-width: 100%; line-height: 0; }
+.prose .img-frame img { display: block; max-width: 100%; height: auto; }
+.prose .img-frame[data-align="center"] { display: block; width: fit-content; }
+.prose .img-frame.selected img { outline: 2px solid var(--accent, #1565c0); outline-offset: 1px; }
+.prose .img-handle { display: none; position: absolute; width: 12px; height: 12px; background: #fff; border: 2px solid var(--accent, #1565c0); border-radius: 2px; z-index: 2; }
+.prose .img-frame.selected .img-handle { display: block; }
+.prose .img-nw { left: -6px; top: -6px; cursor: nwse-resize; } .prose .img-se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.prose .img-ne { right: -6px; top: -6px; cursor: nesw-resize; } .prose .img-sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.prose .img-bar { display: none; position: absolute; left: 50%; top: -38px; transform: translateX(-50%); gap: 2px; padding: 3px; background: var(--panel, #fff); border: 1px solid rgba(128,128,128,.35); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.15); line-height: 1; white-space: nowrap; z-index: 3; }
+.prose .img-frame.selected .img-bar { display: inline-flex; }
+.prose .img-bar button { min-width: 26px; height: 24px; padding: 0 4px; font: 13px/1 system-ui, sans-serif; border: 0; background: transparent; border-radius: 4px; cursor: pointer; color: inherit; }
+.prose .img-bar button:hover, .prose .img-bar button:focus-visible { background: rgba(21,101,192,.12); }
+
+/* Settings: services and accounts; service results */
+.services-panel .service-row { padding: 8px 0; border-bottom: 1px solid rgba(128,128,128,.2); }
+.services-panel .service-head { display: flex; gap: 8px; align-items: baseline; }
+.services-panel .ok { color: #2e7d32; }
+.services-panel .actions-inline, .account-form .actions-inline { display: flex; gap: 6px; margin-top: 6px; }
+.services-panel .accounts { list-style: none; padding: 0; }
+.services-panel .accounts li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 3px 0; }
+.translate-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.translate-pair p { white-space: pre-wrap; margin: 4px 0 0; }
+.grammar-list li { margin: 6px 0; }
+.grammar-list .row-inline { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }

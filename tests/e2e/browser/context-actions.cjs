@@ -21,7 +21,7 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   await page.context().route('https://www.deepl.com/**', (r) => r.fulfill({ status: 200, body: 'ok' }));
   const popup = page.waitForEvent('popup', { timeout: 3000 }).catch(() => null);
   await page.locator('[role="menuitem"]', { hasText: 'Traduce' }).first().click();
-  await page.locator('[role="menuitem"]', { hasText: 'DeepL' }).first().click();
+  await page.getByRole('menuitem', { name: 'DeepL', exact: true }).click();
   const pop = await popup;
   if (pop) await pop.waitForLoadState().catch(() => {});
   check('DeepL opens with the word', Boolean(pop && /deepl\.com\/translator#auto\/ro\/rece$/.test(pop.url())), pop && pop.url());

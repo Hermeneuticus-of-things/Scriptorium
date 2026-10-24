@@ -37,7 +37,8 @@ export function parseComments(html) {
     text: attr(s.open, 'data-comment'),
     on: stripTags(src.slice(s.openEnd, s.closeStart)),
     color: attr(s.open, 'data-comment-color'),
-    author: attr(s.open, 'data-comment-author'),
+    // data-author: written by older versions (and the MCP server before 0.7.2); the editor reads both.
+    author: attr(s.open, 'data-comment-author') || attr(s.open, 'data-author'),
     date: attr(s.open, 'data-comment-date'),
   }));
 }
@@ -63,6 +64,52 @@ export function updateComment(html, index, patch) {
     if (k === 'text') open = /\stitle="/.test(open) ? open.replace(/\stitle="[^"]*"/, ` title="${esc(v)}"`) : open;
   }
   return src.slice(0, s.start) + open + src.slice(s.openEnd);
+}
+
+/**
+ * Footnotes of a document in text order: inline markers (<span data-footnote="…">) and
+ * linked footnotes (<span data-linked-footnote="…">anchor</span>).
+ * [{index, kind: 'inline'|'linked', text, on, before}] (on = anchor text, before = text just before).
+ */
+export function parseFootnotes(html) {
+  const src = String(html || '');
+  const out = [];
+  const re = /<span\b[^>]*\sdata-(linked-)?footnote="([^"]*)"[^>]*>([\s\S]*?)<\/span>/g;
+  let m;
+  while ((m = re.exec(src))) {
+    const before = stripTags(src.slice(Math.max(0, m.index - 400), m.index)).replace(/\s+/g, ' ');
+    out.push({ index: out.length, kind: m[1] ? 'linked' : 'inline', text: unesc(m[2]), on: stripTags(m[3]), before: before.slice(-60).trimStart() });
+  }
+  return out;
+}
+
+/**
+ * OPML outline items ({title, synopsis, label, status, children} from lib/importers.cjs importOpml)
+ * → binder nodes. Label and status names are kept only when the project defines them.
+ * makeNode(type, title) creates a node (src/lib/text.js newNode or lib/store.cjs newNode).
+ */
+export function opmlToNodes(items, project, makeNode, fallbackTitle = 'Fără titlu') {
+  const labels = new Set((project.labels || []).map((l) => l.name));
+  const statuses = new Set(project.statuses || []);
+  const build = (it) => {
+    const kids = (it.children || []).map(build);
+    const node = makeNode(kids.length ? 'folder' : 'text', it.title || fallbackTitle);
+    if (it.synopsis) node.synopsis = it.synopsis;
+    if (it.label && labels.has(it.label)) node.label = it.label;
+    if (it.status && statuses.has(it.status)) node.status = it.status;
+    if (kids.length) node.children = kids;
+    return node;
+  };
+  return (items || []).map(build);
+}
+
+/**
+ * Binder item for a file stored in the project's media/ folder (image, PDF, audio, video…):
+ * type 'file' (what the Binder, Compile and the exporters treat as media), kept out of Compile.
+ * makeNode(type, title) creates the base node.
+ */
+export function mediaNode(makeNode, { id, title, media }) {
+  return { ...makeNode('text', title), id, type: 'file', media, includeInCompile: false };
 }
 
 /** Group daily history rows ({date:'YYYY-MM-DD', draft, total, draftChars?, totalChars?}) by month. */

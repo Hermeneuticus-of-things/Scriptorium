@@ -266,7 +266,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     if (toc !== null) opts.toc = toc;
     if (scope === 'folder' && rootId) opts.rootId = rootId;
     if (scope === 'selection' && selectionIds.length) opts.ids = [...selectionIds];
-    if (output === 'epub' && coverId && api.readMedia) {
+    if (['epub', 'pdf', 'docx'].includes(output) && coverId && api.readMedia) {
       const node = images.find((n) => n.id === coverId);
       if (node) opts.coverImage = await toBase64Image(await api.readMedia(dir, node.media.file));
     }
@@ -472,6 +472,17 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   <label className="check">
                     <input type="checkbox" checked={titlePage ?? Boolean(format.titlePage)} onChange={(e) => setTitlePage(e.target.checked)} /> {tr('ui.compileDialog.pagina_de_titlu_automata_titlu')}
                   </label>
+                  {(output === 'pdf' || output === 'docx') && images.length > 0 && (
+                    <label>
+                      {tr('ui.compileDialog.coperta_prima_pagina')}
+                      <select value={coverId} onChange={(e) => setCoverId(e.target.value)}>
+                        <option value="">{tr('ui.compileDialog.fara_coperta')}</option>
+                        {images.map((n) => (
+                          <option key={n.id} value={n.id}>{n.title}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   <label className="check">
                     <input type="checkbox" checked={toc ?? Boolean(format.toc)} onChange={(e) => setToc(e.target.checked)} /> {tr('ui.compileDialog.cuprins')}
                     {output === 'epub' && <span className="muted"> {tr('ui.compileDialog.in_epub_cuprinsul_de_navigare')}</span>}

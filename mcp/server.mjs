@@ -16,11 +16,14 @@ import { findNode, findParent, flatten, insertNear, moveNode, moveToTrash, updat
 import { buildRegex, findInHtml, replaceInHtml } from '../src/lib/search.js';
 import { htmlToManuscript, lint, manuscriptToHtml, profileFor, reattach, summarize } from '../src/lib/editorial.js';
 import { styleCss, stylesOf } from '../src/lib/styles.js';
+import { projectNoteTabs } from '../src/lib/projectNotes.js';
+import { registerFullTools } from './fullTools.mjs';
 
 const require = createRequire(import.meta.url);
 const store = require('../lib/store.cjs');
 const compile = require('../lib/compile.cjs');
 const history = require('../lib/history.cjs');
+const compileFormats = require('../lib/compileFormats.cjs');
 
 // ---------------------------------------------------------------------------
 // Arguments
@@ -42,6 +45,29 @@ for (const p of projects) {
     process.stderr.write(`Nu e un proiect Scribner: ${p}\n`);
     process.exit(2);
   }
+}
+
+// The app's user data folder (settings.json, user templates, global compile formats).
+// Read only; SCRIBNER_USER_DATA overrides it (portable installs, tests).
+function defaultUserData() {
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  if (process.platform === 'win32') return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Scribner');
+  if (process.platform === 'darwin') return path.join(home, 'Library', 'Application Support', 'Scribner');
+  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'Scribner');
+}
+const userData = process.env.SCRIBNER_USER_DATA ? path.resolve(process.env.SCRIBNER_USER_DATA) : defaultUserData();
+function readJson(file, def) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return def;
+  }
+}
+const appSettings = () => readJson(path.join(userData, 'settings.json'), {});
+try {
+  compileFormats.setGlobalFormats(readJson(path.join(userData, 'compile-formats.json'), []));
+} catch {
+  /* unreadable global formats: presets only */
 }
 
 // ---------------------------------------------------------------------------
@@ -101,13 +127,15 @@ function wordCount(dir, id) {
 
 const text = (s) => ({ content: [{ type: 'text', text: typeof s === 'string' ? s : JSON.stringify(s, null, 2) }] });
 
-function tool(name, description, shape, handler, { writes = false } = {}) {
+// global: the tool does not work on an open project (create / import a new one); its
+// write is logged in the project it creates (result.dir), or in the first project.
+function tool(name, description, shape, handler, { writes = false, global = false } = {}) {
   server.registerTool(name, { title: name, description, inputSchema: shape }, async (input) => {
     try {
       if (writes) requireWritable();
-      const dir = projectDir(input.project);
+      const dir = global ? null : projectDir(input.project);
       const result = await handler(dir, input);
-      if (writes) log(dir, name, input, result);
+      if (writes) log(dir || (result && typeof result === 'object' && result.dir) || projects[0], name, input, result);
       return text(result);
     } catch (err) {
       return { content: [{ type: 'text', text: `Eroare: ${err.message}` }], isError: true };
@@ -117,10 +145,24 @@ function tool(name, description, shape, handler, { writes = false } = {}) {
 
 const project = z.string().optional().describe('Numele sau calea proiectului (implicit primul proiect)');
 
+// Files the server writes for a client (compile, exports, backups of new projects) never
+// land inside a project folder: a client cannot overwrite project files through an export.
+function outsideProjects(p, what = 'output_path') {
+  const out = path.resolve(p);
+  if (projects.some((pd) => out === pd || out.startsWith(pd + path.sep))) throw new Error(`${what} nu poate fi în interiorul unui proiect.`);
+  return out;
+}
+// A project created / imported / restored by a tool becomes reachable in this session.
+function addProject(dir) {
+  const abs = path.resolve(dir);
+  if (!projects.includes(abs)) projects.push(abs);
+  return abs;
+}
+
 // ---------------------------------------------------------------------------
 // Server
 
-const server = new McpServer({ name: 'scribner', version: '0.2.0' });
+const server = new McpServer({ name: 'scribner', version: '0.3.0' });
 
 tool('project_info', 'Titlul, autorul, țintele, etichetele, statusurile, profilul editorial și numărul de cuvinte al proiectului.', { project }, (dir) => {
   const p = load(dir);
@@ -134,7 +176,11 @@ tool('project_info', 'Titlul, autorul, țintele, etichetele, statusurile, profil
     statuses: p.statuses,
     keywords: p.keywordDefs || [],
     customFields: p.customFields || [],
-    editorialProfile: profileFor(p).name,
+    sectionTypes: p.sectionTypes || [],
+    sectionTypeLevels: p.sectionTypeLevels || {},
+    projectNotes: projectNoteTabs(p),
+    collections: (p.collections || []).map(({ id, title, type }) => ({ id, title, type })),
+    editorialProfile: profileFor(p, appSettings()).name,
     draftWords: draft.reduce((s, n) => s + wordCount(dir, n.id), 0),
     readOnly,
   };
@@ -266,7 +312,7 @@ tool(
 
 tool(
   'set_metadata',
-  'Schimbă titlul, sinopsisul, eticheta, statusul, cuvintele cheie, Include în Compile, ținta sau metadatele personalizate.',
+  'Schimbă titlul (redenumire), sinopsisul, eticheta, statusul, cuvintele cheie, Include în Compile, ținta, tipul de secțiune sau metadatele personalizate.',
   {
     project,
     id: z.string(),
@@ -278,6 +324,7 @@ tool(
     include_in_compile: z.boolean().optional(),
     target: z.number().int().min(0).optional(),
     custom: z.record(z.string(), z.union([z.string(), z.boolean()])).optional(),
+    section_type: z.string().optional().describe('Titlul tipului de secțiune; "" îl scoate'),
   },
   (dir, input) => {
     let n;
@@ -292,6 +339,10 @@ tool(
       if (v !== undefined) patch[k] = v;
     }
     if (input.custom) patch.custom = { ...(n.custom || {}), ...input.custom };
+    if (input.section_type !== undefined) {
+      if (input.section_type && !(p.sectionTypes || []).some((t) => t.title === input.section_type)) throw new Error(`Tip de secțiune necunoscut. Disponibile: ${(p.sectionTypes || []).map((t) => t.title).join(', ')}`);
+      patch.sectionType = input.section_type || undefined;
+    }
     p.tree = updateNode(p.tree, input.id, patch);
     });
     return `Actualizat „${patch.title || n.title}”: ${Object.keys(patch).join(', ')}`;
@@ -356,15 +407,23 @@ tool(
   { writes: true },
 );
 
-tool('get_notes', 'Notele unui document, sau ale proiectului cu id "project".', { project, id: z.string() }, (dir, { id }) => {
-  const docId = id === 'project' ? 'project-notes' : id;
-  if (docId !== 'project-notes') nodeOrThrow(load(dir), docId);
+// Notes of a binder item, or of the project: id "project" (first tab) or the id of a
+// Project Notes tab (list_project_notes).
+function notesId(dir, id) {
+  const p = load(dir);
+  if (id === 'project') return projectNoteTabs(p)[0].id;
+  if (projectNoteTabs(p).some((t) => t.id === id)) return id;
+  nodeOrThrow(p, id);
+  return id;
+}
+
+tool('get_notes', 'Notele unui document, sau ale proiectului (id "project" sau id-ul unui tab din list_project_notes).', { project, id: z.string() }, (dir, { id }) => {
+  const docId = notesId(dir, id);
   return htmlToManuscript(store.readDoc(dir, docId, 'notes'));
 });
 
-tool('set_notes', 'Înlocuiește notele unui document sau ale proiectului (id "project").', { project, id: z.string(), content: z.string() }, (dir, { id, content }) => {
-  const docId = id === 'project' ? 'project-notes' : id;
-  if (docId !== 'project-notes') nodeOrThrow(load(dir), docId);
+tool('set_notes', 'Înlocuiește notele unui document sau ale proiectului (id "project" sau id-ul unui tab de note).', { project, id: z.string(), content: z.string() }, (dir, { id, content }) => {
+  const docId = notesId(dir, id);
   const old = store.readDoc(dir, docId, 'notes');
   if (old) store.backupFile(dir, `notes-${docId}.html`, old);
   store.writeDoc(dir, docId, 'notes', manuscriptToHtml(content));
@@ -383,7 +442,8 @@ tool(
     const idx = html.indexOf(target);
     if (idx < 0) throw new Error('Fragmentul nu a fost găsit exact (în interiorul unui singur paragraf, fără formatare la mijloc).');
     store.takeSnapshot(dir, id, 'Înainte de comentariul unui agent AI');
-    const span = `<span data-comment="${esc(comment).replace(/"/g, '&quot;')}" data-author="Agent AI" class="comment">${target}</span>`;
+    // data-comment-author / -date: the attributes the editor and the Inspector read.
+    const span = `<span data-comment="${esc(comment).replace(/"/g, '&quot;')}" data-comment-author="Agent AI" data-comment-date="${new Date().toISOString()}" class="comment">${target}</span>`;
     store.writeDoc(dir, id, 'docs', html.slice(0, idx) + span + html.slice(idx + target.length));
     return 'Comentariu adăugat.';
   },
@@ -417,7 +477,7 @@ tool(
   (dir, { id, severity }) => {
     const p = load(dir);
     const n = nodeOrThrow(p, id);
-    const profile = profileFor(p);
+    const profile = profileFor(p, appSettings());
     const docs = (n.type === 'text' ? [n] : flatten(n.children || [])).filter((x) => x.type === 'text');
     const parent = n.type === 'text' ? findParent(p.tree, id) : n;
     const chapter = flatten(parent ? parent.children || [] : []).filter((x) => x.type === 'text').map((x) => ({ id: x.id, title: x.title, html: store.readDoc(dir, x.id) }));
@@ -446,18 +506,45 @@ tool('restore_snapshot', 'Restaurează un snapshot (textul curent e salvat înt�
   return `Restaurat „${snap.name}”.`;
 }, { writes: true });
 
+// Every Compile output the app has except PDF (rendered by Electron's Chromium): "print"
+// gives the print-ready HTML the PDF is made from.
+const COMPILE_FORMATS = [...Object.keys(compile.OUTPUT_FORMATS).filter((f) => f !== 'pdf'), 'print'];
 tool(
   'compile',
-  'Compilează manuscrisul (Manuscris, cu Include în Compile) în docx | epub | html, într-un fișier lângă proiect sau la output_path.',
-  { project, format: z.enum(['docx', 'epub', 'html']), output_path: z.string().optional() },
-  async (dir, { format, output_path }) => {
+  'Compilează manuscrisul (Manuscris, cu Include în Compile) în docx | epub | html | rtf | odt | md | mmd | txt | fountain | fdx | tex | print (HTML pentru tipar/PDF), cu formatul de Compile ales (list_compile_formats), opțional doar o colecție, un dosar sau anumite documente. Fișierul se scrie lângă proiect sau la output_path.',
+  {
+    project,
+    format: z.enum(COMPILE_FORMATS),
+    output_path: z.string().optional(),
+    format_id: z.string().optional().describe('Formatul de Compile (preset, global sau al proiectului)'),
+    collection_id: z.string().optional().describe('Doar documentele colecției'),
+    root_id: z.string().optional().describe('Doar acest dosar'),
+    ids: z.array(z.string()).optional().describe('Doar aceste documente'),
+    title_page: z.boolean().optional(),
+    toc: z.boolean().optional(),
+    track_changes: z.boolean().optional().describe('DOCX: reviziile rămân urmărite'),
+  },
+  async (dir, { format, output_path, format_id, collection_id, root_id, ids, title_page, toc, track_changes }) => {
     const p = load(dir);
     const read = (id) => store.readDoc(dir, id);
     const styles = stylesOf(p);
-    const opts = { styles, styleCss: styleCss(styles, 'body') };
-    const data = format === 'docx' ? await compile.compileDocx(p, read, opts) : format === 'epub' ? await compile.compileEpub(p, read, opts) : compile.compileHtml(p, read, opts);
-    const out = output_path ? path.resolve(output_path) : path.join(path.dirname(dir), `${p.title.replace(/[<>:"/\\|?*]/g, '_')}.${format}`);
-    if (projects.some((pd) => out === pd || out.startsWith(pd + path.sep))) throw new Error('output_path nu poate fi în interiorul unui proiect.');
+    const opts = { styles, styleCss: styleCss(styles, 'body'), projectDir: dir };
+    if (format_id) {
+      if (!compileFormats.findFormat(p, format_id)) throw new Error(`Format de Compile necunoscut: ${format_id}`);
+      opts.formatId = format_id;
+    }
+    if (collection_id) {
+      if (!(p.collections || []).some((c) => c.id === collection_id)) throw new Error(`Colecție inexistentă: ${collection_id}`);
+      opts.collectionId = collection_id;
+    }
+    if (root_id) opts.rootId = nodeOrThrow(p, root_id).id;
+    if (ids) opts.ids = ids.map((id) => nodeOrThrow(p, id).id);
+    if (title_page !== undefined) opts.titlePage = title_page;
+    if (toc !== undefined) opts.toc = toc;
+    if (track_changes && format === 'docx') Object.assign(opts, { trackChanges: true, trackAuthor: p.author || '' });
+    const data = await compile.compile(p, read, format, opts);
+    const ext = format === 'print' ? 'html' : compile.OUTPUT_FORMATS[format].ext;
+    const out = outsideProjects(output_path ? path.resolve(output_path) : path.join(path.dirname(dir), `${p.title.replace(/[<>:"/\\|?*]/g, '_')}.${ext}`));
     fs.writeFileSync(out, data);
     return `Compilat: ${out}`;
   },
@@ -465,6 +552,25 @@ tool(
 );
 
 tool('writing_history', 'Istoricul scrisului pe zile (cuvinte în manuscris și în tot proiectul).', { project }, (dir) => history.summarize(history.readHistory(dir)));
+
+registerFullTools({
+  tool,
+  z,
+  project,
+  projects,
+  store,
+  load,
+  mutate,
+  trashIds,
+  nodeOrThrow,
+  textNodeOrThrow,
+  pathOf,
+  outsideProjects,
+  addProject,
+  appSettings,
+  userData,
+  readOnly: () => readOnly,
+});
 
 // Resources: the binder and each document as manuscript text.
 server.registerResource('binder', 'scribner://binder', { title: 'Binder', description: 'Structura proiectului principal', mimeType: 'application/json' }, async (uri) => {
