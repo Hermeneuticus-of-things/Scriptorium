@@ -33,7 +33,7 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 |---|---|
 | [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, cronologie, legături între documente |
 | [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic |
-| [Dictezi](#dictezi) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
+| [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
 | [Corectezi](#corectezi) | revizie fără AI, corecturi învățate, asistent AI opțional, versiuni |
 | [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri |
 | [Agenți AI](#agenți-ai) | Claude sau Codex lucrează direct în carte, dacă vrei |
@@ -106,7 +106,7 @@ Clic dreapta pe un cuvânt și ai la îndemână:
 - **Dicționare:** dexonline și sinonime, [sinonimul.ro](https://sinonimul.ro/), Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
 - **Asistent AI, În proiect, NotebookLM:** explicație sau traducere, căutare în toată cartea, glosar, întrebări despre termen în sursele tale.
 
-### Dictezi
+### Dictezi: D&TED – Dictare și transcriere
 
 <p align="center">
   <img src="./assets/readme/voice-team.svg" width="100%" alt="Scrii cu vocea: vorbești și fraza apare pe fișa scenei, fără internet. Lucrați împreună: fiecare om cu culoarea lui pe fișele aceleiași cărți, una blocată de Ana">
@@ -375,7 +375,7 @@ La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 le
 
 **Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
 
-**Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi).
+**Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi-dted--dictare-și-transcriere).
 
 **Pot lega un agent AI, ca Claude sau Codex?** Da, prin *AI → Conectează la Claude (MCP)*, fără Node.js. Pentru Codex, Gemini CLI, Cursor sau VS Code, comenzile sunt în *Ajutor → „Ce faci tu”*.
 
