@@ -55,12 +55,16 @@ export function isTypoFix(from, to) {
 export function learnCorrection(list, from, to) {
   if (!isTypoFix(from, to)) return null;
   const f = from.trim().toLowerCase();
-  const t = to.trim().toLowerCase();
+  // Stored in lower case unless the writer's case is its own (a proper noun: "bucuresti" →
+  // "București"); case that only follows what was typed ("Teh" → "The") is not kept.
+  const typedTo = to.trim();
+  const t = matchCase(from.trim(), typedTo.toLowerCase()) === typedTo ? typedTo.toLowerCase() : typedTo;
+  const tl = t.toLowerCase();
   const cur = Array.isArray(list) ? list : [];
   // A replacement the writer typed in Settings for this word wins over learning.
   if (cur.some((r) => r && !r.learned && r.from && r.from.toLowerCase() === f)) return null;
   if (cur.some((r) => r && r.learned && r.from === f && r.to === t)) return null;
-  const rest = cur.filter((r) => !(r && r.learned && (r.from === f || (r.from === t && r.to === f))));
+  const rest = cur.filter((r) => !(r && r.learned && (r.from === f || (r.from === tl && String(r.to).toLowerCase() === f))));
   const out = [...rest, { from: f, to: t, learned: true }];
   // Oldest learned entries go first when the list is full; typed ones are never dropped.
   let extra = out.filter((r) => r.learned).length - MAX_LEARNED;
