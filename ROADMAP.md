@@ -1078,3 +1078,21 @@ Comparația nano a conținutului tab-urilor din programul clasic e **blocată pe
 (2) partea dreaptă a ecranului, unde stă Inspectorul, e acoperită de un panou always-on-top al
 utilizatorului, deci nici captura de ecran + OCR nu-l poate citi. Nu se mută ferestrele utilizatorului.
 - [ ] De reluat când panoul always-on-top e ascuns temporar, sau pe un ecran liber.
+
+### Ținte, Statistici, Scratchpad, Compunere, Corkboard, Outliner, Căutare — stadiu
+Capturarea dialogurilor programului clasic se face acum pe **Desktop 3** prin **PrintWindow + OCR**
+(merge cu desktopul inactiv) și prin UI Automation unde toolkitul o expune. Limită reală: multe
+dialoguri Qt ale programului clasic **nu-și expun conținutul prin accesibilitate** (doar pixeli, citiți cu
+OCR), iar unele sunt **modale** (deschiderea prin UIA blochează firul) — se deschid printr-un proces
+separat și se capturează prin PrintWindow.
+
+Constatări (verificate pe partea Scribner, care e inspectabilă complet):
+- **Ținte** — Scribner e superset: țintă draft + sesiune, deadline, zile de scris, reset sesiune, numără
+  doar grupul compilat, notificări, cuvinte/pagină, permite negativ, sesiune din deadline, pe toate
+  proiectele (`TargetsDialog.jsx`, `lib/stats.js`). Paritate+.
+- **Statistici** — clasicul: numărători + „Word Frequency". Scribner are `Statistics…` și istoric de
+  scriere; comparația nano a numărătorilor e limitată de OCR pe dialogul modal.
+- **Scratchpad, Compunere, Corkboard, Outliner, Căutare** — prezente în Scribner la nivel de meniu și
+  componente dedicate; comparația de conținut e limitată de accesibilitatea Qt a programului clasic.
+- [ ] De reluat comparația nano pe aceste dialoguri cu panoul always-on-top ascuns (pentru zona din
+  dreapta) sau pe un ecran liber; infrastructura (Desktop 3 + PrintWindow + OCR) e gata.
