@@ -42,10 +42,16 @@ Return ONLY JSON: {"gaps":[{"el":"","note":"<=14 words, what to add"}],"aliases"
 
 async function run(scene, rows, context = '') {
   const shards = chunk(rows, SHARD);
-  const results = await Promise.all(shards.map((s) => judge(`${scene}#${shards.indexOf(s)}`, s, context)));
+  const results = await Promise.all(shards.map((s, i) => judge(`${scene}#${i}`, s, context).catch((e) => { console.error(`shard ${i}: ${e.message}`); return { verdicts: [] }; })));
   const merged = results.flatMap((r) => r.verdicts).filter((v) => v.verdict && v.verdict !== 'skip');
-  const lead = await callLead(scene, merged, context);
-  return { scene, raw: rows.length, workerKept: merged.length, gaps: lead.gaps || [], aliases: lead.aliases || [], leadModel: lead.leadModel };
+  // Only the worker-flagged gaps need the lead's review; aliases are recorded as-is.
+  const workerGaps = merged.filter((v) => v.verdict === 'gap');
+  const aliases = merged.filter((v) => v.verdict === 'alias').map((v) => ({ el: v.el, scribnerLabel: v.scribnerLabel }));
+  const leadShards = chunk(workerGaps, 30);
+  const leadOut = await Promise.all(leadShards.map((s, i) => callLead(`${scene}#L${i}`, s, context).catch((e) => { console.error(`lead ${i}: ${e.message}`); return { gaps: [], aliases: [] }; })));
+  const gaps = leadOut.flatMap((o) => o.gaps || []);
+  const leadAliases = leadOut.flatMap((o) => o.aliases || []);
+  return { scene, raw: rows.length, workerKept: merged.length, workerGaps: workerGaps.length, gaps, aliases: [...aliases, ...leadAliases], leadModel: leadOut[0]?.leadModel };
 }
 module.exports = { run };
 if (require.main === module) {

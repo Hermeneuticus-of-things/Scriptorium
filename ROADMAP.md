@@ -1026,3 +1026,26 @@ MACRO 12, MEGA 10, MEZZO 10, MICRO 11, NANO 14. Total 57; primele 50 intră în 
 - **Q14 Șablon → compile, ferestre multiple, sincronizare** (MACRO 1, 8–9; MEGA 9): `lib/templates.cjs`, `lib/folderSync.cjs`, `electron/windowHandlers.cjs` (nou), `src/components/Home.jsx`.
 
 Ordine: Q3 înaintea lui Q6 (aceleași vizualizări); Q7 și Q9 nu ating același fișier; restul în paralel.
+
+## Comparație vizuală (audit 5)
+
+Comparație fereastră-cu-fereastră cu programul clasic de referință, pe un proiect de test identic,
+până la nivel de element, ordine, text, valoare implicită, stare, bifă și scurtătură. Unelte în
+`scripts/ui-audit/` (captură deterministă prin accesibilitate + OCR; diff determinist; judecată doar pe
+rezidul ambiguu, pe serverul local OmniRoute, lead Opus 4.7 + lucrători). Doar comportamentul e observat;
+nimic nu se copiază din programul clasic. Extrasele proprii Scribner (AI, MCP, dictare) se păstrează.
+
+### Meniuri
+Capturate complet ambele bare de meniu (10 meniuri clasice la 3 niveluri + context cu text; meniul
+Scribner). Diff determinist: 468 intrări prezente în clasic și nepotrivite în Scribner, 53 diferențe de
+scurtătură (multe sunt zgomot OCR — tratate ca semnal slab, neimplementate orb), 49 de stare.
+
+- [x] **Curățare text** (clasic: Edit › Text Tidying) — submeniu nou în Transformări cu: spații multiple →
+  un spațiu, elimină liniile goale dintre paragrafe, scoate tab-urile de la începutul rândului.
+  `src/lib/editorMenus.js` (funcții pure `collapseSpaces`/`collapseBlankLines`/`stripLeadingTabs`),
+  `src/lib/i18n-ui.js`, test `tests/textTidy.test.js`.
+- [ ] Transformări în plus (clasic: Edit › Transformations): versale mici (Small Caps) și eliminarea lor —
+  necesită o marcă nouă, nu doar transformare de șir.
+- [ ] Șterge textul tăiat (clasic: Edit › Text Tidying › Delete Struck-Through Text) — comandă pe editor.
+- [ ] Rest de triat din cele 468: multe sunt echivalente sub alt nume (alias) sau intrări dinamice/niche;
+  de confirmat una câte una înainte de implementare.
