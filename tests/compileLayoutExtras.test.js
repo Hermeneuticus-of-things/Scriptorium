@@ -23,6 +23,12 @@ describe('compile layout extras', () => {
     expect(css).toMatch(/\.lay1\{[^}]*column-count:2/);
     expect(L.layoutCss([{ cls: 'lay1', lay: { columns: 1 } }])).not.toMatch(/column-count/);
   });
+  it('comments compile mode: footnotes vs inline vs kept', () => {
+    const html = 'a<span data-comment="o notă">cuvânt</span>b';
+    expect(L.commentsTo(html, 'footnotes')).toContain('cuvânt<span data-footnote="o notă"');
+    expect(L.commentsTo(html, 'inline')).toContain('cuvânt [o notă]');
+    expect(L.commentsTo(html, 'strip')).toBe(html); // strip/export handled elsewhere, unchanged here
+  });
   it('decorative separator maps the chosen symbol to its glyph', () => {
     expect(L.normalizeSep({ kind: 'decorative', symbol: 'asterism' })).toMatchObject({ kind: 'decorative', text: '⁂' });
     expect(L.normalizeSep({ kind: 'decorative', symbol: 'stars' })).toMatchObject({ text: '* * *' });
