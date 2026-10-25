@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.9
+- Reparație: butoanele de spațiu între paragrafe (0.10.8) stricau afișarea editorului („Fereastra nu se mai poate afișa" — `Cannot read properties of undefined (reading 'id')`). Grupul nou din bara de format nu avea intrarea corespunzătoare în lista de grupuri, așa că indexarea ieșea din sincron. Acum lista e completă, iar bara e protejată: un grup fără pereche nu mai e afișat în loc să pice toată fereastra.
+
 ## v0.10.8
 - Bara de format — butoane directe pentru spațiul dintre paragrafe: patru butoane (↥− ↥+ pentru spațiul înainte, ↧− ↧+ pentru cel după) schimbă spațierea dintr-un clic, câte 3 pt, fără să mai deschidă un dialog. Meniul „Paragraf" (cu valoare exactă în pt) rămâne. Coborârea la 0 readuce paragraful la spațierea implicită.
 

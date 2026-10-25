@@ -660,7 +660,9 @@ export default function FormatBar({
   ];
   // Customized layout (View → Customize Toolbar…): groups in the chosen order, "sep" starts a
   // separated section, "space" is a flexible space.
-  const byId = Object.fromEntries(groups.map((x, i) => [FORMAT_ITEMS[i].id, x]));
+  // groups[] must stay index-aligned with FORMAT_ITEMS (same count and order); the ?. guards
+  // against a mismatch so a stray group degrades to "not shown" instead of crashing the window.
+  const byId = Object.fromEntries(groups.map((x, i) => [FORMAT_ITEMS[i]?.id, x]).filter(([id]) => id));
   const laid = [];
   let forceSep = false;
   for (const id of layout) {

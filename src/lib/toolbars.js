@@ -48,6 +48,7 @@ export const FORMAT_ITEMS = [
   { id: 'highlight', label: 'ui.fb.highlight' },
   { id: 'align', label: 'ui.fb.align' },
   { id: 'spacing', label: 'ui.fb.spacing' },
+  { id: 'paraSpace', label: 'ui.fb.paraSpace' },
   { id: 'lists', label: 'ui.fb.lists' },
   { id: 'dialogue', label: 'ui.fb.dialogue' },
   { id: 'notes', label: 'ui.fb.notes' },
@@ -69,7 +70,7 @@ export const FORMAT_ITEMS = [
 // colour/highlight, alignment, paragraph menu with line spacing, lists, image and table).
 // Everything else can be added through customization; what does not fit goes into the » overflow.
 // Saved bars are untouched: normalizeList keeps them and appends only ids not in `seen`.
-const FORMAT_BASIC = ['block', 'font', 'bui', 'color', 'highlight', 'align', 'spacing', 'paragraph', 'lists', 'image', 'table'];
+const FORMAT_BASIC = ['block', 'font', 'bui', 'color', 'highlight', 'align', 'spacing', 'paraSpace', 'paragraph', 'lists', 'image', 'table'];
 export const FORMAT_DEFAULT = FORMAT_ITEMS.map((i) => i.id).filter((id) => FORMAT_BASIC.includes(id));
 
 export const DISPLAY_MODES = ['iconText', 'icon', 'text'];
