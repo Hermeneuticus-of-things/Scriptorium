@@ -110,3 +110,30 @@
 
 /* Page View at the File > Page Setup size (vars set by App from project.pageSetup) */
 .page.page-view.page-setup { --page-w: var(--ps-w, 21cm); --page-h: var(--ps-h, 29.7cm); padding: var(--ps-mt, 2.5cm) var(--ps-mr, 2.5cm) var(--ps-mb, 2.5cm) var(--ps-ml, 2.5cm); }
+
+/* G5: line numbers (screen only), styles side panel, pane history and lock, equations */
+.line-numbers-gutter { position: absolute; top: 0; left: 0; width: 44px; height: 100%; pointer-events: none; user-select: none; z-index: 1; }
+.line-numbers-gutter .line-no { position: absolute; right: 6px; font: 11px/1.4 system-ui, sans-serif; color: var(--muted, #888); font-variant-numeric: tabular-nums; }
+@media print { .line-numbers-gutter { display: none; } }
+.editor.with-styles-panel { position: relative; padding-right: 232px; }
+.styles-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 224px; border-left: 1px solid var(--line, #ddd); background: var(--panel, var(--bg, #fafafa)); }
+.styles-panel-inner { position: sticky; top: 0; max-height: 100vh; overflow: auto; padding: 8px 10px; box-sizing: border-box; }
+.styles-panel-head { display: flex; justify-content: space-between; align-items: center; }
+.styles-panel h4 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; color: var(--muted, #888); }
+.styles-panel-list { list-style: none; margin: 0; padding: 0; }
+.styles-panel-list li { display: flex; align-items: center; gap: 2px; border-radius: 4px; }
+.styles-panel-list li.on { background: color-mix(in srgb, var(--accent, #36c) 18%, transparent); }
+.styles-panel-list .style-apply { flex: 1; text-align: left; background: none; border: 0; padding: 4px 6px; cursor: pointer; }
+.styles-panel-actions { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.pane-nav { position: relative; display: inline-flex; align-items: center; gap: 2px; }
+.pane-history-list { position: absolute; top: 100%; left: 0; z-index: 50; min-width: 220px; max-height: 320px; overflow: auto; list-style: none; margin: 2px 0 0; padding: 4px 0; background: var(--paper, #fff); border: 1px solid var(--line, #ccc); border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+.pane-history-list li { padding: 4px 12px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pane-history-list li:hover { background: color-mix(in srgb, var(--accent, #36c) 15%, transparent); }
+.pane-history-list li.on { font-weight: 600; }
+.pane-lock.on { color: var(--accent, #36c); }
+.pane-head .pane-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.equation-dialog .equation-input { width: 100%; font-family: ui-monospace, monospace; box-sizing: border-box; }
+.equation-dialog .equation-preview { min-height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line, #ddd); border-radius: 4px; margin: 8px 0; padding: 8px; background: #fff; color: #000; }
+.equation-dialog .equation-render { font-size: 20px; }
+.equation-samples { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.equation-samples button { font-family: ui-monospace, monospace; font-size: 11px; }
