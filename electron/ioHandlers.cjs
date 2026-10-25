@@ -5,11 +5,11 @@
 //   require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, rememberRecent, noteSelfWrite });
 //
 // preload.cjs lines (inside the exposeInMainWorld('api', { ... }) object):
-//   importFiles: (dir, mode, separator) => call('io:importFiles', dir, mode, separator),
+//   importFiles: (dir, mode, separator, opts) => call('io:importFiles', dir, mode, separator, opts),
 //   importOpml: () => call('io:importOpml'),
 //   importWebPage: (url) => call('io:importWebPage', url),
 //   exportDocuments: (dir, project, ids, options) => call('io:exportDocuments', dir, project, ids, options),
-//   exportOpml: (dir, project) => call('io:exportOpml', dir, project),
+//   exportOpml: (dir, project, opts) => call('io:exportOpml', dir, project, opts),
 //   exportCsv: (dir, project, wordCounts) => call('io:exportCsv', dir, project, wordCounts),
 //   saveProjectAs: (dir, newTitle) => call('io:saveAs', dir, newTitle),
 //   printDocument: (html, title) => call('io:printDocument', html, title),
@@ -18,7 +18,7 @@
 //   saveAsTemplate: (dir, meta) => call('io:saveAsTemplate', dir, meta),
 //   deleteTemplate: (id) => call('io:deleteTemplate', id),
 //   newFromTemplate: (title, templateId) => call('io:newFromTemplate', title, templateId),
-//   importText: (mode, separator) => call('io:importText', mode, separator),
+//   importText: (mode, separator, opts) => call('io:importText', mode, separator, opts),
 //   importWebPage: (url, dir) => call('io:importWebPage', url, dir),
 //   getPageSetup: (project) => call('io:getPageSetup', project),
 //   setPageSetup: (setup) => call('io:setPageSetup', setup),
@@ -33,6 +33,8 @@ const { loadHtml } = require('../lib/loadHtml.cjs');
 const path = require('path');
 const { fileToHtml, classifyFile, importOpml, importWebPage, TEXT_EXTS } = require('../lib/importers.cjs');
 const { splitHtml } = require('../lib/docxImport.cjs');
+// Only known split options cross the IPC boundary.
+const splitOpts = (o) => ({ firstLineTitle: Boolean(o && o.firstLineTitle) });
 const exporters = require('../lib/exporters.cjs');
 const templates = require('../lib/templates.cjs');
 const printSetup = require('../lib/printSetup.cjs');
@@ -66,7 +68,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   }
 
   // Text files become documents; everything else is copied into media/ (goes to Research).
-  handle('io:importFiles', async (e, dir, mode = 'none', separator = '#') => {
+  handle('io:importFiles', async (e, dir, mode = 'none', separator = '#', opts = {}) => {
     assertOpened(dir);
     const res = await dialog.showOpenDialog(winOf(e), {
       title: 'Importă fișiere',
@@ -83,7 +85,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     const media = [];
     for (const file of res.filePaths) {
       if (classifyFile(file) === 'text') {
-        texts.push(...splitHtml(await fileToHtml(file), mode, separator, baseTitle(file)));
+        texts.push(...splitHtml(await fileToHtml(file), mode, separator, baseTitle(file), splitOpts(opts)));
       } else {
         const id = store.newId();
         const ext = (path.extname(file).slice(1) || 'bin').toLowerCase();
@@ -107,7 +109,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
 
   // With `dir` (an opened project) the page's images are downloaded into media/ and embedded (offline copy);
   // the result then has `media` items to add to Research.
-  handle('io:importWebPage', async (_e, url, dir) => {
+  handle('io:importWebPage', async (_e, url, dir, opts = {}) => {
     if (dir) assertOpened(dir);
     const saveMedia = dir
       ? ({ data, ext, name }) => {
@@ -117,7 +119,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
           return { id, title: name.replace(/\.[^.]+$/, '') || 'Imagine', file, mime: store.mimeFor(file), name };
         }
       : null;
-    const page = await importWebPage(url, { saveMedia });
+    const page = await importWebPage(url, { saveMedia, asText: Boolean(opts && opts.asText) });
     if (!dir) return page;
     return {
       title: page.title,
@@ -127,7 +129,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   });
 
   // Import dialog (Word/RTF/ODT/text/Markdown/HTML/Fountain/FDX) with split options.
-  handle('io:importText', async (e, mode = 'none', separator = '#') => {
+  handle('io:importText', async (e, mode = 'none', separator = '#', opts = {}) => {
     const res = await dialog.showOpenDialog(winOf(e), {
       title: 'Importă text',
       properties: ['openFile', 'multiSelections'],
@@ -141,7 +143,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     });
     if (res.canceled) return null;
     const parts = [];
-    for (const file of res.filePaths) parts.push(...splitHtml(await fileToHtml(file), mode, separator, baseTitle(file)));
+    for (const file of res.filePaths) parts.push(...splitHtml(await fileToHtml(file), mode, separator, baseTitle(file), splitOpts(opts)));
     return parts;
   });
 
@@ -152,6 +154,16 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     return templates.saveUserTemplate(dir, templatesDir(), meta || {});
   });
   handle('io:deleteTemplate', (_e, id) => templates.deleteUserTemplate(templatesDir(), id));
+  handle('io:exportTemplate', async (e, id) => {
+    const res = await dialog.showOpenDialog(winOf(e), { title: 'Exportă șablonul în…', properties: ['openDirectory', 'createDirectory'] });
+    if (res.canceled || !res.filePaths[0]) return null;
+    return templates.exportUserTemplate(templatesDir(), id, res.filePaths[0]);
+  });
+  handle('io:importTemplate', async (e) => {
+    const res = await dialog.showOpenDialog(winOf(e), { title: 'Importă șablon (folderul .sablon)', properties: ['openDirectory'] });
+    if (res.canceled || !res.filePaths[0]) return null;
+    return templates.importUserTemplate(res.filePaths[0], templatesDir());
+  });
   // Returns {dir}; the renderer then opens it with openProject(dir) (it is in the recent list).
   handle('io:newFromTemplate', async (e, title, templateId) => {
     const name = String(title || '').trim();
@@ -283,9 +295,12 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     return res.filePath;
   };
 
-  handle('io:exportOpml', async (e, dir, project) => {
+  handle('io:exportOpml', async (e, dir, project, opts = {}) => {
     assertOpened(dir);
-    return saveText(e, 'Exportă OPML', `${exporters.safeName(project.title)}.opml`, [{ name: 'OPML', extensions: ['opml'] }], exporters.exportOpml(project));
+    const textOf = opts && opts.includeText
+      ? (n) => [store.readDoc(dir, n.id, 'docs'), store.readDoc(dir, n.id, 'notes')].map((h) => store.htmlToText(h || '').trim()).filter(Boolean).join('\n\n')
+      : null;
+    return saveText(e, 'Exportă OPML', `${exporters.safeName(project.title)}.opml`, [{ name: 'OPML', extensions: ['opml'] }], exporters.exportOpml(project, { textOf }));
   });
 
   handle('io:exportCsv', async (e, dir, project, wordCounts) => {
