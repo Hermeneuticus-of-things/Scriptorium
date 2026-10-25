@@ -121,11 +121,11 @@ describe('menu layout: Find submenu, Go To binder tree, appended items, native r
 });
 
 describe('default shortcuts', () => {
-  it('no two commands share a key; Ctrl+G finds next, Go To dialog on Ctrl+Alt+G', () => {
+  it('no two commands share a key; Ctrl+G finds next, Go To dialog on Ctrl+J', () => {
     expect([...conflicts(Object.keys(DEFAULT_KEYS), {})]).toEqual([]);
     expect(DEFAULT_KEYS.findNext).toBe('Ctrl+G');
     expect(DEFAULT_KEYS.findPrev).toBe('Ctrl+Shift+G');
-    expect(DEFAULT_KEYS.goto).toBe('Ctrl+Alt+G');
+    expect(DEFAULT_KEYS.goto).toBe('Ctrl+J');
     // Menu-only labels (editor keys) are not registry shortcuts, so they never run twice.
     for (const k of ['Ctrl+B', 'Ctrl+I', 'Ctrl+U', 'Ctrl+Shift+V', 'Ctrl+Z', 'Ctrl+Y']) expect(Object.values(DEFAULT_KEYS)).not.toContain(k);
   });
