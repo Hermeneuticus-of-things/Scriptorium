@@ -236,6 +236,19 @@ export function createMockApi() {
           };
         })()
       : {}),
+    // Updates exist only in the desktop program; in the browser the page is always the current one.
+    async updateCheck() {
+      return { unavailable: true, current: '', latest: '', newer: false, notes: '' };
+    },
+    async updateConfigure() {
+      return false;
+    },
+    async updateDownload() {
+      throw new Error('Actualizarea este disponibilă doar în aplicația desktop.');
+    },
+    async updateInstall() {
+      throw new Error('Actualizarea este disponibilă doar în aplicația desktop.');
+    },
     async getSettings() {
       return structuredClone(state.settings);
     },

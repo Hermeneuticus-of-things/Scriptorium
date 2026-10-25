@@ -33,6 +33,7 @@ export const TOP_ITEMS = [
   { id: 'voice', label: 'cmd.speech', glyph: '🎙', command: 'speech', text: 'ui.tb.voice' },
   { id: 'settings', label: 'cmd.settings', glyph: '⚙', command: 'settings' },
   { id: 'help', label: 'cmd.help', glyph: '?', command: 'help' },
+  { id: 'update', label: 'cmd.checkUpdates', glyph: '⟳', command: 'checkUpdates', needs: 'desktop' },
 ];
 // Decluttered default: navigation, title, view switch, Compile, Inspector (+ the AI menu on desktop).
 export const TOP_DEFAULT = ['home', 'back', 'forward', 'title', SPACE, 'views', 'voice', 'compile', 'inspector', 'aiMenu'];

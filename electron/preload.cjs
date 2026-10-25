@@ -151,6 +151,21 @@ contextBridge.exposeInMainWorld('api', {
   openLink: (url) => call('app:openLink', url),
   copyText: (text) => call('app:copyText', text),
   // Error log (Help → Report a problem): { entries, env }; new errors arrive through onAppError.
+  // Updates (Help → Check for updates): latest release info, download with progress, install and restart.
+  updateCheck: () => call('update:check'),
+  updateConfigure: () => call('update:configure'),
+  updateDownload: () => call('update:download'),
+  updateInstall: () => call('update:install'),
+  onUpdateProgress: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('update:progress', listener);
+    return () => ipcRenderer.removeListener('update:progress', listener);
+  },
+  onUpdateAvailable: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('update:available', listener);
+    return () => ipcRenderer.removeListener('update:available', listener);
+  },
   getErrorLog: () => call('errors:get'),
   clearErrorLog: () => call('errors:clear'),
   logError: (info) => call('errors:log', info),
