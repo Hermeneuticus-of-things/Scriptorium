@@ -14,7 +14,7 @@ export const AI_ONLY_COMMANDS = new Set([
 export const SUBMENUS = {
   file: [
     ['menu.import', ['import', 'importFiles', 'importOpml', 'importWeb', 'transcribeAudio', 'importZotero', 'importBib', 'importBundle']],
-    ['menu.export', ['exportFiles', 'exportScriv', 'exportLatex', 'exportPandoc', 'exportMmd', 'exportFdx', 'exportFountain', 'exportBundle', 'editorPackage', 'saveTemplate']],
+    ['menu.export', ['exportFiles', 'exportScriv', 'exportLatex', 'exportPandoc', 'exportMmd', 'exportFdx', 'exportFountain', 'exportBundle', 'editorPackage']], // saveTemplate: top level of File (G4)
     ['menu.sync', ['syncOut', 'syncIn']],
     ['menu.print', ['pageSetup', 'printPreview', 'print']],
   ],

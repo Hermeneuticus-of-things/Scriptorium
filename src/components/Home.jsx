@@ -9,7 +9,7 @@ export function orderRecent(recent = [], pinned = []) {
 }
 
 // [{category, templates}] in a stable category order (mirrors lib/templates.cjs groupTemplates).
-const CATEGORY_ORDER = ['Generale', 'Ficțiune', 'Non-ficțiune', 'Scenariu', 'Poezie', 'Ale mele'];
+const CATEGORY_ORDER = ['Generale', 'Ficțiune', 'Non-ficțiune', 'Scenariu', 'Poezie', 'Diverse', 'Ale mele'];
 export function groupTemplates(list = []) {
   const map = new Map();
   for (const t of list) {
@@ -41,7 +41,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
   const recent = orderRecent(settings.recent || [], pinned);
   const [title, setTitle] = useState('');
   const [templates, setTemplates] = useState([{ id: 'blank', name: tr('ui.home.gol') }]);
-  const [templateId, setTemplateId] = useState('novel');
+  const [templateId, setTemplateId] = useState(() => initialSettings?.defaultTemplate || 'novel');
   const loadTemplates = React.useCallback(() => {
     const list = api.listAllTemplates || api.listTemplates;
     list?.call(api).then((l) => l && setTemplates(l)).catch(onError);
@@ -53,7 +53,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
       const r = await api.newFromTemplate(title.trim(), templateId);
       return r ? api.openProject(r.dir) : null;
     }
-    return api.newProject(title.trim(), templateId);
+    return api.newProject(title.trim(), chosen ? templateId : 'novel');
   };
   const removeTemplate = async () => {
     if (!chosen || !chosen.user || !window.confirm(tr('ui.home.stergi_sablonul_x', { name: chosen.name }))) return;
@@ -61,6 +61,25 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
       await api.deleteTemplate(chosen.id);
       setTemplateId('novel');
       loadTemplates();
+    } catch (e) {
+      onError(e);
+    }
+  };
+  // Template chooser > Options: default template, import / export of user templates.
+  const setDefaultTemplate = () => chosen && saveSettings({ defaultTemplate: chosen.id });
+  const importTemplate = async () => {
+    try {
+      const tpl = await api.importTemplate();
+      if (!tpl) return;
+      loadTemplates();
+      setTemplateId(tpl.id);
+    } catch (e) {
+      onError(e);
+    }
+  };
+  const exportTemplate = async () => {
+    try {
+      await api.exportTemplate(chosen.id);
     } catch (e) {
       onError(e);
     }
@@ -170,6 +189,9 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
               <div className="tpl-menu" role="menu">
                 <button role="menuitem" onClick={() => { setMenu(null); run(() => api.importScriv())(); }}>{tr('ui.home.importa_proiect_scrivener_scriv')}</button>
                 {api.isWeb && api.importBundle && <button role="menuitem" onClick={() => { setMenu(null); run(() => api.importBundle())(); }}>{tr('ui.home.importa_pachet_json')}</button>}
+                {chosen && <button role="menuitem" disabled={settings.defaultTemplate === chosen.id} onClick={() => { setMenu(null); setDefaultTemplate(); }}>{tr('ui.g4.tplImplicit')}</button>}
+                {api.importTemplate && <button role="menuitem" onClick={() => { setMenu(null); importTemplate(); }}>{tr('ui.g4.tplImporta')}</button>}
+                {chosen && chosen.user && api.exportTemplate && <button role="menuitem" onClick={() => { setMenu(null); exportTemplate(); }}>{tr('ui.g4.tplExporta')}</button>}
                 {chosen && chosen.user && api.deleteTemplate && <button role="menuitem" onClick={() => { setMenu(null); removeTemplate(); }}>{tr('ui.home.sterge_sablonul')}</button>}
                 {canSync && <p className="muted small">{tr('ui.home.folder_sync_tip')}</p>}
               </div>

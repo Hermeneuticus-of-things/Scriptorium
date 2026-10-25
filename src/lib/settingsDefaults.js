@@ -41,7 +41,11 @@ export const DEFAULT_SETTINGS = {
   backupOnClose: true,
   snapshotOnSave: false,
   backupEveryMin: 0,
-  backupKeep: 10,
+  backupOnOpen: false,
+  backupOnSave: false, // also on each manual save (Ctrl+S), at most once a minute
+  backupZip: true,
+  backupDateName: true, // date and time in the backup's file name
+  backupKeep: 5, // new installs; settings saved before keep their value (lib/backup.cjs migrateBackupKeep)
   backupDir: '',
   // AI
   aiEnabled: true,
