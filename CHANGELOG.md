@@ -2,6 +2,13 @@
 
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
+### v0.9.8, căutare macro (aplicația desktop cap-coadă)
+- Setările salvate (limba, autosalvarea, înlocuirile automate, rândul, fontul, redeschiderea ultimului proiect) se citesc înapoi; înainte dialogul pornea cu valorile implicite și le suprascria la salvare. Cheile rămân în procesul principal.
+- Un settings.json valid dar greșit (null, listă, `recent` stricat) nu mai oprește pornirea aplicației.
+- Același proiect deschis printr-o legătură simbolică (sau altă literă mare/mică) nu mai poate fi deschis în două ferestre.
+- Backup manual: include ultimele rânduri tastate.
+- EPUB comprimat (4,5 MB → zeci de KB la 2000 de documente).
+
 ### v0.9.8, căutare micro/nano
 - Scurtăturile aplicației cu Ctrl+Shift (Compile, Referință rapidă, Binder, Salvează ca, Inspector) tastate în editor nu mai aplică și formatarea editorului pe aceeași tastă; uneltele pentru dezvoltatori trec pe F12.
 - Numărarea cuvintelor: blocuri div/tabel separate; diacriticele descompuse (s + virgulă) nu mai rup cuvântul, nici la căutarea pe cuvânt întreg.

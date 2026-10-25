@@ -78,7 +78,12 @@ function readSettings() {
     return { ...SETTINGS_DEFAULTS }; // first start
   }
   try {
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    // Valid JSON that is not a settings object (null, a list, a string) counts as corrupt too.
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
+    if (!Array.isArray(parsed.recent)) parsed.recent = [];
+    parsed.recent = parsed.recent.filter((r) => r && typeof r.dir === 'string');
+    return parsed;
   } catch {
     // Unreadable: kept aside (never overwritten by defaults) and the last good copy is used.
     try {
@@ -88,6 +93,8 @@ function readSettings() {
     }
     try {
       const good = JSON.parse(fs.readFileSync(`${settingsFile()}.bak`, 'utf8'));
+      if (!good || typeof good !== 'object' || Array.isArray(good)) throw new Error('bad backup');
+      if (!Array.isArray(good.recent)) good.recent = [];
       store.writeAtomic(settingsFile(), JSON.stringify(good, null, 2));
       return good;
     } catch {
@@ -415,7 +422,12 @@ function handle(channel, fn) {
 handle('settings:get', () => {
   const s = readSettings();
   const b = backupSettings();
+  // Every saved preference goes back to the window (language, autosave, replacements…), except
+  // the secrets, which stay in this process.
+  const SECRET = new Set(['apiKeys', 'apiKeyEnc', 'apiKeyPlain', 'services', 'accounts']);
+  const plain = Object.fromEntries(Object.entries(s).filter(([k]) => !SECRET.has(k) && !/(apikey|secret|token|password)/i.test(k)));
   return {
+    ...plain,
     // `missing`: the Home screen marks recents whose folder is gone (moved, deleted, drive unplugged).
     recent: (s.recent || []).map((r) => (r && r.dir && !fs.existsSync(path.join(r.dir, 'project.json')) ? { ...r, missing: true } : r)),
     theme: s.theme,
@@ -500,6 +512,13 @@ handle('project:open', async (e, dirArg) => {
     dir = res.filePaths[0];
   } else if (!(readSettings().recent || []).some((r) => r.dir === dir)) {
     throw new Error('Proiectul nu este în lista recentă.');
+  }
+  // One spelling per folder (a link or another letter case is the same project): two windows
+  // must not both write into it.
+  try {
+    dir = fs.realpathSync.native(dir);
+  } catch {
+    /* missing: the open below reports it */
   }
   // Already open in another window: focus it and leave this one as it is.
   const owner = claims.ownerOf(dir);

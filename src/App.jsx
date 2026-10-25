@@ -2921,6 +2921,7 @@ export default function App({ api: apiProp }) {
       {dialog === 'backup' && (
         <BackupDialog
           api={api}
+          flush={flush}
           dir={dir}
           onOpenProject={async (res) => {
             await flush();
