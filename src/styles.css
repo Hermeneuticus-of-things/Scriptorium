@@ -603,3 +603,31 @@ legend { color: var(--muted); padding: 0 4px; }
 .comp-bar-spacer { flex: 1; }
 .app.composition[data-comp-align='left'] .page { margin-left: 5vw; margin-right: auto; }
 .app.composition[data-comp-align='right'] .page { margin-left: auto; margin-right: 5vw; }
+/* Compile window: "Compile for" row, then formats | section layouts | Contents/Options/Metadata */
+.compile-dialog .cd-top { display: flex; align-items: center; gap: .6em; }
+.compile-dialog .cd-compile-for { display: flex; flex-direction: row; align-items: center; gap: .5em; font-weight: 600; }
+.compile-dialog .cd-compile-for select { font-weight: 400; }
+.compile-dialog .cd-body { display: grid; grid-template-columns: 200px 220px minmax(0, 1fr); gap: .8em; }
+.compile-dialog .cd-formats { min-width: 0; }
+.compile-dialog .cd-layouts { display: flex; flex-direction: column; gap: .5em; min-width: 0; border-right: 1px solid var(--border, #ddd); padding-right: .8em; }
+.compile-dialog .cd-layouts h3, .compile-dialog .cd-formats h3 { margin: 0 0 .3em; font-size: .95em; }
+.compile-dialog .cd-layout-cards { list-style: none; margin: 0; padding: 0; overflow: auto; max-height: 52vh; display: flex; flex-direction: column; gap: .4em; }
+.compile-dialog .cd-layout-card { border: 1px solid var(--border, #ddd); border-radius: 4px; padding: .4em; }
+.compile-dialog .cd-layout-thumb { height: 46px; background: #fff; color: #333; border: 1px solid #ccc; padding: 4px 6px; overflow: hidden; display: flex; flex-direction: column; gap: 3px; font: 9px/1.2 Georgia, serif; }
+.compile-dialog .cd-layout-thumb.pb { border-top: 3px double #999; }
+.compile-dialog .cd-thumb-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.compile-dialog .cd-thumb-title.upper { text-transform: uppercase; }
+.compile-dialog .cd-thumb-title.smallcaps { font-variant: small-caps; }
+.compile-dialog .cd-thumb-lines { flex: 1; background: repeating-linear-gradient(#bbb 0 1px, transparent 1px 5px); }
+.compile-dialog .cd-layout-name { font-weight: 600; margin-top: .25em; overflow-wrap: anywhere; }
+.compile-dialog .cd-icon-tabs button { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 5.5em; }
+.compile-dialog .cd-tab-icon { font-size: 1.25em; line-height: 1; }
+.compile-dialog .cd-items { list-style: none; margin: .4em 0 0; padding: .3em; border: 1px solid var(--border, #ddd); max-height: 34vh; overflow: auto; }
+.compile-dialog .cd-items li { margin: 1px 0; }
+.compile-dialog .cd-sub-backdrop { z-index: 20; }
+.compile-dialog .cd-sub { width: min(900px, 94vw); max-height: 86vh; }
+.compile-dialog .cd-sub .cd-panel { max-height: 60vh; }
+@media (max-width: 760px) {
+  .compile-dialog .cd-body { grid-template-columns: 1fr; }
+  .compile-dialog .cd-layouts { border-right: none; padding-right: 0; }
+}
