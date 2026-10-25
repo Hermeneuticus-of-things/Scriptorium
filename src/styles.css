@@ -536,3 +536,31 @@ legend { color: var(--muted); padding: 0 4px; }
 
 /* Typewriter mode: room below (and above) the text, so the line being written can sit mid-screen. */
 .page.typewriter { padding-bottom: 50vh; padding-top: 30vh; }
+
+/* Home: template chooser */
+.tpl-chooser { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.tpl-chooser h2 { margin: 0; font-size: 16px; }
+.tpl-body { display: flex; gap: 12px; min-height: 300px; }
+.tpl-cats { list-style: none; margin: 0; padding: 6px; flex: 0 0 170px; border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; gap: 2px; }
+.tpl-cats li { padding: 6px 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; gap: 6px; }
+.tpl-cats li:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.tpl-cats li.on { background: var(--accent); color: #fff; }
+.tpl-cats li.on .muted { color: inherit; opacity: .8; }
+.tpl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.tpl-grid { list-style: none; margin: 0; padding: 8px; flex: 1; border: 1px solid var(--line); border-radius: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; align-content: start; overflow: auto; max-height: 320px; }
+.tpl-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border: 1px solid transparent; border-radius: 8px; cursor: pointer; text-align: center; }
+.tpl-card:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.tpl-card.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.tpl-icon { font-size: 34px; line-height: 1; }
+.tpl-name { font-size: 13px; overflow-wrap: anywhere; }
+.tpl-desc { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 64px; }
+.tpl-desc p { margin: 4px 0 0; }
+.tpl-footer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tpl-spacer { flex: 1; }
+.tpl-footer > input { min-width: 180px; }
+.tpl-menu-wrap { position: relative; }
+.tpl-menu { position: absolute; bottom: calc(100% + 4px); left: 0; z-index: 20; min-width: 240px; max-height: 320px; overflow: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.18); padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.tpl-menu > button { text-align: left; border: 0; background: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; color: inherit; }
+.tpl-menu > button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.tpl-menu .recent { list-style: none; margin: 0; padding: 0; }
+@media (max-width: 640px) { .tpl-body { flex-direction: column; } .tpl-cats { flex-basis: auto; } }
