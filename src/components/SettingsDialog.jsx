@@ -62,9 +62,11 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     backupOnClose: init.backupOnClose !== false,
     backupOnOpen: Boolean(init.backupOnOpen),
     snapshotOnSave: Boolean(init.snapshotOnSave),
+    backupOnSave: Boolean(init.backupOnSave),
+    backupDateName: init.backupDateName !== false,
     backupZip: init.backupZip !== false,
     backupEveryMin: init.backupEveryMin || 0,
-    backupKeep: init.backupKeep || 10,
+    backupKeep: init.backupKeep || 5,
     backupDir: init.backupDir || '',
     teamName: init.team?.name || '',
     dtedPath: init.dtedPath || '',
@@ -233,7 +235,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         sharingSync: sharing.sync,
         sharingExport: sharing.export,
         backupEveryMin: Number(s.backupEveryMin) || 0,
-        backupKeep: Math.max(1, Number(s.backupKeep) || 10),
+        backupKeep: Math.max(1, Number(s.backupKeep) || 5),
         team: {
           name: s.teamName.trim().slice(0, 60),
           color: s.teamColor,
@@ -465,7 +467,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       <>
         {check('backupOnClose', t('set.backupOnClose'))}
         {check('backupOnOpen', t('ui.settingsDialog.backup_si_la_deschiderea_proiectului'))}
+        {check('backupOnSave', t('ui.g4.backupOnSave'))}
         {check('backupZip', t('ui.settingsDialog.backup_comprimat_zip_debifat_copie'))}
+        {check('backupDateName', t('ui.g4.backupDateName'))}
         <div className="row">
           <label>
             {t('set.backupEvery')}

@@ -269,6 +269,9 @@ export function createMockApi() {
         draftWords: d.draftEnd,
       }));
     },
+    async backupOnSave() {
+      return null; // backups exist only in the desktop app
+    },
     async importFile() {
       throw new Error('Importul de fișiere funcționează doar în aplicația desktop.');
     },

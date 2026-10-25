@@ -4,12 +4,13 @@ import { t } from '../lib/i18n.js';
 export default function ImportDialog({ api, target, onImported, onClose, onError }) {
   const [mode, setMode] = useState('h1');
   const [separator, setSeparator] = useState('#');
+  const [firstLineTitle, setFirstLineTitle] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const run = async () => {
     setBusy(true);
     try {
-      const parts = await (api.importText ? api.importText(mode, separator) : api.importFile(mode, separator));
+      const parts = await (api.importText ? api.importText(mode, separator || '#', { firstLineTitle }) : api.importFile(mode, separator || '#', { firstLineTitle }));
       if (parts && parts.length) {
         onImported(parts);
         onClose();
@@ -41,9 +42,52 @@ export default function ImportDialog({ api, target, onImported, onClose, onError
             <input value={separator} onChange={(e) => setSeparator(e.target.value)} />
           </label>
         )}
+        <label className="check">
+          <input type="checkbox" checked={firstLineTitle} onChange={(e) => setFirstLineTitle(e.target.checked)} /> {t('ui.g4.primulRandTitlu')}
+        </label>
         <div className="actions">
           <button onClick={onClose}>{t('btn.cancel')}</button>
           <button className="primary" disabled={busy} onClick={run}>{busy ? t('ui.importDialog.se_importa') : t('ui.importDialog.alege_fisiere')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// File > Import > Web Page: address, title (empty = the page's own title), formatted page or plain text.
+export function WebImportDialog({ onImport, onClose }) {
+  const [url, setUrl] = useState('https://');
+  const [title, setTitle] = useState('');
+  const [asText, setAsText] = useState(false);
+  const ok = /^https?:\/\/\S+\.\S+/.test(url.trim());
+  const submit = () => {
+    if (!ok) return;
+    onImport({ url: url.trim(), title: title.trim(), asText });
+    onClose();
+  };
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" role="dialog" aria-label={t('ui.g4.webTitlu')} onClick={(e) => e.stopPropagation()}>
+        <h2>{t('ui.g4.webTitlu')}</h2>
+        <label>
+          {t('ui.g4.webAdresa')}
+          <input autoFocus value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        </label>
+        <label>
+          {t('ui.g4.webNume')}
+          <input value={title} placeholder={t('ui.g4.webNumePh')} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        </label>
+        <fieldset className="checks">
+          <label className="check">
+            <input type="radio" name="web-as" checked={!asText} onChange={() => setAsText(false)} /> {t('ui.g4.webPagina')}
+          </label>
+          <label className="check">
+            <input type="radio" name="web-as" checked={asText} onChange={() => setAsText(true)} /> {t('ui.g4.webText')}
+          </label>
+        </fieldset>
+        <div className="actions">
+          <button onClick={onClose}>{t('btn.cancel')}</button>
+          <button className="primary" disabled={!ok} onClick={submit}>{t('ui.g4.webImporta')}</button>
         </div>
       </div>
     </div>

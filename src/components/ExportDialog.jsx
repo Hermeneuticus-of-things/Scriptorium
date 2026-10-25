@@ -30,6 +30,7 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
   const [withSynopsis, setWithSynopsis] = useState(true);
   const [withMeta, setWithMeta] = useState(false);
   const [trackChanges, setTrackChanges] = useState(false);
+  const [opmlText, setOpmlText] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState('');
 
@@ -44,7 +45,7 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
         const res = await api.exportDocuments(dir, project, ids, { format, withNotes, withSynopsis, withMeta, trackChanges: format === 'docx' && trackChanges });
         if (res) setDone(t('ui.exportDialog.au_fost_exportate_x_documente', { count: res.count, dir: res.dir }));
       } else if (tab === 'opml') {
-        const file = await api.exportOpml(dir, project);
+        const file = await api.exportOpml(dir, project, { includeText: opmlText });
         if (file) setDone(t('ui.exportDialog.schita_a_fost_salvata_in', { file: file }));
       } else {
         const file = await api.exportCsv(dir, project);
@@ -111,7 +112,12 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
           </div>
         )}
         {tab === 'opml' && (
-          <p className="muted">{t('ui.exportDialog.exporta_structura_binder_ului_ca')}</p>
+          <div className="fields">
+            <p className="muted">{t('ui.exportDialog.exporta_structura_binder_ului_ca')}</p>
+            <label className="check">
+              <input type="checkbox" checked={opmlText} onChange={(e) => setOpmlText(e.target.checked)} /> {t('ui.g4.opmlNote')}
+            </label>
+          </div>
         )}
         {tab === 'csv' && (
           <p className="muted">{t('ui.exportDialog.exporta_un_tabel_cu_metadatele')}</p>
