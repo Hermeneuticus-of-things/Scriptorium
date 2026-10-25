@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { t } from '../lib/i18n.js';
 
-export default function BackupDialog({ api, dir, onOpenProject, onClose, onError }) {
+export default function BackupDialog({ flush, api, dir, onOpenProject, onClose, onError }) {
   const [list, setList] = useState([]);
   const [busy, setBusy] = useState(false);
   const refresh = () => api.listBackups(dir).then(setList).catch(onError);
@@ -12,6 +12,7 @@ export default function BackupDialog({ api, dir, onOpenProject, onClose, onError
   const now = async () => {
     setBusy(true);
     try {
+      await flush?.(); // the latest typing goes into the backup too
       await api.backupNow(dir);
       await refresh();
     } catch (e) {

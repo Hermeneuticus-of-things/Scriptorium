@@ -12,6 +12,10 @@ export const noneLabel = (name, t) => (name === NONE ? t('ui.corkboard.fara_etic
 export const noneStatus = (name, t) => (name === NONE ? t('ui.corkboard.fara_status') : (getLanguage() === 'en' && BUILTIN_STATUSES_EN[name]) || name);
 export const DEFAULT_LABEL_TITLE = 'Etichetă';
 export const DEFAULT_STATUS_TITLE = 'Status';
+// The names the writer gave the Label and Status fields (Project Settings); the defaults follow
+// the interface language.
+export const labelTitleOf = (project, tr) => (project?.labelTitle && project.labelTitle !== DEFAULT_LABEL_TITLE ? project.labelTitle : tr('ui.binder.eticheta'));
+export const statusTitleOf = (project, tr) => (project?.statusTitle && project.statusTitle !== DEFAULT_STATUS_TITLE ? project.statusTitle : tr('ui.app.status'));
 export const FIELD_TYPES = ['text', 'checkbox', 'list', 'date'];
 
 const clone = (x) => structuredClone(x);
@@ -48,16 +52,24 @@ function mapTree(project, fn) {
 }
 
 // ---- labels ----
+// The Compile filters name labels / statuses too: kept in step with a rename or delete.
+function compileFilter(out, key, from, to) {
+  const list = out.compile && out.compile[key];
+  if (!Array.isArray(list)) return;
+  out.compile = { ...out.compile, [key]: to == null ? list.filter((x) => x !== from) : list.map((x) => (x === from ? to : x)) };
+}
 export function renameLabel(project, oldName, newName) {
   if (oldName === NONE || !newName || oldName === newName) return clone(project);
   const out = mapTree(project, (n) => { if (n.label === oldName) n.label = newName; });
   out.labels = (out.labels || []).map((l) => (l.name === oldName ? { ...l, name: newName } : l));
+  compileFilter(out, 'labels', oldName, newName);
   return out;
 }
 export function deleteLabel(project, name) {
   if (name === NONE) return clone(project);
   const out = mapTree(project, (n) => { if (n.label === name) n.label = NONE; });
   out.labels = (out.labels || []).filter((l) => l.name !== name);
+  compileFilter(out, 'labels', name, null);
   return out;
 }
 
@@ -66,12 +78,14 @@ export function renameStatus(project, oldName, newName) {
   if (oldName === NONE || !newName || oldName === newName) return clone(project);
   const out = mapTree(project, (n) => { if (n.status === oldName) n.status = newName; });
   out.statuses = (out.statuses || []).map((s) => (s === oldName ? newName : s));
+  compileFilter(out, 'statuses', oldName, newName);
   return out;
 }
 export function deleteStatus(project, name) {
   if (name === NONE) return clone(project);
   const out = mapTree(project, (n) => { if (n.status === name) n.status = NONE; });
   out.statuses = (out.statuses || []).filter((s) => s !== name);
+  compileFilter(out, 'statuses', name, null);
   return out;
 }
 
@@ -184,6 +198,7 @@ export function applyProjectSettings(project, draft) {
   const propagate = (origList, items, del, ren, key = 'name') => {
     const kept = new Set(items.map((i) => i.orig).filter((o) => o != null));
     for (const o of origList) if (!kept.has(o) && o !== NONE) p = del(p, o);
+    items = items.map((i) => (typeof i[key] === 'string' ? { ...i, [key]: i[key].trim() } : i));
     const renames = items.filter((i) => i.orig != null && i.orig !== i[key]);
     const tmp = renames.map((r, k) => `\u0000tmp${k}\u0000`);
     renames.forEach((r, k) => { p = ren(p, r.orig, tmp[k]); });

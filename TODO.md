@@ -150,6 +150,12 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] răspuns și „rezolvat” la comentarii
 - [x] (v0.9.6) echipă: conflicte false la paragrafe vecine
 - [ ] engleză, rămase: bara de imagini, „Caută după formatare”, limbile din Servicii, tabelele din Ajutor → Sintaxă (mod scenariu), mesajele motorului de dictare, folderul `scrivener-original/` (nume nou + citire nume vechi)
+- [x] (v0.9.7) eek din D&TED în dictarea Scribner: listă modele, alegere, „Folosit acum”, mesaj pentru D&TED vechi, imagine README
+- [ ] D&TED 0.4.2: construit și publicat pe Windows (PyInstaller + instalator + amprente) — la autor
+- [ ] probă reală pe Windows: dictare cu eek prin D&TED în Scribner — la autor
+- [ ] deschiderea unui proiect cu dublu clic / din linia de comandă (argv, second-instance, open-file, fileAssociations)
+- [ ] la ieșire: ferestrele salvează înainte de backup (before-quit → flush din renderer)
+- [ ] watcher: folder dispărut pe Linux (rename) tratat ca offline; un singur retry pe proiect
 - [ ] echipă: ordonarea jurnalului cu ceasuri decalate; copiile de conflict ale jurnalelor de echipă
 - [ ] `mergeDoc` re-ancorare după inserții (conflicte false)
 - [x] (v0.9.4) căutare „cuvânt întreg” și `^`/`$` peste granițele de formatare (bold în mijlocul cuvântului) — `src/lib/search.js`
@@ -175,3 +181,28 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] motor încorporat (whisper.cpp), descărcare din Setări cu progres și amprente, dictare cu microfonul, fișiere audio decodate în fereastră
 - [x] teste unitare + browser cu microfon fals; docs, README, ajutor
 - [ ] proba pe Windows (autorul): Descarcă motorul, F9, un MP3
+
+- [ ] Scrivenings: istoricul Undo se pierde după o editare în vederea compusă (historyKey comun); săgeți între secțiuni; bară de formatare comună.
+- [ ] „Copiază curat”: curățarea comentariilor cu DOMParser (span-uri imbricate).
+- [ ] Demo browser: Compile HTML cu doctype/charset și opțiunile (domeniu, titlu); previzualizarea să respecte domeniul.
+- [ ] Meniul Vizualizare: etichete în engleză (Corkboard, Outline, Quick Reference); „Duplică” de două ori cu Ctrl+D; Compile → Pagină doar în inchi.
+- [ ] MCP `import_files`: folder de import permis, configurabil.
+- [ ] Texte netraduse: formatting.js (FORMAT_KINDS, bara de imagine), pacing.js, PacingView, AiPanel („scrie”, „Respinge”), BackupDialog, EditorialPanel, CompileDialog (Interior/Exterior), collections.js, panelsExtra (Notă din ciorne, părți de vorbire), meniul Ajutor din main.cjs, mesajele webApi.js; 7 chei i18n nefolosite.
+- [ ] search.js/team.js: regex de tag care înțelege `>` în atribute; decodare `&amp;amp;` într-o singură trecere.
+- [ ] sanitize.js: toate URL-urile din srcset, style cu `\`, atributele background/poster.
+- [x] Colecție din căutare salvată cu câmpul Note: să încarce notele (App.jsx collectionNodes).
+- [x] Ținte: draftChars real, comparații pe unitatea aleasă, sessionReset (miezul nopții/manual), countOnlyCompiled.
+- [x] labelTitle/statusTitle afișate în Outline, Binder, Corkboard, Inspector.
+- [x] Corkboard pe rânduri: tragerea între grupuri schimbă eticheta/statusul; Ctrl+←/→ în grup.
+- [x] Setări D&TED: aplicate abia la Salvează; modelul afișat din starea motorului.
+- [ ] Panoul editorial: selectează exact problema, nu tot fragmentul.
+- [ ] Mărunte: blocare echipă la redenumire din Outline/Corkboard; zile de scris toate debifate; semn pentru semn de carte în coș; ceasul dictării în pauză.
+- [ ] Note de proiect: ștergerea filei să șteargă și fișierul notes/<id>.html.
+- [ ] Deschiderea unui proiect din linia de comandă / a doua lansare (argv).
+- [ ] Poziția și mărimea ferestrei salvate și ținute pe ecran.
+- [ ] Căutare/înlocuire în vederea compusă pe toate secțiunile.
+- [ ] Personalizarea barei: lista „Disponibile” din tastatură; tragerea pe poziția următoare.
+- [ ] Referința rapidă: text actualizat și ținută pe ecran; Setări la 800x600 (butoanele); Inspectorul sub 900 px.
+- [ ] Layout-uri cu același nume; comenzi duplicate în meniuri.
+- [ ] MCP: DNS rebinding la import_web_page (conexiune la IP-ul verificat); mesaje zod în română; move_item before/after rădăcină și trashedFrom.
+- [ ] Compile: regulile cu ^/$ pe paragraf; Editorial: autofix în adnotări, spații duble lângă adnotări.

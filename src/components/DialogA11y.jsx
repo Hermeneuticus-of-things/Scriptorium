@@ -34,12 +34,12 @@ export default function DialogA11y() {
     // Remember what had focus before a dialog opened. Menu items are skipped: the menu closes
     // when the dialog opens, so focus goes back to the menu button (or what was focused before).
     const onFocusIn = (e) => {
-      if (!e.target.closest?.('.modal, [role=menu], .context-menu')) lastFocus = e.target;
+      if (!e.target.closest?.('.modal, .help-window, [role=menu], .context-menu, [aria-haspopup=menu], .menubar')) lastFocus = e.target; // menu-bar buttons too: focus goes back to the work
     };
     const top = () => [...open.keys()].filter((m) => m.isConnected).pop();
 
     const scan = () => {
-      for (const modal of document.querySelectorAll('.modal-backdrop > .modal')) {
+      for (const modal of document.querySelectorAll('.modal-backdrop > .modal, .help-backdrop > .help-window')) {
         if (open.has(modal)) continue;
         decorateDialog(modal);
         open.set(modal, lastFocus);

@@ -100,7 +100,7 @@ export function updateNode(tree, id, patch) {
 export function moveToTrash(tree, id) {
   const trash = tree.find((n) => n.root === 'trash');
   const node = findNode(tree, id);
-  if (!node || node.root || rootOf(tree, id)?.id === trash.id) return tree;
+  if (!trash || !node || node.root || rootOf(tree, id)?.id === trash.id) return tree;
   const parent = findParent(tree, id);
   const list = parent ? parent.children : tree;
   const from = { parentId: parent ? parent.id : null, index: list.findIndex((n) => n.id === id) };
@@ -407,7 +407,13 @@ export function keyMoveMany(tree, ids, dir) {
 // Which row to select after the given ids leave their place (trash / move): the next
 // sibling of the last one, else the previous sibling of the first, else the parent.
 export function selectionAfterRemoval(tree, ids) {
-  const order = inOrder(tree, ids);
+  // Only the top-most removed items count: a child of a removed folder goes with it.
+  const all = new Set(ids);
+  const inside = (id) => {
+    for (let p = findParent(tree, id); p; p = findParent(tree, p.id)) if (all.has(p.id)) return true;
+    return false;
+  };
+  const order = inOrder(tree, ids).filter((n) => !inside(n.id));
   if (!order.length) return null;
   const set = new Set(ids);
   const last = order[order.length - 1];

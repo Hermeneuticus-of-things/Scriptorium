@@ -2,10 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { analyzePacing } from '../lib/pacing.js';
 import { t, uiLocale } from '../lib/i18n.js';
 
+// Decimals in the interface language (12,3 in Romanian).
+const dec = (v) => (typeof v === 'number' ? v.toLocaleString(uiLocale(), { maximumFractionDigits: 2 }) : v);
+
 const METRICS = () => ([
   ['words', t('ui.outliner.cuvinte'), (v) => v.toLocaleString(uiLocale())],
   ['dialogueRatio', 'Dialog %', (v) => `${Math.round(v * 100)}%`],
-  ['avgSentence', t('ui.pacingView.lungime_medie_fraza'), (v) => v],
+  ['avgSentence', t('ui.pacingView.lungime_medie_fraza'), (v) => dec(v)],
   ['avgParagraph', 'Lungime medie paragraf', (v) => v],
 ]);
 
@@ -32,7 +35,7 @@ export default function PacingView({ project, docs, onOpen, onClose }) {
         {onClose && <button onClick={onClose} style={{ marginLeft: 'auto' }}>{t('btn.close')}</button>}
       </div>
       <p className="muted">
-        {s.count} {t('ui.pacingView.scene')} {s.totalWords.toLocaleString(uiLocale())} {t('ui.pacingView.cuvinte_medie')} {s.meanWords} · abatere {s.stdDev} (CV {s.cv}{t('ui.pacingView.dialog_mediu')} {Math.round(s.meanDialogue * 100)}{t('ui.pacingView.fraza_medie')} {s.meanSentence} {t('ui.inspector.cuvinte')}
+        {s.count} {t('ui.pacingView.scene')} {s.totalWords.toLocaleString(uiLocale())} {t('ui.pacingView.cuvinte_medie')} {dec(s.meanWords)} · {t('ui.pacingView.abatere')} {dec(s.stdDev)} (CV {dec(s.cv)}{t('ui.pacingView.dialog_mediu')} {Math.round(s.meanDialogue * 100)}{t('ui.pacingView.fraza_medie')} {dec(s.meanSentence)} {t('ui.inspector.cuvinte')}
       </p>
       {data.scenes.length === 0 ? <p className="muted">Manuscrisul nu are scene.</p> : (
         <svg width={W} height={H + 30} role="img" aria-label={t('ui.pacingView.grafic_x_pe_scene', { label: label })} style={{ fontSize: 10 }}>

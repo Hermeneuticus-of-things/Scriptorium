@@ -24,6 +24,7 @@ import { resolveWikiLink } from '../editor/writing.js';
 import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
+import { insertable } from '../lib/inlineInsert.js';
 import FindBar from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
 import FormatFind from './FormatFind.jsx';
@@ -58,6 +59,8 @@ const Editor = forwardRef(function Editor(
   },
   ref,
 ) {
+  const typewriterRef = useRef(typewriter);
+  typewriterRef.current = typewriter;
   const histRef = useRef(null); // { base, groups } recorded for historyKey
   const replaying = useRef(false);
   const [showFind, setShowFind] = useState(false);
@@ -119,7 +122,7 @@ const Editor = forwardRef(function Editor(
       onBlur: () => flushRef.current(),
       onDestroy: () => flushRef.current(),
       onSelectionUpdate: ({ editor: ed }) => {
-        if (!typewriter) return;
+        if (!typewriterRef.current) return; // a ref: turning the mode on reaches editors already open
         const { node } = ed.view.domAtPos(ed.state.selection.from);
         const el = node.nodeType === 1 ? node : node.parentElement;
         el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -271,7 +274,8 @@ const Editor = forwardRef(function Editor(
         flushRef.current();
         if (!editor || editor.isDestroyed) return;
         const tr = editor.state.tr;
-        if (replaceChangedRange(tr, htmlToDoc(h, editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true));
+        // Not in this pane's undo history: its Undo must not reverse the other pane's change.
+        if (replaceChangedRange(tr, htmlToDoc(h, editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true).setMeta('addToHistory', false));
       },
       selectAround: (kind) => Boolean(editor && !editor.isDestroyed && selectAround(editor.view, undefined, kind)),
       getSelectionText: () => {
@@ -282,7 +286,7 @@ const Editor = forwardRef(function Editor(
       insertText: (text) => {
         if (!editor) return;
         const { to } = editor.state.selection;
-        editor.chain().focus().setTextSelection(to).insertContent(textToHtml(text)).run();
+        editor.chain().focus().setTextSelection(to).insertContent(insertable(text)).run();
       },
       // One line goes into the current paragraph as text; several lines become paragraphs.
       replaceSelection: (text) => {
@@ -293,6 +297,23 @@ const Editor = forwardRef(function Editor(
       },
       // A read-only editor (locked document, snapshot view) is left alone: false tells the caller.
       replaceSelectionHtml: (h) => Boolean(editor && !editor.isDestroyed && editor.isEditable && editor.chain().focus().insertContent(h).run()),
+      // Selects the index-th comment's text (Inspector › Comments › Go to).
+      selectComment: (index) => {
+        if (!editor || editor.isDestroyed) return false;
+        const el = editor.view.dom.querySelectorAll('[data-comment]')[index];
+        if (!el) return false;
+        const from = editor.view.posAtDOM(el, 0);
+        const to = editor.view.posAtDOM(el, el.childNodes.length);
+        editor.chain().focus().setTextSelection({ from, to }).scrollIntoView().run();
+        return true;
+      },
+      // Inserts after the selection (never over it); a single paragraph goes inline at the caret.
+      insertHtmlAfter: (h) => {
+        if (!editor || editor.isDestroyed || !editor.isEditable) return false;
+        const { to } = editor.state.selection;
+        const one = String(h).trim().match(/^<p>((?:(?!<\/?p[\s>]).)*)<\/p>$/s);
+        return editor.chain().focus().setTextSelection(to).insertContent(one ? one[1] : h).run();
+      },
       // Selects the first occurrence of a text snippet (used to jump to an editorial issue).
       // opts.block (0-based textblock index, = lint paragraph) and opts.at (offset in it) pick
       // the occurrence nearest to that place, so a repeated word jumps to the right one.

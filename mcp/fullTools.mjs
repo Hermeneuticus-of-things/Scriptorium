@@ -77,8 +77,79 @@ const { parseBibliography } = require('../lib/bibliography.cjs');
 // Names of every tool this module registers (tests assert the server lists them all).
 export const FULL_TOOL_NAMES = [];
 
+
+// Web pages for a client: only public addresses (no localhost, LAN or cloud metadata, checked
+// again after each redirect) and at most 20 MB, so a page cannot reach the user's own network.
+// Private, loopback, link-local, CGNAT and documentation ranges; IPv6 forms that carry an IPv4
+// address (mapped ::ffff:a.b.c.d, NAT64 64:ff9b::, 6to4 2002::, compatible ::a.b.c.d) are unwrapped.
+let blockList = null;
+async function isPrivateAddress(addr) {
+  const net = await import('node:net');
+  if (!blockList) {
+    blockList = new net.BlockList();
+    for (const [a, n] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.0.0.0', 24], ['192.168.0.0', 16], ['198.18.0.0', 15], ['224.0.0.0', 3]]) blockList.addSubnet(a, n, 'ipv4');
+    for (const [a, n] of [['::', 127], ['fc00::', 7], ['fe80::', 10], ['fec0::', 10], ['ff00::', 8]]) blockList.addSubnet(a, n, 'ipv6');
+  }
+  if (net.isIPv4(addr)) return blockList.check(addr, 'ipv4');
+  if (!net.isIPv6(addr)) return true;
+  const full = expandV6(addr);
+  const v4of = (hi, lo) => `${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`;
+  const w = full.map((x) => parseInt(x, 16));
+  const embedded =
+    w.slice(0, 5).every((x) => x === 0) && (w[5] === 0xffff || w[5] === 0) ? v4of(w[6], w[7]) // mapped / compatible
+    : w[0] === 0x64 && w[1] === 0xff9b ? v4of(w[6], w[7]) // NAT64
+    : w[0] === 0x2002 ? v4of(w[1], w[2]) // 6to4
+    : null;
+  if (embedded && blockList.check(embedded, 'ipv4')) return true;
+  return blockList.check(addr, 'ipv6');
+}
+function expandV6(a) {
+  let s = a.toLowerCase().replace(/%.*$/, '');
+  const m = /(\d+\.\d+\.\d+\.\d+)$/.exec(s);
+  if (m) {
+    const p = m[1].split('.').map(Number);
+    s = s.slice(0, -m[1].length) + `${((p[0] << 8) | p[1]).toString(16)}:${((p[2] << 8) | p[3]).toString(16)}`;
+  }
+  const [head, tail] = s.split('::');
+  const h = head ? head.split(':') : [];
+  const t = tail !== undefined ? (tail ? tail.split(':') : []) : [];
+  const fill = tail !== undefined ? Array(8 - h.length - t.length).fill('0') : [];
+  return [...h, ...fill, ...t].map((x) => x || '0');
+}
+async function publicFetch(href, max = 20 * 1024 * 1024) {
+  const dns = await import('node:dns/promises');
+  let url = href;
+  for (let hop = 0; hop < 6; hop++) {
+    const u = new URL(url);
+    if (!/^https?:$/.test(u.protocol)) throw new Error('Sunt acceptate doar adrese http(s).');
+    const host = u.hostname.replace(/^\[|\]$/g, '');
+    const addrs = await dns.lookup(host, { all: true }).catch(() => []);
+    if (!addrs.length) throw new Error(`Adresa nu există: ${host}`);
+    if (process.env.SCRIBNER_MCP_ALLOW_LOCAL_WEB !== '1' && (/^localhost$/i.test(host) || (await Promise.all(addrs.map((a) => isPrivateAddress(a.address)))).some(Boolean))) throw new Error('Adresele locale sau din rețeaua proprie nu se descarcă.');
+    const r = await fetch(u.href, { redirect: 'manual' });
+    if (r.status >= 300 && r.status < 400 && r.headers.get('location')) {
+      url = new URL(r.headers.get('location'), u.href).href;
+      continue;
+    }
+    const len = Number(r.headers.get('content-length') || 0);
+    if (len > max) throw new Error('Pagina e prea mare (peste 20 MB).');
+    const chunks = [];
+    let size = 0;
+    if (r.body) {
+      for await (const c of r.body) {
+        size += c.length;
+        if (size > max) throw new Error('Pagina e prea mare (peste 20 MB).');
+        chunks.push(c);
+      }
+    }
+    const buf = Buffer.concat(chunks);
+    return { ok: r.ok, status: r.status, url: u.href, headers: r.headers, text: async () => buf.toString('utf8'), arrayBuffer: async () => buf };
+  }
+  throw new Error('Prea multe redirecționări.');
+}
+
 export function registerFullTools(ctx) {
-  const { z, project, store, textIndexOf, load, mutate, trashIds, nodeOrThrow, textNodeOrThrow, pathOf, outsideProjects, addProject, appSettings, userData } = ctx;
+  const { z, project, store, textIndexOf, load, mutate, trashIds, nodeOrThrow, textNodeOrThrow, pathOf, outsideProjects, freshOutput, hiddenPath, lockedIds, addProject, appSettings, userData } = ctx;
   const tool = (name, ...rest) => {
     FULL_TOOL_NAMES.push(name);
     return ctx.tool(name, ...rest);
@@ -112,19 +183,31 @@ export function registerFullTools(ctx) {
   };
   const existingFile = (p) => {
     const abs = path.resolve(p);
+    // Hidden places (.ssh, .aws, dotfiles) are not read for a client.
     if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) throw new Error(`Fișier inexistent: ${abs}`);
+    // Also where a link really points (a link to ~/.ssh/id_rsa is the key itself).
+    if (hiddenPath(abs) || hiddenPath(fs.realpathSync.native(abs))) throw new Error(`Nu import din foldere sau fișiere ascunse ori de sistem: ${abs}`);
     return abs;
   };
   // Output folder named by the client: must exist (or be creatable) and lie outside every project.
+  const madeDirs = new Set();
   const outputDir = (p) => {
     const abs = outsideProjects(p, 'output_dir');
+    if (fs.existsSync(abs) && fs.lstatSync(abs).isSymbolicLink()) throw new Error(`output_dir: ${abs} este o legătură (symlink); nu scriu prin ea.`);
     fs.mkdirSync(abs, { recursive: true });
+    return abs;
+  };
+  // The folder an export fills: a folder the user already has (non-empty) is not written over,
+  // only one this server made earlier in the session.
+  const freshDir = (abs) => {
+    if (fs.existsSync(abs) && !madeDirs.has(abs) && fs.readdirSync(abs).length) throw new Error(`Folderul există deja și nu e gol: ${abs}. Alege alt folder sau șterge-l întâi.`);
+    madeDirs.add(abs);
     return abs;
   };
   const outputFile = (p) => {
     const abs = outsideProjects(p, 'output_path');
     fs.mkdirSync(path.dirname(abs), { recursive: true });
-    return abs;
+    return freshOutput(abs);
   };
   const rootByKind = (p, kind) => p.tree.find((n) => n.root === kind) || (kind === 'research' ? p.tree[1] : p.tree[0]);
   const containerOrThrow = (p, id) => {
@@ -213,8 +296,8 @@ export function registerFullTools(ctx) {
       if (parent_id) containerOrThrow(p0, parent_id);
       const texts = [];
       const media = [];
-      for (const f of files) {
-        const file = existingFile(f);
+      const checked = files.map(existingFile); // every path first: nothing is written for a list with a bad one
+      for (const file of checked) {
         const base = path.basename(file).replace(/\.[^.]+$/, '');
         const ext = path.extname(file).toLowerCase();
         if (ext === '.opml') {
@@ -254,14 +337,15 @@ export function registerFullTools(ctx) {
       }
       if (!/^https?:$/.test(u.protocol)) throw new Error('Sunt acceptate doar adrese http(s).');
       if (parent_id) containerOrThrow(load(dir), parent_id);
-      const r = await fetch(u.href, { redirect: 'follow' });
+      const r = await publicFetch(u.href);
       if (!r.ok) throw new Error(`Pagina nu a putut fi descărcată (HTTP ${r.status}).`);
       let page = importers.webPageToHtml(await r.text(), r.url || u.href);
       let media = [];
       if (images) {
         const local = await importers.localizeImages(page.html, {
           fetchImage: async (src) => {
-            const res = await fetch(src, { redirect: 'follow' });
+            const res = await publicFetch(src).catch(() => null);
+            if (!res) return null;
             if (!res.ok) return null;
             return { data: Buffer.from(await res.arrayBuffer()), mime: res.headers.get('content-type') || '' };
           },
@@ -342,7 +426,7 @@ export function registerFullTools(ctx) {
     async (dir, { output_dir, format, ids, with_notes, with_synopsis, with_meta, track_changes }) => {
       const p = load(dir);
       if (ids) ids.forEach((id) => nodeOrThrow(p, id));
-      const outDir = outsideProjects(path.join(outputDir(output_dir), exporters.safeName(p.title || 'Export')));
+      const outDir = freshDir(outsideProjects(path.join(outputDir(output_dir), exporters.safeName(p.title || 'Export'))));
       const res = await exporters.exportDocuments(p, dir, (id) => readDocSafe(dir, id), (id) => readDocSafe(dir, id, 'notes'), ids || null, outDir, {
         format,
         withNotes: with_notes,
@@ -1104,6 +1188,8 @@ export function registerFullTools(ctx) {
       if (node) {
         const html = readDocSafe(dir, node.id);
         if (glossaryHasTerm(html, t)) throw new Error(`„${t}” este deja în glosar.`);
+        const lock = lockedIds(dir)[node.id];
+        if (lock) throw new Error(`Glosarul e blocat de ${lock.who} (lucru în echipă); nu l-am modificat.`);
         writeWithSnapshot(dir, node.id, html + line, 'Înainte de glosar (agent AI)');
         return { id: node.id, title: node.title, term: t };
       }
@@ -1181,7 +1267,13 @@ export function registerFullTools(ctx) {
     { project, id: z.string().describe('Document sau dosar') },
     (dir, { id }) => {
       const changed = [];
+      const skipped = [];
+      const locks = lockedIds(dir);
       for (const n of textDocs(load(dir), id)) {
+        if (locks[n.id]) {
+          skipped.push(n.title); // locked by a person: left as is, no snapshot
+          continue;
+        }
         const html = readDocSafe(dir, n.id);
         // Author text (paragraphs the writer changed by hand) is never touched.
         const own = new Set(authorParagraphs(html, n.authorHashes).map((x) => x.text));
@@ -1190,7 +1282,7 @@ export function registerFullTools(ctx) {
         writeWithSnapshot(dir, n.id, fixed, 'Înainte de corecturile automate (agent AI)');
         changed.push(n.title);
       }
-      return `${changed.length} documente corectate${changed.length ? `: ${changed.join(', ')}` : ''}.`;
+      return `${changed.length} documente corectate${changed.length ? `: ${changed.join(', ')}` : ''}.${skipped.length ? ` Sărite (blocate): ${skipped.join(', ')}.` : ''}`;
     },
     W,
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Notes } from './Inspector.jsx';
 import { LEGACY_NOTES_ID, addNoteTab, projectNoteTabs, removeNoteTab, renameNoteTab } from '../lib/projectNotes.js';
 import { t as tr } from '../lib/i18n.js';
@@ -12,14 +12,20 @@ import { t as tr } from '../lib/i18n.js';
 export default function ProjectNotesTabs({ tabs: rawTabs, readNote, onNoteChange, onTabsChange, onRemoveNote, onError }) {
   const tabs = projectNoteTabs({ projectNotes: rawTabs });
   const [active, setActive] = useState(tabs[0].id);
-  const [html, setHtml] = useState(null);
+  // {id, html}: the text belongs to one tab, so a newly opened tab never starts with another's.
+  const [loaded, setLoaded] = useState(null);
   const cur = tabs.find((t) => t.id === active) || tabs[0];
+  const html = loaded && loaded.id === cur.id ? loaded.html : null;
+  const typed = useRef(new Map()); // tab id -> text typed this session (its save may still be queued)
 
   useEffect(() => {
     let alive = true;
-    setHtml(null);
+    if (typed.current.has(cur.id)) {
+      setLoaded({ id: cur.id, html: typed.current.get(cur.id) });
+      return undefined;
+    }
     Promise.resolve(readNote(cur.id))
-      .then((h) => alive && setHtml(h || ''))
+      .then((h) => alive && setLoaded({ id: cur.id, html: h || '' }))
       .catch((e) => onError?.(e));
     return () => {
       alive = false;
@@ -54,7 +60,7 @@ export default function ProjectNotesTabs({ tabs: rawTabs, readNote, onNoteChange
         ))}
         <button onClick={add} title={tr('ui.projectNotesTabs.fila_noua_de_note')} aria-label={tr('ui.projectNotesTabs.fila_noua')}>+</button>
       </div>
-      {html !== null && <Notes key={cur.id} initial={html} onChange={(h) => onNoteChange(cur.id, h)} placeholder={tr('ui.inspector.note_pentru_tot_proiectul')} />}
+      {html !== null && <Notes key={cur.id} initial={html} onChange={(h) => { typed.current.set(cur.id, h); onNoteChange(cur.id, h); }} placeholder={tr('ui.inspector.note_pentru_tot_proiectul')} />}
       <div className="row">
         <button className="link" onClick={rename}>{tr('set.binderDbl.rename')}</button>
         <button className="link" onClick={remove} disabled={cur.id === LEGACY_NOTES_ID || tabs.length <= 1}>{tr('ui.projectNotesTabs.sterge_fila')}</button>

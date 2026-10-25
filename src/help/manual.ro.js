@@ -943,6 +943,7 @@ scribner mcp "D:\\Carti\\Drumul spre munte.scribner"               serverul MCP 
 <li><strong>Text nou:</strong> fără selecție, intră la cursor. <strong>Modificare:</strong> peste o selecție, o înlocuiește; un singur Ctrl+Z întoarce textul vechi.</li>
 <li>În bara de jos: <em>Pauză</em> (ce spui nu se scrie), <em>Stop</em>, <em>Anulează</em> (scoate tot ce s-a dictat de la pornire).</li>
 <li><em>Fișier → Importă → Transcrie fișier audio…</em>: MP3, WAV, M4A, OGG, FLAC → document nou în Cercetare, pe paragrafe, cu ora din înregistrare [mm:ss] (se poate opri din setări). Pe un fișier audio din binder: <em>Documente → Transcrie cu D&amp;TED</em>.</li>
+<li><strong>Cea mai bună acuratețe:</strong> alege D&amp;TED în setări; după <em>Verifică</em> alegi modelul (implicit <em>eek</em>, optimizat pentru română: 5,8% cuvinte greșite față de 10,9% la modelul standard) și vezi care e folosit acum.</li>
 <li>Numele și termenii cărții, scriși în setări, ajută recunoașterea; înlocuirile automate se aplică și textului dictat. Un document blocat nu primește text dictat.</li>
 </ul>`,
       },

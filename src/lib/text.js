@@ -1,12 +1,12 @@
 import { t as tr } from './i18n.js';
 export function htmlToText(html) {
   const el = document.createElement('div');
-  el.innerHTML = (html || '').replace(/<\/(p|h[1-6]|li|blockquote)>/gi, '$&\n').replace(/<br\s*\/?>/gi, '\n');
+  el.innerHTML = (html || '').replace(/<\/(p|h[1-6]|li|blockquote|div|td|th|tr|pre|dt|dd|figcaption)>/gi, '$&\n').replace(/<br\s*\/?>/gi, '\n');
   return el.textContent || '';
 }
 
 export function countWords(text) {
-  const words = (text || '').match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu);
+  const words = (text || '').normalize('NFC').match(/[\p{L}\p{N}][\p{L}\p{N}\p{M}'’-]*/gu);
   return words ? words.length : 0;
 }
 

@@ -10,7 +10,7 @@ import { htmlToText } from '../lib/text.js';
 import { parseComments, updateComment } from '../lib/panelsExtra.js';
 import { t as tr, uiLocale } from '../lib/i18n.js';
 import { sanitizeHtml } from '../lib/sanitize.js';
-import { noneLabel, noneStatus } from '../lib/projectSettings.js';
+import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
 
 // Survives the remount App does on every selection change (key = selected id),
 // so "Lock Inspector" keeps showing the pinned document while navigating.
@@ -97,7 +97,7 @@ export default function Inspector({
   api, dir, project, node: selectedNode, html: selectedHtml, words: selectedWords, allKeywords, linkTargets = [], onOpen, onPatch: onPatchSelected,
   onNotesChange: onNotesSelected, onProjectNotesChange, onRestore, onError, flush,
   // Optional (batch C): lock, comments, per-id callbacks.
-  docs = null, counts = null, onPatchNode, onNotesChangeFor, onLockChange, authorName = '', onJumpToComment, onHtmlChange,
+  docs = null, counts = null, onPatchNode, onNotesChangeFor, onLockChange, teamLockOf = () => null, authorName = '', onJumpToComment, onHtmlChange,
 }) {
   const [tab, setTab] = useState('meta');
   const [snaps, setSnaps] = useState([]);
@@ -210,7 +210,7 @@ export default function Inspector({
             <>
               <div className="row">
                 <label>
-                  {tr('ui.binder.eticheta')}
+                  {labelTitleOf(project, tr)}
                   <select value={node.label} onChange={(e) => onPatch({ label: e.target.value })}>
                     {project.labels.map((l) => (
                       <option key={l.name} value={l.name}>{noneLabel(l.name, tr)}</option>
@@ -218,7 +218,7 @@ export default function Inspector({
                   </select>
                 </label>
                 <label>
-                  Status
+                  {statusTitleOf(project, tr)}
                   <select value={node.status} onChange={(e) => onPatch({ status: e.target.value })}>
                     {project.statuses.map((s) => (
                       <option key={s} value={s}>{noneStatus(s, tr)}</option>
@@ -312,7 +312,7 @@ export default function Inspector({
                 )}
                 {api.renameSnapshot && <button className="link" onClick={() => renameSnap(s)} title={tr('set.binderDbl.rename')}>✎</button>}
                 {api.deleteSnapshot && <button className="link" onClick={() => deleteSnap(s)} title={tr('ui.inspector.sterge_snapshot_ul')}>🗑</button>}
-                {!pinnedOther && <button
+                {!pinnedOther && !node.locked && !teamLockOf(node.id) && <button
                   className="link"
                   onClick={async () => {
                     if (!window.confirm(tr('ui.inspector.restaurezi_acest_snapshot_textul_curent'))) return;
@@ -374,7 +374,7 @@ function CommentItem({ c, editable, authorName, onJump, onEdit, onDelete }) {
         {c.date && <span> · {new Date(c.date).toLocaleString(uiLocale())}</span>}
       </div>
       <div className="comment-actions">
-        {onJump && <button className="link" onClick={onJump}>Salt</button>}
+        {onJump && <button className="link" onClick={onJump}>{tr('ui.inspector.salt')}</button>}
         {editable && (
           <>
             <span className="comment-colors">

@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('api', {
   appendAuthorJournal: (dir, rows) => call('editorial:appendAuthorJournal', dir, rows),
   teamFiles: (dir) => call('team:files', dir),
   dtedStatus: (opts) => call('dted:status', opts),
+  dtedSetModel: (nume) => call('dted:setModel', nume),
   whisperStatus: () => call('whisper:status'),
   whisperInstall: (variant) => call('whisper:install', variant),
   whisperRemove: () => call('whisper:remove'),

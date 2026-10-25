@@ -290,12 +290,12 @@ function OverflowBar({ groups }) {
       {shown.map(([it, i], k) => render(it, i, k === 0))}
       {hidden.length > 0 && (
         <div className="fb-more menu">
-          <button className={open ? 'on' : ''} title="Mai multe comenzi de formatare" aria-label="Mai multe comenzi de formatare" aria-haspopup="true" aria-expanded={open} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { if (e.detail === 0) wantPopFocus.current = !open; setOpen((o) => !o); }}>
+          <button className={open ? 'on' : ''} title={tr('ui.formatBar.more')} aria-label={tr('ui.formatBar.more')} aria-haspopup="true" aria-expanded={open} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { if (e.detail === 0) wantPopFocus.current = !open; setOpen((o) => !o); }}>
             »
           </button>
           {open && (
             // A chosen menu item closes the overflow as well.
-            <div className="fb-overflow-pop" ref={popRef} role="group" aria-label="Mai multe comenzi de formatare" onClick={(e) => e.target.closest?.('[role="menuitem"]') && setOpen(false)}>
+            <div className="fb-overflow-pop" ref={popRef} role="group" aria-label={tr('ui.formatBar.more')} onClick={(e) => e.target.closest?.('[role="menuitem"]') && setOpen(false)}>
               {hidden.map(([it, i], k) => render(it, i, k === 0))}
             </div>
           )}

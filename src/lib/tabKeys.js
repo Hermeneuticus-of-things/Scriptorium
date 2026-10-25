@@ -3,7 +3,8 @@
 // tab tabIndex={id === current ? 0 : -1}.
 export function tabKeys(ids, current, select) {
   return (e) => {
-    const i = ids.indexOf(current);
+    const found = ids.indexOf(current);
+    const i = found < 0 ? 0 : found;
     const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ids.length - 1 }[e.key];
     if (next === undefined || !ids.length) return;
     e.preventDefault();

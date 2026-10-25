@@ -493,7 +493,7 @@ export function autofix(html, opts = {}) {
       s = s.replace(/(^|[\s(\[ ])"/g, '$1„').replace(/"/g, '”');
       s = s.replace(/&quot;/g, '”');
       if (first && /\S/.test(s)) {
-        s = s.replace(/^([\s„«* ]*)(\p{Ll})/u, (x, pre, ch) => pre + ch.toLocaleUpperCase('ro'));
+        s = s.replace(/^([\s„«"'* ]*)(\p{Ll})/u, (x, pre, ch) => pre + ch.toLocaleUpperCase('ro'));
         first = false;
       }
       return s;

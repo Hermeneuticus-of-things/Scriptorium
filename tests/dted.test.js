@@ -145,6 +145,20 @@ describe('the service, with a fake D&TED process', () => {
     throw new Error(`no event: ${JSON.stringify(events)}`);
   };
 
+  it('the service state lists the models, and a model can be chosen (eek by default)', async () => {
+    const { d } = fake();
+    try {
+      const st = await d.state();
+      expect(st.model_folosit).toBe('whisper-turbo-ro-en-ct2');
+      expect(st.modele.map((m) => m.nume)).toContain('whisper-turbo-ro-en-ct2');
+      const after = await d.setModel('whisper-large-v3-turbo-ct2');
+      expect(after.model_folosit).toBe('whisper-large-v3-turbo-ct2');
+      await expect(d.setModel('nu-exista')).rejects.toThrow(/Model necunoscut/);
+    } finally {
+      await d.stop();
+    }
+  });
+
   it('status, a transcription and its events', async () => {
     const { d, events } = fake();
     try {

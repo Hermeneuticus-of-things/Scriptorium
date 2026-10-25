@@ -5,7 +5,10 @@
 export function buildRegex({ query, regex, caseSensitive, wholeWord }) {
   if (!query) return null;
   let src = regex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  if (wholeWord) src = `(?<![\\p{L}\\p{N}_])(?:${src})(?![\\p{L}\\p{N}_])`;
+  if (wholeWord) src = `(?<![\\p{L}\\p{N}\\p{M}_])(?:${src})(?![\\p{L}\\p{N}\\p{M}_])`;
+  // A repeated group that itself repeats ((a+)+, (\w*)*…) can take forever on a long text:
+  // refused like an invalid pattern, so neither the app nor the MCP server can hang on it.
+  if (regex && (/\((?:[^()\\]|\\.)*[+*}](?:[^()\\]|\\.)*\)\s*[+*{]/.test(query) || query.length > 500)) return null;
   try {
     return new RegExp(src, `g${caseSensitive ? '' : 'i'}u`);
   } catch {
@@ -88,11 +91,11 @@ function matchesIn(seg, re) {
   while ((m = re.exec(text))) {
     if (m.index >= to) break;
     if (m[0] === '') {
-      re.lastIndex++;
+      re.lastIndex = m.index + (text.codePointAt(m.index) > 0xffff ? 2 : 1); // a whole character (u flag)
       continue;
     }
     if (m.index + m[0].length <= to) found.push({ index: m.index - from, m });
-    else re.lastIndex = m.index + 1;
+    else re.lastIndex = m.index + (text.codePointAt(m.index) > 0xffff ? 2 : 1);
   }
   re.lastIndex = 0;
   return found;

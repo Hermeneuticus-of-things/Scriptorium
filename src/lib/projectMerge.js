@@ -13,8 +13,42 @@
 
 const same = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
 
+const plain = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
+const keyOf = (x) => (plain(x) ? (x.id ?? x.name) : x);
+const keyed = (arr) => arr.every((x) => !plain(x) || keyOf(x) !== undefined) && new Set(arr.map((x) => JSON.stringify(keyOf(x)))).size === arr.length;
+
+// Both sides changed the value: objects merge key by key, lists by item (string lists as sets,
+// object lists by id or name), so neither side's additions are lost; a true clash keeps mine.
 function pick3(base, mine, theirs) {
-  return same(mine, base) ? theirs : mine;
+  if (same(mine, base)) return theirs;
+  if (same(theirs, base) || same(mine, theirs)) return mine;
+  if (plain(mine) && plain(theirs)) {
+    const b = plain(base) ? base : {};
+    const out = {};
+    for (const k of new Set([...Object.keys(mine), ...Object.keys(theirs)])) {
+      const v = pick3(b[k], mine[k], theirs[k]);
+      if (v !== undefined) out[k] = v;
+    }
+    return out;
+  }
+  if (Array.isArray(mine) && Array.isArray(theirs) && keyed(mine) && keyed(theirs)) {
+    const b = Array.isArray(base) && keyed(base) ? base : [];
+    const k = (x) => JSON.stringify(keyOf(x));
+    const B = new Map(b.map((x) => [k(x), x]));
+    const T = new Map(theirs.map((x) => [k(x), x]));
+    const M = new Map(mine.map((x) => [k(x), x]));
+    const out = [];
+    for (const x of mine) {
+      const id = k(x);
+      if (!T.has(id) && B.has(id)) {
+        if (same(x, B.get(id))) continue; // removed there, untouched here
+        out.push(x);
+      } else out.push(T.has(id) && B.has(id) ? pick3(B.get(id), x, T.get(id)) : x);
+    }
+    for (const x of theirs) if (!M.has(k(x)) && !B.has(k(x))) out.push(x); // added there
+    return out;
+  }
+  return mine;
 }
 
 function index(tree) {

@@ -139,7 +139,7 @@ export function createMockApi() {
       case 'translate':
         return `[${payload_lang || 'română'}] ${t}`;
       case 'ask':
-        return `Răspuns demo la „${question.slice(0, 80)}”: textul are ${t.split(/\s+/).filter(Boolean).length} cuvinte.`;
+        return `Răspuns demo la „${question.slice(0, 80)}”: textul are ${((n) => (n % 100 >= 20 || n >= 100 && n % 100 === 0 ? `${n} de cuvinte` : n === 1 ? '1 cuvânt' : `${n} cuvinte`))(t.split(/\s+/).filter(Boolean).length)}.`;
       default:
         throw new Error(`Acțiune necunoscută: ${action}`);
     }
@@ -543,13 +543,25 @@ function fakeDted() {
     emit(cancelled ? { ev: 'anulat', id: dict.id } : { ev: 'dictare_oprita', id: dict.id, text: dict.sent.join(' ') });
     dict = null;
   };
+  let demoDtedModel = 'auto';
+  const DEMO_MODELE = [
+    { nume: 'whisper-turbo-ro-en-ct2', descriere: 'Optimizat pentru română (recomandat — WER 5,8%)', instalat: true },
+    { nume: 'whisper-large-v3-turbo-ct2', descriere: 'Standard multilingv', instalat: true },
+  ];
+  const demoDtedState = () => ({ model: demoDtedModel, model_folosit: demoDtedModel === 'auto' ? DEMO_MODELE[0].nume : demoDtedModel, modele: DEMO_MODELE });
   return {
     onDtedEvent(fn) {
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
     async dtedStatus() {
-      return { found: true, source: 'D&TED simulat (demo)', running: true };
+      // ?demo&dted=old: a D&TED from before the model choice (no model list).
+      const old = typeof location !== 'undefined' && /[?&]dted=old\b/.test(location.search);
+      return { found: true, source: 'D&TED simulat (demo)', running: true, state: old ? { versiune: '0.3.1' } : demoDtedState() };
+    },
+    async dtedSetModel(nume) {
+      demoDtedModel = nume || 'auto';
+      return demoDtedState();
     },
     async dtedPickAudio() {
       return 'interviu-bunica.mp3';

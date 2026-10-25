@@ -24,7 +24,7 @@ const { open, ed, check, done, menuPick } = require('./_helpers.cjs');
   await p.waitForTimeout(9000);
   const queue = p.locator('.author-queue');
   check('author text recorded', (await queue.count()) === 1 && /Text al autorului: 2 paragrafe/.test(await queue.innerText()), (await queue.count()) ? await queue.innerText() : 'none');
-  check('issue on author text goes to COADA_AUTOR', /COADA_AUTOR: [1-9]\d* semnale/.test(await queue.innerText()) && /desigur/i.test(await queue.innerText()));
+  check('issue on author text goes to COADA_AUTOR', /COADA_AUTOR: [1-9]\d* (de )?semnal(e)?/.test(await queue.innerText()) && /desigur/i.test(await queue.innerText()));
 
   // A proposal (demo model) and the author's own edit with the 412 guard.
   await p.getByRole('button', { name: /I-REP: repară/ }).click();

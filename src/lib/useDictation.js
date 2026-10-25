@@ -88,6 +88,10 @@ export function useDictation({ api, getEditor, onTranscript, onMessage, replacem
     // Another engine (Settings): what ran on this one is over.
     return () => {
       off();
+      // The old engine stops what it was doing (a separate D&TED would keep the microphone).
+      const d = state.current.dictation;
+      if (d) api.dtedDictateStop?.(d.id)?.catch?.(() => {});
+      for (const id of Object.keys(state.current.jobs)) api.dtedCancel?.(id)?.catch?.(() => {});
       if (state.current.dictation) setDict(null);
       if (Object.keys(state.current.jobs).length) {
         state.current.jobs = {};
