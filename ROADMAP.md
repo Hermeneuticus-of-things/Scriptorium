@@ -305,3 +305,4 @@ Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
     - [ ] căutare hibridă lexicală + semantică (embeddings locale) în cercetarea din proiect
     - [ ] Scribner ca client MCP (servere externe: bibliografie, dicționare) pentru asistentul intern
     - [ ] unealtă MCP de adnotare pe interval exact de caractere (acum: comentariu după citat)
+16. [x] MCP pe cele cinci categorii: unelte (cu adnotări), resurse (proiecte, binder, documente, ghid), șabloane de lucru, transport prin rețea (`--http` cu token), securitate (doar citire, snapshot înainte de scriere, blocări, căi ascunse refuzate, adrese locale blocate la import web).

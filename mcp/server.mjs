@@ -88,9 +88,16 @@ store.writeDoc = (dir, id, kind, html) => {
 const args = process.argv.slice(2);
 const projects = [];
 let readOnly = false;
+// --http <port>: Streamable HTTP instead of stdio (another computer, a home server, a tunnel).
+let httpPort = 0;
+let httpHost = '127.0.0.1';
+let httpToken = process.env.SCRIBNER_MCP_TOKEN || '';
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--project' && args[i + 1]) projects.push(path.resolve(args[++i]));
   else if (args[i] === '--read-only') readOnly = true;
+  else if (args[i] === '--http' && args[i + 1]) httpPort = Number(args[++i]);
+  else if (args[i] === '--host' && args[i + 1]) httpHost = args[++i];
+  else if (args[i] === '--token' && args[i + 1]) httpToken = args[++i];
 }
 for (const p of (process.env.SCRIBNER_PROJECTS || '').split(path.delimiter).filter(Boolean)) projects.push(path.resolve(p));
 // No --project: the projects in Scribner's recent list (on this computer), so one general command
@@ -779,6 +786,20 @@ server.registerResource('projects', 'scribner://projects', { title: 'Proiecte', 
   contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(projects.map((d) => ({ name: path.basename(d).replace(/\.scribner$/i, ''), dir: d, title: (() => { try { return load(d).title; } catch { return ''; } })() })), null, 2) }],
 }));
 
+// A short guide for the agent: how the work is organised and what is safe (read when unsure).
+server.registerResource('ghid', 'scribner://ghid', { title: 'Ghid pentru agent', description: 'Cum lucrezi cu proiectele Scribner prin acest server', mimeType: 'text/markdown' }, async (uri) => ({
+  contents: [{ uri: uri.href, mimeType: 'text/markdown', text: [
+    '# Scribner: ghid pentru agent',
+    '- Proiectele: resursa scribner://projects; argumentul `project` = numele sau calea (implicit primul).',
+    '- Structura: `list_binder` (Manuscris, Cercetare, Coș). Textul: `read_document` (format manuscript, html sau text).',
+    '- Caută: `search`; înlocuiește: `replace` (sare documentele blocate de colegi).',
+    '- Scrie: `write_document`, `set_notes`, `set_metadata`, `add_comment`. Fiecare scriere face întâi un snapshot; `restore_snapshot` o anulează.',
+    '- Proiecte .scriv: `scriv_outline`, `scriv_read`, `scriv_search` pe loc; `import_scriv` le transformă în proiecte Scribner.',
+    '- Ce faci e notat în agent-log.jsonl din proiect. Cu --read-only uneltele de scriere sunt refuzate.',
+    '- Nu scrie fără acordul autorului: propune întâi, aplică doar ce a aprobat.',
+  ].join('\n') }],
+}));
+
 // Ready-made workflows the client can offer as commands (prompt templates). They only describe the
 // work; every change still goes through the tools above (snapshot first, locks respected).
 const promptText = (text) => ({ messages: [{ role: 'user', content: { type: 'text', text } }] });
@@ -798,5 +819,65 @@ server.registerPrompt(
   ({ cale }) => promptText(`Citește proiectul .scriv din „${cale}” cu scriv_outline, apoi textele cu scriv_read. Spune-mi ce conține. Dacă îți cer, importă-l cu import_scriv într-un folder pe care ți-l dau.`),
 );
 
-await server.connect(new StdioServerTransport());
+if (httpPort) await serveHttp();
+else await server.connect(new StdioServerTransport());
+
+// Streamable HTTP, stateless JSON, one request at a time. Every request carries
+// "Authorization: Bearer <token>"; without --token / SCRIBNER_MCP_TOKEN a random one is made and
+// printed once. Listens on 127.0.0.1 unless --host says otherwise (e.g. a Tailscale address).
+async function serveHttp() {
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const { StreamableHTTPServerTransport } = await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
+  if (!httpToken) {
+    httpToken = crypto.randomBytes(24).toString('hex');
+    process.stderr.write(`Token MCP (pune-l în clientul AI ca „Authorization: Bearer …”): ${httpToken}\n`);
+  }
+  const expected = Buffer.from(`Bearer ${httpToken}`);
+  let queue = Promise.resolve();
+  const srv = http.createServer((req, res) => {
+    const got = Buffer.from(String(req.headers.authorization || ''));
+    if (got.length !== expected.length || !crypto.timingSafeEqual(got, expected)) {
+      res.writeHead(401, { 'content-type': 'application/json' }).end('{"error":"token lipsă sau greșit"}');
+      return;
+    }
+    if (new URL(req.url, 'http://x').pathname !== '/mcp') {
+      res.writeHead(404).end();
+      return;
+    }
+    if (req.method !== 'POST') {
+      res.writeHead(405, { allow: 'POST' }).end();
+      return;
+    }
+    const chunks = [];
+    let size = 0;
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > 50 * 1024 * 1024) req.destroy();
+      else chunks.push(c);
+    });
+    req.on('end', () => {
+      queue = queue.then(async () => {
+        let body;
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        } catch {
+          res.writeHead(400).end('{"error":"JSON invalid"}');
+          return;
+        }
+        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+        await server.connect(transport);
+        try {
+          await transport.handleRequest(req, res, body);
+        } finally {
+          await server.close().catch(() => {});
+        }
+      }).catch((e) => {
+        if (!res.headersSent) res.writeHead(500).end(JSON.stringify({ error: e.message }));
+      });
+    });
+  });
+  await new Promise((resolve) => srv.listen(httpPort, httpHost, resolve));
+  process.stderr.write(`Scribner MCP pe http://${httpHost}:${httpPort}/mcp\n`);
+}
 process.stderr.write(`Scribner MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);
