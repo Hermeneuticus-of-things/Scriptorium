@@ -58,6 +58,7 @@ const NEW_READ_TOOLS = (ctx) => ({
   list_templates: {},
   scriv_outline: { scriv_path: path.join(ctx.tmp, 'mini.scriv') },
   scriv_read: { scriv_path: path.join(ctx.tmp, 'mini.scriv'), id: 'X' },
+  scriv_search: { scriv_path: path.join(ctx.tmp, 'mini.scriv'), query: 'T' },
   list_compile_formats: {},
   list_project_notes: {},
   list_keywords: {},
@@ -462,6 +463,13 @@ describe('MCP integral: export', () => {
     const item = outline.find((o) => o.title === 'Scena B');
     expect(item).toBeTruthy();
     expect(typeof (await call('scriv_read', { scriv_path: res.dir, id: item.id }))).toBe('string');
+    // the same through the .scrivx file inside it, and a search
+    const scrivx = path.join(res.dir, fs.readdirSync(res.dir).find((f) => f.endsWith('.scrivx')));
+    expect((await call('scriv_outline', { scriv_path: scrivx })).length).toBe(outline.length);
+    expect(Array.isArray(await call('scriv_search', { scriv_path: scrivx, query: 'Scena' }))).toBe(true);
+    fs.mkdirSync(path.join(tmp, 'din-scrivx'));
+    const imp2 = await call('import_scriv', { scriv_path: scrivx, dest_dir: path.join(tmp, 'din-scrivx') });
+    expect(JSON.stringify(await call('list_binder', { project: imp2.dir }))).toContain('Scena B');
   });
 
   it('export_notebooklm (project notes tabs included)', async () => {

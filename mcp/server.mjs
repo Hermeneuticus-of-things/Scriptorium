@@ -243,7 +243,15 @@ function textIndexOf(html, target, from = 0) {
 }
 
 function tool(name, description, shape, handler, { writes = false, global = false } = {}) {
-  server.registerTool(name, { title: name, description, inputSchema: shape }, async (input) => {
+  // Hints for the client's approval gates: reads run freely, changes ask, and the ones that remove
+  // or overwrite text are marked destructive (they still take a snapshot or backup first).
+  const annotations = {
+    readOnlyHint: !writes,
+    destructiveHint: writes && /^(trash|empty|delete|remove|replace|restore|merge|split|write|set_notes|convert|apply|rename|editorial_autofix)/.test(name),
+    idempotentHint: !writes,
+    openWorldHint: /web|lookup|import_web|zotero/.test(name),
+  };
+  server.registerTool(name, { title: name, description, inputSchema: shape, annotations }, async (input) => {
     try {
       if (writes) requireWritable();
       const dir = global ? null : projectDir(input.project);
@@ -379,6 +387,7 @@ tool(
       status: n.status,
       keywords: n.keywords || [],
       custom: n.custom || {},
+      target: n.target ? { value: n.target, unit: n.targetType === 'Characters' ? 'caractere' : 'cuvinte' } : null,
       words: store.wordCount(html),
       notes: store.htmlToText(store.readDoc(dir, id, 'notes')).trim(),
       content: body,
