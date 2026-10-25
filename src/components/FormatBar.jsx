@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { useEditorState } from '@tiptap/react';
 import { getHTMLFromFragment } from '@tiptap/core';
 import Menu from './Menu.jsx';
-import { builtinName, t as tr } from '../lib/i18n.js';
+import { builtinName, t as tr, uiLocale } from '../lib/i18n.js';
 import { htmlToManuscript } from '../lib/editorial.js';
 import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linkedToFootnotes } from '../lib/noteConvert.js';
 import { isParaStyle } from '../lib/styles.js';
@@ -13,6 +13,7 @@ import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../li
 
 const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Verdana', 'Calibri', 'Courier New', 'Courier Prime'];
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
+const LINE_SPACINGS = [1, 1.2, 1.5, 2, 2.5, 3];
 const LIST_TYPES = [['1', '1. 2. 3.'], ['a', 'a. b. c.'], ['A', 'A. B. C.'], ['i', 'i. ii. iii.'], ['I', 'I. II. III.']];
 const ask = (label, cur) => {
   const v = window.prompt(label, cur ?? '');
@@ -480,8 +481,16 @@ export default function FormatBar({
     const v = ask(label, cur);
     if (v !== undefined) setPara({ [key]: v });
   };
+  // Line spacing as in the classic paragraph bar: 1.0 / 1.2 / 1.5 / 2.0 / 2.5 / 3.0 / Other…
+  const fmtSpacing = (v) => Number(v).toLocaleString(uiLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+  const spacingItems = [
+    ...LINE_SPACINGS.map((v) => ({ label: `${Number(p.lineHeight) === v ? '✓ ' : ''}${fmtSpacing(v)}`, action: () => setPara({ lineHeight: v }) })),
+    '-',
+    { label: `${p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight)) ? `✓ ${fmtSpacing(p.lineHeight)} · ` : ''}${tr('ui.formatBar.lineSpacingOther')}`, action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
+    { label: tr('ui.formatBar.lineSpacingDefault'), action: () => setPara({ lineHeight: null }), disabled: !p.lineHeight },
+  ];
   const paraItems = [
-    ...[1, 1.15, 1.5, 2].map((v) => ({ label: `${p.lineHeight === v ? '✓ ' : ''}${tr('ui.formatBar.lineSpacing', { v })}`, action: () => setPara({ lineHeight: v }) })),
+    ...LINE_SPACINGS.map((v) => ({ label: `${Number(p.lineHeight) === v ? '✓ ' : ''}${tr('ui.formatBar.lineSpacing', { v: fmtSpacing(v) })}`, action: () => setPara({ lineHeight: v }) })),
     { label: tr('ui.formatBar.lineSpacingCustom'), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
     '-',
     { label: tr('ui.formatBar.spaceBefore', { v: p.spaceBefore ?? '–' }), action: () => num(tr('ui.formatBar.spaceBeforePrompt'), 'spaceBefore', p.spaceBefore) },
@@ -600,6 +609,7 @@ export default function FormatBar({
         {btn('⯈', s.align === 'right', () => chain().setTextAlign('right').run(), tr('ui.formatBar.right'))}
         {btn('☰', s.align === 'justify', () => chain().setTextAlign('justify').run(), tr('ui.formatBar.justify'))}
     </>),
+    g(4, <span className="fb-spacing" data-label={tr('ui.formatBar.lineSpacingMenu')} style={{ display: 'contents' }}><Menu label={`↕ ${fmtSpacing(p.lineHeight || 1)}`} items={spacingItems} /></span>, false, tr('ui.formatBar.lineSpacingMenu')),
     g(5, <>
         {btn('•', s.bullet, () => chain().toggleBulletList().run(), tr('ui.formatBar.bullets'))}
         {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), tr('ui.formatBar.ordered'))}
@@ -611,7 +621,7 @@ export default function FormatBar({
     g(0, <>
         {s.comment
           ? btn('💬✕', null, () => chain().unsetComment().run(), tr('ui.formatBar.removeComment'))
-          : btn('💬', null, onAddComment, tr('ui.formatBar.comment'), !s.hasSelection)}
+          : btn('💬', null, onAddComment, tr('ui.formatBar.comment'))}
         {btn('¹', null, onAddFootnote, tr('ui.formatBar.footnoteBtn'))}
         {btn('✎', null, onAddAnnotation, tr('ui.formatBar.annotationBtn'))}
         {btn('🔗', s.link, insertLinkExternal, tr('ui.formatBar.linkBtn'))}

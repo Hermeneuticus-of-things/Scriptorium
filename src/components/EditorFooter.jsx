@@ -4,7 +4,8 @@ import { t as tr, uiLocale } from '../lib/i18n.js';
 // The footer under the open document: text size, words and characters, and the document's own
 // target (a small popover to set it, with a progress bar). Props: node, words, chars, zoom,
 // onZoom(z), onPatch(patch) (null = read-only).
-export default function EditorFooter({ node, words = 0, chars = 0, zoom = 100, onZoom, onPatch }) {
+// selectedWords > 0 (words in the editor's selection) shows "Words: 37 of 1,234".
+export default function EditorFooter({ node, words = 0, selectedWords = 0, chars = 0, zoom = 100, onZoom, onPatch }) {
   const [open, setOpen] = useState(false);
   if (!node) return null;
   const unit = node.targetType === 'Characters' ? 'Characters' : 'Words';
@@ -19,7 +20,9 @@ export default function EditorFooter({ node, words = 0, chars = 0, zoom = 100, o
         ))}
       </select>
       <span className="spacer" />
-      <span>{tr('ui.footer.cuvinte')}: {fmt(words)}</span>
+      <span className="footer-words">
+        {tr('ui.footer.cuvinte')}: {selectedWords > 0 ? tr('ui.footer.x_din_y', { x: fmt(selectedWords), y: fmt(words) }) : fmt(words)}
+      </span>
       <span>{tr('ui.footer.caractere')}: {fmt(chars)}</span>
       <span className="spacer" />
       <span className="footer-target">

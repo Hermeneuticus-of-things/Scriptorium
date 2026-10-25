@@ -1,7 +1,13 @@
 // Scenario 3: comments and footnotes — add, edit, delete, undo/redo, survive document switches.
 const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
 (async () => {
-  const { browser, page, errors } = await open();
+  // The notes group is not on the default format bar; add it the way a user would keep it (saved toolbars).
+  const { browser, page, errors } = await open({
+    beforeOpen: async (p) => {
+      await p.evaluate(() => localStorage.setItem('scribner-demo-toolbars', JSON.stringify({ format: ['block', 'font', 'bui', 'notes'] })));
+      await p.reload();
+    },
+  });
   let answer = '';
   page.on('dialog', (d) => (d.type() === 'prompt' ? d.accept(answer) : d.accept()));
   const binder = (t) => page.locator('.binder').getByText(t, { exact: true });

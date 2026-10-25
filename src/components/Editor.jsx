@@ -23,7 +23,7 @@ import { buildExtensions } from '../editor/extensions.js';
 import { resolveWikiLink } from '../editor/writing.js';
 import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
-import { textToHtml } from '../lib/text.js';
+import { countWords, textToHtml } from '../lib/text.js';
 import { insertable } from '../lib/inlineInsert.js';
 import FindBar, { findAgain, lastFind } from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
@@ -56,10 +56,18 @@ const Editor = forwardRef(function Editor(
     onCreateLinkedDoc = null,
     linkFolders = [],
     linkFolderDefault = '',
+    commentColor = '',
+    authorName = '',
+    onSelectionWords = null,
   },
   ref,
 ) {
   const actionsRef = useRef({}); // note/image actions defined below, called from the handle
+  const commentRef = useRef({ color: commentColor, author: authorName });
+  commentRef.current = { color: commentColor, author: authorName };
+  const selWordsRef = useRef(onSelectionWords);
+  selWordsRef.current = onSelectionWords;
+  const lastSelWords = useRef(0);
   const typewriterRef = useRef(typewriter);
   typewriterRef.current = typewriter;
   const histRef = useRef(null); // { base, groups } recorded for historyKey
@@ -123,6 +131,15 @@ const Editor = forwardRef(function Editor(
       onBlur: () => flushRef.current(),
       onDestroy: () => flushRef.current(),
       onSelectionUpdate: ({ editor: ed }) => {
+        // Words in the selection for the footer ("Words: 37 of 1,234"); 0 = no selection.
+        if (selWordsRef.current) {
+          const { from, to, empty } = ed.state.selection;
+          const n = empty ? 0 : countWords(ed.state.doc.textBetween(from, to, ' ', ' '));
+          if (n !== lastSelWords.current) {
+            lastSelWords.current = n;
+            selWordsRef.current(n);
+          }
+        }
         if (!typewriterRef.current) return; // a ref: turning the mode on reaches editors already open
         const { node } = ed.view.domAtPos(ed.state.selection.from);
         const el = node.nodeType === 1 ? node : node.parentElement;
@@ -259,6 +276,16 @@ const Editor = forwardRef(function Editor(
     };
   }, [editor, historyKey]);
 
+  function addCommentNow(text) {
+    if (!editor || editor.isDestroyed || !editor.isEditable) return false;
+    if (editor.state.selection.empty && !selectAround(editor.view, undefined, 'word')) return false;
+    const { color, author } = commentRef.current;
+    const attrs = { comment: String(text ?? ''), ...(color ? { color } : {}), ...(author ? { author } : {}), date: new Date().toISOString() };
+    const ok = editor.chain().focus().setMark('comment', attrs).run();
+    flushRef.current();
+    return ok;
+  }
+
   useImperativeHandle(
     ref,
     () => ({
@@ -298,6 +325,27 @@ const Editor = forwardRef(function Editor(
       },
       // A read-only editor (locked document, snapshot view) is left alone: false tells the caller.
       replaceSelectionHtml: (h) => Boolean(editor && !editor.isDestroyed && editor.isEditable && editor.chain().focus().insertContent(h).run()),
+      // New comment over the selection, or over the word under the cursor when nothing is selected.
+      addComment: (text = '') => addCommentNow(text),
+      addFootnote: (text = '') => {
+        if (!editor || editor.isDestroyed || !editor.isEditable) return false;
+        const ok = editor.chain().focus().insertFootnote(text).run();
+        flushRef.current();
+        return ok;
+      },
+      // Selects the index-th footnote marker or linked-footnote anchor (Inspector › Comments & Notes).
+      selectFootnote: (index) => {
+        if (!editor || editor.isDestroyed) return false;
+        const el = editor.view.dom.querySelectorAll('[data-footnote],[data-linked-footnote]')[index];
+        if (!el) return false;
+        if (el.hasAttribute('data-footnote')) {
+          const pos = editor.view.posAtDOM(el, 0);
+          editor.chain().focus().setNodeSelection(pos).scrollIntoView().run();
+        } else {
+          editor.chain().focus().setTextSelection({ from: editor.view.posAtDOM(el, 0), to: editor.view.posAtDOM(el, el.childNodes.length) }).scrollIntoView().run();
+        }
+        return true;
+      },
       // Selects the index-th comment's text (Inspector › Comments › Go to).
       selectComment: (index) => {
         if (!editor || editor.isDestroyed) return false;
@@ -372,8 +420,7 @@ const Editor = forwardRef(function Editor(
         return true;
       },
       // Insert menu: the same actions as the format bar (prompts for the note text).
-      addComment: () => actionsRef.current.addComment?.(),
-      addFootnote: () => actionsRef.current.addLinkedFootnote?.(),
+      addLinkedFootnote: () => actionsRef.current.addLinkedFootnote?.(),
       addInlineFootnote: () => actionsRef.current.addFootnote?.(),
       addAnnotation: () => actionsRef.current.addAnnotation?.(),
       insertImage: () => actionsRef.current.insertImage?.(),
@@ -452,8 +499,9 @@ const Editor = forwardRef(function Editor(
   const chain = () => editor.chain().focus();
 
   const addComment = () => {
+    if (editor.state.selection.empty && !selectAround(editor.view, undefined, 'word')) return;
     const text = window.prompt(i18nT('ui.editor.commentPrompt'));
-    if (text) chain().setComment(text).run();
+    if (text) addCommentNow(text);
   };
   const addFootnote = () => {
     const text = window.prompt(i18nT('ui.editor.footnotePrompt'));

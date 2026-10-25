@@ -69,3 +69,26 @@
 .binder .separator-title { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; color: var(--muted, #888); font-size: 0.85em; }
 .binder .separator-rule { flex: 1; border-top: 1px solid currentColor; opacity: 0.6; min-width: 12px; }
 .binder .separator-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; }
+
+/* G3: Inspector › Comments & Footnotes in one list, in text order */
+.annot-pane .annot-toolbar { gap: 6px; margin-bottom: 8px; }
+.annot-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.annot-item { border-left: 4px solid var(--line, #ccc); padding: 4px 8px; background: rgba(128, 128, 128, 0.06); border-radius: 4px; }
+.annot-item.annot-footnote { border-left-color: var(--muted, #888); }
+.annot-head { display: flex; gap: 6px; align-items: baseline; cursor: pointer; min-width: 0; }
+.annot-head q { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-style: italic; }
+.annot-head:hover q, .annot-head:focus-visible q { text-decoration: underline dotted; }
+.annot-kind sup { font-weight: 600; }
+.annot-text { white-space: pre-wrap; padding: 2px 0; border-radius: 3px; }
+.annot-text.editable { cursor: text; }
+.annot-text.editable:hover { background: rgba(128, 128, 128, 0.1); }
+.annot-edit { width: 100%; box-sizing: border-box; font: inherit; resize: vertical; }
+.bookmark-scope { margin: 6px 0; }
+.revision-colors .rev-color { display: inline-flex; flex-direction: column; align-items: center; font-size: 12px; }
+.footer-words { white-space: nowrap; }
+/* Revision rounds take the colours chosen in Settings (vars set by applySettingsCss). */
+.prose [data-revision="1"] { color: var(--rev-1, #c62828) !important; }
+.prose [data-revision="2"] { color: var(--rev-2, #1565c0) !important; }
+.prose [data-revision="3"] { color: var(--rev-3, #2e7d32) !important; }
+.prose [data-revision="4"] { color: var(--rev-4, #6a1b9a) !important; }
+.prose [data-revision="5"] { color: var(--rev-5, #ef6c00) !important; }
