@@ -173,7 +173,7 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 
 ### Agenți AI
 
-Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic. Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
+Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic — dialogul detectează ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie configurarea fiecăruia dintr-un clic, cu copie de siguranță. Agentul primește peste 80 de unelte (citire/scriere documente, binder, căutare, snapshot-uri, Compile, import/export, revizie). Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
 
 ### Compilezi
 
@@ -389,7 +389,7 @@ Cât timp depozitul programului e privat, actualizatorul are nevoie de un token 
 
 **Trebuie să folosesc AI?** Nu. Programul e complet fără el.
 
-**Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Da. În Setări → Servicii și conturi pui cheile: traduci în program cu DeepL sau Google, verifici gramatica cu LanguageTool, asculți textul cu vocile Speechify. Tot acolo îți ții și alte conturi cu parolă. Totul se păstrează criptat pe calculatorul tău. Pentru AI pui cheia în *AI → Setări AI*: Anthropic, OpenAI, Gemini, NVIDIA NIM, OpenRouter și alții; unele au și modele gratuite.
+**Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Da. În Setări → Servicii și conturi pui cheile: traduci în program cu DeepL sau Google, verifici gramatica cu LanguageTool, asculți textul cu vocile Speechify. La fiecare serviciu poți pune și **email + parolă** (pentru conturi fără cheie), iar butonul **Testează conexiunea** verifică pe loc dacă cheia e acceptată; orice alt serviciu îl ții la *Alte conturi*. Totul se păstrează criptat pe calculatorul tău. Pentru AI pui cheia în *AI → Setări AI*: Anthropic, OpenAI, Gemini, NVIDIA NIM, OpenRouter și alții; unele au și modele gratuite.
 
 **Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
 
