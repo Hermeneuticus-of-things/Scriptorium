@@ -10,6 +10,7 @@ const { open, check, done, menuCmd } = require('./_helpers.cjs');
   // appearance: composition width/fade
   await openSettings();
   await tab(1);
+  await dlg().locator('[data-look-section=composition]').click();
   const labels = await dlg().locator('fieldset label').allInnerTexts();
   const fadeLabel = labels.find((l) => /opac|transpar|Opacit/i.test(l)) || labels[2];
   const widthLabel = labels.find((l) => /lățime|width/i.test(l)) || labels[1];
@@ -25,6 +26,7 @@ const { open, check, done, menuCmd } = require('./_helpers.cjs');
   await openSettings();
   check('autosave kept', (await dlg().locator('input[type=number]').first().inputValue()) === '7');
   await tab(1);
+  await dlg().locator('[data-look-section=composition]').click();
   check('composition width kept', (await field(widthLabel.trim()).inputValue()) === '60');
   check('paper opacity 0 kept (not reset to 100)', (await field(fadeLabel.trim()).inputValue()) === '0', await field(fadeLabel.trim()).inputValue());
   await page.keyboard.press('Escape');
