@@ -345,3 +345,585 @@ Inventar al ferestrelor, panourilor, dialogurilor și funcțiilor programului cl
 - [ ] Sincronizare cu aplicația mobilă (prin dosar în cloud): există doar sincronizarea cu un dosar extern
 - [ ] Verificare de actualizări din Ajutor (există opțiunea în Setări, fără fereastră proprie)
 - [ ] Înregistrare/licență (nu se aplică: program liber)
+
+## Paritate în adâncime, fereastră cu fereastră (audit 3)
+
+Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensions/` și `lib/`, față de manualul programului clasic (ediția 3 pentru Windows). Auditurile 1 și 2 au marcat ferestrele ca „prezente” după nume; aici fiecare control al ferestrei clasice e căutat în componenta Scribner. Legendă: rândul **Identic** adună controalele care există cu același comportament (un control = un element între virgule); fiecare casetă e un element **parțial** (cu diferența spusă) sau **lipsă**. Totalurile sunt în tabelul de la final, apoi prioritățile și pachetele de lucru.
+
+### A1. Opțiuni: General (`SettingsDialog.jsx`, panoul `general`)
+**Identic:** redeschide ultimul proiect la pornire, salvare automată după N secunde de inactivitate, caută actualizări, verificare automată a actualizărilor.
+- [ ] **parțial** Salvare automată: doar pragul de inactivitate; lipsește „salvează oricum la fiecare N minute”.
+- [ ] **lipsă** „La pornire arată fereastra de șabloane / proiect nou” ca alegere separată de redeschiderea ultimului proiect.
+- [ ] **lipsă** „Redeschide toate proiectele deschise la închidere” (nu doar ultimul).
+- [ ] **lipsă** Buton „Resetează avertizările ascunse” (toate „Nu mai arăta” reactivate).
+- [ ] **lipsă** Folder implicit pentru proiectele noi.
+- [ ] **lipsă** Managerul de bibliografie extern (aplicația deschisă de „Inserează citare”, F4).
+- [ ] **lipsă** „Fereastra de șabloane rămâne pe ultima categorie aleasă”.
+- [ ] **parțial** Ținta cărții și a sesiunii sunt aici și în fereastra Ținte; în clasic stau doar în Ținte. Dublura trebuie unificată cu `TargetsDialog.jsx`.
+- [ ] **lipsă** „Arată numărul de cuvinte al selecției în bara de stare” ca opțiune (acum mereu).
+- [ ] **lipsă** Mărimea implicită a ferestrei și „Pornește maximizat”.
+
+### A2. Opțiuni: Aspect (Appearance), cu toate sub-secțiunile
+**Identic:** temă (ca sistemul, luminoasă, întunecată, sepia), aspect interfață clasic/modern, culoare de accent, culoarea comentariilor, culorile celor 5 runde de revizie, fontul editorului, mărimea textului în editor, interlinie, lățimea paginii, mărimea textului în binder.
+- [ ] **lipsă** Teme de culori salvabile: „Salvează tema”, „Încarcă tema”, export/import fișier de temă.
+- [ ] **lipsă** Binder: culoarea fundalului, culoarea textului, rânduri alternante colorate.
+- [ ] **lipsă** Binder: unde apare culoarea etichetei (pe rând întreg / pe icoană / punct).
+- [ ] **lipsă** Binder: font separat pentru dosare (bold) și pentru documentele cu copii.
+- [ ] **lipsă** Binder: fontul (familia), nu doar mărimea.
+- [ ] **parțial** Editor: culorile vin doar din temă + accent; lipsesc culoarea fundalului editorului, a textului, a selecției, a cursorului.
+- [ ] **lipsă** Editor: culoarea paginii și a zonei din jurul paginii în Vedere pagină.
+- [ ] **lipsă** Editor: culoarea și opacitatea liniei curente evidențiate.
+- [ ] **lipsă** Editor: culori pentru legăturile interne vs externe.
+- [ ] **lipsă** Editor: culoarea blocurilor „Păstrează formatarea”.
+- [ ] **lipsă** Editor: culoarea marcajelor rezultatelor de căutare.
+- [ ] **lipsă** Corkboard: fundal (plută, lemn, culoare, imagine proprie), culoarea fișelor, culoarea titlului fișei.
+- [ ] **lipsă** Corkboard: fontul titlului și fontul sinopsisului pe fișe.
+- [ ] **lipsă** Outliner: rânduri alternante, culoarea grilei, culoarea rândurilor de dosar, fonturi titlu/sinopsis.
+- [ ] **parțial** Compunere: fundal, lățime, opacitate, aliniere, pagină de hârtie există; lipsesc culoarea textului, culoarea paginii, culoarea barei de control.
+- [ ] **lipsă** Scenariu: culorile elementelor de scenariu în editor.
+- [ ] **lipsă** Inspector: fontul și fundalul notelor, fontul sinopsisului.
+- [ ] **lipsă** Scrivenings: fontul titlurilor de document și aspectul separatorului dintre documente (culoare, stil linie).
+- [ ] **lipsă** Margine de adnotări: font și mărime pentru comentarii și note de subsol.
+- [ ] **lipsă** Mărimea icoanelor din bara de instrumente / densitate compactă.
+- [ ] **lipsă** „Implicit” pentru fiecare culoare în parte cu previzualizare (există doar la accent și comentarii).
+
+### A3. Opțiuni: Corkboard
+**Identic:** formă rotunjită/pătrată, fișe liniate, umplere cu culoarea etichetei, mărime mică/medie/mare, proporție, spațiere, coloane automate (toate în bara panoului, pe proiect).
+- [ ] **parțial** Opțiunile există doar în bara corkboard-ului, pe proiect; lipsesc ca implicite globale în Opțiuni.
+- [ ] **lipsă** Ștampila de status pe fișă, cu opacitate reglabilă.
+- [ ] **lipsă** Eticheta afișată ca pin colorat / bandă (acum doar umplere completă).
+- [ ] **lipsă** Icoana tipului de document pe fișă.
+- [ ] **lipsă** Numărul de cuvinte / ținta pe fișă.
+- [ ] **lipsă** Cuvintele-cheie ca pătrățele colorate pe marginea fișei.
+- [ ] **lipsă** Număr maxim de rânduri de sinopsis (trunchiere).
+- [ ] **lipsă** Corkboard liber: „Aliniază la grilă”, mărimea grilei, „Arată grila”.
+- [ ] **lipsă** „Arată imaginea în loc de sinopsis” ca implicit global.
+- [ ] **lipsă** Mai multe dosare selectate: fișele lor pe același panou, grupate sau una după alta.
+
+### A4. Opțiuni: Compunere (Compose)
+**Identic:** fundal culoare/imagine, încadrare/repetare imagine, lățimea textului, opacitatea paginii, aliniere, pagină de hârtie, ținte afișate.
+- [ ] **lipsă** Bara de control: ascundere automată și întârzierea apariției.
+- [ ] **lipsă** Alegerea monitorului / fundal pe monitorul al doilea.
+- [ ] **lipsă** Zoom propriu al textului în compunere (separat de editor).
+- [ ] **lipsă** Margini interne ale paginii (sus/jos/lateral).
+- [ ] **parțial** Inspectorul în compunere există ca buton; lipsesc opacitatea lui și alegerea taburilor.
+- [ ] **lipsă** Mașină de scris pornită automat în compunere, separat de editor.
+- [ ] **lipsă** „Arată bara de derulare” și „Ascunde cursorul mouse-ului când scriu”.
+
+### A5. Opțiuni: Editare / Opțiuni
+**Identic:** defilare tip mașină de scris, caractere invizibile, vizualizare implicită (editor/corkboard/outline), legătură înapoi automată.
+- [ ] **lipsă** Mașină de scris: poziția rândului (procent din înălțime), nu doar mijlocul.
+- [ ] **lipsă** Evidențierea rândului curent (opțiune).
+- [ ] **lipsă** Lățimea cursorului și clipirea lui.
+- [ ] **lipsă** Spațiu suplimentar după finalul documentului (derulare dincolo de final).
+- [ ] **lipsă** Zoom implicit al editorului pentru documentele deschise.
+- [ ] **lipsă** Titlul implicit al documentelor noi.
+- [ ] **lipsă** Închiderea automată a parantezelor și ghilimelelor.
+- [ ] **parțial** Completare automată: lista e pe proiect; lipsesc opțiunile „propune după N litere” și „include titlurile documentelor”.
+- [ ] **lipsă** „Selectează cuvinte întregi la tragere”.
+
+### A6. Opțiuni: Editare / Formatare
+**Identic:** font implicit, mărime, interlinie, indentarea primei linii, spațiu după paragraf.
+- [ ] **parțial** Lipsește mini-editorul cu riglă pentru formatarea implicită: aliniere, indent stânga/dreapta, spațiu înainte, tab-uri.
+- [ ] **lipsă** Font separat pentru notițe (notele documentului și ale proiectului).
+- [ ] **lipsă** Font implicit pentru notele de subsol și comentarii.
+- [ ] **lipsă** „Aplică formatarea implicită textului lipit”.
+- [ ] **lipsă** „Convertește documentele existente la formatarea implicită” pe tot proiectul (există pe document, în bara de format).
+- [ ] **lipsă** Unități de măsură pentru riglă și indent (cm / in / pt).
+
+### A7. Opțiuni: Editare / Revizii
+**Identic:** culorile celor 5 runde.
+- [ ] **lipsă** Ștergerile în modul revizie apar tăiate în culoarea rundei (în loc să dispară).
+- [ ] **lipsă** Nume editabile pentru runde.
+
+### A8. Opțiuni: Partajare (Import, Export, Sincronizare)
+**Identic:** formatul implicit la export fișiere, păstrează dosarele, include notele, include metadatele, sincronizare cu folder extern, formatul fișierelor sincronizate, sincronizează notele, la deschidere, la închidere.
+- [ ] **lipsă** Import: „Convertește textul importat la formatarea implicită”.
+- [ ] **lipsă** Import: paginile web se importă ca text / PDF / arhivă (alegere).
+- [ ] **lipsă** Import OPML: textul nodului merge în sinopsis sau în text.
+- [ ] **lipsă** Import Word: notele de subsol rămân inline sau devin note legate.
+- [ ] **lipsă** Export: notițele în format separat de text.
+- [ ] **lipsă** Export: comentariile și notele de subsol ca note Word sau ca text.
+- [ ] **parțial** Sincronizare: lipsesc „prefix cu numărul de ordine”, „doar documentele dintr-o colecție”, „sincronizează și Cercetarea”, „formatul fișierelor de cercetare”.
+- [ ] **lipsă** Sincronizare cu aplicația mobilă prin dosar în cloud (vezi și G9).
+- [ ] **lipsă** Verificare periodică a fișierelor externe modificate.
+
+### A9. Opțiuni: Comportamente (Behaviors)
+**Identic:** Enter în binder (editează / document nou), dublu-clic în binder (redenumește / Quick Reference), snapshot la salvarea manuală.
+- [ ] **lipsă** Dublu-clic pe dosar: expandează / deschide în corkboard / în outliner.
+- [ ] **lipsă** Vizualizarea implicită diferită pentru dosare și pentru documente cu copii.
+- [ ] **lipsă** Selecția multiplă în binder se afișează ca Scrivenings / corkboard / outliner (alegere).
+- [ ] **lipsă** Documentele cărora li se adaugă copii devin dosare automat (opțiune).
+- [ ] **lipsă** Tragerea din binder în editor creează legătură / inserează textul / inserează imaginea.
+- [ ] **lipsă** Legăturile interne se deschid în panoul curent / celălalt panou / Quick Reference.
+- [ ] **lipsă** Semnele de carte se deschid în Quick Reference sau în editor (alegere).
+- [ ] **lipsă** Confirmare la golirea coșului (opțiune).
+- [ ] **lipsă** Documentele fără titlu primesc prima linie ca titlu.
+- [ ] **lipsă** Sunet la atingerea țintei.
+
+### A10. Opțiuni: Backup
+**Identic:** la închidere, la deschidere, la salvarea manuală, la N minute, ZIP, data în nume, păstrează ultimele N, folder de backup, alege folder, folder implicit.
+- [ ] **lipsă** Buton „Deschide folderul de backup”.
+- [ ] **lipsă** Buton „Fă backup acum” în panoul de Opțiuni (comanda există în meniu).
+
+### A11. Opțiuni: Corecturi / Corecție automată
+**Identic:** ghilimele automate, liniuță din --, elipsă din trei puncte, fracții, majusculă la început de propoziție, limbi pentru corector, înlocuiri automate, învățarea corecturilor, dicționar personal.
+- [ ] **lipsă** Corectează DOuă MAjuscule la început de cuvânt.
+- [ ] **lipsă** Majusculă pentru numele zilelor (pentru limbile care o cer).
+- [ ] **lipsă** Corectează apăsarea accidentală a Caps Lock.
+- [ ] **lipsă** Excepții la majuscula automată (abrevieri: „dr.”, „etc.”, „nr.”).
+- [ ] **lipsă** Verificarea ortografiei în timp ce scrii: pornit/oprit global.
+- [ ] **lipsă** Verificarea gramaticii ca opțiune separată.
+- [ ] **lipsă** Ignoră cuvintele scrise cu MAJUSCULE, cele cu cifre și adresele web.
+- [ ] **lipsă** Alegerea perechii de ghilimele („…”, "…", «…», ‚…’) și a celor simple.
+- [ ] **lipsă** Lista de înlocuiri: import/export fișier.
+
+### A12. Opțiuni: Tastatură (`ShortcutsDialog.jsx`)
+**Identic:** scurtătură proprie pentru fiecare comandă, editare.
+- [ ] **lipsă** Salvare/încărcare set de scurtături în fișier.
+- [ ] **lipsă** Căutare comandă după scurtătură.
+- [ ] **parțial** Conflictele sunt semnalate; lipsește „Înlocuiește scurtătura existentă” într-un pas.
+- [ ] **lipsă** Resetare individuală la implicit.
+
+### A13. Opțiuni: Navigare (Navigation)
+- [ ] **lipsă** Panoul întreg lipsește (nu există tab `navigation` în `TABS`).
+- [ ] **lipsă** Editor împărțit: ce selectez în corkboard/outliner se deschide în celălalt panou.
+- [ ] **lipsă** Selecția din corkboard/outliner se reflectă în binder.
+- [ ] **lipsă** Poziția cursorului ținută la schimbarea documentului: opțiune (acum mereu).
+- [ ] **lipsă** Taste în outliner: Enter = rând nou / editează; Tab = mută la dreapta.
+- [ ] **lipsă** Quick Reference: fereastră mereu deasupra.
+- [ ] **lipsă** Restaurarea aranjamentului ferestrelor la deschiderea proiectului: opțiune.
+
+### B. Setări proiect, toate taburile (`ProjectSettingsDialog.jsx`)
+**Identic:** etichete (nume, culoare, ordine, adaugă, șterge), statusuri (nume, ordine, adaugă, șterge), metadate proprii (text, text pe mai multe rânduri, bifă, listă cu opțiuni, dată, valoare implicită, titlul coloanei), tipuri de secțiune (adaugă, șterge, tip implicit după nivel), formatare implicită pe proiect, listă de completare automată, foldere speciale (șabloane, importuri, scratchpad), autor (nume, prenume, completare), titlu prescurtat, subtitlu, backup pe proiect (excludere, la închidere, la N minute).
+- [ ] **lipsă** Etichete: titlul câmpului redenumibil („Etichetă” → „Punct de vedere”) folosit apoi în Inspector și Outliner.
+- [ ] **lipsă** Etichete și statusuri: valoare implicită pentru documentele noi.
+- [ ] **lipsă** Statusuri: titlul câmpului redenumibil.
+- [ ] **lipsă** Metadate proprii: alinierea coloanei (stânga/centru/dreapta) și încadrarea textului.
+- [ ] **lipsă** Metadate proprii: tip „număr” cu sortare numerică.
+- [ ] **parțial** Tipuri de secțiune: tipul implicit e „după nivel”; lipsește distincția dosar / document cu copii / document simplu pe fiecare nivel.
+- [ ] **lipsă** Proprietățile proiectului: limba principală (pentru corector și compile).
+- [ ] **lipsă** Proprietățile proiectului: editura, ISBN, adresă, drepturi (azi doar în formatul de compile).
+- [ ] **lipsă** Tab „Icoane”: icoane proprii (importă imagine, redenumește, șterge).
+- [ ] **lipsă** Dosarul destinație pentru „Adaugă selecția la document” / note primite din alte aplicații.
+- [ ] **lipsă** Formatare implicită: „folosește setarea globală” (anularea suprascrierii pe proiect).
+- [ ] **lipsă** Export/import al etichetelor, statusurilor și metadatelor pentru alt proiect.
+
+### C. Configurare pagină (`PageSetupDialog.jsx`)
+**Identic:** hârtie (A4, Letter, Legal, personalizat), lățime/înălțime, orientare portret/peisaj, margini sus/jos/stânga/dreapta, antet stânga/centru/dreapta, subsol stânga/centru/dreapta, fără antet pe prima pagină, substituenți, mărime pt, spațiere rânduri, previzualizare tipărire.
+- [ ] **lipsă** Butonul „Imprimantă…”: alegerea imprimantei și a tăvii.
+- [ ] **lipsă** Scalare la tipărire (%).
+- [ ] **lipsă** Setări de tipărire pe tip de vedere: document (titluri, sinopsis, note), corkboard (fișe pe pagină, chenare, culori), outline (coloane).
+- [ ] **lipsă** Tipărirea fișelor din corkboard ca fișe reale 3×5 / 4×6 cu linii de tăiere.
+- [ ] **lipsă** Margini în oglindă la tipărirea directă (există doar în Compile).
+- [ ] **parțial** Antet/subsol: lipsesc fontul propriu și distanța față de marginea paginii.
+
+### D1. Compile: fereastra de ansamblu (`CompileDialog.jsx`, `lib/compileFormats.cjs`)
+**Identic:** formate de ieșire (Word, ODT, EPUB, HTML, Markdown, MultiMarkdown, LaTeX, Fountain, Final Draft, text simplu, PDF prin tipărire), „compilează pentru”, sursă (tot manuscrisul, dosar, selecție, colecție), filtre după etichetă și stare, atribuirea așezărilor pe tip de secțiune, cuprins, copertă din Cercetare, pagină de titlu automată, materie de început, formate globale și ale proiectului, duplicare/ștergere format, previzualizare.
+- [ ] **parțial** Formate predefinite puține; lipsesc echivalentele: manuscris standard (Courier), manuscris (Times), roman tipărit (paperback), roman cu părți numerotate, non-ficțiune, povestire, scenariu de film, piesă de teatru, scenariu BD, scenariu radio, poezie, e-book ficțiune, exemplar de corectură.
+- [ ] **lipsă** Lista „Conținut” în fereastră cu bifa „Include”, „Pagină nouă înainte” și tipul secțiunii editabile pe fiecare rând.
+- [ ] **lipsă** Filtru invers („exclude ce corespunde”) și filtru după cuvinte-cheie / căutare salvată.
+- [ ] **lipsă** Materie de final (back matter), simetric cu materia de început.
+- [ ] **lipsă** Materie de început aleasă diferit pe tip de ieșire (PDF vs EPUB).
+- [ ] **lipsă** „Deschide fișierul după compilare” (în aplicația implicită).
+- [ ] **lipsă** Import/export al unui format de compile ca fișier.
+- [ ] **lipsă** RTF ca ieșire de Compile (există doar la Export).
+- [ ] **parțial** PDF = tipărire Chromium din HTML; lipsesc controlul rupturilor de pagină (văduve/orfane), încorporarea fonturilor alese, numerotarea cu cifre romane în front matter.
+
+### D2. Compile / designer: Separatoare
+**Identic:** separator între secțiuni de același tip, între tipuri diferite, separator înainte (rând gol, pagină nouă, text propriu, nimic).
+- [ ] **parțial** Clasicul are patru reguli (text-text, dosar-dosar, dosar-text, text-dosar) și reguli pe tip de secțiune; Scribner are două (același tip / tip diferit).
+- [ ] **lipsă** Ruptură de secțiune Word (secțiune nouă, începe pe pagină impară).
+- [ ] **lipsă** Separator decorativ ales din listă (#, *, ⁂, linie) cu aliniere.
+
+### D3. Compile / designer: Așezări de secțiune (Section Layouts)
+**Identic:** listă de așezări, arată titlul, arată textul, prefix, sufix, litere (normale / MAJUSCULE / Majuscule / majuscule mici), aliniere titlu, pagină nouă înainte.
+- [ ] **lipsă** Miniatura fiecărei așezări în listă (cum arată secțiunea).
+- [ ] **lipsă** Conținut suplimentar per așezare: sinopsis, note, metadate (etichetă, status, cuvinte-cheie) înainte sau după text.
+- [ ] **lipsă** Formatarea titlului per așezare: font, mărime, spațiu înainte/după, stil.
+- [ ] **lipsă** Primul paragraf: primele N cuvinte cu majuscule mici; majusculă inițială mare (drop cap).
+- [ ] **lipsă** Indentarea primului paragraf per așezare (există doar global „fără alineat după titluri”).
+- [ ] **lipsă** „Pagină nouă după” și „începe pe pagina din dreapta”.
+- [ ] **lipsă** „Suprascrie formatarea textului” vs „păstrează formatarea din editor” per așezare.
+- [ ] **lipsă** Text pe coloane per așezare.
+
+### D4. Compile / designer: Stiluri
+- [ ] **parțial** Stilurile din editor ajung în DOCX; lipsește tabul care redefinește un stil doar la ieșire (font, mărime, culoare, indent).
+- [ ] **lipsă** „Elimină stilul X la compilare” (textul rămâne, stilul cade).
+- [ ] **lipsă** Corespondența stil → stil Word / clasă CSS în EPUB/HTML, explicită.
+
+### D5. Compile / designer: Prefix și sufix de titlu
+**Identic:** prefix, sufix, substituenți de numerotare de bază.
+- [ ] **lipsă** Prefix pe mai multe rânduri cu formatare proprie (ex. „Capitolul unu” centrat, alt font, apoi titlul).
+- [ ] **parțial** Numerotări: lipsesc numerele scrise în litere, cifrele romane mari/mici, literele (a, b, c) și contoarele cu nume separate.
+
+### D6. Compile / designer: Opțiuni de text
+**Identic:** ghilimele inteligente, două cratime → linie de dialog, elimină culorile textului, elimină evidențierile, legăturile interne devin text, comentarii Word, revizii ca modificări urmărite.
+- [ ] **lipsă** Italic → subliniat (manuscris standard) și invers.
+- [ ] **lipsă** Elimină spațiile duble și spațiile de la sfârșitul paragrafelor.
+- [ ] **lipsă** Ghilimele inteligente → drepte; elipsa → trei puncte.
+- [ ] **lipsă** Elimină textul tăiat / ștergerile din revizii.
+- [ ] **lipsă** Elimină legăturile externe (textul rămâne).
+
+### D7. Compile / designer: Înlocuiri
+**Identic:** caută, înlocuiește cu, regex, majuscule, cuvânt întreg, doar în text.
+- [ ] **lipsă** Domeniu pe înlocuire: doar titluri / doar text / peste tot.
+- [ ] **lipsă** Bifă de activare pe fiecare înlocuire și reordonare.
+
+### D8. Compile / designer: Transformări
+**Identic:** majuscule mici pentru text marcat, fără alineat după titluri.
+- [ ] **lipsă** Convertește la text simplu (fără formatare).
+- [ ] **lipsă** Spațiu de nedespărțit înainte de semnele duble de punctuație (pentru franceză).
+- [ ] **lipsă** Blocurile „Păstrează formatarea” tratate ca bloc de cod / citat în Markdown.
+
+### D9. Compile / designer: Note de subsol și comentarii
+**Identic:** note de subsol, note la finalul capitolului, note la finalul cărții, numerotare, repornirea numerotării, comentarii Word.
+- [ ] **lipsă** Comentariile ca note de subsol / eliminate / ca text între paranteze (alegere).
+- [ ] **lipsă** Formatul numerelor de notă (1, i, *, a) și al marcajului în text.
+- [ ] **lipsă** Titlul și stilul secțiunii de note de final.
+- [ ] **lipsă** Tratament diferit pentru notele inline și cele legate.
+
+### D10. Compile / designer: Setări de pagină
+**Identic:** hârtie, lățime/înălțime, margini, margini în oglindă, prima pagină fără antet, spațiere.
+- [ ] **lipsă** Numerotarea paginilor începe de la N; cifre romane pentru materia de început.
+- [ ] **lipsă** Spațiu de legătură (gutter).
+- [ ] **lipsă** Pagina de titlu fără număr (separat de „prima pagină fără antet”).
+- [ ] **lipsă** Coloane de text pe pagină.
+
+### D11. Compile / designer: Antete și subsoluri
+**Identic:** antet și subsol (stânga/centru/dreapta), număr de pagină, substituenți.
+- [ ] **lipsă** Antet diferit pe paginile pare și impare.
+- [ ] **lipsă** Antet diferit (sau absent) pe prima pagină a fiecărui capitol.
+- [ ] **lipsă** Titlul capitolului curent în antet (running head).
+- [ ] **lipsă** Font și mărime proprii pentru antet/subsol.
+
+### D12. Compile / designer: Statistici
+- [ ] **lipsă** Tabul care stabilește cum se numără pentru substituenții de cuvinte (rotunjire la 100/1000, cu sau fără titluri).
+
+### D13. Compile / designer: Substituenți
+**Identic:** substituenții de bază documentați în ajutor (titlu, autor, numerotare).
+- [ ] **parțial** Lipsesc: titlul prescurtat, data compilării cu format, numărul de cuvinte rotunjit, pagina curentă/totală, eticheta, statusul, cuvintele-cheie, câmpurile de metadate proprii, includerea unei imagini și a altui document.
+- [ ] **lipsă** Previzualizarea valorii unui substituent în dialog.
+
+### D14. Compile / designer: Metadate
+**Identic:** titlu, autor, editura, identificator (ISBN), subiecte.
+- [ ] **lipsă** Limba, data publicării, descriere, drepturi, serie și numărul în serie.
+- [ ] **lipsă** Metadate YAML pentru ieșirile Markdown.
+
+### D15. Compile / designer: Setări de scenariu (Script settings)
+- [ ] **lipsă** Alegerea formatului de scenariu la compile, cu corespondența element → stil de ieșire.
+- [ ] **lipsă** „(CONT'D)” / „(MORE)” automate la ruperea dialogului pe pagini.
+
+### D16. Compile / designer: alte secțiuni
+- [ ] **parțial** Cuprins: doar bifă; lipsesc titlul cuprinsului, adâncimea, punctele de conducere și stilul.
+- [ ] **lipsă** E-book: CSS propriu, împărțirea în fișiere, imaginea de copertă separată de text.
+- [ ] **lipsă** HTML: CSS propriu, un fișier sau mai multe.
+- [ ] **lipsă** Markdown: stilul titlurilor (# sau subliniat), separatorul notelor.
+- [ ] **lipsă** Post-procesare (comandă externă după compile, ex. Pandoc/LaTeX).
+
+### E. Ținte de proiect (`TargetsDialog.jsx`)
+**Identic:** ținta manuscrisului, ținta sesiunii, unitate (cuvinte/caractere/pagini), cuvinte pe pagină, termen limită, zile de scris, zile rămase, cuvinte pe zi calculate, resetarea sesiunii (miezul nopții / deschidere / manual), resetare manuală, doar textul inclus în compile, notificare la atingerea țintei, notificare și pentru țintele documentelor.
+- [ ] **lipsă** „Permite numărări negative” (ștergerile scad din sesiune).
+- [ ] **lipsă** Sesiunea preia automat ținta pe zi calculată din termen.
+- [ ] **lipsă** Sesiunea numără textul din toate proiectele deschise.
+- [ ] **parțial** Fereastra e un dialog; în clasic e un panou mic, plutitor, mereu deasupra, cu cele două bare.
+
+### F. Statistici proiect / text (`StatisticsDialog.jsx`)
+**Identic:** domeniu (manuscris compilat, tot proiectul, selecție), cuvinte, caractere cu și fără spații, paragrafe, fraze, pagini tipărite, pagini de carte, minute de lectură, frecvența cuvintelor, lungimea frazelor.
+- [ ] **lipsă** Sortarea tabelului de frecvență pe coloane și export CSV.
+- [ ] **lipsă** „Statistici de text” rapide pentru selecție, ca fereastră mică separată.
+- [ ] **lipsă** Grafic al frecvenței.
+
+### G. Istoricul scrisului (`HistoryDialog.jsx`)
+**Identic:** zilnic, lunar, manuscris / tot proiectul, cuvinte, caractere, medie pe zi, zile cu scris, zile la rând, grafic pe 30 de zile.
+- [ ] **lipsă** Export CSV.
+- [ ] **lipsă** Cuvinte adăugate și șterse separat (brut / net).
+- [ ] **lipsă** Interval de date ales.
+- [ ] **lipsă** Ștergerea istoricului sau a zilelor selectate.
+
+### H. Scratchpad (`Scratchpad.jsx`)
+**Identic:** listă de note, notă nouă, titlu, ștergere, trimite în proiect.
+- [ ] **lipsă** Fereastră independentă, deschisă și fără proiect, mereu deasupra, cu scurtătură globală.
+- [ ] **lipsă** Folder pe disc ales de utilizator; notele ca fișiere.
+- [ ] **parțial** „Trimite în proiect”: lipsesc alegerea proiectului deschis, a dosarului și „Adaugă la documentul selectat”.
+- [ ] **lipsă** Text formatat în notă (bold, italic).
+- [ ] **lipsă** Import/export de note.
+
+### I. Ecran complet / Compunere (`CompositionBar.jsx`)
+**Identic:** fundal, lățime, opacitatea paginii, poziția textului, salt la document, inspector, numărare cuvinte, ieșire cu Esc.
+- [ ] **lipsă** Zoom al textului din bara de control.
+- [ ] **lipsă** Butonul de cuvinte-cheie (HUD) din bară.
+- [ ] **lipsă** Ținta afișată ca bară de progres în bară.
+- [ ] **lipsă** Navigare înainte/înapoi între documente din bară.
+
+### J. Scenariu (`extensions/ScriptMode.js`, `lib/scriptFormats.js`)
+**Identic:** formate film, teatru, BD, radio, elementele (antet de scenă, acțiune, personaj, paranteză, dialog, tranziție, plan), Tab/Enter spre elementul următor, completare personaje și antete de scenă.
+- [ ] **lipsă** Editorul de formate de scenariu: element nou, font, indent, majuscule, spațiu înainte, „Tab duce la”, „Enter duce la”.
+- [ ] **lipsă** Salvarea și importul unui format de scenariu ca fișier.
+- [ ] **lipsă** Lista de completare a scenariului editabilă (personaje, locații, tranziții) într-o fereastră.
+- [ ] **parțial** Indicatorul elementului curent în bara de jos fără sfatul „Tab: …, Enter: …”.
+
+### K. Snapshot-uri (`SnapshotsPane.jsx`, `SnapshotManagerDialog.jsx`)
+**Identic:** snapshot cu/fără titlu, listă cu dată și titlu, comparare cu textul curent (cuvânt/frază/paragraf), modificarea următoare/anterioară, revenire cu snapshot de siguranță, redenumire, ștergere, manager pe proiect.
+- [ ] **lipsă** Comparare între două snapshot-uri oarecare.
+- [ ] **lipsă** Copierea unei porțiuni din snapshot în document.
+- [ ] **lipsă** Managerul: sortare pe coloane și „Arată în binder”.
+
+### L1. Căutare / Înlocuire în document (`FindBar.jsx`)
+**Identic:** caută, anterior/următor, majuscule, cuvinte întregi, regex, înlocuiește, înlocuiește tot.
+- [ ] **lipsă** Mod „Conține / Începe cu / Cuvânt întreg”.
+- [ ] **lipsă** Doar în selecție.
+- [ ] **lipsă** Istoricul căutărilor.
+- [ ] **lipsă** Ignoră diacriticele.
+
+### L2. Căutare și înlocuire în proiect (`AdvancedSearchDialog.jsx`, `FindDialog.jsx`)
+**Identic:** domenii (tot, titlu, text, sinopsis, note, cuvinte-cheie, etichete, stări, metadate), oricare cuvânt / toate / expresia exactă / regex, majuscule, cuvinte întregi, include coșul, doar incluse în compile, înlocuire în proiect cu confirmare, salvare ca colecție.
+- [ ] **lipsă** Căutare într-un câmp de metadate propriu anume.
+- [ ] **lipsă** Rezultatele afișate în binder (lista filtrată în locul arborelui).
+- [ ] **lipsă** Previzualizarea fiecărei apariții înainte de înlocuirea în proiect, cu excluderi.
+- [ ] **lipsă** Filtre după tipul documentului și după data creării/modificării.
+- [ ] **lipsă** Căutare după formatare în tot proiectul (azi `FormatFind.jsx` e pe document).
+
+### M. Colecții (`CollectionsBar.jsx`)
+**Identic:** colecție nouă, din selecție, adaugă/scoate selecția, culoare, redenumire, ștergere, căutare salvată.
+- [ ] **lipsă** Reordonarea taburilor de colecții.
+- [ ] **lipsă** Editarea criteriilor unei căutări salvate.
+- [ ] **lipsă** „Compilează colecția” din meniul ei.
+
+### N. Cuvinte-cheie (`KeywordsDialog.jsx`, HUD în `MissingWindows.jsx`)
+**Identic:** listă, culoare, redenumire, ștergere, părinte, filtrare, număr de utilizări, unire la redenumire, HUD plutitor cu aplicare pe selecție.
+- [ ] **lipsă** Tragerea unui cuvânt-cheie pe documente din binder/corkboard.
+- [ ] **lipsă** „Caută documentele cu acest cuvânt-cheie”.
+
+### O. Aranjamente (Layouts)
+**Identic:** salvează aranjamentul, aplică, gestionează.
+- [ ] **parțial** Nu e garantat că se salvează coloanele outliner-ului, modul corkboard și împărțirea editorului; de verificat și completat.
+- [ ] **lipsă** Export/import al unui aranjament.
+- [ ] **lipsă** Miniatură în lista de aranjamente.
+
+### P. Quick Reference (`QuickRef.jsx`, 32 de rânduri)
+**Identic:** fereastră separată, mai multe ferestre, „deschide în editorul principal”.
+- [ ] **lipsă** Bara de format și rigla în fereastră.
+- [ ] **lipsă** Inspector în fereastră (sinopsis, note, metadate).
+- [ ] **lipsă** Zoom propriu, mereu deasupra.
+- [ ] **lipsă** Fișiere de cercetare (imagine, PDF) în Quick Reference.
+- [ ] **lipsă** Numărare și țintă în subsolul ferestrei.
+
+### Q. Generator de nume (`NameGeneratorDialog.jsx`)
+**Identic:** gen, prenume și/sau nume, origini prenume, origini nume, raritate, inițiale aliterate, nume duble, număr, copiază, copiază lista, inserează, generează din nou.
+- [ ] **lipsă** Nume care încep cu o literă dată.
+- [ ] **lipsă** Liste proprii de nume importate din fișier.
+
+### R. Focus lingvistic (`extensions/LinguisticFocus.js`)
+**Identic:** substantive, verbe, adjective, adverbe, conjuncții, oprit, limba, estompare.
+- [ ] **lipsă** Pronume și prepoziții.
+- [ ] **parțial** Focus pe dialog există în bara de format, nu în fereastra de focus lingvistic.
+- [ ] **lipsă** Evidențiere colorată în loc de estompare.
+
+### S. Import (`ImportDialog.jsx`, `lib/scrivImport.cjs`)
+**Identic:** Word/RTF/ODT/text, Markdown, OPML, pagină web, BibTeX, Zotero, proiect `.scriv`, pachet JSON, Fountain, FDX, împarte la Titlu 1, la Titlu 1 și 2, la rând separator, primul rând ca titlu, modificări urmărite → revizii.
+- [ ] **lipsă** Import dosar întreg de pe disc cu structura lui.
+- [ ] **lipsă** Import ca document legat (fișier extern, nu copiat).
+- [ ] **lipsă** Import HTML local și EPUB.
+- [ ] **parțial** Imagini/PDF/media se pot pune în Cercetare, dar dialogul de import nu le listează ca format.
+- [ ] **lipsă** Import și împărțire: separatorul păstrat ca titlu al documentului nou.
+
+### T. Export (`ExportDialog.jsx`)
+**Identic:** tot proiectul / dosarul curent / selecția, DOCX, RTF, HTML, TXT, Markdown, păstrează structura, note, metadate CSV, outline OPML, revizii ca modificări urmărite.
+- [ ] **lipsă** ODT la Export.
+- [ ] **lipsă** Snapshot-urile exportate ca fișiere separate.
+- [ ] **lipsă** Fișierele de cercetare în formatul original.
+- [ ] **lipsă** Alegerea coloanelor la exportul de metadate CSV.
+
+### U. Șabloane de document
+**Identic:** dosar de șabloane, document nou din șablon.
+- [ ] **lipsă** Substituenți rezolvați la crearea documentului (data, numerotare în titlu).
+- [ ] **lipsă** Șablon implicit pentru documentele noi dintr-un dosar anume.
+- [ ] **parțial** De verificat că eticheta, statusul, cuvintele-cheie și metadatele se copiază din șablon.
+
+### V. Alegerea șablonului de proiect (`Home.jsx`, `SaveTemplateDialog.jsx`)
+**Identic:** categorii, proiect gol, titlu, descriere, salvează ca șablon (categorie, descriere, icoană, include conținut), import/export șablon, șablon implicit, ștergere, proiecte recente fixate.
+- [ ] **lipsă** Șabloane predefinite echivalente: roman, roman cu părți, povestire, non-ficțiune cu note, eseu/teză, scenariu de film, piesă de teatru, BD, poezie, listă de lectură.
+- [ ] **lipsă** Căutare în lista de șabloane.
+
+### W. Semne de carte (`BookmarksPanel.jsx`, tab în Inspector)
+**Identic:** semne ale documentului și ale proiectului, adaugă documentul curent, previzualizare la clic, deschide la dublu-clic, elimină.
+- [ ] **lipsă** Fișiere externe în lista de semne de carte (adresa web există doar în Inspector).
+- [ ] **lipsă** Reordonare prin tragere.
+
+### X. Inspector, fiecare tab (`Inspector.jsx`)
+**Identic:** sinopsis text, sinopsis imagine, titlu, subtitlu, etichetă, status, tip secțiune, include în compile, cuvinte-cheie, câmpuri proprii, note document, note proiect, semne de carte, snapshot-uri, comentarii, note de subsol, creat/modificat, ținta documentului, legături de intrare, blocare inspector, icoană și culoarea ei, favorit.
+- [ ] **lipsă** „Pagină nouă înainte” și „Compilează așa cum e” pe document.
+- [ ] **lipsă** Sinopsis din primele rânduri ale textului, fără AI.
+- [ ] **lipsă** Comentarii: filtru (doar comentarii / doar note) și culoare per comentariu.
+- [ ] **parțial** Mai multe note de proiect: există `ProjectNotesTabs.jsx`, dar nu ca taburi în inspector.
+
+### Y. Corkboard, opțiunile panoului (`Corkboard.jsx`)
+**Identic:** grilă, liber, linii după etichetă/status/cuvânt-cheie, mărime, formă, liniat, umplere etichetă, proporție, spațiere, fișă nouă după selecție, fixează ordinea, aranjează pe linii.
+- [ ] **lipsă** Orientarea liniilor (orizontal / vertical).
+- [ ] **lipsă** Imagine trasă direct pe fișă devine sinopsis-imagine.
+
+### Z. Outliner, coloane și opțiuni (`Outliner.jsx`)
+**Identic:** titlu, sinopsis, etichetă, status, cuvinte, caractere, țintă, progres, tip secțiune, cuvinte-cheie, creat, modificat, în compile, câmpuri proprii, extinde/restrânge tot, sortare, revino la ordinea din binder, total cuvinte.
+- [ ] **lipsă** Coloane: total cuvinte cu copii, țintă totală, progres total, pagină nouă înainte, număr de snapshot-uri, data ultimului snapshot.
+- [ ] **lipsă** Reordonarea coloanelor prin tragere și lățimi salvate.
+- [ ] **lipsă** Sinopsisul sub titlu în aceeași coloană.
+- [ ] **lipsă** Rândurile colorate cu culoarea etichetei.
+
+### AA. Meniul contextual al binderului (`Binder.jsx`, `ContextMenu.jsx`)
+**Identic:** document nou, dosar nou, duplicat, mută în, mută în coș, golește coșul, redenumește, include în compile, favorit, deschide în panoul 2, deschide în Quick Reference, setează ca (etichetă/status), extinde tot, restrânge tot.
+- [ ] **lipsă** Convertește în dosar / în document text.
+- [ ] **lipsă** Adaugă la colecție.
+- [ ] **lipsă** Schimbă icoana.
+- [ ] **lipsă** Fă snapshot pentru documentele selectate.
+- [ ] **lipsă** Unește și Sortează copiii (alfabetic) din meniu.
+- [ ] **lipsă** Arată fișierul în Explorer (cercetare).
+- [ ] **lipsă** Copiază legătura către document.
+
+### AB. Bara de antet și bara de subsol a editorului (`Editor.jsx`, `EditorFooter.jsx`)
+**Identic:** subsol: cuvinte, caractere, ținta documentului, unitatea, zoom.
+- [ ] **lipsă** Bara de antet pe fiecare panou: înapoi/înainte, titlul documentului cu meniu (istoric, documente vecine), blocare în loc, legare cu celălalt panou, împărțire.
+- [ ] **parțial** Înapoi/înainte există doar ca comenzi globale (`back`/`forward`), nu pe panou.
+- [ ] **lipsă** Subsol în Scrivenings: totalul tuturor documentelor afișate.
+- [ ] **lipsă** Subsol în corkboard/outliner cu controalele vederii (mărime fișe etc.), cum e în clasic.
+
+### AC. Bara de format (`FormatBar.jsx`)
+**Identic:** stiluri, font, mărime, bold, italic, subliniat, tăiat, culoare text, evidențiere, aliniere, interlinie cu valoare proprie, liste, indent, tab-uri, tabel, imagine, legătură, comentariu, notă de subsol, revizii, semn de carte, transformări de litere, copiere specială, copiază/lipește formatarea.
+- [ ] **lipsă** Lista de fonturi cu previzualizarea fontului.
+- [ ] **lipsă** Spațierea între caractere.
+- [ ] **lipsă** Stiluri de listă cu numerotare proprie (1.1, a), I.).
+
+### AD. Meniul Text / Format
+**Identic:** schimbă literele (MAJUSCULE, minuscule, titlu, propoziție), selectează cuvânt/propoziție/paragraf, elimină spațiile duble, liniuțe, ghilimele, data de azi, pagină nouă, linie orizontală, note inline ↔ legate, text de la dreapta la stânga.
+- [ ] **lipsă** Inserează substituent (submeniu cu substituenții de compile).
+- [ ] **lipsă** Elimină toate comentariile / notele de subsol din document.
+- [ ] **lipsă** Convertește la text simplu (fără formatare).
+- [ ] **lipsă** Despărțire în silabe (hyphenation) în editor și la compile.
+
+### Totaluri audit 3
+
+Numărătoarea „identic” e pe elementele din rândul **Identic** (aproximativă: o paranteză cu variante contează ca un element).
+
+| Fereastră | identic | parțial | lipsă |
+|---|---:|---:|---:|
+| A1. Opțiuni: General | 4 | 2 | 8 |
+| A2. Opțiuni: Aspect | 13 | 2 | 19 |
+| A3. Opțiuni: Corkboard | 8 | 1 | 9 |
+| A4. Opțiuni: Compunere | 7 | 1 | 6 |
+| A5. Opțiuni: Editare / Opțiuni | 4 | 1 | 8 |
+| A6. Opțiuni: Editare / Formatare | 5 | 1 | 5 |
+| A7. Opțiuni: Editare / Revizii | 1 | 0 | 2 |
+| A8. Opțiuni: Partajare | 9 | 1 | 8 |
+| A9. Opțiuni: Comportamente | 3 | 0 | 10 |
+| A10. Opțiuni: Backup | 10 | 0 | 2 |
+| A11. Opțiuni: Corecturi | 9 | 0 | 9 |
+| A12. Opțiuni: Tastatură | 2 | 1 | 3 |
+| A13. Opțiuni: Navigare | 0 | 0 | 7 |
+| B. Setări proiect | 32 | 1 | 11 |
+| C. Configurare pagină | 14 | 1 | 5 |
+| D1. Compile: ansamblu | 25 | 2 | 7 |
+| D2. Compile: Separatoare | 6 | 1 | 2 |
+| D3. Compile: Așezări de secțiune | 8 | 0 | 8 |
+| D4. Compile: Stiluri | 0 | 1 | 2 |
+| D5. Compile: Prefix/sufix titlu | 3 | 1 | 1 |
+| D6. Compile: Opțiuni de text | 7 | 0 | 5 |
+| D7. Compile: Înlocuiri | 6 | 0 | 2 |
+| D8. Compile: Transformări | 2 | 0 | 3 |
+| D9. Compile: Note și comentarii | 6 | 0 | 4 |
+| D10. Compile: Setări de pagină | 6 | 0 | 4 |
+| D11. Compile: Antete/subsoluri | 3 | 0 | 4 |
+| D12. Compile: Statistici | 0 | 0 | 1 |
+| D13. Compile: Substituenți | 3 | 1 | 1 |
+| D14. Compile: Metadate | 5 | 0 | 2 |
+| D15. Compile: Scenariu | 0 | 0 | 2 |
+| D16. Compile: alte secțiuni | 0 | 1 | 4 |
+| E. Ținte | 13 | 1 | 3 |
+| F. Statistici | 12 | 0 | 3 |
+| G. Istoricul scrisului | 9 | 0 | 4 |
+| H. Scratchpad | 5 | 1 | 4 |
+| I. Compunere | 8 | 0 | 4 |
+| J. Scenariu | 13 | 1 | 3 |
+| K. Snapshot-uri | 8 | 0 | 3 |
+| L1. Căutare în document | 7 | 0 | 4 |
+| L2. Căutare în proiect | 16 | 0 | 5 |
+| M. Colecții | 7 | 0 | 3 |
+| N. Cuvinte-cheie | 9 | 0 | 2 |
+| O. Aranjamente | 3 | 1 | 2 |
+| P. Quick Reference | 3 | 0 | 5 |
+| Q. Generator de nume | 12 | 0 | 2 |
+| R. Focus lingvistic | 8 | 1 | 2 |
+| S. Import | 15 | 1 | 4 |
+| T. Export | 11 | 0 | 4 |
+| U. Șabloane de document | 2 | 1 | 2 |
+| V. Șabloane de proiect | 12 | 0 | 2 |
+| W. Semne de carte | 5 | 0 | 2 |
+| X. Inspector | 22 | 1 | 3 |
+| Y. Corkboard (panou) | 12 | 0 | 2 |
+| Z. Outliner | 18 | 0 | 4 |
+| AA. Meniul contextual binder | 14 | 0 | 7 |
+| AB. Antet/subsol editor | 5 | 1 | 3 |
+| AC. Bara de format | 24 | 0 | 3 |
+| AD. Meniul Text | 13 | 0 | 4 |
+| **Total** | **487** | **28** | **253** |
+
+Concluzie: ferestrele de lucru zilnic (Inspector, Outliner, bara de format, căutare, ținte, import/export) sunt aproape complete. Golurile mari sunt în **Opțiuni** (Aspect, Comportamente, Navigare, Corecturi: 61 de lipsuri), în **designerul de Compile** (D2–D16: 45 de lipsuri) și în ferestrele „mici” rămase schelet (Quick Reference, Scratchpad, antetul editorului).
+
+### Primele 40, după valoarea pentru utilizator
+
+1. Formate de compile predefinite: manuscris standard, roman tipărit, non-ficțiune, scenariu (D1)
+2. Lista „Conținut” în Compile cu Include / Pagină nouă înainte / tip secțiune pe rând (D1)
+3. Formatarea titlului per așezare: font, mărime, spațiu, prefix pe mai multe rânduri (D3, D5)
+4. Antete diferite par/impar, prima pagină de capitol, titlul capitolului în antet (D11)
+5. Numerotare de la N și cifre romane în materia de început; materie de final (D10, D1)
+6. Comentariile/notele: alegerea tratamentului la compile și formatul numerelor (D9)
+7. Opțiuni de text la compile: italic ↔ subliniat, spații duble, ghilimele drepte, elimină tăiatul (D6)
+8. Cuprins configurabil (titlu, adâncime, puncte de conducere) (D16)
+9. Panoul Navigare în Opțiuni (A13)
+10. Comportamente: dublu-clic pe dosar, vedere implicită pe tip, selecție multiplă ca Scrivenings/corkboard (A9)
+11. Bara de antet pe fiecare panou al editorului: înapoi/înainte, meniul titlului, blocare, legare panouri (AB)
+12. Quick Reference cu bara de format, inspector, mereu deasupra (P)
+13. Corecturi: DOuă MAjuscule, Caps Lock, excepții, corector pornit/oprit, alegerea ghilimelelor (A11)
+14. Ignoră diacriticele + doar în selecție în căutare (L1)
+15. Previzualizarea înlocuirii în proiect cu excluderi (L2)
+16. Rezultatele căutării afișate în binder (L2)
+17. Culori editor: fundal, text, selecție, linia curentă, pagina în Vedere pagină (A2, A5)
+18. Teme de culori salvabile și importabile (A2)
+19. Corkboard: ștampila de status, pin de etichetă, cuvinte-cheie pe fișe, fundal (A3)
+20. Corkboard liber: aliniere la grilă (A3)
+21. Outliner: coloane totale cu copii, reordonare coloane, lățimi salvate (Z)
+22. Etichete/statusuri: titlu de câmp redenumibil, valoare implicită (B)
+23. Limba proiectului + date editoriale în Setări proiect (B, D14)
+24. Mașină de scris: poziția rândului; evidențierea rândului curent (A5)
+25. Formatare implicită completă cu riglă; font pentru notițe și note de subsol (A6)
+26. Scratchpad ca fereastră independentă, cu folder pe disc și „Adaugă la document” (H)
+27. Meniul contextual al binderului: convertește dosar/text, adaugă la colecție, icoană, snapshot, sortează (AA)
+28. Compunere: zoom propriu, bară care se ascunde, țintă în bară, HUD cuvinte-cheie (A4, I)
+29. Comparare între două snapshot-uri și copiere parțială din snapshot (K)
+30. Tipărire corkboard ca fișe și setări de tipărire pe vedere (C)
+31. Editor de formate de scenariu + (CONT'D)/(MORE) la compile (J, D15)
+32. Ținte: numărări negative, sesiunea preia ținta pe zi, panou plutitor (E)
+33. Sincronizare: prefix numeric, doar o colecție, include Cercetarea (A8)
+34. Import dosar de pe disc cu structură; import EPUB/HTML local (S)
+35. Stiluri la compile: redefinire și eliminare pe stil (D4)
+36. Substituenți lipsă + meniul „Inserează substituent” (D13, AD)
+37. Istoric scris: export CSV, brut/net, interval (G)
+38. Separatoare cu patru reguli și separator decorativ (D2)
+39. Tastatură: salvare/încărcare set, resetare individuală (A12)
+40. Șabloane de proiect predefinite pe genuri (V)
+
+### Pachete de lucru (câte un agent fiecare, fișiere în mare parte disjuncte)
+
+- **P1. Compile: formate și conținut** (1, 2, 5, 8) — `lib/compileFormats.cjs`, `lib/compile.cjs` (partea de selecție, front/back matter, cuprins), `CompileDialog.jsx` (doar tabul „Conținut”/ansamblu), `tests/compile*.test.js`.
+- **P2. Compile: așezări, text, note, stiluri, separatoare** (3, 6, 7, 35, 38) — `lib/compile.cjs` (redarea secțiunilor și transformările; coordonat cu P1 prin funcții separate, ex. `lib/compileLayouts.cjs` nou), `src/components/CompileLayoutEditor.jsx` (nou, scos din `CompileDialog.jsx`), teste.
+- **P3. Compile: pagină, antete, substituenți, scenariu** (4, 5 partea de numerotare, 31 partea de compile, 36) — `lib/compileDocx.cjs`/partea DOCX și PDF din `lib/compile.cjs`, `lib/placeholders.cjs` (nou), `PageSetupDialog.jsx`, `src/help/` (lista substituenților), `FormatBar.jsx` doar meniul „Inserează substituent”.
+- **P4. Opțiuni: Navigare + Comportamente + Tastatură** (9, 10, 39) — `SettingsDialog.jsx` (panouri noi `navigation`, `behaviors`), `lib/settingsDefaults.js`, `Binder.jsx` (dublu-clic, selecție multiplă), `ShortcutsDialog.jsx`, `lib/commands.js`.
+- **P5. Opțiuni: Aspect și teme de culori** (17, 18, 24) — `src/components/AppearancePane.jsx` (nou, scos din `SettingsDialog.jsx`), `lib/settingsDefaults.js` (`applySettingsCss`), `src/styles.css`, foaia de stil a temei clasice din `src/`, `src/editor/lineHighlight.js`, `src/editor/writing.js` (mașina de scris).
+- **P6. Corecturi și căutare în document** (13, 14) — `src/editor/corrections.js`, `lib/autoReplace.js`, `src/components/CorrectionsPane.jsx` (nou), `FindBar.jsx`, `src/editor/docSearch.js`.
+- **P7. Căutare în proiect** (15, 16) — `AdvancedSearchDialog.jsx`, `FindDialog.jsx`, `lib/projectSearch.js`, `lib/search.js`, vedere „rezultate” în `Binder.jsx` (doar un mod de filtrare izolat; coordonat cu P4).
+- **P8. Antetul editorului și Quick Reference** (11, 12) — `src/components/EditorHeader.jsx` (nou), `Editor.jsx`, `EditorFooter.jsx`, `QuickRef.jsx`, `electron/main.cjs` (fereastra QR mereu deasupra).
+- **P9. Corkboard și Outliner** (19, 20, 21) — `Corkboard.jsx`, `Outliner.jsx`, `src/panels-extra.css`.
+- **P10. Setări proiect și Inspector** (22, 23, 25) — `ProjectSettingsDialog.jsx`, `lib/projectSettings.js`, `Inspector.jsx`, `lib/store.cjs` (câmpuri noi de proiect), `src/components/DefaultFormatPane.jsx` (nou).
+- **P11. Ferestre mici: Scratchpad, Compunere, Ținte, Snapshot-uri, Istoric** (26, 28, 29, 32, 37) — `Scratchpad.jsx`, `CompositionBar.jsx`, `TargetsDialog.jsx`, `SnapshotsPane.jsx`, `lib/snapshotDiff.js`, `HistoryDialog.jsx`, `electron/main.cjs` (fereastră scratchpad; coordonat cu P8 prin handler IPC separat).
+- **P12. Binder (meniu), tipărire, scenariu, import/sync, șabloane** (27, 30, 31 partea de editor, 33, 34, 40) — `ContextMenu.jsx`, `lib/editorMenus.js`, `PrintPreviewDialog.jsx`, `extensions/ScriptMode.js`, `lib/scriptFormats.js`, `ImportDialog.jsx`, `lib/scrivImport.cjs` doar pentru import dosar, `templates/` (șabloane noi), `Home.jsx`.
+
+Ordinea recomandată: P1 → P2 → P3 secvențial (toate ating Compile); P4–P12 se pot face în paralel cu ele, cu atenție la `SettingsDialog.jsx` (P4, P5, P6 extrag fiecare panoul propriu într-un fișier nou, ca să nu se calce) și la `Binder.jsx` (P4 și P7).
