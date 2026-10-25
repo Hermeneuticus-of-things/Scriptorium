@@ -777,7 +777,7 @@ handle('menu:set', (e, spec) => {
   const extra = [
     { type: 'separator' },
     { label: 'Despre Scribner', click: () => dialog.showMessageBox(win, { message: `Scribner ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi.' }) },
-    { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools' },
+    { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools', accelerator: 'F12' } // Ctrl+Shift+I is the Inspector,
   ];
   const helpMenu = template.find((m, i) => spec[i] && spec[i].items.some((it) => it !== '-' && it.id === 'help'));
   if (helpMenu) helpMenu.submenu.push(...extra);

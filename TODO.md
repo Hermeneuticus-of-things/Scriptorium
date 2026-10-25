@@ -187,3 +187,6 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] Demo browser: Compile HTML cu doctype/charset și opțiunile (domeniu, titlu); previzualizarea să respecte domeniul.
 - [ ] Meniul Vizualizare: etichete în engleză (Corkboard, Outline, Quick Reference); „Duplică” de două ori cu Ctrl+D; Compile → Pagină doar în inchi.
 - [ ] MCP `import_files`: folder de import permis, configurabil.
+- [ ] Texte netraduse: formatting.js (FORMAT_KINDS, bara de imagine), pacing.js, PacingView, AiPanel („scrie”, „Respinge”), BackupDialog, EditorialPanel, CompileDialog (Interior/Exterior), collections.js, panelsExtra (Notă din ciorne, părți de vorbire), meniul Ajutor din main.cjs, mesajele webApi.js; 7 chei i18n nefolosite.
+- [ ] search.js/team.js: regex de tag care înțelege `>` în atribute; decodare `&amp;amp;` într-o singură trecere.
+- [ ] sanitize.js: toate URL-urile din srcset, style cu `\`, atributele background/poster.

@@ -100,7 +100,7 @@ export function updateNode(tree, id, patch) {
 export function moveToTrash(tree, id) {
   const trash = tree.find((n) => n.root === 'trash');
   const node = findNode(tree, id);
-  if (!node || node.root || rootOf(tree, id)?.id === trash.id) return tree;
+  if (!trash || !node || node.root || rootOf(tree, id)?.id === trash.id) return tree;
   const parent = findParent(tree, id);
   const list = parent ? parent.children : tree;
   const from = { parentId: parent ? parent.id : null, index: list.findIndex((n) => n.id === id) };

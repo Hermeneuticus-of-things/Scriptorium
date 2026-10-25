@@ -2,6 +2,13 @@
 
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
+### v0.9.8, căutare micro/nano
+- Scurtăturile aplicației cu Ctrl+Shift (Compile, Referință rapidă, Binder, Salvează ca, Inspector) tastate în editor nu mai aplică și formatarea editorului pe aceeași tastă; uneltele pentru dezvoltatori trec pe F12.
+- Numărarea cuvintelor: blocuri div/tabel separate; diacriticele descompuse (s + virgulă) nu mai rup cuvântul, nici la căutarea pe cuvânt întreg.
+- Plural românesc: probleme, erori, fraze, titluri, termeni, intrări, conflicte („25 de probleme”, „1 problemă”).
+- Înlocuirile la dictare: regulile scrise cu sedilă se aplică; o regulă goală șterge cuvântul.
+- Coș lipsă, file fără tab curent: fără erori. Textul gol din editor tradus.
+
 ### v0.9.8, căutare pe editor și binder
 - Editor împărțit: Undo într-un panou nu mai readuce textul anulat în celălalt.
 - Documentele blocate nu mai sunt atinse de Găsește și înlocuiește în proiect și nu mai pot fi restaurate dintr-un snapshot.

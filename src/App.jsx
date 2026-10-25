@@ -1615,8 +1615,24 @@ export default function App({ api: apiProp }) {
         }
       }
     };
+    // Ctrl+Shift app shortcuts typed in the editor run before the editor sees the key, so it does
+    // not also apply its own formatting on the same keys (Ctrl+Shift+E centring, +S strike…).
+    const onEditorKey = (e) => {
+      if (!project || !(e.ctrlKey || e.metaKey) || !e.shiftKey || !e.target?.closest?.('.ProseMirror')) return;
+      if (document.querySelector('.modal-backdrop')) return;
+      const combo = keyFromEvent(e);
+      const cmd = combo && Object.values(commandsRef.current).find((c) => c.key === combo && !c.disabled);
+      if (!cmd) return;
+      e.preventDefault();
+      e.stopPropagation();
+      cmd.run();
+    };
+    window.addEventListener('keydown', onEditorKey, true);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onEditorKey, true);
+      window.removeEventListener('keydown', onKey);
+    };
   });
   // Format bar layout (customizable) is published for every FormatBar.
   useEffect(() => {

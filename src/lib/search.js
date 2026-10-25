@@ -5,7 +5,7 @@
 export function buildRegex({ query, regex, caseSensitive, wholeWord }) {
   if (!query) return null;
   let src = regex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  if (wholeWord) src = `(?<![\\p{L}\\p{N}_])(?:${src})(?![\\p{L}\\p{N}_])`;
+  if (wholeWord) src = `(?<![\\p{L}\\p{N}\\p{M}_])(?:${src})(?![\\p{L}\\p{N}\\p{M}_])`;
   try {
     return new RegExp(src, `g${caseSensitive ? '' : 'i'}u`);
   } catch {

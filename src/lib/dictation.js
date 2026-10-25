@@ -36,11 +36,12 @@ export function joinFragment(before, fragment) {
 /** The writer's auto-replacements on whole words (case of the dictated word kept). */
 export function applyReplacements(text, list = []) {
   const map = new Map();
-  for (const r of list || []) if (r && r.from && r.to && !/\s/.test(r.from)) map.set(r.from.toLocaleLowerCase('ro'), r.to);
+  for (const r of list || []) if (r && r.from && r.to !== undefined && r.to !== null && !/\s/.test(r.from)) map.set(cedillaToComma(r.from).toLocaleLowerCase('ro'), String(r.to));
   if (!map.size) return text;
   return cedillaToComma(String(text)).replace(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu, (w) => {
     const to = map.get(w.toLocaleLowerCase('ro'));
     if (to === undefined) return w;
+    if (!to) return '';
     return w[0] === w[0].toLocaleUpperCase('ro') && w[0] !== w[0].toLocaleLowerCase('ro') ? to[0].toLocaleUpperCase('ro') + to.slice(1) : to;
   });
 }
