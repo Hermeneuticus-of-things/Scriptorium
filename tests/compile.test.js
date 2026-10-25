@@ -350,6 +350,6 @@ describe('pdfOptions and print CSS', () => {
 describe('linked footnotes', () => {
   it('compile as anchor text plus an inline footnote', () => {
     const { linkedNotesInline } = require('../lib/compile.cjs');
-    expect(linkedNotesInline('<p>a <span data-linked-footnote="N" class="linked-footnote">b</span></p>')).toBe('<p>a b<span data-footnote="N" class="footnote"></span></p>');
+    expect(linkedNotesInline('<p>a <span data-linked-footnote="N" class="linked-footnote">b</span></p>')).toBe('<p>a b<span data-footnote="N" data-linked="1" class="footnote"></span></p>');
   });
 });
