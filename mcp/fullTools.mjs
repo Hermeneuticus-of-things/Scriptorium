@@ -77,8 +77,44 @@ const { parseBibliography } = require('../lib/bibliography.cjs');
 // Names of every tool this module registers (tests assert the server lists them all).
 export const FULL_TOOL_NAMES = [];
 
+
+// Web pages for a client: only public addresses (no localhost, LAN or cloud metadata, checked
+// again after each redirect) and at most 20 MB, so a page cannot reach the user's own network.
+const PRIVATE_IP = /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|::1$|::$|f[cd]|fe[89ab]|::ffff:(127|10|192\.168|169\.254)\.)/i;
+async function publicFetch(href, max = 20 * 1024 * 1024) {
+  const dns = await import('node:dns/promises');
+  let url = href;
+  for (let hop = 0; hop < 6; hop++) {
+    const u = new URL(url);
+    if (!/^https?:$/.test(u.protocol)) throw new Error('Sunt acceptate doar adrese http(s).');
+    const host = u.hostname.replace(/^\[|\]$/g, '');
+    const addrs = await dns.lookup(host, { all: true }).catch(() => []);
+    if (!addrs.length) throw new Error(`Adresa nu există: ${host}`);
+    if (process.env.SCRIBNER_MCP_ALLOW_LOCAL_WEB !== '1' && (/^localhost$/i.test(host) || addrs.some((a) => PRIVATE_IP.test(a.address)))) throw new Error('Adresele locale sau din rețeaua proprie nu se descarcă.');
+    const r = await fetch(u.href, { redirect: 'manual' });
+    if (r.status >= 300 && r.status < 400 && r.headers.get('location')) {
+      url = new URL(r.headers.get('location'), u.href).href;
+      continue;
+    }
+    const len = Number(r.headers.get('content-length') || 0);
+    if (len > max) throw new Error('Pagina e prea mare (peste 20 MB).');
+    const chunks = [];
+    let size = 0;
+    if (r.body) {
+      for await (const c of r.body) {
+        size += c.length;
+        if (size > max) throw new Error('Pagina e prea mare (peste 20 MB).');
+        chunks.push(c);
+      }
+    }
+    const buf = Buffer.concat(chunks);
+    return { ok: r.ok, status: r.status, url: u.href, headers: r.headers, text: async () => buf.toString('utf8'), arrayBuffer: async () => buf };
+  }
+  throw new Error('Prea multe redirecționări.');
+}
+
 export function registerFullTools(ctx) {
-  const { z, project, store, textIndexOf, load, mutate, trashIds, nodeOrThrow, textNodeOrThrow, pathOf, outsideProjects, freshOutput, hiddenPath, addProject, appSettings, userData } = ctx;
+  const { z, project, store, textIndexOf, load, mutate, trashIds, nodeOrThrow, textNodeOrThrow, pathOf, outsideProjects, freshOutput, hiddenPath, lockedIds, addProject, appSettings, userData } = ctx;
   const tool = (name, ...rest) => {
     FULL_TOOL_NAMES.push(name);
     return ctx.tool(name, ...rest);
@@ -256,14 +292,15 @@ export function registerFullTools(ctx) {
       }
       if (!/^https?:$/.test(u.protocol)) throw new Error('Sunt acceptate doar adrese http(s).');
       if (parent_id) containerOrThrow(load(dir), parent_id);
-      const r = await fetch(u.href, { redirect: 'follow' });
+      const r = await publicFetch(u.href);
       if (!r.ok) throw new Error(`Pagina nu a putut fi descărcată (HTTP ${r.status}).`);
       let page = importers.webPageToHtml(await r.text(), r.url || u.href);
       let media = [];
       if (images) {
         const local = await importers.localizeImages(page.html, {
           fetchImage: async (src) => {
-            const res = await fetch(src, { redirect: 'follow' });
+            const res = await publicFetch(src).catch(() => null);
+            if (!res) return null;
             if (!res.ok) return null;
             return { data: Buffer.from(await res.arrayBuffer()), mime: res.headers.get('content-type') || '' };
           },
@@ -1106,6 +1143,8 @@ export function registerFullTools(ctx) {
       if (node) {
         const html = readDocSafe(dir, node.id);
         if (glossaryHasTerm(html, t)) throw new Error(`„${t}” este deja în glosar.`);
+        const lock = lockedIds(dir)[node.id];
+        if (lock) throw new Error(`Glosarul e blocat de ${lock.who} (lucru în echipă); nu l-am modificat.`);
         writeWithSnapshot(dir, node.id, html + line, 'Înainte de glosar (agent AI)');
         return { id: node.id, title: node.title, term: t };
       }
@@ -1183,7 +1222,13 @@ export function registerFullTools(ctx) {
     { project, id: z.string().describe('Document sau dosar') },
     (dir, { id }) => {
       const changed = [];
+      const skipped = [];
+      const locks = lockedIds(dir);
       for (const n of textDocs(load(dir), id)) {
+        if (locks[n.id]) {
+          skipped.push(n.title); // locked by a person: left as is, no snapshot
+          continue;
+        }
         const html = readDocSafe(dir, n.id);
         // Author text (paragraphs the writer changed by hand) is never touched.
         const own = new Set(authorParagraphs(html, n.authorHashes).map((x) => x.text));
@@ -1192,7 +1237,7 @@ export function registerFullTools(ctx) {
         writeWithSnapshot(dir, n.id, fixed, 'Înainte de corecturile automate (agent AI)');
         changed.push(n.title);
       }
-      return `${changed.length} documente corectate${changed.length ? `: ${changed.join(', ')}` : ''}.`;
+      return `${changed.length} documente corectate${changed.length ? `: ${changed.join(', ')}` : ''}.${skipped.length ? ` Sărite (blocate): ${skipped.join(', ')}.` : ''}`;
     },
     W,
   );

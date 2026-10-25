@@ -226,7 +226,7 @@ async function connect(projectDir, extra = []) {
     new StdioClientTransport({
       command: process.execPath,
       args: [path.resolve('mcp/server.mjs'), '--project', projectDir, ...extra],
-      env: { ...process.env, SCRIBNER_USER_DATA: userData },
+      env: { ...process.env, SCRIBNER_USER_DATA: userData, SCRIBNER_MCP_ALLOW_LOCAL_WEB: '1' },
       stderr: 'ignore',
     }),
   );

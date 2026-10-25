@@ -2,6 +2,13 @@
 
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
+### v0.9.8, căutare separată pe MCP
+- Căutare/înlocuire cu tipar care poate potrivi gol (`x*`, `^`, `\b`) pe text cu emoji: nu mai blochează serverul MCP și nici aplicația.
+- `editorial_autofix` sare documentele blocate (fără snapshot) și le numește; `glossary_add` verifică blocarea înainte de snapshot.
+- `merge_documents` și `empty_trash` respectă documentele blocate din subarbore.
+- `create_document` cu `after_id` în Coș e refuzat.
+- `import_web_page`: doar adrese publice (fără localhost, rețeaua proprie, metadata cloud), verificat la fiecare redirecționare; maximum 20 MB.
+
 ### v0.9.8, căutare mezzo (fluxuri complete)
 - Note de proiect: o filă nouă nu mai primește textul filei anterioare, iar fila anterioară nu mai apare goală.
 - Redenumirea sau ștergerea unei etichete/unui status actualizează și filtrele din Compile; numele cu spații la capăt nu mai pierd culoarea etichetei.

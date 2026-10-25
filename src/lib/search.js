@@ -88,11 +88,11 @@ function matchesIn(seg, re) {
   while ((m = re.exec(text))) {
     if (m.index >= to) break;
     if (m[0] === '') {
-      re.lastIndex++;
+      re.lastIndex = m.index + (text.codePointAt(m.index) > 0xffff ? 2 : 1); // a whole character (u flag)
       continue;
     }
     if (m.index + m[0].length <= to) found.push({ index: m.index - from, m });
-    else re.lastIndex = m.index + 1;
+    else re.lastIndex = m.index + (text.codePointAt(m.index) > 0xffff ? 2 : 1);
   }
   re.lastIndex = 0;
   return found;

@@ -198,7 +198,7 @@ function assertSubtreeUnlocked(dir, ids) {
   if (!Object.keys(locks).length) return;
   let p;
   try {
-    p = store.loadProject(dir);
+    p = store.loadProject(dir, { readOnly: true });
   } catch {
     return;
   }
@@ -234,7 +234,7 @@ function tool(name, description, shape, handler, { writes = false, global = fals
       const dir = global ? null : projectDir(input.project);
       if (writes && dir) for (const id of [input.id, ...(Array.isArray(input.ids) && name !== 'replace' ? input.ids : [])]) assertUnlocked(dir, id);
       // Moving or trashing a folder moves the locked documents inside it too.
-      if (writes && dir && /^(trash_item|move_item|delete|merge|move_items|trash_items)$/.test(name)) assertSubtreeUnlocked(dir, [input.id, ...(Array.isArray(input.ids) ? input.ids : [])]);
+      if (writes && dir && /^(trash_item|move_item|merge_documents|empty_trash)$/.test(name)) assertSubtreeUnlocked(dir, name === 'empty_trash' ? [store.loadProject(dir, { readOnly: true }).tree.find((n) => n.root === 'trash')?.id] : [input.id, ...(Array.isArray(input.ids) ? input.ids : [])]);
       const result = await handler(dir, input);
       if (writes) log(dir || (result && typeof result === 'object' && result.dir) || projects[0], name, input, result);
       return text(result);
@@ -406,6 +406,7 @@ tool(
           // "after" means sibling: insertNear would nest the item inside a folder anchor.
           const after = nodeOrThrow(p, after_id);
           if (after.root) throw new Error('after_id nu poate fi o rădăcină; folosește parent_id.');
+          if (trashIds(p).has(after_id)) throw new Error('after_id e în Coș: textul nou n-ar fi vizibil (și s-ar pierde la golirea coșului).');
           const list = findParent(p.tree, after_id).children;
           list.splice(list.findIndex((n) => n.id === after_id) + 1, 0, node);
         } else {
@@ -706,6 +707,8 @@ registerFullTools({
   outsideProjects,
   freshOutput,
   hiddenPath,
+  lockedIds,
+  assertSubtreeUnlocked,
   addProject,
   appSettings,
   userData,

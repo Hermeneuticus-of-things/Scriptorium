@@ -24,7 +24,7 @@ export function findRanges(doc, re) {
     let m;
     while ((m = re.exec(text))) {
       if (m[0] === '') {
-        re.lastIndex++;
+        re.lastIndex = m.index + (text.codePointAt(m.index) > 0xffff ? 2 : 1); // a whole character (u flag)
         continue;
       }
       const from = map[m.index];
