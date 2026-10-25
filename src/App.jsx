@@ -68,7 +68,7 @@ import SettingsDialog from './components/SettingsDialog.jsx';
 import FindDialog from './components/FindDialog.jsx';
 import HistoryDialog from './components/HistoryDialog.jsx';
 import BackupDialog from './components/BackupDialog.jsx';
-import ImportDialog from './components/ImportDialog.jsx';
+import ImportDialog, { WebImportDialog } from './components/ImportDialog.jsx';
 import Menu from './components/Menu.jsx';
 import StatusBar from './components/StatusBar.jsx';
 import {
@@ -1556,12 +1556,11 @@ export default function App({ api: apiProp }) {
     saveProject({ ...project, tree });
     setToast(`Import OPML: ${items.length} elemente de nivel superior.`);
   };
-  const importWeb = async () => {
-    const url = window.prompt('Adresa paginii web (http/https):', 'https://');
-    if (!url || url === 'https://') return;
-    const page = await api.importWebPage(url, dir);
+  const importWeb = async ({ url, title = '', asText = false } = {}) => {
+    if (!url) return setDialog('importWeb');
+    const page = await api.importWebPage(url, dir, { asText });
     // The page and its images (saved offline in media/) go in with a single project save.
-    const node = newNode('text', page.title || url);
+    const node = newNode('text', title || page.title || url);
     // The download can take seconds; the binder may have changed meanwhile.
     const pj = projectRef.current;
     let tree = insertNear(pj.tree, selectedId, node);
@@ -1610,8 +1609,8 @@ export default function App({ api: apiProp }) {
     await addResearchDocs([{ title: page.title || url, html: page.html, media: page.media }]);
     return true;
   };
-  const importFilesCmd = async (mode = 'none', separator = '#') => {
-    const res = await api.importFiles(dir, mode, separator);
+  const importFilesCmd = async (mode = 'none', separator = '#', opts = {}) => {
+    const res = await api.importFiles(dir, mode, separator, opts);
     if (!res) return;
     // Media first, then the texts on top of that tree: two separate saves from the same
     // `project` snapshot made the second one drop the first one's items.
@@ -2074,7 +2073,7 @@ export default function App({ api: apiProp }) {
   // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
   const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
   const commandList = [
-    ['file', 'save', tr('cmd.save'), () => flush()],
+    ['file', 'save', tr('cmd.save'), () => flush().then(() => dir && api.backupOnSave?.(dir)).catch(report)],
     ['file', 'compile', tr('cmd.compile'), () => flush().then(() => setDialog('compile'))],
     ['file', 'import', tr('cmd.import'), () => setDialog('import')],
     ['file', 'importFiles', tr('cmd.importFiles'), () => setDialog('importSplit'), !api.importFiles],
@@ -2090,6 +2089,8 @@ export default function App({ api: apiProp }) {
     ['file', 'saveAs', tr('cmd.saveAs'), () => saveAs().catch(report), !api.saveProjectAs],
     ['file', 'print', tr('cmd.print'), printCurrent, !api.printDocument && !api.printDocuments],
     ['file', 'backups', tr('cmd.backups'), () => setDialog('backup'), !api.listBackups],
+    ['file', 'backupNow', tr('cmd.backupNow'), () => flush().then(() => api.backupNow(dir)).then((f) => f && setToast(tr('ui.g4.backupFacut', { file: f }))).catch(report), !api.backupNow],
+    ['file', 'backupTo', tr('cmd.backupTo'), () => flush().then(() => api.backupTo(dir)).then((f) => f && setToast(tr('ui.g4.backupFacut', { file: f }))).catch(report), !api.backupTo],
     ['file', 'closeProject', tr('cmd.closeProject'), closeProject],
     ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
     ['edit', 'findProject', tr('cmd.findProject'), () => { setFindSeed(''); setDialog('find'); }],
@@ -3142,6 +3143,7 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
+      {dialog === 'importWeb' && <WebImportDialog onImport={(o) => importWeb(o).catch(report)} onClose={() => setDialog(null)} />}
       {dialog === 'import' && <ImportDialog api={api} target={selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
       {quickRefs.map((q) => {
         const n = findNode(project.tree, q.id);
@@ -3185,7 +3187,7 @@ export default function App({ api: apiProp }) {
           emptyText={tr('ui.app.niciun_document')}
         />
       )}
-      {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep) => importFilesCmd(mode, sep).catch(report)} onClose={() => setDialog(null)} />}
+      {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep, opts) => importFilesCmd(mode, sep, opts).catch(report)} onClose={() => setDialog(null)} />}
       {dialog === 'layouts' && (
         <LayoutsDialog layouts={settings.layouts || []} onChange={(l) => saveLayouts(l).catch(report)} onApply={applyLayout} onClose={() => setDialog(null)} />
       )}

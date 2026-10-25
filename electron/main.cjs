@@ -35,7 +35,9 @@ const openedDirs = new Set();
 const dirtyDirs = new Set();
 let backupTimer = null;
 
-const BACKUP_DEFAULTS = { backupOnClose: true, backupEveryMin: 0, backupKeep: 10, backupDir: '', backupOnOpen: false, backupZip: true };
+const BACKUP_DEFAULTS = { backupOnClose: true, backupEveryMin: 0, backupKeep: backup.DEFAULT_KEEP, backupDir: '', backupOnOpen: false, backupOnSave: false, backupDateName: true, backupZip: true };
+// Backup on manual save (Ctrl+S): at most once a minute per project.
+const saveBackupDue = backup.makeSaveThrottle(60 * 1000);
 
 function backupSettings() {
   return { ...BACKUP_DEFAULTS, ...readSettings() };
@@ -51,7 +53,7 @@ async function backupAll() {
   backupRunning = (async () => {
     for (const dir of list) {
       try {
-        await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, { zip: s.backupZip !== false });
+        await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
       } catch (err) {
         console.error('Backup eșuat pentru', dir, err);
         dirtyDirs.add(path.resolve(dir));
@@ -448,6 +450,8 @@ handle('settings:get', () => {
     layouts: s.layouts || [],
     backupOnClose: b.backupOnClose,
     backupOnOpen: Boolean(b.backupOnOpen),
+    backupOnSave: Boolean(b.backupOnSave),
+    backupDateName: b.backupDateName !== false,
     backupZip: b.backupZip !== false,
     backupEveryMin: b.backupEveryMin,
     backupKeep: b.backupKeep,
@@ -840,7 +844,27 @@ handle('media:openExternal', async (_e, dir, file) => {
 handle('backup:now', async (_e, dir) => {
   assertOpened(dir);
   const s = backupSettings();
-  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, { zip: s.backupZip !== false });
+  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
+});
+// File > Back Up To…: one backup in a folder chosen in a dialog (remembered as the next default).
+handle('backup:to', async (e, dir) => {
+  assertOpened(dir);
+  const s = backupSettings();
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Backup în…',
+    defaultPath: s.backupToDir || s.backupDir || undefined,
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (res.canceled || !res.filePaths[0]) return null;
+  writeSettings({ ...readSettings(), backupToDir: res.filePaths[0] });
+  return backup.backupProject(dir, res.filePaths[0], s.backupKeep, backup.backupOptions(s));
+});
+// Manual save: a backup when "back up on each manual save" is on, throttled to once a minute.
+handle('backup:onSave', async (_e, dir) => {
+  assertOpened(dir);
+  const s = backupSettings();
+  if (!s.backupOnSave || !saveBackupDue(dir)) return null;
+  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 handle('backup:list', (_e, dir) => {
   assertOpened(dir);
@@ -868,7 +892,7 @@ handle('history:get', (_e, dir) => {
   return history.summarize(history.readHistory(dir));
 });
 
-handle('import:file', async (e, mode, separator) => {
+handle('import:file', async (e, mode, separator, opts) => {
   const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
     title: 'Importă text',
     properties: ['openFile', 'multiSelections'],
@@ -878,7 +902,7 @@ handle('import:file', async (e, mode, separator) => {
   const parts = [];
   for (const file of res.filePaths) {
     const html = await fileToHtml(file);
-    parts.push(...splitHtml(html, mode, separator, path.basename(file).replace(/\.[^.]+$/, '')));
+    parts.push(...splitHtml(html, mode, separator, path.basename(file).replace(/\.[^.]+$/, ''), { firstLineTitle: Boolean(opts && opts.firstLineTitle) }));
   }
   return parts;
 });
@@ -1149,6 +1173,12 @@ if (!gotLock) {
 
 app.whenReady().then(() => {
   if (!gotLock) return;
+  try {
+    const migrated = backup.migrateBackupKeep(readSettings(), fs.existsSync(settingsFile()));
+    if (migrated) writeSettings(migrated);
+  } catch (err) {
+    console.error('Migrarea setărilor de backup a eșuat', err);
+  }
   try {
     migrateAiKeys();
   } catch (err) {
