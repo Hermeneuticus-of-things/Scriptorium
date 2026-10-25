@@ -25,7 +25,7 @@ import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { textToHtml } from '../lib/text.js';
 import { insertable } from '../lib/inlineInsert.js';
-import FindBar from './FindBar.jsx';
+import FindBar, { findAgain, lastFind } from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
 import FormatFind from './FormatFind.jsx';
 import Ruler from './Ruler.jsx';
@@ -59,6 +59,7 @@ const Editor = forwardRef(function Editor(
   },
   ref,
 ) {
+  const actionsRef = useRef({}); // note/image actions defined below, called from the handle
   const typewriterRef = useRef(typewriter);
   typewriterRef.current = typewriter;
   const histRef = useRef(null); // { base, groups } recorded for historyKey
@@ -361,6 +362,21 @@ const Editor = forwardRef(function Editor(
       // the title is the selected text, if any.
       openFind: () => setShowFind(true),
       openFormatFind: () => setShowFormatFind(true),
+      // Edit › Find › Find Next / Previous / Use Selection for Find.
+      findAgain: (dir = 1) => findAgain(editor, dir),
+      useSelectionForFind: () => {
+        if (!editor) return false;
+        const { from, to } = editor.state.selection;
+        if (from === to) return false;
+        lastFind.query = editor.state.doc.textBetween(from, to, ' ').slice(0, 80);
+        return true;
+      },
+      // Insert menu: the same actions as the format bar (prompts for the note text).
+      addComment: () => actionsRef.current.addComment?.(),
+      addFootnote: () => actionsRef.current.addLinkedFootnote?.(),
+      addInlineFootnote: () => actionsRef.current.addFootnote?.(),
+      addAnnotation: () => actionsRef.current.addAnnotation?.(),
+      insertImage: () => actionsRef.current.insertImage?.(),
       // useSelectionAsTitle=false: plain split at the cursor (Scrivener "Split at Selection").
       splitAtCursor: (useSelectionAsTitle = true) => {
         if (!editor) return null;
@@ -448,6 +464,14 @@ const Editor = forwardRef(function Editor(
     if (text) chain().insertAnnotation(text).run();
   };
   const insertImage = () => imageInput.current?.click();
+  // Linked footnote on the selection (or the word at the caret); none there: an inline one.
+  const addLinkedFootnote = () => {
+    if (editor.state.selection.empty) editor.commands.selectWord?.();
+    if (editor.state.selection.empty) return addFootnote();
+    const text = window.prompt(i18nT('ui.editor.footnotePrompt'));
+    if (text) chain().setLinkedFootnote(text).run();
+  };
+  actionsRef.current = { addComment, addFootnote, addLinkedFootnote, addAnnotation, insertImage };
   const onImageFile = (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';

@@ -775,6 +775,8 @@ require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, get
 
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
+// Menu items the window does itself (clipboard, window size); anything else goes to the renderer.
+const NATIVE_ROLES = new Set(['cut', 'copy', 'paste', 'pasteAndMatchStyle', 'minimize', 'togglefullscreen']);
 handle('menu:set', (e, spec) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   const items = (list) =>
@@ -783,6 +785,10 @@ handle('menu:set', (e, spec) => {
         ? { type: 'separator' }
         : Array.isArray(it.items)
         ? { label: it.label, submenu: items(it.items) }
+        : it.role === 'toggleMaximize'
+        ? { label: it.label, click: () => win && !win.isDestroyed() && (win.isMaximized() ? win.unmaximize() : win.maximize()) }
+        : it.role && NATIVE_ROLES.has(it.role)
+        ? { label: it.label, role: it.role, enabled: !it.disabled, accelerator: it.key ? it.key.replace('Ctrl', 'CmdOrCtrl') : undefined, registerAccelerator: false }
         : {
             label: it.label,
             enabled: !it.disabled,
