@@ -70,6 +70,35 @@ export function editorMenus(ctx) {
     const out = fn(e.state.doc.textBetween(from, to, '\n'));
     c.insertContentAt({ from, to }, out).setTextSelection({ from, to: from + out.length }).run();
   });
+  // Text tidying works on the block structure (not re-inserted plain text, which would merge paragraphs
+  // and drop inline formatting): 'blank' removes empty paragraphs, 'tabs' strips leading tabs per block,
+  // 'spaces' collapses runs of spaces/tabs to one. Edits are applied back-to-front so positions stay valid.
+  const tidy = (kind) => on((c, e) => {
+    const { from, to, empty } = e.state.selection;
+    if (empty) return;
+    c.command(({ tr, state }) => {
+      const ranges = [];
+      state.doc.nodesBetween(from, to, (node, pos) => {
+        if (kind === 'blank' && node.isTextblock && node.content.size === 0) { ranges.push([pos, pos + node.nodeSize]); return false; }
+        if (kind === 'tabs' && node.isTextblock && node.firstChild && node.firstChild.isText) {
+          const m = /^\t+/.exec(node.firstChild.text);
+          if (m) ranges.push([pos + 1, pos + 1 + m[0].length]);
+        }
+        if (kind === 'spaces' && node.isText && node.text) {
+          const re = /[ \t]{2,}/g; let m;
+          while ((m = re.exec(node.text))) { const s = Math.max(from, pos + m.index); const en = Math.min(to, pos + m.index + m[0].length); if (en > s) ranges.push([s, en, ' ']); }
+        }
+        return true;
+      });
+      if (!ranges.length) return false;
+      for (let i = ranges.length - 1; i >= 0; i--) {
+        const [s, en, repl] = ranges[i];
+        if (repl !== undefined) tr.replaceWith(s, en, state.schema.text(repl));
+        else tr.delete(s, en);
+      }
+      return true;
+    }).run();
+  });
   const selectionHtml = (e) => {
     const { from, to, empty } = e.state.selection;
     return getHTMLFromFragment(empty ? e.state.doc.content : e.state.doc.slice(from, to).content, e.schema);
@@ -136,9 +165,9 @@ export function editorMenus(ctx) {
       { label: L('plainText'), action: on((c) => c.unsetAllMarks().run()) },
     ] },
     { label: L('textTidy'), submenu: [
-      { label: L('tidySpaces'), action: transform(collapseSpaces) },
-      { label: L('tidyBlankLines'), action: transform(collapseBlankLines) },
-      { label: L('tidyLeadingTabs'), action: transform(stripLeadingTabs) },
+      { label: L('tidySpaces'), action: tidy('spaces') },
+      { label: L('tidyBlankLines'), action: tidy('blank') },
+      { label: L('tidyLeadingTabs'), action: tidy('tabs') },
     ] },
   ];
 
