@@ -19,6 +19,11 @@ const BASE_COLUMNS = (project) => ([
   { id: 'chars', label: t('ui.historyDialog.caractere'), num: true },
   { id: 'target', label: t('ui.inspector.tinta'), num: true },
   { id: 'progress', label: t('ui.common.progres') },
+  { id: 'totalTarget', label: t('ui.out2.totalTarget'), num: true },
+  { id: 'totalProgress', label: t('ui.out2.totalProgress') },
+  { id: 'pageBreak', label: t('ui.out2.pageBreak') },
+  { id: 'snapCount', label: t('ui.out2.snapCount'), num: true },
+  { id: 'snapLast', label: t('ui.out2.snapLast') },
   { id: 'created', label: t('ui.common.creat') },
   { id: 'modified', label: t('ui.common.modificat') },
 ]);
@@ -33,6 +38,25 @@ function loadShowSynopsis() {
   }
 }
 
+/** Sum of the node's own value and every descendant's. */
+export function subtreeSum(n, own) {
+  return (Number(own(n)) || 0) + (n.children || []).reduce((s, c) => s + subtreeSum(c, own), 0);
+}
+/** Column list after dragging `id` onto `target` (before or after it). */
+export function moveColumn(cols, id, target, pos = 'before') {
+  if (id === target || !cols.includes(id) || !cols.includes(target)) return cols;
+  const rest = cols.filter((c) => c !== id);
+  const i = rest.indexOf(target) + (pos === 'after' ? 1 : 0);
+  return [...rest.slice(0, i), id, ...rest.slice(i)];
+}
+function loadWidths() {
+  try {
+    return JSON.parse(localStorage.getItem('scribner-outline-widths')) || {};
+  } catch {
+    return {};
+  }
+}
+
 function loadColumns() {
   try {
     return JSON.parse(localStorage.getItem('scribner-outline-columns')) || DEFAULT_COLUMNS;
@@ -42,7 +66,7 @@ function loadColumns() {
 }
 
 // charCounts {id: n} or docs {id: html} (optional) feed the Characters column.
-export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null }) {
+export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null, snapCounts = null }) {
   const [showSynopsis, setShowSynopsis] = useState(loadShowSynopsis);
   const toggleSynopsis = (on) => {
     setShowSynopsis(on);
@@ -66,6 +90,36 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   const fields = project.customFields || [];
   const allColumns = [...BASE_COLUMNS(project), ...fields.map((f) => ({ id: `custom:${f.title}`, label: f.title }))];
 
+  const [widths, setWidths] = useState(loadWidths);
+  const [colDrag, setColDrag] = useState(null);
+  const saveWidths = (next) => {
+    setWidths(next);
+    try {
+      localStorage.setItem('scribner-outline-widths', JSON.stringify(next));
+    } catch {
+      /* not critical */
+    }
+  };
+  // Drag the right edge of a header to resize; the width is remembered per column.
+  const startResize = (col, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const th = e.currentTarget.closest('th');
+    const x0 = e.clientX;
+    const w0 = th.getBoundingClientRect().width;
+    let w = w0;
+    const move = (ev) => {
+      w = Math.max(40, Math.round(w0 + ev.clientX - x0));
+      th.style.width = `${w}px`;
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      saveWidths({ ...loadWidths(), [col]: w });
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
   const saveColumns = (next) => {
     setColumns(next);
     try {
@@ -82,6 +136,14 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     if (col === 'chars') return charsOf(n);
     if (col === 'target') return n.target || 0;
     if (col === 'progress') return n.target ? Math.min(1, (counts[n.id] || 0) / n.target) : -1;
+    if (col === 'totalTarget') return subtreeSum(n, (x) => x.target);
+    if (col === 'totalProgress') {
+      const tt = subtreeSum(n, (x) => x.target);
+      return tt ? Math.min(1, total(n) / tt) : -1;
+    }
+    if (col === 'pageBreak') return n.pageBreakBefore ? 1 : 0;
+    if (col === 'snapCount') return snapCounts?.[n.id]?.count || 0;
+    if (col === 'snapLast') return snapCounts?.[n.id]?.last || '';
     if (col === 'keywords') return (n.keywords || []).join(', ');
     if (col === 'include') return n.includeInCompile !== false ? 1 : 0;
     // Label and status sort in the project's own list order, not alphabetically.
@@ -111,7 +173,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     visit(root.children || [], 0);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [root, collapsed, sort, counts, charCounts, docs]);
+  }, [root, collapsed, sort, counts, charCounts, docs, snapCounts]);
 
   const focusRow = (id) => setTimeout(() => bodyRef.current?.querySelector(`tr[data-row-id="${CSS.escape(id)}"]`)?.focus(), 0);
   // Keyboard on a focused row: ↑/↓/Home/End move, ←/→ collapse/expand, Enter / F2 edit the
@@ -193,10 +255,16 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
         );
       case 'include':
         return <input type="checkbox" aria-label={cellLabel(n, col)} checked={n.includeInCompile !== false} onChange={(e) => onPatch(n.id, { includeInCompile: e.target.checked })} />;
+      case 'pageBreak':
+        return <input type="checkbox" aria-label={cellLabel(n, col)} checked={Boolean(n.pageBreakBefore)} onChange={(e) => onPatch(n.id, { pageBreakBefore: e.target.checked })} />;
       case 'words':
       case 'total':
       case 'chars':
-        return value(n, col).toLocaleString(uiLocale());
+      case 'totalTarget':
+      case 'snapCount':
+        return value(n, col) ? value(n, col).toLocaleString(uiLocale()) : col === 'totalTarget' || col === 'snapCount' ? '' : '0';
+      case 'snapLast':
+        return fmtDate(value(n, col));
       case 'target':
         return (
           <input
@@ -209,7 +277,8 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
             onBlur={(e) => Number(e.target.value || 0) !== (n.target || 0) && onPatch(n.id, { target: Number(e.target.value) || 0 })}
           />
         );
-      case 'progress': {
+      case 'progress':
+      case 'totalProgress': {
         const v = value(n, col);
         return v < 0 ? '' : <meter min="0" max="1" value={v} title={`${Math.round(v * 100)}%`} />;
       }
@@ -237,7 +306,33 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     };
   };
   const cellLabel = (n, col) => `${(allColumns.find((c) => c.id === col) || {}).label || col}: ${n.title || ''}`;
-  const shown = allColumns.filter((c) => columns.includes(c.id));
+  // Shown columns in the order the writer arranged them (dragging a header moves it).
+  const shown = columns.map((id) => allColumns.find((c) => c.id === id)).filter(Boolean);
+  const colDragProps = (id) => ({
+    draggable: true,
+    onDragStart: (e) => {
+      if (e.target.closest?.('.col-resize')) return e.preventDefault();
+      setColDrag(id);
+      e.dataTransfer.effectAllowed = 'move';
+      try {
+        e.dataTransfer.setData('text/plain', id);
+      } catch {
+        /* some engines refuse data on drag start */
+      }
+    },
+    onDragEnd: () => setColDrag(null),
+    onDragOver: (e) => {
+      if (!colDrag || colDrag === id) return;
+      e.preventDefault();
+    },
+    onDrop: (e) => {
+      if (!colDrag) return;
+      e.preventDefault();
+      const r = e.currentTarget.getBoundingClientRect();
+      saveColumns(moveColumn(columns, colDrag, id, e.clientX - r.left < r.width / 2 ? 'before' : 'after'));
+      setColDrag(null);
+    },
+  });
   const sumTotal = (root.children || []).reduce((s, c) => s + total(c), 0);
 
   return (
@@ -250,8 +345,11 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
         <button onClick={() => setAll(false)}>{t('ui.binder.restrange_tot')}</button>
         {sort && <button onClick={() => setSort(null)} title={t('ui.outliner.revino_la_ordinea_din_binder')}>{t('ui.outliner.ordinea_din_binder')}</button>}
         <details className="col-chooser">
-          <summary>Coloane</summary>
+          <summary>{t('ui.out2.columns')}</summary>
           <div className="col-list">
+            {Object.keys(widths).length > 0 && (
+              <button className="link" onClick={() => saveWidths({})}>{t('ui.out2.resetCols')}</button>
+            )}
             <label className="check">
               <input type="checkbox" checked={showSynopsis} onChange={(e) => toggleSynopsis(e.target.checked)} />
               {t('ui.outliner.arata_sinopsisul')}
@@ -272,12 +370,14 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
       <table role="treegrid" aria-label={t('ui.outliner.outline_x', { title: root.title || '' })} aria-rowcount={rows.length + 1}>
         <thead>
           <tr>
-            <th scope="col" {...sortHeader('title')}>
+            <th scope="col" {...sortHeader('title')} style={widths.title ? { width: widths.title } : undefined}>
               {t('ui.advancedSearchDialog.titlu')} {sort?.col === 'title' ? (sort.dir === 'asc' ? '▲' : '▼') : ''}
+              <span className="col-resize" aria-hidden="true" onMouseDown={(e) => startResize('title', e)} onClick={(e) => e.stopPropagation()} />
             </th>
             {shown.map((c) => (
-              <th key={c.id} scope="col" className={c.num ? 'num' : ''} {...sortHeader(c.id)}>
+              <th key={c.id} scope="col" data-col={c.id} className={`${c.num ? 'num' : ''} ${colDrag === c.id ? 'col-dragging' : ''}`} title={t('ui.out2.dragCol')} style={widths[c.id] ? { width: widths[c.id] } : undefined} {...sortHeader(c.id)} {...colDragProps(c.id)}>
                 {c.label} {sort?.col === c.id ? (sort.dir === 'asc' ? '▲' : '▼') : ''}
+                <span className="col-resize" aria-hidden="true" onMouseDown={(e) => startResize(c.id, e)} onClick={(e) => e.stopPropagation()} />
               </th>
             ))}
           </tr>

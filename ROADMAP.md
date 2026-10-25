@@ -389,16 +389,16 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### A3. Opțiuni: Corkboard
 **Identic:** formă rotunjită/pătrată, fișe liniate, umplere cu culoarea etichetei, mărime mică/medie/mare, proporție, spațiere, coloane automate (toate în bara panoului, pe proiect).
-- [ ] **parțial** Opțiunile există doar în bara corkboard-ului, pe proiect; lipsesc ca implicite globale în Opțiuni.
-- [ ] **lipsă** Ștampila de status pe fișă, cu opacitate reglabilă.
-- [ ] **lipsă** Eticheta afișată ca pin colorat / bandă (acum doar umplere completă).
-- [ ] **lipsă** Icoana tipului de document pe fișă.
-- [ ] **lipsă** Numărul de cuvinte / ținta pe fișă.
-- [ ] **lipsă** Cuvintele-cheie ca pătrățele colorate pe marginea fișei.
-- [ ] **lipsă** Număr maxim de rânduri de sinopsis (trunchiere).
-- [ ] **lipsă** Corkboard liber: „Aliniază la grilă”, mărimea grilei, „Arată grila”.
-- [ ] **lipsă** „Arată imaginea în loc de sinopsis” ca implicit global.
-- [ ] **lipsă** Mai multe dosare selectate: fișele lor pe același panou, grupate sau una după alta.
+- [x] **parțial** Opțiunile există doar în bara corkboard-ului, pe proiect; lipsesc ca implicite globale în Opțiuni.
+- [x] **lipsă** Ștampila de status pe fișă, cu opacitate reglabilă.
+- [x] **lipsă** Eticheta afișată ca pin colorat / bandă (acum doar umplere completă).
+- [x] **lipsă** Icoana tipului de document pe fișă.
+- [x] **lipsă** Numărul de cuvinte / ținta pe fișă.
+- [x] **lipsă** Cuvintele-cheie ca pătrățele colorate pe marginea fișei.
+- [x] **lipsă** Număr maxim de rânduri de sinopsis (trunchiere).
+- [x] **lipsă** Corkboard liber: „Aliniază la grilă”, mărimea grilei, „Arată grila”.
+- [x] **lipsă** „Arată imaginea în loc de sinopsis” ca implicit global.
+- [x] **lipsă** Mai multe dosare selectate: fișele lor pe același panou, grupate sau una după alta.
 
 ### A4. Opțiuni: Compunere (Compose)
 **Identic:** fundal culoare/imagine, încadrare/repetare imagine, lățimea textului, opacitatea paginii, aliniere, pagină de hârtie, ținte afișate.
@@ -760,15 +760,15 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### Y. Corkboard, opțiunile panoului (`Corkboard.jsx`)
 **Identic:** grilă, liber, linii după etichetă/status/cuvânt-cheie, mărime, formă, liniat, umplere etichetă, proporție, spațiere, fișă nouă după selecție, fixează ordinea, aranjează pe linii.
-- [ ] **lipsă** Orientarea liniilor (orizontal / vertical).
-- [ ] **lipsă** Imagine trasă direct pe fișă devine sinopsis-imagine.
+- [x] **lipsă** Orientarea liniilor (orizontal / vertical).
+- [x] **lipsă** Imagine trasă direct pe fișă devine sinopsis-imagine.
 
 ### Z. Outliner, coloane și opțiuni (`Outliner.jsx`)
 **Identic:** titlu, sinopsis, etichetă, status, cuvinte, caractere, țintă, progres, tip secțiune, cuvinte-cheie, creat, modificat, în compile, câmpuri proprii, extinde/restrânge tot, sortare, revino la ordinea din binder, total cuvinte.
-- [ ] **lipsă** Coloane: total cuvinte cu copii, țintă totală, progres total, pagină nouă înainte, număr de snapshot-uri, data ultimului snapshot.
-- [ ] **lipsă** Reordonarea coloanelor prin tragere și lățimi salvate.
-- [ ] **lipsă** Sinopsisul sub titlu în aceeași coloană.
-- [ ] **lipsă** Rândurile colorate cu culoarea etichetei.
+- [x] **lipsă** Coloane: total cuvinte cu copii, țintă totală, progres total, pagină nouă înainte, număr de snapshot-uri, data ultimului snapshot.
+- [x] **lipsă** Reordonarea coloanelor prin tragere și lățimi salvate.
+- [x] **lipsă** Sinopsisul sub titlu în aceeași coloană.
+- [x] **lipsă** Rândurile colorate cu culoarea etichetei.
 
 ### AA. Meniul contextual al binderului (`Binder.jsx`, `ContextMenu.jsx`)
 **Identic:** document nou, dosar nou, duplicat, mută în, mută în coș, golește coșul, redenumește, include în compile, favorit, deschide în panoul 2, deschide în Quick Reference, setează ca (etichetă/status), extinde tot, restrânge tot.

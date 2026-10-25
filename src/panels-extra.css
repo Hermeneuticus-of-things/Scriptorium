@@ -102,3 +102,23 @@
 .card .card-kw-strip { position: absolute; top: 6px; bottom: 6px; right: 0; width: 5px; display: flex; flex-direction: column; gap: 1px; border-radius: 2px 0 0 2px; overflow: hidden; pointer-events: none; }
 .card .card-kw-strip > span { flex: 1; }
 .card.drop-keyword { outline: 2px dashed var(--accent, #8a5a2b); outline-offset: 2px; }
+/* P9: corkboard label band, type icon, words, synopsis clamp, freeform grid, vertical lines, stack */
+.card .card-label-band { position: absolute; top: 0; bottom: 0; left: 0; width: 6px; pointer-events: none; }
+.card.label-band header, .card.label-band textarea, .card.label-band .card-image, .card.label-band footer { margin-left: 6px; }
+.card .card-type-icon { display: inline-flex; align-items: center; margin-right: 4px; opacity: 0.8; }
+.card .card-words { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); padding: 2px 10px 6px; }
+.card .card-words meter { flex: 1; height: 6px; max-width: 90px; }
+.card.syn-clamp textarea:not(:focus) { max-height: calc(var(--syn-lines, 3) * 1.4em + 16px); overflow: hidden; flex: 0 1 auto; min-height: 0; }
+.freeform { background-size: var(--grid-size, 24px) var(--grid-size, 24px); }
+.freeform.no-grid { background-image: none; }
+.cork-lines.vertical { display: flex; align-items: flex-start; gap: 18px; overflow-x: auto; }
+.cork-lines.vertical > .cork-line { flex: 0 0 auto; margin-top: 18px; }
+.cork-lines.vertical .row-cards { flex-direction: column; overflow-x: visible; }
+.cork-stack-bar { align-self: flex-start; margin: 8px 20px 0; }
+.corkboard-stack.continuous > .corkboard { flex: 1; }
+.cork-pane fieldset { border: 1px solid var(--line, #ccc); border-radius: 6px; margin: 0 0 10px; display: flex; flex-direction: column; gap: 6px; }
+/* P9: outliner column drag and widths */
+.outliner th { position: relative; }
+.outliner th.col-dragging { opacity: 0.5; }
+.outliner th .col-resize { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 1; }
+.outliner th .col-resize:hover { background: var(--accent, #8a5a2b); opacity: 0.4; }

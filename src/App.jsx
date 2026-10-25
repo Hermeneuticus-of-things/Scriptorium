@@ -2812,6 +2812,8 @@ export default function App({ api: apiProp }) {
                 }
                 readMedia={api.readMedia ? (file) => api.readMedia(dir, file) : null}
                 labelColorIn={colorIn}
+                corkDefaults={settings?.corkboard}
+                counts={counts}
                 selectedIds={selectedIds}
                 onDropKeyword={dropKeyword}
               />
@@ -2830,6 +2832,7 @@ export default function App({ api: apiProp }) {
                 onPatch={patchNode}
                 onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
                 labelColorIn={colorIn}
+                snapCounts={snapCounts}
               />
             )}
           </div>

@@ -1,5 +1,6 @@
 import { LANG_NAMES } from '../lib/lookups.js';
 import ServicesPanel from './ServicesPanel.jsx';
+import CorkboardPane from './CorkboardPane.jsx';
 import React, { useRef, useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
 import { colorFor, newMachineId } from '../lib/team.js';
@@ -10,7 +11,7 @@ import AI_PRESETS from '../../lib/aiPresets.json';
 // Base URL is editable only for local / custom servers; cloud presets use their fixed URL.
 const EDITABLE_URL = new Set(['ollama', 'lmstudio', 'custom']);
 
-const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'language'];
+const TABS = ['general', 'appearance', 'corkboard','behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'language'];
 const TAB_FALLBACK = { sharing: 'Partajare' };
 const tabLabel = (k) => {
   const v = t(`set.tab.${k}`);
@@ -167,6 +168,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       setAiTest({ ok: false, text: e.message });
     }
   };
+  const [corkDefaults, setCorkDefaults] = useState(() => ({ ...(init.corkboard || {}) }));
   const [comp, setComp] = useState({
     bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade ?? 100,
     bgImage: settings.compBgImage || '', bgImageFit: settings.compBgImageFit || 'cover', showTargets: Boolean(settings.compShowTargets),
@@ -235,6 +237,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         compBgImage: comp.bgImage,
         compBgImageFit: comp.bgImageFit,
         compShowTargets: comp.showTargets,
+        corkboard: corkDefaults,
         sharingSync: sharing.sync,
         sharingExport: sharing.export,
         backupEveryMin: Number(s.backupEveryMin) || 0,
@@ -306,6 +309,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         )}
       </>
     ),
+    corkboard: <CorkboardPane value={corkDefaults} onChange={(v) => (setCorkDefaults(v), setDirty(true))} />,
     appearance: (
       <>
         <label>
