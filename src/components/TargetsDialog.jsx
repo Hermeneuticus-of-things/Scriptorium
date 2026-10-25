@@ -19,7 +19,7 @@ function TypeSelect({ value, onChange }) {
 }
 
 // draftChars (optional) makes character targets exact; pages use wordsPerPage.
-export default function TargetsDialog({ project, draftWords, draftChars, onSave, onClose }) {
+export default function TargetsDialog({ project, draftWords, draftChars, onSave, onClose, onResetSession }) {
   const t = project?.targets || {};
   const [draft, setDraft] = useState(t.draft || 0);
   const [draftType, setDraftType] = useState(t.draftType || 'Words');
@@ -112,9 +112,10 @@ export default function TargetsDialog({ project, draftWords, draftChars, onSave,
             <select value={sessionReset} onChange={(e) => setSessionReset(e.target.value)}>
               <option value="midnight">{tr('ui.targetsDialog.la_miezul_noptii')}</option>
               <option value="open">{tr('ui.targetsDialog.la_deschiderea_proiectului')}</option>
-              <option value="manual">Manual</option>
+              <option value="manual">{tr('ui.targetsDialog.manual')}</option>
             </select>
           </label>
+          {onResetSession && <button type="button" className="link" onClick={onResetSession}>{tr('ui.targetsDialog.reset_session')}</button>}
         </fieldset>
         <label className="check">
           <input type="checkbox" checked={countOnlyCompiled} onChange={(e) => setCountOnlyCompiled(e.target.checked)} /> {tr('ui.targetsDialog.numara_doar_textul_inclus_in')}

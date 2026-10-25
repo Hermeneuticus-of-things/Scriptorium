@@ -19,7 +19,24 @@ import { styleCss, stylesOf } from '../src/lib/styles.js';
 import { projectNoteTabs } from '../src/lib/projectNotes.js';
 import { registerFullTools } from './fullTools.mjs';
 import { diffParagraphs } from '../src/lib/authorText.js';
-import { AGENT, logRow, readPeers } from '../src/lib/team.js';
+import { AGENT, logRow, readPeers as readPeersRaw, seenTimes } from '../src/lib/team.js';
+
+// Locks are judged by when this server saw each presence file change, not by the other
+// computer's clock (it may run ahead or behind). A lock seen for the first time counts as live.
+const seenPresence = new Map();
+const readPeers = (files) => {
+  const now = Date.now();
+  for (const [name, t] of Object.entries(files || {})) {
+    if (!/^presence-.+\.json$/.test(name)) continue;
+    try {
+      const m = JSON.parse(t).machine;
+      if (m && !seenPresence.has(m)) seenPresence.set(m, { stamp: JSON.parse(t).time, at: now });
+    } catch {
+      /* unreadable presence file */
+    }
+  }
+  return readPeersRaw(seenTimes(files, seenPresence, now), { now });
+};
 
 const require = createRequire(import.meta.url);
 const store = require('../lib/store.cjs');
@@ -176,6 +193,29 @@ function assertUnlocked(dir, id) {
   const lock = readPeers(teamStore.teamFiles(dir)).locks[id];
   if (lock) throw new Error(`Documentul e blocat de ${lock.who} (lucru în echipă); nu l-am modificat. Cere-i să-l deblocheze sau lucrează la alt document.`);
 }
+function assertSubtreeUnlocked(dir, ids) {
+  const locks = lockedIds(dir);
+  if (!Object.keys(locks).length) return;
+  let p;
+  try {
+    p = store.loadProject(dir, { readOnly: true });
+  } catch {
+    return;
+  }
+  const find = (list, id) => {
+    for (const n of list || []) {
+      if (n.id === id) return n;
+      const f = find(n.children, id);
+      if (f) return f;
+    }
+    return null;
+  };
+  for (const id of ids.filter(Boolean)) {
+    for (const n of flatten(find(p.tree, id)?.children || [])) {
+      if (locks[n.id]) throw new Error(`„${n.title}” e blocat de ${locks[n.id].who} (lucru în echipă); nu am mutat dosarul care îl conține.`);
+    }
+  }
+}
 const lockedIds = (dir) => (dir && fs.existsSync(path.join(dir, 'team')) ? readPeers(teamStore.teamFiles(dir)).locks : {});
 
 // Position of `target` in the HTML text, never inside a tag or an attribute value
@@ -193,6 +233,8 @@ function tool(name, description, shape, handler, { writes = false, global = fals
       if (writes) requireWritable();
       const dir = global ? null : projectDir(input.project);
       if (writes && dir) for (const id of [input.id, ...(Array.isArray(input.ids) && name !== 'replace' ? input.ids : [])]) assertUnlocked(dir, id);
+      // Moving or trashing a folder moves the locked documents inside it too.
+      if (writes && dir && /^(trash_item|move_item|merge_documents|empty_trash)$/.test(name)) assertSubtreeUnlocked(dir, name === 'empty_trash' ? [store.loadProject(dir, { readOnly: true }).tree.find((n) => n.root === 'trash')?.id] : [input.id, ...(Array.isArray(input.ids) ? input.ids : [])]);
       const result = await handler(dir, input);
       if (writes) log(dir || (result && typeof result === 'object' && result.dir) || projects[0], name, input, result);
       return text(result);
@@ -220,8 +262,28 @@ function outsideProjects(p, what = 'output_path') {
     return process.platform === 'win32' || process.platform === 'darwin' ? r.toLowerCase() : r;
   };
   const real = norm(p);
+  if (hiddenPath(path.resolve(p)) || hiddenPath(real)) throw new Error(`${what}: nu scriu în foldere sau fișiere ascunse ori de sistem.`);
   if (projects.map(norm).some((pd) => real === pd || real.startsWith(pd + path.sep))) throw new Error(`${what} nu poate fi în interiorul unui proiect.`);
   return path.resolve(p); // the comparison form is only for the check; the caller keeps its spelling
+}
+// Hidden or start-up places (dotfiles, .ssh, Start Menu, autostart) are never read or written for a client.
+function hiddenPath(abs) {
+  return abs.split(/[\\/]+/).some((seg) => (seg.startsWith('.') && seg !== '.' && seg !== '..') || /^(start menu|startup|autostart|launchagents)$/i.test(seg));
+}
+// An existing file is replaced only when this server wrote it (a re-compile to the same place).
+const writtenByServer = new Set();
+function freshOutput(abs) {
+  // A link at the output path (even a dangling one) would send the write somewhere else.
+  let st = null;
+  try {
+    st = fs.lstatSync(abs);
+  } catch {
+    /* new file */
+  }
+  if (st && st.isSymbolicLink()) throw new Error(`La ${abs} este o legătură (symlink); nu scriu prin ea.`);
+  if (st && !writtenByServer.has(abs)) throw new Error(`Fișierul există deja: ${abs}. Alege alt nume sau șterge-l întâi.`);
+  writtenByServer.add(abs);
+  return abs;
 }
 // A project created / imported / restored by a tool becomes reachable in this session.
 function addProject(dir) {
@@ -352,6 +414,7 @@ tool(
           // "after" means sibling: insertNear would nest the item inside a folder anchor.
           const after = nodeOrThrow(p, after_id);
           if (after.root) throw new Error('after_id nu poate fi o rădăcină; folosește parent_id.');
+          if (trashIds(p).has(after_id)) throw new Error('after_id e în Coș: textul nou n-ar fi vizibil (și s-ar pierde la golirea coșului).');
           const list = findParent(p.tree, after_id).children;
           list.splice(list.findIndex((n) => n.id === after_id) + 1, 0, node);
         } else {
@@ -410,8 +473,8 @@ tool(
     mutate(dir, (p) => {
     n = nodeOrThrow(p, input.id);
     if (n.root) throw new Error('Rădăcinile nu au metadate editabile.');
-    if (input.label && !p.labels.some((l) => l.name === input.label)) throw new Error(`Etichetă necunoscută. Disponibile: ${p.labels.map((l) => l.name).join(', ')}`);
-    if (input.status && !p.statuses.includes(input.status)) throw new Error(`Status necunoscut. Disponibile: ${p.statuses.join(', ')}`);
+    if (input.label !== undefined && !p.labels.some((l) => l.name === input.label)) throw new Error(`Etichetă necunoscută. Disponibile: ${p.labels.map((l) => l.name).join(', ')}`);
+    if (input.status !== undefined && !p.statuses.includes(input.status)) throw new Error(`Status necunoscut. Disponibile: ${p.statuses.join(', ')}`);
     patch = {};
     for (const [k, v] of [['title', input.title], ['synopsis', input.synopsis], ['label', input.label], ['status', input.status], ['keywords', input.keywords], ['includeInCompile', input.include_in_compile], ['target', input.target]]) {
       if (v !== undefined) patch[k] = v;
@@ -628,7 +691,7 @@ tool(
     const data = await compile.compile(p, read, format, opts);
     const ext = format === 'print' ? 'html' : compile.OUTPUT_FORMATS[format].ext;
     const out = outsideProjects(output_path ? path.resolve(output_path) : path.join(path.dirname(dir), `${p.title.replace(/[<>:"/\\|?*]/g, '_')}.${ext}`));
-    fs.writeFileSync(out, data);
+    fs.writeFileSync(freshOutput(out), data);
     return `Compilat: ${out}`;
   },
   { writes: true },
@@ -650,6 +713,10 @@ registerFullTools({
   textNodeOrThrow,
   pathOf,
   outsideProjects,
+  freshOutput,
+  hiddenPath,
+  lockedIds,
+  assertSubtreeUnlocked,
   addProject,
   appSettings,
   userData,

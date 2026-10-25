@@ -134,3 +134,12 @@ Dictarea și transcrierea merg acum și fără D&TED. Scribner are propriul moto
   - `tests/whisper.test.js`: descărcarea cu amprente, arhiva falsificată, modelul trunchiat, serverul simulat (`tests/fixtures/fake-whisper-server.cjs`), tăierea pe pauze, filtrele;
   - `tests/e2e/browser/whisper.cjs`: descărcarea din Setări, microfonul fals din Chromium, fișierul audio.
 - **Rămâne la autor:** proba pe Windows, cu descărcarea reală și cu microfonul.
+
+## 8. Modelul eek (v0.9.7, D&TED v0.4.1)
+
+- D&TED v0.4 folosește implicit modelul **eek** (`eek/whisper-turbo-ro-en`, Whisper turbo antrenat pe română): 5,8% cuvinte greșite față de 10,9% la `large-v3-turbo` standard (măsurători în `docs/MODELE_ROMANA.md` din D&TED).
+- Protocolul serviciului are comanda `{"cmd":"model","nume":…}`, iar `stare` raportează `model`, `model_folosit` și `modele` `[{nume, descriere, instalat}]`.
+- În Scribner: `lib/dted.cjs` `state()` / `setModel()`; IPC `dted:setModel`; setarea `dtedModel` (implicit `auto`), aplicată la prima cerere după fiecare pornire a serviciului; în *Setări → Servicii și conturi → D&TED → Verifică* apare lista modelelor (cele neinstalate sunt dezactivate) și „Folosit acum”.
+- Un D&TED mai vechi (fără comanda `model`) merge mai departe, doar fără listă.
+- Motorul încorporat (whisper.cpp) rămâne pe `large-v3-turbo`: eek e publicat cu acces aprobat individual, deci nu se poate descărca automat din Scribner.
+- Teste: `tests/dted.test.js` (stare, alegere, model necunoscut) și `tests/e2e/browser/dted-model.cjs`.

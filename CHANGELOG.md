@@ -1,5 +1,98 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
+
+### v0.9.8, a doua rundă pe toate nivelurile + lista cerută
+- Colecțiile din căutare salvată care includ câmpul Note încarcă notele (găsesc aceleași documente ca dialogul).
+- Ținte: unitatea (cuvinte/caractere/pagini) se aplică la bara de stare și la notificări; caracterele se numără exact; „numără doar ce intră în Compile” are efect; sesiunea se resetează la miezul nopții, la deschidere sau manual (buton „Începe o sesiune nouă acum”).
+- Numele date câmpurilor Etichetă și Status (Setările proiectului) apar în Outline, Binder, Inspector și Corkboard.
+- Corkboard pe rânduri: o cartonașă trasă în alt rând primește eticheta/statusul rândului; Ctrl+←/→ mută în rândul ei.
+- Setări D&TED: Anulează readuce calea și modelul salvate (Verifică și lista de modele acționează imediat asupra motorului).
+- MCP: tipare regex periculoase ((a+)+) refuzate (și în aplicație); adrese IPv6 cu IPv4 local (::ffff:127.0.0.1, NAT64, 6to4) blocate; legături simbolice la ieșire refuzate; căi ascunse verificate și după legături; folderul de export existent nu se suprascrie; `set_metadata` cu etichetă goală refuzat; `import_files` validează toate căile înainte de a scrie.
+- CLI: `backup -o` și `import -o` nu mai pot scrie în interiorul unui proiect; comenzi ca `__proto__` nu mai dau eroare JS.
+- Istoricul scrisului: un history.json stricat e pus deoparte, nu șters; scriere atomică.
+- Compile: textul adnotărilor cu stiluri în interior nu mai intră în carte; regulile regex cu `\-` merg.
+- Import: OPML cu `>` în atribute și entități duble corect; fișiere text Windows-1250 și UTF-16 fără BOM.
+- Editorial: majuscula după `'` se corectează; Ritm: dialog cu ghilimele amestecate, zecimale cu virgulă.
+- Cuvinte-cheie: unirea prin redenumire nu mai creează bucle de părinți.
+- Contrast: culorile de eroare și succes în tema întunecată, gri-ul în temele luminoase.
+- Desktop: limba corectorului se schimbă imediat; Compile citește media doar din proiectul deschis.
+- Mod mașină de scris: rândul curent stă la mijloc; Comentarii › Salt selectează comentariul; fereastra de Ajutor ține focusul; după un dialog focusul revine în text, nu pe meniu.
+
+### v0.9.8, căutare separată pe MCP
+- Căutare/înlocuire cu tipar care poate potrivi gol (`x*`, `^`, `\b`) pe text cu emoji: nu mai blochează serverul MCP și nici aplicația.
+- `editorial_autofix` sare documentele blocate (fără snapshot) și le numește; `glossary_add` verifică blocarea înainte de snapshot.
+- `merge_documents` și `empty_trash` respectă documentele blocate din subarbore.
+- `create_document` cu `after_id` în Coș e refuzat.
+- `import_web_page`: doar adrese publice (fără localhost, rețeaua proprie, metadata cloud), verificat la fiecare redirecționare; maximum 20 MB.
+
+### v0.9.8, căutare mezzo (fluxuri complete)
+- Note de proiect: o filă nouă nu mai primește textul filei anterioare, iar fila anterioară nu mai apare goală.
+- Redenumirea sau ștergerea unei etichete/unui status actualizează și filtrele din Compile; numele cu spații la capăt nu mai pierd culoarea etichetei.
+- Outline: Eticheta și Statusul se sortează în ordinea din proiect.
+- Glosarele regenerate apar imediat și în editorul deschis (fără suprascriere la autosalvare).
+
+### v0.9.8, căutare macro (aplicația desktop cap-coadă)
+- Setările salvate (limba, autosalvarea, înlocuirile automate, rândul, fontul, redeschiderea ultimului proiect) se citesc înapoi; înainte dialogul pornea cu valorile implicite și le suprascria la salvare. Cheile rămân în procesul principal.
+- Un settings.json valid dar greșit (null, listă, `recent` stricat) nu mai oprește pornirea aplicației.
+- Același proiect deschis printr-o legătură simbolică (sau altă literă mare/mică) nu mai poate fi deschis în două ferestre.
+- Backup manual: include ultimele rânduri tastate.
+- EPUB comprimat (4,5 MB → zeci de KB la 2000 de documente).
+
+### v0.9.8, căutare micro/nano
+- Scurtăturile aplicației cu Ctrl+Shift (Compile, Referință rapidă, Binder, Salvează ca, Inspector) tastate în editor nu mai aplică și formatarea editorului pe aceeași tastă; uneltele pentru dezvoltatori trec pe F12.
+- Numărarea cuvintelor: blocuri div/tabel separate; diacriticele descompuse (s + virgulă) nu mai rup cuvântul, nici la căutarea pe cuvânt întreg.
+- Plural românesc: probleme, erori, fraze, titluri, termeni, intrări, conflicte („25 de probleme”, „1 problemă”).
+- Înlocuirile la dictare: regulile scrise cu sedilă se aplică; o regulă goală șterge cuvântul.
+- Coș lipsă, file fără tab curent: fără erori. Textul gol din editor tradus.
+
+### v0.9.8, căutare pe editor și binder
+- Editor împărțit: Undo într-un panou nu mai readuce textul anulat în celălalt.
+- Documentele blocate nu mai sunt atinse de Găsește și înlocuiește în proiect și nu mai pot fi restaurate dintr-un snapshot.
+- Ștergerea unui dosar împreună cu un copil nu mai lasă selecția în Coș.
+- Modul compoziție (F11) deschide editorul și din Corkboard sau Outline.
+- Golirea coșului: fără confirmare când coșul e gol; selecția trece în Manuscris.
+- Texte rămase în română în interfața engleză („Blocat”, „Mai multe comenzi de formatare”).
+
+### v0.9.8, căutare pe MCP, importuri și Compile
+- MCP: `compile` și exporturile nu mai suprascriu fișiere existente străine; nicio cale ascunsă sau de pornire (.ssh, Startup) nu se citește sau scrie; blocările din echipă se judecă după ceasul serverului, nu al celuilalt calculator; un dosar cu un document blocat nu se mai mută sau trimite la coș.
+- Îmbinarea project.json păstrează schimbările ambelor părți în obiecte (`custom`) și liste (cuvinte-cheie, colecții, etichete).
+- Import .scriv: niciun element nu mai citește fișiere din afara proiectului; UUID repetat primește id nou; etichete `__proto__` ignorate; `content.rtf` folder nu mai oprește importul.
+- RTF: legăturile `javascript:` nu mai trec; escape-urile stricate nu mai produc caractere NUL.
+- Proiect: `project.json` cu BOM se deschide; unul fără arbore dă mesaj clar; id-uri rezervate Windows refuzate.
+- Markdown: notele de subsol sunt escapate; notele goale nu mai lasă marcaj.
+- AI: textul documentului nu mai poate închide blocul `<text>` din cerere.
+
+### v0.9.8, căutare L3 pe interfață
+- AI: acceptarea unei corecturi pe o parte de paragraf și „Inserează la cursor” nu mai rup paragraful (`src/lib/inlineInsert.js`); spațiile din jurul selecției rămân.
+- Cercetare: „Inserează în document” pune răspunsul după selecție, fără s-o șteargă (`insertHtmlAfter`).
+- Istoricul scrisului: înregistrează imediat la deschidere, fără întârzierea de 5 s.
+- Statistici: rândul „Altele” nu mai include pronumele; demo AI: „38 de cuvinte”.
+
+### Cerința user
+> "extins multilevel bug hunting pe toate aplicația"
+
+- **PDF și tipărire pentru o carte întreagă:** pagina se încarcă dintr-un fișier temporar; înainte, peste ~1,2 MB (o carte de ~100 000 de cuvinte) exportul PDF și Print Preview cădeau (verificat în Electron: 5 MB merg).
+- **Setări stricate:** un `settings.json` ilizibil nu mai e înlocuit cu valorile implicite (pierdeai cheile și proiectele recente): e păstrat deoparte și se folosește ultima copie bună (`settings.json.bak`).
+- **Backup:** un proiect modificat în timpul unui backup intră în următorul; aceeași cale scrisă diferit nu mai face două backup-uri; două backup-uri nu mai rulează deodată.
+- **Ferestre:** ferestrele ascunse pentru PDF nu mai sunt luate drept ferestre de lucru; meniul nativ se golește la reîncărcarea paginii.
+- **Dictare (motorul încorporat):** o pornire eșuată nu mai blochează dictarea până la repornirea ferestrei; oprirea în timpul pornirii nu mai dă eroare; mesaj în română când motorul cade în mijlocul transcrierii; fișierele lungi se decodează la 16 kHz (de ~3 ori mai puțină memorie); la schimbarea motorului, cel vechi se oprește (D&TED nu mai ține microfonul).
+- **Dictare (text):** ş/ţ cu sedilă devin ș/ț; majuscula după „ sau « la început de frază; înlocuirile tale se aplică și pe varianta cu sedilă.
+- **D&TED în Scribner:** cererile de stare/model se potrivesc după id; modelul se reîncearcă dacă D&TED era ocupat; transcrierea fișierelor din binder folosește și ea modelul ales.
+- **D&TED (repo separat):** serviciul nu mai moare la un caracter care nu se poate scrie sau la o comandă greșită; „Stop” al unei ferestre nu mai oprește dictarea alteia; id dublu refuzat; schimbarea modelului refuzată cât timp așteaptă transcrieri; anularea merge și cât se încarcă modelul.
+
+## 2026-10-24 — v0.9.7 — Modelul eek de la D&TED în Scribner
+
+### Cerința user
+> "pune motor eek de la D&TED – Dictare și transcriere și integrează motor eek și să fie deep în Scribner UI dictarea"
+
+- **Dictarea cu D&TED folosește modelul eek** (antrenat pe română, 5,8% cuvinte greșite față de 10,9%): *Setări → Servicii și conturi → D&TED → Verifică* arată modelele instalate, „Folosit acum” și permite alegerea; alegerea se păstrează și se aplică la fiecare pornire a serviciului.
+- D&TED (repo separat, ramura cu modul serviciu): comanda `model` și lista modelelor în `stare`.
+- Un D&TED mai vechi (fără alegerea modelului) primește mesajul să se actualizeze la 0.4.2.
+- D&TED 0.4.2: versiunea și pașii de publicare (`docs/SERVICIU.md`); executabilul Windows se construiește pe calculatorul autorului.
+- Ajutor (RO/EN), README cu imagine (`assets/readme/dtedmodel.png`) și `docs/DTED.md` §8.
+- Test E2E „typing saved to Alfa” așteaptă scrierea pe disc (era fragil pe CI).
+
 ## 2026-10-24 — v0.9.6 — Bucle divergente/convergente (runda 3)
 
 - **Interfața în engleză și Ajutorul (căutare divergentă):**

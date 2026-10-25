@@ -393,8 +393,10 @@ const RO_ONE = {
   scene: 'scenă', locuri: 'loc', minute: 'minut', zile: 'zi', comentarii: 'comentariu', note: 'notă',
   'snapshot-uri': 'snapshot', elemente: 'element', rânduri: 'rând', paragrafe: 'paragraf', surse: 'sursă',
   pasaje: 'pasaj', apariții: 'apariție', înlocuiri: 'înlocuire', secunde: 'secundă', ore: 'oră',
+  probleme: 'problemă', erori: 'eroare', fraze: 'frază', titluri: 'titlu', termeni: 'termen', intrări: 'intrare',
+  conflicte: 'conflict', semnale: 'semnal', bucle: 'buclă',
 };
-const RO_ADJ_ONE = { blocate: 'blocat', modificate: 'modificat', selectate: 'selectat', noi: 'nou', șterse: 'șters' };
+const RO_ADJ_ONE = { blocate: 'blocat', modificate: 'modificat', selectate: 'selectat', noi: 'nou', șterse: 'șters', actualizate: 'actualizat', importate: 'importat', găsite: 'găsit' };
 const RO_COUNT = new RegExp(`(^|[^\\d.,])(\\d{1,3}(?:\\.\\d{3})+|\\d+) (${Object.keys(RO_ONE).join('|')})(?: (${Object.keys(RO_ADJ_ONE).join('|')}))?(?![\\wăâîșț-])`, 'g');
 export function pluralRo(s) {
   return s.replace(RO_COUNT, (m, pre, num, noun, adj) => {

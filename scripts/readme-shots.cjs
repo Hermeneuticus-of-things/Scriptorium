@@ -362,6 +362,20 @@ const SHOTS = {
       await p.waitForTimeout(300);
     },
   },
+  dtedmodel: {
+    kicker: 'Dictare · D&TED · modelul eek',
+    title: 'Alegi modelul care recunoaște româna cel mai bine',
+    sub: 'Setări → Servicii și conturi → D&TED → Verifică: eek, antrenat pe română, greșește aproape de două ori mai puțin decât modelul standard.',
+    query: '&dted',
+    async setup(p) {
+      await menuCmd(p, 'Setări…');
+      await p.getByRole('tab', { name: 'Servicii și conturi' }).click();
+      await p.getByRole('button', { name: 'Verifică' }).click();
+      await p.getByText(/Folosit acum:/).waitFor();
+      await p.locator('.settings-dialog').evaluate((el) => el.querySelector('select[value], select')?.scrollIntoView({ block: 'center' }));
+      await p.waitForTimeout(300);
+    },
+  },
   conflict: {
     kicker: 'Lucru în echipă · conflict',
     title: 'Același paragraf, schimbat pe două calculatoare',

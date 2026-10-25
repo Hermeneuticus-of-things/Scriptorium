@@ -34,7 +34,7 @@ function findInPlain(text, re, context = 40) {
   let m;
   while ((m = re.exec(s))) {
     if (m[0] === '') {
-      re.lastIndex++;
+      re.lastIndex = m.index + (s.codePointAt(m.index) > 0xffff ? 2 : 1); // a whole character (u flag)
       continue;
     }
     const start = Math.max(0, m.index - context);

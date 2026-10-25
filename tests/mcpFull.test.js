@@ -192,6 +192,7 @@ const PRELOAD_COVERAGE = {
   onWhisperProgress: 'gui: progresul descărcării',
   dtedStatus: 'gui: D&TED (dictare) rulează pe calculatorul autorului, cu microfonul lui',
   dtedPickAudio: 'gui: dialog de fișiere',
+  dtedSetModel: 'gui: modelul D&TED îl alege autorul în Setări',
   dtedTranscribe: 'gui: transcrierea D&TED o cere autorul din fereastră (agentul primește documentul creat)',
   dtedTranscribeMedia: 'gui: transcrierea D&TED o cere autorul din binder',
   dtedDictateStart: 'gui: dictare la microfon',
@@ -225,7 +226,7 @@ async function connect(projectDir, extra = []) {
     new StdioClientTransport({
       command: process.execPath,
       args: [path.resolve('mcp/server.mjs'), '--project', projectDir, ...extra],
-      env: { ...process.env, SCRIBNER_USER_DATA: userData },
+      env: { ...process.env, SCRIBNER_USER_DATA: userData, SCRIBNER_MCP_ALLOW_LOCAL_WEB: '1' },
       stderr: 'ignore',
     }),
   );

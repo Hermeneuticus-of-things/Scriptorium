@@ -1,3 +1,4 @@
+import { t as tr } from '../lib/i18n.js';
 import { ScriptMode } from '../extensions/ScriptMode.js';
 import { Extension, InputRule, Mark, Node, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -235,7 +236,7 @@ export const RedoKeys = Extension.create({
   },
 });
 
-export function buildExtensions({ placeholder = 'Începe să scrii…', smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], getLinkTargets = () => [], onMissingLink = null, corrections = null, showInvisibles = false } = {}) {
+export function buildExtensions({ placeholder = tr('ui.editor.placeholder'), smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], getLinkTargets = () => [], onMissingLink = null, corrections = null, showInvisibles = false } = {}) {
   // corrections: {smartDashes, smartEllipsis, autoCapitalize, replacements}; null keeps the
   // historical behaviour (dashes/ellipsis only through Typography when smartQuotes is on).
   const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [], ...corrections } : null;

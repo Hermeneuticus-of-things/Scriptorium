@@ -260,3 +260,10 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
     - fără D&TED instalat, comenzile apar cu un link de instalare; nimic nu pleacă pe internet; procesul rulează din main, renderer-ul nu pornește programe;
     - teste: protocolul JSON simulat, anularea, erori (lipsă model, fără microfon), scenariu de browser cu un D&TED fals.
 12. **[x] v0.9.0 — Motorul de recunoaștere a vorbirii încorporat în Scribner** (whisper.cpp + large-v3-turbo, descărcat din Setări; detalii în docs/DTED.md §7). Rămâne: proba reală pe Windows (descărcare, microfon, NVIDIA).
+
+## Dictare: modelul eek (v0.9.7)
+
+- [x] D&TED modul serviciu: comanda `model`, lista modelelor în `stare` (D&TED 0.4.2)
+- [x] Scribner: alegerea modelului în Setări, „Folosit acum”, mesaj pentru D&TED vechi
+- [ ] D&TED 0.4.2 publicat (Windows)
+- [ ] Motorul încorporat cu un model românesc descărcabil liber (eek cere acces aprobat individual)

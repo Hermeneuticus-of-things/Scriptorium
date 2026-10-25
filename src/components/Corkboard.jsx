@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { cardHeight } from '../lib/panelsExtra.js';
 import { FolderIcon } from './Icons.jsx';
 import { t } from '../lib/i18n.js';
-import { NONE, noneLabel, noneStatus } from '../lib/projectSettings.js';
+import { NONE, labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
 
 const SIZES = { mic: 180, mediu: 230, mare: 300 };
 
@@ -171,7 +171,14 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
     },
     onDrop: (e) => {
       e.preventDefault();
-      if (drag && drag !== n.id) onMove(drag, n.id, side(e));
+      if (drag && drag !== n.id) {
+        onMove(drag, n.id, side(e));
+        // Lines by label / status: a card dropped in another row takes that row's value.
+        const moved = items.find((x) => x.id === drag);
+        if (cork.mode === 'lines' && moved && (cork.by === 'label' || cork.by === 'status') && groupKey(moved) !== groupKey(n)) {
+          onPatch(drag, { [cork.by]: groupKey(n) });
+        }
+      }
       setDrag(null);
       setHint(null);
     },
@@ -181,7 +188,8 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   // Keyboard on a focused card: arrows move between cards (↑/↓ by visual row), Enter edits
   // the title, Ctrl+Enter opens the document, Ctrl+←/→ reorders (Scrivener corkboard).
   const onKey = (e, n) => {
-    const order = items.map((x) => x.id);
+    // In lines mode Ctrl+←/→ reorders within the card's own row.
+    const order = (cork.mode === 'lines' ? items.filter((x) => groupKey(x) === groupKey(n)) : items).map((x) => x.id);
     const i = order.indexOf(n.id);
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
@@ -286,8 +294,8 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
         </div>
         {cork.mode === 'lines' && (
           <select value={cork.by} onChange={(e) => setCork({ by: e.target.value })} title={t('ui.corkboard.aranjeaza_pe_linii_dupa')}>
-            <option value="label">{t('ui.corkboard.dupa_eticheta')}</option>
-            <option value="status">{t('ui.corkboard.dupa_status')}</option>
+            <option value="label">{project.labelTitle && project.labelTitle !== 'Etichetă' ? `${t('ui.corkboard.dupa')} ${labelTitleOf(project, t).toLocaleLowerCase()}` : t('ui.corkboard.dupa_eticheta')}</option>
+            <option value="status">{project.statusTitle && project.statusTitle !== 'Status' ? `${t('ui.corkboard.dupa')} ${statusTitleOf(project, t).toLocaleLowerCase()}` : t('ui.corkboard.dupa_status')}</option>
             <option value="keyword">{t('ui.corkboard.dupa_cuvant_cheie')}</option>
           </select>
         )}

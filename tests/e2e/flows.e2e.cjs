@@ -228,7 +228,8 @@ const flat = (nodes, out = []) => {
     await win.keyboard.type('A doua parte.');
     await save();
     const alfa = nodeBy('Alfa');
-    check('typing saved to Alfa', /Prima parte a textului\./.test(docOnDisk(alfa.id)) && /A doua parte\./.test(docOnDisk(alfa.id)));
+    // The write lands asynchronously after Ctrl+S: wait for it instead of reading once.
+    check('typing saved to Alfa', Boolean(await waitFor(() => /Prima parte a textului\./.test(docOnDisk(alfa.id)) && /A doua parte\./.test(docOnDisk(alfa.id)), 3000)));
     await win.keyboard.press('Home'); // caret at the start of "A doua parte."
     await cmd('split');
     const second = await waitFor(() => flat(project().tree).find((n) => /Alfa \(continuare\)/.test(n.title)), 5000);
