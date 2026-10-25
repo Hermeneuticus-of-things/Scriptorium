@@ -927,3 +927,102 @@ Concluzie: ferestrele de lucru zilnic (Inspector, Outliner, bara de format, cău
 - **P12. Binder (meniu), tipărire, scenariu, import/sync, șabloane** (27, 30, 31 partea de editor, 33, 34, 40) — `ContextMenu.jsx`, `lib/editorMenus.js`, `PrintPreviewDialog.jsx`, `extensions/ScriptMode.js`, `lib/scriptFormats.js`, `ImportDialog.jsx`, `lib/scrivImport.cjs` doar pentru import dosar, `templates/` (șabloane noi), `Home.jsx`.
 
 Ordinea recomandată: P1 → P2 → P3 secvențial (toate ating Compile); P4–P12 se pot face în paralel cu ele, cu atenție la `SettingsDialog.jsx` (P4, P5, P6 extrag fiecare panoul propriu într-un fișier nou, ca să nu se calce) și la `Binder.jsx` (P4 și P7).
+
+## Omisiuni pe cinci niveluri: macro, mega, mezzo, micro, nano (audit 4)
+
+Comparație cu programul clasic (versiunea 3 pentru Windows), verificată în cod (`src/`, `lib/`, `electron/`). Nu repetă punctele din G0–G5, audit 2 și audit 3. Format: ce face programul clasic → ce face Scribner acum.
+
+### MACRO: fluxuri întregi, cap-coadă
+
+- [ ] **Flux șablon → compile fără ruptură**: programul clasic leagă șablonul de proiect de un format de compile implicit, de tipurile de secțiune și de stilurile proprii, astfel încât un proiect nou compilează corect din prima → Scribner aplică șablonul doar structurii din binder (`lib/templates.cjs`); formatul de compile se alege separat.
+- [ ] **PDF în panoul editorului cu căutare și pagina ținută minte**: programul clasic afișează PDF-ul cu pagini, căutare și copiere de text → Scribner îl afișează în `MediaView.jsx` prin vizualizatorul încorporat, fără căutare legată de proiect.
+- [ ] **Pagina PDF-ului și poziția din audio/video ținute minte per document**: clasicul redeschide la aceeași pagină / secundă → Scribner pornește mereu de la început.
+- [ ] **Pagină web importată ca arhivă locală, vizualizabilă offline**: clasicul o salvează ca fișier în proiect → Scribner o salvează ca text sau legătură.
+- [ ] **Transcriere cu media alături**: clasicul are taste pentru pauză și „înapoi câteva secunde” cât timp cursorul e în text → `MiniPlayer.jsx` nu are scurtături globale active din editor.
+- [ ] **Referințe ale documentului și ale proiectului** (listă de URL-uri, fișiere, documente din proiect în Inspector) → Scribner are doar legăturile din text și semnele de carte.
+- [ ] **Înlocuire în tot proiectul cu domeniu** (text, titluri, sinopsis, note) și cu listă de documente afectate → `AdvancedSearchDialog.jsx` înlocuiește fără bife de domeniu pe câmpuri.
+- [ ] **Sincronizare cu varianta mobilă prin dosar cloud**, cu conflicte rezolvate pe document → Scribner are doar sincronizare cu dosar extern (`lib/folderSync.cjs`) și dosar de echipă.
+- [ ] **Mai multe proiecte deschise, fiecare în fereastra lui, cu meniul Fereastră care le listează** → există `window:new` (`electron/preload.cjs`), dar fără listă de ferestre și cu setări „ultimul proiect” globale.
+- [ ] **Copiere/mutare de documente între două proiecte deschise prin tragere** → lipsește.
+- [ ] **Backup la închidere cu „păstrează ultimele N” vizibil și restaurare dintr-o listă la deschidere** → `lib/backup.cjs` face copia, restaurarea se face manual.
+- [ ] **Flux de revizie**: clasicul face snapshot automat înainte de a porni revizia și compară snapshot-uri pe cuvânt în panou → Scribner nu leagă pornirea reviziei de un snapshot automat.
+
+### MEGA: arhitectură și comportament
+
+- [ ] **Rotund `.scriv` → Scribner → `.scriv` fără pierderi**: în `lib/scrivExport.cjs` lipsesc culorile și ordinea etichetelor, definițiile câmpurilor proprii (listă/dată/bifă), setările și formatele de compile, stilurile proiectului, colecțiile de căutare (salvate ca interogare), imaginile de sinopsis, semnele de carte ale proiectului, notele de proiect multiple. Nu există test de rotund pe un proiect de referință.
+- [ ] **Raport de fidelitate la export `.scriv`** (simetric cu `ImportReport.jsx`): ce nu a putut fi scris.
+- [ ] **Recuperare după cădere**: clasicul oferă la repornire „recuperează modificările nesalvate” → Scribner salvează la inactivitate și la `beforeunload`, fără jurnal de recuperare pentru textul tastat între salvări.
+- [ ] **Lacăt de sesiune la deschiderea aceluiași proiect de două ori** (avertizare, deschidere doar în citire) → `project.json.lock` din `lib/store.cjs` protejează doar scrierile scurte.
+- [ ] **Performanță la 1.000 de documente / 500k cuvinte**: binder-ul, outliner-ul și corkboard-ul randează toate rândurile (nicio virtualizare în `src/`); Scrivenings creează câte un editor pe secțiune.
+- [ ] **Încărcare leneșă a textelor**: clasicul citește doar documentele deschise → Scribner ține tot proiectul în memorie.
+- [ ] **Istoricul de anulare păstrat per document** după ce schimbi documentul din panou → se pierde (editorul e recreat).
+- [ ] **Anulare pentru operațiile din binder** (mutare, redenumire, tragere, ștergere) → doar coșul permite revenirea.
+- [ ] **Regulile sincronizării cu dosar extern documentate și testate** (subdosare, formate, documente noi create din fișiere noi, conflict când ambele părți s-au schimbat) → `lib/folderSync.cjs` fără test de conflict.
+- [ ] **Indicator „nesalvat” în titlul ferestrei** cât timp există modificări în așteptare → lipsește.
+
+### MEZZO: comportament la nivel de panou
+
+- [ ] **Tragere din binder în editor** inserează legătură internă sau imagine → `Editor.jsx` nu are `onDrop`.
+- [ ] **Tragere pe un dosar din corkboard / outliner** mută documentul înăuntru → doar binder-ul acceptă plasare „în”.
+- [ ] **Plasare direct pe tab-ul unei colecții** → `CollectionsBar.jsx` are o singură țintă.
+- [ ] **Ctrl + tragere = copiere** în binder, corkboard, outliner → Scribner mută mereu.
+- [ ] **Indicatorul „în / deasupra / dedesubt”** la fel în toate vizualizările → complet doar în binder.
+- [ ] **Scrivenings: selecție, căutare și înlocuire continue peste secțiuni** → `Scrivenings.jsx` are un editor separat pe secțiune, deci se opresc la margine.
+- [ ] **Scrivenings: săgeată sus/jos trece în secțiunea vecină** fără clic → nu există gestionare explicită.
+- [ ] **Selecția comună între binder, corkboard și outliner** → selecția e locală fiecărei vizualizări.
+- [ ] **Istoricul de navigare ține și vizualizarea** (înapoi revine la corkboard-ul dosarului) → istoricul din G5 ține doar documentul.
+- [ ] **Panoul legat urmărește și selecția din outliner/corkboard**, nu doar din binder → de completat.
+
+### MICRO: valori implicite, texte, stări
+
+- [ ] **Confirmări uniforme cu verbe pe butoane** (Golește coșul / Anulează) → `confirm()` nativ în ~18 fișiere, cu OK/Cancel.
+- [ ] **Bifă „nu mai întreba”** la confirmările repetitive → lipsește.
+- [ ] **Stări goale cu îndemn** (corkboard gol, colecție goală, căutare fără rezultate, coș gol, note goale) → niciun tipar comun în `src/`.
+- [ ] **Comenzi dezactivate când nu se aplică** (Împarte la cursor fără cursor, Combină cu un singur document) → rămân active și nu fac nimic.
+- [ ] **Tooltip cu scurtătura** pe fiecare buton din bara de unelte → `title=` fără scurtătură.
+- [ ] **Ordinea și gruparea meniurilor** ca în programul clasic, cu separatoare pe grupe → de aliniat în `Menu.jsx`.
+- [ ] **Mesaje scurte în bara de stare** („Salvat”, „3 documente mutate”, „Compilare terminată”) → lipsesc.
+- [ ] **Unități la marginile paginii** (cm / in / pt după sistem) → o singură unitate.
+- [ ] **Document nou intră direct în redenumire** cu „Fără titlu” selectat → de verificat în binder, corkboard și outliner.
+- [ ] **Numărătoare pe dosar** în corkboard/outliner („12 documente, 8.430 cuvinte”) → lipsește.
+- [ ] **Avertizare la închidere cu compilare/export în curs** → lipsește.
+
+### NANO: tastatură, cursor, memorie per document
+
+- [ ] **Defilarea ținută minte per document** în editorul principal → doar panoul de copiere o ține (`App.jsx`, `copyScroll`).
+- [ ] **Cursorul și selecția ținute minte per document**, și după repornire → lipsește.
+- [ ] **Zoom ținut minte per document** (opțional) → doar per panou.
+- [ ] **Mărimea, poziția și maximizarea ferestrei ținute minte** → `BrowserWindow` pornește mereu la 1400 lățime (`electron/main.cjs`).
+- [ ] **Lățimile binder/inspector și raportul împărțirii ținute minte per proiect** → de verificat, parțial global.
+- [ ] **Ordinea focusului între panouri** (Ctrl+Tab / F6: binder → editor → inspector) → nedefinită.
+- [ ] **Variante cu modificatori la clic**: Shift+clic în binder deschide în celălalt panou, Alt+clic în fereastră rapidă → doar Ctrl+clic e consecvent.
+- [ ] **Triplu clic selectează paragraful fără marcajul paragrafului următor** la copiere → comportamentul implicit al browserului.
+- [ ] **Meniul contextual pe text**: sugestiile de ortografie există (`electron/main.cjs`); lipsesc Caută în dicționar / pe web, Ignoră peste tot, Adaugă comentariu, Adaugă selecția la colecție, Legătură către document.
+- [ ] **Anulare pe cuvânt**: clasicul anulează pe cuvânt → Scribner grupează după timp (implicit ProseMirror), deci o frază tastată repede se anulează integral.
+- [ ] **O corectură automată se anulează cu un singur Ctrl+Z** (ghilimele, linie, majusculă), revenind la ce ai tastat → de verificat pe fiecare regulă din `src/extensions/`.
+- [ ] **Completare automată cu întârziere și Esc** pentru cuvinte-cheie și câmpuri proprii → temporizare neuniformă.
+- [ ] **Cursorul la tragere** (+ la copiere, interdicție peste ținte invalide) → `dropEffect` nesetat pe cazuri.
+- [ ] **Ctrl+Home/End în Scrivenings duce la începutul/sfârșitul întregii secvențe**, nu al secțiunii → de verificat.
+
+### Totaluri audit 4
+
+MACRO 12, MEGA 10, MEZZO 10, MICRO 11, NANO 14. Total 57; primele 50 intră în pachetele de mai jos (rămân în afară: MICRO 8–9, NANO 5, 12, 14, MEZZO 10, MACRO 10).
+
+### Pachete de lucru Q (câte un agent, fișiere disjuncte)
+
+- **Q1 Rotund `.scriv`** (MEGA 1–2): `lib/scrivExport.cjs`, `lib/scrivImport.cjs`, `tests/scrivRoundtrip.test.js` (nou).
+- **Q2 Siguranța datelor** (MEGA 3–4, 10; MACRO 11): `lib/store.cjs`, `lib/backup.cjs`, `electron/ioHandlers.cjs`, `src/components/BackupDialog.jsx`, `src/components/ConflictDialog.jsx`.
+- **Q3 Performanță** (MEGA 5–6): `src/components/Outliner.jsx`, `src/components/Corkboard.jsx`, `src/components/Binder.jsx`, `lib/loadHtml.cjs`.
+- **Q4 Scrivenings** (MEZZO 6–7): `src/components/Scrivenings.jsx`, `src/editor/scriveningsBoundary.js` (nou).
+- **Q5 Anulare** (MEGA 7–8; NANO 10–11): `src/components/Editor.jsx`, `src/extensions/` (regulile de tastare), `src/lib/undoBinder.js` (nou).
+- **Q6 Tragere și plasare** (MEZZO 1–5; NANO 13): `src/lib/dnd.js` (nou, reguli comune), `src/components/CollectionsBar.jsx`; legarea în binder/corkboard/outliner după Q3.
+- **Q7 Memorie per document și fereastră** (NANO 1–4): `electron/main.cjs` (limitele ferestrei), `src/lib/docViewState.js` (nou), `src/components/PaneNav.jsx`.
+- **Q8 Focus, modificatori, selecție comună** (NANO 6–8; MEZZO 8–9): `src/lib/focusOrder.js` (nou), `src/components/Menu.jsx`, `src/components/ShortcutsDialog.jsx`.
+- **Q9 Meniul contextual pe text** (NANO 9): `src/components/ContextMenu.jsx`, `electron/v10Handlers.cjs` (handler nou; `main.cjs` rămâne la Q7).
+- **Q10 Confirmări, stări goale, mesaje** (MICRO 1–3, 7, 10–11): `src/components/DialogA11y.jsx`, `src/components/StatusBar.jsx`, `src/lib/i18n.js`.
+- **Q11 Comenzi și tooltip-uri** (MICRO 4–6): `src/components/FormatBar.jsx`, `src/components/ToolbarCustomizeDialog.jsx`, `src/components/QuickRef.jsx`.
+- **Q12 Cercetare în panou** (MACRO 2–5): `src/components/MediaView.jsx`, `src/components/MiniPlayer.jsx`, `src/components/ResearchPanel.jsx`, `lib/importers.cjs`.
+- **Q13 Referințe, înlocuire cu domeniu, flux de revizie** (MACRO 6–7, 12): `src/components/AdvancedSearchDialog.jsx`, `src/components/Inspector.jsx`, `src/components/SnapshotsPane.jsx`, `lib/trackChanges.cjs`.
+- **Q14 Șablon → compile, ferestre multiple, sincronizare** (MACRO 1, 8–9; MEGA 9): `lib/templates.cjs`, `lib/folderSync.cjs`, `electron/windowHandlers.cjs` (nou), `src/components/Home.jsx`.
+
+Ordine: Q3 înaintea lui Q6 (aceleași vizualizări); Q7 și Q9 nu ating același fișier; restul în paralel.
