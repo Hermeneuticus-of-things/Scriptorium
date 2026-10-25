@@ -99,6 +99,7 @@ contextBridge.exposeInMainWorld('api', {
   recordHistory: (dir, counts) => call('history:record', dir, counts),
   getHistory: (dir) => call('history:get', dir),
   exportCompiled: (dir, project, format, options) => call('compile:export', dir, project, format, options),
+  exportCompileFormat: (fileName, text) => call('compile:exportFormat', fileName, text),
   previewCompiled: (dir, project, options) => call('compile:preview', dir, project, options),
   exportScript: (format, html, title) => call('script:export', format, html, title),
   exportScriv: (dir, project) => call('v04:exportScriv', dir, project),

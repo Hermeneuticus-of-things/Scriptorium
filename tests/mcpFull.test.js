@@ -132,6 +132,7 @@ const PRELOAD_COVERAGE = {
   recordHistory: 'gui: istoricul se notează de fereastra care scrie',
   getHistory: 'writing_history',
   exportCompiled: 'compile',
+  exportCompileFormat: 'gui: salvarea unui format de compilare ca fișier (dialog de salvare)',
   previewCompiled: 'compile',
   exportScript: 'compile',
   exportScriv: 'export_scriv',

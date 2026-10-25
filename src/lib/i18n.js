@@ -433,11 +433,11 @@ export function cmdLabel(id, fallback) {
 // Built-in Compile formats and styles keep their stored (Romanian) names; only the display is
 // translated, and only while the user has not renamed them.
 const BUILTIN_EN = {
-  format: { manuscris: 'Standard manuscript', paperback: 'Printed book (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'A5 PDF for reading', implicit: 'Default', times: 'Times New Roman (double-spaced)', courier: 'Courier (classic manuscript)' },
+  format: { manuscris: 'Standard manuscript', paperback: 'Printed book (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'A5 PDF for reading', implicit: 'Default', times: 'Times New Roman (double-spaced)', courier: 'Courier (classic manuscript)', 'roman-parti': 'Novel with numbered parts', nonfictiune: 'Non-fiction', povestire: 'Short story', 'scenariu-film': 'Screenplay', 'piesa-teatru': 'Stage play', 'scenariu-bd': 'Comic script', 'scenariu-radio': 'Radio script', poezie: 'Poetry', 'ebook-fictiune': 'Fiction e-book', corectura: 'Proof copy' },
   style: { ilustratie: 'Illustration', accent: 'Accent', sanscrit: 'Sanskrit term', 'citat-bloc': 'Block quote', motto: 'Epigraph', scrisoare: 'Letter', centrat: 'Centered', separator: 'Scene separator' },
 };
 const BUILTIN_RO = {
-  format: { manuscris: 'Manuscris standard', paperback: 'Carte tipărită (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'Citire PDF A5', implicit: 'Implicit (Default)', times: 'Times New Roman (dublu spațiat)', courier: 'Courier (manuscris clasic)' },
+  format: { manuscris: 'Manuscris standard', paperback: 'Carte tipărită (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'Citire PDF A5', implicit: 'Implicit (Default)', times: 'Times New Roman (dublu spațiat)', courier: 'Courier (manuscris clasic)', 'roman-parti': 'Roman cu părți numerotate', nonfictiune: 'Non-ficțiune', povestire: 'Povestire', 'scenariu-film': 'Scenariu de film', 'piesa-teatru': 'Piesă de teatru', 'scenariu-bd': 'Scenariu de bandă desenată', 'scenariu-radio': 'Scenariu radio', poezie: 'Poezie', 'ebook-fictiune': 'E-book ficțiune', corectura: 'Exemplar de corectură' },
   style: { ilustratie: 'Ilustrație', accent: 'Accent', sanscrit: 'Termen sanscrit', 'citat-bloc': 'Citat bloc', motto: 'Motto', scrisoare: 'Scrisoare', centrat: 'Centrat', separator: 'Separator de scenă' },
 };
 /** Display name of a built-in format/style ({ id, name }); renamed or user items show their own name. */

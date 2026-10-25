@@ -1018,7 +1018,22 @@ handle('compile:export', async (e, dir, project, format, options) => {
     },
   });
   fs.writeFileSync(res.filePath, data);
+  // "Open after compiling": the file in its default application; otherwise shown in its folder.
+  if (options.openAfter && (await shell.openPath(res.filePath)) === '') return res.filePath;
   shell.showItemInFolder(res.filePath);
+  return res.filePath;
+});
+
+// Compile format as a file (.scribcompile): the renderer builds the JSON, this only saves it.
+handle('compile:exportFormat', async (e, fileName, text) => {
+  if (typeof text !== 'string' || text.length > 5e6) throw new Error('Format invalid');
+  const res = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Exportă formatul de compilare',
+    defaultPath: String(fileName || 'format.scribcompile').replace(/[\\/]/g, ' '),
+    filters: [{ name: 'Format de compilare', extensions: ['scribcompile'] }],
+  });
+  if (res.canceled) return null;
+  fs.writeFileSync(res.filePath, text, 'utf8');
   return res.filePath;
 });
 
