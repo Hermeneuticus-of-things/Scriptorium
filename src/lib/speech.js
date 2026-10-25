@@ -37,17 +37,27 @@ export function pickVoice(voices, lang = 'ro-RO') {
 
 /** Split long text into sentence chunks (Chromium cuts utterances ~>15s). */
 export function chunkText(text, max = 220) {
-  const parts = String(text || '').replace(/\s+/g, ' ').trim().match(/[^.!?…]+[.!?…]*\s*/g) || [];
+  // Split into sentence-sized pieces for streaming. Paragraph breaks (newlines) are kept as hard
+  // boundaries, so the voice pauses between paragraphs and gives a line without end punctuation
+  // (a title, a heading) its own closing cadence instead of running it into the next sentence.
+  const norm = String(text || '')
+    .replace(/[^\S\n]+/g, ' ')         // collapse spaces and tabs, but keep newlines
+    .replace(/[ \t]*\n[ \t]*/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+  const parts = norm.match(/[^.!?…\n]+[.!?…]*|\n/g) || [];
   const out = [];
   let cur = '';
+  const flush = () => { const s = cur.replace(/\n+/g, '\n').trim(); if (s) out.push(s); cur = ''; };
   for (const p of parts) {
-    if ((cur + p).length > max && cur) {
-      out.push(cur.trim());
-      cur = '';
-    }
-    cur += p;
+    if (p === '\n') { cur += '\n'; continue; }
+    const piece = p.trim();
+    if (!piece) continue;
+    const sep = cur && !cur.endsWith('\n') ? ' ' : '';
+    if ((cur + sep + piece).length > max && cur.trim()) flush();
+    cur += (cur && !cur.endsWith('\n') ? ' ' : '') + piece;
   }
-  if (cur.trim()) out.push(cur.trim());
+  flush();
   return out;
 }
 

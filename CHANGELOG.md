@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.7
+- Editor — zoom coerent: zoom-ul e acum o lupă pe toată pagina (ca la editoarele obișnuite), nu o mărire separată a textului. Textul, titlul, spațierea și marginile cresc și scad împreună, la fel în ambele ferestre; mărimea reală a fontului documentului rămâne neatinsă (la 100% textul e exact cât e setat, ex. 10pt). Înainte titlul și textul se măreau prin mecanisme diferite și ieșeau necoerente.
+- Editor — spațiere mai strânsă implicit: când nu e setată o spațiere anume în formatare, rândurile sunt la 1,5 (nu 1,7), deci textul e mai apropiat.
+- Citire cu voce (Mihai) — intonația punctuației și a aliniatelor: pauzele dintre paragrafe se păstrează, iar un rând fără semn de punctuație la final (un titlu) primește cadența lui de încheiere în loc să se lipească de fraza următoare. Punctuația dă intonația firească (ton urcat la „?", oprire la „.", pauză scurtă la „,").
+
 ## v0.10.6
 - Mini-player voce: fereastră mai mare, bara de nivel a microfonului mai mare (verde → galben → roșu pe măsură ce se apropie de maxim) și un avertisment „prea tare" când semnalul distorsionează. Dictarea tot nu pornește singură — microfonul pornește doar la click.
 
