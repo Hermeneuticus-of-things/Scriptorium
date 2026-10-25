@@ -1,7 +1,8 @@
 import { LANG_NAMES } from '../lib/lookups.js';
 import ServicesPanel from './ServicesPanel.jsx';
 import React, { useRef, useState } from 'react';
-import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
+import { DEFAULT_SETTINGS, LOOK_DEFAULTS, normalizeLook } from '../lib/settingsDefaults.js';
+import AppearancePane from './AppearancePane.jsx';
 import { colorFor, newMachineId } from '../lib/team.js';
 import { listsFor, profileId } from '../lib/editorial.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
@@ -16,21 +17,14 @@ const tabLabel = (k) => {
   const v = t(`set.tab.${k}`);
   return !v || v === `set.tab.${k}` ? TAB_FALLBACK[k] || k : v;
 };
-const FONTS = [
-  ['Georgia, serif', 'Georgia'],
-  ["'Times New Roman', serif", 'Times New Roman'],
-  ["'Palatino Linotype', Palatino, serif", 'Palatino'],
-  ['Garamond, serif', 'Garamond'],
-  ['Arial, sans-serif', 'Arial'],
-  ["'Segoe UI', system-ui, sans-serif", 'Segoe UI'],
-  ["'Courier New', monospace", 'Courier New'],
-];
 
 export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, initialTab }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
   const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
   const [tab, setTab] = useState(() => (TABS.includes(initialTab) ? initialTab : 'general'));
   const [s, setS] = useState({
+    ...Object.fromEntries(Object.keys(LOOK_DEFAULTS).map((k) => [k, init[k] ?? LOOK_DEFAULTS[k]])),
+    savedThemes: init.savedThemes || [],
     language: init.language,
     reopenLastProject: init.reopenLastProject !== false,
     autoUpdateCheck: init.autoUpdateCheck !== false,
@@ -217,7 +211,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
 
   const save = async () => {
     try {
-      const patch = {
+      const patch = normalizeLook({
         ...s,
         autosaveSec: Math.max(1, num(s.autosaveSec, 2)),
         fontSize: num(s.fontSize, 18) || 18,
@@ -244,7 +238,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           color: s.teamColor,
           machine: init.team?.machine || newMachineId(),
         },
-      };
+      });
       patch.dtedPath = s.dtedPath.trim();
       delete patch.teamName;
       delete patch.teamColor;
@@ -306,118 +300,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         )}
       </>
     ),
-    appearance: (
-      <>
-        <label>
-          {t('set.theme')}
-          <select value={s.theme} onChange={set('theme')}>
-            {['system', 'light', 'dark', 'sepia'].map((x) => <option key={x} value={x}>{t(`set.theme.${x}`)}</option>)}
-          </select>
-        </label>
-        <label>
-          {t('ui.settingsDialog.aspect_interfata')}
-          <select value={s.uiStyle} onChange={set('uiStyle')}>
-            <option value="classic">{t('ui.settingsDialog.clasic_ca_scrivener_3')}</option>
-            <option value="modern">Modern</option>
-          </select>
-        </label>
-        <div className="row">
-          <label>
-            {t('set.editorFont')}
-            <select value={s.editorFont} onChange={set('editorFont')}>
-              {!FONTS.some(([v]) => v === s.editorFont) && <option value={s.editorFont}>{s.editorFont}</option>}
-              {FONTS.map(([v, n]) => <option key={v} value={v} style={{ fontFamily: v }}>{n}</option>)}
-            </select>
-          </label>
-          <label>
-            {t('set.fontSize')}
-            <input type="number" min="12" max="32" value={s.fontSize} onChange={set('fontSize')} />
-          </label>
-        </div>
-        <div className="row">
-          <label>
-            {t('set.lineHeight')}
-            <input type="number" min="1" max="3" step="0.1" value={s.lineHeight} onChange={set('lineHeight')} />
-          </label>
-          <label>
-            {t('set.pageWidth')}
-            <input type="number" min="25" max="120" value={s.pageWidth} onChange={set('pageWidth')} />
-          </label>
-          <label>
-            {t('set.binderFontSize')}
-            <input type="number" min="10" max="22" value={s.binderFontSize} onChange={set('binderFontSize')} />
-          </label>
-        </div>
-        <label>
-          {t('set.accent')}
-          <div className="row">
-            <input type="color" value={s.accentColor || '#8a5a2b'} onChange={set('accentColor')} />
-            {s.accentColor && <button onClick={() => set('accentColor')('')}>{t('btn.default')}</button>}
-          </div>
-        </label>
-        <label>
-          {t('ui.settings.commentColor')}
-          <div className="row">
-            <input type="color" aria-label={t('ui.settings.commentColor')} value={s.commentColor || '#f5d76e'} onChange={set('commentColor')} />
-            {s.commentColor && <button onClick={() => set('commentColor')('')}>{t('btn.default')}</button>}
-          </div>
-        </label>
-        <fieldset className="revision-colors">
-          <legend>{t('ui.settings.revisionColors')}</legend>
-          <div className="row">
-            {s.revisionColors.map((c, i) => (
-              <label key={i} className="rev-color">
-                {t('ui.settings.revisionRound', { n: i + 1 })}
-                <input type="color" aria-label={t('ui.settings.revisionRound', { n: i + 1 })} value={c} onChange={(e) => setS((p) => ({ ...p, revisionColors: p.revisionColors.map((x, k) => (k === i ? e.target.value : x)) }))} />
-              </label>
-            ))}
-            <button onClick={() => setS((p) => ({ ...p, revisionColors: [...DEFAULT_SETTINGS.revisionColors] }))}>{t('btn.default')}</button>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>{t('set.composition')}</legend>
-          <div className="row">
-            <label>
-              {t('set.compBg')}
-              <input type="color" value={comp.bg || '#1d1c1a'} onChange={(e) => setComp((c) => ({ ...c, bg: e.target.value }))} />
-            </label>
-            <label>
-              {t('set.compWidth')}
-              <input type="number" min="25" max="80" value={comp.width} onChange={(e) => setComp((c) => ({ ...c, width: e.target.value }))} />
-            </label>
-            <label>
-              {t('set.compFade')}
-              <input type="number" min="0" max="100" step="5" value={comp.fade} onChange={(e) => setComp((c) => ({ ...c, fade: e.target.value }))} />
-            </label>
-          </div>
-          <label className="check">
-            <input type="checkbox" checked={comp.paper} onChange={(e) => setComp((c) => ({ ...c, paper: e.target.checked }))} /> {t('set.compPaper')}
-          </label>
-          {comp.bg && <button className="link" onClick={() => setComp((c) => ({ ...c, bg: '' }))}>{t('set.compBgDefault')}</button>}
-          <div className="row comp-bg-image">
-            <label>
-              Imagine de fundal
-              <input type="file" accept="image/*" onChange={pickBgImage} />
-            </label>
-            {comp.bgImage && (
-              <>
-                <span className="comp-bg-thumb" style={{ backgroundImage: `url("${comp.bgImage}")` }} aria-label="Previzualizare fundal" />
-                <select value={comp.bgImageFit} onChange={(e) => setComp((c) => ({ ...c, bgImageFit: e.target.value }))}>
-                  <option value="cover">Umple</option>
-                  <option value="contain">{t('ui.settingsDialog.incadreaza')}</option>
-                  <option value="tile">{t('ui.settingsDialog.repeta')}</option>
-                  <option value="center">Centrat</option>
-                </select>
-                <button className="link" onClick={() => setComp((c) => ({ ...c, bgImage: '' }))}>{t('ui.settingsDialog.fara_imagine')}</button>
-              </>
-            )}
-          </div>
-          <label className="check">
-            <input type="checkbox" checked={comp.showTargets} onChange={(e) => setComp((c) => ({ ...c, showTargets: e.target.checked }))} /> {t('ui.settingsDialog.arata_tinta_document_si_sesiune')}
-          </label>
-        </fieldset>
-      </>
-    ),
+    appearance: <AppearancePane s={s} setS={setS} set={set} comp={comp} setComp={setComp} pickBgImage={pickBgImage} api={api} onError={onError} />,
     behaviors: (
       <>
         <label>

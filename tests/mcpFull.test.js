@@ -191,6 +191,8 @@ const PRELOAD_COVERAGE = {
   speakCloud: 'gui: citire cu voce tare (Speechify) redată în fereastră; un agent nu are difuzoare',
   newWindow: 'gui: ferestre',
   toggleFullScreen: 'gui: ferestre',
+  listDisplays: 'gui: ferestre',
+  compositionDisplay: 'gui: ferestre',
   recheckSpelling: 'gui: corector ortografic',
   openMediaExternal: 'gui: deschide aplicația externă',
   releaseProject: 'gui: ferestre',

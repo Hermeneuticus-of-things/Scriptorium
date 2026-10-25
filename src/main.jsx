@@ -13,6 +13,7 @@ import './editor-extra.css';
 import './help/help.css';
 import './ai.css';
 import './scrivener-theme.css';
+import './appearance.css';
 
 // Electron: window.api from the preload. Browser: IndexedDB-backed web/PWA build,
 // or the in-memory demo with ?demo (also used when IndexedDB is unavailable).

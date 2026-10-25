@@ -20,7 +20,7 @@ const HISTORY_CACHE = new Map(); // key → { base, groups: [[stepJSON]], html }
 const HISTORY_MAX_GROUPS = 400;
 const HISTORY_MAX_DOCS = 30;
 import { buildExtensions } from '../editor/extensions.js';
-import { resolveWikiLink } from '../editor/writing.js';
+import { resolveWikiLink, typewriterScroll } from '../editor/writing.js';
 import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { countWords, textToHtml } from '../lib/text.js';
@@ -141,9 +141,12 @@ const Editor = forwardRef(function Editor(
           }
         }
         if (!typewriterRef.current) return; // a ref: turning the mode on reaches editors already open
-        const { node } = ed.view.domAtPos(ed.state.selection.from);
-        const el = node.nodeType === 1 ? node : node.parentElement;
-        el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        // Keeps the typing line at the position chosen in Options (Aspect > Editor), 50 % by default.
+        if (!typewriterScroll(ed.view)) {
+          const { node } = ed.view.domAtPos(ed.state.selection.from);
+          const el = node.nodeType === 1 ? node : node.parentElement;
+          el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
       },
       editorProps: {
         // Right-click on unselected text selects the word under the pointer, so the context
