@@ -506,8 +506,8 @@ const flat = (nodes, out = []) => {
     check('Ctrl+2: corkboard', Boolean(await waitFor(() => win.locator('.toolbar .seg button.on', { hasText: 'Corkboard' }).count(), 2000)));
     await win.keyboard.press('Control+1');
     check('Ctrl+1: editor', Boolean(await waitFor(() => win.locator('.toolbar .seg button.on', { hasText: 'Editor' }).count(), 2000)));
-    await win.keyboard.press('Control+Alt+g');
-    check('Ctrl+Alt+G: go to dialog', Boolean(await waitFor(() => win.locator('.modal').count(), 2000)));
+    await win.keyboard.press('Control+j');
+    check('Ctrl+J: go to dialog', Boolean(await waitFor(() => win.locator('.modal').count(), 2000)));
     await closeModal();
     await binderRow('Alfa').click();
     const alfa = nodeBy('Alfa');
