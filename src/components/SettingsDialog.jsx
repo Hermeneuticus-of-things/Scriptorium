@@ -61,6 +61,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     aiEnabled: init.aiEnabled !== false,
     backupOnClose: init.backupOnClose !== false,
     backupOnOpen: Boolean(init.backupOnOpen),
+    snapshotOnSave: Boolean(init.snapshotOnSave),
     backupZip: init.backupZip !== false,
     backupEveryMin: init.backupEveryMin || 0,
     backupKeep: init.backupKeep || 10,
@@ -405,6 +406,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             {['rename', 'openQuickRef'].map((x) => <option key={x} value={x}>{t(`set.binderDbl.${x}`)}</option>)}
           </select>
         </label>
+        {check('snapshotOnSave', t('set.snapshotOnSave'))}
         {check('typewriter', t('set.typewriter'))}
       </>
     ),
