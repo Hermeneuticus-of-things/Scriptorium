@@ -24,6 +24,16 @@ async function caretEnd(page, loc = ed(page)) {
   await page.keyboard.press('Control+End');
   await page.waitForTimeout(30);
 }
+// Scrivenings is one continuous text, so Ctrl+End goes to the end of the whole set: the end
+// of one section is reached by clicking the bottom-right of its last block, then End.
+async function sectionEnd(page, section) {
+  const last = section.locator(':scope > *').last();
+  const box = await last.boundingBox();
+  await last.click({ position: { x: Math.max(1, box.width - 2), y: Math.max(1, box.height - 3) } });
+  await page.waitForTimeout(80);
+  await page.keyboard.press('End');
+  await page.waitForTimeout(30);
+}
 let failures = 0;
 function check(name, ok, info = '') {
   if (!ok) failures++;
@@ -59,4 +69,4 @@ async function menuCmd(page, label, { wait = 300 } = {}) {
   }
   throw new Error(`menu item not found: ${label}`);
 }
-module.exports = { open, ed, caretEnd, check, done, menuPick, menuCmd };
+module.exports = { open, ed, caretEnd, sectionEnd, check, done, menuPick, menuCmd };

@@ -1,14 +1,14 @@
 import { t as i18nT } from '../lib/i18n.js';
 import { TextSelection } from '@tiptap/pm/state';
 import { sentenceAt, wordAt } from '../lib/textRange.js';
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 // Serializing the whole document (getHTML) costs ~7 ms per keystroke on 50k words, so the
 // HTML is produced and handed to onChange once typing pauses. Every path that needs the
 // newest text (blur, unmount, getHtml/setHtml, window unload, App flush) flushes first.
 export const SERIALIZE_DELAY = 300;
 import { EditorContent, useEditor } from '@tiptap/react';
-import { getHTMLFromFragment } from '@tiptap/core';
+import { getHTMLFromFragment, getSchema } from '@tiptap/core';
 import { Step } from '@tiptap/pm/transform';
 import { closeHistory } from '@tiptap/pm/history';
 
@@ -22,6 +22,7 @@ const HISTORY_MAX_DOCS = 30;
 import { buildExtensions } from '../editor/extensions.js';
 import { resolveWikiLink, typewriterScroll } from '../editor/writing.js';
 import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
+import { buildScriveningsDoc, replaceSectionContent, sectionAt, sectionHtml, sectionRanges } from '../editor/scriveningsBoundary.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { countWords, textToHtml } from '../lib/text.js';
 import { insertable } from '../lib/inlineInsert.js';
@@ -66,6 +67,15 @@ const Editor = forwardRef(function Editor(
     showStylesPanel = false,
     onStylesChange = null,
     onCloseStylesPanel = null,
+    // Scrivenings as one continuous text: [{id, title, html, readOnly}]. Each section is
+    // saved through onSectionChange(id, html); registerSectionRef(id, handle) gives every
+    // document its own handle; onSectionFocus(id) follows the caret; onOpenSection(id) =
+    // click on a section title.
+    sections = null,
+    onSectionChange = null,
+    onSectionFocus = null,
+    registerSectionRef = null,
+    onOpenSection = null,
   },
   ref,
 ) {
@@ -106,11 +116,46 @@ const Editor = forwardRef(function Editor(
   const dirty = useRef(null);
   const dirtyTimer = useRef(null);
   const flushRef = useRef(() => {});
+  const scriv = Boolean(sections);
+  const sectionChangeRef = useRef(onSectionChange);
+  sectionChangeRef.current = onSectionChange;
+  const sectionFocusRef = useRef(onSectionFocus);
+  sectionFocusRef.current = onSectionFocus;
+  const openSectionRef = useRef(onOpenSection);
+  openSectionRef.current = onOpenSection;
+  const focusedSection = useRef(null);
+  // Scrivenings: id → section node last saved (an untouched section keeps its node object,
+  // so only the sections actually edited are serialized and saved).
+  const savedSections = useRef(new Map());
+  // Built once: the document of sections for the editor's first content.
+  const scrivInit = useMemo(() => {
+    if (!sections) return null;
+    const schema = getSchema(buildExtensions({ scrivenings: {} }));
+    return buildScriveningsDoc(schema, sections).toJSON();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const followSection = (state) => {
+    if (!scriv) return;
+    const s = sectionAt(state.doc, state.selection.head);
+    if (s && s.id !== focusedSection.current) {
+      focusedSection.current = s.id;
+      sectionFocusRef.current?.(s.id);
+    }
+  };
   flushRef.current = () => {
     clearTimeout(dirtyTimer.current);
     const pend = dirty.current;
     if (!pend) return;
     dirty.current = null;
+    if (scriv) {
+      for (const s of sectionRanges(pend.doc)) {
+        const prev = savedSections.current.get(s.id);
+        if (prev && prev.node === s.node) continue;
+        const out = sectionHtml(s.node, pend.schema);
+        savedSections.current.set(s.id, { node: s.node, html: out });
+        if (!prev || prev.html !== out) sectionChangeRef.current?.(s.id, out);
+      }
+      return;
+    }
     const out = getHTMLFromFragment(pend.doc.content, pend.schema);
     if (scriptRef.current) {
       charsRef.current = collectCharacters(out);
@@ -120,10 +165,15 @@ const Editor = forwardRef(function Editor(
   };
   const editor = useEditor(
     {
-      extensions: buildExtensions({ smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current, getLinkTargets: () => linkTargetsRef.current, onMissingLink: (label, from) => createLinkRef.current && setWikiOffer({ label, from, folder: linkFolderRef.current }) }),
-      content: html || '<p></p>',
+      extensions: buildExtensions({ scrivenings: scriv ? { onOpen: (id) => openSectionRef.current?.(id), openTitle: i18nT('ui.scriv.deschideSingur'), readOnlyLabel: i18nT('ui.editor.doar_citire') } : null, smartQuotes, corrections, showInvisibles, getWords: () => wordsRef.current, getScriptFormat: () => scriptRef.current, getCharacters: () => charsRef.current, getSceneHeadings: () => scenesRef.current, getLinkTargets: () => linkTargetsRef.current, onMissingLink: (label, from) => createLinkRef.current && setWikiOffer({ label, from, folder: linkFolderRef.current }) }),
+      content: scrivInit || html || '<p></p>',
       parseOptions: PARSE_OPTIONS,
       editable: !readOnly,
+      onCreate: ({ editor: ed }) => {
+        if (!scriv) return;
+        // Every section as loaded counts as saved (nothing is written until it is edited).
+        for (const s of sectionRanges(ed.state.doc)) savedSections.current.set(s.id, { node: s.node, html: null });
+      },
       onTransaction: ({ transaction: tr }) => {
         const h = histRef.current;
         if (!h || replaying.current || !tr.docChanged || tr.getMeta('addToHistory') === false) return;
@@ -136,10 +186,14 @@ const Editor = forwardRef(function Editor(
         clearTimeout(dirtyTimer.current);
         dirtyTimer.current = setTimeout(() => flushRef.current(), SERIALIZE_DELAY);
       },
-      onFocus: () => onFocus?.(),
+      onFocus: ({ editor: ed }) => {
+        onFocus?.();
+        followSection(ed.state);
+      },
       onBlur: () => flushRef.current(),
       onDestroy: () => flushRef.current(),
       onSelectionUpdate: ({ editor: ed }) => {
+        followSection(ed.state);
         // Words in the selection for the footer ("Words: 37 of 1,234"); 0 = no selection.
         if (selWordsRef.current) {
           const { from, to, empty } = ed.state.selection;
@@ -303,8 +357,73 @@ const Editor = forwardRef(function Editor(
     return ok;
   }
 
-  useImperativeHandle(
-    ref,
+  // Elements inside `scope` (a Scrivenings section) or the whole editor.
+  const domRoot = (scope) => (scope ? editor.view.dom.querySelector(`[data-scriv-id="${CSS.escape(scope)}"] .scriv-body`) : editor.view.dom);
+  const selectFootnoteIn = (index, scope) => {
+    if (!editor || editor.isDestroyed) return false;
+    const el = domRoot(scope)?.querySelectorAll('[data-footnote],[data-linked-footnote]')[index];
+    if (!el) return false;
+    if (el.hasAttribute('data-footnote')) {
+      const pos = editor.view.posAtDOM(el, 0);
+      editor.chain().focus().setNodeSelection(pos).scrollIntoView().run();
+    } else {
+      editor.chain().focus().setTextSelection({ from: editor.view.posAtDOM(el, 0), to: editor.view.posAtDOM(el, el.childNodes.length) }).scrollIntoView().run();
+    }
+    return true;
+  };
+  const selectCommentIn = (index, scope) => {
+    if (!editor || editor.isDestroyed) return false;
+    const el = domRoot(scope)?.querySelectorAll('[data-comment]')[index];
+    if (!el) return false;
+    const from = editor.view.posAtDOM(el, 0);
+    const to = editor.view.posAtDOM(el, el.childNodes.length);
+    editor.chain().focus().setTextSelection({ from, to }).scrollIntoView().run();
+    return true;
+  };
+  // Selects the first occurrence of a text snippet inside `root` (the doc, or one Scrivenings
+  // section whose content starts at `base`).
+  const findTextIn = (snippet, opts, root, base) => {
+    if (!editor || !snippet) return false;
+    const needle = snippet.replace(/^…|…$/g, '').trim().slice(0, 60);
+    if (!needle) return false;
+    let found = null;
+    let blockNo = -1;
+    const wantBlock = Number.isInteger(opts.block) ? opts.block : null;
+    const nearest = (text) => {
+      if (!Number.isFinite(opts.at)) return text.indexOf(needle);
+      let best = -1;
+      for (let i = text.indexOf(needle); i >= 0; i = text.indexOf(needle, i + 1)) if (best < 0 || Math.abs(i - opts.at) < Math.abs(best - opts.at)) best = i;
+      return best;
+    };
+    const pass = (only) => root.descendants((node, pos) => {
+      if (found || !node.isTextblock) return !found;
+      blockNo += 1;
+      if (only !== null && blockNo !== only) return false;
+      const text = node.textContent;
+      const at = only !== null ? nearest(text) : text.indexOf(needle);
+      if (at >= 0) {
+        // map text offset to document position by walking inline children
+        let offset = 0;
+        let start = null;
+        node.forEach((child, childOffset) => {
+          if (start !== null) return;
+          const len = child.isText ? child.text.length : 0;
+          if (child.isText && at >= offset && at <= offset + len) start = base + pos + 1 + childOffset + (at - offset);
+          offset += len;
+        });
+        if (start !== null) found = { from: start, to: start + needle.length };
+      }
+      return false;
+    });
+    if (wantBlock !== null) pass(wantBlock);
+    blockNo = -1;
+    if (!found) pass(null);
+    if (!found) return false;
+    editor.chain().focus().setTextSelection(found).scrollIntoView().run();
+    return true;
+  };
+
+  const handle = useMemo(
     () => ({
       editor,
       setScriptElement: (el) => editor?.chain().focus().setScriptElement(el).run(),
@@ -351,28 +470,9 @@ const Editor = forwardRef(function Editor(
         return ok;
       },
       // Selects the index-th footnote marker or linked-footnote anchor (Inspector › Comments & Notes).
-      selectFootnote: (index) => {
-        if (!editor || editor.isDestroyed) return false;
-        const el = editor.view.dom.querySelectorAll('[data-footnote],[data-linked-footnote]')[index];
-        if (!el) return false;
-        if (el.hasAttribute('data-footnote')) {
-          const pos = editor.view.posAtDOM(el, 0);
-          editor.chain().focus().setNodeSelection(pos).scrollIntoView().run();
-        } else {
-          editor.chain().focus().setTextSelection({ from: editor.view.posAtDOM(el, 0), to: editor.view.posAtDOM(el, el.childNodes.length) }).scrollIntoView().run();
-        }
-        return true;
-      },
+      selectFootnote: (index) => selectFootnoteIn(index, null),
       // Selects the index-th comment's text (Inspector › Comments › Go to).
-      selectComment: (index) => {
-        if (!editor || editor.isDestroyed) return false;
-        const el = editor.view.dom.querySelectorAll('[data-comment]')[index];
-        if (!el) return false;
-        const from = editor.view.posAtDOM(el, 0);
-        const to = editor.view.posAtDOM(el, el.childNodes.length);
-        editor.chain().focus().setTextSelection({ from, to }).scrollIntoView().run();
-        return true;
-      },
+      selectComment: (index) => selectCommentIn(index, null),
       // Inserts after the selection (never over it); a single paragraph goes inline at the caret.
       insertHtmlAfter: (h) => {
         if (!editor || editor.isDestroyed || !editor.isEditable) return false;
@@ -383,46 +483,7 @@ const Editor = forwardRef(function Editor(
       // Selects the first occurrence of a text snippet (used to jump to an editorial issue).
       // opts.block (0-based textblock index, = lint paragraph) and opts.at (offset in it) pick
       // the occurrence nearest to that place, so a repeated word jumps to the right one.
-      findText: (snippet, opts = {}) => {
-        if (!editor || !snippet) return false;
-        const needle = snippet.replace(/^…|…$/g, '').trim().slice(0, 60);
-        if (!needle) return false;
-        let found = null;
-        let blockNo = -1;
-        const wantBlock = Number.isInteger(opts.block) ? opts.block : null;
-        const nearest = (text) => {
-          if (!Number.isFinite(opts.at)) return text.indexOf(needle);
-          let best = -1;
-          for (let i = text.indexOf(needle); i >= 0; i = text.indexOf(needle, i + 1)) if (best < 0 || Math.abs(i - opts.at) < Math.abs(best - opts.at)) best = i;
-          return best;
-        };
-        const pass = (only) => editor.state.doc.descendants((node, pos) => {
-          if (found || !node.isTextblock) return !found;
-          blockNo += 1;
-          if (only !== null && blockNo !== only) return false;
-          const text = node.textContent;
-          const at = only !== null ? nearest(text) : text.indexOf(needle);
-          if (at >= 0) {
-            // map text offset to document position by walking inline children
-            let offset = 0;
-            let start = null;
-            node.forEach((child, childOffset) => {
-              if (start !== null) return;
-              const len = child.isText ? child.text.length : 0;
-              if (child.isText && at >= offset && at <= offset + len) start = pos + 1 + childOffset + (at - offset);
-              offset += len;
-            });
-            if (start !== null) found = { from: start, to: start + needle.length };
-          }
-          return false;
-        });
-        if (wantBlock !== null) pass(wantBlock);
-        blockNo = -1;
-        if (!found) pass(null);
-        if (!found) return false;
-        editor.chain().focus().setTextSelection(found).scrollIntoView().run();
-        return true;
-      },
+      findText: (snippet, opts = {}) => Boolean(editor) && findTextIn(snippet, opts, editor.state.doc, 0),
       // Splits the document at the cursor. Returns {before, after, title} as HTML;
       // the title is the selected text, if any.
       openFind: () => setShowFind(true),
@@ -465,8 +526,68 @@ const Editor = forwardRef(function Editor(
         return true;
       },
     }),
-    [editor],
+    [editor], // eslint-disable-line react-hooks/exhaustive-deps
   );
+  useImperativeHandle(ref, () => handle, [handle]);
+
+  // Scrivenings: one handle per document, so the rest of the app (Inspector, split pane,
+  // project replace, Split at cursor) still addresses each document by its id.
+  useEffect(() => {
+    if (!editor || !scriv || !registerSectionRef) return undefined;
+    const ids = sectionRanges(editor.state.doc).map((s) => s.id);
+    const find = (id) => (editor.isDestroyed ? null : sectionRanges(editor.state.doc).find((s) => s.id === id));
+    for (const id of ids) {
+      registerSectionRef(id, {
+        ...handle,
+        sectionId: id,
+        getHtml: () => {
+          flushRef.current();
+          const s = find(id);
+          return s ? sectionHtml(s.node, editor.schema) : '';
+        },
+        getText: () => {
+          const s = find(id);
+          return s ? s.node.textBetween(0, s.node.content.size, '\n\n') : '';
+        },
+        setHtml: (h) => {
+          flushRef.current();
+          if (editor.isDestroyed) return;
+          const tr = editor.state.tr;
+          if (!replaceSectionContent(tr, id, h)) return;
+          editor.view.dispatch(tr.setMeta('preventUpdate', true).setMeta('addToHistory', false));
+          const s = find(id);
+          if (s) savedSections.current.set(id, { node: s.node, html: null });
+        },
+        findText: (snippet, opts = {}) => {
+          const s = find(id);
+          return Boolean(s) && findTextIn(snippet, opts, s.node, s.from);
+        },
+        selectFootnote: (index) => selectFootnoteIn(index, id),
+        selectComment: (index) => selectCommentIn(index, id),
+        // Split at the cursor inside this document only.
+        splitAtCursor: (useSelectionAsTitle = true) => {
+          const s = find(id);
+          if (!s) return null;
+          const { from, to } = editor.state.selection;
+          if (from < s.from || from > s.to) return null;
+          const title = from === to || !useSelectionAsTitle ? '' : editor.state.doc.textBetween(from, Math.min(to, s.to), ' ').trim().slice(0, 80);
+          return {
+            before: getHTMLFromFragment(s.node.content.cut(0, from - s.from), editor.schema),
+            after: getHTMLFromFragment(s.node.content.cut(from - s.from), editor.schema),
+            title,
+          };
+        },
+        // Caret into this document (kept where it is when it is already there).
+        focus: () => {
+          const s = find(id);
+          if (!s) return;
+          const { head } = editor.state.selection;
+          editor.commands.focus(head >= s.from && head <= s.to ? undefined : s.from + 1);
+        },
+      });
+    }
+    return () => ids.forEach((id) => registerSectionRef(id, null));
+  }, [editor, handle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Unmount (document switch, pane closed) and window close must not drop pending typing.
   useEffect(() => {
@@ -662,9 +783,11 @@ const Editor = forwardRef(function Editor(
             }}
           />
         ))}
-        <h2 className="doc-title" onClick={onTitleClick}>
-          {title}
-        </h2>
+        {!scriv && (
+          <h2 className="doc-title" onClick={onTitleClick}>
+            {title}
+          </h2>
+        )}
         {readOnly && <p className="hint">{i18nT('ui.editor.doar_citire')}</p>}
         {showFormatFind && <FormatFind editor={editor} styles={styles} onClose={() => { setShowFormatFind(false); editor.commands.focus(); }} />}
         {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={1} />}

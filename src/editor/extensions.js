@@ -15,6 +15,7 @@ import { Corrections } from './corrections.js';
 import { Invisibles } from './invisibles.js';
 import { AllCaps, Bookmark, ListStyle, PageBreak, ParagraphFormat, PreserveFormat, ScaledImage, SmallCaps } from './formatting.js';
 import { LineHighlight } from './lineHighlight.js';
+import { scriveningsExtensions } from './scriveningsBoundary.js';
 import { AutoComplete, CharStyle, ParagraphStyle, Revision, WikiLink, WritingFocus } from './writing.js';
 
 // Comment attached to a text range: <span data-comment="text" class="comment">…</span>
@@ -236,7 +237,7 @@ export const RedoKeys = Extension.create({
   },
 });
 
-export function buildExtensions({ placeholder = tr('ui.editor.placeholder'), smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], getLinkTargets = () => [], onMissingLink = null, corrections = null, showInvisibles = false } = {}) {
+export function buildExtensions({ placeholder = tr('ui.editor.placeholder'), smartQuotes = true, getWords = () => [], getScriptFormat = () => null, getCharacters = () => [], getSceneHeadings = () => [], getLinkTargets = () => [], onMissingLink = null, corrections = null, showInvisibles = false, scrivenings = null } = {}) {
   // corrections: {smartDashes, smartEllipsis, autoCapitalize, replacements}; null keeps the
   // historical behaviour (dashes/ellipsis only through Typography when smartQuotes is on).
   const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [], ...corrections } : null;
@@ -248,7 +249,9 @@ export function buildExtensions({ placeholder = tr('ui.editor.placeholder'), sma
     WritingFocus,
     AutoComplete.configure({ getWords }),
     WikiLink.configure({ getTargets: getLinkTargets, onMissing: onMissingLink }),
-    StarterKit.configure({ link: { openOnClick: false, protocols: ['scribner', 'scriptorium'] } }),
+    // Scrivenings (one continuous text over several documents): its own top node of sections.
+    StarterKit.configure({ link: { openOnClick: false, protocols: ['scribner', 'scriptorium'] }, ...(scrivenings ? { document: false, trailingNode: false } : {}) }),
+    ...(scrivenings ? scriveningsExtensions(scrivenings) : []),
     Placeholder.configure({ placeholder }),
     Comment,
     Footnote,

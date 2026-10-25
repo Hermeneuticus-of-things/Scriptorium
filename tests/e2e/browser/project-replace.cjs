@@ -38,7 +38,7 @@ const { open, caretEnd, check, done } = require('./_helpers.cjs');
   // Scrivenings over the folder shows replaced text too
   await binder('Partea a doua').click();
   await page.waitForTimeout(400);
-  const scr = await page.locator('.pane:not(.second) .scriv-section .ProseMirror').allInnerTexts();
+  const scr = await page.locator('.pane:not(.second) .scriv-section .scriv-body').allInnerTexts();
   check('Scrivenings sections show the replacement', scr.length > 0 && scr.every((s) => !/Matei\b/.test(s)), scr.join(' / ').slice(0, 160));
   check('no console errors', errors.length === 0, errors.join(' | '));
   await browser.close();

@@ -189,7 +189,7 @@
 }
 [data-ui='classic'] .doc-title { font: 600 12px var(--sc-font); color: var(--sc-muted); text-transform: none; }
 [data-ui='classic'] .scriv-head { background: var(--sc-chrome-2); border-bottom: 1px solid var(--sc-line); padding: 3px 10px; font-size: 12px; }
-[data-ui='classic'] .scriv-section .page.flow { border-bottom: 1px dashed #b8b8b8; }
+[data-ui='classic'] .scriv-section { border-bottom: 1px dashed #b8b8b8; }
 [data-ui='classic'] .find-bar { border-radius: 0; background: var(--sc-chrome); }
 
 /* ---------- inspector ---------- */

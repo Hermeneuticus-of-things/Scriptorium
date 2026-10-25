@@ -1,5 +1,5 @@
 // Scenario: Scrivenings in pane 1 and one of its documents alone in pane 2 — edits flow both ways.
-const { open, caretEnd, check, done } = require('./_helpers.cjs');
+const { open, caretEnd, sectionEnd, check, done } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
   const binder = (t) => page.locator('.binder').getByText(t, { exact: true });
@@ -10,13 +10,13 @@ const { open, caretEnd, check, done } = require('./_helpers.cjs');
   await page.locator('.pane').first().click({ position: { x: 20, y: 60 } }).catch(() => {});
   await binder('Partea întâi').click();
   await page.waitForTimeout(400);
-  const secs = page.locator('.pane:not(.second) .scriv-section .ProseMirror');
+  const secs = page.locator('.pane:not(.second) .scriv-section .scriv-body');
   const n = await secs.count();
   check('pane 1 shows Scrivenings', n === 3, `sections=${n}`);
   const p2 = page.locator('.pane.second .ProseMirror');
   check('pane 2 shows Drumul', (await p2.innerText()).includes('Matei'));
   if (n === 3) {
-    await caretEnd(page, secs.nth(1));
+    await sectionEnd(page, secs.nth(1));
     await page.keyboard.type(' DINSCRIV', { delay: 15 });
     await page.waitForTimeout(500);
     check('pane 2 shows the edit made in Scrivenings', (await p2.innerText()).includes('DINSCRIV'));

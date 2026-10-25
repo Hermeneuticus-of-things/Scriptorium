@@ -86,8 +86,8 @@
 
 /* ---- Linked documents (scrivenings) ---- */
 :root[style*='--scriv-title-font'] .scriv-section .doc-title, :root[style*='--scriv-title-font'] .scriv-head { font-family: var(--scriv-title-font); }
-:root[style*='--scriv-sep-style'] .scriv-section .page.flow { border-bottom-style: var(--scriv-sep-style); }
-:root[style*='--scriv-sep-color'] .scriv-section .page.flow { border-bottom-color: var(--scriv-sep-color); }
+:root[style*='--scriv-sep-style'] .scriv-section { border-bottom-style: var(--scriv-sep-style); }
+:root[style*='--scriv-sep-color'] .scriv-section { border-bottom-color: var(--scriv-sep-color); }
 
 /* ---- Annotation margin: comments and footnotes ---- */
 :root[style*='--annot-font'] .annotations, :root[style*='--annot-font'] .annot-pane .annot-text, :root[style*='--annot-font'] .prose .annotation { font-family: var(--annot-font); }

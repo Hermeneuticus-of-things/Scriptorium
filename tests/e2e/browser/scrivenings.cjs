@@ -1,15 +1,15 @@
 // Scenario 6: Scrivenings — edits in each section save to their own document; Enter at a section end.
-const { open, caretEnd, check, done } = require('./_helpers.cjs');
+const { open, caretEnd, sectionEnd, check, done } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
   const binder = (t) => page.locator('.binder').getByText(t, { exact: true });
   await binder('Partea întâi').click();
-  await page.waitForSelector('.scriv-section .ProseMirror');
-  const secs = page.locator('.scriv-section .ProseMirror');
+  await page.waitForSelector('.scriv-section .scriv-body');
+  const secs = page.locator('.scriv-section .scriv-body');
   check('one section per document of the folder', (await secs.count()) === 3);
-  await caretEnd(page, secs.nth(1));
+  await sectionEnd(page, secs.nth(1));
   await page.keyboard.type(' DOI', { delay: 10 });
-  await caretEnd(page, secs.nth(0));
+  await sectionEnd(page, secs.nth(0));
   await page.keyboard.type(' UNU', { delay: 10 });
   await page.keyboard.press('Enter');
   await page.keyboard.type('Paragraf nou', { delay: 10 });

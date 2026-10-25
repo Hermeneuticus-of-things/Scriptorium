@@ -232,10 +232,14 @@ label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--t
 .diff { white-space: pre-wrap; }
 .scrivenings { padding-bottom: 40vh; }
 .scriv-head { position: sticky; top: 0; z-index: 2; padding: 6px 14px; background: var(--bg); border-bottom: 1px solid var(--line); }
-.scriv-section .page.flow { margin: 0 auto; border-radius: 0; border-top: none; border-bottom: 1px dashed var(--line); box-shadow: none; padding-top: 18px; padding-bottom: 18px; }
-.scriv-section:first-of-type .page.flow { margin-top: 20px; border-top: 1px solid var(--line); }
-.scriv-section .doc-title { cursor: pointer; font-size: 13px; margin-bottom: .4em; }
-.scriv-section .prose .ProseMirror { min-height: 2em; }
+/* One editor, one section per document (src/editor/scriveningsBoundary.js). */
+.scrivenings .page.flow { margin: 20px auto 0; }
+.scriv-section { border-bottom: 1px dashed var(--line); padding: 18px 0; counter-reset: fn; }
+.scriv-section:first-child { padding-top: 0; }
+.scriv-section:last-child { border-bottom: none; }
+.scriv-section .doc-title { cursor: pointer; font-size: 13px; margin-bottom: .4em; user-select: none; }
+.scriv-section .scriv-body { min-height: 2em; }
+.scriv-section.scriv-ro .scriv-body { opacity: .75; }
 .card.dragging { opacity: .4; }
 .card.drop-before { box-shadow: -4px 0 0 var(--accent); }
 .card.drop-after { box-shadow: 4px 0 0 var(--accent); }
@@ -425,7 +429,7 @@ legend { color: var(--muted); padding: 0 4px; }
 
 /* --- Batch A: scrivenings toggles, split orientation, hoist, separators, text appearance, format bar --- */
 .scrivenings.no-titles .scriv-section .doc-title { display: none; }
-.scrivenings.no-separators .scriv-section .page.flow { border-bottom-color: transparent; border-top-color: transparent; }
+.scrivenings.no-separators .scriv-section { border-bottom-color: transparent; }
 .scriv-head .link { margin-left: 12px; }
 .workspace.split.split-h { flex-direction: column; }
 .workspace.split.split-h .pane + .pane { border-left: none; border-top: 1px solid var(--line); }
