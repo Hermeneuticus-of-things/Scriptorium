@@ -1126,3 +1126,17 @@ Comparație pe componente (text), rezultat consistent — **Scribner la paritate
 - **Scratchpad**: „Send to project" + append în ambele.
 - **Editor (opțiuni)**: paritate; diferă randarea nativă (font hinting) și „copyholder" (al 3-lea editor).
 - [ ] Opțional minor: Corkboard „Commit freeform order" (rearanjează binderul după pozițiile din freeform).
+
+### Format (verificat pe inventarul .qm): paritate+
+Meniul Format al clasicului are versale mici, versale, indentări granulare (prima linie, agățată, dreapta),
+păstrează-cu-următorul, liste numerotate/alfabetice, titluri 1–6, conversii note/comentarii. Scribner le
+are deja: `SmallCaps`/`AllCaps` (`src/editor/formatting.js`), indentări `firstIndent/indentLeft/indentRight`
++ tab stops, spațiere per paragraf, stiluri, conversii note↔comentarii. Singurele diferențe sunt
+specific-engleze (Capitalize 'i', ordinale) sau native (font hinting). **Verdict: paritate/superset.**
+
+### Verdict final audit 5 (metoda pe text, din resursele binare)
+Comparație pe ~70 de componente ale interfeței (toate etichetele din `ScrivenerApp_ro.qm`). La fiecare,
+Scribner are deja funcția — **paritate sau superset**, cu extrasele proprii peste (AI, MCP, dictare, RAG,
+fracții, per-output front/back matter). Goluri reale găsite în tot auditul și reparate: 2 — „Curățare text"
+(meniuri) și „Deschide folderul de backup" (Opțiuni). Rest: aliniere opțională minoră (ex. Corkboard
+„Commit freeform order") sau specific nativ/englez, nerelevant pentru un editor româno-centric.
