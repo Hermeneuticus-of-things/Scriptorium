@@ -72,6 +72,9 @@ const LAYOUT_DEFAULTS = {
   separatorBefore: 'auto',
 };
 
+// Decorative separator symbols (mirror of lib/compileLayouts.cjs DECORATIONS; the engine maps the key).
+const SEP_DECOR = [['stars', '* * *'], ['star', '*'], ['asterism', '⁂'], ['dinkus', '• • •'], ['fleuron', '❦'], ['tilde', '~'], ['hash', '#'], ['line', '———']];
+
 const clone = (x) => JSON.parse(JSON.stringify(x));
 
 function walk(nodes, fn, depth = 0) {
@@ -446,6 +449,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
           {label}
           <select value={s.kind} onChange={(e) => setIn(['separators', key], { ...s, kind: e.target.value })}>
             <option value="text">Text</option>
+            <option value="decorative">{tr('ui.compileDialog.p23.decorativ')}</option>
             <option value="page">{tr('ui.compileDialog.pagina_noua')}</option>
             <option value="space">{tr('ui.compileDialog.rand_gol')}</option>
             <option value="none">{tr('ui.compileDialog.nimic')}</option>
@@ -455,6 +459,16 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
           <label>
             Text
             <input value={s.text || ''} onChange={(e) => setIn(['separators', key], { ...s, text: e.target.value })} />
+          </label>
+        )}
+        {s.kind === 'decorative' && (
+          <label>
+            {tr('ui.compileDialog.p23.simbol')}
+            <select value={s.symbol || 'stars'} onChange={(e) => setIn(['separators', key], { ...s, symbol: e.target.value })}>
+              {SEP_DECOR.map(([k, sym]) => (
+                <option key={k} value={k}>{sym}</option>
+              ))}
+            </select>
           </label>
         )}
       </div>

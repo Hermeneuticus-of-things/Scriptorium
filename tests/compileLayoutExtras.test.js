@@ -23,4 +23,9 @@ describe('compile layout extras', () => {
     expect(css).toMatch(/\.lay1\{[^}]*column-count:2/);
     expect(L.layoutCss([{ cls: 'lay1', lay: { columns: 1 } }])).not.toMatch(/column-count/);
   });
+  it('decorative separator maps the chosen symbol to its glyph', () => {
+    expect(L.normalizeSep({ kind: 'decorative', symbol: 'asterism' })).toMatchObject({ kind: 'decorative', text: '⁂' });
+    expect(L.normalizeSep({ kind: 'decorative', symbol: 'stars' })).toMatchObject({ text: '* * *' });
+    expect(L.normalizeSep({ kind: 'decorative', symbol: 'line' })).toMatchObject({ line: true, text: '' });
+  });
 });
