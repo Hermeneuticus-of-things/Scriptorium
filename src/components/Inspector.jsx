@@ -93,6 +93,35 @@ function Keywords({ value, all, onChange }) {
   );
 }
 
+// One collapsible group of the Details tab: only what the writer opened stays open (remembered).
+const SECTIONS_KEY = 'scribner-inspector-sections';
+function Section({ id, title, open: openByDefault = false, children }) {
+  const [open, setOpen] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SECTIONS_KEY) || '{}');
+      return saved[id] ?? openByDefault;
+    } catch {
+      return openByDefault;
+    }
+  });
+  const toggle = (e) => {
+    const next = e.currentTarget.open;
+    setOpen(next);
+    try {
+      const saved = JSON.parse(localStorage.getItem(SECTIONS_KEY) || '{}');
+      localStorage.setItem(SECTIONS_KEY, JSON.stringify({ ...saved, [id]: next }));
+    } catch {
+      /* storage off */
+    }
+  };
+  return (
+    <details className="insp-section" open={open} onToggle={toggle}>
+      <summary>{title}</summary>
+      {open && <div className="insp-section-body">{children}</div>}
+    </details>
+  );
+}
+
 export default function Inspector({
   api, dir, project, node: selectedNode, html: selectedHtml, words: selectedWords, allKeywords, linkTargets = [], onOpen, onPatch: onPatchSelected,
   onNotesChange: onNotesSelected, onProjectNotesChange, onRestore, onError, flush,
@@ -184,30 +213,19 @@ export default function Inspector({
       </div>
 
       {tab === 'meta' && (
-        <div className="fields">
-          <label>
-            {tr('ui.advancedSearchDialog.sinopsis')}
+        <div className="fields insp-sections">
+          <Section id="synopsis" title={tr('ui.advancedSearchDialog.sinopsis')} open>
             <textarea
               key={`${node.id}:${node.synopsis || ''}`}
               rows={6}
+              aria-label={tr('ui.advancedSearchDialog.sinopsis')}
               defaultValue={node.synopsis || ''}
               onBlur={(e) => e.target.value !== (node.synopsis || '') && onPatch({ synopsis: e.target.value })}
             />
-          </label>
-          {!isRoot && <SynopsisImagePicker api={api} dir={dir} node={node} onPatch={onPatch} onError={onError} />}
+            {!isRoot && <SynopsisImagePicker api={api} dir={dir} node={node} onPatch={onPatch} onError={onError} />}
+          </Section>
           {!isRoot && (
-            <label>
-              {tr('ui.inspector.subtitlu')}
-              <input
-                key={`sub-${node.id}`}
-                defaultValue={node.subtitle || ''}
-                placeholder={tr('ui.inspector.subtitlu_tip')}
-                onBlur={(e) => e.target.value.trim() !== (node.subtitle || '') && onPatch({ subtitle: e.target.value.trim() })}
-              />
-            </label>
-          )}
-          {!isRoot && (
-            <>
+            <Section id="general" title={tr('ui.inspector.sec_general')} open>
               <div className="row">
                 <label>
                   {labelTitleOf(project, tr)}
@@ -226,21 +244,26 @@ export default function Inspector({
                   </select>
                 </label>
               </div>
-              <label>
-                {tr('ui.advancedSearchDialog.cuvinte_cheie')}
-                <Keywords value={node.keywords || []} all={allKeywords} onChange={(keywords) => onPatch({ keywords })} />
-              </label>
               <label className="check">
                 <input type="checkbox" checked={node.includeInCompile !== false} onChange={(e) => onPatch({ includeInCompile: e.target.checked })} />
                 {tr('ui.binder.include_in_compile')}
               </label>
+            </Section>
+          )}
+          {!isRoot && (
+            <Section id="keywords" title={`${tr('ui.advancedSearchDialog.cuvinte_cheie')}${(node.keywords || []).length ? ` (${node.keywords.length})` : ''}`}>
+              <Keywords value={node.keywords || []} all={allKeywords} onChange={(keywords) => onPatch({ keywords })} />
+            </Section>
+          )}
+          {!isRoot && (
+            <Section id="target" title={`${tr('ui.inspector.tinta_document')}${node.target ? `: ${node.target}` : ''}`}>
               <div className="row">
                 <label>
                   {tr('ui.inspector.tinta_document')}
                   <input type="number" min="0" step="100" value={node.target || 0} onChange={(e) => onPatch({ target: Number(e.target.value) || 0 })} />
                 </label>
                 <label>
-                  Unitate
+                  {tr('ui.inspector.unitate')}
                   <select value={node.targetType === 'Characters' ? 'Characters' : 'Words'} onChange={(e) => onPatch({ targetType: e.target.value })}>
                     <option value="Words">{tr('ui.inspector.cuvinte')}</option>
                     <option value="Characters">{tr('ui.inspector.caractere')}</option>
@@ -250,12 +273,31 @@ export default function Inspector({
               <label className="check">
                 <input type="checkbox" checked={node.targetNotify !== false} onChange={(e) => onPatch({ targetNotify: e.target.checked })} /> {tr('ui.inspector.notificare_la_atingerea_tintei')}
               </label>
-            </>
+            </Section>
           )}
-          {!isRoot && <CustomFields project={project} node={node} onPatch={onPatch} />}
-          {!isRoot && <DocumentExtras project={project} node={node} onPatch={onPatch} linkTargets={linkTargets} onOpen={onOpen} docs={docs} />}
-          <MetaTable project={project} node={node} />
-          <p className="muted">{words.toLocaleString(uiLocale())} {tr('ui.inspector.cuvinte_in_acest_document')}</p>
+          {!isRoot && (
+            <Section id="custom" title={tr('ui.inspector.sec_campuri')}>
+              <label>
+                {tr('ui.inspector.subtitlu')}
+                <input
+                  key={`sub-${node.id}`}
+                  defaultValue={node.subtitle || ''}
+                  placeholder={tr('ui.inspector.subtitlu_tip')}
+                  onBlur={(e) => e.target.value.trim() !== (node.subtitle || '') && onPatch({ subtitle: e.target.value.trim() })}
+                />
+              </label>
+              <CustomFields project={project} node={node} onPatch={onPatch} />
+            </Section>
+          )}
+          {!isRoot && (
+            <Section id="extras" title={tr('ui.inspector.sec_legaturi')}>
+              <DocumentExtras project={project} node={node} onPatch={onPatch} linkTargets={linkTargets} onOpen={onOpen} docs={docs} />
+            </Section>
+          )}
+          <Section id="info" title={`${tr('ui.inspector.sec_info')} · ${words.toLocaleString(uiLocale())} ${tr('ui.inspector.cuvinte')}`}>
+            <MetaTable project={project} node={node} />
+            <p className="muted">{words.toLocaleString(uiLocale())} {tr('ui.inspector.cuvinte_in_acest_document')}</p>
+          </Section>
         </div>
       )}
 
