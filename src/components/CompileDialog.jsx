@@ -1417,7 +1417,14 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       aria-label={tr('ui.compileDialog.p23.cssTitlu')}
                       placeholder={'.synopsis { font-style: italic; }'}
                       value={(format.html && format.html.css) || (format.ebook && format.ebook.css) || ''}
-                      onChange={(e) => { setIn(['html', 'css'], e.target.value); setIn(['ebook', 'css'], e.target.value); }}
+                      onChange={(e) => {
+                        const css = e.target.value;
+                        patchFormat((f) => {
+                          (f.html || (f.html = {})).css = css;
+                          (f.ebook || (f.ebook = {})).css = css;
+                          return f;
+                        });
+                      }}
                     />
                     <p className="muted small">{tr('ui.compileDialog.p23.cssInfo')}</p>
                   </fieldset>
