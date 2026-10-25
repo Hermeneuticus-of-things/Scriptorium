@@ -92,3 +92,13 @@
 .prose [data-revision="3"] { color: var(--rev-3, #2e7d32) !important; }
 .prose [data-revision="4"] { color: var(--rev-4, #6a1b9a) !important; }
 .prose [data-revision="5"] { color: var(--rev-5, #ef6c00) !important; }
+/* Label colour as a light row tint (binder, outline) */
+.binder .binder-row.tinted:not(.selected):not(.multi) { background: var(--row-tint); }
+.binder .binder-row.drop-keyword { outline: 2px dashed var(--accent, #8a5a2b); outline-offset: -2px; }
+.outliner tr.tinted:not(.selected) > td { background: var(--row-tint); }
+.outliner .title-cell .outline-syn { display: block; margin: 2px 0 0 22px; width: calc(100% - 22px); font-size: 0.86em; color: var(--muted); background: transparent; border: none; resize: vertical; min-height: 1.4em; padding: 0; font-family: inherit; }
+.outliner .title-cell .outline-syn:focus { color: inherit; outline: 1px solid var(--line); background: var(--paper); }
+/* Keyword colours as a stacked strip on the right edge of a card */
+.card .card-kw-strip { position: absolute; top: 6px; bottom: 6px; right: 0; width: 5px; display: flex; flex-direction: column; gap: 1px; border-radius: 2px 0 0 2px; overflow: hidden; pointer-events: none; }
+.card .card-kw-strip > span { flex: 1; }
+.card.drop-keyword { outline: 2px dashed var(--accent, #8a5a2b); outline-offset: 2px; }

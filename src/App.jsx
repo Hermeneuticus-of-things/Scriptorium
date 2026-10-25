@@ -22,10 +22,10 @@ import GoToDialog from './components/GoToDialog.jsx';
 import ProjectSettingsDialog from './components/ProjectSettingsDialog.jsx';
 import StatisticsDialog from './components/StatisticsDialog.jsx';
 import TargetsDialog from './components/TargetsDialog.jsx';
-import CollectionsBar from './components/CollectionsBar.jsx';
+import CollectionsBar, { SEARCH_RESULTS_TAB } from './components/CollectionsBar.jsx';
 import KeywordsDialog from './components/KeywordsDialog.jsx';
 import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
-import { collectionNodes, createCollection } from './lib/collections.js';
+import { addKeywordToDocs, addToCollection, collectionNodes, createCollection, removeFromCollection } from './lib/collections.js';
 import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
@@ -66,7 +66,7 @@ import EditorFooter from './components/EditorFooter.jsx';
 import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
-import { applySettingsCss } from './lib/settingsDefaults.js';
+import { applySettingsCss, labelColorIn as labelColorInOf } from './lib/settingsDefaults.js';
 import DialogA11y from './components/DialogA11y.jsx';
 import { setLanguage, cmdLabel, groupLabel, builtinName, t as tr, uiLocale } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
@@ -87,6 +87,8 @@ import {
   duplicateNode,
   convertNode,
   sortChildren,
+  groupIntoFolder,
+  docLink,
   siblingInOrder,
   moveNode,
   moveToTrash,
@@ -363,6 +365,7 @@ export default function App({ api: apiProp }) {
   const [aiProgress, setAiProgress] = useState(null);
   const [showSpeech, setShowSpeech] = useState(false);
   const [activeCollectionId, setActiveCollectionId] = useState(null);
+  const [searchResultIds, setSearchResultIds] = useState(null); // last project search, shown in the Search results tab
   // Notes of every item, loaded only while the active saved search looks in the Notes field.
   const [collectionNotes, setCollectionNotes] = useState({});
   useEffect(() => {
@@ -1103,7 +1106,6 @@ export default function App({ api: apiProp }) {
     if (!selectedId) return;
     setHideBinder(false);
     setActiveCollectionId(null);
-    if (hoistId && hoistId !== selectedId && !ancestorIds(project.tree, selectedId).includes(hoistId)) setHoistId(null);
     setRevealId(null);
     setTimeout(() => setRevealId(selectedId), 0);
   };
@@ -1925,8 +1927,23 @@ export default function App({ api: apiProp }) {
   const hoistNode = hoistId ? findNode(project.tree, hoistId) : null;
   const binderProject = binderProjectOf(project, hoistNode);
   const editorAreaClass = `editor-area ${editorView.hideFormatBar ? 'hide-formatbar' : ''} ${editorView.hideComments ? 'hide-comments' : ''} ${editorView.hideRevisions ? 'hide-revisions' : ''}`;
-  const activeCollection = activeCollectionId ? (project.collections || []).find((c) => c.id === activeCollectionId) : null;
-  const collectionIds = activeCollection ? collectionNodes(project, activeCollection, docs, collectionNotes).map((n) => n.id) : null;
+  const activeCollection = activeCollectionId === SEARCH_RESULTS_TAB
+    ? { id: SEARCH_RESULTS_TAB, title: tr('ui.collectionsBar.rezultatele_cautarii'), type: 'results' }
+    : activeCollectionId ? (project.collections || []).find((c) => c.id === activeCollectionId) : null;
+  const collectionIds = activeCollection?.type === 'results'
+    ? (searchResultIds || []).filter((id) => findNode(project.tree, id))
+    : activeCollection ? collectionNodes(project, activeCollection, docs, collectionNotes).map((n) => n.id) : null;
+  const colorIn = labelColorInOf(settings);
+  const dropKeyword = (ids, name) => saveProject(addKeywordToDocs(projectRef.current, ids, name));
+  const groupItems = (ids) => {
+    const folder = newNode('folder', tr('ui.binder.grup_nou'));
+    const tree = groupIntoFolder(project.tree, ids, folder);
+    if (tree === project.tree) return;
+    setTreeU(tree);
+    setSelectedIds(new Set());
+    setSelectedId(folder.id);
+    setRenameId(folder.id);
+  };
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
   const splitNode = splitId ? findNode(project.tree, splitId) : null;
   const copyNode = copyholder ? findNode(project.tree, copyholder.id) : null;
@@ -2528,6 +2545,7 @@ export default function App({ api: apiProp }) {
           onSelect={setActiveCollectionId}
           onChange={saveProject}
           selectedIds={[...selectedIds]}
+          searchResultIds={searchResultIds}
         />
         {hoistNode && (
           <div className="hoist-bar">
@@ -2548,6 +2566,24 @@ export default function App({ api: apiProp }) {
           onSetTemplateFolder={(id) => saveProject({ ...project, templateFolder: id || null })}
           filterIds={collectionIds}
           filterTitle={activeCollection?.title}
+          labelColorIn={colorIn}
+          collections={project.collections || []}
+          activeCollectionId={activeCollectionId}
+          onAddToCollection={(cid, ids) => saveProject(addToCollection(project, cid, ids))}
+          onNewCollection={(ids) => {
+            const title = window.prompt(tr('ui.advancedSearchDialog.numele_colectiei'), tr('ui.collectionsBar.colectie_noua'));
+            if (!title || !title.trim()) return;
+            const r = createCollection(project, { title: title.trim(), type: 'manual', ids });
+            saveProject(r.project);
+          }}
+          onRemoveFromCollection={(cid, ids) => saveProject(removeFromCollection(project, cid, ids))}
+          onConvert={(ids, type) => setTreeU(ids.reduce((t, id) => convertNode(t, id, type), project.tree))}
+          onSortChildren={(id, desc) => setTreeU(sortChildren(project.tree, id, 'title', desc))}
+          onGroup={groupItems}
+          onCopyLink={(id) => navigator.clipboard?.writeText(docLink(id)).catch(report)}
+          onSnapshot={() => snapshotSelection().catch(report)}
+          onDuplicate={(id, withChildren) => duplicateSelection(withChildren).catch(report)}
+          onDropKeyword={dropKeyword}
           docs={docs}
           width={widths.binder}
           selectedId={selectedId}
@@ -2722,6 +2758,9 @@ export default function App({ api: apiProp }) {
                   )
                 }
                 readMedia={api.readMedia ? (file) => api.readMedia(dir, file) : null}
+                labelColorIn={colorIn}
+                selectedIds={selectedIds}
+                onDropKeyword={dropKeyword}
               />
             )}
             {view === 'outline' && (
@@ -2737,6 +2776,7 @@ export default function App({ api: apiProp }) {
                 }}
                 onPatch={patchNode}
                 onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
+                labelColorIn={colorIn}
               />
             )}
           </div>
@@ -3248,6 +3288,7 @@ export default function App({ api: apiProp }) {
             setView('editor');
           }}
           onReplace={replaceAdvanced}
+          onResults={setSearchResultIds}
           onSaveAsCollection={(title, criteria) => {
             const { query, ...options } = criteria;
             const r = createCollection(project, { title, type: 'search', search: { query, options } });

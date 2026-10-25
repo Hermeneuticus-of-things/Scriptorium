@@ -553,7 +553,7 @@ function CustomFields({ project, node, onPatch }) {
   );
 }
 
-const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥', '🧭', '🗝️', '📌', '🕯️', '🌿', '🌊', '⛰️', '🏛️', '👤', '👥', '🗺️', '📅', '🔬', '📚', '✉️', '🎭'];
+export const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥', '🧭', '🗝️', '📌', '🕯️', '🌿', '🌊', '⛰️', '🏛️', '👤', '👥', '🗺️', '📅', '🔬', '📚', '✉️', '🎭'];
 
 // Icon, section type, lock, favorite and bookmarks (Scrivener: Inspector > Bookmarks).
 const BM_SCOPE_KEY = 'scribner-bookmarks-scope';

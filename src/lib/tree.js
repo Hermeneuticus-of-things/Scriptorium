@@ -467,3 +467,27 @@ export function historyRedo(h, current) {
   if (!step || idSignature(step.before) !== idSignature(current)) return null;
   return { tree: restoreStructure(step.after, current), history: { past: [...h.past, step], future: h.future.slice(1) } };
 }
+
+// Group: puts the selected items (top-level ones, in binder order) into `folder`, which takes
+// the place of the first item. Roots are never grouped. Returns the tree unchanged when
+// nothing can be grouped.
+export function groupIntoFolder(tree, ids, folder) {
+  const set = new Set(ids.filter((id) => !tree.some((r) => r.id === id)));
+  const hasSelectedAncestor = (id) => {
+    for (let p = findParent(tree, id); p; p = findParent(tree, p.id)) if (set.has(p.id)) return true;
+    return false;
+  };
+  const top = inOrder(tree, ids).filter((n) => !n.root && !tree.some((r) => r.id === n.id) && !hasSelectedAncestor(n.id)).map((n) => n.id);
+  if (!top.length || !folder?.id) return tree;
+  return produce(tree, (t) => {
+    const parent = findParent(t, top[0]);
+    const list = parent ? parent.children : t;
+    const at = list.findIndex((n) => n.id === top[0]);
+    const box = { ...structuredClone(folder), children: [] };
+    list.splice(at, 0, box);
+    for (const id of top) box.children.push(detach(t, id));
+  });
+}
+
+// Link to one document of the project, usable in notes and other documents.
+export const docLink = (id) => `scribner://doc/${encodeURIComponent(id)}`;

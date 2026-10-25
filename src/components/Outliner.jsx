@@ -3,6 +3,7 @@ import { binderNav } from '../lib/tree.js';
 import { htmlToText } from '../lib/text.js';
 import { DocumentIcon, FolderIcon } from './Icons.jsx';
 import { t, uiLocale } from '../lib/i18n.js';
+import { labelTint } from '../lib/settingsDefaults.js';
 import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
 
 // Columns the outline can show (Scrivener: Outliner > Columns).
@@ -21,7 +22,16 @@ const BASE_COLUMNS = (project) => ([
   { id: 'created', label: t('ui.common.creat') },
   { id: 'modified', label: t('ui.common.modificat') },
 ]);
-const DEFAULT_COLUMNS = ['synopsis', 'label', 'status'];
+// The synopsis shows under the title by default; its own column stays available.
+export const DEFAULT_COLUMNS = ['label', 'status'];
+
+function loadShowSynopsis() {
+  try {
+    return localStorage.getItem('scribner-outline-synopsis') !== 'off';
+  } catch {
+    return true;
+  }
+}
 
 function loadColumns() {
   try {
@@ -32,7 +42,18 @@ function loadColumns() {
 }
 
 // charCounts {id: n} or docs {id: html} (optional) feed the Characters column.
-export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null }) {
+export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null }) {
+  const [showSynopsis, setShowSynopsis] = useState(loadShowSynopsis);
+  const toggleSynopsis = (on) => {
+    setShowSynopsis(on);
+    try {
+      localStorage.setItem('scribner-outline-synopsis', on ? 'on' : 'off');
+    } catch {
+      /* not critical */
+    }
+  };
+  const labelColors = Object.fromEntries((project.labels || []).map((l) => [l.name, l.color]));
+  const rowTint = (n) => (labelColorIn?.outliner && n.label ? labelTint(labelColors[n.label]) : '');
   const charsOf = (n) => (charCounts ? charCounts[n.id] || 0 : docs && docs[n.id] ? htmlToText(docs[n.id]).length : 0);
   const [columns, setColumns] = useState(loadColumns);
   const [collapsed, setCollapsed] = useState({});
@@ -231,6 +252,10 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
         <details className="col-chooser">
           <summary>Coloane</summary>
           <div className="col-list">
+            <label className="check">
+              <input type="checkbox" checked={showSynopsis} onChange={(e) => toggleSynopsis(e.target.checked)} />
+              {t('ui.outliner.arata_sinopsisul')}
+            </label>
             {allColumns.map((c) => (
               <label key={c.id} className="check">
                 <input
@@ -300,8 +325,9 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
                 setDrag(null);
                 setDropHint(null);
               }}
-              className={`${drag === n.id ? 'dragging' : ''} ${sel === n.id ? 'selected' : ''} ${dropHint && dropHint.id === n.id ? `drop-${dropHint.pos}` : ''}`}
+              className={`${drag === n.id ? 'dragging' : ''} ${sel === n.id ? 'selected' : ''} ${dropHint && dropHint.id === n.id ? `drop-${dropHint.pos}` : ''} ${rowTint(n) ? 'tinted' : ''}`}
               style={{
+                ...(rowTint(n) ? { '--row-tint': rowTint(n) } : null),
                 ...(dropHint && dropHint.id === n.id ? { boxShadow: `inset 0 ${dropHint.pos === 'before' ? 2 : -2}px 0 var(--accent, #3b82f6)` } : null),
               }}
             >
@@ -337,6 +363,18 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
                     {n.children ? <FolderIcon /> : <DocumentIcon />}
                     {n.title}
                   </button>
+                )}
+                {showSynopsis && !columns.includes('synopsis') && (n.synopsis || sel === n.id) && (
+                  <textarea
+                    className="outline-syn"
+                    rows={1}
+                    aria-label={cellLabel(n, 'synopsis')}
+                    placeholder={t('ui.corkboard.sinopsis')}
+                    key={`syn-${n.synopsis || ''}`}
+                    defaultValue={n.synopsis || ''}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    onBlur={(e) => e.target.value !== (n.synopsis || '') && onPatch(n.id, { synopsis: e.target.value })}
+                  />
                 )}
               </td>
               {shown.map((c) => (
