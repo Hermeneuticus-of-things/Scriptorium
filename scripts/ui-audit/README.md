@@ -27,6 +27,12 @@ Scara de decizie (conform regulii „calitate prin unelte, nu prin credit"):
    Verdicte: `gap` (de adăugat în Scribner), `alias` (există sub alt nume → `aliases.json`),
    `skip` (extra proprii Scribner — AI, MCP, dictare — sau irelevant). Extrasele Scribner nu se scot.
 
+## OCR (scurtături + text UI)
+`ocr.ps1` folosește **Tesseract** (local) cu pachetele `ron+eng` (diacritice române + scurtături ASCII),
+cu upscale 3× și ieșire TSV (casete per cuvânt). Dacă Tesseract lipsește, cade pe OCR-ul Windows.
+Setup o singură dată: `pwsh get-tessdata.ps1` (descarcă modelele „best", ~24 MB, într-un folder al
+utilizatorului; modelele nu se urcă în depozit). Reglaj: `OCR_TESSDATA`, `OCR_LANG`, `OCR_PSM`.
+
 ## Mediu
 - `OMNIROUTE_URL` (implicit `http://127.0.0.1:20128/v1`), `OMNIROUTE_API_KEY`.
 - `OMNIROUTE_LEAD` (implicit `aug/opus4.7`), `OMNIROUTE_WORKER` (implicit `auto/best-fast`).
