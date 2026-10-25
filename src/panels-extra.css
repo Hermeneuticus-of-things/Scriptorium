@@ -60,7 +60,7 @@
 .composition.has-bg-image[data-fit='contain'] { background-size: contain; }
 .composition.has-bg-image[data-fit='tile'] { background-size: auto; background-repeat: repeat; }
 .composition.has-bg-image[data-fit='center'] { background-size: auto; }
-.comp-targets { position: fixed; right: 18px; bottom: 14px; z-index: 50; display: flex; gap: 12px; padding: 4px 10px; border-radius: 12px; font-size: 12px; background: rgba(0, 0, 0, 0.45); color: #f3efe6; }
+.comp-targets { position: fixed; right: 18px; top: 14px; z-index: 50; display: flex; gap: 12px; padding: 4px 10px; border-radius: 12px; font-size: 12px; background: rgba(0, 0, 0, 0.45); color: #f3efe6; }
 .comp-targets meter { width: 90px; }
 
 /* Binder separators (node.separator === true) */
