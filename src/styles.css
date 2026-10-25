@@ -569,3 +569,24 @@ legend { color: var(--muted); padding: 0 4px; }
 .insp-section > summary::before { content: '▸'; color: var(--muted); transition: transform .15s; }
 .insp-section[open] > summary::before { transform: rotate(90deg); }
 .insp-section-body { display: flex; flex-direction: column; gap: 8px; padding: 0 4px 10px; }
+/* Inspector: the pane icons sit at the bottom, one pane shown at a time. */
+.inspector > .tabs { order: 99; position: sticky; bottom: 0; margin-top: auto; background: var(--panel); border-top: 1px solid var(--line); padding-top: 4px; z-index: 1; }
+.inspector .seg { display: flex; gap: 0; }
+.inspector .seg button { flex: 1; border-radius: 0; }
+.inspector .seg button:first-child { border-radius: 6px 0 0 6px; }
+.inspector .seg button:last-child { border-radius: 0 6px 6px 0; }
+.inspector .seg button.on { background: var(--accent-soft); font-weight: 600; }
+/* Footer under the open document: zoom, words/characters, the document target. */
+.editor-footer { position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 12px; padding: 3px 10px; font-size: 12px; color: var(--muted); background: var(--panel); border-top: 1px solid var(--line); }
+.editor-footer .spacer { flex: 1; }
+.editor-footer .zoom-select { font-size: 12px; }
+.footer-target { position: relative; display: flex; align-items: center; gap: 6px; }
+.footer-target meter { width: 80px; }
+.footer-pop { position: absolute; bottom: 28px; right: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; min-width: 200px; background: var(--paper); color: var(--text); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.sc-header-bar .hdr-arrow { font-size: 10px; min-width: 24px; }
+/* Corkboard: the view controls sit in a footer bar under the cards. */
+.corkboard { display: flex; flex-direction: column; min-height: 100%; }
+.corkboard { padding-bottom: 0; }
+.corkboard > .cork-head { order: 99; position: sticky; bottom: 0; z-index: 2; margin-top: auto; background: var(--panel); border-top: 1px solid var(--line); padding: 4px 8px; }
+[data-ui='classic'] .corkboard { padding-bottom: 0; }
+[data-ui='classic'] .corkboard > .cork-head { margin: auto -16px 0; border-bottom: none; border-top: 1px solid var(--sc-line); }

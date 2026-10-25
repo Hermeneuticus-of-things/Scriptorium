@@ -249,7 +249,7 @@
 
 /* ---------- corkboard ---------- */
 [data-ui='classic'] .corkboard {
-  min-height: 100%; padding: 10px 16px 30px;
+  min-height: 100%; padding: 10px 16px 0;
   background-color: var(--sc-cork);
   background-image:
     radial-gradient(var(--sc-cork-dot) 1px, transparent 1.2px),

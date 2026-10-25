@@ -66,7 +66,7 @@ export default function TargetsDialog({ project, draftWords, draftChars, onSave,
           <legend>Manuscris</legend>
           <div className="row">
             <label>{tr('ui.targetsDialog.tinta_manuscrisului')}<input type="number" min="0" value={draft} onChange={(e) => setDraft(e.target.value)} /></label>
-            <label>Unitate<TypeSelect value={draftType} onChange={setDraftType} /></label>
+            <label>{tr('ui.inspector.unitate')}<TypeSelect value={draftType} onChange={setDraftType} /></label>
           </div>
           {(draftType === 'Pages' || sessionType === 'Pages') && (
             <label>
@@ -105,7 +105,7 @@ export default function TargetsDialog({ project, draftWords, draftChars, onSave,
           <legend>Sesiune</legend>
           <div className="row">
             <label>{tr('ui.targetsDialog.tinta_sesiunii')}<input type="number" min="0" value={session} onChange={(e) => setSession(e.target.value)} /></label>
-            <label>Unitate<TypeSelect value={sessionType} onChange={setSessionType} /></label>
+            <label>{tr('ui.inspector.unitate')}<TypeSelect value={sessionType} onChange={setSessionType} /></label>
           </div>
           <label>
             Resetarea sesiunii

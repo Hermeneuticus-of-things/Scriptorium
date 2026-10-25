@@ -13,12 +13,12 @@ const URL = (process.env.SCRIBNER_URL || 'http://localhost:4183/?demo') + '&whis
   await page.waitForSelector('.pane .ProseMirror');
   const ed = page.locator('.pane .ProseMirror').first();
 
-  // engine missing: F9 explains where to download it
+  // engine missing: F9 starts the one-time download by itself and says so
   await ed.click();
   await page.keyboard.press('Control+End');
   await page.keyboard.press('F9');
   await page.waitForTimeout(500);
-  check('without the engine F9 points to Settings', /Descarcă motorul/.test(await page.locator('body').innerText()));
+  check('without the engine F9 starts the download', /descărcarea motorului de dictare/.test(await page.locator('body').innerText()));
   check('no dictation bar without the engine', (await page.locator('.dictation-bar').count()) === 0);
 
   // download from Settings → Services
@@ -26,10 +26,7 @@ const URL = (process.env.SCRIBNER_URL || 'http://localhost:4183/?demo') + '&whis
   await page.locator('.modal [role=tab]', { hasText: /Servicii/ }).first().click();
   const eng = page.locator('.local-engine');
   check('the built-in engine is the default choice', (await page.locator('input[name=speechEngine]').first().isChecked()) === true);
-  check('size shown before download', /590 MB/.test(await eng.innerText()));
-  await eng.locator('button.primary', { hasText: /Descarcă motorul/ }).click();
-  await page.waitForSelector('.local-engine progress', { timeout: 3000 }).catch(() => {});
-  check('progress while downloading', (await page.locator('.local-engine progress').count()) === 1);
+  // the download F9 started is finishing (or done): Settings shows it, no second download needed
   await page.waitForFunction(() => /gata/.test(document.querySelector('.local-engine')?.innerText || ''), null, { timeout: 5000 }).catch(() => {});
   check('engine ready after download', /e descărcat și gata/.test(await eng.innerText()), await eng.innerText());
   await page.locator('.modal button.primary', { hasText: /^Salvează$/ }).last().click();

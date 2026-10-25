@@ -4,7 +4,7 @@ const { open, check, done, menuPick } = require('./_helpers.cjs');
 (async () => {
   const { browser, page: p, errors } = await open();
   const tbIds = () => p.$$eval('header.toolbar > [data-tb]', (els) => els.map((e) => e.dataset.tb));
-  check('default toolbar: compile + inspector', JSON.stringify(await tbIds()) === JSON.stringify(['home', 'back', 'forward', 'compile', 'inspector']), JSON.stringify(await tbIds()));
+  check('default toolbar: compile + inspector', JSON.stringify(await tbIds()) === JSON.stringify(['home', 'back', 'forward', 'voice', 'compile', 'inspector']), JSON.stringify(await tbIds()));
   await menuPick(p, 'Vizualizare', 'Personalizează bara de instrumente…');
   const dlg = p.locator('.tb-customize');
   check('dialog opens', (await dlg.count()) === 1);
@@ -51,7 +51,7 @@ const { open, check, done, menuPick } = require('./_helpers.cjs');
   await p.locator('.tb-customize').getByRole('button', { name: 'Restabilește implicit' }).click();
   await p.locator('.tb-customize').getByRole('button', { name: 'Salvează' }).click();
   await p.waitForTimeout(300);
-  check('defaults restored', JSON.stringify(await tbIds()) === JSON.stringify(['home', 'back', 'forward', 'compile', 'inspector']), JSON.stringify(await tbIds()));
+  check('defaults restored', JSON.stringify(await tbIds()) === JSON.stringify(['home', 'back', 'forward', 'voice', 'compile', 'inspector']), JSON.stringify(await tbIds()));
   check('no page errors', !errors.length, errors.join(' | '));
   await browser.close();
   done();

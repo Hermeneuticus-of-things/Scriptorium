@@ -56,6 +56,8 @@ const NEW_WRITE_TOOLS = (ctx) => ({
 });
 const NEW_READ_TOOLS = (ctx) => ({
   list_templates: {},
+  scriv_outline: { scriv_path: path.join(ctx.tmp, 'mini.scriv') },
+  scriv_read: { scriv_path: path.join(ctx.tmp, 'mini.scriv'), id: 'X' },
   list_compile_formats: {},
   list_project_notes: {},
   list_keywords: {},
@@ -448,6 +450,11 @@ describe('MCP integral: export', () => {
     const imp = await call('import_scriv', { scriv_path: res.dir, dest_dir: path.join(tmp, 'din-scriv') });
     const binder = await call('list_binder', { project: imp.dir });
     expect(JSON.stringify(binder)).toContain('Scena B');
+    // read in place, without importing
+    const outline = await call('scriv_outline', { scriv_path: res.dir });
+    const item = outline.find((o) => o.title === 'Scena B');
+    expect(item).toBeTruthy();
+    expect(typeof (await call('scriv_read', { scriv_path: res.dir, id: item.id }))).toBe('string');
   });
 
   it('export_notebooklm (project notes tabs included)', async () => {
@@ -788,6 +795,8 @@ describe('MCP integral --read-only', () => {
     const p = makeProject(roTmp, 'Doar citire');
     fs.writeFileSync(path.join(roTmp, 'x.md'), '# x');
     fs.writeFileSync(path.join(roTmp, 'x.bib'), '@book{a, title={A}}');
+    fs.mkdirSync(path.join(roTmp, 'mini.scriv'));
+    fs.writeFileSync(path.join(roTmp, 'mini.scriv', 'mini.scrivx'), '<?xml version="1.0"?><ScrivenerProject><Binder><BinderItem UUID="X" Type="Text"><Title>T</Title></BinderItem></Binder></ScrivenerProject>');
     const before = snapshotTree(roTmp);
     const { call: ro } = await connect(p.dir, ['--read-only']);
     const ctx = { tmp: roTmp, a: p.a, b: p.b, md: path.join(roTmp, 'x.md'), bib: path.join(roTmp, 'x.bib') };

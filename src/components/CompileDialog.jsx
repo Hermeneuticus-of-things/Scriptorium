@@ -51,7 +51,7 @@ const TABS = () => ([
   ['inlocuiri', tr('ui.compileDialog.inlocuiri')],
   ['note', tr('ui.advancedSearchDialog.note')],
   ['pagina', tr('ui.compileDialog.pagina')],
-  ['metadate', 'Metadate'],
+  ['metadate', tr('ui.common.metadate')],
 ]);
 
 const LAYOUT_DEFAULTS = {
@@ -385,7 +385,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
         <h2>{tr('ui.compileDialog.compileaza')}</h2>
         <div className="cd-body">
           <aside className="cd-formats">
-            <h3>Formate</h3>
+            <h3>{tr('ui.common.formate')}</h3>
             <ul>
               {all.map((f) => (
                 <li key={f.id}>
@@ -847,7 +847,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
         {preview !== null && (
           <div className="cd-preview">
             <div className="row">
-              <strong>Previzualizare</strong>
+              <strong>{tr('ui.common.previzualizare')}</strong>
               <button type="button" onClick={() => setPreview(null)}>{tr('ui.compileDialog.inchide_previzualizarea')}</button>
             </div>
             <iframe title="Previzualizare" sandbox="" srcDoc={preview} />
@@ -858,7 +858,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
         <div className="actions">
           <button type="button" onClick={onClose}>{tr('btn.close')}</button>
           <button type="button" onClick={persist}>{tr('ui.compileDialog.salveaza_setarile')}</button>
-          <button type="button" disabled={busy} onClick={showPreview}>Previzualizare</button>
+          <button type="button" disabled={busy} onClick={showPreview}>{tr('ui.common.previzualizare')}</button>
           <button type="button" className="primary" disabled={busy} onClick={run}>{busy ? tr('ui.compileDialog.se_compileaza') : tr('ui.compileDialog.compileaza')}</button>
         </div>
       </div>

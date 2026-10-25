@@ -128,7 +128,8 @@ export default function Inspector({
   // Optional (batch C): lock, comments, per-id callbacks.
   docs = null, counts = null, onPatchNode, onNotesChangeFor, onLockChange, teamLockOf = () => null, authorName = '', onJumpToComment, onHtmlChange,
 }) {
-  const [tab, setTab] = useState('meta');
+  const [tab, setTab] = useState('notes');
+  const [notesOf, setNotesOf] = useState('doc'); // Notes pane: this document or the whole project
   const [snaps, setSnaps] = useState([]);
   const [preview, setPreview] = useState(null);
   const [compare, setCompare] = useState(null);
@@ -198,13 +199,13 @@ export default function Inspector({
         {lockedId && <span className="muted small">{tr('ui.inspector.blocat_pe')} <strong>{node.title}</strong></span>}
         {pinnedOther && onOpen && <button className="link" onClick={() => onOpen(node.id)}>{tr('ui.app.deschide')}</button>}
       </div>
-      <div className="tabs" role="tablist" aria-label={tr('ui.inspector.taburi')} onKeyDown={tabKeys(['meta', 'notes', 'project', 'annot', 'snapshots'], tab, setTab)}>
+      <div className="tabs" role="tablist" aria-label={tr('ui.inspector.taburi')} onKeyDown={tabKeys(['notes', 'bookmarks', 'meta', 'snapshots', 'annot'], tab, setTab)}>
         {[
-          ['meta', tr('ui.inspector.tab_detalii'), MetaIcon],
           ['notes', tr('ui.advancedSearchDialog.note'), NotesIcon],
-          ['project', tr('group.project'), BookmarkIcon],
-          ['annot', `${tr('ui.inspector.tab_comentarii')}${notes.comments.length + notes.footnotes.length ? ` (${notes.comments.length + notes.footnotes.length})` : ''}`, CommentIcon],
+          ['bookmarks', tr('ui.inspector.tab_semne'), BookmarkIcon],
+          ['meta', tr('ui.inspector.tab_detalii'), MetaIcon],
           ['snapshots', tr('ui.inspector.tab_snapshots'), SnapshotIcon],
+          ['annot', `${tr('ui.inspector.tab_comentarii')}${notes.comments.length + notes.footnotes.length ? ` (${notes.comments.length + notes.footnotes.length})` : ''}`, CommentIcon],
         ].map(([id, label, Ico]) => (
           <button key={id} role="tab" aria-selected={tab === id} tabIndex={tab === id ? 0 : -1} className={tab === id ? 'on' : ''} onClick={() => setTab(id)} title={label} aria-label={label}>
             <Ico />
@@ -214,16 +215,6 @@ export default function Inspector({
 
       {tab === 'meta' && (
         <div className="fields insp-sections">
-          <Section id="synopsis" title={tr('ui.advancedSearchDialog.sinopsis')} open>
-            <textarea
-              key={`${node.id}:${node.synopsis || ''}`}
-              rows={6}
-              aria-label={tr('ui.advancedSearchDialog.sinopsis')}
-              defaultValue={node.synopsis || ''}
-              onBlur={(e) => e.target.value !== (node.synopsis || '') && onPatch({ synopsis: e.target.value })}
-            />
-            {!isRoot && <SynopsisImagePicker api={api} dir={dir} node={node} onPatch={onPatch} onError={onError} />}
-          </Section>
           {!isRoot && (
             <Section id="general" title={tr('ui.inspector.sec_general')} open>
               <div className="row">
@@ -289,11 +280,6 @@ export default function Inspector({
               <CustomFields project={project} node={node} onPatch={onPatch} />
             </Section>
           )}
-          {!isRoot && (
-            <Section id="extras" title={tr('ui.inspector.sec_legaturi')}>
-              <DocumentExtras project={project} node={node} onPatch={onPatch} linkTargets={linkTargets} onOpen={onOpen} docs={docs} />
-            </Section>
-          )}
           <Section id="info" title={`${tr('ui.inspector.sec_info')} · ${words.toLocaleString(uiLocale())} ${tr('ui.inspector.cuvinte')}`}>
             <MetaTable project={project} node={node} />
             <p className="muted">{words.toLocaleString(uiLocale())} {tr('ui.inspector.cuvinte_in_acest_document')}</p>
@@ -302,15 +288,35 @@ export default function Inspector({
       )}
 
       {tab === 'notes' && (
-        <NotesLoader api={api} dir={dir} id={node.id} onChange={onNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_acest_document')} />
+        <div className="fields insp-sections">
+            <Section id="synopsis" title={tr('ui.advancedSearchDialog.sinopsis')} open>
+            <textarea
+              key={`${node.id}:${node.synopsis || ''}`}
+              rows={6}
+              aria-label={tr('ui.advancedSearchDialog.sinopsis')}
+              defaultValue={node.synopsis || ''}
+              onBlur={(e) => e.target.value !== (node.synopsis || '') && onPatch({ synopsis: e.target.value })}
+            />
+            {!isRoot && <SynopsisImagePicker api={api} dir={dir} node={node} onPatch={onPatch} onError={onError} />}
+          </Section>
+          <div className="seg" role="group" aria-label={tr('ui.advancedSearchDialog.note')}>
+            <button className={notesOf === 'doc' ? 'on' : ''} aria-pressed={notesOf === 'doc'} onClick={() => setNotesOf('doc')}>{tr('ui.inspector.note_document')}</button>
+            <button className={notesOf === 'project' ? 'on' : ''} aria-pressed={notesOf === 'project'} onClick={() => setNotesOf('project')}>{tr('group.project')}</button>
+          </div>
+          {notesOf === 'doc' ? (
+            <NotesLoader key="doc" api={api} dir={dir} id={node.id} onChange={onNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_acest_document')} />
+          ) : (
+            <NotesLoader key="project" api={api} dir={dir} id="project-notes" onChange={onProjectNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_tot_proiectul')} />
+          )}
+        </div>
       )}
-      {tab === 'project' && (
-        <NotesLoader api={api} dir={dir} id="project-notes" onChange={onProjectNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_tot_proiectul')} />
+      {tab === 'bookmarks' && !isRoot && (
+        <DocumentExtras project={project} node={node} onPatch={onPatch} linkTargets={linkTargets} onOpen={onOpen} docs={docs} />
       )}
 
       {tab === 'annot' && (
         <div className="annotations">
-          <h4>Comentarii</h4>
+          <h4>{tr('ui.inspector.tab_comentarii')}</h4>
           {notes.comments.length === 0 && <p className="muted">{tr('ui.inspector.selecteaza_text_si_apasa_in')}</p>}
           <ul className="comment-list">
             {notes.comments.map((c) => (
