@@ -100,7 +100,7 @@ describe('DOCX line spacing rule', () => {
   it('default paragraph spacing states lineRule="auto" (LibreOffice reads a missing rule as exact and clips inline images)', async () => {
     const buf = await compile.compile(project, () => `<p><img src="data:image/png;base64,${PNG}" alt="a"></p>`, 'docx', { format: JSON.parse(JSON.stringify(F.PRESETS.find((p) => p.id === 'paperback'))) });
     const styles = await (await JSZip.loadAsync(buf)).file('word/styles.xml').async('string');
-    const sp = /<w:pPrDefault><w:pPr><w:spacing [^>]*>/.exec(styles)[0];
+    const sp = /<w:pPrDefault><w:pPr>(?:<w:widowControl\/>)?<w:spacing [^>]*>/.exec(styles)[0];
     expect(sp).toMatch(/w:line="\d+"/);
     expect(sp).toMatch(/w:lineRule="auto"/);
   });

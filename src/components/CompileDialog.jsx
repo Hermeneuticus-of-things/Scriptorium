@@ -6,6 +6,8 @@ import { styleCss, stylesOf } from '../lib/styles.js';
 import formatsSource from '../../lib/compileFormats.cjs?raw';
 import { t as tr, builtinName } from '../lib/i18n.js';
 import { noneLabel, noneStatus } from '../lib/projectSettings.js';
+import { collectionNodes, listKeywords } from '../lib/collections.js';
+import { exportFormatFile, formatFileName, importFormatFile, FORMAT_FILE_EXT } from '../lib/compileFormatFile.js';
 
 function readPresets() {
   try {
@@ -134,7 +136,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   }, [globalsLoaded, all, formatId]);
   const [collectionId, setCollectionId] = useState(pc.collectionId || '');
   const [trackChanges, setTrackChanges] = useState(Boolean(pc.trackChanges));
-  const collections = (project.collections || []).filter((c) => Array.isArray(c.ids));
+  // Manual collections and saved searches (their documents are found when compiling).
+  const collections = (project.collections || []).filter((c) => Array.isArray(c.ids) || c.type === 'search');
 
   const [output, setOutput] = useState(pc.output || 'docx');
   const [scope, setScope] = useState(pc.scope || 'draft');
@@ -145,6 +148,17 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [toc, setToc] = useState(pc.toc ?? null);
   const [labels, setLabels] = useState(pc.labels || []);
   const [statuses, setStatuses] = useState(pc.statuses || []);
+  const [keywords, setKeywords] = useState(pc.keywords || []);
+  const [filterInvert, setFilterInvert] = useState(Boolean(pc.filterInvert));
+  // Front/back matter per output: {pdf: id | '-'}; missing = the general choice above.
+  const [frontByOut, setFrontByOut] = useState(pc.frontMatterByOutput || {});
+  const [backByOut, setBackByOut] = useState(pc.backMatterByOutput || {});
+  const [tocSettings, setTocSettings] = useState(pc.tocSettings || {});
+  const [openAfter, setOpenAfter] = useState(Boolean(pc.openAfter));
+  const [frontRoman, setFrontRoman] = useState(pc.frontRoman ?? null);
+  const [flow, setFlow] = useState(pc.flow || {});
+  const [fonts, setFonts] = useState(Array.isArray(pc.fonts) ? pc.fonts : []);
+  const [notice, setNotice] = useState('');
   const [epub, setEpub] = useState({ language: 'ro', ...(pc.epub || {}) });
   const [coverId, setCoverId] = useState(pc.coverId || '');
   const [tab, setTab] = useState('continut');
@@ -159,6 +173,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const images = useMemo(() => imageItems(project.tree), [project.tree]);
   const labelNames = (project.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
   const statusNames = (project.statuses || []).map((s) => (typeof s === 'string' ? s : s.name));
+  const keywordNames = useMemo(() => listKeywords(project).map((k) => k.name), [project]);
   const draftFolders = folders.filter((f) => f.id !== (project.tree[1] && project.tree[1].id));
 
   useEffect(() => {
@@ -220,6 +235,50 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     const name = window.prompt('Numele formatului', format.name);
     if (name && name.trim()) setIn(['name'], name.trim());
   };
+  // Format as a file (.scribcompile): export the selected one, import as a new project format.
+  const exportFormat = async () => {
+    if (!format) return;
+    const text = exportFormatFile(format);
+    try {
+      if (api.exportCompileFormat) {
+        const file = await api.exportCompileFormat(formatFileName(format), text);
+        if (file) setNotice(file);
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+      a.download = formatFileName(format);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch (e) {
+      onError(e);
+    }
+  };
+  const importFormat = async (file) => {
+    if (!file) return;
+    try {
+      const f = importFormatFile(await file.text(), all.map((x) => x.name), newCustomId);
+      setFormats((l) => [...l, f]);
+      setFormatId(f.id);
+      setNotice(tr('ui.compileDialog.p1.format_importat', { name: f.name }));
+    } catch {
+      onError(new Error(tr('ui.compileDialog.p1.fisier_invalid')));
+    }
+  };
+  const addFont = async (file) => {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      onError(new Error(tr('ui.compileDialog.p1.font_prea_mare')));
+      return;
+    }
+    const buf = new Uint8Array(await file.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+    const ext = (/\.([a-z0-9]+)$/i.exec(file.name) || [])[1] || 'ttf';
+    const family = file.name.replace(/\.[^.]+$/, '').replace(/[-_](regular|bold|italic|book|roman)$/i, '').replace(/[-_]+/g, ' ').trim();
+    setFonts((l) => [...l, { family: family || (format && format.typography && format.typography.fontFamily) || 'Font', ext: ext.toLowerCase(), name: file.name, data: btoa(bin) }]);
+  };
+
   const remove = () => {
     if (!editable || !window.confirm(tr('ui.compileDialog.stergi_formatul_x', { name: format.name }))) return;
     if (isGlobal) saveGlobals(globals.filter((f) => f.id !== formatId)).catch(onError);
@@ -241,6 +300,15 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     toc,
     labels,
     statuses,
+    keywords,
+    filterInvert,
+    frontMatterByOutput: frontByOut,
+    backMatterByOutput: backByOut,
+    tocSettings,
+    openAfter,
+    frontRoman,
+    flow,
+    fonts,
     epub,
     coverId,
     collectionId,
@@ -262,12 +330,29 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
       backMatterId: backMatterId || null,
       labels,
       statuses,
+      keywords,
+      filterInvert,
+      frontMatterByOutput: frontByOut,
+      backMatterByOutput: backByOut,
+      tocSettings,
+      openAfter,
+      flow,
+      fonts,
       epub,
       styles,
       styleCss: styleCss(styles, 'body'),
       projectDir: dir, // <$img:Name> placeholders read images from the project's media
     };
-    if (collectionId) opts.collectionId = collectionId;
+    if (frontRoman !== null) opts.frontRoman = frontRoman;
+    const col = collections.find((c) => c.id === collectionId);
+    if (col && col.type === 'search') {
+      // A saved search: its documents now (text read from disk), as an explicit id list.
+      const docs = {};
+      const ids = [];
+      walk(next.tree, (n) => n.type !== 'file' && !n.root && ids.push(n.id));
+      for (const id of ids) docs[id] = (await api.readDoc(dir, id)) || '';
+      opts.collectionIds = collectionNodes(next, col, docs).map((n) => n.id);
+    } else if (collectionId) opts.collectionId = collectionId;
     if (output === 'docx' && trackChanges) {
       opts.trackChanges = true;
       opts.trackAuthor = next.author || '';
@@ -339,6 +424,11 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const setLayout = (t, key, value) => setIn(['layouts', t], { ...layoutOf(t), [key]: value });
 
   if (!format) return null;
+  const outKey = output === 'print' ? 'pdf' : output;
+  const outputLabel = (OUTPUTS().find(([id]) => id === outKey) || [])[1] || outKey;
+  const tocBase = { title: 'Cuprins', depth: 2, leaders: true, pageNumbers: true, ...(format.tocSettings || {}), ...tocSettings };
+  const tocCfg = { ...tocBase, depth: Math.max(1, Math.min(3, Number(tocBase.depth) || 2)) };
+  const flowCfg = { widows: 2, orphans: 2, keepWithNext: true, ...(format.flow || {}), ...flow };
   const xf = format.transforms || {};
   const ty = format.typography || {};
   const page = format.page;
@@ -402,9 +492,27 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     if (scope === 'selection' && !selectionIds.includes(n.id)) return;
     contentItems.push({ n, depth });
   });
-  const setIncluded = (id, on) => {
-    const mapTree = (nodes) => (nodes || []).map((n) => (n.id === id ? { ...n, includeInCompile: on } : n.children ? { ...n, children: mapTree(n.children) } : n));
+  // A field of one binder item, changed from the Contents list (undefined removes it).
+  const setNodeField = (id, patch) => {
+    const apply = (n) => {
+      const out = { ...n, ...patch };
+      for (const k of Object.keys(patch)) if (patch[k] === undefined) delete out[k];
+      return out;
+    };
+    const mapTree = (nodes) => (nodes || []).map((n) => (n.id === id ? apply(n) : n.children ? { ...n, children: mapTree(n.children) } : n));
     onProjectChange({ ...project, tree: mapTree(project.tree), compile: settings() });
+  };
+  const setIncluded = (id, on) => setNodeField(id, { includeInCompile: on });
+  // Section types: the project's own (stored by id) plus the format's layouts (stored by title).
+  const sectionTypeOptions = (() => {
+    const out = (project.sectionTypes || []).map((t) => ({ value: t.id || t.title, label: t.title }));
+    for (const k of Object.keys((format && format.layouts) || {})) if (!k.startsWith('@') && !out.some((o) => o.label === k)) out.push({ value: k, label: k });
+    return out;
+  })();
+  const sectionTypeValue = (n) => {
+    if (!n.sectionType) return '';
+    const hit = sectionTypeOptions.find((o) => o.value === n.sectionType || o.label === n.sectionType);
+    return hit ? hit.value : '';
   };
   const layoutSummary = (l) =>
     [l.showTitle ? tr('ui.compileDialog.arata_titlul') : null, l.showText ? tr('ui.compileDialog.arata_textul') : null, l.pageBreakBefore ? tr('ui.compileDialog.pagina_noua') : null]
@@ -477,6 +585,22 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                 </button>
               )}
             </div>
+            <div className="cd-format-actions">
+              <button type="button" onClick={exportFormat}>{tr('ui.compileDialog.p1.exporta_format')}</button>
+              <label className="cd-file-btn">
+                {tr('ui.compileDialog.p1.importa_format')}
+                <input
+                  type="file"
+                  accept={`.${FORMAT_FILE_EXT},.json`}
+                  onChange={(e) => {
+                    importFormat(e.target.files && e.target.files[0]);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            </div>
+            {format.preferredOutput && <p className="muted small">{tr('ui.compileDialog.p1.gandit_pentru', { out: (OUTPUTS().find(([id]) => id === format.preferredOutput) || [])[1] || format.preferredOutput })}</p>}
+            {notice && <p className="ok small">{notice}</p>}
             {isGlobal && <p className="muted small">{tr('ui.compileDialog.format_global_modificarile_se_salveaza')}</p>}
             {!editable && <p className="muted small">{tr('ui.compileDialog.formatele_predefinite_nu_se_modifica')}</p>}
           </aside>
@@ -539,16 +663,48 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <input type="radio" checked={scope === 'selection'} disabled={!selectionIds.length} onChange={() => setScope('selection')} /> {tr('ui.compileDialog.selectia_n', { n: selectionIds.length })}
                     </label>
                   </fieldset>
-                  <ul className="cd-items" aria-label={tr('ui.compileDialog.elemente_incluse')}>
-                    {contentItems.map(({ n, depth }) => (
-                      <li key={n.id} style={{ paddingLeft: `${depth * 1.1}em` }}>
-                        <label className="check">
-                          <input type="checkbox" checked={n.includeInCompile !== false} onChange={(e) => setIncluded(n.id, e.target.checked)} />
-                          <span className="cd-item-icon" aria-hidden="true">{n.type === 'folder' ? '📁' : '📄'}</span> {n.title}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="muted small">{tr('ui.compileDialog.p1.continut_coloane')}</p>
+                  <table className="cd-table cd-contents" aria-label={tr('ui.compileDialog.elemente_incluse')}>
+                    <thead>
+                      <tr>
+                        <th>{tr('ui.compileDialog.p1.include')}</th>
+                        <th>{tr('ui.compileDialog.p1.document')}</th>
+                        <th>{tr('ui.compileDialog.p1.pagina_noua_rand')}</th>
+                        <th>{tr('ui.compileDialog.p1.tip_sectiune_rand')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {contentItems.map(({ n, depth }) => (
+                        <tr key={n.id} className={n.includeInCompile === false ? 'cd-excluded' : ''}>
+                          <td>
+                            <input type="checkbox" aria-label={`${tr('ui.compileDialog.p1.include')}: ${n.title}`} checked={n.includeInCompile !== false} onChange={(e) => setIncluded(n.id, e.target.checked)} />
+                          </td>
+                          <td style={{ paddingLeft: `${0.3 + depth * 1.1}em` }}>
+                            <span className="cd-item-icon" aria-hidden="true">{n.type === 'folder' ? '📁' : '📄'}</span> {n.title}
+                          </td>
+                          <td>
+                            <select
+                              aria-label={`${tr('ui.compileDialog.p1.pagina_noua_rand')}: ${n.title}`}
+                              value={typeof n.compilePageBreak === 'boolean' ? String(n.compilePageBreak) : ''}
+                              onChange={(e) => setNodeField(n.id, { compilePageBreak: e.target.value === '' ? undefined : e.target.value === 'true' })}
+                            >
+                              <option value="">{tr('ui.compileDialog.p1.dupa_asezare')}</option>
+                              <option value="true">{tr('ui.compileDialog.p1.da')}</option>
+                              <option value="false">{tr('ui.compileDialog.p1.nu')}</option>
+                            </select>
+                          </td>
+                          <td>
+                            <select aria-label={`${tr('ui.compileDialog.p1.tip_sectiune_rand')}: ${n.title}`} value={sectionTypeValue(n)} onChange={(e) => setNodeField(n.id, { sectionType: e.target.value || undefined })}>
+                              <option value="">{tr('ui.compileDialog.p1.tip_implicit')}</option>
+                              {sectionTypeOptions.map((t) => (
+                                <option key={t.value} value={t.value}>{t.label}</option>
+                              ))}
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
 
@@ -565,7 +721,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       </select>
                     </label>
                     <label>
-                      Materie de final (back matter)
+                      {tr('ui.compileDialog.p1.materie_de_final')}
                       <select value={backMatterId} onChange={(e) => setBack(e.target.value)}>
                         <option value="">{tr('ui.app.fara')}</option>
                         {folders.map((f) => (
@@ -574,6 +730,33 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       </select>
                     </label>
                   </div>
+                  {output !== 'print' && (
+                    <div className="row cd-per-output">
+                      {[
+                        [tr('ui.compileDialog.materie_de_inceput_front_matter'), frontByOut, setFrontByOut],
+                        [tr('ui.compileDialog.p1.materie_de_final'), backByOut, setBackByOut],
+                      ].map(([label, map, setMap]) => (
+                        <label key={label}>
+                          {label} · {tr('ui.compileDialog.p1.doar_pentru_x', { out: outputLabel })}
+                          <select
+                            value={map[outKey] || ''}
+                            onChange={(e) => {
+                              const next = { ...map };
+                              if (e.target.value) next[outKey] = e.target.value;
+                              else delete next[outKey];
+                              setMap(next);
+                            }}
+                          >
+                            <option value="">{tr('ui.compileDialog.p1.ca_mai_sus')}</option>
+                            <option value="-">{tr('ui.compileDialog.p1.niciuna')}</option>
+                            {folders.map((f) => (
+                              <option key={f.id} value={f.id}>{f.title}</option>
+                            ))}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                   <label className="check">
                     <input type="checkbox" checked={titlePage ?? Boolean(format.titlePage)} onChange={(e) => setTitlePage(e.target.checked)} /> {tr('ui.compileDialog.pagina_de_titlu_automata_titlu')}
                   </label>
@@ -592,6 +775,80 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <input type="checkbox" checked={toc ?? Boolean(format.toc)} onChange={(e) => setToc(e.target.checked)} /> {tr('ui.compileDialog.cuprins')}
                     {output === 'epub' && <span className="muted"> {tr('ui.compileDialog.in_epub_cuprinsul_de_navigare')}</span>}
                   </label>
+                  {(toc ?? Boolean(format.toc)) && (
+                    <div className="row cd-toc">
+                      <label>
+                        {tr('ui.compileDialog.p1.cuprins_titlu')}
+                        <input value={tocCfg.title} onChange={(e) => setTocSettings({ ...tocSettings, title: e.target.value })} />
+                      </label>
+                      <label>
+                        {tr('ui.compileDialog.p1.cuprins_adancime')}
+                        <select value={tocCfg.depth} onChange={(e) => setTocSettings({ ...tocSettings, depth: Number(e.target.value) })}>
+                          {[1, 2, 3].map((d) => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="check">
+                        <input type="checkbox" checked={tocCfg.pageNumbers} onChange={(e) => setTocSettings({ ...tocSettings, pageNumbers: e.target.checked })} /> {tr('ui.compileDialog.p1.cuprins_pagini')}
+                      </label>
+                      <label className="check">
+                        <input type="checkbox" checked={tocCfg.leaders} disabled={!tocCfg.pageNumbers} onChange={(e) => setTocSettings({ ...tocSettings, leaders: e.target.checked })} /> {tr('ui.compileDialog.p1.cuprins_puncte')}
+                      </label>
+                    </div>
+                  )}
+                  {['pdf', 'print', 'docx'].includes(output) && format.page && (
+                    <fieldset className="cd-pages">
+                      <legend>{tr('ui.compileDialog.p1.pagini_pdf')}</legend>
+                      <label className="check">
+                        <input type="checkbox" checked={frontRoman ?? Boolean(format.page.frontRoman)} onChange={(e) => setFrontRoman(e.target.checked)} /> {tr('ui.compileDialog.p1.cifre_romane')}
+                      </label>
+                      <div className="row">
+                        <label>
+                          {tr('ui.compileDialog.p1.vaduve')}
+                          <input type="number" min="1" max="9" value={flowCfg.widows} onChange={(e) => setFlow({ ...flow, widows: Number(e.target.value) || 1 })} />
+                        </label>
+                        <label>
+                          {tr('ui.compileDialog.p1.orfane')}
+                          <input type="number" min="1" max="9" value={flowCfg.orphans} onChange={(e) => setFlow({ ...flow, orphans: Number(e.target.value) || 1 })} />
+                        </label>
+                      </div>
+                      <label className="check">
+                        <input type="checkbox" checked={flowCfg.keepWithNext} onChange={(e) => setFlow({ ...flow, keepWithNext: e.target.checked })} /> {tr('ui.compileDialog.p1.titlu_cu_textul')}
+                      </label>
+                    </fieldset>
+                  )}
+                  {['pdf', 'print', 'docx', 'epub', 'html'].includes(output) && (
+                    <fieldset className="cd-fonts">
+                      <legend>{tr('ui.compileDialog.p1.fonturi')}</legend>
+                      <p className="muted small">{tr('ui.compileDialog.p1.fonturi_nota')}</p>
+                      <ul className="cd-font-list">
+                        {fonts.map((f, i) => (
+                          <li key={`${f.name}-${i}`}>
+                            <input aria-label={tr('ui.compileDialog.p1.font_familie')} value={f.family} onChange={(e) => setFonts(fonts.map((x, j) => (j === i ? { ...x, family: e.target.value } : x)))} />
+                            <span className="muted small"> {f.name}</span>
+                            <button type="button" onClick={() => setFonts(fonts.filter((_, j) => j !== i))}>{tr('ui.compileDialog.p1.elimina')}</button>
+                          </li>
+                        ))}
+                      </ul>
+                      <label className="cd-file-btn">
+                        {tr('ui.compileDialog.p1.adauga_font')}
+                        <input
+                          type="file"
+                          accept=".ttf,.otf,.woff,.woff2"
+                          onChange={(e) => {
+                            addFont(e.target.files && e.target.files[0]).catch(onError);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </fieldset>
+                  )}
+                  {output !== 'print' && api.exportCompiled && (
+                    <label className="check">
+                      <input type="checkbox" checked={openAfter} onChange={(e) => setOpenAfter(e.target.checked)} /> {tr('ui.compileDialog.p1.deschide_dupa')}
+                    </label>
+                  )}
                   {output === 'docx' && (
                     <label className="check">
                       <input type="checkbox" checked={trackChanges} onChange={(e) => setTrackChanges(e.target.checked)} /> {tr('ui.compileDialog.reviziile_ca_modificari_urmarite_word')}
@@ -613,7 +870,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                         <select value={collectionId} onChange={(e) => setCollectionId(e.target.value)}>
                           <option value="">{tr('ui.compileDialog.toate_documentele')}</option>
                           {collections.map((c) => (
-                            <option key={c.id} value={c.id}>{c.title}</option>
+                            <option key={c.id} value={c.id}>{c.title}{c.type === 'search' ? ` ${tr('ui.compileDialog.p1.cautare_salvata')}` : ''}</option>
                           ))}
                         </select>
                       </label>
@@ -626,6 +883,19 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                         </label>
                       ))}
                     </div>
+                    {keywordNames.length > 0 && (
+                      <div className="cd-chips">
+                        <span className="muted">{tr('ui.compileDialog.p1.cuvinte_cheie')}</span>
+                        {keywordNames.map((k) => (
+                          <label key={k} className="check">
+                            <input type="checkbox" checked={keywords.includes(k)} onChange={() => toggleIn(keywords, setKeywords, k)} /> {k}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    <label className="check">
+                      <input type="checkbox" checked={filterInvert} onChange={(e) => setFilterInvert(e.target.checked)} /> {tr('ui.compileDialog.p1.exclude_potrivite')}
+                    </label>
                   </fieldset>
                 </div>
               )}
@@ -1003,6 +1273,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
 }
 
 const CSS = `
+.compile-dialog .cd-contents td,.compile-dialog .cd-contents th{padding:.15em .4em;text-align:left}
+.compile-dialog .cd-contents select{font-size:.9em}
+.compile-dialog .cd-contents tr.cd-excluded td:nth-child(2){opacity:.55;text-decoration:line-through}
+.compile-dialog .cd-file-btn{position:relative;display:inline-block;cursor:pointer;border:1px solid var(--border,#ccc);border-radius:4px;padding:.15em .6em}
+.compile-dialog .cd-file-btn input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.compile-dialog .cd-font-list{list-style:none;padding:0;margin:.3em 0}
+.compile-dialog .cd-font-list li{display:flex;gap:.4em;align-items:center;margin:.2em 0}
 .compile-dialog{max-width:1100px;width:95vw}
 .compile-dialog .cd-body{min-height:420px}
 .compile-dialog .cd-formats{border-right:1px solid var(--border,#ddd);padding-right:.8em}
