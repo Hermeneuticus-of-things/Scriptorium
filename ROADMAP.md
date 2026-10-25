@@ -520,15 +520,15 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### D1. Compile: fereastra de ansamblu (`CompileDialog.jsx`, `lib/compileFormats.cjs`)
 **Identic:** formate de ieșire (Word, ODT, EPUB, HTML, Markdown, MultiMarkdown, LaTeX, Fountain, Final Draft, text simplu, PDF prin tipărire), „compilează pentru”, sursă (tot manuscrisul, dosar, selecție, colecție), filtre după etichetă și stare, atribuirea așezărilor pe tip de secțiune, cuprins, copertă din Cercetare, pagină de titlu automată, materie de început, formate globale și ale proiectului, duplicare/ștergere format, previzualizare.
-- [ ] **parțial** Formate predefinite puține; lipsesc echivalentele: manuscris standard (Courier), manuscris (Times), roman tipărit (paperback), roman cu părți numerotate, non-ficțiune, povestire, scenariu de film, piesă de teatru, scenariu BD, scenariu radio, poezie, e-book ficțiune, exemplar de corectură.
-- [ ] **lipsă** Lista „Conținut” în fereastră cu bifa „Include”, „Pagină nouă înainte” și tipul secțiunii editabile pe fiecare rând.
-- [ ] **lipsă** Filtru invers („exclude ce corespunde”) și filtru după cuvinte-cheie / căutare salvată.
-- [ ] **lipsă** Materie de final (back matter), simetric cu materia de început.
-- [ ] **lipsă** Materie de început aleasă diferit pe tip de ieșire (PDF vs EPUB).
-- [ ] **lipsă** „Deschide fișierul după compilare” (în aplicația implicită).
-- [ ] **lipsă** Import/export al unui format de compile ca fișier.
-- [ ] **lipsă** RTF ca ieșire de Compile (există doar la Export).
-- [ ] **parțial** PDF = tipărire Chromium din HTML; lipsesc controlul rupturilor de pagină (văduve/orfane), încorporarea fonturilor alese, numerotarea cu cifre romane în front matter.
+- [x] **parțial** Formate predefinite puține; lipsesc echivalentele: manuscris standard (Courier), manuscris (Times), roman tipărit (paperback), roman cu părți numerotate, non-ficțiune, povestire, scenariu de film, piesă de teatru, scenariu BD, scenariu radio, poezie, e-book ficțiune, exemplar de corectură. *Făcut (P1): 10 formate noi (roman cu părți, non-ficțiune, povestire, scenariu de film, piesă de teatru, scenariu BD, scenariu radio, poezie, e-book ficțiune, exemplar de corectură) lângă manuscris Courier/Times și paperback; cele de scenariu spun ieșirea pentru care sunt gândite.*
+- [x] **lipsă** Lista „Conținut” în fereastră cu bifa „Include”, „Pagină nouă înainte” și tipul secțiunii editabile pe fiecare rând.
+- [x] **lipsă** Filtru invers („exclude ce corespunde”) și filtru după cuvinte-cheie / căutare salvată.
+- [x] **lipsă** Materie de final (back matter), simetric cu materia de început.
+- [x] **lipsă** Materie de început aleasă diferit pe tip de ieșire (PDF vs EPUB); la fel materia de final.
+- [x] **lipsă** „Deschide fișierul după compilare” (în aplicația implicită).
+- [x] **lipsă** Import/export al unui format de compile ca fișier (`.scribcompile`).
+- [x] **lipsă** RTF ca ieșire de Compile (există doar la Export).
+- [x] **parțial** PDF = tipărire Chromium din HTML; lipsesc controlul rupturilor de pagină (văduve/orfane), încorporarea fonturilor alese, numerotarea cu cifre romane în front matter. *Făcut (P1): văduve/orfane și titlu legat de text (CSS + Word), fonturi încorporate (PDF/HTML/EPUB/Word), materia de început pe pagini proprii numerotate i, ii, iii (PDF și Word), corpul de la 1.*
 
 ### D2. Compile / designer: Separatoare
 **Identic:** separator între secțiuni de același tip, între tipuri diferite, separator înainte (rând gol, pagină nouă, text propriu, nimic).
@@ -585,7 +585,7 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### D10. Compile / designer: Setări de pagină
 **Identic:** hârtie, lățime/înălțime, margini, margini în oglindă, prima pagină fără antet, spațiere.
-- [ ] **lipsă** Numerotarea paginilor începe de la N; cifre romane pentru materia de început.
+- [ ] **lipsă** Numerotarea paginilor începe de la N; cifre romane pentru materia de început. *Cifrele romane: făcute în P1 (D1); rămâne „începe de la N”.*
 - [ ] **lipsă** Spațiu de legătură (gutter).
 - [ ] **lipsă** Pagina de titlu fără număr (separat de „prima pagină fără antet”).
 - [ ] **lipsă** Coloane de text pe pagină.
@@ -615,7 +615,7 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 - [ ] **lipsă** „(CONT'D)” / „(MORE)” automate la ruperea dialogului pe pagini.
 
 ### D16. Compile / designer: alte secțiuni
-- [ ] **parțial** Cuprins: doar bifă; lipsesc titlul cuprinsului, adâncimea, punctele de conducere și stilul.
+- [x] **parțial** Cuprins: doar bifă; lipsesc titlul cuprinsului, adâncimea, punctele de conducere și stilul. *Făcut (P1): titlu, 1–3 niveluri (și în navigarea EPUB), numere de pagină cu puncte de conducere în Word (PAGEREF actualizat la deschidere); în PDF cuprinsul are legături, fără numere de pagină (Chromium nu le calculează).*
 - [ ] **lipsă** E-book: CSS propriu, împărțirea în fișiere, imaginea de copertă separată de text.
 - [ ] **lipsă** HTML: CSS propriu, un fișier sau mai multe.
 - [ ] **lipsă** Markdown: stilul titlurilor (# sau subliniat), separatorul notelor.
@@ -913,7 +913,7 @@ Concluzie: ferestrele de lucru zilnic (Inspector, Outliner, bara de format, cău
 
 ### Pachete de lucru (câte un agent fiecare, fișiere în mare parte disjuncte)
 
-- **P1. Compile: formate și conținut** (1, 2, 5, 8) — `lib/compileFormats.cjs`, `lib/compile.cjs` (partea de selecție, front/back matter, cuprins), `CompileDialog.jsx` (doar tabul „Conținut”/ansamblu), `tests/compile*.test.js`.
+- **P1. Compile: formate și conținut** (1, 2, 5, 8) — `lib/compileFormats.cjs`, `lib/compile.cjs` (partea de selecție, front/back matter, cuprins), `CompileDialog.jsx` (doar tabul „Conținut”/ansamblu), `tests/compile*.test.js`. **Făcut:** D1 complet, cuprinsul din D16; din punctul 5 materia de final și cifrele romane în materia de început (numerotarea de la N rămâne la P3).
 - **P2. Compile: așezări, text, note, stiluri, separatoare** (3, 6, 7, 35, 38) — `lib/compile.cjs` (redarea secțiunilor și transformările; coordonat cu P1 prin funcții separate, ex. `lib/compileLayouts.cjs` nou), `src/components/CompileLayoutEditor.jsx` (nou, scos din `CompileDialog.jsx`), teste.
 - **P3. Compile: pagină, antete, substituenți, scenariu** (4, 5 partea de numerotare, 31 partea de compile, 36) — `lib/compileDocx.cjs`/partea DOCX și PDF din `lib/compile.cjs`, `lib/placeholders.cjs` (nou), `PageSetupDialog.jsx`, `src/help/` (lista substituenților), `FormatBar.jsx` doar meniul „Inserează substituent”.
 - **P4. Opțiuni: Navigare + Comportamente + Tastatură** (9, 10, 39) — `SettingsDialog.jsx` (panouri noi `navigation`, `behaviors`), `lib/settingsDefaults.js`, `Binder.jsx` (dublu-clic, selecție multiplă), `ShortcutsDialog.jsx`, `lib/commands.js`.
