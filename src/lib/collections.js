@@ -63,6 +63,24 @@ export const moveInCollection = (project, collectionId, id, newIndex) =>
     ids.splice(Math.max(0, Math.min(newIndex, ids.length)), 0, id);
   });
 
+/** Moves a collection tab to another place (index in the list of collections). */
+export function moveCollection(project, collectionId, newIndex) {
+  const list = [...(project.collections || [])];
+  const from = list.findIndex((c) => c.id === collectionId);
+  if (from < 0) return project;
+  const [c] = list.splice(from, 1);
+  list.splice(Math.max(0, Math.min(newIndex, list.length)), 0, c);
+  return { ...project, collections: list };
+}
+
+/** New criteria for a saved search (Edit search criteria). */
+export const setCollectionSearch = (project, collectionId, criteria) =>
+  withCollection(project, collectionId, (c) => {
+    if (c.type !== 'search') return;
+    const { query = '', ...options } = criteria || {};
+    c.search = structuredClone({ query, options });
+  });
+
 // Criteria object for a search collection.
 export const collectionCriteria = (collection) => ({
   ...(collection.search?.options || {}),

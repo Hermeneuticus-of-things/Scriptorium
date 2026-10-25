@@ -1,3 +1,4 @@
+import { caretPosFor, rememberCaretPos } from '../lib/behaviors.js';
 import { t as i18nT } from '../lib/i18n.js';
 import { TextSelection } from '@tiptap/pm/state';
 import { sentenceAt, wordAt } from '../lib/textRange.js';
@@ -66,10 +67,13 @@ const Editor = forwardRef(function Editor(
     showStylesPanel = false,
     onStylesChange = null,
     onCloseStylesPanel = null,
+    rememberCaret = false,
   },
   ref,
 ) {
   const actionsRef = useRef({}); // note/image actions defined below, called from the handle
+  const caretKeyRef = useRef(null); // Options › Navigation: cursor position kept per document
+  caretKeyRef.current = rememberCaret ? historyKey : null;
   const commentRef = useRef({ color: commentColor, author: authorName });
   commentRef.current = { color: commentColor, author: authorName };
   const selWordsRef = useRef(onSelectionWords);
@@ -140,6 +144,7 @@ const Editor = forwardRef(function Editor(
       onBlur: () => flushRef.current(),
       onDestroy: () => flushRef.current(),
       onSelectionUpdate: ({ editor: ed }) => {
+        if (caretKeyRef.current) rememberCaretPos(caretKeyRef.current, ed.state.selection.from);
         // Words in the selection for the footer ("Words: 37 of 1,234"); 0 = no selection.
         if (selWordsRef.current) {
           const { from, to, empty } = ed.state.selection;
@@ -299,6 +304,19 @@ const Editor = forwardRef(function Editor(
     flushRef.current();
     return ok;
   }
+
+  // Back to a document: the cursor goes where it was (no focus, no scroll jump on a long text).
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || !rememberCaret || !historyKey) return;
+    const pos = caretPosFor(historyKey);
+    if (pos === undefined) return;
+    const at = Math.max(1, Math.min(pos, editor.state.doc.content.size - 1));
+    try {
+      editor.commands.setTextSelection(at);
+    } catch {
+      /* the text changed under the old position */
+    }
+  }, [editor, historyKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useImperativeHandle(
     ref,

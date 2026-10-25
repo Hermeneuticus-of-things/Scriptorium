@@ -92,11 +92,13 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
     }
   };
   const groups = groupTemplates(templates);
-  const [category, setCategory] = useState(null);
+  // Options › General: the chooser opens on the last category used.
+  const [category, setCategory] = useState(() => (initialSettings?.templatesRememberCategory !== false ? initialSettings?.templatesLastCategory || null : null));
   const activeCat = category && groups.some((g) => g.category === category) ? category : (groups.find((g) => g.templates.some((t) => t.id === templateId)) || groups[0])?.category;
   const shown = groups.find((g) => g.category === activeCat)?.templates || [];
   const pickCategory = (c) => {
     setCategory(c);
+    if (settings.templatesRememberCategory !== false && settings.templatesLastCategory !== c) saveSettings({ templatesLastCategory: c });
     const g = groups.find((x) => x.category === c);
     if (g && !g.templates.some((t) => t.id === templateId) && g.templates[0]) setTemplateId(g.templates[0].id);
   };

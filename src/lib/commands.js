@@ -82,12 +82,45 @@ export const DEFAULT_KEYS = {
   revealBinder: 'Ctrl+Alt+R',
   // Scrivener's Format > Show Ruler is Ctrl+Shift+R, already Quick Reference here.
   toggleRuler: 'Ctrl+Alt+Shift+R',
+  // Insert Citation opens the reference manager chosen in Options › General.
+  insertCitation: 'F4',
 };
 
 // Effective shortcut for a command; an empty string in settings disables it.
 export function shortcutFor(id, settings) {
   const custom = settings && settings.shortcuts ? settings.shortcuts[id] : undefined;
   return custom !== undefined ? custom : DEFAULT_KEYS[id] || '';
+}
+
+// Shortcut sets saved to / loaded from a file (Options › Keyboard).
+export const SHORTCUT_SET_FORMAT = 'scribner-shortcuts';
+export function serializeShortcutSet(map) {
+  return JSON.stringify({ format: SHORTCUT_SET_FORMAT, version: 1, shortcuts: map || {} }, null, 2);
+}
+/** Map read from a set file; unknown commands are dropped, combos normalized. Throws on another format. */
+export function parseShortcutSet(text, knownIds = null) {
+  const data = JSON.parse(String(text || ''));
+  const src = data && data.format === SHORTCUT_SET_FORMAT ? data.shortcuts : null;
+  if (!src || typeof src !== 'object') throw new Error('format');
+  const out = {};
+  for (const [id, combo] of Object.entries(src)) {
+    if (knownIds && !knownIds.includes(id)) continue;
+    if (typeof combo === 'string') out[id] = combo ? normalizeCombo(combo) : '';
+  }
+  return out;
+}
+
+/** Ids of the commands that use a combination now. */
+export function holdersOf(ids, combo, settings) {
+  const k = normalizeCombo(combo);
+  return k ? ids.filter((id) => shortcutFor(id, settings) === k) : [];
+}
+
+/** Gives combo to id and takes it away from every other command in one step. */
+export function assignShortcut(map, ids, id, combo) {
+  const next = { ...(map || {}), [id]: combo };
+  for (const other of holdersOf(ids, combo, { shortcuts: next })) if (other !== id) next[other] = '';
+  return next;
 }
 
 // Commands whose shortcut collides with another one.

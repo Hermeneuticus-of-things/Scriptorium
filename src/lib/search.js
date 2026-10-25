@@ -118,9 +118,11 @@ export function findInHtml(html, re, context = 40) {
   return results;
 }
 
-export function replaceInHtml(html, re, replacement) {
+// keep(i) (optional) decides, per match in document order, whether it is replaced (preview exclusions).
+export function replaceInHtml(html, re, replacement, keep = null) {
   if (!re) return { html, count: 0 };
   let count = 0;
+  let seen = 0;
   // Number of capture groups: $N beyond it stays literal (args after the groups are offset/input).
   const groups = new RegExp(`${re.source}|`, re.flags).exec('').length - 1;
   const expand = (args) =>
@@ -138,6 +140,7 @@ export function replaceInHtml(html, re, replacement) {
       let res = '';
       let at = 0;
       for (const { index, m } of matchesIn(seg, re)) {
+        if (keep && !keep(seen++)) continue;
         count++;
         res += seg.s.slice(at, index) + expand([...m]);
         at = index + m[0].length;
@@ -146,4 +149,50 @@ export function replaceInHtml(html, re, replacement) {
     })
     .join('');
   return { html: out, count };
+}
+
+// Find by formatting across the project: the HTML each kind is stored as.
+export const PROJECT_FORMATS = ['bold', 'italic', 'underline', 'strike', 'highlight', 'comment', 'footnote', 'annotation', 'revision', 'charStyle', 'bookmark'];
+const FORMAT_OPEN = {
+  bold: /<(strong|b)\b[^>]*>/gi,
+  italic: /<(em|i)\b[^>]*>/gi,
+  underline: /<(u)\b[^>]*>/gi,
+  strike: /<(s|del|strike)\b[^>]*>/gi,
+  highlight: /<(mark)\b[^>]*>/gi,
+  comment: /<(\w+)\b[^>]*\sdata-comment(?:=|\s|>)[^>]*>/gi,
+  footnote: /<(\w+)\b[^>]*\sdata-(?:linked-)?footnote(?:=|\s|>)[^>]*>/gi,
+  annotation: /<(\w+)\b[^>]*\sdata-annotation(?:=|\s|>)[^>]*>/gi,
+  revision: /<(\w+)\b[^>]*\sdata-revision(?:=|\s|>)[^>]*>/gi,
+  charStyle: /<(\w+)\b[^>]*\sdata-char-style(?:=|\s|>)[^>]*>/gi,
+  bookmark: /<(\w+)\b[^>]*\sdata-bookmark(?:=|\s|>)[^>]*>/gi,
+};
+
+/** Plain text of every run with the given formatting, in document order (nested tags of the same name balanced). */
+export function formattedRuns(html, kind) {
+  const open = FORMAT_OPEN[kind];
+  const src = String(html || '');
+  if (!open) return [];
+  const out = [];
+  open.lastIndex = 0;
+  let m;
+  while ((m = open.exec(src))) {
+    const tag = m[1].toLowerCase();
+    const tagRe = new RegExp(`<(/?)${tag}\\b[^>]*>`, 'gi');
+    tagRe.lastIndex = m.index + m[0].length;
+    let depth = 1;
+    let t;
+    let end = src.length;
+    while ((t = tagRe.exec(src))) {
+      depth += t[1] ? -1 : 1;
+      if (!depth) {
+        end = t.index;
+        break;
+      }
+    }
+    const text = decode(src.slice(m.index + m[0].length, end).replace(/<[^>]*>/g, '')).replace(/\s+/g, ' ').trim();
+    if (text) out.push(text);
+    open.lastIndex = Math.max(open.lastIndex, end);
+  }
+  open.lastIndex = 0;
+  return out;
 }

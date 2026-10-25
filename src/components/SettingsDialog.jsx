@@ -1,7 +1,11 @@
 import { LANG_NAMES } from '../lib/lookups.js';
 import ServicesPanel from './ServicesPanel.jsx';
 import React, { useRef, useState } from 'react';
-import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
+import { DEFAULT_SETTINGS, PANE_KEYS } from '../lib/settingsDefaults.js';
+import GeneralPane from './GeneralPane.jsx';
+import BehaviorsPane from './BehaviorsPane.jsx';
+import NavigationPane from './NavigationPane.jsx';
+import KeyboardPane from './KeyboardPane.jsx';
 import { colorFor, newMachineId } from '../lib/team.js';
 import { listsFor, profileId } from '../lib/editorial.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
@@ -10,7 +14,7 @@ import AI_PRESETS from '../../lib/aiPresets.json';
 // Base URL is editable only for local / custom servers; cloud presets use their fixed URL.
 const EDITABLE_URL = new Set(['ollama', 'lmstudio', 'custom']);
 
-const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'language'];
+const TABS = ['general', 'appearance', 'behaviors', 'navigation', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'language'];
 const TAB_FALLBACK = { sharing: 'Partajare' };
 const tabLabel = (k) => {
   const v = t(`set.tab.${k}`);
@@ -26,7 +30,7 @@ const FONTS = [
   ["'Courier New', monospace", 'Courier New'],
 ];
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, initialTab }) {
+export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, onTargets, initialTab }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
   const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
   const [tab, setTab] = useState(() => (TABS.includes(initialTab) ? initialTab : 'general'));
@@ -78,6 +82,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     dtedTimestamps: init.dtedTimestamps !== false,
     speechEngine: init.speechEngine || 'local',
     teamColor: init.team?.color || '',
+    ...Object.fromEntries([...PANE_KEYS, 'hiddenWarnings'].map((k) => [k, init[k]])),
   });
   const set = (k) => (e) => {
     const v = e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e;
@@ -283,29 +288,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   );
 
   const panes = {
-    general: (
-      <>
-        {check('reopenLastProject', t('set.reopenLast'))}
-        {api.onUpdateAvailable && check('autoUpdateCheck', t('set.autoUpdateCheck'))}
-        <label>
-          {t('set.autosave')}
-          <input type="number" min="1" max="120" value={s.autosaveSec} onChange={set('autosaveSec')} />
-        </label>
-        {check('checkUpdates', t('set.checkUpdates'))}
-        {project && (
-          <div className="row">
-            <label>
-              {t('set.targetDraft')}
-              <input type="number" min="0" step="1000" value={draft} onChange={(e) => setDraft(e.target.value)} />
-            </label>
-            <label>
-              {t('set.targetSession')}
-              <input type="number" min="0" step="100" value={session} onChange={(e) => setSession(e.target.value)} />
-            </label>
-          </div>
-        )}
-      </>
-    ),
+    general: <GeneralPane s={s} set={set} setS={setS} check={check} api={api} onTargets={onTargets} />,
     appearance: (
       <>
         <label>
@@ -418,24 +401,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         </fieldset>
       </>
     ),
-    behaviors: (
-      <>
-        <label>
-          {t('set.binderEnter')}
-          <select value={s.binderEnter} onChange={set('binderEnter')}>
-            {['edit', 'newDoc'].map((x) => <option key={x} value={x}>{t(`set.binderEnter.${x}`)}</option>)}
-          </select>
-        </label>
-        <label>
-          {t('set.binderDbl')}
-          <select value={s.binderDoubleClick} onChange={set('binderDoubleClick')}>
-            {['rename', 'openQuickRef'].map((x) => <option key={x} value={x}>{t(`set.binderDbl.${x}`)}</option>)}
-          </select>
-        </label>
-        {check('snapshotOnSave', t('set.snapshotOnSave'))}
-        {check('typewriter', t('set.typewriter'))}
-      </>
-    ),
+    behaviors: <BehaviorsPane s={s} set={set} check={check} />,
+    navigation: <NavigationPane s={s} set={set} check={check} />,
     corrections: (
       <>
         {check('smartQuotes', t('set.smartQuotes'))}
@@ -514,12 +481,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         </label>
       </>
     ) : null,
-    keyboard: (
-      <>
-        <p className="muted small">{t('set.keyboardInfo')}</p>
-        <button disabled={!onShortcuts} onClick={() => onShortcuts?.()}>{t('set.openShortcuts')}</button>
-      </>
-    ),
+    keyboard: <KeyboardPane settings={settings} onShortcuts={onShortcuts} />,
     ai: (
       <>
         {check('aiEnabled', t('set.aiEnabled'))}

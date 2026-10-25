@@ -3,7 +3,7 @@ import Editor from './Editor.jsx';
 import { t } from '../lib/i18n.js';
 
 // Floating Quick Reference panel: another document open next to the main editor.
-export default function QuickRef({ node, html, x, y, readOnly, smartQuotes, onChange, onMove, onClose, onOpen }) {
+export default function QuickRef({ node, html, x, y, readOnly, smartQuotes, onChange, onMove, onClose, onOpen, onTop = false }) {
   const box = useRef(null);
   const startDrag = (e) => {
     const sx = e.clientX - x;
@@ -17,7 +17,7 @@ export default function QuickRef({ node, html, x, y, readOnly, smartQuotes, onCh
     window.addEventListener('mouseup', up);
   };
   return (
-    <div className="quickref" ref={box} style={{ left: x, top: y }} role="dialog" aria-label={`Quick Reference: ${node.title}`}>
+    <div className={`quickref${onTop ? ' quickref-ontop' : ''}`} ref={box} style={{ left: x, top: y, ...(onTop ? { zIndex: 1000 } : {}) }} role="dialog" aria-label={`Quick Reference: ${node.title}`}>
       <div className="quickref-head" onMouseDown={startDrag}>
         <strong>{node.title}</strong>
         <span className="spacer" />

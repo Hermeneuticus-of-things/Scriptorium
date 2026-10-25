@@ -3,7 +3,8 @@ import { buildRegex, findInHtml } from '../lib/search.js';
 import { flatten } from '../lib/tree.js';
 import { t } from '../lib/i18n.js';
 
-export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClose, initialQuery = '' }) {
+export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClose, initialQuery = '', onShowInBinder }) {
+  const [skip, setSkip] = useState(() => new Set()); // documents left out of Replace all
   const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
   const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, includeTrash: false });
@@ -34,7 +35,7 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
   const toggle = (k) => () => setOpts((o) => ({ ...o, [k]: !o[k] }));
 
   const replaceAll = async () => {
-    const ids = results.map((r) => r.node.id);
+    const ids = results.map((r) => r.node.id).filter((id) => !skip.has(id));
     if (!ids.length) return;
     if (!window.confirm(t('ui.findDialog.inlocuiesti_x_aparitii_in_x', { total: total, length: ids.length }))) return;
     setBusy(true);
@@ -71,6 +72,13 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
         <div className="results">
           {results.map(({ node, hits, inTitle, inSyn }) => (
             <div key={node.id} className="result">
+              <input
+                type="checkbox"
+                checked={!skip.has(node.id)}
+                onChange={() => setSkip((x) => { const n = new Set(x); if (n.has(node.id)) n.delete(node.id); else n.add(node.id); return n; })}
+                aria-label={t('ui.p7.includeInInlocuire', { title: node.title })}
+                title={t('ui.p7.includeInInlocuire', { title: node.title })}
+              />{' '}
               <button className="link" onClick={() => onOpen(node.id)}>
                 <strong>{node.title}</strong>
               </button>{' '}
@@ -91,7 +99,8 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
         {message && <p className="ok">{message}</p>}
         <div className="actions">
           <button onClick={onClose}>{t('btn.close')}</button>
-          <button className="primary" disabled={!re || !total || busy} onClick={replaceAll}>
+          {onShowInBinder && <button disabled={!results.length} onClick={() => onShowInBinder(results.map((r) => r.node.id), Object.fromEntries(results.map((r) => [r.node.id, r.hits.length + (r.inTitle ? 1 : 0) + (r.inSyn ? 1 : 0)])))}>{t('ui.p7.arataInBinder')}</button>}
+          <button className="primary" disabled={!re || !total || busy || results.every((r) => skip.has(r.node.id))} onClick={replaceAll}>
             {t('ui.advancedSearchDialog.inlocuieste_tot')}
           </button>
         </div>

@@ -4,7 +4,17 @@ export const DEFAULT_SETTINGS = {
   language: 'ro',
   reopenLastProject: true,
   autosaveSec: 2,
+  autosaveEveryMin: 0, // also save every N minutes even while typing (0 = only after the pause)
   checkUpdates: false,
+  startupAction: 'reopenLast', // 'reopenLast' | 'reopenAll' | 'templates'
+  defaultProjectDir: '', // folder offered first for new projects
+  bibliographyApp: '', // external reference manager opened by Insert Citation (F4)
+  templatesRememberCategory: true, // the template chooser opens on the last category used
+  showSelectionCount: true, // selected words in the editor footer
+  windowWidth: 1400,
+  windowHeight: 900,
+  startMaximized: false,
+  hiddenWarnings: [], // keys of warnings turned off with "Do not show again"
   // Appearance
   theme: 'system',
   editorFont: 'Georgia, serif',
@@ -20,7 +30,28 @@ export const DEFAULT_SETTINGS = {
   binderEnter: 'edit', // 'edit' | 'newDoc'
   binderDoubleClick: 'rename', // 'rename' | 'openQuickRef'
   typewriter: false,
-  // Composition
+  folderDoubleClick: 'behaviour', // 'behaviour' (as above) | 'expand' | 'corkboard' | 'outline'
+  folderView: 'keep', // view when a folder is selected: 'keep' | 'editor' | 'corkboard' | 'outline'
+  parentDocView: 'keep', // the same for a document with sub-documents
+  multiSelectView: 'scrivenings', // several items selected: 'scrivenings' | 'corkboard' | 'outline'
+  autoFolderOnChildren: false, // a document that receives sub-documents becomes a folder
+  binderDragToEditor: 'link', // dropping binder items in the text: 'link' | 'text' | 'image'
+  internalLinksOpen: 'current', // 'current' | 'other' (the other pane of the split) | 'quickRef'
+  bookmarksOpen: 'editor', // 'editor' | 'quickRef'
+  confirmEmptyTrash: true,
+  untitledFirstLine: false, // an untitled document takes its first line as title
+  targetSound: false, // a short sound when a target is reached
+  // Navigation
+  splitOpenInOther: false, // split: what is chosen on the corkboard / outliner opens in the other pane
+  syncBinderSelection: true, // selection on the corkboard / outliner is shown in the binder
+  rememberCaret: true, // each document keeps its cursor position
+  outlinerEnter: 'edit', // Enter in the outliner: 'edit' | 'newRow'
+  outlinerTab: 'indent', // Tab in the outliner: 'indent' (move right) | 'none'
+  quickRefOnTop: false, // Quick Reference panels float above dialogs
+  restoreLayoutOnOpen: true, // views, widths and split come back when a project opens
+  // Quick search in the toolbar
+  quickSearch: { fields: [], operator: 'any', caseSensitive: false, wholeWord: false, includeTrash: false },
+
   compBg: '',
   compWidth: 40,
   compPaper: true,
@@ -55,6 +86,15 @@ export const DEFAULT_SETTINGS = {
   // Where the label colour is shown (View > Use label colour in)
   labelColorIn: { binder: false, cards: true, outliner: false, icons: true },
 };
+
+// Keys owned by the General, Behaviors and Navigation panes (src/components/*Pane.jsx).
+export const PANE_KEYS = [
+  'autosaveEveryMin', 'startupAction', 'defaultProjectDir', 'bibliographyApp', 'templatesRememberCategory', 'showSelectionCount',
+  'windowWidth', 'windowHeight', 'startMaximized',
+  'folderDoubleClick', 'folderView', 'parentDocView', 'multiSelectView', 'autoFolderOnChildren', 'binderDragToEditor',
+  'internalLinksOpen', 'bookmarksOpen', 'confirmEmptyTrash', 'untitledFirstLine', 'targetSound',
+  'splitOpenInOther', 'syncBinderSelection', 'rememberCaret', 'outlinerEnter', 'outlinerTab', 'quickRefOnTop', 'restoreLayoutOnOpen',
+];
 
 export const withDefaults = (settings) => ({ ...DEFAULT_SETTINGS, ...(settings || {}) });
 

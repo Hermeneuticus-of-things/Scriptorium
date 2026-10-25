@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { binderNav } from '../lib/tree.js';
 import { htmlToText } from '../lib/text.js';
 import { DocumentIcon, FolderIcon } from './Icons.jsx';
@@ -42,7 +42,7 @@ function loadColumns() {
 }
 
 // charCounts {id: n} or docs {id: html} (optional) feed the Characters column.
-export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null }) {
+export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null, onSelectItem, enterMode = 'edit', tabMode = 'indent', onAddAfter }) {
   const [showSynopsis, setShowSynopsis] = useState(loadShowSynopsis);
   const toggleSynopsis = (on) => {
     setShowSynopsis(on);
@@ -61,6 +61,10 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   const [drag, setDrag] = useState(null);
   const [editing, setEditing] = useState(null);
   const [sel, setSel] = useState(null);
+  // Options › Navigation: the chosen row is shown in the binder too.
+  useEffect(() => {
+    if (sel) onSelectItem?.(sel);
+  }, [sel]); // eslint-disable-line react-hooks/exhaustive-deps
   const [dropHint, setDropHint] = useState(null);
   const bodyRef = useRef(null);
   const fields = project.customFields || [];
@@ -123,9 +127,37 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
       onOpen(n.id);
       return;
     }
+    // Options › Navigation: Enter adds a row after this one, or edits the title (F2 always edits).
+    if (e.key === 'Enter' && !e.shiftKey && enterMode === 'newRow' && onAddAfter) {
+      e.preventDefault();
+      const node = onAddAfter(n.id);
+      if (node?.id) {
+        setEditing(node.id);
+        setSel(node.id);
+      }
+      return;
+    }
     if (e.key === 'Enter' || e.key === 'F2') {
       e.preventDefault();
       setEditing(n.id);
+      return;
+    }
+    // Tab moves the row right (into the row above), Shift+Tab back out to the parent's level.
+    if (e.key === 'Tab' && tabMode === 'indent' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      const i = rows.findIndex((r) => r.n.id === n.id);
+      const depth = rows[i]?.depth ?? 0;
+      if (e.shiftKey) {
+        const parent = [...rows.slice(0, i)].reverse().find((r) => r.depth < depth);
+        if (!parent) return;
+        e.preventDefault();
+        onMove(n.id, parent.n.id, 'after');
+      } else {
+        const prev = [...rows.slice(0, i)].reverse().find((r) => r.depth === depth);
+        if (!prev || prev.n.type === 'file') return;
+        e.preventDefault();
+        onMove(n.id, prev.n.id, 'inside');
+      }
+      focusRow(n.id);
       return;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return;

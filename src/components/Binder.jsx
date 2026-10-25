@@ -38,7 +38,7 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, folderDoubleClick = 'behaviour', onOpenAs, filterCounts = null, onCloseFilter, echoId = null }) {
   const colorIn = labelColorInOf({ labelColorIn });
   const tintIcons = labelTintIcons ?? (labelColorIn ? colorIn.icons : Boolean(project.labelTintIcons));
   const rowTint = (node) => (colorIn.binder && node.label && labelColor[node.label] ? labelTint(labelColor[node.label]) : '');
@@ -314,7 +314,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           aria-selected={selectedId === node.id || selectedIds.has(node.id)}
           aria-expanded={node.children ? Boolean(isOpen) : undefined}
           aria-label={node.title || tr('ui.app.fara_titlu')}
-          className={`binder-row ${selectedId === node.id ? 'selected' : selectedIds.has(node.id) ? 'multi' : ''} ${hint ? `drop-${hint}` : ''} ${node.root ? 'root' : ''} ${hint && copying ? 'drop-copy' : ''} ${node.separator ? 'separator' : ''} ${rowTint(node) ? 'tinted' : ''}`}
+          className={`binder-row ${selectedId === node.id ? 'selected' : selectedIds.has(node.id) ? 'multi' : ''} ${hint ? `drop-${hint}` : ''} ${node.root ? 'root' : ''} ${hint && copying ? 'drop-copy' : ''} ${node.separator ? 'separator' : ''} ${rowTint(node) ? 'tinted' : ''} ${echoId === node.id && selectedId !== node.id ? 'echo' : ''}`}
           data-node-id={node.id}
           style={{ paddingLeft: 8 + depth * 14, ...(rowTint(node) ? { '--row-tint': rowTint(node) } : null) }}
           draggable={!node.root}
@@ -357,7 +357,13 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             setCopying(false);
           }}
           onClick={(e) => select(node.id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
-          onDoubleClick={() => runBehaviour(dblMode, node.id, Boolean(node.root))}
+          onDoubleClick={() => {
+            // Options › Behaviors: double-click on a folder expands it or opens it on the corkboard / outliner.
+            const fm = (node.children || node.type === 'folder') && folderDoubleClick !== 'behaviour' ? folderDoubleClick : null;
+            if (fm === 'expand') setCollapsed((c) => ({ ...c, [node.id]: !c[node.id] }));
+            else if (fm && onOpenAs) onOpenAs(node.id, fm);
+            else runBehaviour(dblMode, node.id, Boolean(node.root));
+          }}
           onContextMenu={(e) => openContext(e, node.id)}
         >
           {node.children ? (
@@ -496,6 +502,12 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         <button onClick={() => setAllCollapsed(true)} title={tr('ui.binder.restrange_tot')}>⊟</button>
       </div>
       <input className="search" type="search" aria-label={tr('ui.binder.cauta_in_proiect')} placeholder={tr('ui.binder.cauta_in_proiect')} title={tr('ui.binder.ctrl_shift_clic_selectie_multipla')} value={query} onChange={(e) => setQuery(e.target.value)} />
+      {filterIds && filterCounts && (
+        <div className="binder-results-head" role="status">
+          <strong>{filterTitle}</strong> <span className="muted">({filterIds.length})</span>
+          {onCloseFilter && <button className="link" onClick={onCloseFilter} title={tr('ui.p7.inapoiLaBinder')}>{tr('ui.p7.inapoiLaBinder')}</button>}
+        </div>
+      )}
       {filterIds ? (
         <ul className="tree collection-list" role="listbox" aria-multiselectable="true" tabIndex={0} ref={treeRef} aria-activedescendant={selected && filterIds.includes(selected) ? rowDomId(selected) : undefined} aria-label={tr('ui.binder.colectia_x', { filterTitle: filterTitle })}>
           {filterIds.length === 0 && <li className="muted" role="presentation">{tr('ui.binder.colectia_e_goala')}</li>}
@@ -530,11 +542,13 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
                     setDropHint(null);
                   }}
                   onClick={(e) => select(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
+                  onDoubleClick={() => runBehaviour(dblMode === 'rename' ? 'open' : dblMode, id, false)}
                   onContextMenu={(e) => openContext(e, id)}
                 >
                   {renderIcon(node)}
                   {labelColor[node.label] && <span className="label-dot" style={{ background: labelColor[node.label] }} />}
                   <span className="title">{node.title}</span>
+                  {filterCounts && filterCounts[id] > 0 && <span className="hit-count" title={tr('ui.p7.aparitii', { n: filterCounts[id] })}>{filterCounts[id]}</span>}
                 </div>
               </li>
             );

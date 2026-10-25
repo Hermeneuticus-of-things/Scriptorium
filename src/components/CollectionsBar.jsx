@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { t } from '../lib/i18n.js';
 import {
-  createCollection, renameCollection, recolorCollection, deleteCollection, addToCollection, removeFromCollection,
+  createCollection, renameCollection, recolorCollection, deleteCollection, addToCollection, removeFromCollection, moveCollection,
 } from '../lib/collections.js';
 import { SearchIcon } from './Icons.jsx';
 
@@ -48,7 +48,9 @@ function Popup({ onClose, children }) {
   );
 }
 
-export default function CollectionsBar({ project, active = null, onSelect, onChange, selectedIds = [], searchResultIds = null }) {
+const TAB_MIME = 'text/x-scribner-collection';
+
+export default function CollectionsBar({ project, active = null, onSelect, onChange, selectedIds = [], searchResultIds = null, onEditSearch, onCompile }) {
   const [renaming, setRenaming] = useState(null); // collection id being renamed inline
   const [dropOn, setDropOn] = useState(null);
   const draggedIds = (e) => {
@@ -60,6 +62,7 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
     }
   };
   const canDrop = (e, c) => c.type !== 'search' && [...(e.dataTransfer?.types || [])].includes('text/x-scribner-ids');
+  const tabDrag = (e) => [...(e.dataTransfer?.types || [])].includes(TAB_MIME);
   const commitRename = (c, value) => {
     setRenaming(null);
     const title = String(value || '').trim();
@@ -158,6 +161,11 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
               title={c.type === 'search' ? t('ui.collectionsBar.x_cautare_salvata', { title: c.title }) : `${c.title} — ${t('ui.collectionsBar.dublu_clic_redenumeste')}`}
               onClick={() => onSelect(c.id)}
               onDoubleClick={() => setRenaming(c.id)}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData(TAB_MIME, c.id);
+                e.dataTransfer.effectAllowed = 'move';
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'F2') {
                   e.preventDefault();
@@ -168,6 +176,12 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
                 }
               }}
               onDragOver={(e) => {
+                if (tabDrag(e)) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dropOn !== c.id) setDropOn(c.id);
+                  return;
+                }
                 if (!canDrop(e, c)) return;
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'copy';
@@ -175,6 +189,13 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
               }}
               onDragLeave={() => setDropOn(null)}
               onDrop={(e) => {
+                const moving = e.dataTransfer.getData(TAB_MIME);
+                if (moving) {
+                  e.preventDefault();
+                  setDropOn(null);
+                  if (moving !== c.id) onChange(moveCollection(project, moving, collections.findIndex((x) => x.id === c.id)));
+                  return;
+                }
                 if (!canDrop(e, c)) return;
                 e.preventDefault();
                 setDropOn(null);
@@ -211,6 +232,16 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
                     {t('ui.collectionsBar.fara_culoare')}
                   </button>
                 )}
+                {c.type === 'search' && onEditSearch && (
+                  <button role="menuitem" onClick={() => { close(); onEditSearch(c); }}>{t('ui.p7.editeazaCriteriile')}</button>
+                )}
+                {onCompile && <button role="menuitem" onClick={() => { close(); onCompile(c); }}>{t('ui.p7.compileazaColectia')}</button>}
+                <button role="menuitem" disabled={collections[0]?.id === c.id} onClick={() => { close(); onChange(moveCollection(project, c.id, collections.findIndex((x) => x.id === c.id) - 1)); }}>
+                  {t('ui.p7.mutaStanga')}
+                </button>
+                <button role="menuitem" disabled={collections[collections.length - 1]?.id === c.id} onClick={() => { close(); onChange(moveCollection(project, c.id, collections.findIndex((x) => x.id === c.id) + 1)); }}>
+                  {t('ui.p7.mutaDreapta')}
+                </button>
                 <button role="menuitem" onClick={() => remove(c)}>{t('btn.delete')}</button>
               </Popup>
             )}

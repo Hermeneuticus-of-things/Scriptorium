@@ -167,8 +167,20 @@ const liveWindow = (wcId) => BrowserWindow.getAllWindows().find((w) => !w.isDest
 const claims = projectWatch.createClaimRegistry({ isAlive: (wcId) => Boolean(liveWindow(wcId)) });
 
 // Returns false (and focuses the other window) when the project is open elsewhere.
+// Projects open now, kept for "reopen all projects open at closing" (Options › General).
+// A window closing while others stay open leaves the list; the last one (quitting) does not.
+const openDirs = new Map(); // webContents id -> dir
+function rememberOpenDirs(closedId) {
+  if (closedId !== undefined) {
+    const others = BrowserWindow.getAllWindows().filter((w) => w.isVisible() && !w.isDestroyed() && w.webContents.id !== closedId);
+    if (!others.length || quittingApp) return;
+    openDirs.delete(closedId);
+  }
+}
+let quittingApp = false;
 function claimDir(sender, dir) {
   const res = claims.claim(sender.id, dir);
+  if (res.ok) openDirs.set(sender.id, dir);
   if (!res.ok) {
     const other = liveWindow(res.owner);
     if (other) {
@@ -183,6 +195,7 @@ function claimDir(sender, dir) {
 // Frees the window's project (closed, crashed, reloaded, back to start screen).
 function releaseWindow(wcId) {
   const dir = claims.release(wcId);
+  rememberOpenDirs(wcId);
   closeWatchers(wcId);
   if (dir && !claims.ownerOf(dir)) {
     bases.delete(dir);
@@ -335,11 +348,15 @@ function recheckSpelling(win) {
     .catch(() => {});
 }
 
+// Options › General: window size and "start maximized" (lib/windowPrefs.cjs).
+const windowPrefs = require('../lib/windowPrefs.cjs');
+
 function createWindow() {
   const offset = BrowserWindow.getAllWindows().filter((w) => w.isVisible()).length * 30; // hidden PDF windows do not count
+  const prefs = windowPrefs.windowSize(readSettings());
   const win = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: prefs.width,
+    height: prefs.height,
     minWidth: 900,
     minHeight: 600,
     ...(offset ? { x: 80 + offset, y: 60 + offset } : {}),
@@ -355,6 +372,7 @@ function createWindow() {
     },
   });
   win.setMenuBarVisibility(false);
+  if (prefs.maximized) win.maximize();
   setupSpelling(win);
   const wcId = win.webContents.id;
   win.on('closed', () => releaseWindow(wcId));
@@ -397,6 +415,26 @@ handle('window:fullScreen', (e, on) => {
 handle('spell:recheck', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   if (win) recheckSpelling(win);
+  return true;
+});
+
+const startupQueue = [];
+handle('startup:takeDir', () => startupQueue.shift() || null);
+handle('settings:chooseFolder', async (e) => {
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), { properties: ['openDirectory', 'createDirectory'] });
+  return res.canceled ? null : res.filePaths[0];
+});
+handle('settings:chooseFile', async (e, opts = {}) => {
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), { title: String(opts.title || ''), properties: ['openFile'] });
+  return res.canceled ? null : res.filePaths[0];
+});
+// Insert Citation (F4): opens the reference manager chosen in Options › General.
+handle('app:openBibliography', async () => {
+  const target = String(readSettings().bibliographyApp || '').trim();
+  if (!target) throw new Error('Nu e ales niciun manager de bibliografie.');
+  if (/^https?:/i.test(target)) return shell.openExternal(target);
+  const err = await shell.openPath(target);
+  if (err) throw new Error(err);
   return true;
 });
 
@@ -501,7 +539,7 @@ handle('templates:list', () => listTemplates());
 
 handle('project:new', async (e, title, templateId) => {
   const win = BrowserWindow.fromWebContents(e.sender);
-  const res = await dialog.showOpenDialog(win, { title: 'Alege folderul în care se creează proiectul', properties: ['openDirectory', 'createDirectory'] });
+  const res = await dialog.showOpenDialog(win, { title: 'Alege folderul în care se creează proiectul', defaultPath: readSettings().defaultProjectDir || undefined, properties: ['openDirectory', 'createDirectory'] });
   if (res.canceled) return null;
   const dir = store.projectDirFor(res.filePaths[0], title);
   const project = store.createProject(dir, title, templateId);
@@ -1160,6 +1198,15 @@ handle('nlm:open', async () => {
 });
 
 let quitting = false;
+app.on('before-quit', () => {
+  if (quittingApp) return;
+  quittingApp = true;
+  try {
+    writeSettings({ ...readSettings(), openAtClose: [...new Set(openDirs.values())] });
+  } catch {
+    /* not critical */
+  }
+});
 app.on('before-quit', (event) => {
   if (quitting || !backupSettings().backupOnClose || dirtyDirs.size === 0) return;
   event.preventDefault();
@@ -1196,7 +1243,10 @@ app.whenReady().then(() => {
     console.error('Migrarea cheii API a eșuat', err);
   }
   scheduleBackups();
+  // "Reopen all projects": one window per project open at closing; each takes its folder from the queue.
+  startupQueue.push(...windowPrefs.startupDirs(readSettings()));
   createWindow();
+  for (let i = 1; i < startupQueue.length; i++) createWindow();
   setTimeout(() => whisper.autoInstall?.(), 5000); // dictation ready without a trip to Settings
   app.on('activate', () => {
     if (!BrowserWindow.getAllWindows().some((w) => w.isVisible())) createWindow();

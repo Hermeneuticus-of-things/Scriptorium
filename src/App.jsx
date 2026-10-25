@@ -25,8 +25,10 @@ import TargetsDialog from './components/TargetsDialog.jsx';
 import CollectionsBar, { SEARCH_RESULTS_TAB } from './components/CollectionsBar.jsx';
 import KeywordsDialog from './components/KeywordsDialog.jsx';
 import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
-import { addKeywordToDocs, addToCollection, collectionNodes, createCollection, removeFromCollection } from './lib/collections.js';
-import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
+import { addKeywordToDocs, addToCollection, collectionNodes, collectionCriteria, createCollection, removeFromCollection, setCollectionSearch } from './lib/collections.js';
+import QuickSearch, { quickCriteria } from './components/QuickSearch.jsx';
+import { dropHtml, firstLineTitle, folderizeNewParents, isUntitled, playChime, viewForNode, viewForSelection } from './lib/behaviors.js';
+import { replaceInFields, searchProject, buildTerms, occurrenceKey } from './lib/projectSearch.js';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
 import { diffParagraphs, journalRows, updateAuthorHashes } from './lib/authorText.js';
@@ -368,6 +370,10 @@ export default function App({ api: apiProp }) {
   const [showSpeech, setShowSpeech] = useState(false);
   const [activeCollectionId, setActiveCollectionId] = useState(null);
   const [searchResultIds, setSearchResultIds] = useState(null); // last project search, shown in the Search results tab
+  const [searchCounts, setSearchCounts] = useState(null); // {id: hits} of the last search shown in the binder
+  const [editSearch, setEditSearch] = useState(null); // saved-search collection whose criteria are edited
+  const [compileIds, setCompileIds] = useState(null); // Compile collection: the ids compiled as a selection
+  const [echoId, setEchoId] = useState(null); // item chosen on the corkboard / outliner, shown in the binder
   // Notes of every item, loaded only while the active saved search looks in the Notes field.
   const [collectionNotes, setCollectionNotes] = useState({});
   useEffect(() => {
@@ -447,7 +453,9 @@ export default function App({ api: apiProp }) {
       .getSettings()
       .then(async (s) => {
         setSettings(s);
-        const last = s?.reopenLastProject !== false && s?.recent?.[0]?.dir;
+        // Options › General › At startup: another window of "reopen all" gets its project from the queue.
+        const queued = s?.startupAction === 'reopenAll' && api.takeStartupDir ? await api.takeStartupDir().catch(() => null) : null;
+        const last = queued || (s?.reopenLastProject !== false && s?.startupAction !== 'templates' && s?.recent?.[0]?.dir);
         if (last && openResultRef.current) {
           try {
             await openResultRef.current(await api.openProject(last));
@@ -674,6 +682,14 @@ export default function App({ api: apiProp }) {
     [flush],
   );
 
+  // Options › General: save every N minutes even while typing without a pause.
+  const everyMin = Number(settings?.autosaveEveryMin) || 0;
+  useEffect(() => {
+    if (!everyMin) return undefined;
+    const iv = setInterval(() => pending.current.size && flush(), everyMin * 60000);
+    return () => clearInterval(iv);
+  }, [everyMin, flush]);
+
   useEffect(() => {
     const onUnload = () => flush();
     window.addEventListener('beforeunload', onUnload);
@@ -772,6 +788,7 @@ export default function App({ api: apiProp }) {
       if (target > 0 && value >= target && !notified.current[key]) {
         notified.current[key] = true;
         setToast(`${msg}: ${value.toLocaleString(uiLocale())} ${unitName(type)}.`);
+        if (settingsRef.current?.targetSound) playChime();
       }
     }
   }, [project, draftValue, sessionValue, sessionStart]);
@@ -792,7 +809,11 @@ export default function App({ api: apiProp }) {
     [api, dir, report],
   );
 
-  const setTree = useCallback((tree) => saveProject({ ...project, tree }), [project, saveProject]);
+  // Options › Behaviors: a document that receives sub-documents becomes a folder.
+  const setTree = useCallback(
+    (tree) => saveProject({ ...project, tree: settings?.autoFolderOnChildren ? folderizeNewParents(project.tree, tree) : tree }),
+    [project, saveProject, settings?.autoFolderOnChildren],
+  );
   // Binder structure changes (add, move, trash, restore) are undoable with Ctrl+Z while the
   // binder has focus, as in Scrivener. Metadata edits made in between are preserved.
   const binderHistory = useRef(emptyHistory());
@@ -833,7 +854,7 @@ export default function App({ api: apiProp }) {
       const all = flatten(res.project.tree).filter((n) => !n.root);
       const entries = await Promise.all(all.map(async (n) => [n.id, await api.readDoc(res.dir, n.id, 'docs')]));
       const cache = Object.fromEntries(entries);
-      const ui = loadUi(res.dir);
+      const ui = settingsRef.current?.restoreLayoutOnOpen === false ? {} : loadUi(res.dir);
       dropTyped();
       diskDocs.current = new Map(entries);
       // A queue left from a session closed while the folder was away: shown and sent now.
@@ -977,20 +998,28 @@ export default function App({ api: apiProp }) {
       if (node && !node.root) setSplitId(id);
       return;
     }
+    // Options › Behaviors: several items selected show as Scrivenings, corkboard or outliner.
+    const showMany = (ids) => {
+      const v = viewForSelection(ids.length, settings);
+      if (!v) return;
+      if (v === 'editor') {
+        if (view === 'editor') openScrivenings(tr('ui.app.x_documente_selectate', { length: ids.length }), ids);
+      } else setView(v);
+    };
     if (ctrl) {
-      setSelectedIds((s) => {
-        const next = new Set(s);
-        if (next.has(id) && next.size > 1) next.delete(id);
-        else next.add(id);
-        return next;
-      });
+      const next = new Set(selectedIds);
+      if (next.has(id) && next.size > 1) next.delete(id);
+      else next.add(id);
+      setSelectedIds(next);
       setSelectedId(id);
+      showMany([...next]);
       return;
     }
     if (shift && selectedId) {
       const order = flatten(project.tree).map((n) => n.id);
       const [a, b] = [order.indexOf(selectedId), order.indexOf(id)].sort((x, y) => x - y);
       setSelectedIds(new Set(order.slice(a, b + 1)));
+      showMany(order.slice(a, b + 1));
       return;
     }
     // Split editor: the click opens in the pane used last, unless it is locked in place.
@@ -1002,6 +1031,9 @@ export default function App({ api: apiProp }) {
       return;
     }
     go(id);
+    // Options › Behaviors: default view for folders and for documents with sub-documents.
+    const v = viewForNode(findNode(project.tree, id), settings);
+    if (v) setView(v);
   };
 
   // I-EDIT author text: paragraphs the writer changes by hand. authorBase holds, per document,
@@ -1083,6 +1115,12 @@ export default function App({ api: apiProp }) {
     }
     noteHandEdit(id);
     writeDocNow(id, html, { hand: true });
+    // Options › Behaviors: an untitled document takes its first line as title.
+    if (settings?.untitledFirstLine) {
+      const node = findNode(projectRef.current.tree, id);
+      const title = node && !node.root && isUntitled(node.title, [tr('cmd.newText'), tr('ui.app.fara_titlu')]) ? firstLineTitle(html) : '';
+      if (title) saveProject({ ...projectRef.current, tree: updateNode(projectRef.current.tree, id, { title }) });
+    }
     const others = [from !== 'main' && editorRefs.current.get(id), from !== 'split' && id === splitId && editorRefs.current.get(`split:${id}`), from !== 'copy' && editorRefs.current.get(`copy:${id}`)];
     for (const other of others) if (other && other.getHtml() !== html) other.setHtml(html);
   };
@@ -1604,8 +1642,73 @@ export default function App({ api: apiProp }) {
     go(first.id);
   };
 
+  // Options › Behaviors: binder items dropped in the text become links, their text or their image.
+  const isBinderDrag = (e) => [...(e.dataTransfer?.types || [])].includes('text/x-scribner-ids') && e.target.closest?.('.ProseMirror');
+  const binderDragOver = (e) => {
+    if (!isBinderDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+  const binderDrop = async (e) => {
+    if (!isBinderDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    let ids = [];
+    try {
+      ids = JSON.parse(e.dataTransfer.getData('text/x-scribner-ids') || '[]');
+    } catch {
+      return;
+    }
+    const dom = e.target.closest('.ProseMirror');
+    const handle = [...editorRefs.current.values()].find((h) => h?.editor?.view?.dom === dom);
+    const ed = handle?.editor;
+    if (!ed || ed.isDestroyed || !ed.isEditable) return;
+    const nodes = ids.map((id) => findNode(project.tree, id)).filter((n) => n && !n.root);
+    if (!nodes.length) return;
+    const mode = settings.binderDragToEditor || 'link';
+    const images = {};
+    if (mode === 'image' && api.readMedia) {
+      for (const n of nodes) {
+        if (n.type !== 'file' || !n.file) continue;
+        const src = await api.readMedia(dir, n.file).catch(() => null);
+        if (typeof src === 'string' && src.startsWith('data:image/')) images[n.id] = src;
+      }
+    }
+    if (mode === 'text') await flush();
+    const at = ed.view.posAtCoords({ left: e.clientX, top: e.clientY });
+    const html = dropHtml(nodes, mode, { docs: docsNow(), images, link: docLink });
+    if (at) ed.chain().focus().insertContentAt(at.pos, html).run();
+    else ed.chain().focus().insertContent(html).run();
+  };
+
+  // Search results listed in the binder in place of the tree (Search results tab).
+  const showResultsInBinder = (ids, counts = null) => {
+    setSearchResultIds(ids);
+    setSearchCounts(counts);
+    setActiveCollectionId(SEARCH_RESULTS_TAB);
+    setHideBinder(false);
+    setDialog(null);
+  };
+  // Toolbar quick search: options kept in the settings, results in the binder as one types.
+  const quickOpts = settings?.quickSearch || {};
+  const [quickInvalid, setQuickInvalid] = useState(false);
+  const runQuickSearch = async (query, opts) => {
+    const criteria = quickCriteria(query, opts);
+    const terms = buildTerms(criteria);
+    const bad = terms === null || terms.some((x) => !x);
+    setQuickInvalid(bad);
+    if (bad) return;
+    let notes = {};
+    if (criteria.fields.includes('notes') && api.readDoc) {
+      const ids = flatten(project.tree).filter((n) => !n.root).map((n) => n.id);
+      notes = Object.fromEntries(await Promise.all(ids.map((id) => api.readDoc(dir, id, 'notes').then((h) => [id, h || ''], () => [id, '']))));
+    }
+    const res = searchProject(project, docsNow(), notes, criteria);
+    showResultsInBinder(res.map((r) => r.node.id), Object.fromEntries(res.map((r) => [r.node.id, Object.values(r.fields).reduce((a, b) => a + b, 0)])));
+  };
+
   // Advanced search replace: text, notes, titles and synopses, with a snapshot of every changed document.
-  const replaceAdvanced = async (criteria, replacement) => {
+  const replaceAdvanced = async (criteria, replacement, excluded = null) => {
     await flush();
     const fields = (criteria.fields && criteria.fields.length ? criteria.fields : ['title', 'text', 'notes', 'synopsis']).filter((f) => ['title', 'text', 'notes', 'synopsis'].includes(f));
     const notesById = {};
@@ -1622,8 +1725,9 @@ export default function App({ api: apiProp }) {
       let notesHtml = notesById[node.id] || '';
       let current = node;
       let count = 0;
-      for (const re of terms) {
-        const r = replaceInFields(current, docHtml, notesHtml, re, replacement, fields);
+      for (const [ti, re] of terms.entries()) {
+        const keep = excluded && excluded.size ? (f, i) => !excluded.has(occurrenceKey(node.id, ti, f, i)) : null;
+        const r = replaceInFields(current, docHtml, notesHtml, re, replacement, fields, keep);
         current = r.node;
         docHtml = r.docHtml;
         notesHtml = r.notesHtml;
@@ -1944,6 +2048,7 @@ export default function App({ api: apiProp }) {
           <SettingsDialog
             initialTab={settingsTab}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
+            onTargets={project ? () => setDialog('targets') : undefined}
             api={api}
             settings={settings}
             project={null}
@@ -1992,6 +2097,23 @@ export default function App({ api: apiProp }) {
   };
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
   const splitNode = splitId ? findNode(project.tree, splitId) : null;
+  // Options › Navigation: with the split on, corkboard / outliner choices open in the other pane beside them.
+  const boardSplit = Boolean(settings.splitOpenInOther) && (view === 'corkboard' || view === 'outline');
+  const openFromBoard = (id) => {
+    if (boardSplit) {
+      const node = findNode(project.tree, id);
+      if (node && !node.root && !node.children) flush().then(() => setSplitId(id));
+      return;
+    }
+    go(id);
+    setView('editor');
+    focusEditor(id);
+  };
+  const echoFromBoard = (id) => {
+    if (!settings.syncBinderSelection || !id) return;
+    setEchoId(id);
+    setRevealId(id);
+  };
   const copyNode = copyholder ? findNode(project.tree, copyholder.id) : null;
   const registerRef = (id, r) => {
     if (r) editorRefs.current.set(id, r);
@@ -2171,11 +2293,21 @@ export default function App({ api: apiProp }) {
     api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
     return node;
   };
+  // Options › Behaviors: internal links open in this pane, the other pane of the split or Quick Reference.
   const openLink = (id) => {
-    if (findNode(project.tree, id)) {
-      go(id);
+    const node = findNode(project.tree, id);
+    if (!node) return report(new Error(tr('ui.app.documentul_legat_nu_mai_exista')));
+    const where = settings.internalLinksOpen || 'current';
+    if (where === 'quickRef' && !node.root && !node.children) return openQuickRef(id);
+    if (where === 'other' && !node.root && !node.children) {
+      if (activePaneRef.current === 'split' && splitId) go(id);
+      else flush().then(() => setSplitId(id));
       setView('editor');
-    } else report(new Error(tr('ui.app.documentul_legat_nu_mai_exista')));
+      return undefined;
+    }
+    go(id);
+    setView('editor');
+    return undefined;
   };
   const chapterFolder = selected && selected.children ? selected : findParent(project.tree, selectedId) || project.tree[0];
   const chapterDocs = flatten(chapterFolder.children || [])
@@ -2316,6 +2448,17 @@ export default function App({ api: apiProp }) {
     ['document', 'snapshotManager', tr('cmd.snapshotManager'), () => flush().then(() => { refreshSnapCounts(); setDialog('snapshotManager'); })],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
+    ['format', 'insertCitation', tr('ui.p4.insereazaCitare'), () => {
+      const app = (settings.bibliographyApp || '').trim();
+      if (!app) {
+        setSettingsTab('general');
+        setDialog('settings');
+        return setToast(tr('ui.p4.bibliografieNesetata'));
+      }
+      if (api.openBibliography) return api.openBibliography().catch(report);
+      if (/^https?:/i.test(app)) return openWeb(app);
+      return setToast(tr('ui.p4.bibliografieDoarDesktop'));
+    }],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
@@ -2584,6 +2727,24 @@ export default function App({ api: apiProp }) {
           </nav>
         )}
         {toolbars.top.map((id, i) => renderTopItem(id, i))}
+        {!composition && (
+          <QuickSearch
+            opts={quickOpts}
+            invalid={quickInvalid}
+            onOptsChange={(next) => { setSettings((x) => ({ ...x, quickSearch: next })); api.setSettings({ quickSearch: next }).catch(report); }}
+            onSearch={(q, o) => runQuickSearch(q, o).catch(report)}
+            onClear={() => { setQuickInvalid(false); if (activeCollectionId === SEARCH_RESULTS_TAB) setActiveCollectionId(null); }}
+            onAdvanced={(q) => { setSearchSeed(q); setDialog('advsearch'); }}
+            onSaveAsCollection={(q, o) => {
+              const title = window.prompt(tr('ui.advancedSearchDialog.numele_colectiei'), q);
+              if (!title || !title.trim()) return;
+              const { query, ...options } = quickCriteria(q, o);
+              const r = createCollection(project, { title: title.trim(), type: 'search', search: { query, options } });
+              saveProject(r.project);
+              setActiveCollectionId(r.id);
+            }}
+          />
+        )}
       </header>
 
       <div className="main">
@@ -2596,6 +2757,14 @@ export default function App({ api: apiProp }) {
           onChange={saveProject}
           selectedIds={[...selectedIds]}
           searchResultIds={searchResultIds}
+          onEditSearch={(c) => setEditSearch(c)}
+          onCompile={(c) => {
+            const ids = c.type === 'search' ? collectionNodes(project, c, docs, collectionNotes).map((n) => n.id) : c.ids || [];
+            if (!ids.length) return setToast(tr('ui.p7.colectieGoala'));
+            setCompileIds(ids);
+            setDialog('compile');
+            return undefined;
+          }}
         />
         {hoistNode && (
           <div className="hoist-bar">
@@ -2604,6 +2773,11 @@ export default function App({ api: apiProp }) {
           </div>
         )}
         <Binder
+          folderDoubleClick={settings.folderDoubleClick || 'behaviour'}
+          onOpenAs={(id, v) => { go(id); setView(v); }}
+          filterCounts={activeCollection?.type === 'results' ? searchCounts || {} : null}
+          onCloseFilter={() => setActiveCollectionId(null)}
+          echoId={echoId}
           binderEnter={settings.binderEnter}
           binderDoubleClick={settings.binderDoubleClick}
           snapCounts={snapCounts}
@@ -2659,7 +2833,7 @@ export default function App({ api: apiProp }) {
           onEmptyTrash={() => {
             const trash = project.tree.find((n) => n.root === 'trash');
             if (!trash || !(trash.children || []).length) return;
-            if (!window.confirm(tr('ui.app.golesti_cosul_documentele_din_cos'))) return;
+            if (settings.confirmEmptyTrash !== false && !window.confirm(tr('ui.app.golesti_cosul_documentele_din_cos'))) return;
             const gone = new Set(flatten(trash.children).map((n) => n.id));
             setTree(emptyTrash(project.tree));
             if (gone.has(selectedId)) setSelectedId(project.tree[0].id); // not a blank editor
@@ -2669,8 +2843,8 @@ export default function App({ api: apiProp }) {
         <div className="resizer" onMouseDown={startResize('binder')} role="separator" aria-label={tr('ui.app.latime_binder')} />
         </>)}
 
-        <section className={`workspace ${(splitNode || copyNode) && view === 'editor' ? 'split' : ''} ${copyNode && view === 'editor' ? 'has-copyholder' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
-          <div className={`pane ${editorAreaClass}`}>
+        <section className={`workspace ${((splitNode || copyNode) && view === 'editor') || (splitNode && boardSplit) ? 'split' : ''} ${copyNode && view === 'editor' ? 'has-copyholder' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
+          <div className={`pane ${editorAreaClass}`} onDragOverCapture={binderDragOver} onDropCapture={binderDrop}>
             {view === 'editor' && selected && !composition && !editorView.hideHeaderBar && (
               <div className="sc-header-bar">
                 <PaneNav pane="main" history={nav} titleOf={titleOfNode} onBack={back} onForward={forward} onJump={mainJump} />
@@ -2712,6 +2886,7 @@ export default function App({ api: apiProp }) {
                 scriptFormat={scriptFormat}
                 key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
                 historyKey={selected.id}
+                rememberCaret={settings.rememberCaret !== false}
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
                 showInvisibles={settings.showInvisibles}
@@ -2745,7 +2920,7 @@ export default function App({ api: apiProp }) {
               <EditorFooter
                 node={selected}
                 words={counts[selected.id] || 0}
-                selectedWords={selWords}
+                selectedWords={settings.showSelectionCount === false ? 0 : selWords}
                 chars={statusChars}
                 zoom={paneZoom(editorView, 'main')}
                 onZoom={(z) => setZoom(z, 'main')}
@@ -2789,11 +2964,8 @@ export default function App({ api: apiProp }) {
                   api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
                 }}
                 folder={selected && selected.children ? selected : findParent(project.tree, selectedId) || project.tree[0]}
-                onOpen={(id) => {
-                  go(id);
-                  setView('editor');
-                  focusEditor(id);
-                }}
+                onOpen={openFromBoard}
+                onSelectItem={echoFromBoard}
                 onPatch={patchNode}
                 onAdd={(afterId) => {
                   const node = addItem('text', undefined, undefined, typeof afterId === 'string' ? afterId : selectedId);
@@ -2822,18 +2994,18 @@ export default function App({ api: apiProp }) {
                 docs={docs}
                 root={selected && selected.children ? selected : project.tree[0]}
                 counts={counts}
-                onOpen={(id) => {
-                  go(id);
-                  setView('editor');
-                  focusEditor(id);
-                }}
+                onOpen={openFromBoard}
+                onSelectItem={echoFromBoard}
+                enterMode={settings.outlinerEnter || 'edit'}
+                tabMode={settings.outlinerTab || 'indent'}
+                onAddAfter={(afterId) => addItem('text', undefined, undefined, afterId)}
                 onPatch={patchNode}
                 onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
                 labelColorIn={colorIn}
               />
             )}
           </div>
-          {splitNode && view === 'editor' && (
+          {splitNode && (view === 'editor' || boardSplit) && (
             <div className={`pane second ${editorAreaClass}`}>
               <div className="pane-head">
                 <PaneNav pane="split" history={splitNav} titleOf={titleOfNode} onBack={() => splitStep(-1)} onForward={() => splitStep(1)} onJump={splitJump} />
@@ -3152,7 +3324,12 @@ export default function App({ api: apiProp }) {
               nodeTitle={(id) => findNode(project.tree, id)?.title}
               readDoc={(id) => api.readDoc(dir, id, 'docs')}
               onChange={(bookmarks) => saveProject({ ...project, bookmarks })}
-              onOpen={(id) => { go(id); setDialog(null); }}
+              onOpen={(id) => {
+                setDialog(null);
+                const n = findNode(project.tree, id);
+                if (settings.bookmarksOpen === 'quickRef' && n && !n.root && !n.children) openQuickRef(id);
+                else go(id);
+              }}
               onError={report}
             />
           </div>
@@ -3267,11 +3444,12 @@ export default function App({ api: apiProp }) {
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
       {showSpeech && <MiniPlayer api={api} dict={dict} getText={speechText} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
-      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={compileIds || [...selectedIds]} initialScope={compileIds ? 'selection' : undefined} onProjectChange={saveProject} onClose={() => { setDialog(null); setCompileIds(null); }} onError={report} />}
       {dialog === 'settings' && (
         <SettingsDialog
             initialTab={settingsTab}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
+            onTargets={project ? () => setDialog('targets') : undefined}
           api={api}
           settings={settings}
           project={project}
@@ -3295,6 +3473,7 @@ export default function App({ api: apiProp }) {
             setView('editor');
           }}
           onReplaceAll={replaceAllInProject}
+          onShowInBinder={showResultsInBinder}
           onClose={() => setDialog(null)}
         />
       )}
@@ -3342,6 +3521,25 @@ export default function App({ api: apiProp }) {
           }}
         />
       )}
+      {editSearch && (
+        <AdvancedSearchDialog
+          project={project}
+          docs={docs}
+          initialCriteria={collectionCriteria(editSearch)}
+          editCollection={editSearch}
+          readNotes={(id) => api.readDoc(dir, id, 'notes')}
+          onOpen={(id) => {
+            go(id);
+            setView('editor');
+          }}
+          onUpdateCollection={(criteria) => {
+            saveProject(setCollectionSearch(project, editSearch.id, criteria));
+            setActiveCollectionId(editSearch.id);
+            setEditSearch(null);
+          }}
+          onClose={() => setEditSearch(null)}
+        />
+      )}
       {dialog === 'advsearch' && (
         <AdvancedSearchDialog
           project={project}
@@ -3354,6 +3552,7 @@ export default function App({ api: apiProp }) {
           }}
           onReplace={replaceAdvanced}
           onResults={setSearchResultIds}
+          onShowInBinder={showResultsInBinder}
           onSaveAsCollection={(title, criteria) => {
             const { query, ...options } = criteria;
             const r = createCollection(project, { title, type: 'search', search: { query, options } });
@@ -3431,6 +3630,7 @@ export default function App({ api: apiProp }) {
         return (
           <QuickRef
             key={q.id}
+            onTop={Boolean(settings.quickRefOnTop)}
             node={n}
             html={docs[q.id] || ''}
             x={q.x}

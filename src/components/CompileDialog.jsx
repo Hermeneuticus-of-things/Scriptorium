@@ -110,7 +110,7 @@ function newCustomId() {
   return `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-export default function CompileDialog({ api, dir, project, selectionIds = [], onProjectChange, onClose, onError }) {
+export default function CompileDialog({ api, dir, project, selectionIds = [], initialScope = null, onProjectChange, onClose, onError }) {
   const pc = project.compile || {};
   const [formats, setFormats] = useState(() => (Array.isArray(pc.formats) ? clone(pc.formats) : []));
   // Global formats (userData/compile-formats.json), shared by all projects.
@@ -137,7 +137,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const collections = (project.collections || []).filter((c) => Array.isArray(c.ids));
 
   const [output, setOutput] = useState(pc.output || 'docx');
-  const [scope, setScope] = useState(pc.scope || 'draft');
+  const [scope, setScope] = useState(initialScope || pc.scope || 'draft');
   const [rootId, setRootId] = useState(pc.rootId || '');
   const [frontMatterId, setFront] = useState(pc.frontMatterId || '');
   const [backMatterId, setBack] = useState(pc.backMatterId || '');
