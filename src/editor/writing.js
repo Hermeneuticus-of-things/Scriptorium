@@ -421,3 +421,42 @@ export const WikiLink = Extension.create({
     ];
   },
 });
+
+/** Reads the typewriter line position (10–90 % of the height) set on <html> by applySettingsCss. */
+export function typewriterLine(root = typeof document !== 'undefined' ? document.documentElement : null) {
+  const n = Number(root?.dataset?.typewriterPos);
+  return Number.isFinite(n) && n >= 10 && n <= 90 ? n / 100 : 0.5;
+}
+
+/** Nearest scrolling ancestor of an element (the workspace, a split pane or the page itself). */
+export function scrollParent(el) {
+  for (let p = el?.parentElement; p; p = p.parentElement) {
+    const st = typeof getComputedStyle === 'function' ? getComputedStyle(p) : null;
+    if (st && /(auto|scroll)/.test(st.overflowY) && p.scrollHeight > p.clientHeight) return p;
+  }
+  return null;
+}
+
+/**
+ * Typewriter scrolling: the scroll offset that puts a caret line (top/bottom in client
+ * coordinates) at `fraction` of the scroller's visible height. Pure, for tests.
+ */
+export function typewriterOffset({ caretTop, caretBottom, boxTop, boxHeight, scrollTop }, fraction = 0.5) {
+  const mid = (caretTop + caretBottom) / 2;
+  return Math.max(0, Math.round(scrollTop + (mid - boxTop) - boxHeight * fraction));
+}
+
+/** Keeps the caret on the chosen typing line of the editor's scroller. */
+export function typewriterScroll(view, fraction = typewriterLine()) {
+  try {
+    const c = view.coordsAtPos(view.state.selection.head);
+    const box = scrollParent(view.dom);
+    if (!box) return false;
+    const r = box.getBoundingClientRect();
+    const top = typewriterOffset({ caretTop: c.top, caretBottom: c.bottom, boxTop: r.top, boxHeight: box.clientHeight, scrollTop: box.scrollTop }, fraction);
+    if (Math.abs(top - box.scrollTop) > 1) box.scrollTo({ top, behavior: 'smooth' });
+    return true;
+  } catch {
+    return false;
+  }
+}

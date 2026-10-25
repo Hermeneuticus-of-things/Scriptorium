@@ -394,6 +394,23 @@ handle('window:fullScreen', (e, on) => {
   win.setFullScreen(on === undefined ? !win.isFullScreen() : Boolean(on));
   return win.isFullScreen();
 });
+// Composition on a chosen monitor (Options > Appearance > Composition): list the displays,
+// move the window onto display `index` and go full screen there.
+handle('window:displays', () => {
+  const { screen } = require('electron');
+  const primary = screen.getPrimaryDisplay().id;
+  return screen.getAllDisplays().map((d, i) => ({ index: i, label: d.label || '', width: d.size.width, height: d.size.height, primary: d.id === primary }));
+});
+handle('window:compositionDisplay', (e, index) => {
+  const { screen } = require('electron');
+  const win = BrowserWindow.fromWebContents(e.sender);
+  const d = screen.getAllDisplays()[Number(index)];
+  if (!win || !d) return false;
+  if (win.isFullScreen()) win.setFullScreen(false);
+  win.setBounds({ x: d.workArea.x, y: d.workArea.y, width: d.workArea.width, height: d.workArea.height });
+  win.setFullScreen(true);
+  return true;
+});
 handle('spell:recheck', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   if (win) recheckSpelling(win);

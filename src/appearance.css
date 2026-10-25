@@ -1,0 +1,123 @@
+/* Options > Appearance (P5): colours, fonts and composition options set by applySettingsCss
+   as variables / data attributes on <html>. Every rule applies only when its variable is set,
+   so an empty option keeps the colour of the theme (light, dark, sepia, classic or modern). */
+
+/* ---- Options dialog: the Appearance pane ---- */
+.appearance-pane { display: flex; flex-direction: column; gap: 8px; }
+.look-themes { flex-wrap: wrap; gap: 6px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.look-themes input:not([type]) { width: 11em; }
+.look-body { display: flex; gap: 14px; align-items: flex-start; }
+.look-sections { list-style: none; margin: 0; padding: 0; min-width: 150px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); }
+.look-sections button { display: block; width: 100%; text-align: left; border: none; border-radius: 0; background: transparent; padding: 5px 10px; }
+.look-sections button.on { background: var(--accent-soft); font-weight: 600; }
+.look-section { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.look-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 14px; }
+.look-color .row { align-items: center; gap: 6px; }
+.look-color input[type='color'] { width: 34px; height: 24px; padding: 0; }
+.look-swatch { width: 18px; height: 18px; border-radius: 3px; border: 1px solid var(--line); flex-shrink: 0; }
+.look-swatch.is-default { background: repeating-linear-gradient(45deg, var(--paper) 0 3px, var(--line) 3px 6px); }
+@media (max-width: 640px) { .look-body { flex-direction: column; } .look-sections { display: flex; flex-wrap: wrap; } .look-sections button { width: auto; } }
+
+/* ---- Editor ---- */
+:root[style*='--ed-bg'] .workspace .page:not(.page-view) { background: var(--ed-bg); }
+:root[style*='--ed-text'] .page .ProseMirror { color: var(--ed-text); }
+:root[style*='--ed-sel'] .page .ProseMirror ::selection, :root[style*='--ed-sel'] .notes .ProseMirror ::selection { background: var(--ed-sel); }
+:root[style*='--ed-caret'] .ProseMirror { caret-color: var(--ed-caret); }
+:root[style*='--pv-paper'] .page.page-view { background-color: var(--pv-paper); }
+:root[style*='--pv-surround'] .workspace:has(.page.page-view), :root[style*='--pv-surround'] .pane:has(.page.page-view) { background: var(--pv-surround); }
+:root[style*='--link-internal'] .prose a.internal-link, :root[style*='--link-internal'] .prose a[href^='scribner:'], :root[style*='--link-internal'] .prose .wiki-link { color: var(--link-internal); }
+:root[style*='--link-external'] .prose a[href^='http'], :root[style*='--link-external'] .prose a[href^='mailto:'] { color: var(--link-external); }
+:root[style*='--keep-format-color'] .prose .preserve-format { background: var(--keep-format-color); }
+:root[style*='--search-hit-color'] .pane:has(.find-bar) .ProseMirror ::selection, :root[style*='--search-hit-color'] .search-hit { background: var(--search-hit-color); }
+/* current line: global switch, colour and opacity */
+.current-line-overlay { background: color-mix(in srgb, var(--cur-line-color, var(--accent-soft, #e3ecfa)) var(--cur-line-opacity, 70%), transparent); }
+/* typewriter: enough room above and below for the chosen typing line */
+.page.typewriter { padding-top: var(--tw-top, 30vh); padding-bottom: var(--tw-bottom, 50vh); }
+
+/* ---- Binder ---- */
+:root[style*='--binder-bg'] .binder, :root[style*='--binder-bg'] .binder .tree { background: var(--binder-bg); }
+:root[style*='--binder-text'] .binder .binder-row:not(.selected) { color: var(--binder-text); }
+:root[style*='--binder-font'] .binder .tree, :root[style*='--binder-font'] .binder .binder-row { font-family: var(--binder-font); }
+:root[data-binder-alt='on'] .binder .tree > li:nth-child(even) > .binder-row:not(.selected),
+:root[data-binder-alt='on'] .binder .tree li:nth-of-type(even) > .binder-row:not(.selected) { background: var(--binder-alt, color-mix(in srgb, var(--text) 5%, transparent)); }
+/* label colour: dot (default), whole row (the dot stretched under the row), or none */
+:root[data-binder-labels='row'] .binder .binder-row { position: relative; }
+:root[data-binder-labels='row'] .binder .binder-row > .label-dot { position: absolute; inset: 0; width: auto; height: auto; margin: 0; border-radius: inherit; opacity: .28; z-index: 0; pointer-events: none; }
+:root[data-binder-labels='row'] .binder .binder-row > :not(.label-dot) { position: relative; z-index: 1; }
+:root[data-binder-labels='none'] .binder .binder-row > .label-dot { display: none; }
+/* folders and documents with children (rows with an open/close arrow) */
+:root[data-binder-containers='bold'] .binder .binder-row:has(button.twisty) .title { font-weight: 700; }
+:root[data-binder-containers='italic'] .binder .binder-row:has(button.twisty) .title { font-style: italic; }
+:root[data-binder-containers='bolditalic'] .binder .binder-row:has(button.twisty) .title { font-weight: 700; font-style: italic; }
+
+/* ---- Corkboard ---- */
+:root[data-cork-bg='cork'] .corkboard { background-color: #b98f5f; background-image: radial-gradient(rgba(90, 60, 30, .35) 1px, transparent 1.3px), radial-gradient(rgba(255, 255, 255, .14) 1px, transparent 1.4px); background-size: 7px 7px, 11px 11px; background-position: 0 0, 3px 5px; }
+:root[data-cork-bg='wood'] .corkboard { background-color: #8b5e3c; background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, .07) 0 2px, transparent 2px 23px), repeating-linear-gradient(90deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 9px); }
+:root[data-cork-bg='linen'] .corkboard { background-color: #e9e2d0; background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, .035) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0, 0, 0, .035) 0 1px, transparent 1px 3px); }
+:root[data-cork-bg='color'] .corkboard { background: var(--cork-bg-color, #b98f5f); }
+:root[data-cork-bg='image'] .corkboard { background: var(--cork-bg-image, none) center / cover no-repeat, var(--cork-bg-color, #b98f5f); }
+:root[style*='--card-color'] .corkboard .card, :root[style*='--card-color'] .corkboard .free-card { background-color: var(--card-color); }
+:root[style*='--card-color'] .corkboard .card textarea { background-color: transparent; }
+:root[style*='--card-title-color'] .corkboard .card-title { color: var(--card-title-color); }
+:root[style*='--card-title-font'] .corkboard .card-title, :root[style*='--card-title-font'] .corkboard .card header input { font-family: var(--card-title-font); }
+:root[style*='--card-synopsis-font'] .corkboard .card textarea { font-family: var(--card-synopsis-font); }
+
+/* ---- Outliner ---- */
+:root[data-out-alt='on'] .outliner tbody tr:nth-child(even):not([aria-selected='true']) { background: var(--out-alt, color-mix(in srgb, var(--text) 5%, transparent)); }
+:root[style*='--out-grid'] .outliner th, :root[style*='--out-grid'] .outliner td { border-color: var(--out-grid); border-style: solid; border-width: 0 1px 1px 0; }
+:root[style*='--out-folder'] .outliner tbody tr[aria-expanded]:not([aria-selected='true']) { background: var(--out-folder); }
+:root[style*='--out-title-font'] .outliner .title-cell { font-family: var(--out-title-font); }
+:root[style*='--out-synopsis-font'] .outliner td.syn, :root[style*='--out-synopsis-font'] .outliner td.syn textarea { font-family: var(--out-synopsis-font); }
+
+/* ---- Script elements in the editor ---- */
+:root[style*='--script-scene-heading'] .prose [data-script='scene-heading'] { color: var(--script-scene-heading); }
+:root[style*='--script-action'] .prose [data-script='action'] { color: var(--script-action); }
+:root[style*='--script-character'] .prose [data-script='character'] { color: var(--script-character); }
+:root[style*='--script-parenthetical'] .prose [data-script='parenthetical'] { color: var(--script-parenthetical); }
+:root[style*='--script-dialogue'] .prose [data-script='dialogue'] { color: var(--script-dialogue); }
+:root[style*='--script-transition'] .prose [data-script='transition'] { color: var(--script-transition); }
+:root[style*='--script-shot'] .prose [data-script='shot'] { color: var(--script-shot); }
+:root[style*='--script-general'] .prose [data-script='general'] { color: var(--script-general); }
+
+/* ---- Inspector ---- */
+:root[style*='--insp-notes-font'] .inspector .notes .ProseMirror, :root[style*='--insp-notes-font'] .floating-inspector .notes { font-family: var(--insp-notes-font); }
+:root[style*='--insp-notes-bg'] .inspector .notes .ProseMirror, :root[style*='--insp-notes-bg'] .floating-inspector .notes .ProseMirror { background: var(--insp-notes-bg); }
+:root[style*='--insp-synopsis-font'] .inspector textarea[aria-label], :root[style*='--insp-synopsis-font'] .floating-inspector .fields > label textarea { font-family: var(--insp-synopsis-font); }
+
+/* ---- Linked documents (scrivenings) ---- */
+:root[style*='--scriv-title-font'] .scriv-section .doc-title, :root[style*='--scriv-title-font'] .scriv-head { font-family: var(--scriv-title-font); }
+:root[style*='--scriv-sep-style'] .scriv-section .page.flow { border-bottom-style: var(--scriv-sep-style); }
+:root[style*='--scriv-sep-color'] .scriv-section .page.flow { border-bottom-color: var(--scriv-sep-color); }
+
+/* ---- Annotation margin: comments and footnotes ---- */
+:root[style*='--annot-font'] .annotations, :root[style*='--annot-font'] .annot-pane .annot-text, :root[style*='--annot-font'] .prose .annotation { font-family: var(--annot-font); }
+:root[style*='--annot-size'] .annotations, :root[style*='--annot-size'] .annot-pane .annot-text { font-size: var(--annot-size); }
+
+/* ---- Toolbar icons and density ---- */
+:root[data-toolbar-icons='small'] .toolbar .tb-glyph { font-size: 12px; }
+:root[data-toolbar-icons='small'] .toolbar button { padding: 2px 6px; }
+:root[data-toolbar-icons='large'] .toolbar .tb-glyph { font-size: 20px; }
+:root[data-toolbar-icons='large'] .toolbar button { padding: 6px 12px; }
+:root[data-density='compact'] .toolbar { padding-top: 2px; padding-bottom: 2px; gap: 3px; }
+:root[data-density='compact'] .binder-row { padding-top: 1px; padding-bottom: 1px; }
+:root[data-density='compact'] .format-bar, :root[data-density='compact'] .statusbar { padding-top: 1px; padding-bottom: 1px; }
+:root[data-density='compact'] .outliner td, :root[data-density='compact'] .outliner th { padding-top: 1px; padding-bottom: 1px; }
+
+/* ---- Composition ---- */
+:root[style*='--comp-text'] .app.composition .page .ProseMirror { color: var(--comp-text); }
+:root[style*='--comp-page'] .app.composition.comp-paper .page { background: color-mix(in srgb, var(--comp-page) calc(var(--comp-fade, 1) * 100%), transparent); }
+:root[style*='--comp-bar-bg'] .comp-bar { background: var(--comp-bar-bg); }
+.app.composition.comp-paper .page { padding: var(--comp-pad-y, 48px) var(--comp-pad-x, 56px); }
+:root[data-comp-zoom='own'] .app.composition .page { --zoom: var(--comp-zoom, 1) !important; }
+/* control bar: pinned, or shown after a delay */
+:root[data-comp-bar='pinned'] .comp-bar { transform: none; opacity: 1; }
+:root[data-comp-bar='auto'] .comp-bar.shown { transition-delay: var(--comp-bar-delay, 0ms); }
+:root[data-comp-scrollbar='off'] .app.composition .workspace, :root[data-comp-scrollbar='off'] .app.composition .pane { scrollbar-width: none; }
+:root[data-comp-scrollbar='off'] .app.composition .workspace::-webkit-scrollbar, :root[data-comp-scrollbar='off'] .app.composition .pane::-webkit-scrollbar { display: none; }
+:root[data-comp-hide-cursor='on'].typing-hide-cursor .app.composition, :root[data-comp-hide-cursor='on'].typing-hide-cursor .app.composition * { cursor: none !important; }
+/* inspector floating over the composition: opacity and the parts it shows */
+.app.composition ~ .floating-inspector, .floating-inspector { opacity: var(--comp-insp-opacity, 1); }
+.floating-inspector:hover, .floating-inspector:focus-within { opacity: 1; }
+:root[data-comp-insp]:not([data-comp-insp*='s']) .floating-inspector .fields > label:first-child { display: none; }
+:root[data-comp-insp]:not([data-comp-insp*='m']) .floating-inspector .fields > .row { display: none; }
+:root[data-comp-insp]:not([data-comp-insp*='n']) .floating-inspector .fi-notes { display: none; }

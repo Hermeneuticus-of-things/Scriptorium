@@ -187,6 +187,8 @@ contextBridge.exposeInMainWorld('api', {
   mcpConnectDesktop: (opts) => call('mcp:connectDesktop', opts),
   newWindow: () => call('window:new'),
   toggleFullScreen: (on) => call('window:fullScreen', on),
+  listDisplays: () => call('window:displays'),
+  compositionDisplay: (index) => call('window:compositionDisplay', index),
   recheckSpelling: () => call('spell:recheck'),
   openMediaExternal: (dir, file) => call('media:openExternal', dir, file),
   releaseProject: () => call('project:release'),
