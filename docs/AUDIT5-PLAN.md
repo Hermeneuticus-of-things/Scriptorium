@@ -88,9 +88,11 @@ capturi. Componentele mici de infrastructură Qt (sub 3 etichete) se tratează d
 ### Compile (P2/P3 — vezi defalcarea de mai sus): toate SCRCompileFormat* + SCRCompile* + SCRSectionLayout*.
 ### Dialoguri de proiect/document
 - [x] Inspector (+ General/Comments/Bookmarks/Keywords/Snapshots) · ProjectTargets · Corkboard · ScratchPad.
-- [ ] ProjectSettingsDialog (113) · ProjectStatistics (51) · WritingHistoryDialog (59) · NameGenerator (47).
+- [x] NameGenerator (47) — gol reparat: filtre „se termină cu"/„conține". ProjectStatistics/WritingHistory: paritate.
+- [ ] ProjectSettingsDialog (113) — de verificat în detaliu.
 - [ ] FindDialog (26) · FindFormattingDialog (45) · ReplaceAllDialog (31) · QuickReference (20) · Bookmarks (20).
-- [ ] ScriptSettingsDialog (87) · PrintSettingsDialog (70) · PageSetup/CustomPageSize · ImportAndSplit (20).
+- [x] ImportAndSplit (20) — paritate (separator + titluri; OPML/fountain separat).
+- [ ] ScriptSettingsDialog (87) · PrintSettingsDialog (70) · PageSetup/CustomPageSize.
 - [ ] TextStyleDialog (31) · StylesDialog · IndentationDialog (18) · LineSpacingDialog · TableProperties (19).
 - [ ] KeywordEditor (19) · ThemeManager (43) · LayoutManager (16) · NewProjectAssistant (58) · TemplateInfo (56).
 ### Nativ/irelevant (nu se implementează)
