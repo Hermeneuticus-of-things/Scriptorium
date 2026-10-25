@@ -61,9 +61,51 @@ function axNode(a) {
   });
   fs.writeFileSync(path.join(outDir, 'menus.json'), JSON.stringify({ role: 'MenuBar', name: 'Scribner', children: menus.filter((m) => m.visible !== false).map(menuNode) }, null, 1));
 
+  // Playwright dropped page.accessibility; Scribner is a web UI, so read the DOM directly — more
+  // accurate than an a11y snapshot. Emits the same node shape element-diff.cjs expects.
+  const domSnapshot = () => win.evaluate(() => {
+    const roleOf = (el) => {
+      const r = el.getAttribute('role');
+      if (r) return { tab: 'TabItem', checkbox: 'CheckBox', radio: 'RadioButton', button: 'Button', menuitem: 'MenuItem', option: 'ListItem', combobox: 'ComboBox', textbox: 'Edit', heading: 'Text' }[r] || null;
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'button') return 'Button';
+      if (tag === 'a') return 'Button';
+      if (tag === 'select') return 'ComboBox';
+      if (tag === 'textarea') return 'Edit';
+      if (tag === 'summary') return 'Button';
+      if (tag === 'input') { const t = (el.type || 'text').toLowerCase(); return t === 'checkbox' ? 'CheckBox' : t === 'radio' ? 'RadioButton' : ['button', 'submit', 'reset'].includes(t) ? 'Button' : 'Edit'; }
+      if (/^h[1-6]$/.test(tag) || el.classList.contains('field-label') || tag === 'label') return 'Text';
+      return null;
+    };
+    const vis = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+    const labelText = (el) => {
+      let t = (el.getAttribute('aria-label') || el.getAttribute('title') || '').trim();
+      if (!t && el.id) { const l = document.querySelector(`label[for="${el.id}"]`); if (l) t = l.textContent.trim(); }
+      if (!t && el.tagName === 'INPUT') { const l = el.closest('label'); if (l) t = l.textContent.trim(); }
+      if (!t) t = (el.textContent || '').trim();
+      return t.replace(/\s+/g, ' ').slice(0, 120);
+    };
+    const out = [];
+    const seen = new Set();
+    for (const el of document.querySelectorAll('button,a,input,select,textarea,summary,label,h1,h2,h3,h4,h5,h6,[role]')) {
+      const role = roleOf(el);
+      if (!role || !vis(el)) continue;
+      const name = labelText(el);
+      if (!name) continue;
+      const key = role + '::' + name;
+      if (seen.has(key)) continue; seen.add(key);
+      const n = { role, name };
+      if (el.disabled || el.getAttribute('aria-disabled') === 'true') n.enabled = false;
+      if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked) n.toggle = 'On'; }
+      else if (el.getAttribute('aria-checked') === 'true' || el.getAttribute('aria-selected') === 'true' || el.classList.contains('active')) n.toggle = 'On';
+      if (el.value !== undefined && el.value !== '' && role !== 'Button') n.value = String(el.value).slice(0, 60);
+      out.push(n);
+    }
+    return { role: 'Window', name: document.title || 'Scribner', children: out };
+  });
   const snap = async (name) => {
-    const ax = await win.accessibility.snapshot({ interestingOnly: true });
-    fs.writeFileSync(path.join(outDir, `${name}.json`), JSON.stringify(axNode(ax || { role: 'none' }), null, 1));
+    const tree = await domSnapshot();
+    fs.writeFileSync(path.join(outDir, `${name}.json`), JSON.stringify(tree, null, 1));
     await win.screenshot({ path: path.join(outDir, `${name}.png`) });
   };
   await snap('main');
