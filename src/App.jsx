@@ -1863,6 +1863,7 @@ export default function App({ api: apiProp }) {
     saveProject({ ...project, tree });
     for (const [id, html] of Object.entries(written)) await api.writeDoc(dir, id, 'docs', html);
     setDocs((d) => ({ ...d, ...written }));
+    for (const [id, html] of Object.entries(written)) setEditorHtml(id, html); // an open glossary shows the new text
     setToast(tr('ui.app.glosare_generate_in_cercetare_x', { length: alogen.terms.length, v1: reading.terms?.length ?? 0, length2: toc.entries.length }));
   };
   const helpContext = () => (composition ? 'composition' : view === 'editor' && selected?.children ? 'scrivenings' : dialog || view);

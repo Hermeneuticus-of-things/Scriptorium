@@ -63,6 +63,9 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     if (col === 'progress') return n.target ? Math.min(1, (counts[n.id] || 0) / n.target) : -1;
     if (col === 'keywords') return (n.keywords || []).join(', ');
     if (col === 'include') return n.includeInCompile !== false ? 1 : 0;
+    // Label and status sort in the project's own list order, not alphabetically.
+    if (col === 'label') return (project.labels || []).findIndex((l) => l.name === n.label);
+    if (col === 'status') return (project.statuses || []).indexOf(n.status);
     if (col.startsWith('custom:')) return String((n.custom || {})[col.slice(7)] ?? '');
     return n[col] || '';
   };

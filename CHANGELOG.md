@@ -2,6 +2,12 @@
 
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
+### v0.9.8, căutare mezzo (fluxuri complete)
+- Note de proiect: o filă nouă nu mai primește textul filei anterioare, iar fila anterioară nu mai apare goală.
+- Redenumirea sau ștergerea unei etichete/unui status actualizează și filtrele din Compile; numele cu spații la capăt nu mai pierd culoarea etichetei.
+- Outline: Eticheta și Statusul se sortează în ordinea din proiect.
+- Glosarele regenerate apar imediat și în editorul deschis (fără suprascriere la autosalvare).
+
 ### v0.9.8, căutare macro (aplicația desktop cap-coadă)
 - Setările salvate (limba, autosalvarea, înlocuirile automate, rândul, fontul, redeschiderea ultimului proiect) se citesc înapoi; înainte dialogul pornea cu valorile implicite și le suprascria la salvare. Cheile rămân în procesul principal.
 - Un settings.json valid dar greșit (null, listă, `recent` stricat) nu mai oprește pornirea aplicației.
