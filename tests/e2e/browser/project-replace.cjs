@@ -6,7 +6,7 @@ const { open, caretEnd, check, done } = require('./_helpers.cjs');
   page.on('dialog', (d) => d.accept());
   const binder = (t) => page.locator('.binder').getByText(t, { exact: true });
   await binder('Drumul').click();
-  await page.locator('button[title="Split editor"]').click();
+  await page.locator('button.split-btn').click();
   await page.waitForSelector('.pane.second .ProseMirror');
   const p1 = page.locator('.pane:not(.second) .ProseMirror').first();
   const p2 = page.locator('.pane.second .ProseMirror');

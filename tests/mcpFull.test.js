@@ -56,6 +56,9 @@ const NEW_WRITE_TOOLS = (ctx) => ({
 });
 const NEW_READ_TOOLS = (ctx) => ({
   list_templates: {},
+  scriv_outline: { scriv_path: path.join(ctx.tmp, 'mini.scriv') },
+  scriv_read: { scriv_path: path.join(ctx.tmp, 'mini.scriv'), id: 'X' },
+  scriv_search: { scriv_path: path.join(ctx.tmp, 'mini.scriv'), query: 'T' },
   list_compile_formats: {},
   list_project_notes: {},
   list_keywords: {},
@@ -87,6 +90,12 @@ const PRELOAD_COVERAGE = {
   mcpConnectDesktop: 'gui: scrie configurarea Claude Desktop la cererea autorului',
   isMisspelled: 'gui: corectorul ortografic al ferestrei (corecturi învățate)',
   onSpellReplaced: 'gui: sugestie aleasă din meniul nativ de clic dreapta',
+  updateCheck: 'gui: actualizarea programului (Ajutor → Caută actualizări)',
+  updateConfigure: 'gui: actualizarea programului (setări)',
+  updateDownload: 'gui: actualizarea programului',
+  updateInstall: 'gui: actualizarea programului',
+  onUpdateProgress: 'gui: actualizarea programului',
+  onUpdateAvailable: 'gui: anunțul de versiune nouă',
   getSettings: 'gui: setările aplicației (temă, chei API); serverul citește doar backup / liste editoriale',
   setSettings: 'gui: setările aplicației și cheile API nu se schimbă din agent',
   chooseBackupDir: 'gui: dialog de folder (backup_now primește backup_dir)',
@@ -139,9 +148,14 @@ const PRELOAD_COVERAGE = {
   editorPackage: 'export_editor_package',
   deleteSnapshot: 'manage_snapshot',
   renameSnapshot: 'manage_snapshot',
+  snapshotCounts: 'gui: semnul din Binder și managerul de snapshot-uri (list_snapshots per document)',
   listAllTemplates: 'list_templates',
   saveAsTemplate: 'gui: scrie în folderul aplicației, nu la o cale dată de client',
   deleteTemplate: 'gui: șterge din folderul aplicației',
+  exportTemplate: 'gui: dialog de folder pentru exportul unui șablon',
+  importTemplate: 'gui: dialog de folder; scrie în folderul aplicației',
+  backupTo: 'gui: dialog de folder (backup_now primește backup_dir)',
+  backupOnSave: 'gui: backup la salvarea manuală din fereastră (Ctrl+S)',
   newFromTemplate: 'create_project',
   importText: 'import_files',
   importWebPage: 'import_web_page',
@@ -185,6 +199,9 @@ const PRELOAD_COVERAGE = {
   teamFiles: 'team_activity',
   whisperStatus: 'gui: motorul de dictare încorporat rulează pe calculatorul autorului',
   whisperInstall: 'gui: descărcarea motorului de dictare, din Setări',
+  ttsStatus: 'gui: vocea de citire încorporată (mini-player)',
+  ttsInstall: 'gui: descărcarea vocii de citire, automat la prima pornire',
+  ttsSynth: 'gui: citire cu voce tare în mini-player',
   whisperRemove: 'gui: ștergerea motorului de dictare, din Setări',
   whisperTranscribePcm: 'gui: sunetul vine de la microfonul autorului',
   whisperReadAudio: 'gui: fișierul audio ales în dialog',
@@ -304,6 +321,13 @@ afterAll(async () => {
 });
 
 describe('MCP integral: tool list and coverage', () => {
+  it('offers workflow prompts and a project list resource', async () => {
+    const { prompts } = await client.listPrompts();
+    expect(prompts.map((x) => x.name)).toEqual(expect.arrayContaining(['revizie_capitol', 'rezumat_proiect', 'importa_scriv']));
+    const r = await client.readResource({ uri: 'scribner://projects' });
+    expect(JSON.parse(r.contents[0].text).length).toBeGreaterThan(0);
+  });
+
   it('lists every old and new tool', async () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
@@ -445,6 +469,18 @@ describe('MCP integral: export', () => {
     const imp = await call('import_scriv', { scriv_path: res.dir, dest_dir: path.join(tmp, 'din-scriv') });
     const binder = await call('list_binder', { project: imp.dir });
     expect(JSON.stringify(binder)).toContain('Scena B');
+    // read in place, without importing
+    const outline = await call('scriv_outline', { scriv_path: res.dir });
+    const item = outline.find((o) => o.title === 'Scena B');
+    expect(item).toBeTruthy();
+    expect(typeof (await call('scriv_read', { scriv_path: res.dir, id: item.id }))).toBe('string');
+    // the same through the .scrivx file inside it, and a search
+    const scrivx = path.join(res.dir, fs.readdirSync(res.dir).find((f) => f.endsWith('.scrivx')));
+    expect((await call('scriv_outline', { scriv_path: scrivx })).length).toBe(outline.length);
+    expect(Array.isArray(await call('scriv_search', { scriv_path: scrivx, query: 'Scena' }))).toBe(true);
+    fs.mkdirSync(path.join(tmp, 'din-scrivx'));
+    const imp2 = await call('import_scriv', { scriv_path: scrivx, dest_dir: path.join(tmp, 'din-scrivx') });
+    expect(JSON.stringify(await call('list_binder', { project: imp2.dir }))).toContain('Scena B');
   });
 
   it('export_notebooklm (project notes tabs included)', async () => {
@@ -785,6 +821,8 @@ describe('MCP integral --read-only', () => {
     const p = makeProject(roTmp, 'Doar citire');
     fs.writeFileSync(path.join(roTmp, 'x.md'), '# x');
     fs.writeFileSync(path.join(roTmp, 'x.bib'), '@book{a, title={A}}');
+    fs.mkdirSync(path.join(roTmp, 'mini.scriv'));
+    fs.writeFileSync(path.join(roTmp, 'mini.scriv', 'mini.scrivx'), '<?xml version="1.0"?><ScrivenerProject><Binder><BinderItem UUID="X" Type="Text"><Title>T</Title></BinderItem></Binder></ScrivenerProject>');
     const before = snapshotTree(roTmp);
     const { call: ro } = await connect(p.dir, ['--read-only']);
     const ctx = { tmp: roTmp, a: p.a, b: p.b, md: path.join(roTmp, 'x.md'), bib: path.join(roTmp, 'x.bib') };

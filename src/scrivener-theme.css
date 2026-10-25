@@ -249,7 +249,7 @@
 
 /* ---------- corkboard ---------- */
 [data-ui='classic'] .corkboard {
-  min-height: 100%; padding: 10px 16px 30px;
+  min-height: 100%; padding: 10px 16px 0;
   background-color: var(--sc-cork);
   background-image:
     radial-gradient(var(--sc-cork-dot) 1px, transparent 1.2px),
@@ -344,7 +344,10 @@
 [data-ui='classic'] .settings-dialog > .actions, [data-ui='classic'] .ps-dialog > .actions { grid-row: 30; }
 
 /* compile dialog */
-[data-ui='classic'] .compile-dialog { width: min(980px, 96vw); }
+[data-ui='classic'] .compile-dialog { width: min(1100px, 96vw); }
+[data-ui='classic'] .compile-dialog .cd-sub { width: min(900px, 94vw); }
+[data-ui='classic'] .compile-dialog .cd-layout-card { border-radius: 0; background: var(--sc-paper); border-color: var(--sc-line); }
+[data-ui='classic'] .compile-dialog .cd-items { background: var(--sc-paper); border-color: var(--sc-line); }
 [data-ui='classic'] .compile-dialog .cd-formats {
   background: var(--sc-paper); border: 1px solid var(--sc-line); border-radius: 0; padding: 0;
 }

@@ -178,7 +178,18 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
       return abandon(e); // a failed start never leaves dictation "already running"
     }
     if (d.cancelled || d.stopped) return abandon();
-    if (!st.installed) return abandon(new Error('Motorul de dictare nu e descărcat încă: Setări → Servicii și conturi → Dictare și transcriere → Descarcă motorul.'));
+    if (!st.installed) {
+      // Not there yet: the download starts by itself (once); dictation works as soon as it ends.
+      if (st.installing) {
+        const p = st.installing.totalMb ? ` (${Math.round((st.installing.mb / st.installing.totalMb) * 100)}%)` : '';
+        return abandon(new Error(`Motorul de dictare se descarcă acum${p}. Dictarea pornește imediat ce termină; o singură dată.`));
+      }
+      if (st.supported && api.whisperInstall) {
+        api.whisperInstall('cpu').catch(() => {});
+        return abandon(new Error('Am pornit descărcarea motorului de dictare (în jur de 1 GB, o singură dată). Progresul apare jos; apoi apeși din nou Dictează.'));
+      }
+      return abandon(new Error('Motorul de dictare nu e descărcat încă: Setări → Servicii și conturi → Dictare și transcriere → Descarcă motorul.'));
+    }
     if (!media?.getUserMedia) return abandon(new Error('Microfonul nu e disponibil aici.'));
     try {
       d.stream = await media.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });

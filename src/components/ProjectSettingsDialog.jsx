@@ -3,17 +3,16 @@ import { NONE, FIELD_TYPES, makeDraft, applyProjectSettings, validateDraft, move
 import { t as tr } from '../lib/i18n.js';
 
 const TABS = () => ([
-  ['proiect', tr('group.project')],
-  ['etichete', tr('ui.advancedSearchDialog.etichete')],
-  ['statusuri', tr('ui.projectSettingsDialog.statusuri')],
-  ['metadate', 'Metadate'],
   ['sectiuni', tr('ui.projectSettingsDialog.tipuri_de_sectiune')],
   ['formatare', tr('ui.projectSettingsDialog.formatare_implicita')],
-  ['autocomplete', 'Auto-completare'],
-  ['backup', 'Backup'],
-  ['foldere', 'Foldere speciale'],
-]);
-const FONTS = ['', 'Georgia, serif', "'Times New Roman', serif", "'Palatino Linotype', Palatino, serif", 'Garamond, serif', 'Arial, sans-serif', "'Courier New', monospace"];
+  ['metadate', tr('ui.projectSettingsDialog.metadate_proprii')],
+  ['etichete', tr('ui.advancedSearchDialog.etichete')],
+  ['statusuri', tr('ui.projectSettingsDialog.statusuri')],
+  ['autocomplete', tr('ui.projectSettingsDialog.auto_completare')],
+  ['foldere', tr('ui.projectSettingsDialog.foldere_speciale')],
+  ['backup', tr('ui.projectSettingsDialog.backup')],
+  ['proiect', tr('group.project')],
+]);const FONTS = ['', 'Georgia, serif', "'Times New Roman', serif", "'Palatino Linotype', Palatino, serif", 'Garamond, serif', 'Arial, sans-serif', "'Courier New', monospace"];
 
 // Extra project settings kept outside lib/projectSettings.js (merged on save).
 function makeExtras(project) {
@@ -37,8 +36,16 @@ const LEVELS = () => ([
 ]);
 
 const CSS = `
-.ps-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid rgba(128,128,128,.3); padding-bottom: 6px; }
-.ps-tabs button.on { font-weight: 600; text-decoration: underline; }
+.ps-dialog { display: grid; grid-template-columns: 190px 1fr; column-gap: 14px; row-gap: 8px; align-content: start; }
+.ps-dialog > * { grid-column: 2; min-width: 0; }
+.ps-dialog > h2, .ps-dialog > .actions, .ps-dialog > style { grid-column: 1 / -1; }
+.ps-dialog > .actions { grid-row: 30; }
+.ps-tabs { grid-column: 1; grid-row: 2 / span 20; display: flex; flex-direction: column; gap: 2px; align-self: stretch; min-height: 340px; border-right: 1px solid rgba(128,128,128,.3); padding-right: 8px; }
+.ps-tabs button { text-align: left; border: 0; background: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; color: inherit; }
+.ps-tabs button:hover { background: rgba(128,128,128,.12); }
+.ps-tabs button.on { background: var(--accent, #4a6fa5); color: #fff; font-weight: 600; }
+.ps-pane { max-height: 62vh; overflow: auto; padding-right: 4px; }
+@media (max-width: 640px) { .ps-dialog { display: block; } .ps-tabs { flex-direction: row; flex-wrap: wrap; min-height: 0; border-right: 0; border-bottom: 1px solid rgba(128,128,128,.3); padding-bottom: 6px; } }
 .ps-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .ps-item { display: flex; align-items: center; gap: 6px; }
 .ps-item > input[type=text], .ps-item > input:not([type]) { flex: 1; min-width: 0; }
@@ -61,11 +68,22 @@ function Reorder({ i, n, pinFirst, onMove }) {
 // Project settings (Scrivener: Project > Project Settings).
 export default function ProjectSettingsDialog({ project, folders, onSave, onClose }) {
   const [d, setD] = useState(() => makeDraft(project));
-  const [tab, setTab] = useState('proiect');
+  const [tab, setTab] = useState('sectiuni');
   const [errors, setErrors] = useState([]);
   const [x, setX] = useState(() => makeExtras(project));
   const setFmt = (p) => setX((o) => ({ ...o, defaultFormatting: { ...o.defaultFormatting, ...p } }));
   const setBk = (p) => setX((o) => ({ ...o, backup: { ...o.backup, ...p } }));
+
+  const tabKeys = (e) => {
+    const ids = TABS().map(([id]) => id);
+    const i = ids.indexOf(tab);
+    const n = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: ids.length - 1 }[e.key];
+    if (n == null) return;
+    e.preventDefault();
+    const k = (n + ids.length) % ids.length;
+    setTab(ids[k]);
+    e.currentTarget.querySelectorAll('[role=tab]')[k]?.focus();
+  };
 
   const set = (p) => setD((x) => ({ ...x, ...p }));
   const setList = (key, fn) => setD((x) => ({ ...x, [key]: fn(x[key]) }));
@@ -156,13 +174,24 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
       <div className="modal wide ps-dialog" role="dialog" aria-label={tr('ui.projectSettingsDialog.setarile_proiectului')} onClick={(e) => e.stopPropagation()}>
         <style>{CSS}</style>
         <h2>{tr('ui.projectSettingsDialog.setarile_proiectului')}</h2>
-        <div className="ps-tabs" role="tablist">
+        <div className="ps-tabs" role="tablist" aria-orientation="vertical" aria-label={tr('ui.projectSettingsDialog.sectiuni_setari')} onKeyDown={tabKeys}>
           {TABS().map(([id, label]) => (
-            <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>
+            <button
+              key={id}
+              id={`ps-tab-${id}`}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              aria-controls="ps-pane"
+              tabIndex={tab === id ? 0 : -1}
+              className={tab === id ? 'on' : ''}
+              onClick={() => setTab(id)}
+            >
               {label}
             </button>
           ))}
         </div>
+        <div className="ps-pane" id="ps-pane" role="tabpanel" aria-labelledby={`ps-tab-${tab}`}>
 
         {tab === 'proiect' && (
           <div className="fields">
@@ -441,6 +470,8 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             )}
           </div>
         )}
+
+        </div>
 
         {errors.length > 0 && (
           <ul className="ps-errors">

@@ -9,6 +9,7 @@ import Scrivenings from './components/Scrivenings.jsx';
 import Corkboard from './components/Corkboard.jsx';
 import Outliner from './components/Outliner.jsx';
 import Inspector from './components/Inspector.jsx';
+import SnapshotManagerDialog from './components/SnapshotManagerDialog.jsx';
 import AiPanel from './components/AiPanel.jsx';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
@@ -16,6 +17,7 @@ import ImportReport from './components/ImportReport.jsx';
 import QuickRef from './components/QuickRef.jsx';
 import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
+import UpdateDialog, { UpdateBanner } from './components/UpdateDialog.jsx';
 import GoToDialog from './components/GoToDialog.jsx';
 import ProjectSettingsDialog from './components/ProjectSettingsDialog.jsx';
 import StatisticsDialog from './components/StatisticsDialog.jsx';
@@ -47,7 +49,9 @@ import ResearchPanel from './components/ResearchPanel.jsx';
 import AiJobBar from './components/AiJobBar.jsx';
 import McpConnectDialog from './components/McpConnectDialog.jsx';
 import { buildMenuLayout, nativeMenuSpec, AI_ONLY_COMMANDS } from './lib/menuLayout.js';
+import { editorMenus } from './lib/editorMenus.js';
 import FloatingInspector from './components/FloatingInspector.jsx';
+import CompositionBar from './components/CompositionBar.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
 import ProjectNotesTabs from './components/ProjectNotesTabs.jsx';
 import TimelineView from './components/TimelineView.jsx';
@@ -55,18 +59,21 @@ import RelationMap from './components/RelationMap.jsx';
 import PacingView from './components/PacingView.jsx';
 import NameGeneratorDialog from './components/NameGeneratorDialog.jsx';
 import Scratchpad from './components/Scratchpad.jsx';
-import SpeechBar from './components/SpeechBar.jsx';
+import { LinguisticFocusPanel, KeywordsHud, SpecialCharsDialog, AutoCompleteDialog } from './components/MissingWindows.jsx';
+import { pageViewVars, wordBefore, completeFromList, completionSuffix, toggleKeywordOn } from './lib/missingWindows.js';
+import MiniPlayer from './components/MiniPlayer.jsx';
+import EditorFooter from './components/EditorFooter.jsx';
 import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
 import { applySettingsCss } from './lib/settingsDefaults.js';
 import DialogA11y from './components/DialogA11y.jsx';
-import { setLanguage, cmdLabel, groupLabel, t as tr, uiLocale } from './lib/i18n.js';
+import { setLanguage, cmdLabel, groupLabel, builtinName, t as tr, uiLocale } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
 import FindDialog from './components/FindDialog.jsx';
 import HistoryDialog from './components/HistoryDialog.jsx';
 import BackupDialog from './components/BackupDialog.jsx';
-import ImportDialog from './components/ImportDialog.jsx';
+import ImportDialog, { WebImportDialog } from './components/ImportDialog.jsx';
 import Menu from './components/Menu.jsx';
 import StatusBar from './components/StatusBar.jsx';
 import {
@@ -233,7 +240,14 @@ export default function App({ api: apiProp }) {
   const team = useTeam({ api, dir, settings, docId: selectedId });
   // D&TED dictation (text at the cursor, or replacing the selection) and audio transcription.
   // The built-in recogniser (default, desktop) or the separate D&TED program (Settings).
-  const speechMode = settings?.speechEngine === 'dted' || !api.whisperStatus ? 'dted' : 'local';
+  // Nothing chosen yet: D&TED when it is installed (its eek model is the most accurate), otherwise
+  // the built-in engine, which downloads itself once in the background.
+  const [dtedInstalled, setDtedInstalled] = useState(false);
+  useEffect(() => {
+    if (!api.dtedStatus || settings?.speechEngine) return;
+    api.dtedStatus().then((r) => setDtedInstalled(Boolean(r?.found)), () => {});
+  }, [api, settings?.speechEngine]);
+  const speechMode = settings?.speechEngine === 'dted' || !api.whisperStatus || (!settings?.speechEngine && dtedInstalled) ? 'dted' : 'local';
   const speechApi = useMemo(
     () => (speechMode === 'local' ? createLocalSpeech(api, { terms: () => settingsRef.current?.dtedTerms || '' }) : api),
     [api, speechMode],
@@ -285,6 +299,21 @@ export default function App({ api: apiProp }) {
   }, []);
   // Help → Report a problem, and the discreet "send a report?" toast for a newly captured error.
   const [reportOpen, setReportOpen] = useState(false);
+  // Help → Check for updates, and the "new version" banner (once per new version; remembered in settings).
+  const [updateOpen, setUpdateOpen] = useState(null); // null | { initial }
+  const [updateBanner, setUpdateBanner] = useState(null);
+  const bannerShown = useRef('');
+  useEffect(() => {
+    if (!api.onUpdateAvailable) return undefined;
+    return api.onUpdateAvailable((info) => {
+      if (!info?.newer || bannerShown.current === info.latest) return;
+      // Once per new version: the shown version is remembered in settings (not shown again at the next check).
+      if (settingsRef.current?.updateShown === info.latest) return;
+      bannerShown.current = info.latest;
+      setUpdateBanner(info);
+      api.setSettings?.({ updateShown: info.latest }).catch(() => {});
+    });
+  }, [api]);
   const [errorPrompt, setErrorPrompt] = useState(false);
   const seenErrors = useRef(new Set());
   useEffect(() => {
@@ -374,6 +403,8 @@ export default function App({ api: apiProp }) {
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
+  const [floats, setFloats] = useState({ lf: false, kh: false, sc: false }); // audit 2 floating windows
+  const toggleFloat = (k) => setFloats((f) => ({ ...f, [k]: !f[k] }));
   const [printOpts, setPrintOpts] = useState(null); // File > Print Preview: { ids, pageSetup? }
   const [composition, setComposition] = useState(false);
   const [error, setError] = useState('');
@@ -619,9 +650,12 @@ export default function App({ api: apiProp }) {
     };
   }, []);
 
+  // Documents edited since the last manual save (Settings: snapshot them on Ctrl+S).
+  const changedSinceSave = useRef(new Set());
   const queueWrite = useCallback(
     (id, kind, html) => {
       pending.current.set(`${id}|${kind}`, html);
+      if (kind === 'docs') changedSinceSave.current.add(id);
       setSaveState(tr('ui.app.se_salveaza'));
       clearTimeout(timer.current);
       timer.current = setTimeout(flush, Math.max(0.2, Number(settingsRef.current?.autosaveSec) || SAVE_DELAY / 1000) * 1000);
@@ -1161,6 +1195,42 @@ export default function App({ api: apiProp }) {
     ed.chain().focus().insertContentAt(at, textToHtml(text)).run();
     return undefined;
   };
+  // Audit 2: Insert > Special Characters and Ctrl+Space completion from the project's list.
+  const activeTipTap = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.editor || null;
+  const insertSpecialChar = (ch) => {
+    const ed = activeTipTap();
+    if (!ed || ed.isDestroyed) return setToast(tr('ui.mw.sc_no_editor'));
+    ed.chain().focus().insertContent(ch).run();
+    return undefined;
+  };
+  const autoCompleteWord = () => {
+    const ed = activeTipTap();
+    if (!ed || ed.isDestroyed) return setToast(tr('ui.mw.sc_no_editor'));
+    const { from, empty, $from } = ed.state.selection;
+    if (!empty) return undefined;
+    const prefix = wordBefore($from.parent.textBetween(0, $from.parentOffset, undefined, '￼'));
+    const matches = completeFromList(projectRef.current?.autoComplete || [], prefix);
+    if (!prefix || !matches.length) return setToast(tr('ui.mw.ac_none', { w: prefix }));
+    ed.chain().focus().insertContentAt(from, completionSuffix(matches[0], prefix)).run();
+    return undefined;
+  };
+  const autoCompleteRef = useRef(autoCompleteWord);
+  autoCompleteRef.current = autoCompleteWord;
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey && !e.altKey && !e.metaKey && e.code === 'Space' && e.target.closest?.('.ProseMirror')) {
+        e.preventDefault();
+        autoCompleteRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
+  // Page View "setup" size follows File > Page Setup (paper, orientation, margins).
+  useEffect(() => {
+    const vars = pageViewVars(project?.pageSetup);
+    for (const [k, v] of Object.entries(vars)) document.documentElement.style.setProperty(k, v);
+  }, [project?.pageSetup]);
   const runService = async (kind, service) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
     const source = (handle?.getSelectionText() || '').trim();
@@ -1246,6 +1316,45 @@ export default function App({ api: apiProp }) {
     const ids = selectionList().filter((id) => findNode(project.tree, id).type === 'text');
     for (const id of ids) await api.takeSnapshot(dir, id, stamp);
     setToast(tr('ui.app.snapshot_salvat_pentru_x_documente', { length: ids.length }));
+    refreshSnapCounts();
+  };
+  // Snapshot counts per document (Binder mark, Snapshots Manager), refreshed after snapshot changes.
+  const [snapCounts, setSnapCounts] = useState({});
+  const refreshSnapCounts = useCallback(async () => {
+    if (!dir || !project) return;
+    try {
+      if (api.snapshotCounts) return setSnapCounts((await api.snapshotCounts(dir)) || {});
+      const out = {};
+      for (const n of flatten(project.tree)) {
+        if (n.type !== 'text') continue;
+        const list = await api.listSnapshots(dir, n.id);
+        if (list.length) out[n.id] = { count: list.length, last: list.reduce((m, x) => (x.date > m ? x.date : m), '') };
+      }
+      setSnapCounts(out);
+    } catch {
+      /* the mark is a hint only */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, dir, project?.tree]);
+  // Automatic snapshots (split, merge, replace…) change the project too: refresh shortly after.
+  useEffect(() => {
+    const t = setTimeout(refreshSnapCounts, 600);
+    return () => clearTimeout(t);
+  }, [refreshSnapCounts]);
+  const takeSnapshotOf = async (id, name) => {
+    await flush();
+    await api.takeSnapshot(dir, id, name).catch(report);
+    setToast(tr('ui.snap.saved'));
+    refreshSnapCounts();
+  };
+  const saveCommand = async () => {
+    const ids = [...changedSinceSave.current];
+    changedSinceSave.current.clear();
+    await flush();
+    if (!settings?.snapshotOnSave || !ids.length) return;
+    const title = tr('ui.snap.manual_save');
+    for (const id of ids) if (findNode(project.tree, id)?.type === 'text') await api.takeSnapshot(dir, id, title).catch(report);
+    refreshSnapCounts();
   };
   const swapPanes = () => {
     if (!splitId || !selectedId) return;
@@ -1258,6 +1367,19 @@ export default function App({ api: apiProp }) {
     setSettings(await api.getSettings());
   };
   const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
+  const setZoom = (z) => setEditorView({ ...editorViewRef.current, zoom: Math.min(400, Math.max(50, Math.round(z))) });
+  const editorViewRef = useRef(editorView);
+  editorViewRef.current = editorView;
+  // Ctrl + mouse wheel over the text: larger / smaller text (the page keeps its width).
+  useEffect(() => {
+    const onWheel = (e) => {
+      if (!(e.ctrlKey || e.metaKey) || !e.target.closest?.('.page')) return;
+      e.preventDefault();
+      setZoom((editorViewRef.current.zoom || 100) + (e.deltaY < 0 ? 10 : -10));
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  });
 
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
   // Layouts (Window > Layouts): named combinations of views and panels.
@@ -1534,12 +1656,11 @@ export default function App({ api: apiProp }) {
     saveProject({ ...project, tree });
     setToast(`Import OPML: ${items.length} elemente de nivel superior.`);
   };
-  const importWeb = async () => {
-    const url = window.prompt('Adresa paginii web (http/https):', 'https://');
-    if (!url || url === 'https://') return;
-    const page = await api.importWebPage(url, dir);
+  const importWeb = async ({ url, title = '', asText = false } = {}) => {
+    if (!url) return setDialog('importWeb');
+    const page = await api.importWebPage(url, dir, { asText });
     // The page and its images (saved offline in media/) go in with a single project save.
-    const node = newNode('text', page.title || url);
+    const node = newNode('text', title || page.title || url);
     // The download can take seconds; the binder may have changed meanwhile.
     const pj = projectRef.current;
     let tree = insertNear(pj.tree, selectedId, node);
@@ -1588,8 +1709,8 @@ export default function App({ api: apiProp }) {
     await addResearchDocs([{ title: page.title || url, html: page.html, media: page.media }]);
     return true;
   };
-  const importFilesCmd = async (mode = 'none', separator = '#') => {
-    const res = await api.importFiles(dir, mode, separator);
+  const importFilesCmd = async (mode = 'none', separator = '#', opts = {}) => {
+    const res = await api.importFiles(dir, mode, separator, opts);
     if (!res) return;
     // Media first, then the texts on top of that tree: two separate saves from the same
     // `project` snapshot made the second one drop the first one's items.
@@ -1631,6 +1752,9 @@ export default function App({ api: apiProp }) {
   // Character count for the status bar: htmlToText parses the whole document, so only redo it
   // when that document's text changes.
   const selectedHtml = selectedId ? docs[selectedId] || '' : '';
+  // Words in the main editor's selection (footer "Words: 37 of 1,234"); reset with the document.
+  const [selWords, setSelWords] = useState(0);
+  useEffect(() => setSelWords(0), [selectedId]);
   const statusChars = useMemo(() => htmlToText(selectedHtml).replace(/\s+/g, ' ').trim().length, [selectedHtml]);
   const projectStyles = stylesOf(project);
 
@@ -1663,8 +1787,10 @@ export default function App({ api: apiProp }) {
         if (!layer) setComposition(false);
         return;
       }
-      const combo = keyFromEvent(e);
+      let combo = keyFromEvent(e);
       if (!combo) return;
+      // Ctrl and + on the number pad, or Ctrl+Shift+= on the main keys: the same as Ctrl+=.
+      if (combo === 'Ctrl++' || combo === 'Ctrl+Shift++') combo = commandsRef.current.zoomIn?.key || combo;
       // A dialog is open: only Save still works behind it.
       const inDialog = document.querySelector('.modal-backdrop');
       // Typing in a field outside the editor: plain, Shift- or Alt-only keys belong to the field.
@@ -1782,6 +1908,8 @@ export default function App({ api: apiProp }) {
           />
         )}
         <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
+      <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
+        <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
         <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
       </>
     );
@@ -2016,7 +2144,7 @@ export default function App({ api: apiProp }) {
   ];
 
   const navigateMenu = [
-    { label: tr('cmd.goto'), shortcut: 'Ctrl+G', action: () => setDialog('goto') },
+    { label: tr('cmd.goto'), shortcut: shortcutFor('goto', settings), action: () => setDialog('goto') },
     { label: tr('cmd.prevDoc'), shortcut: 'Ctrl+Alt+↑', action: () => goSibling(-1) },
     { label: tr('cmd.nextDoc'), shortcut: 'Ctrl+Alt+↓', action: () => goSibling(1) },
     { label: tr('ui.app.dosarul_parinte'), action: () => {
@@ -2025,8 +2153,8 @@ export default function App({ api: apiProp }) {
     } },
     { label: tr('cmd.back'), shortcut: 'Alt+←', action: back },
     { label: tr('cmd.forward'), shortcut: 'Alt+→', action: forward },
-    '-',
-    ...(favorites.length ? favorites.map((f) => ({ label: `★ ${f.title}`, action: () => go(f.id) })) : [{ label: tr('ui.app.niciun_favorit_bifeaza_favorit_in'), action: () => {}, disabled: true }]),
+    // Favorites are listed first in Navigate › Go To; this line only explains how to add one.
+    ...(favorites.length ? [] : ['-', { label: tr('ui.app.niciun_favorit_bifeaza_favorit_in'), action: () => {}, disabled: true }]),
   ];
 
   const projectMenu = [
@@ -2050,7 +2178,7 @@ export default function App({ api: apiProp }) {
   // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
   const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
   const commandList = [
-    ['file', 'save', tr('cmd.save'), () => flush()],
+    ['file', 'save', tr('cmd.save'), () => saveCommand().then(() => dir && api.backupOnSave?.(dir)).catch(report)],
     ['file', 'compile', tr('cmd.compile'), () => flush().then(() => setDialog('compile'))],
     ['file', 'import', tr('cmd.import'), () => setDialog('import')],
     ['file', 'importFiles', tr('cmd.importFiles'), () => setDialog('importSplit'), !api.importFiles],
@@ -2066,13 +2194,23 @@ export default function App({ api: apiProp }) {
     ['file', 'saveAs', tr('cmd.saveAs'), () => saveAs().catch(report), !api.saveProjectAs],
     ['file', 'print', tr('cmd.print'), printCurrent, !api.printDocument && !api.printDocuments],
     ['file', 'backups', tr('cmd.backups'), () => setDialog('backup'), !api.listBackups],
+    ['file', 'backupNow', tr('cmd.backupNow'), () => flush().then(() => api.backupNow(dir)).then((f) => f && setToast(tr('ui.g4.backupFacut', { file: f }))).catch(report), !api.backupNow],
+    ['file', 'backupTo', tr('cmd.backupTo'), () => flush().then(() => api.backupTo(dir)).then((f) => f && setToast(tr('ui.g4.backupFacut', { file: f }))).catch(report), !api.backupTo],
     ['file', 'closeProject', tr('cmd.closeProject'), closeProject],
     ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
+    ['edit', 'findNext', tr('cmd.findNext'), () => { const h = editorHandle(); if (h && !h.findAgain(1)) h.openFind(); }],
+    ['edit', 'findPrev', tr('cmd.findPrev'), () => { const h = editorHandle(); if (h && !h.findAgain(-1)) h.openFind(); }],
+    ['edit', 'findUseSel', tr('cmd.findUseSel'), () => editorHandle()?.useSelectionForFind()],
     ['edit', 'findProject', tr('cmd.findProject'), () => { setFindSeed(''); setDialog('find'); }],
+    ['edit', 'findFormat', tr('cmd.findFormat'), () => editorHandle()?.openFormatFind()],
     ['edit', 'advSearch', tr('cmd.advSearch'), () => { setSearchSeed(''); setDialog('advsearch'); }],
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
+    ['view', 'zoomIn', tr('cmd.zoomIn'), () => setZoom((editorView.zoom || 100) + 10)],
+    ['view', 'zoomOut', tr('cmd.zoomOut'), () => setZoom((editorView.zoom || 100) - 10)],
+    ['view', 'zoomReset', tr('cmd.zoomReset'), () => setZoom(100)],
+    ['view', 'pageFull', tr('cmd.pageFull'), () => setEditorView({ ...editorView, fullWidth: !editorView.fullWidth })],
     ['view', 'composition', tr('cmd.composition'), () => { setView('editor'); setComposition((c) => !c); }],
     ['view', 'toggleInspector', tr('cmd.toggleInspector'), () => setShowInspector((v) => !v)],
     ['view', 'toggleBinder', tr('cmd.toggleBinder'), () => setHideBinder((v) => !v)],
@@ -2100,10 +2238,15 @@ export default function App({ api: apiProp }) {
     ['document', 'duplicate', tr('cmd.duplicate'), () => duplicateSelection(true)],
     ['document', 'snapshot', tr('cmd.snapshot'), async () => {
       if (!selected || selected.root) return;
-      await flush();
-      await api.takeSnapshot(dir, selected.id, `Snapshot ${new Date().toLocaleString(uiLocale())}`).catch(report);
-      setToast('Snapshot salvat.');
+      await takeSnapshotOf(selected.id, `Snapshot ${new Date().toLocaleString(uiLocale())}`);
     }],
+    ['document', 'snapshotTitled', tr('cmd.snapshotTitled'), async () => {
+      if (!selected || selected.root) return;
+      const name = window.prompt(tr('ui.inspector.titlul_snapshot_ului'), 'Snapshot');
+      if (name === null) return;
+      await takeSnapshotOf(selected.id, name.trim() || 'Snapshot');
+    }],
+    ['document', 'snapshotManager', tr('cmd.snapshotManager'), () => flush().then(() => { refreshSnapCounts(); setDialog('snapshotManager'); })],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
@@ -2158,6 +2301,7 @@ export default function App({ api: apiProp }) {
     ['help', 'helpSyntax', tr('cmd.helpSyntax'), () => setHelp({ topic: null, tab: 'syntax' })],
     ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
     ['help', 'reportIssue', tr('cmd.reportIssue'), () => setReportOpen(true)],
+    ['help', 'checkUpdates', tr('cmd.checkUpdates'), () => setUpdateOpen({ initial: null }), !api.updateCheck],
     ['help', 'about', 'Despre Scribner', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
     ['tools', 'nameGen', tr('cmd.nameGen'), () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
@@ -2170,6 +2314,12 @@ export default function App({ api: apiProp }) {
     ['tools', 'shortcuts', tr('cmd.shortcuts'), () => setDialog('shortcuts')],
     ['window', 'saveLayout', tr('cmd.saveLayout'), saveLayout],
     ['window', 'manageLayouts', tr('cmd.manageLayouts'), () => setDialog('layouts')],
+    ['view', 'pageViewSetup', tr('cmd.pageViewSetup'), () => setEditorView({ ...editorView, pageView: !(editorView.pageView && editorView.pageSize === 'setup'), pageSize: 'setup' })],
+    ['view', 'linguisticFocus', tr('cmd.linguisticFocus'), () => toggleFloat('lf')],
+    ['project', 'keywordsHud', tr('cmd.keywordsHud'), () => toggleFloat('kh')],
+    ['format', 'specialChars', tr('cmd.specialChars'), () => toggleFloat('sc')],
+    ['project', 'autoCompleteList', tr('cmd.autoCompleteList'), () => setDialog('autoComplete')],
+    ['edit', 'autoComplete', tr('cmd.autoComplete'), () => autoCompleteWord()],
     ['window', 'fullScreen', 'Ecran complet', toggleFullScreen],
     ['document', 'moveTo', tr('cmd.moveTo'), () => setDialog('moveTo'), !selectionList().length],
     ['document', 'toggleSeparator', tr('cmd.toggleSeparator'), toggleSeparator, !selectionList().length],
@@ -2183,7 +2333,7 @@ export default function App({ api: apiProp }) {
     ['nav', 'unhoist', tr('cmd.unhoist'), () => setHoistId(null), !hoistId],
     ['view', 'scrivSelection', tr('cmd.scrivSelection'), () => openScrivenings(tr('ui.app.x_documente_selectate', { length: selectionList().length }), selectionList())],
     ['view', 'scrivCollection', tr('cmd.scrivCollection'), () => openScrivenings(activeCollection?.title || '', collectionIds || []), !activeCollection],
-    ['view', 'scrivTitles', tr('cmd.scrivTitles'), () => toggleView('scrivHideTitles')],
+    ['view', 'scrivTitles', tr('cmd.scrivTitles'), () => toggleView('scrivShowTitles')],
     ['view', 'scrivSeparators', tr('cmd.scrivSeparators'), () => toggleView('scrivHideSeparators')],
     ['view', 'toggleFormatBar', tr('cmd.toggleFormatBar'), () => toggleView('hideFormatBar')],
     ['view', 'toggleComments', tr('cmd.toggleComments'), () => toggleView('hideComments')],
@@ -2230,8 +2380,22 @@ export default function App({ api: apiProp }) {
     const c = commands[id];
     return c && { id, label: c.label, action: c.run, disabled: c.disabled, shortcut: c.key };
   };
+  const edMenus = editorMenus({
+    t: tr,
+    handle: editorHandle,
+    view: editorView,
+    setView: setEditorView,
+    settings,
+    setSettings: (patch) => { setSettings((s) => ({ ...s, ...patch })); api.setSettings(patch).catch(report); },
+    styles: projectStyles,
+    styleName: (st) => builtinName('style', st),
+    run: (id) => commandsRef.current[id]?.run(),
+    desktop: Boolean(api.setAppMenu),
+  });
   const menuLayout = buildMenuLayout(commands, {
-    extras: { document: documentMenu, nav: navigateMenu, project: projectMenu },
+    extras: { document: documentMenu, nav: navigateMenu, project: projectMenu, edit: edMenus.edit, insert: edMenus.insert, format: edMenus.format, view: edMenus.view, window: edMenus.window },
+    after: { edit: [commands.appendSelection && menuItem('appendSelection'), ...edMenus.editAfter].filter(Boolean) },
+    goto: { tree: project.tree, go: (id) => { go(id); setView('editor'); }, skip: (n) => n.root === 'trash' },
     label: (k) => tr(k),
     item: menuItem,
   });
@@ -2331,6 +2495,7 @@ export default function App({ api: apiProp }) {
     <div
       className={`app ${composition ? 'composition' : ''} ${composition && settings.compPaper !== false ? 'comp-paper' : ''} ${composition && settings.compBgImage ? 'has-bg-image' : ''}`}
       data-fit={settings.compBgImageFit || 'cover'}
+      data-comp-align={composition ? settings.compAlign || 'center' : undefined}
       onContextMenu={onEditorContextMenu}
       style={
         composition
@@ -2373,6 +2538,7 @@ export default function App({ api: apiProp }) {
         <Binder
           binderEnter={settings.binderEnter}
           binderDoubleClick={settings.binderDoubleClick}
+          snapCounts={snapCounts}
           onOpenItem={(id) => onBinderSelect(id, {})}
           onQuickRef={openQuickRef}
           project={binderProject}
@@ -2419,7 +2585,7 @@ export default function App({ api: apiProp }) {
 
         <section className={`workspace ${(splitNode || copyNode) && view === 'editor' ? 'split' : ''} ${copyNode && view === 'editor' ? 'has-copyholder' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
           <div className={`pane ${editorAreaClass}`}>
-            {view === 'editor' && selected && !composition && (
+            {view === 'editor' && selected && !composition && !editorView.hideHeaderBar && (
               <div className="sc-header-bar">
                 <button onClick={back} disabled={nav.index <= 0} title={tr('ui.app.inapoi_alt')} aria-label={tr('cmd.back')}><BackIcon /></button>
                 <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title={tr('ui.app.inainte_alt')} aria-label={tr('cmd.forward')}><ForwardIcon /></button>
@@ -2447,7 +2613,9 @@ export default function App({ api: apiProp }) {
                     <LockIcon />
                   </button>
                 )}
-                <button onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title="Split editor" aria-label="Split editor"><SplitIcon /></button>
+                <button className="hdr-arrow" onClick={() => goSibling(-1)} title={tr('cmd.prevDoc')} aria-label={tr('cmd.prevDoc')}>▲</button>
+                <button className="hdr-arrow" onClick={() => goSibling(1)} title={tr('cmd.nextDoc')} aria-label={tr('cmd.nextDoc')}>▼</button>
+                <button className="split-btn" onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
               </div>
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type === 'file' && !selected.children && (
@@ -2479,6 +2647,20 @@ export default function App({ api: apiProp }) {
                 view={editorView}
                 onViewChange={setEditorView}
                 onManageStyles={() => setDialog('styles')}
+                commentColor={settings.commentColor || ''}
+                authorName={settings.authorName || project.author || ''}
+                onSelectionWords={setSelWords}
+              />
+            )}
+            {view === 'editor' && selected && !isFolderView && selected.type !== 'file' && !composition && !editorView.hideFooterBar && (
+              <EditorFooter
+                node={selected}
+                words={counts[selected.id] || 0}
+                selectedWords={selWords}
+                chars={statusChars}
+                zoom={editorView.zoom || 100}
+                onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
+                onPatch={selected.root || selected.locked ? null : (patch) => patchNode(selected.id, patch)}
               />
             )}
             {isFolderView && (
@@ -2497,7 +2679,7 @@ export default function App({ api: apiProp }) {
                 registerRef={registerRef}
                 onFocusSection={(id) => (activeId.current = id)}
                 onChange={(id, html) => writeSynced(id, html, 'main')}
-                showTitles={!editorView.scrivHideTitles}
+                showTitles={Boolean(editorView.scrivShowTitles)}
                 showSeparators={!editorView.scrivHideSeparators}
                 onClose={scrivList ? () => setScrivList(null) : undefined}
                 onOpen={(id) => go(id)}
@@ -2576,6 +2758,8 @@ export default function App({ api: apiProp }) {
                   corrections={corrections}
                   defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
+                  commentColor={settings.commentColor || ''}
+                  authorName={settings.authorName || project.author || ''}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
                   title={splitNode.title}
@@ -2660,6 +2844,7 @@ export default function App({ api: apiProp }) {
                   }}
                   onError={report}
                   flush={flush}
+                  onSnapshotsChanged={refreshSnapCounts}
                   docs={docs}
                   counts={counts}
                   onPatchNode={patchNode}
@@ -2668,6 +2853,18 @@ export default function App({ api: apiProp }) {
                   onHtmlChange={(html, id) => {
                     writeDocNow(id, html);
                     setEditorHtml(id, html);
+                  }}
+                  latestHtml={(id) => docsNow()[id]}
+                  onProjectBookmarksChange={(bookmarks) => saveProject({ ...project, bookmarks })}
+                  onAddAnnotation={(kind, id) => {
+                    const h = editorRefs.current.get(id);
+                    if (!h) return false;
+                    return kind === 'comment' ? h.addComment?.('') : h.addFootnote?.('');
+                  }}
+                  onJumpToFootnote={(index, id) => {
+                    go(id);
+                    setView('editor');
+                    setTimeout(() => editorRefs.current.get(id)?.selectFootnote?.(index), 80);
                   }}
                   onJumpToComment={(index, c, id) => {
                     go(id);
@@ -2807,11 +3004,23 @@ export default function App({ api: apiProp }) {
         sync={conflict ? { state: 'conflict' } : offline || queued ? { state: 'pending', n: queued } : team.who ? { state: 'ok' } : null}
         team={team.who ? team : null}
         onTeam={() => setDialog('team')}
-        zoom={editorView.zoom || 100}
-        onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
       />
 
-      {composition && <button className="exit-composition" onClick={() => setComposition(false)}>{tr('ui.app.iesi_esc')}</button>}
+      {composition && (
+        <CompositionBar
+          settings={settings}
+          onSettings={async (patch) => { setSettings((s) => ({ ...s, ...patch })); await api.setSettings(patch); }}
+          zoom={editorView.zoom || 100}
+          onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
+          words={selected ? counts[selected.id] || 0 : 0}
+          chars={selected ? statusChars : 0}
+          inspectorOn={showFloatInspector}
+          onInspector={() => setShowFloatInspector((v) => !v)}
+          onGoto={() => setDialog('goto')}
+          onExit={() => setComposition(false)}
+          onError={(e) => setToast(e.message)}
+        />
+      )}
       {composition && settings.compShowTargets && selected && (
         <div className="comp-targets">
           <span>{tr('ui.statusBar.document')}: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
@@ -2951,7 +3160,7 @@ export default function App({ api: apiProp }) {
         />
       )}
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
-      {showSpeech && <SpeechBar api={api} getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
+      {showSpeech && <MiniPlayer api={api} dict={dict} getText={speechText} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (
@@ -2985,6 +3194,25 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'history' && <HistoryDialog api={api} dir={dir} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'snapshotManager' && (
+        <SnapshotManagerDialog
+          api={api}
+          dir={dir}
+          project={project}
+          counts={snapCounts}
+          docs={docs}
+          canRestore={(id) => !findNode(project.tree, id)?.locked && !team.lockOf(id)}
+          flush={flush}
+          onRestore={(id, html) => {
+            writeDocNow(id, html);
+            setEditorHtml(id, html);
+          }}
+          onChanged={refreshSnapCounts}
+          onOpen={(id) => go(id)}
+          onError={report}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'backup' && (
         <BackupDialog
           api={api}
@@ -3068,11 +3296,10 @@ export default function App({ api: apiProp }) {
           project={project}
           draftWords={totals.tWords}
           draftChars={totals.draftChars}
+          draftValue={draftValue}
+          sessionValue={sessionValue}
           onResetSession={resetSession}
-          onSave={(targets) => {
-            saveProject({ ...project, targets });
-            setDialog(null);
-          }}
+          onSave={(targets) => saveProject({ ...project, targets })}
           onClose={() => setDialog(null)}
         />
       )}
@@ -3090,6 +3317,7 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
+      {dialog === 'importWeb' && <WebImportDialog onImport={(o) => importWeb(o).catch(report)} onClose={() => setDialog(null)} />}
       {dialog === 'import' && <ImportDialog api={api} target={selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
       {quickRefs.map((q) => {
         const n = findNode(project.tree, q.id);
@@ -3133,7 +3361,18 @@ export default function App({ api: apiProp }) {
           emptyText={tr('ui.app.niciun_document')}
         />
       )}
-      {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep) => importFilesCmd(mode, sep).catch(report)} onClose={() => setDialog(null)} />}
+      {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep, opts) => importFilesCmd(mode, sep, opts).catch(report)} onClose={() => setDialog(null)} />}
+      {floats.lf && <LinguisticFocusPanel view={editorView} setView={(patch) => setEditorView({ ...editorView, ...patch })} onClose={() => setFloats((f) => ({ ...f, lf: false }))} />}
+      {floats.kh && project && (
+        <KeywordsHud
+          project={project}
+          selectedIds={selectionList()}
+          onToggle={(name) => setTree(toggleKeywordOn(project.tree, selectionList(), name))}
+          onClose={() => setFloats((f) => ({ ...f, kh: false }))}
+        />
+      )}
+      {floats.sc && <SpecialCharsDialog onInsert={insertSpecialChar} onClose={() => setFloats((f) => ({ ...f, sc: false }))} />}
+      {dialog === 'autoComplete' && project && <AutoCompleteDialog list={project.autoComplete || []} onSave={(list) => saveProject({ ...projectRef.current, autoComplete: list })} onClose={() => setDialog(null)} />}
       {dialog === 'layouts' && (
         <LayoutsDialog layouts={settings.layouts || []} onChange={(l) => saveLayouts(l).catch(report)} onApply={applyLayout} onClose={() => setDialog(null)} />
       )}
@@ -3151,6 +3390,7 @@ export default function App({ api: apiProp }) {
       )}
       <DialogA11y />
       <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
+      <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
       <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
     </div>
   );
@@ -3158,6 +3398,26 @@ export default function App({ api: apiProp }) {
 
 // Live regions stay in the DOM all the time so screen readers announce the messages that
 // appear in them (a region inserted together with its text is often not read).
+function UpdateUi({ api, open, setOpen, banner, setBanner, beforeInstall }) {
+  return (
+    <>
+      {banner && !open && (
+        <UpdateBanner
+          info={banner}
+          onOpen={() => {
+            setOpen({ initial: banner });
+            setBanner(null);
+          }}
+          onDismiss={() => {
+            setBanner(null);
+          }}
+        />
+      )}
+      {open && <UpdateDialog api={api} initial={open.initial} beforeInstall={beforeInstall} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
 function ReportUi({ api, open, setOpen, prompt, setPrompt, onDone }) {
   return (
     <>

@@ -13,6 +13,9 @@ export const DEFAULT_SETTINGS = {
   pageWidth: 42,
   binderFontSize: 14,
   accentColor: '',
+  // Colour of new comments ('' = the theme's comment colour) and of the five revision rounds.
+  commentColor: '',
+  revisionColors: ['#c62828', '#1565c0', '#2e7d32', '#6a1b9a', '#ef6c00'],
   // Behaviors
   binderEnter: 'edit', // 'edit' | 'newDoc'
   binderDoubleClick: 'rename', // 'rename' | 'openQuickRef'
@@ -22,6 +25,7 @@ export const DEFAULT_SETTINGS = {
   compWidth: 40,
   compPaper: true,
   compFade: 100,
+  compAlign: 'center',
   // Corrections
   smartQuotes: true,
   smartDashes: true,
@@ -38,8 +42,13 @@ export const DEFAULT_SETTINGS = {
   autoBacklinks: false,
   // Backup
   backupOnClose: true,
+  snapshotOnSave: false,
   backupEveryMin: 0,
-  backupKeep: 10,
+  backupOnOpen: false,
+  backupOnSave: false, // also on each manual save (Ctrl+S), at most once a minute
+  backupZip: true,
+  backupDateName: true, // date and time in the backup's file name
+  backupKeep: 5, // new installs; settings saved before keep their value (lib/backup.cjs migrateBackupKeep)
   backupDir: '',
   // AI
   aiEnabled: true,
@@ -61,6 +70,8 @@ export function applySettingsCss(settings, root = typeof document !== 'undefined
     '--para-spacing': `${Number(s.paragraphSpacing) || 0}em`,
     '--accent': s.accentColor,
   };
+  const revs = Array.isArray(s.revisionColors) ? s.revisionColors : DEFAULT_SETTINGS.revisionColors;
+  for (let i = 0; i < 5; i += 1) vars[`--rev-${i + 1}`] = revs[i] || DEFAULT_SETTINGS.revisionColors[i];
   for (const [k, v] of Object.entries(vars)) {
     if (v) root.style.setProperty(k, v);
     else root.style.removeProperty(k);

@@ -33,6 +33,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [s, setS] = useState({
     language: init.language,
     reopenLastProject: init.reopenLastProject !== false,
+    autoUpdateCheck: init.autoUpdateCheck !== false,
     autosaveSec: init.autosaveSec,
     checkUpdates: Boolean(init.checkUpdates),
     theme: init.theme || 'system',
@@ -43,6 +44,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     pageWidth: init.pageWidth,
     binderFontSize: init.binderFontSize,
     accentColor: init.accentColor || '',
+    commentColor: init.commentColor || '',
+    revisionColors: [0, 1, 2, 3, 4].map((i) => (init.revisionColors || [])[i] || DEFAULT_SETTINGS.revisionColors[i]),
     binderEnter: init.binderEnter,
     binderDoubleClick: init.binderDoubleClick,
     typewriter: Boolean(init.typewriter),
@@ -61,9 +64,12 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     aiEnabled: init.aiEnabled !== false,
     backupOnClose: init.backupOnClose !== false,
     backupOnOpen: Boolean(init.backupOnOpen),
+    snapshotOnSave: Boolean(init.snapshotOnSave),
+    backupOnSave: Boolean(init.backupOnSave),
+    backupDateName: init.backupDateName !== false,
     backupZip: init.backupZip !== false,
     backupEveryMin: init.backupEveryMin || 0,
-    backupKeep: init.backupKeep || 10,
+    backupKeep: init.backupKeep || 5,
     backupDir: init.backupDir || '',
     teamName: init.team?.name || '',
     dtedPath: init.dtedPath || '',
@@ -232,7 +238,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         sharingSync: sharing.sync,
         sharingExport: sharing.export,
         backupEveryMin: Number(s.backupEveryMin) || 0,
-        backupKeep: Math.max(1, Number(s.backupKeep) || 10),
+        backupKeep: Math.max(1, Number(s.backupKeep) || 5),
         team: {
           name: s.teamName.trim().slice(0, 60),
           color: s.teamColor,
@@ -256,6 +262,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       }]));
       Object.assign(patch, aiPatch());
       await api.setSettings(patch);
+      api.updateConfigure?.().catch(() => {});
       if (project) {
         onProjectChange({
           ...project,
@@ -279,6 +286,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     general: (
       <>
         {check('reopenLastProject', t('set.reopenLast'))}
+        {api.onUpdateAvailable && check('autoUpdateCheck', t('set.autoUpdateCheck'))}
         <label>
           {t('set.autosave')}
           <input type="number" min="1" max="120" value={s.autosaveSec} onChange={set('autosaveSec')} />
@@ -347,6 +355,25 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             {s.accentColor && <button onClick={() => set('accentColor')('')}>{t('btn.default')}</button>}
           </div>
         </label>
+        <label>
+          {t('ui.settings.commentColor')}
+          <div className="row">
+            <input type="color" aria-label={t('ui.settings.commentColor')} value={s.commentColor || '#f5d76e'} onChange={set('commentColor')} />
+            {s.commentColor && <button onClick={() => set('commentColor')('')}>{t('btn.default')}</button>}
+          </div>
+        </label>
+        <fieldset className="revision-colors">
+          <legend>{t('ui.settings.revisionColors')}</legend>
+          <div className="row">
+            {s.revisionColors.map((c, i) => (
+              <label key={i} className="rev-color">
+                {t('ui.settings.revisionRound', { n: i + 1 })}
+                <input type="color" aria-label={t('ui.settings.revisionRound', { n: i + 1 })} value={c} onChange={(e) => setS((p) => ({ ...p, revisionColors: p.revisionColors.map((x, k) => (k === i ? e.target.value : x)) }))} />
+              </label>
+            ))}
+            <button onClick={() => setS((p) => ({ ...p, revisionColors: [...DEFAULT_SETTINGS.revisionColors] }))}>{t('btn.default')}</button>
+          </div>
+        </fieldset>
         <fieldset>
           <legend>{t('set.composition')}</legend>
           <div className="row">
@@ -405,6 +432,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             {['rename', 'openQuickRef'].map((x) => <option key={x} value={x}>{t(`set.binderDbl.${x}`)}</option>)}
           </select>
         </label>
+        {check('snapshotOnSave', t('set.snapshotOnSave'))}
         {check('typewriter', t('set.typewriter'))}
       </>
     ),
@@ -463,7 +491,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       <>
         {check('backupOnClose', t('set.backupOnClose'))}
         {check('backupOnOpen', t('ui.settingsDialog.backup_si_la_deschiderea_proiectului'))}
+        {check('backupOnSave', t('ui.g4.backupOnSave'))}
         {check('backupZip', t('ui.settingsDialog.backup_comprimat_zip_debifat_copie'))}
+        {check('backupDateName', t('ui.g4.backupDateName'))}
         <div className="row">
           <label>
             {t('set.backupEvery')}

@@ -71,3 +71,20 @@ describe('binder / corkboard / scratchpad', () => {
     expect(iconTint('', '#f00', false)).toBe(null);
   });
 });
+
+import { parseAnnotations, updateFootnote, parseFootnotes } from '../src/lib/panelsExtra.js';
+describe('annotations in text order', () => {
+  const h = '<p>Unu<span data-footnote="nota A" class="footnote"></span> <span data-comment="com" class="comment">doi</span> <span data-linked-footnote="nota B" class="linked-footnote">trei</span></p>';
+  it('merges comments and footnotes by position', () => {
+    const a = parseAnnotations(h);
+    expect(a.map((x) => `${x.kind}:${x.text}`)).toEqual(['footnote:nota A', 'comment:com', 'footnote:nota B']);
+    expect(a[2].index).toBe(1);
+  });
+  it('edits and deletes footnotes', () => {
+    expect(parseFootnotes(updateFootnote(h, 1, { text: 'nouă "x"' }))[1].text).toBe('nouă "x"');
+    const d = updateFootnote(h, 1, null);
+    expect(d).toContain('trei');
+    expect(parseFootnotes(d)).toHaveLength(1);
+    expect(parseFootnotes(updateFootnote(h, 0, null))[0].text).toBe('nota B');
+  });
+});

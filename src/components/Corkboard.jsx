@@ -289,8 +289,8 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
         <span className="spacer" />
         <div className="seg">
           <button className={cork.mode === 'grid' ? 'on' : ''} onClick={() => setCork({ mode: 'grid' })}>{t('ui.corkboard.grila')}</button>
-          <button className={cork.mode === 'lines' ? 'on' : ''} onClick={() => setCork({ mode: 'lines' })}>Linii</button>
-          <button className={cork.mode === 'free' ? 'on' : ''} onClick={() => setCork({ mode: 'free' })}>Liber</button>
+          <button className={cork.mode === 'lines' ? 'on' : ''} onClick={() => setCork({ mode: 'lines' })}>{t('ui.common.linii')}</button>
+          <button className={cork.mode === 'free' ? 'on' : ''} onClick={() => setCork({ mode: 'free' })}>{t('ui.common.liber')}</button>
         </div>
         {cork.mode === 'lines' && (
           <select value={cork.by} onChange={(e) => setCork({ by: e.target.value })} title={t('ui.corkboard.aranjeaza_pe_linii_dupa')}>
@@ -306,7 +306,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
           <option value="mare">{t('ui.corkboard.fise_mari')}</option>
         </select>
         <details className="cork-options">
-          <summary>Aspect</summary>
+          <summary>{t('ui.common.aspect')}</summary>
           <div className="cork-options-body">
             <label>
               {t('ui.corkboard.proportie')}

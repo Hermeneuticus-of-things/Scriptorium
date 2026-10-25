@@ -30,11 +30,13 @@ export const TOP_ITEMS = [
   { id: 'irep', label: 'cmd.irep', glyph: '✓', command: 'irep', text: 'I-REP' },
   { id: 'ai', label: 'cmd.ai', glyph: '✦', command: 'ai', needs: 'ai', text: 'AI' },
   { id: 'aiMenu', label: 'ui.tb.aiMenu', kind: 'aiMenu', needs: 'desktop' },
+  { id: 'voice', label: 'cmd.speech', glyph: '🎙', command: 'speech', text: 'ui.tb.voice' },
   { id: 'settings', label: 'cmd.settings', glyph: '⚙', command: 'settings' },
   { id: 'help', label: 'cmd.help', glyph: '?', command: 'help' },
+  { id: 'update', label: 'cmd.checkUpdates', glyph: '⟳', command: 'checkUpdates', needs: 'desktop' },
 ];
 // Decluttered default: navigation, title, view switch, Compile, Inspector (+ the AI menu on desktop).
-export const TOP_DEFAULT = ['home', 'back', 'forward', 'title', SPACE, 'views', 'compile', 'inspector', 'aiMenu'];
+export const TOP_DEFAULT = ['home', 'back', 'forward', 'title', SPACE, 'views', 'voice', 'compile', 'inspector', 'aiMenu'];
 
 // Format bar groups (ids used by components/FormatBar.jsx).
 export const FORMAT_ITEMS = [
@@ -45,6 +47,7 @@ export const FORMAT_ITEMS = [
   { id: 'color', label: 'ui.fb.color' },
   { id: 'highlight', label: 'ui.fb.highlight' },
   { id: 'align', label: 'ui.fb.align' },
+  { id: 'spacing', label: 'ui.fb.spacing' },
   { id: 'lists', label: 'ui.fb.lists' },
   { id: 'dialogue', label: 'ui.fb.dialogue' },
   { id: 'notes', label: 'ui.fb.notes' },
@@ -62,8 +65,12 @@ export const FORMAT_ITEMS = [
   { id: 'copySpecial', label: 'ui.fb.copySpecial' },
   { id: 'undo', label: 'ui.fb.undo' },
 ];
-// Everything stays in the format bar by default; what does not fit goes into the » overflow.
-export const FORMAT_DEFAULT = FORMAT_ITEMS.map((i) => i.id);
+// Default format bar: the everyday groups only (paragraph style, font and size, bold/italic/underline,
+// colour/highlight, alignment, paragraph menu with line spacing, lists, image and table).
+// Everything else can be added through customization; what does not fit goes into the » overflow.
+// Saved bars are untouched: normalizeList keeps them and appends only ids not in `seen`.
+const FORMAT_BASIC = ['block', 'font', 'bui', 'color', 'highlight', 'align', 'spacing', 'paragraph', 'lists', 'image', 'table'];
+export const FORMAT_DEFAULT = FORMAT_ITEMS.map((i) => i.id).filter((id) => FORMAT_BASIC.includes(id));
 
 export const DISPLAY_MODES = ['iconText', 'icon', 'text'];
 export const BARS = {

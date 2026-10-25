@@ -65,7 +65,7 @@ const watchdog = setTimeout(() => {
   // 3. Compile DOCX, PDF, EPUB via the Compile dialog
   for (const [fmt, label] of [['docx', 'Word'], ['pdf', 'PDF'], ['epub', 'EPUB']]) {
     await win.locator('button[title^="Compilează"]').first().click();
-    await win.waitForSelector('text=Format de ieșire');
+    await win.waitForSelector('text=Compilează pentru');
     const sel = win.locator('select').filter({ has: win.locator(`option[value="${fmt}"]`) }).first();
     await sel.selectOption(fmt);
     await answer(`${W}/out.${fmt}`);

@@ -1,5 +1,33 @@
 # CHANGELOG — Scriptorium
 
+
+## v0.9.9
+- Actualizare din aplicație de pe GitHub: verificare automată o dată pe zi (10 s după pornire dacă ultima verificare e mai veche de 24 h; cerere condiționată cu ETag, așteptare la limita de cereri), anunț „Versiune nouă” o singură dată pe versiune, Ajutor → Caută actualizări… cu note, descărcare cu progres, verificare dimensiune + SHA-256, instalare silențioasă și repornire (portabil: arată fișierul nou). Setare „Verifică automat actualizările” (pornită implicit); buton opțional „Actualizare” în bara de sus. Versiunile publică și `SHA256SUMS`; instalatorul are `RestartApplications=yes`. (`lib/updater.cjs`, `electron/updateHandlers.cjs`, `src/components/UpdateDialog.jsx`)
+- MCP `--anonymize` (oprit implicit): numele din private-names.txt (și, la cerere, emailurile și telefoanele) trimise modelului ca jetoane și rehidratate local la scriere; `docs/MCP_ARHITECTURA.md` descrie toată legătura agent ↔ Scribner.
+- MCP prin rețea: `--http <port>` (Streamable HTTP, cu token obligatoriu, pe 127.0.0.1 implicit, `--host` pentru alt calculator); resursa `scribner://ghid` cu regulile de lucru pentru agent.
+- Proiect nou: șabloanele pe categorii (stânga), fișe cu iconiță (mijloc), descriere dedesubt; Opțiuni▾ și Deschide recent▾ jos.
+- Setările proiectului cu listă verticală de file în stânga.
+- Compile pe trei coloane (formate · așezări de secțiuni · Conținut/Opțiuni/Metadate) și „Editează formatul…” separat.
+- Ținte într-un panou plutitor cu bare de progres; Statistici cu manuscrisul și selecția alăturate.
+- Modul compunere: bara de comenzi apare la marginea de jos (fundal, poziția paginii, mărimea textului, lățimea, estomparea, Inspector, Mergi la, Ieșire).
+- Bara de formatare implicită mai scurtă (restul în »).
+- Inspector ca în programele de scris clasice: un singur panou o dată, ales din iconițele de jos (Note, Semne de carte și legături, Metadate, Snapshot-uri, Comentarii); Note e implicit, cu sinopsisul sus și comutatorul Document / Proiect.
+- Bara de jos a documentului: zoom, cuvinte, caractere și ținta documentului (buton cu fereastră mică și bară de progres).
+- Bara documentului: ▲▼ pentru documentul anterior / următor.
+- Corkboard: comenzile de vizualizare în bara de jos.
+- Outline: coloane implicite Sinopsis, Etichetă, Status.
+- Binder: indicațiile de taste mutate în tooltip-ul căutării (mai puțin text pe ecran).
+- Texte rămase în română în interfața engleză (Metadate, Previzualizare, Formate, Statistici, Linii, Liber, Aspect, Progres, Creat, Modificat…).
+- MCP: `scriv_outline`, `scriv_read`, `scriv_search` și `import_scriv` primesc folderul .scriv sau fișierul .scrivx; în aplicație importul pornește de la fișierul .scrivx; evaluare în `mcp/eval` (10 întrebări pe o carte de test); unelte marcate doar citire / distructive. `scriv_outline` și `scriv_read` citesc un proiect .scriv pe loc, fără import; serverul își descrie uneltele clientului AI; șabloane de lucru (prompts: revizie_capitol, rezumat_proiect, importa_scriv) și resursa `scribner://projects`.
+- Mini-player Voce: și vocea Speechify, dacă e configurată.
+- Iconiță nouă (carte deschisă cu peniță, scris „SCRIBNER” sub ea) pentru program, installer, scurtătura de pe desktop și din meniul Start.
+- Pagina de scris: se lățește sau se îngustează trăgând de margini; dublu-clic pe margine = toată fereastra (și comanda „Pagina pe toată fereastra”).
+- Mărirea textului: Ctrl+= / Ctrl+- / Ctrl+0 și Ctrl+rotița mouse-ului; se mărește doar textul, pagina își păstrează lățimea.
+- Mini-player „Voce” (F8 sau butonul 🎙 din bară): dictare (●/❚❚/■) și citire cu voce tare, fereastră mică mutabilă.
+- Vocea de citire românească inclusă (Piper, „Mihai”), descărcată singură o dată la prima pornire; vocile sistemului rămân ca alternativă.
+- Dictarea e gata fără vizită în Setări: motorul se descarcă singur o dată, în fundal; dacă D&TED e instalat, e folosit el.
+- MCP: comandă generală, aceeași pe orice calculator și pentru orice client AI, fără nume de utilizator și fără carte (`cmd /c %LOCALAPPDATA%\Programs\Scribner\scribner-mcp.cmd`); fără `--project` serverul oferă proiectele din lista recentă.
+
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
 ### v0.9.8, a doua rundă pe toate nivelurile + lista cerută

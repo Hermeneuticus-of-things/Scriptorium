@@ -35,7 +35,7 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, snapCounts = null }) {
   const tintIcons = labelTintIcons ?? Boolean(project.labelTintIcons);
   // Behaviours from Options: Enter = 'rename' | 'newDoc' | 'open' ('edit' = 'open');
   // double-click = 'rename' | 'quickRef' | 'open' ('openQuickRef' = 'quickRef').
@@ -115,7 +115,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const renderIcon = (node) => {
     const tint = iconTint(node.iconColor, labelColor[node.label], tintIcons);
     return (
-      <span className={`icon ${tint ? 'tinted' : ''}`} style={tint ? { color: tint, '--icon-tint': tint } : undefined}>
+      <span className={`icon ${tint ? 'tinted' : ''}${snapCounts?.[node.id]?.count ? ' has-snapshots' : ''}`} style={tint ? { color: tint, '--icon-tint': tint } : undefined}>
         {iconFor(node)}
       </span>
     );
@@ -420,8 +420,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         <button onClick={() => setAllCollapsed(false)} title={tr('ui.binder.extinde_tot')}>⊞</button>
         <button onClick={() => setAllCollapsed(true)} title={tr('ui.binder.restrange_tot')}>⊟</button>
       </div>
-      <input className="search" type="search" aria-label={tr('ui.binder.cauta_in_proiect')} placeholder={tr('ui.binder.cauta_in_proiect')} value={query} onChange={(e) => setQuery(e.target.value)} />
-      <p className="tip">{tr('ui.binder.ctrl_shift_clic_selectie_multipla')}</p>
+      <input className="search" type="search" aria-label={tr('ui.binder.cauta_in_proiect')} placeholder={tr('ui.binder.cauta_in_proiect')} title={tr('ui.binder.ctrl_shift_clic_selectie_multipla')} value={query} onChange={(e) => setQuery(e.target.value)} />
       {filterIds ? (
         <ul className="tree collection-list" role="listbox" aria-multiselectable="true" tabIndex={0} ref={treeRef} aria-activedescendant={selected && filterIds.includes(selected) ? rowDomId(selected) : undefined} aria-label={tr('ui.binder.colectia_x', { filterTitle: filterTitle })}>
           {filterIds.length === 0 && <li className="muted" role="presentation">{tr('ui.binder.colectia_e_goala')}</li>}

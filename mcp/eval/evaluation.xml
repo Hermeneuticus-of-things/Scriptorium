@@ -1,0 +1,43 @@
+<evaluation>
+  <!-- Fixed book: node mcp/eval/fixture.cjs <folder>; start the server with --project on it. Read-only questions. -->
+  <qa_pair>
+    <question>În cartea „Drumul spre munte”, în ce oraș începe călătoria personajului principal?</question>
+    <answer>Sibiu</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Ce obiect primise Ilinca de la bunicul ei? Răspunde cu cele două cuvinte din text, fără articol nehotărât.</question>
+    <answer>busolă de alamă</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Câte documente din manuscris au eticheta „Acțiune”?</question>
+    <answer>3</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Care este titlul documentului din manuscris marcat ca flashback?</question>
+    <answer>Amintirea</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Ce altitudine are lacul, după nota de subsol din capitolul în care Ilinca găsește urmele unui foc? Răspunde doar cu numărul de metri.</question>
+    <answer>2034</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Cine a lăsat comentariul despre anul în care fusese aprins focul?</question>
+    <answer>Ana</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Ce vârstă are cabanierul, după fișa personajelor din Cercetare?</question>
+    <answer>61</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Ce țintă de cuvinte are documentul cu statusul „De făcut”?</question>
+    <answer>1500</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Câte documente din manuscris au cuvântul cheie „busola”?</question>
+    <answer>2</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>În ce dosar al manuscrisului se află documentul în care Ilinca numără turiștii? Răspunde cu titlul dosarului.</question>
+    <answer>Partea a doua</answer>
+  </qa_pair>
+</evaluation>
