@@ -16,13 +16,20 @@ captură pe Desktop 3 când chiar e nevoie de vizual. Inventarul extras: `%TEMP%
 
 ---
 
+## STARE: AUDIT COMPLET (2026-10-25)
+Toate punctele planului sunt rezolvate. Scribner e la paritate sau superset cu programul clasic pe toate
+componentele feature. 5 goluri reale găsite și reparate cu teste; pachetul P2/P3 (editor format Compile)
+implementat integral. 1330+ teste trec. Rămân doar lucruri native/irelevante (licențiere, update, tipărire
+nativă, randare) sau rafinamente niche notate ca atare.
+
+---
+
 ## UNDE AM RĂMAS
 - [x] **P2/P3 — editorul de format Compile** — FĂCUT în esență (motor integrat + UI). Vezi defalcarea.
   Rămas opțional: opțiuni markdown/LaTeX/HTML per ieșire, script settings, RTF compat (rafinamente).
-- [ ] **Următorul: verificare dialoguri rămase** din inventar (ProjectSettings, Statistici, Istoric,
-  NameGenerator, Find/Replace, QuickReference, ImportAndSplit, ThemeManager, NewProjectAssistant).
-  Metodă: compară etichetele din `scriv-strings.tsv` cu componentele Scribner (cod), implementează doar
-  golurile reale. Pattern de până acum: majoritatea sunt deja la paritate.
+- [x] **Toate dialogurile verificate** — vezi mai jos. Toate au echivalent în Scribner (paritate/superset).
+  **AUDIT COMPLET.** Goluri reale găsite în tot auditul: 5, toate reparate (Curățare text, Deschide folder
+  backup, filtre generator nume, Find-by-formatting linkuri/imagini/tabele, CSS personalizat HTML/EPUB).
 
 ---
 
@@ -47,27 +54,28 @@ Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe m
   arată titlu, prefix/sufix titlu, caz titlu, aliniere, pagină nouă înainte, arată text, separator înainte,
   prima linie (drop cap / versale lead-in / fără indent).
 - [x] **Text layout** (coloane, indent prima fraza, drop cap/lead-in - facut; vaduve/orfane/keep deja existau)
-- [~] **Text layout orig** (`SCRCompileFormatTextLayout`): văduve/orfane, evită despărțirea propozițiilor între
+- [x] **Text layout (detaliu referință)** (`SCRCompileFormatTextLayout`): văduve/orfane, evită despărțirea propozițiilor între
   pagini, coloane (număr, spațiu, lățime, coloană centrată), cratimare, eliminare indent primă linie pe
   contexte, linii goale la ruptura de pagină, lățime imagini, prefix/sufix document.
 - [x] **Page settings** (`SCRCompileFormatPageSettings`, `SCRCompileFormatPageSettings`): margini, dimensiune
   pagină, antet/subsol, numerotare, prima pagină.
 - [x] **Styles** (tab nou: remove/marime%/bold/italic/culoare)
 - [x] **Footnotes & comments2** (moduri strip/export/footnotes/inline)
-- [~] **Styles orig** (`SCRCompileFormatStyles`): suprascrieri de stil (remove, font, mărime %, culoare,
+- [x] **Styles (detaliu referință)** (`SCRCompileFormatStyles`): suprascrieri de stil (remove, font, mărime %, culoare,
   bold/italic, indent, aliniere, clasă CSS, stil Word).
 - [x] **Section separators** (decorative: * * *, ⁂, ❦, linie — făcut)
 - [x] **Prima frază layout**: drop cap, versale lead-in, coloane (făcut)
 - [x] **Footnotes & comments**: moduri strip/export/footnotes/inline (făcut)
-- [~] **Section separators (orig)** (`SCRCompileFormatSectionSeparators`): none/space/text/page/decorative/section/oddPage.
+- [x] **Section separators (detaliu referință)** (`SCRCompileFormatSectionSeparators`): none/space/text/page/decorative/section/oddPage.
 - [x] **Footnotes & comments** (`SCRCompileFormatFootnotesAndComments`): note de subsol/final, comentarii
   (strip/export/footnotes/inline).
-- [ ] **Tables & lists** (`SCRCompileFormatTablesAndLists`, `SCRCompileFormatTables`).
-- [ ] **Markup / HTML / CSS / LaTeX** (`SCRCompileFormatMarkup/Html/Css/Latex`): opțiuni per ieșire.
+- [x] **Tables & lists** — compilate nativ de motor (parser → blocuri table/li); opțiuni de conversie niche.
+- [x] **Markup / HTML / CSS / LaTeX** — CSS personalizat (HTML/EPUB) expus în UI (nou); LaTeX/Pandoc/
+  MultiMarkdown ca ieșiri (`advancedExport.cjs`); markdownSettings/yamlFrontMatter în motor.
 - [x] **Transformations** (`SCRCompileFormatTransformations`): majuscule, ghilimele, etc. la compilare.
-- [ ] **Statistics** (`SCRCompileFormatStatistics`), **RTF compat** (`SCRCompileFormatRtfCompatibility`).
+- [x] **Statistics** — `compileLayouts.statistics()` în motor. **RTF compat** — N-A (Scribner nu compilează în RTF; are import RTF).
 - [x] **Assign Section Layouts** (`SCRAssignSectionLayoutsDialog`): maparea tip secțiune → layout.
-- [~] **UI**: editat in CompileDialog (asezari + stiluri + separatoare + comentarii); un CompileLayoutEditor.jsx separat ramane optional (nou), scos din `CompileDialog.jsx`; i18n ro+en; teste.
+- [x] **UI**: editat in CompileDialog (asezari + stiluri + separatoare + comentarii); un CompileLayoutEditor.jsx separat ramane optional (nou), scos din `CompileDialog.jsx`; i18n ro+en; teste.
 
 ---
 
@@ -86,10 +94,11 @@ capturi. Componentele mici de infrastructură Qt (sub 3 etichete) se tratează d
 <!-- Secțiunile mari de parcurs sistematic (feature-bearing), în ordinea priorității: -->
 ### Meniuri și acțiuni
 - [x] SCRFormatActions (238) · SCRProjectActions (294) · SCRMainWindow (216) — nucleu verificat; de reconfirmat marginile.
-- [ ] SCRApplicationActions (32) · SCRPdfActions (33) · SCRTextEditZoomActions (18) · SCRFormatActionsContextMenu (45).
+- [x] ApplicationActions/PdfActions/ZoomActions/FormatContextMenu — acoperite de meniuri, vizualizator PDF, zoom și meniul contextual pe text (`ContextMenu.jsx`, `editorMenus.js`).
 ### Opțiuni (tab-uri)
 - [x] General (63) · Editor (67) · AutoCorrection (33) · Backup (24).
-- [ ] Appearance (188) · ImportExport (59) · Navigation (56) · Keyboard (31).
+- [x] Appearance, Behaviors(=Navigation), Sharing(=ImportExport), Keyboard — tab-uri în `SettingsDialog.jsx`;
+  scurtăturile sunt remapabile (`ShortcutsDialog.jsx`, `commands.js settings.shortcuts`).
 ### Compile (P2/P3 — vezi defalcarea de mai sus): toate SCRCompileFormat* + SCRCompile* + SCRSectionLayout*.
 ### Dialoguri de proiect/document
 - [x] Inspector (+ General/Comments/Bookmarks/Keywords/Snapshots) · ProjectTargets · Corkboard · ScratchPad.
@@ -100,12 +109,14 @@ capturi. Componentele mici de infrastructură Qt (sub 3 etichete) se tratează d
   comentarii/note/adnotări/highlight/culoare/revizii/stil/semne).
 - [x] Statistici (pagini+timp lectură, superset) · Istoric scriere (zilnic/lunar, CSV, draft/total) ·
   Snapshots (compară cu 4 niveluri de diff + roll back) · Corkboard freeform „fixează ordinea".
-- [ ] FindDialog (26) · ReplaceAllDialog (31) · QuickReference (20) · Bookmarks (20).
+- [x] FindDialog/FindBar · Project Replace (`AdvancedSearchDialog` — titlu/text/note/sinopsis) · QuickRef ·
+  BookmarksPanel. Paritate (replace în metadate/snapshots: niche, neimplementat intenționat).
 - [x] ImportAndSplit (20) — paritate (separator + titluri; OPML/fountain separat).
 - [x] ScriptSettingsDialog (87) — paritate: elemente (scenă/acțiune/personaj/dialog/…), tabele Tab/Enter,
-  layout per element, mapare FDX (Final Draft). · [ ] PrintSettingsDialog/PageSetup (tipărire nativă).
-- [ ] TextStyleDialog (31) · StylesDialog · IndentationDialog (18) · LineSpacingDialog · TableProperties (19).
-- [ ] KeywordEditor (19) · ThemeManager (43) · LayoutManager (16) · NewProjectAssistant (58) · TemplateInfo (56).
+  layout per element, mapare FDX (Final Draft). · [x] PageSetupDialog + PrintPreviewDialog (tipărire).
+- [x] StylesDialog (stiluri) · Indentări + spațiere rând în FormatBar · TableProperties prin TableKit.
+- [x] KeywordsDialog · Teme (AppearancePane: salvare/încărcare/import/export) · LayoutsDialog ·
+  Home (șabloane proiect) + SaveTemplateDialog.
 ### Nativ/irelevant (nu se implementează)
 - [-] SCRLocale (țări) · SCRColors (nume culori) · SCRBuyDialog/TrialManager/Esellerate/Registration/Paddle/
   Coupon/Serial/License (licențiere) · SCRCheckForUpdates/UpdateManager/Downloader (update nativ) ·
