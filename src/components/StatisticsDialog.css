@@ -1,0 +1,8 @@
+.stats-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stats-compare section { border: 1px solid rgba(0,0,0,.12); border-radius: 8px; padding: 10px 12px; }
+.stats-compare h3 { margin: 0 0 6px; font-size: 14px; }
+.stats-compare dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.stats-compare dt { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.stats-compare dd { margin: 0; opacity: .8; }
+.stats-text-details > summary { cursor: pointer; font-weight: 600; margin: 4px 0; }
+.stats-text-details[open] { display: flex; flex-direction: column; gap: 10px; }
