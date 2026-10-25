@@ -88,6 +88,7 @@ store.writeDoc = (dir, id, kind, html) => {
 const args = process.argv.slice(2);
 const projects = [];
 let readOnly = false;
+let anonymizeOn = false; // --anonymize: private names, e-mails and phones go out as tokens
 // --http <port>: Streamable HTTP instead of stdio (another computer, a home server, a tunnel).
 let httpPort = 0;
 let httpHost = '127.0.0.1';
@@ -95,6 +96,7 @@ let httpToken = process.env.SCRIBNER_MCP_TOKEN || '';
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--project' && args[i + 1]) projects.push(path.resolve(args[++i]));
   else if (args[i] === '--read-only') readOnly = true;
+  else if (args[i] === '--anonymize') anonymizeOn = true;
   else if (args[i] === '--http' && args[i + 1]) httpPort = Number(args[++i]);
   else if (args[i] === '--host' && args[i + 1]) httpHost = args[++i];
   else if (args[i] === '--token' && args[i + 1]) httpToken = args[++i];
@@ -249,6 +251,26 @@ function textIndexOf(html, target, from = 0) {
   return -1;
 }
 
+// --anonymize: the private names come from <project>/private-names.txt (one per line) of every
+// project in this session; e-mail addresses and phone numbers are always covered.
+const { createAnonymizer } = require('../lib/anonymize.cjs');
+let anon = null;
+function anonymizer() {
+  if (!anonymizeOn) return null;
+  if (!anon) {
+    const names = [];
+    for (const d of projects) {
+      try {
+        names.push(...fs.readFileSync(path.join(d, 'private-names.txt'), 'utf8').split(/\r?\n/));
+      } catch {
+        /* no list for this project */
+      }
+    }
+    anon = createAnonymizer(names);
+  }
+  return anon;
+}
+
 function tool(name, description, shape, handler, { writes = false, global = false } = {}) {
   // Hints for the client's approval gates: reads run freely, changes ask, and the ones that remove
   // or overwrite text are marked destructive (they still take a snapshot or backup first).
@@ -265,11 +287,16 @@ function tool(name, description, shape, handler, { writes = false, global = fals
       if (writes && dir) for (const id of [input.id, ...(Array.isArray(input.ids) && name !== 'replace' ? input.ids : [])]) assertUnlocked(dir, id);
       // Moving or trashing a folder moves the locked documents inside it too.
       if (writes && dir && /^(trash_item|move_item|merge_documents|empty_trash)$/.test(name)) assertSubtreeUnlocked(dir, name === 'empty_trash' ? [store.loadProject(dir, { readOnly: true }).tree.find((n) => n.root === 'trash')?.id] : [input.id, ...(Array.isArray(input.ids) ? input.ids : [])]);
-      const result = await handler(dir, input);
-      if (writes) log(dir || (result && typeof result === 'object' && result.dir) || projects[0], name, input, result);
-      return text(result);
+      const an = anonymizer();
+      const args = an ? an.hydrate(input) : input; // tokens the agent sends back become real names here
+      const result = await handler(dir, args);
+      if (writes) log(dir || (result && typeof result === 'object' && result.dir) || projects[0], name, args, result);
+      const out = text(result);
+      if (an) out.content = out.content.map((c) => (c.type === 'text' ? { ...c, text: an.pack(c.text) } : c));
+      return out;
     } catch (err) {
-      return { content: [{ type: 'text', text: `Eroare: ${err.message}` }], isError: true };
+      const an = anonymizer();
+      return { content: [{ type: 'text', text: `Eroare: ${an ? an.pack(err.message) : err.message}` }], isError: true };
     }
   });
 }
@@ -766,7 +793,8 @@ registerFullTools({
 server.registerResource('binder', 'scribner://binder', { title: 'Binder', description: 'Structura proiectului principal', mimeType: 'application/json' }, async (uri) => {
   const p = load(projects[0]);
   const slim = (n) => ({ id: n.id, title: n.title, type: n.root ? `root:${n.root}` : n.type, children: n.children ? n.children.map(slim) : undefined });
-  return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(p.tree.map(slim), null, 2) }] };
+  const t = JSON.stringify(p.tree.map(slim), null, 2);
+  return { contents: [{ uri: uri.href, mimeType: 'application/json', text: anonymizer() ? anonymizer().pack(t) : t }] };
 });
 
 server.registerResource(
@@ -778,7 +806,7 @@ server.registerResource(
     },
   }),
   { title: 'Document', description: 'Textul unui document în format manuscript', mimeType: 'text/markdown' },
-  async (uri, { id }) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: htmlToManuscript(store.readDoc(projects[0], id)) }] }),
+  async (uri, { id }) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: ((t) => (anonymizer() ? anonymizer().pack(t) : t))(htmlToManuscript(store.readDoc(projects[0], anonymizer() ? anonymizer().hydrate(id) : id))) }] }),
 );
 
 // The projects this server can reach (names and folders), for clients that read resources first.
