@@ -2,6 +2,7 @@
 
 
 ## v0.9.9
+- Actualizare din aplicație de pe GitHub: verificare automată o dată pe zi (10 s după pornire dacă ultima verificare e mai veche de 24 h; cerere condiționată cu ETag, așteptare la limita de cereri), anunț „Versiune nouă” o singură dată pe versiune, Ajutor → Caută actualizări… cu note, descărcare cu progres, verificare dimensiune + SHA-256, instalare silențioasă și repornire (portabil: arată fișierul nou). Setare „Verifică automat actualizările” (pornită implicit); buton opțional „Actualizare” în bara de sus. Versiunile publică și `SHA256SUMS`; instalatorul are `RestartApplications=yes`. (`lib/updater.cjs`, `electron/updateHandlers.cjs`, `src/components/UpdateDialog.jsx`)
 - MCP `--anonymize` (oprit implicit): numele din private-names.txt (și, la cerere, emailurile și telefoanele) trimise modelului ca jetoane și rehidratate local la scriere; `docs/MCP_ARHITECTURA.md` descrie toată legătura agent ↔ Scribner.
 - MCP prin rețea: `--http <port>` (Streamable HTTP, cu token obligatoriu, pe 127.0.0.1 implicit, `--host` pentru alt calculator); resursa `scribner://ghid` cu regulile de lucru pentru agent.
 - Proiect nou: șabloanele pe categorii (stânga), fișe cu iconiță (mijloc), descriere dedesubt; Opțiuni▾ și Deschide recent▾ jos.

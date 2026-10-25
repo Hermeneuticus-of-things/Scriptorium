@@ -33,6 +33,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [s, setS] = useState({
     language: init.language,
     reopenLastProject: init.reopenLastProject !== false,
+    autoUpdateCheck: init.autoUpdateCheck !== false,
     autosaveSec: init.autosaveSec,
     checkUpdates: Boolean(init.checkUpdates),
     theme: init.theme || 'system',
@@ -259,6 +260,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       }]));
       Object.assign(patch, aiPatch());
       await api.setSettings(patch);
+      api.updateConfigure?.().catch(() => {});
       if (project) {
         onProjectChange({
           ...project,
@@ -282,6 +284,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     general: (
       <>
         {check('reopenLastProject', t('set.reopenLast'))}
+        {api.onUpdateAvailable && check('autoUpdateCheck', t('set.autoUpdateCheck'))}
         <label>
           {t('set.autosave')}
           <input type="number" min="1" max="120" value={s.autosaveSec} onChange={set('autosaveSec')} />

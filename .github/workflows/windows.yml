@@ -119,4 +119,6 @@ jobs:
               exit 0
             fi
           fi
-          gh release create "$TAG" release/*.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Scribner $TAG" --generate-notes
+          # Checksums for the in-app updater and for anyone verifying a download by hand.
+          (cd release && sha256sum *.exe > SHA256SUMS)
+          gh release create "$TAG" release/*.exe release/SHA256SUMS --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Scribner $TAG" --generate-notes
