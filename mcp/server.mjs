@@ -765,5 +765,29 @@ server.registerResource(
   async (uri, { id }) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: htmlToManuscript(store.readDoc(projects[0], id)) }] }),
 );
 
+// The projects this server can reach (names and folders), for clients that read resources first.
+server.registerResource('projects', 'scribner://projects', { title: 'Proiecte', description: 'Proiectele Scribner disponibile în această sesiune', mimeType: 'application/json' }, async (uri) => ({
+  contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(projects.map((d) => ({ name: path.basename(d).replace(/\.scribner$/i, ''), dir: d, title: (() => { try { return load(d).title; } catch { return ''; } })() })), null, 2) }],
+}));
+
+// Ready-made workflows the client can offer as commands (prompt templates). They only describe the
+// work; every change still goes through the tools above (snapshot first, locks respected).
+const promptText = (text) => ({ messages: [{ role: 'user', content: { type: 'text', text } }] });
+server.registerPrompt(
+  'revizie_capitol',
+  { title: 'Revizuiește un capitol', description: 'Citește un capitol, propune corecturi de stil și le aplică doar după confirmare.', argsSchema: { titlu: z.string().describe('Titlul capitolului din binder') } },
+  ({ titlu }) => promptText(`În proiectul Scribner, găsește cu list_binder documentul sau dosarul „${titlu}”, citește-l cu read_document și propune corecturi (gramatică, repetiții, ritm), fiecare cu fragmentul exact. Nu scrie nimic până nu confirm; după confirmare aplică doar ce am aprobat, cu replace sau write_document (fiecare scriere face snapshot).`),
+);
+server.registerPrompt(
+  'rezumat_proiect',
+  { title: 'Rezumatul cărții', description: 'Un rezumat pe capitole al manuscrisului, fără modificări.' },
+  () => promptText('Folosește project_info și list_binder, apoi read_document pe fiecare capitol din Manuscris. Fă un rezumat pe capitole (2–3 fraze fiecare) și o listă de personaje cu prima apariție. Doar citire: nu modifica nimic.'),
+);
+server.registerPrompt(
+  'importa_scriv',
+  { title: 'Citește un proiect .scriv', description: 'Citește un proiect .scriv pe loc și, la cerere, îl importă.', argsSchema: { cale: z.string().describe('Folderul .scriv') } },
+  ({ cale }) => promptText(`Citește proiectul .scriv din „${cale}” cu scriv_outline, apoi textele cu scriv_read. Spune-mi ce conține. Dacă îți cer, importă-l cu import_scriv într-un folder pe care ți-l dau.`),
+);
+
 await server.connect(new StdioServerTransport());
 process.stderr.write(`Scribner MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);

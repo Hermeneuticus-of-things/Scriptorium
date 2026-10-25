@@ -309,6 +309,13 @@ afterAll(async () => {
 });
 
 describe('MCP integral: tool list and coverage', () => {
+  it('offers workflow prompts and a project list resource', async () => {
+    const { prompts } = await client.listPrompts();
+    expect(prompts.map((x) => x.name)).toEqual(expect.arrayContaining(['revizie_capitol', 'rezumat_proiect', 'importa_scriv']));
+    const r = await client.readResource({ uri: 'scribner://projects' });
+    expect(JSON.parse(r.contents[0].text).length).toBeGreaterThan(0);
+  });
+
   it('lists every old and new tool', async () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
