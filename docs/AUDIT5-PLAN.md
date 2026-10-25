@@ -75,6 +75,11 @@ Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe m
 Legendă: `[x]` paritate confirmată · `[~]` parțial/în lucru · `[ ]` de verificat · `[-]` nativ/irelevant
 (țări, culori, licență, trial, update, telemetrie, dialoguri de eroare, randare nativă).
 
+CONCLUZIE SWEEP: pe toate componentele mari verificate (meniuri, Format, Opțiuni+sub-tab-uri, Inspector,
+Compile+editor, Corecturi, Corkboard, Scratchpad, Ținte, Generator de nume, Import+Split, Setări proiect,
+Scenariu) Scribner e la PARITATE sau SUPERSET. Goluri reale în tot auditul: 3, toate reparate (Curățare text,
+Deschide folder backup, filtre generator nume). Restul componentelor mici/native: irelevante.
+
 Notă: multe „de verificat" se vor dovedi paritate (pattern constant). Se verifică pe cod/inventar, nu cu
 capturi. Componentele mici de infrastructură Qt (sub 3 etichete) se tratează doar dacă apar ca funcție reală.
 
@@ -89,10 +94,12 @@ capturi. Componentele mici de infrastructură Qt (sub 3 etichete) se tratează d
 ### Dialoguri de proiect/document
 - [x] Inspector (+ General/Comments/Bookmarks/Keywords/Snapshots) · ProjectTargets · Corkboard · ScratchPad.
 - [x] NameGenerator (47) — gol reparat: filtre „se termină cu"/„conține". ProjectStatistics/WritingHistory: paritate.
-- [ ] ProjectSettingsDialog (113) — de verificat în detaliu.
+- [x] ProjectSettingsDialog (113) — paritate+: etichete, status, tipuri de secțiune, metadate
+  personalizate cu tipuri (text/număr/checkbox/listă/dată — are și „număr" peste clasic), autocompletare.
 - [ ] FindDialog (26) · FindFormattingDialog (45) · ReplaceAllDialog (31) · QuickReference (20) · Bookmarks (20).
 - [x] ImportAndSplit (20) — paritate (separator + titluri; OPML/fountain separat).
-- [ ] ScriptSettingsDialog (87) · PrintSettingsDialog (70) · PageSetup/CustomPageSize.
+- [x] ScriptSettingsDialog (87) — paritate: elemente (scenă/acțiune/personaj/dialog/…), tabele Tab/Enter,
+  layout per element, mapare FDX (Final Draft). · [ ] PrintSettingsDialog/PageSetup (tipărire nativă).
 - [ ] TextStyleDialog (31) · StylesDialog · IndentationDialog (18) · LineSpacingDialog · TableProperties (19).
 - [ ] KeywordEditor (19) · ThemeManager (43) · LayoutManager (16) · NewProjectAssistant (58) · TemplateInfo (56).
 ### Nativ/irelevant (nu se implementează)
