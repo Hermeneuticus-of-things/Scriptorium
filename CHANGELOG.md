@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.3
+- Servicii și conturi: buton **„Testează conexiunea"** la fiecare serviciu cu API (DeepL, Google, LanguageTool, Speechify, Zotero, GitHub) — face o cerere minimă cu cheia pusă și spune dacă e acceptată; mesaj clar dacă lipsește cheia. (`lib/serviceTest.cjs`)
+
 ## v0.10.2
 - Servicii și conturi: fiecare serviciu (DeepL, Google, LanguageTool, Speechify, Zotero) are acum și **Email cont + Parolă cont** (criptate ca restul), pe lângă cheie — pentru serviciile unde te loghezi cu un cont, nu (doar) cu o cheie. Un serviciu e „configurat" de când pui orice câmp.
 - D&TED: documentația descrie compatibilitatea pe **protocolul serviciului (protocol 1)**, nu pe un număr de versiune; modelul **eek** corectat la 5,4% WER.

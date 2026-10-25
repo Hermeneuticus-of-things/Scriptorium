@@ -1196,7 +1196,17 @@ handle('app:openLink', async (_e, url) => {
 });
 // Outside services and other accounts (lib/services.cjs). Secrets stay in this process:
 // the window gets only which services are set up and the non-secret fields.
-handle('services:status', () => ({ services: services.serviceStatus(readSettings(), safeStorage), accounts: services.listAccounts(readSettings()) }));
+handle('services:status', () => {
+  const st = services.serviceStatus(readSettings(), safeStorage);
+  const { TESTABLE } = require('../lib/serviceTest.cjs');
+  for (const id of Object.keys(st)) st[id].testable = TESTABLE.has(id);
+  return { services: st, accounts: services.listAccounts(readSettings()) };
+});
+handle('services:test', async (_e, id) => {
+  const { testService } = require('../lib/serviceTest.cjs');
+  await testService(id, services.getService(readSettings(), id, safeStorage));
+  return { ok: true };
+});
 handle('services:set', (_e, id, values) => {
   writeSettings(services.setService(readSettings(), id, values || {}, safeStorage));
   return services.serviceStatus(readSettings(), safeStorage)[id];

@@ -8,6 +8,7 @@ export default function ServicesPanel({ api }) {
   const [typed, setTyped] = useState({}); // `${service}.${field}` -> value typed in this session
   const [msg, setMsg] = useState('');
   const [acc, setAcc] = useState(null); // account being edited
+  const [test, setTest] = useState({}); // service id -> { busy, ok, msg } for "Test connection"
   const supported = Boolean(api.servicesStatus);
 
   const load = () => api.servicesStatus().then(setData).catch((e) => setMsg(e.message));
@@ -41,6 +42,15 @@ export default function ServicesPanel({ api }) {
       load();
     } catch (e) {
       setMsg(e.message);
+    }
+  };
+  const doTest = async (id) => {
+    setTest((x) => ({ ...x, [id]: { busy: true } }));
+    try {
+      await api.testService(id);
+      setTest((x) => ({ ...x, [id]: { ok: true, msg: t('ui.services.test_ok') } }));
+    } catch (e) {
+      setTest((x) => ({ ...x, [id]: { ok: false, msg: e.message } }));
     }
   };
   const saveAccount = async () => {
@@ -79,7 +89,9 @@ export default function ServicesPanel({ api }) {
           <div className="actions-inline">
             <button type="button" onClick={() => save(id, s.fields)} disabled={!s.fields.some((f) => `${id}.${f.id}` in typed)}>{t('btn.save')}</button>
             {s.fields.some((f) => f.set) && <button type="button" onClick={() => remove(id, s.fields)}>{t('ui.services.sterge')}</button>}
+            {s.testable && <button type="button" onClick={() => doTest(id)} disabled={test[id]?.busy || !s.configured}>{test[id]?.busy ? t('ui.services.testez') : t('ui.services.testeaza')}</button>}
           </div>
+          {test[id] && !test[id].busy && <p className={test[id].ok ? 'ok small' : 'muted small'} role="status">{test[id].msg}</p>}
         </div>
       ))}
 

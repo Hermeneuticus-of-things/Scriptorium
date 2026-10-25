@@ -193,6 +193,7 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('app:error', listener);
   },
   servicesStatus: () => call('services:status'),
+  testService: (id) => call('services:test', id),
   setService: (id, values) => call('services:set', id, values),
   setAccount: (account) => call('accounts:set', account),
   deleteAccount: (id) => call('accounts:delete', id),

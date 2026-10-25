@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const svc = require('../lib/services.cjs');
 const tr = require('../lib/translate.cjs');
+const stest = require('../lib/serviceTest.cjs');
 
 // Reversible fake of Electron safeStorage.
 const safe = {
@@ -126,5 +127,23 @@ describe('Speechify text to speech', () => {
     await expect(tr.speechifySpeak({ apiKey: '', text: 'x' })).rejects.toThrow(/Setări/);
     await expect(tr.speechifySpeak({ apiKey: 'k', text: '  ' })).rejects.toThrow(/niciun text/);
     await expect(tr.speechifySpeak({ apiKey: 'k', text: 'x', fetchImpl: fakeFetch(401, {}, []) })).rejects.toThrow(/cheia nu e acceptată/);
+  });
+});
+
+describe('test connection per service', () => {
+  it('API services report ok on a 200 answer', async () => {
+    await expect(stest.testService('deepl', { apiKey: 'k:fx' }, { fetchImpl: fakeFetch(200, { translations: [{ text: 'x', detected_source_language: 'EN' }] }, []) })).resolves.toEqual({ ok: true });
+    await expect(stest.testService('googleTranslate', { apiKey: 'g' }, { fetchImpl: fakeFetch(200, { data: { translations: [{ translatedText: 'x', detectedSourceLanguage: 'en' }] } }, []) })).resolves.toEqual({ ok: true });
+    await expect(stest.testService('speechify', { apiKey: 'sk', voiceId: 'george' }, { fetchImpl: fakeFetch(200, { audio_data: 'QUJD' }, []) })).resolves.toEqual({ ok: true });
+  });
+  it('zotero and github: friendly errors; missing ids caught before the call', async () => {
+    await expect(stest.testService('zotero', { userId: '1', apiKey: 'z' }, { fetchImpl: fakeFetch(403, {}, []) })).rejects.toThrow(/nu e acceptat/);
+    await expect(stest.testService('zotero', { userId: '1', apiKey: 'z' }, { fetchImpl: fakeFetch(200, {}, []) })).resolves.toEqual({ ok: true });
+    await expect(stest.testService('zotero', {}, { fetchImpl: fakeFetch(200, {}, []) })).rejects.toThrow(/Pune/);
+    await expect(stest.testService('github', { token: 't' }, { fetchImpl: fakeFetch(401, {}, []) })).rejects.toThrow(/nu e acceptat/);
+    await expect(stest.testService('github', { token: 't' }, { fetchImpl: fakeFetch(200, {}, []) })).resolves.toEqual({ ok: true });
+  });
+  it('TESTABLE lists the services with a functional API', () => {
+    expect([...stest.TESTABLE]).toEqual(expect.arrayContaining(['deepl', 'googleTranslate', 'languagetool', 'speechify', 'zotero', 'github']));
   });
 });

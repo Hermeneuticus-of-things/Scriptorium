@@ -196,6 +196,7 @@ const PRELOAD_COVERAGE = {
   logError: 'gui: erorile ferestrei ajung în jurnalul aplicației',
   onAppError: 'gui: notificare de eroare nouă în fereastră',
   servicesStatus: 'gui: conturile de servicii au secretele criptate cu safeStorage din Electron',
+  testService: 'gui: butonul „Testează conexiunea” din Servicii și conturi verifică cheia cu o cerere minimă',
   setService: 'gui: conturile de servicii nu se schimbă din agent',
   setAccount: 'gui: conturile de servicii nu se schimbă din agent',
   deleteAccount: 'gui: conturile de servicii nu se schimbă din agent',
