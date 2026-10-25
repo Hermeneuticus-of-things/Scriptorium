@@ -129,6 +129,7 @@ import { PickNodeDialog, ImportSplitDialog } from './components/BatchADialogs.js
 import LayoutsDialog from './components/LayoutsDialog.jsx';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
+import useReader from './lib/useReader.js';
 import { mergeProject } from './lib/projectMerge.js';
 import { pullExternalDocs } from './lib/syncGuard.js';
 import { mergeDoc, resolveMerge } from './lib/team.js';
@@ -1378,6 +1379,15 @@ export default function App({ api: apiProp }) {
       .catch(report);
   };
   const selectedText = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.getSelectionText() || '';
+  // Read aloud from the right-click menu (uses the local Mihai voice when installed, else system voices).
+  const reader = useReader(api);
+  const wholeDocText = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.getText?.() || '';
+  const textFromCursor = () => {
+    const ed = (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.editor;
+    if (!ed) return wholeDocText();
+    const seg = ed.state.doc.textBetween(ed.state.selection.to, ed.state.doc.content.size, '\n\n').trim();
+    return seg || wholeDocText();
+  };
   const openWeb = (url) => (api.openLink ? api.openLink(url).catch(report) : window.open(url, '_blank', 'noopener'));
   // Word or phrase lookups; translation takes the whole selection, dictionaries a short phrase.
   const lookupWord = (kind) => {
@@ -2729,14 +2739,36 @@ export default function App({ api: apiProp }) {
     const text = selectedText().trim();
     const run = (id) => () => commands[id]?.run();
     const items = [];
+    const sep = () => { if (items.length && items[items.length - 1] !== '-') items.push('-'); };
+
+    // Citire cu voce: mereu disponibilă, direct din meniu (fără să deschizi mini-playerul).
+    if (reader.canRead) {
+      const r = [];
+      if (text) r.push({ label: tr('ui.ctx.citeste_selectia'), action: () => reader.read(text) });
+      r.push({ label: tr('ui.ctx.citeste_aici'), action: () => reader.read(textFromCursor()) });
+      r.push({ label: tr('ui.ctx.citeste_tot'), action: () => reader.read(wholeDocText()) });
+      if (reader.reading) r.push('-', { label: tr('ui.ctx.opreste_citirea'), action: reader.stop });
+      items.push({ label: tr('ui.ctx.citeste'), submenu: r });
+    }
+
+    // Clipboard: cele mai folosite, sus.
     if (text) {
+      sep();
+      items.push({ label: tr('ui.ctx.taie'), action: () => { activeHandle()?.editor?.commands.focus(); document.execCommand('cut'); } });
+      items.push({ label: tr('ui.ctx.copiaza'), action: () => navigator.clipboard?.writeText(text) });
+
+      // Limbă și căutare pe selecție.
       const g = lookupGroups(text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro', lang: settings.language || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, action: () => openWeb(l.url) }));
       const inApp = api.translateText ? [{ label: tr('cmd.deeplInApp'), action: run('deeplInApp') }, { label: tr('cmd.googleInApp'), action: run('googleInApp') }, '-'] : [];
+      sep();
       if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: [...inApp, ...links(g.translate)] });
       if (api.checkGrammar) items.push({ label: tr('cmd.grammarSel'), action: run('grammarSel') });
       if (g.dict.length) items.push({ label: tr('ui.ctx.dictionare'), submenu: links(g.dict) });
       items.push({ label: tr('ui.ctx.cercetare_web'), submenu: links(g.research) });
+
+      // AI și proiect.
+      sep();
       if (aiEnabled) {
         items.push({
           label: tr('ui.ctx.asistent_ai'),
@@ -2758,13 +2790,13 @@ export default function App({ api: apiProp }) {
         ],
       });
       if (api.nlmOpen) items.push({ label: tr('cmd.nlmAskSel'), action: askNotebookLm });
-      items.push('-');
     }
+
+    // Selecție.
+    sep();
     items.push({ label: tr('ui.ctx.extinde'), submenu: [{ label: tr('cmd.selectSentence'), action: run('selectSentence') }, { label: tr('cmd.selectParagraph'), action: run('selectParagraph') }] });
-    if (text) {
-      items.push({ label: tr('ui.ctx.taie'), action: () => { activeHandle()?.editor?.commands.focus(); document.execCommand('cut'); } });
-      items.push({ label: tr('ui.ctx.copiaza'), action: () => navigator.clipboard?.writeText(text) });
-    }
+
+    if (items[items.length - 1] === '-') items.pop();
     return items;
   };
 
