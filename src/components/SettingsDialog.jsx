@@ -44,6 +44,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     pageWidth: init.pageWidth,
     binderFontSize: init.binderFontSize,
     accentColor: init.accentColor || '',
+    commentColor: init.commentColor || '',
+    revisionColors: [0, 1, 2, 3, 4].map((i) => (init.revisionColors || [])[i] || DEFAULT_SETTINGS.revisionColors[i]),
     binderEnter: init.binderEnter,
     binderDoubleClick: init.binderDoubleClick,
     typewriter: Boolean(init.typewriter),
@@ -353,6 +355,25 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             {s.accentColor && <button onClick={() => set('accentColor')('')}>{t('btn.default')}</button>}
           </div>
         </label>
+        <label>
+          {t('ui.settings.commentColor')}
+          <div className="row">
+            <input type="color" aria-label={t('ui.settings.commentColor')} value={s.commentColor || '#f5d76e'} onChange={set('commentColor')} />
+            {s.commentColor && <button onClick={() => set('commentColor')('')}>{t('btn.default')}</button>}
+          </div>
+        </label>
+        <fieldset className="revision-colors">
+          <legend>{t('ui.settings.revisionColors')}</legend>
+          <div className="row">
+            {s.revisionColors.map((c, i) => (
+              <label key={i} className="rev-color">
+                {t('ui.settings.revisionRound', { n: i + 1 })}
+                <input type="color" aria-label={t('ui.settings.revisionRound', { n: i + 1 })} value={c} onChange={(e) => setS((p) => ({ ...p, revisionColors: p.revisionColors.map((x, k) => (k === i ? e.target.value : x)) }))} />
+              </label>
+            ))}
+            <button onClick={() => setS((p) => ({ ...p, revisionColors: [...DEFAULT_SETTINGS.revisionColors] }))}>{t('btn.default')}</button>
+          </div>
+        </fieldset>
         <fieldset>
           <legend>{t('set.composition')}</legend>
           <div className="row">

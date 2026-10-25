@@ -136,7 +136,7 @@ export function editorMenus(ctx) {
   const insertChar = (s) => on((c) => c.insertContent(s).run());
   const insert = [
     { label: L('comment'), action: () => handle()?.addComment?.() },
-    { label: L('footnote'), action: () => handle()?.addFootnote?.() },
+    { label: L('footnote'), action: () => handle()?.addLinkedFootnote?.() },
     { label: L('annotation'), action: () => handle()?.addAnnotation?.() },
     { label: L('inlineFootnote'), action: () => handle()?.addInlineFootnote?.() },
     '-',

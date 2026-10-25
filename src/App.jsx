@@ -1752,6 +1752,9 @@ export default function App({ api: apiProp }) {
   // Character count for the status bar: htmlToText parses the whole document, so only redo it
   // when that document's text changes.
   const selectedHtml = selectedId ? docs[selectedId] || '' : '';
+  // Words in the main editor's selection (footer "Words: 37 of 1,234"); reset with the document.
+  const [selWords, setSelWords] = useState(0);
+  useEffect(() => setSelWords(0), [selectedId]);
   const statusChars = useMemo(() => htmlToText(selectedHtml).replace(/\s+/g, ' ').trim().length, [selectedHtml]);
   const projectStyles = stylesOf(project);
 
@@ -2330,7 +2333,7 @@ export default function App({ api: apiProp }) {
     ['nav', 'unhoist', tr('cmd.unhoist'), () => setHoistId(null), !hoistId],
     ['view', 'scrivSelection', tr('cmd.scrivSelection'), () => openScrivenings(tr('ui.app.x_documente_selectate', { length: selectionList().length }), selectionList())],
     ['view', 'scrivCollection', tr('cmd.scrivCollection'), () => openScrivenings(activeCollection?.title || '', collectionIds || []), !activeCollection],
-    ['view', 'scrivTitles', tr('cmd.scrivTitles'), () => toggleView('scrivHideTitles')],
+    ['view', 'scrivTitles', tr('cmd.scrivTitles'), () => toggleView('scrivShowTitles')],
     ['view', 'scrivSeparators', tr('cmd.scrivSeparators'), () => toggleView('scrivHideSeparators')],
     ['view', 'toggleFormatBar', tr('cmd.toggleFormatBar'), () => toggleView('hideFormatBar')],
     ['view', 'toggleComments', tr('cmd.toggleComments'), () => toggleView('hideComments')],
@@ -2644,12 +2647,16 @@ export default function App({ api: apiProp }) {
                 view={editorView}
                 onViewChange={setEditorView}
                 onManageStyles={() => setDialog('styles')}
+                commentColor={settings.commentColor || ''}
+                authorName={settings.authorName || project.author || ''}
+                onSelectionWords={setSelWords}
               />
             )}
             {view === 'editor' && selected && !isFolderView && selected.type !== 'file' && !composition && !editorView.hideFooterBar && (
               <EditorFooter
                 node={selected}
                 words={counts[selected.id] || 0}
+                selectedWords={selWords}
                 chars={statusChars}
                 zoom={editorView.zoom || 100}
                 onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
@@ -2672,7 +2679,7 @@ export default function App({ api: apiProp }) {
                 registerRef={registerRef}
                 onFocusSection={(id) => (activeId.current = id)}
                 onChange={(id, html) => writeSynced(id, html, 'main')}
-                showTitles={!editorView.scrivHideTitles}
+                showTitles={Boolean(editorView.scrivShowTitles)}
                 showSeparators={!editorView.scrivHideSeparators}
                 onClose={scrivList ? () => setScrivList(null) : undefined}
                 onOpen={(id) => go(id)}
@@ -2751,6 +2758,8 @@ export default function App({ api: apiProp }) {
                   corrections={corrections}
                   defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
+                  commentColor={settings.commentColor || ''}
+                  authorName={settings.authorName || project.author || ''}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
                   html={docs[splitNode.id] || ''}
                   title={splitNode.title}
@@ -2844,6 +2853,18 @@ export default function App({ api: apiProp }) {
                   onHtmlChange={(html, id) => {
                     writeDocNow(id, html);
                     setEditorHtml(id, html);
+                  }}
+                  latestHtml={(id) => docsNow()[id]}
+                  onProjectBookmarksChange={(bookmarks) => saveProject({ ...project, bookmarks })}
+                  onAddAnnotation={(kind, id) => {
+                    const h = editorRefs.current.get(id);
+                    if (!h) return false;
+                    return kind === 'comment' ? h.addComment?.('') : h.addFootnote?.('');
+                  }}
+                  onJumpToFootnote={(index, id) => {
+                    go(id);
+                    setView('editor');
+                    setTimeout(() => editorRefs.current.get(id)?.selectFootnote?.(index), 80);
                   }}
                   onJumpToComment={(index, c, id) => {
                     go(id);

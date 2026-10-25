@@ -135,7 +135,7 @@ describe('editor menus (Edit, Insert, Format, View, Window)', () => {
   const t = (k) => k;
   const calls = [];
   const settingsPatches = [];
-  const m = editorMenus({ t, handle: () => ({ addComment: () => calls.push('comment'), addFootnote: () => calls.push('fn'), addInlineFootnote: () => calls.push('ifn'), addAnnotation: () => calls.push('ann') }), view: { revision: 2 }, setView: (v) => calls.push(v), settings: {}, setSettings: (p) => settingsPatches.push(p), styles: [], run: () => {}, desktop: false });
+  const m = editorMenus({ t, handle: () => ({ addComment: () => calls.push('comment'), addLinkedFootnote: () => calls.push('fn'), addInlineFootnote: () => calls.push('ifn'), addAnnotation: () => calls.push('ann') }), view: { revision: 2 }, setView: (v) => calls.push(v), settings: {}, setSettings: (p) => settingsPatches.push(p), styles: [], run: () => {}, desktop: false });
   const labels = (list) => list.filter((x) => x !== '-').map((x) => x.label);
   it('Insert has the notes, image, date, placeholders, special characters and table', () => {
     expect(labels(m.insert)).toEqual(['ui.menu.comment', 'ui.menu.footnote', 'ui.menu.annotation', 'ui.menu.inlineFootnote', 'ui.menu.image', 'ui.menu.dateTime', 'ui.menu.placeholder', 'ui.menu.specialChars', 'ui.menu.pageBreak', 'ui.menu.table']);
