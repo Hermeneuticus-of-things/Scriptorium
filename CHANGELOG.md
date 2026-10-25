@@ -13,7 +13,7 @@
 - Outline: coloane implicite Sinopsis, Etichetă, Status.
 - Binder: indicațiile de taste mutate în tooltip-ul căutării (mai puțin text pe ecran).
 - Texte rămase în română în interfața engleză (Metadate, Previzualizare, Formate, Statistici, Linii, Liber, Aspect, Progres, Creat, Modificat…).
-- MCP: `scriv_outline` și `scriv_read` citesc un proiect .scriv pe loc, fără import; serverul își descrie uneltele clientului AI; șabloane de lucru (prompts: revizie_capitol, rezumat_proiect, importa_scriv) și resursa `scribner://projects`.
+- MCP: `scriv_outline`, `scriv_read`, `scriv_search` și `import_scriv` primesc folderul .scriv sau fișierul .scrivx; în aplicație importul pornește de la fișierul .scrivx; evaluare în `mcp/eval` (10 întrebări pe o carte de test); unelte marcate doar citire / distructive. `scriv_outline` și `scriv_read` citesc un proiect .scriv pe loc, fără import; serverul își descrie uneltele clientului AI; șabloane de lucru (prompts: revizie_capitol, rezumat_proiect, importa_scriv) și resursa `scribner://projects`.
 - Mini-player Voce: și vocea Speechify, dacă e configurată.
 - Iconiță nouă (carte deschisă cu peniță, scris „SCRIBNER” sub ea) pentru program, installer, scurtătura de pe desktop și din meniul Start.
 - Pagina de scris: se lățește sau se îngustează trăgând de margini; dublu-clic pe margine = toată fereastra (și comanda „Pagina pe toată fereastra”).

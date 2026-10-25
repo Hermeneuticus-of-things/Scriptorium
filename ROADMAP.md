@@ -295,6 +295,13 @@ Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
     - [ ] Bara documentului comună pentru ambele panouri (meniul titlului, blocare pe loc)
     - [ ] Comparare și restul ferestrelor: Cuvinte cheie, Colecții, Import/Export, Generator de nume, Referință rapidă, meniuri
 11. [x] Mesajul „niciun server MCP Scrivener”: serverul Scribner citește și proiecte .scriv pe loc (`scriv_outline`, `scriv_read`), are prompts și resurse.
-12. [ ] Import/export pornind și de la fișierul `.scrivx` (nu doar de la folderul `.scriv`), în aplicație și în MCP; căutare în proiectul .scriv (`scriv_search`).
-13. [ ] Skill / instrument „mcp-builder” cu teste pentru serverul MCP Scribner (evaluări automate ale uneltelor).
+12. [x] Import pornind și de la fișierul `.scrivx` (nu doar de la folderul `.scriv`), în aplicație și în MCP; `scriv_search` în proiectul .scriv. Exportul scrie un folder `.scriv` complet (cu `.scrivx` în el).
+13. [x] Evaluare MCP după ghidul mcp-builder: `mcp/eval/` (carte de test + 10 întrebări) verificată de `tests/mcpEval.test.js`; adnotări readOnly/destructive pe fiecare unealtă; `read_document` arată și ținta.
 14. [ ] Bug-uri rămase din vânătoarea pe niveluri (lista din TODO.md, secțiunea 25.10).
+15. [ ] Arhitectura AI pe trei straturi (propunerea din 25.10), ce lipsește față de ce există deja:
+    - există: panou AI lateral, AI pe selecție cu Accept/Respinge, cercetare în proiect (RAG), server MCP complet, furnizori locali (Ollama, LM Studio) și în cloud
+    - [ ] diff vizual roșu/verde la propunerile AI (acum: text propus + Accept/Respinge)
+    - [ ] Ctrl+K inline: casetă de comandă AI în editor (Ctrl+K e acum „împarte”; altă tastă)
+    - [ ] căutare hibridă lexicală + semantică (embeddings locale) în cercetarea din proiect
+    - [ ] Scribner ca client MCP (servere externe: bibliografie, dicționare) pentru asistentul intern
+    - [ ] unealtă MCP de adnotare pe interval exact de caractere (acum: comentariu după citat)

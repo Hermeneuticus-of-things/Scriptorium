@@ -910,7 +910,9 @@ handle('snap:list', (_e, dir, id) => {
 
 handle('import:scriv', async (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
-  const src = await dialog.showOpenDialog(win, { title: 'Alege folderul proiectului Scrivener (.scriv)', properties: ['openDirectory'] });
+  // The .scrivx file inside the project (on Windows a .scriv project is a folder: open it and pick
+  // its .scrivx). importScriv takes either the file or the folder.
+  const src = await dialog.showOpenDialog(win, { title: 'Alege proiectul .scriv (fișierul .scrivx din el)', properties: ['openFile'], filters: [{ name: 'Proiect .scriv', extensions: ['scrivx'] }] });
   if (src.canceled) return null;
   const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Scribner?', properties: ['openDirectory', 'createDirectory'] });
   if (dest.canceled) return null;
