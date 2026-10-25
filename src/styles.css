@@ -313,6 +313,33 @@ legend { color: var(--muted); padding: 0 4px; }
 .media-view img { max-width: 100%; max-height: 80vh; object-fit: contain; align-self: center; }
 .media-view iframe { flex: 1; min-height: 70vh; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
 .media-view video { max-width: 100%; max-height: 75vh; }
+/* Research viewers in the editor pane (PDF, image, player, web copy) */
+.media-view { min-height: 0; overflow: hidden; }
+.viewer-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
+.viewer-bar input[type="number"] { width: 4.5em; }
+.viewer-bar input[type="search"] { width: 12em; }
+.viewer-sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 4px; }
+.viewer-zoom { min-width: 3.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.viewer-search { display: inline-flex; gap: 4px; }
+.pdf-viewer, .image-viewer, .web-archive { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+.pdf-body { display: flex; gap: 8px; flex: 1; min-height: 0; }
+.media-view .pdf-frame { flex: 1; min-width: 0; min-height: 60vh; }
+.pdf-notes { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; overflow: auto; border-left: 1px solid var(--line); padding-left: 8px; font-size: 13px; }
+.pdf-notes textarea { width: 100%; resize: vertical; box-sizing: border-box; }
+.pdf-notes-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.pdf-annotations { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pdf-ann { border-left: 3px solid var(--line); padding: 2px 6px; }
+.pdf-ann q { display: block; font-family: Georgia, serif; }
+.pdf-ann p { margin: 2px 0; }
+.image-stage { flex: 1; min-height: 0; overflow: auto; cursor: grab; display: flex; align-items: flex-start; justify-content: center; padding: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.image-stage:active { cursor: grabbing; }
+.media-view .image-stage img { max-width: none; max-height: none; align-self: auto; margin: auto; user-select: none; }
+.player-view { display: flex; flex-direction: column; gap: 8px; }
+.player-view audio { width: 100%; }
+.media-view .web-frame { flex: 1; min-height: 60vh; }
+.binder-col { position: relative; }
+.binder-col.file-drop { outline: 2px dashed var(--accent, #2e7dd7); outline-offset: -4px; }
+.file-drop-hint { position: absolute; inset: auto 8px 8px 8px; z-index: 5; padding: 8px; border-radius: 6px; background: var(--accent, #2e7dd7); color: #fff; font-size: 13px; text-align: center; pointer-events: none; }
 .meta-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .meta-table td { border-bottom: 1px solid var(--line); padding: 3px 4px; vertical-align: top; }
 .meta-table td:first-child { color: var(--muted); width: 40%; }

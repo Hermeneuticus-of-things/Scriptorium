@@ -187,10 +187,58 @@ export function createMockApi() {
     };
   };
   const key = (dir, id, kind) => `${dir}|${kind || 'docs'}|${id}`;
+  // Media files of the demo (media/<file> on the desktop) as data: addresses.
+  const mediaFiles = {};
+  const b64 = (bytes) => {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  };
+  const MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', pdf: 'application/pdf', mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', mp4: 'video/mp4', webm: 'video/webm', html: 'text/html', htm: 'text/html', txt: 'text/plain' };
+  const putMedia = (name, bytes) => {
+    const ext = (String(name).split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const mime = MIME[ext] || 'application/octet-stream';
+    const id = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+    const file = `${id}.${MIME[ext] ? ext : 'bin'}`;
+    mediaFiles[file] = `data:${mime};base64,${b64(bytes)}`;
+    return { id, title: String(name).replace(/\.[^.]+$/, '') || name, media: { file, mime, name: String(name) } };
+  };
+  // ?demo&media: Research holds a PDF, an image, a recording and a saved web page (viewers in the editor pane).
+  const mediaDemo = typeof location !== 'undefined' && /[?&]media\b/.test(location.search);
+  const enc = (t) => new TextEncoder().encode(t);
+  const demoMedia = () => {
+    const pdfPage = (n) => `BT /F1 24 Tf 72 700 Td (Pagina ${n} - Arhiva satului) Tj ET`;
+    const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R 4 0 R 5 0 R] /Count 3 >>'];
+    for (let i = 0; i < 3; i++) objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${6 + i} 0 R /Resources << /Font << /F1 9 0 R >> >> >>`);
+    for (let i = 0; i < 3; i++) objs.push(`<< /Length ${pdfPage(i + 1).length} >>\nstream\n${pdfPage(i + 1)}\nendstream`);
+    objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+    let pdf = '%PDF-1.4\n';
+    const offs = [];
+    objs.forEach((o, i) => { offs.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+    const xref = pdf.length;
+    pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offs.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#cfe3c8"/><path d="M0 600 L300 250 L520 520 L760 180 L1200 620 L1200 800 L0 800Z" fill="#5d7a4f"/><text x="40" y="80" font-size="48" fill="#223">Munții Apuseni</text></svg>';
+    // 2 s of silence, 8 kHz mono WAV
+    const n = 16000;
+    const wav = new Uint8Array(44 + n);
+    const dv = new DataView(wav.buffer);
+    [...'RIFF'].forEach((c, i) => (wav[i] = c.charCodeAt(0)));
+    dv.setUint32(4, 36 + n, true);
+    [...'WAVEfmt '].forEach((c, i) => (wav[8 + i] = c.charCodeAt(0)));
+    dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, 8000, true); dv.setUint32(28, 8000, true); dv.setUint16(32, 1, true); dv.setUint16(34, 8, true);
+    [...'data'].forEach((c, i) => (wav[36 + i] = c.charCodeAt(0)));
+    dv.setUint32(40, n, true);
+    wav.fill(128, 44);
+    const page = '<!doctype html><html><head><meta charset="utf-8"><title>Cabane din Apuseni</title></head><body><h1>Cabane din Apuseni</h1><p>Copie locală a unei pagini despre cabanele de munte.</p></body></html>';
+    const items = [putMedia('Arhiva satului.pdf', enc(pdf)), putMedia('Munții Apuseni.svg', enc(svg)), putMedia('Interviu Matei.wav', wav), putMedia('Cabane din Apuseni.html', enc(page))];
+    items[3].media.source = 'https://example.org/cabane';
+    return items.map((it) => ({ id: it.id, title: it.title, type: 'file', media: it.media, includeInCompile: false, synopsis: '', label: 'Fără', status: 'Fără', target: 0 }));
+  };
   const load = (dir) => {
     if (!state.projects[dir]) {
       const demo = demoProject();
       state.projects[dir] = demo.project;
+      if (mediaDemo) state.projects[dir].tree[1].children.push(...demoMedia());
       for (const [id, html] of Object.entries(demo.docs)) files[key(dir, id)] = html;
     }
     return structuredClone(state.projects[dir]);
@@ -321,6 +369,21 @@ export function createMockApi() {
     async openBookmarkFile(dir, file) {
       if (typeof window !== 'undefined') window.__demoOpenedFiles = [...(window.__demoOpenedFiles || []), file];
       return true;
+    },
+    async readMedia(_dir, file) {
+      if (!mediaFiles[file]) throw new Error(`Fișier media lipsă: ${file}`);
+      return mediaFiles[file];
+    },
+    async addMediaData(_dir, name, bytes) {
+      return putMedia(name, bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []));
+    },
+    // The demo has no internet access: the "archived" page is a small offline stand-in.
+    async archiveWebPage(_dir, url) {
+      const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const it = putMedia('Pagina web.html', enc(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(url)}</title></head><body><h1>${esc(url)}</h1><p>Copie locală (demo).</p></body></html>`));
+      it.title = url;
+      it.media.source = url;
+      return it;
     },
     async readDoc(dir, id, kind) {
       return files[key(dir, id, kind)] || '';
