@@ -196,7 +196,7 @@ Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze
 
 | Format | Pentru ce |
 |---|---|
-| Manuscris standard | trimis la editură: pagină A4, rânduri largi, antet „Nume / Titlu / pagină” |
+| Manuscris standard | trimis la editură: Georgia 10 pt, titluri 12 pt bold, subtitluri 10 pt bold, pagină A4, rânduri largi, antet „Nume / Titlu / pagină” |
 | Carte tipărită (paperback) | carte de tipar 6 × 9 in, margini în oglindă, Garamond, capitole pe pagină nouă |
 | E-book | EPUB curat, cu cuprins de navigare și copertă |
 | Modern | aspect aerisit, capitole numerotate simplu |
@@ -378,6 +378,8 @@ Programul își caută singur versiunile noi pe pagina de versiuni a proiectului
 Oricând: **Ajutor → Caută actualizări…** (sau din paleta de comenzi; se poate pune și un buton „Actualizare” în bara de sus). Fereastra arată versiunea ta și pe cea nouă, ce aduce, apoi **Descarcă și instalează** (cu progres) și **Instalează și repornește**: lucrul se salvează, instalatorul rulează fără întrebări, închide programul și îl pornește din nou. Varianta portabilă descarcă fișierul nou și deschide dosarul în care se află; îl pornești în locul celui vechi.
 
 Siguranță: doar prin https, doar către adresele GitHub; fișierul descărcat se verifică după dimensiune și după amprenta SHA-256 publicată (fișierul `SHA256SUMS` al fiecărei versiuni), altfel nu este folosit. Cererile repetate sunt condiționate (ETag), iar la limita de cereri GitHub programul așteaptă și reîncearcă mai târziu.
+
+Cât timp depozitul programului e privat, actualizatorul are nevoie de un token GitHub cu drept de citire ca să vadă versiunile. Îl pui o dată în *Setări → Servicii și conturi → GitHub (actualizări)*, unde se păstrează criptat ca celelalte chei, sau, dacă preferi, ca variabilă de mediu `SCRIBNER_GITHUB_TOKEN`. Pe un depozit public nu e nevoie de token.
 
 ### Întrebări
 
