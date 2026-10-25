@@ -393,6 +393,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <input value={s.backupDir} readOnly placeholder={t('set.backupDirPh')} />
             <button onClick={async () => set('backupDir')((await api.chooseBackupDir()) || s.backupDir)}>{t('btn.choose')}</button>
             {s.backupDir && <button onClick={() => set('backupDir')('')}>{t('btn.default')}</button>}
+            <button disabled={!s.backupDir && !dir} onClick={() => api.openBackupFolder?.(dir)}>{t('set.openBackupFolder')}</button>
           </div>
         </label>
       </>

@@ -97,6 +97,12 @@ describe('backup', () => {
     expect(fs.readdirSync(bdir)).toHaveLength(3);
     expect(fs.existsSync(dated)).toBe(true);
   });
+  it('effective backup folder: custom dir wins, else project default, else null', () => {
+    expect(backup.effectiveBackupDir('/custom/b', '/p/Carte.scribner')).toBe('/custom/b');
+    expect(backup.effectiveBackupDir('', '/p/Carte.scribner')).toBe('/p/Carte.backups');
+    expect(backup.effectiveBackupDir('', null)).toBe(null);
+    expect(backup.effectiveBackupDir('', '')).toBe(null);
+  });
   it('options from settings and the keep-5 migration', () => {
     expect(backup.backupOptions({})).toEqual({ zip: true, dateInName: true });
     expect(backup.backupOptions({ backupZip: false, backupDateName: false })).toEqual({ zip: false, dateInName: false });

@@ -513,6 +513,16 @@ handle('settings:chooseBackupDir', async (e) => {
   if (!res.canceled) chosenBackupDir = res.filePaths[0];
   return res.canceled ? null : res.filePaths[0];
 });
+// Open the effective backup folder in the OS file manager: the custom backup dir if set,
+// otherwise the current project's default backup folder. Created first so opening never fails.
+handle('settings:openBackupFolder', async (_e, dir) => {
+  const s = backupSettings();
+  const target = backup.effectiveBackupDir(s.backupDir, dir);
+  if (!target) return { ok: false };
+  try { fs.mkdirSync(target, { recursive: true }); } catch { /* opening still attempted */ }
+  const err = await shell.openPath(target);
+  return { ok: !err, dir: target, error: err || undefined };
+});
 let chosenBackupDir = null;
 handle('templates:list', () => listTemplates());
 
