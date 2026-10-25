@@ -41,15 +41,18 @@ captură pe Desktop 3 când chiar e nevoie de vizual. Inventarul extras: `%TEMP%
 ## P2/P3 — editorul de format Compile (defalcare pe referință)
 Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe măsură ce faci.
 - [x] **Integrare motor** din `wip/p2-p3-compile` (compileLayouts.cjs, placeholders.cjs, compile.cjs), teste verzi.
-- [ ] **Section Layouts** (`SCRCompileFormatSectionLayouts`, `SCRSectionLayoutEditor`): per tip de secțiune —
+- [x] **Section Layouts** (`SCRCompileFormatSectionLayouts`, `SCRSectionLayoutEditor`): per tip de secțiune —
   arată titlu, prefix/sufix titlu, caz titlu, aliniere, pagină nouă înainte, arată text, separator înainte,
   prima linie (drop cap / versale lead-in / fără indent).
-- [ ] **Text layout** (`SCRCompileFormatTextLayout`): văduve/orfane, evită despărțirea propozițiilor între
+- [x] **Text layout** (coloane, indent prima fraza, drop cap/lead-in - facut; vaduve/orfane/keep deja existau)
+- [~] **Text layout orig** (`SCRCompileFormatTextLayout`): văduve/orfane, evită despărțirea propozițiilor între
   pagini, coloane (număr, spațiu, lățime, coloană centrată), cratimare, eliminare indent primă linie pe
   contexte, linii goale la ruptura de pagină, lățime imagini, prefix/sufix document.
 - [ ] **Page settings** (`SCRCompileFormatPageSettings`, `SCRCompileFormatPageSettings`): margini, dimensiune
   pagină, antet/subsol, numerotare, prima pagină.
-- [ ] **Styles** (`SCRCompileFormatStyles`): suprascrieri de stil (remove, font, mărime %, culoare,
+- [x] **Styles** (tab nou: remove/marime%/bold/italic/culoare)
+- [x] **Footnotes & comments2** (moduri strip/export/footnotes/inline)
+- [~] **Styles orig** (`SCRCompileFormatStyles`): suprascrieri de stil (remove, font, mărime %, culoare,
   bold/italic, indent, aliniere, clasă CSS, stil Word).
 - [x] **Section separators** (decorative: * * *, ⁂, ❦, linie — făcut)
 - [x] **Prima frază layout**: drop cap, versale lead-in, coloane (făcut)
@@ -62,7 +65,7 @@ Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe m
 - [ ] **Transformations** (`SCRCompileFormatTransformations`): majuscule, ghilimele, etc. la compilare.
 - [ ] **Statistics** (`SCRCompileFormatStatistics`), **RTF compat** (`SCRCompileFormatRtfCompatibility`).
 - [ ] **Assign Section Layouts** (`SCRAssignSectionLayoutsDialog`): maparea tip secțiune → layout.
-- [ ] **UI**: `CompileLayoutEditor.jsx` (nou), scos din `CompileDialog.jsx`; i18n ro+en; teste.
+- [~] **UI**: editat in CompileDialog (asezari + stiluri + separatoare + comentarii); un CompileLayoutEditor.jsx separat ramane optional (nou), scos din `CompileDialog.jsx`; i18n ro+en; teste.
 
 ---
 
