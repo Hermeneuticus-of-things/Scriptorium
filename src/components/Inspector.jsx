@@ -97,7 +97,7 @@ export default function Inspector({
   api, dir, project, node: selectedNode, html: selectedHtml, words: selectedWords, allKeywords, linkTargets = [], onOpen, onPatch: onPatchSelected,
   onNotesChange: onNotesSelected, onProjectNotesChange, onRestore, onError, flush,
   // Optional (batch C): lock, comments, per-id callbacks.
-  docs = null, counts = null, onPatchNode, onNotesChangeFor, onLockChange, authorName = '', onJumpToComment, onHtmlChange,
+  docs = null, counts = null, onPatchNode, onNotesChangeFor, onLockChange, teamLockOf = () => null, authorName = '', onJumpToComment, onHtmlChange,
 }) {
   const [tab, setTab] = useState('meta');
   const [snaps, setSnaps] = useState([]);
@@ -312,7 +312,7 @@ export default function Inspector({
                 )}
                 {api.renameSnapshot && <button className="link" onClick={() => renameSnap(s)} title={tr('set.binderDbl.rename')}>✎</button>}
                 {api.deleteSnapshot && <button className="link" onClick={() => deleteSnap(s)} title={tr('ui.inspector.sterge_snapshot_ul')}>🗑</button>}
-                {!pinnedOther && <button
+                {!pinnedOther && !node.locked && !teamLockOf(node.id) && <button
                   className="link"
                   onClick={async () => {
                     if (!window.confirm(tr('ui.inspector.restaurezi_acest_snapshot_textul_curent'))) return;

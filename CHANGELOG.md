@@ -2,6 +2,14 @@
 
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
+### v0.9.8, căutare pe editor și binder
+- Editor împărțit: Undo într-un panou nu mai readuce textul anulat în celălalt.
+- Documentele blocate nu mai sunt atinse de Găsește și înlocuiește în proiect și nu mai pot fi restaurate dintr-un snapshot.
+- Ștergerea unui dosar împreună cu un copil nu mai lasă selecția în Coș.
+- Modul compoziție (F11) deschide editorul și din Corkboard sau Outline.
+- Golirea coșului: fără confirmare când coșul e gol; selecția trece în Manuscris.
+- Texte rămase în română în interfața engleză („Blocat”, „Mai multe comenzi de formatare”).
+
 ### v0.9.8, căutare pe MCP, importuri și Compile
 - MCP: `compile` și exporturile nu mai suprascriu fișiere existente străine; nicio cale ascunsă sau de pornire (.ssh, Startup) nu se citește sau scrie; blocările din echipă se judecă după ceasul serverului, nu al celuilalt calculator; un dosar cu un document blocat nu se mai mută sau trimite la coș.
 - Îmbinarea project.json păstrează schimbările ambelor părți în obiecte (`custom`) și liste (cuvinte-cheie, colecții, etichete).

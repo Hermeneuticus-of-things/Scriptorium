@@ -181,3 +181,9 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] motor încorporat (whisper.cpp), descărcare din Setări cu progres și amprente, dictare cu microfonul, fișiere audio decodate în fereastră
 - [x] teste unitare + browser cu microfon fals; docs, README, ajutor
 - [ ] proba pe Windows (autorul): Descarcă motorul, F9, un MP3
+
+- [ ] Scrivenings: istoricul Undo se pierde după o editare în vederea compusă (historyKey comun); săgeți între secțiuni; bară de formatare comună.
+- [ ] „Copiază curat”: curățarea comentariilor cu DOMParser (span-uri imbricate).
+- [ ] Demo browser: Compile HTML cu doctype/charset și opțiunile (domeniu, titlu); previzualizarea să respecte domeniul.
+- [ ] Meniul Vizualizare: etichete în engleză (Corkboard, Outline, Quick Reference); „Duplică” de două ori cu Ctrl+D; Compile → Pagină doar în inchi.
+- [ ] MCP `import_files`: folder de import permis, configurabil.

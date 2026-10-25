@@ -272,7 +272,8 @@ const Editor = forwardRef(function Editor(
         flushRef.current();
         if (!editor || editor.isDestroyed) return;
         const tr = editor.state.tr;
-        if (replaceChangedRange(tr, htmlToDoc(h, editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true));
+        // Not in this pane's undo history: its Undo must not reverse the other pane's change.
+        if (replaceChangedRange(tr, htmlToDoc(h, editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true).setMeta('addToHistory', false));
       },
       selectAround: (kind) => Boolean(editor && !editor.isDestroyed && selectAround(editor.view, undefined, kind)),
       getSelectionText: () => {

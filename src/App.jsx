@@ -1421,7 +1421,7 @@ export default function App({ api: apiProp }) {
     const nodeUpdates = [];
     for (const id of ids) {
       const node = findNode(projectRef.current.tree, id);
-      if (!node) continue;
+      if (!node || node.locked || team.lockOf(id)) continue; // locked documents are left as they are
       // Titles and synopses too: the dialog lists matches there.
       const r = replaceInFields(node, docs[id] || '', '', re, replacement, ['title', 'synopsis', 'text']);
       if (!r.count) continue;
@@ -1992,7 +1992,7 @@ export default function App({ api: apiProp }) {
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
-    ['view', 'composition', tr('cmd.composition'), () => setComposition((c) => !c)],
+    ['view', 'composition', tr('cmd.composition'), () => { setView('editor'); setComposition((c) => !c); }],
     ['view', 'toggleInspector', tr('cmd.toggleInspector'), () => setShowInspector((v) => !v)],
     ['view', 'toggleBinder', tr('cmd.toggleBinder'), () => setHideBinder((v) => !v)],
     ['view', 'split', tr('cmd.split'), () => splitDocument(false)],
@@ -2324,7 +2324,12 @@ export default function App({ api: apiProp }) {
           }}
           onTrash={trashSelection}
           onEmptyTrash={() => {
-            if (window.confirm(tr('ui.app.golesti_cosul_documentele_din_cos'))) setTree(emptyTrash(project.tree));
+            const trash = project.tree.find((n) => n.root === 'trash');
+            if (!trash || !(trash.children || []).length) return;
+            if (!window.confirm(tr('ui.app.golesti_cosul_documentele_din_cos'))) return;
+            const gone = new Set(flatten(trash.children).map((n) => n.id));
+            setTree(emptyTrash(project.tree));
+            if (gone.has(selectedId)) setSelectedId(project.tree[0].id); // not a blank editor
           }}
         />
         </div>
@@ -2339,7 +2344,7 @@ export default function App({ api: apiProp }) {
                 <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title={tr('ui.app.inainte_alt')} aria-label={tr('cmd.forward')}><ForwardIcon /></button>
                 <DocumentIcon />
                 <strong style={{ flex: 1 }}>{selected.title}</strong>
-                {selected.locked && <LockIcon title="Blocat" />}
+                {selected.locked && <LockIcon title={tr('ui.app.blocat')} />}
                 {team.live.filter((p) => p.doc === selected.id).map((p) => (
                   <span key={p.machine} className="team-chip" style={{ borderColor: p.color }} title={tr('ui.team.lucreaza_acum', { name: p.who })}>
                     <span className="team-dot" style={{ background: p.color }} /> {p.who}
@@ -2555,6 +2560,7 @@ export default function App({ api: apiProp }) {
               {showInspector && (
                 <Inspector
                   key={`insp-${selected.id}`}
+                  teamLockOf={team.lockOf}
                   api={api}
                   dir={dir}
                   project={project}
