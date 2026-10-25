@@ -77,8 +77,8 @@ Legendă: `[x]` paritate confirmată · `[~]` parțial/în lucru · `[ ]` de ver
 
 CONCLUZIE SWEEP: pe toate componentele mari verificate (meniuri, Format, Opțiuni+sub-tab-uri, Inspector,
 Compile+editor, Corecturi, Corkboard, Scratchpad, Ținte, Generator de nume, Import+Split, Setări proiect,
-Scenariu) Scribner e la PARITATE sau SUPERSET. Goluri reale în tot auditul: 3, toate reparate (Curățare text,
-Deschide folder backup, filtre generator nume). Restul componentelor mici/native: irelevante.
+Scenariu) Scribner e la PARITATE sau SUPERSET. Goluri reale în tot auditul: 4, toate reparate (Curățare text, Deschide folder backup, filtre
+generator nume, Find-by-formatting: linkuri/imagini/tabele). Restul componentelor mici/native: irelevante.
 
 Notă: multe „de verificat" se vor dovedi paritate (pattern constant). Se verifică pe cod/inventar, nu cu
 capturi. Componentele mici de infrastructură Qt (sub 3 etichete) se tratează doar dacă apar ca funcție reală.
@@ -96,7 +96,11 @@ capturi. Componentele mici de infrastructură Qt (sub 3 etichete) se tratează d
 - [x] NameGenerator (47) — gol reparat: filtre „se termină cu"/„conține". ProjectStatistics/WritingHistory: paritate.
 - [x] ProjectSettingsDialog (113) — paritate+: etichete, status, tipuri de secțiune, metadate
   personalizate cu tipuri (text/număr/checkbox/listă/dată — are și „număr" peste clasic), autocompletare.
-- [ ] FindDialog (26) · FindFormattingDialog (45) · ReplaceAllDialog (31) · QuickReference (20) · Bookmarks (20).
+- [x] FindFormattingDialog (45) — gol reparat: căutare după linkuri/imagini/tabele (avea deja
+  comentarii/note/adnotări/highlight/culoare/revizii/stil/semne).
+- [x] Statistici (pagini+timp lectură, superset) · Istoric scriere (zilnic/lunar, CSV, draft/total) ·
+  Snapshots (compară cu 4 niveluri de diff + roll back) · Corkboard freeform „fixează ordinea".
+- [ ] FindDialog (26) · ReplaceAllDialog (31) · QuickReference (20) · Bookmarks (20).
 - [x] ImportAndSplit (20) — paritate (separator + titluri; OPML/fountain separat).
 - [x] ScriptSettingsDialog (87) — paritate: elemente (scenă/acțiune/personaj/dialog/…), tabele Tab/Enter,
   layout per element, mapare FDX (Final Draft). · [ ] PrintSettingsDialog/PageSetup (tipărire nativă).
