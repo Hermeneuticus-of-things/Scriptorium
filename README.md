@@ -371,6 +371,14 @@ O versiune nouă apare în Releases de fiecare dată când iese, automat.
 La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 lecții scurte, în care înveți lucrând. Manualul complet se deschide oricând cu F1.
 
 
+### Actualizări
+
+Programul își caută singur versiunile noi pe pagina de versiuni a proiectului de pe GitHub: o dată pe zi (la 10 secunde după pornire, dacă ultima verificare are peste 24 de ore, și apoi la fiecare 24 de ore cât timp rămâne deschis). Când apare o versiune nouă, jos se arată o singură dată un anunț discret „Versiune nouă x.y.z — Actualizează”. Verificarea automată se oprește din Setări → General („Verifică automat actualizările”).
+
+Oricând: **Ajutor → Caută actualizări…** (sau din paleta de comenzi; se poate pune și un buton „Actualizare” în bara de sus). Fereastra arată versiunea ta și pe cea nouă, ce aduce, apoi **Descarcă și instalează** (cu progres) și **Instalează și repornește**: lucrul se salvează, instalatorul rulează fără întrebări, închide programul și îl pornește din nou. Varianta portabilă descarcă fișierul nou și deschide dosarul în care se află; îl pornești în locul celui vechi.
+
+Siguranță: doar prin https, doar către adresele GitHub; fișierul descărcat se verifică după dimensiune și după amprenta SHA-256 publicată (fișierul `SHA256SUMS` al fiecărei versiuni), altfel nu este folosit. Cererile repetate sunt condiționate (ETag), iar la limita de cereri GitHub programul așteaptă și reîncearcă mai târziu.
+
 ### Întrebări
 
 **Am nevoie de internet?** Nu. Scribner merge pe calculatorul tău și textele rămân la tine. Internetul îți trebuie doar pentru DeepL, dicționarele online și AI.

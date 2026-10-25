@@ -17,6 +17,7 @@ import ImportReport from './components/ImportReport.jsx';
 import QuickRef from './components/QuickRef.jsx';
 import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
+import UpdateDialog, { UpdateBanner } from './components/UpdateDialog.jsx';
 import GoToDialog from './components/GoToDialog.jsx';
 import ProjectSettingsDialog from './components/ProjectSettingsDialog.jsx';
 import StatisticsDialog from './components/StatisticsDialog.jsx';
@@ -296,6 +297,21 @@ export default function App({ api: apiProp }) {
   }, []);
   // Help → Report a problem, and the discreet "send a report?" toast for a newly captured error.
   const [reportOpen, setReportOpen] = useState(false);
+  // Help → Check for updates, and the "new version" banner (once per new version; remembered in settings).
+  const [updateOpen, setUpdateOpen] = useState(null); // null | { initial }
+  const [updateBanner, setUpdateBanner] = useState(null);
+  const bannerShown = useRef('');
+  useEffect(() => {
+    if (!api.onUpdateAvailable) return undefined;
+    return api.onUpdateAvailable((info) => {
+      if (!info?.newer || bannerShown.current === info.latest) return;
+      // Once per new version: the shown version is remembered in settings (not shown again at the next check).
+      if (settingsRef.current?.updateShown === info.latest) return;
+      bannerShown.current = info.latest;
+      setUpdateBanner(info);
+      api.setSettings?.({ updateShown: info.latest }).catch(() => {});
+    });
+  }, [api]);
   const [errorPrompt, setErrorPrompt] = useState(false);
   const seenErrors = useRef(new Set());
   useEffect(() => {
@@ -1849,6 +1865,8 @@ export default function App({ api: apiProp }) {
           />
         )}
         <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
+      <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
+        <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
         <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
       </>
     );
@@ -2240,6 +2258,7 @@ export default function App({ api: apiProp }) {
     ['help', 'helpSyntax', tr('cmd.helpSyntax'), () => setHelp({ topic: null, tab: 'syntax' })],
     ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
     ['help', 'reportIssue', tr('cmd.reportIssue'), () => setReportOpen(true)],
+    ['help', 'checkUpdates', tr('cmd.checkUpdates'), () => setUpdateOpen({ initial: null }), !api.updateCheck],
     ['help', 'about', 'Despre Scribner', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
     ['tools', 'nameGen', tr('cmd.nameGen'), () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
@@ -3293,6 +3312,7 @@ export default function App({ api: apiProp }) {
       )}
       <DialogA11y />
       <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
+      <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
       <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
     </div>
   );
@@ -3300,6 +3320,26 @@ export default function App({ api: apiProp }) {
 
 // Live regions stay in the DOM all the time so screen readers announce the messages that
 // appear in them (a region inserted together with its text is often not read).
+function UpdateUi({ api, open, setOpen, banner, setBanner, beforeInstall }) {
+  return (
+    <>
+      {banner && !open && (
+        <UpdateBanner
+          info={banner}
+          onOpen={() => {
+            setOpen({ initial: banner });
+            setBanner(null);
+          }}
+          onDismiss={() => {
+            setBanner(null);
+          }}
+        />
+      )}
+      {open && <UpdateDialog api={api} initial={open.initial} beforeInstall={beforeInstall} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
 function ReportUi({ api, open, setOpen, prompt, setPrompt, onDone }) {
   return (
     <>
