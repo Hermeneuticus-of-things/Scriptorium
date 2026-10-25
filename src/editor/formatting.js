@@ -250,7 +250,21 @@ function eachTextblock(state, fn) {
 }
 
 export function applyFormat(state, tr, clip) {
-  const { from, to, empty } = state.selection;
+  let { from, to, empty } = state.selection;
+  // No selection: the character formatting goes on the word under the cursor (and on what is typed next).
+  if (empty) {
+    const { $from } = state.selection;
+    if ($from.parent.isTextblock) {
+      const text = $from.parent.textBetween(0, $from.parent.content.size, null, '\ufffc');
+      const [a, b] = wordBounds(text, $from.parentOffset);
+      if (b > a) {
+        from = $from.start() + a;
+        to = $from.start() + b;
+        empty = false;
+      }
+    }
+    if (empty) tr.setStoredMarks((clip.marks || []).map((mj) => state.schema.marks[mj.type]?.create(mj.attrs)).filter(Boolean));
+  }
   if (!empty) {
     for (const [, type] of Object.entries(state.schema.marks)) if (!CONTENT_MARKS.includes(type.name)) tr.removeMark(from, to, type);
     for (const mj of clip.marks || []) {

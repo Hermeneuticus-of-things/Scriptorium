@@ -105,6 +105,36 @@ export function styleForShortcut(styles, shortcut) {
   return (styles || []).find((s) => s.shortcut && normalizeShortcut(s.shortcut) === shortcut) || null;
 }
 
+// --- Styles side panel helpers ------------------------------------------------
+
+/** Unique id from a style name ("Citat lung" → "citat-lung", "-2" when taken). */
+export function styleIdFor(name, taken = new Set()) {
+  const base =
+    String(name || '')
+      .toLocaleLowerCase('ro')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'stil';
+  let id = base;
+  for (let i = 2; taken.has(id); i++) id = `${base}-${i}`;
+  return id;
+}
+
+/** New style from the look of the selection: {bold, italic, underline, align, size}. */
+export function styleFromLook(styles, name, type, look = {}) {
+  const st = { id: styleIdFor(name, new Set((styles || []).map((s) => s.id))), name: String(name).trim(), type: type === 'char' ? 'char' : 'para' };
+  for (const k of ['bold', 'italic', 'underline', 'smallCaps']) if (look[k]) st[k] = true;
+  if (look.color) st.color = look.color;
+  if (look.size && look.size !== 100) st.size = look.size;
+  if (st.type === 'para' && look.align) st.align = look.align;
+  return [...(styles || []), st];
+}
+
+export const renameStyle = (styles, id, name) => (styles || []).map((s) => (s.id === id && String(name).trim() ? { ...s, name: String(name).trim() } : s));
+// Removed from the stylesheet; "next" links to it are cleared.
+export const deleteStyle = (styles, id) => (styles || []).filter((s) => s.id !== id).map((s) => (s.next === id ? { ...s, next: undefined } : s));
+
 // Shortcuts used by more than one style (shown as a warning in the dialog).
 export function duplicateShortcuts(styles) {
   const seen = new Map();
