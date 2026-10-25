@@ -55,6 +55,8 @@ contextBridge.exposeInMainWorld('api', {
   mcpInfo: (dir) => call('mcp:info', dir),
   readStylesFromProject: () => call('styles:readFromProject'),
   addMediaFiles: (dir) => call('media:add', dir),
+  addMediaData: (dir, name, bytes) => call('media:addData', dir, name, bytes),
+  archiveWebPage: (dir, url) => call('research:archiveWeb', dir, url),
   importFiles: (dir, mode, separator, opts) => call('io:importFiles', dir, mode, separator, opts),
   importOpml: () => call('io:importOpml'),
   exportDocuments: (dir, project, ids, options) => call('io:exportDocuments', dir, project, ids, options),
