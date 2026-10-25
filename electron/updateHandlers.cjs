@@ -7,19 +7,20 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const updater = require('../lib/updater.cjs');
 
-module.exports = function updateHandlers({ handle, app, net, shell, BrowserWindow, getSettings, setSettings }) {
+module.exports = function updateHandlers({ handle, app, net, shell, BrowserWindow, getSettings, setSettings, githubToken }) {
   const cache = {}; // ETag + last release body (conditional requests)
   let lastInfo = null;
   let downloaded = null;
   const portable = updater.isPortable();
   const fetchImpl = (url, opts) => net.fetch(url, opts);
-  const token = process.env.SCRIBNER_GITHUB_TOKEN || '';
+  // The stored GitHub token (Settings → Servicii și conturi), read fresh each call; env is the fallback.
+  const token = typeof githubToken === 'function' ? githubToken : () => process.env.SCRIBNER_GITHUB_TOKEN || '';
   const broadcast = (channel, payload) => {
     for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send(channel, payload);
   };
 
   async function check() {
-    lastInfo = await updater.checkLatest({ fetchImpl, currentVersion: app.getVersion(), portable, token, cache });
+    lastInfo = await updater.checkLatest({ fetchImpl, currentVersion: app.getVersion(), portable, token: token(), cache });
     return lastInfo;
   }
   // Background check: the windows show the banner (once per new version, remembered by the renderer).
@@ -54,7 +55,7 @@ module.exports = function updateHandlers({ handle, app, net, shell, BrowserWindo
       fetchImpl,
       info,
       dir,
-      token,
+      token: token(),
       onProgress: ({ received, total }) => {
         const now = Date.now();
         if (now - lastSent < 150 && received !== total) return;
