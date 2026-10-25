@@ -365,27 +365,27 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### A2. Opțiuni: Aspect (Appearance), cu toate sub-secțiunile
 **Identic:** temă (ca sistemul, luminoasă, întunecată, sepia), aspect interfață clasic/modern, culoare de accent, culoarea comentariilor, culorile celor 5 runde de revizie, fontul editorului, mărimea textului în editor, interlinie, lățimea paginii, mărimea textului în binder.
-- [ ] **lipsă** Teme de culori salvabile: „Salvează tema”, „Încarcă tema”, export/import fișier de temă.
-- [ ] **lipsă** Binder: culoarea fundalului, culoarea textului, rânduri alternante colorate.
-- [ ] **lipsă** Binder: unde apare culoarea etichetei (pe rând întreg / pe icoană / punct).
-- [ ] **lipsă** Binder: font separat pentru dosare (bold) și pentru documentele cu copii.
-- [ ] **lipsă** Binder: fontul (familia), nu doar mărimea.
-- [ ] **parțial** Editor: culorile vin doar din temă + accent; lipsesc culoarea fundalului editorului, a textului, a selecției, a cursorului.
-- [ ] **lipsă** Editor: culoarea paginii și a zonei din jurul paginii în Vedere pagină.
-- [ ] **lipsă** Editor: culoarea și opacitatea liniei curente evidențiate.
-- [ ] **lipsă** Editor: culori pentru legăturile interne vs externe.
-- [ ] **lipsă** Editor: culoarea blocurilor „Păstrează formatarea”.
-- [ ] **lipsă** Editor: culoarea marcajelor rezultatelor de căutare.
-- [ ] **lipsă** Corkboard: fundal (plută, lemn, culoare, imagine proprie), culoarea fișelor, culoarea titlului fișei.
-- [ ] **lipsă** Corkboard: fontul titlului și fontul sinopsisului pe fișe.
-- [ ] **lipsă** Outliner: rânduri alternante, culoarea grilei, culoarea rândurilor de dosar, fonturi titlu/sinopsis.
-- [ ] **parțial** Compunere: fundal, lățime, opacitate, aliniere, pagină de hârtie există; lipsesc culoarea textului, culoarea paginii, culoarea barei de control.
-- [ ] **lipsă** Scenariu: culorile elementelor de scenariu în editor.
-- [ ] **lipsă** Inspector: fontul și fundalul notelor, fontul sinopsisului.
-- [ ] **lipsă** Scrivenings: fontul titlurilor de document și aspectul separatorului dintre documente (culoare, stil linie).
-- [ ] **lipsă** Margine de adnotări: font și mărime pentru comentarii și note de subsol.
-- [ ] **lipsă** Mărimea icoanelor din bara de instrumente / densitate compactă.
-- [ ] **lipsă** „Implicit” pentru fiecare culoare în parte cu previzualizare (există doar la accent și comentarii).
+- [x] **lipsă** Teme de culori salvabile: „Salvează tema”, „Încarcă tema”, export/import fișier de temă. (făcut în P5)
+- [x] **lipsă** Binder: culoarea fundalului, culoarea textului, rânduri alternante colorate. (făcut în P5)
+- [x] **lipsă** Binder: unde apare culoarea etichetei (pe rând întreg / pe icoană / punct). (făcut în P5)
+- [x] **lipsă** Binder: font separat pentru dosare (bold) și pentru documentele cu copii. (făcut în P5: stil aldin/cursiv pentru dosarele și documentele cu copii)
+- [x] **lipsă** Binder: fontul (familia), nu doar mărimea. (făcut în P5)
+- [x] **parțial** Editor: culorile vin doar din temă + accent; lipsesc culoarea fundalului editorului, a textului, a selecției, a cursorului. (făcut în P5)
+- [x] **lipsă** Editor: culoarea paginii și a zonei din jurul paginii în Vedere pagină. (făcut în P5)
+- [x] **lipsă** Editor: culoarea și opacitatea liniei curente evidențiate. (făcut în P5)
+- [x] **lipsă** Editor: culori pentru legăturile interne vs externe. (făcut în P5)
+- [x] **lipsă** Editor: culoarea blocurilor „Păstrează formatarea”. (făcut în P5)
+- [x] **lipsă** Editor: culoarea marcajelor rezultatelor de căutare. (făcut în P5: culoarea rezultatului curent din bara de căutare)
+- [x] **lipsă** Corkboard: fundal (plută, lemn, culoare, imagine proprie), culoarea fișelor, culoarea titlului fișei. (făcut în P5)
+- [x] **lipsă** Corkboard: fontul titlului și fontul sinopsisului pe fișe. (făcut în P5)
+- [x] **lipsă** Outliner: rânduri alternante, culoarea grilei, culoarea rândurilor de dosar, fonturi titlu/sinopsis. (făcut în P5)
+- [x] **parțial** Compunere: fundal, lățime, opacitate, aliniere, pagină de hârtie există; lipsesc culoarea textului, culoarea paginii, culoarea barei de control. (făcut în P5)
+- [x] **lipsă** Scenariu: culorile elementelor de scenariu în editor. (făcut în P5)
+- [x] **lipsă** Inspector: fontul și fundalul notelor, fontul sinopsisului. (făcut în P5)
+- [x] **lipsă** Scrivenings: fontul titlurilor de document și aspectul separatorului dintre documente (culoare, stil linie). (făcut în P5)
+- [x] **lipsă** Margine de adnotări: font și mărime pentru comentarii și note de subsol. (făcut în P5)
+- [x] **lipsă** Mărimea icoanelor din bara de instrumente / densitate compactă. (făcut în P5)
+- [x] **lipsă** „Implicit” pentru fiecare culoare în parte cu previzualizare (există doar la accent și comentarii). (făcut în P5)
 
 ### A3. Opțiuni: Corkboard
 **Identic:** formă rotunjită/pătrată, fișe liniate, umplere cu culoarea etichetei, mărime mică/medie/mare, proporție, spațiere, coloane automate (toate în bara panoului, pe proiect).
@@ -402,18 +402,18 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### A4. Opțiuni: Compunere (Compose)
 **Identic:** fundal culoare/imagine, încadrare/repetare imagine, lățimea textului, opacitatea paginii, aliniere, pagină de hârtie, ținte afișate.
-- [ ] **lipsă** Bara de control: ascundere automată și întârzierea apariției.
-- [ ] **lipsă** Alegerea monitorului / fundal pe monitorul al doilea.
-- [ ] **lipsă** Zoom propriu al textului în compunere (separat de editor).
-- [ ] **lipsă** Margini interne ale paginii (sus/jos/lateral).
-- [ ] **parțial** Inspectorul în compunere există ca buton; lipsesc opacitatea lui și alegerea taburilor.
-- [ ] **lipsă** Mașină de scris pornită automat în compunere, separat de editor.
-- [ ] **lipsă** „Arată bara de derulare” și „Ascunde cursorul mouse-ului când scriu”.
+- [x] **lipsă** Bara de control: ascundere automată și întârzierea apariției. (făcut în P5)
+- [x] **lipsă** Alegerea monitorului / fundal pe monitorul al doilea. (făcut în P5: ecran complet pe monitorul ales; fundalul pe al doilea monitor rămâne de făcut)
+- [x] **lipsă** Zoom propriu al textului în compunere (separat de editor). (făcut în P5)
+- [x] **lipsă** Margini interne ale paginii (sus/jos/lateral). (făcut în P5)
+- [x] **parțial** Inspectorul în compunere există ca buton; lipsesc opacitatea lui și alegerea taburilor. (făcut în P5)
+- [x] **lipsă** Mașină de scris pornită automat în compunere, separat de editor. (făcut în P5)
+- [x] **lipsă** „Arată bara de derulare” și „Ascunde cursorul mouse-ului când scriu”. (făcut în P5)
 
 ### A5. Opțiuni: Editare / Opțiuni
 **Identic:** defilare tip mașină de scris, caractere invizibile, vizualizare implicită (editor/corkboard/outline), legătură înapoi automată.
-- [ ] **lipsă** Mașină de scris: poziția rândului (procent din înălțime), nu doar mijlocul.
-- [ ] **lipsă** Evidențierea rândului curent (opțiune).
+- [x] **lipsă** Mașină de scris: poziția rândului (procent din înălțime), nu doar mijlocul. (făcut în P5)
+- [x] **lipsă** Evidențierea rândului curent (opțiune). (făcut în P5)
 - [ ] **lipsă** Lățimea cursorului și clipirea lui.
 - [ ] **lipsă** Spațiu suplimentar după finalul documentului (derulare dincolo de final).
 - [ ] **lipsă** Zoom implicit al editorului pentru documentele deschise.

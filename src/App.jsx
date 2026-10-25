@@ -69,6 +69,7 @@ import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
 import { applySettingsCss, labelColorIn as labelColorInOf } from './lib/settingsDefaults.js';
+import { hideCursorWhileTyping } from './lib/appearance.js';
 import DialogA11y from './components/DialogA11y.jsx';
 import { setLanguage, cmdLabel, groupLabel, builtinName, t as tr, uiLocale } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
@@ -418,6 +419,11 @@ export default function App({ api: apiProp }) {
   const toggleFloat = (k) => setFloats((f) => ({ ...f, [k]: !f[k] }));
   const [printOpts, setPrintOpts] = useState(null); // File > Print Preview: { ids, pageSetup? }
   const [composition, setComposition] = useState(false);
+  // Composition: hide the mouse pointer while typing; full screen on the chosen monitor.
+  useEffect(() => (composition ? hideCursorWhileTyping() : undefined), [composition]);
+  useEffect(() => {
+    if (composition && settings && Number(settings.compDisplay) >= 0) api.compositionDisplay?.(Number(settings.compDisplay)).catch(() => {});
+  }, [composition]);
   const [error, setError] = useState('');
   const [saveState, setSaveStateRaw] = useState('salvat');
   // Called on every keystroke: setting the same value still made React re-render App each time.
@@ -2719,7 +2725,7 @@ export default function App({ api: apiProp }) {
                 html={docs[selected.id] || ''}
                 title={selected.title}
                 readOnly={inTrash(selected.id) || Boolean(selected.locked) || Boolean(team.lockOf(selected.id))}
-                typewriter={settings.typewriter}
+                typewriter={settings.typewriter || (composition && settings.compTypewriter)}
                 smartQuotes={smartQuotes}
                 onFocus={() => { activeId.current = selected.id; setActivePane('main'); }}
                 onChange={(html) => writeSynced(selected.id, html, 'main')}
@@ -3115,8 +3121,8 @@ export default function App({ api: apiProp }) {
         <CompositionBar
           settings={settings}
           onSettings={async (patch) => { setSettings((s) => ({ ...s, ...patch })); await api.setSettings(patch); }}
-          zoom={editorView.zoom || 100}
-          onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
+          zoom={settings.compZoom || editorView.zoom || 100}
+          onZoom={(z) => (settings.compZoom ? (setSettings((x) => ({ ...x, compZoom: z })), api.setSettings({ compZoom: z })) : setEditorView({ ...editorView, zoom: z }))}
           words={selected ? counts[selected.id] || 0 : 0}
           chars={selected ? statusChars : 0}
           inspectorOn={showFloatInspector}

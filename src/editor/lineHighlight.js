@@ -12,6 +12,11 @@ export function fadeOpacity(v) {
   return Number.isFinite(n) && n > 0 ? Math.min(1, Math.max(0.05, n)) : 0.28;
 }
 
+/** The Options switch "Evidențiază rândul curent" (data-cur-line on <html>) turns it on for every editor. */
+export function globalLineHighlight(root = typeof document !== 'undefined' ? document.documentElement : null) {
+  return root?.dataset?.curLine === 'on';
+}
+
 export const LineHighlight = Extension.create({
   name: 'lineHighlight',
   addStorage() {
@@ -48,7 +53,8 @@ export const LineHighlight = Extension.create({
           if (host) host.insertBefore(bar, view.dom);
           let lastFade = null;
           const update = () => {
-            const { enabled, fade } = ext.storage;
+            const { fade } = ext.storage;
+            const enabled = ext.storage.enabled || globalLineHighlight();
             // Only touch the inline style when the value changes: rewriting an inherited custom
             // property on the editor root restyles every descendant (hundreds of ms per key on
             // large documents with many decorations).
@@ -77,11 +83,15 @@ export const LineHighlight = Extension.create({
           view.dom.addEventListener('blur', onBlur);
           view.dom.addEventListener('focus', update);
           update();
+          // The global switch lives on <html>: follow it without waiting for a keystroke.
+          const mo = typeof MutationObserver !== 'undefined' ? new MutationObserver(() => update()) : null;
+          mo?.observe(document.documentElement, { attributes: true, attributeFilter: ['data-cur-line'] });
           return {
             update,
             destroy() {
               view.dom.removeEventListener('blur', onBlur);
               view.dom.removeEventListener('focus', update);
+              mo?.disconnect();
               bar.remove();
             },
           };
