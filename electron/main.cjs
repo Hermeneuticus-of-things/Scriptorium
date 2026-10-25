@@ -1236,9 +1236,19 @@ const mcpEntry = ({ projects = [], readOnly = false } = {}) =>
 handle('mcp:connectInfo', async (_e, opts = {}) => {
   const mc = require('../lib/mcpConfig.cjs');
   const entry = mcpEntry(opts);
-  return { entry, command: mc.claudeCodeCommand(entry), desktopConfig: mc.claudeDesktopConfigPath() };
+  const clients = mc.MCP_CLIENTS.map((c) => ({
+    id: c.id,
+    label: c.label,
+    kind: c.kind,
+    detected: mc.clientDetected(c.id),
+    path: mc.clientConfigPath(c.id),
+    command: c.id === 'claudeCode' ? mc.claudeCodeCommand(entry) : null,
+    preview: c.kind === 'command' ? null : mc.previewClientConfig(c.id, entry),
+  }));
+  return { entry, command: mc.claudeCodeCommand(entry), desktopConfig: mc.claudeDesktopConfigPath(), clients };
 });
 handle('mcp:connectDesktop', async (_e, opts = {}) => require('../lib/mcpConfig.cjs').writeClaudeDesktopConfig(mcpEntry(opts)));
+handle('mcp:connectClient', async (_e, { id, opts = {} } = {}) => require('../lib/mcpConfig.cjs').writeClientConfig(id, mcpEntry(opts)));
 handle('tts:speak', async (_e, { text } = {}) => {
   const sp = services.getService(readSettings(), 'speechify', safeStorage);
   return translate.speechifySpeak({ apiKey: sp.apiKey, voiceId: sp.voiceId, text });

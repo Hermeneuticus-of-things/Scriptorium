@@ -203,6 +203,7 @@ contextBridge.exposeInMainWorld('api', {
   importZotero: (req) => call('zotero:import', req),
   mcpConnectInfo: (opts) => call('mcp:connectInfo', opts),
   mcpConnectDesktop: (opts) => call('mcp:connectDesktop', opts),
+  mcpConnectClient: (id, opts) => call('mcp:connectClient', { id, opts }),
   newWindow: () => call('window:new'),
   toggleFullScreen: (on) => call('window:fullScreen', on),
   listDisplays: () => call('window:displays'),

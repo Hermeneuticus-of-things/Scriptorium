@@ -43,6 +43,64 @@ describe('mcpConfig', () => {
   });
 });
 
+describe('mcpConfig — mai mulți clienți MCP', () => {
+  const entry = m.serverEntry({ execPath: '/x/Scribner', serverPath: '/x/server.mjs', projects: ['/p'] });
+  const winOpts = { platform: 'win32', env: { APPDATA: 'C:\\U\\A\\Roaming', LOCALAPPDATA: 'C:\\U\\A\\Local' }, home: 'C:\\U' };
+  const nixOpts = { platform: 'linux', env: {}, home: '/home/i' };
+
+  it('calea config-ului pentru fiecare client', () => {
+    expect(m.clientConfigPath('cursor', nixOpts)).toBe('/home/i/.cursor/mcp.json');
+    expect(m.clientConfigPath('gemini', nixOpts)).toBe('/home/i/.gemini/settings.json');
+    expect(m.clientConfigPath('windsurf', nixOpts)).toBe('/home/i/.codeium/windsurf/mcp_config.json');
+    expect(m.clientConfigPath('opencode', nixOpts)).toBe('/home/i/.config/opencode/opencode.json');
+    expect(m.clientConfigPath('codex', nixOpts)).toBe('/home/i/.codex/config.toml');
+    expect(m.clientConfigPath('vscode', nixOpts)).toBe('/home/i/.config/Code/User/mcp.json');
+    expect(m.clientConfigPath('vscode', winOpts)).toBe('C:\\U\\A\\Roaming\\Code\\User\\mcp.json');
+    expect(m.clientConfigPath('cursor', winOpts)).toBe('C:\\U\\.cursor\\mcp.json');
+    expect(m.clientConfigPath('claudeCode', nixOpts)).toBeNull();
+  });
+  it('Cursor/Gemini/Windsurf folosesc cheia mcpServers; VS Code cheia servers', () => {
+    expect(JSON.parse(m.mergeForClient('cursor', '', entry)).mcpServers.scribner.command).toBe('/x/Scribner');
+    expect(JSON.parse(m.mergeForClient('gemini', '{"mcpServers":{"altul":{"command":"y"}}}', entry)).mcpServers.altul).toEqual({ command: 'y' });
+    const vs = JSON.parse(m.mergeForClient('vscode', '', entry));
+    expect(vs.servers.scribner.command).toBe('/x/Scribner');
+    expect(vs.mcpServers).toBeUndefined();
+  });
+  it('OpenCode: command ca listă, type local', () => {
+    const o = JSON.parse(m.mergeForClient('opencode', '', entry));
+    expect(o.mcp.scribner).toMatchObject({ type: 'local', enabled: true });
+    expect(o.mcp.scribner.command).toEqual(['/x/Scribner', '/x/server.mjs', '--project', '/p']);
+  });
+  it('Codex: tabel TOML [mcp_servers.scribner], înlocuiește-l pe cel vechi', () => {
+    const out = m.mergeForClient('codex', '[other]\nx = 1\n[mcp_servers.scribner]\ncommand = "vechi"\n', entry);
+    expect(out).toContain('[other]');
+    expect(out).toContain('[mcp_servers.scribner]');
+    expect(out).toContain('command = "/x/Scribner"');
+    expect(out).toContain('args = ["/x/server.mjs", "--project", "/p"]');
+    expect((out.match(/\[mcp_servers\.scribner\]/g) || []).length).toBe(1); // only one, the new one
+    expect(out).not.toContain('vechi');
+  });
+  it('detectare: client instalat dacă folderul de config există', () => {
+    const exists = (p) => p === '/home/i/.cursor' || p === '/home/i/.cursor/mcp.json';
+    expect(m.clientDetected('cursor', { ...nixOpts, exists })).toBe(true);
+    expect(m.clientDetected('gemini', { ...nixOpts, exists })).toBe(false);
+    expect(m.clientDetected('claudeCode', nixOpts)).toBe(true); // command-only, mereu oferit
+  });
+  it('writeClientConfig scrie cu backup și e atomic', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-cli-'));
+    const file = path.join(dir, '.cursor', 'mcp.json');
+    expect(m.writeClientConfig('cursor', entry, { file }).backup).toBeNull();
+    const r = m.writeClientConfig('cursor', { ...entry, args: ['/z'] }, { file });
+    expect(fs.existsSync(r.backup)).toBe(true);
+    expect(JSON.parse(fs.readFileSync(file, 'utf8')).mcpServers.scribner.args).toEqual(['/z']);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+  it('registrul listează clienții principali', () => {
+    const ids = m.MCP_CLIENTS.map((c) => c.id);
+    expect(ids).toEqual(expect.arrayContaining(['claudeDesktop', 'claudeCode', 'cursor', 'gemini', 'opencode', 'windsurf', 'vscode', 'codex']));
+  });
+});
+
 describe('serverul MCP pornit prin electron ca Node (cum îl pornește Claude)', () => {
   it('răspunde la initialize și listează uneltele', async () => {
     const electron = require('electron'); // path of the electron binary in node_modules

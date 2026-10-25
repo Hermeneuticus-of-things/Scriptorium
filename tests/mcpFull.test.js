@@ -98,6 +98,7 @@ const PRELOAD_COVERAGE = {
   onScratchReceive: 'gui: notiță primită din fereastra de notițe',
   mcpConnectInfo: 'gui: legarea programului la Claude se face din interfață (Ajutor)',
   mcpConnectDesktop: 'gui: scrie configurarea Claude Desktop la cererea autorului',
+  mcpConnectClient: 'gui: scrie configurarea MCP a clientului ales (Cursor, Gemini, OpenCode, Windsurf, VS Code, Codex) la cererea autorului',
   isMisspelled: 'gui: corectorul ortografic al ferestrei (corecturi învățate)',
   onSpellReplaced: 'gui: sugestie aleasă din meniul nativ de clic dreapta',
   updateCheck: 'gui: actualizarea programului (Ajutor → Caută actualizări)',
