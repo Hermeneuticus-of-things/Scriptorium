@@ -1067,17 +1067,15 @@ sarcini structurate), sunt puține.
   separate (la închidere/deschidere/salvare); de evaluat dacă merită un singur comutator-umbrelă.
 
 ### Inspector
-Structura se potrivește: ambele au 5 tab-uri — Note, Semne de carte/linkuri, Detalii (Metadate),
-Snapshot-uri, Comentarii și note de subsol. Inspectorul Scribner (verificat în cod) e complet:
-icoană + culoare, tip de secțiune, etichetă, status, include în compile, pagină nouă înainte,
-compilează așa cum e, cuvinte cheie, țintă (+ unitate + notificare), subtitlu, câmpuri personalizate,
-date creat/modificat, număr de cuvinte, linkuri, snapshot-uri, comentarii/note.
-
-Comparația nano a conținutului tab-urilor din programul clasic e **blocată pe acest calculator**:
-(1) câmpurile Inspectorului clasic nu sunt expuse prin stratul de accesibilitate (widget-uri Qt custom);
-(2) partea dreaptă a ecranului, unde stă Inspectorul, e acoperită de un panou always-on-top al
-utilizatorului, deci nici captura de ecran + OCR nu-l poate citi. Nu se mută ferestrele utilizatorului.
-- [ ] De reluat când panoul always-on-top e ascuns temporar, sau pe un ecran liber.
+Capturat **exhaustiv pe Desktop 3** prin input real + PrintWindow (overlay-ul "Routines" nu mai e blocaj:
+PrintWindow desenează fereastra direct). Ambele au aceleași 5 tab-uri. Comparație nano, tab cu tab:
+- **Note**: Synopsis (titlu + rezumat + imagine sinopsis) + Note. Scribner identic.
+- **Metadate**: Creat/Modificat, Include în compile, Tip de secțiune, Metadate personalizate, Cuvinte cheie.
+  Scribner le are pe toate **plus** Etichetă, Status, Țintă (+unitate+notificare), Compilează-așa-cum-e.
+- **Semne de carte, Snapshot-uri, Comentarii & note**: prezente în ambele.
+Verdict: **paritate+ (Scribner superset)**. Singurul detaliu: clasicul arată mereu selectorul "Tip de
+secțiune"; Scribner îl ascunde dacă proiectul n-are tipuri definite.
+- [ ] Minor: arată selectorul de tip de secțiune și când lista e goală (opțional, aliniere cu clasicul).
 
 ### Ținte, Statistici, Scratchpad, Compunere, Corkboard, Outliner, Căutare — stadiu
 Capturarea dialogurilor programului clasic se face acum pe **Desktop 3** prin **PrintWindow + OCR**
@@ -1096,3 +1094,19 @@ Constatări (verificate pe partea Scribner, care e inspectabilă complet):
   componente dedicate; comparația de conținut e limitată de accesibilitatea Qt a programului clasic.
 - [ ] De reluat comparația nano pe aceste dialoguri cu panoul always-on-top ascuns (pentru zona din
   dreapta) sau pe un ecran liber; infrastructura (Desktop 3 + PrintWindow + OCR) e gata.
+
+### Compile (capturat pe Desktop 3, 13 secțiuni)
+Clasicul (stil Scrivener 3): „Compile For" (ieșire), 11 formate predefinite, Section Layouts cu
+previzualizare, atribuire tip de secțiune per document, front/back matter. Scribner (`CompileDialog.jsx`,
+`lib/compileFormats.cjs`): ieșiri docx/pdf/epub/print + altele, formate predefinite, front/back matter
+**per ieșire** (peste clasic). Partea avansată de **Section Layouts per tip de secțiune** (editor de
+așezări cu prefixe/formatare) e urmărită separat ca pachetul **P2/P3** (ramura `wip/p2-p3-compile`,
+neintegrată). Verdict pe nucleu: **paritate**; așezările avansate: în lucru (P2/P3).
+
+### Metodă și verdict general (audit 5)
+Captura clasicului se face pe **Desktop 3** (modulul VirtualDesktop), cu **PrintWindow** (merge acoperit
+/ pe desktop inactiv) și **input real** pentru parcurgerea exhaustivă (Qt nu expune structura prin
+accesibilitate și ignoră input-ul sintetic din fundal). Pattern consistent pe ferestrele parcurse adânc
+(meniuri, Opțiuni, Inspector pe tab-uri, Ținte, Compile): **Scribner e la paritate sau superset**, cu
+extrasele proprii păstrate (AI, MCP, dictare). Goluri reale găsite și reparate: „Curățare text" (meniuri)
+și „Deschide folderul de backup" (Opțiuni).
