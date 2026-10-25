@@ -46,6 +46,13 @@ describe('compile layout extras', () => {
     expect(css).toMatch(/font-weight:700/);
     expect(L.styleOverrideCss(styles, { s1: { remove: true, sizePct: 120 } })).toBe('');
   });
+  it('title/prefix typography and page-break-after emit CSS', () => {
+    const css = L.layoutCss([{ cls: 'c1', lay: { titleBold: true, titleFont: 'Georgia', prefixCase: 'upper', pageBreakAfter: true } }]);
+    expect(css).toMatch(/\.h-c1\{[^}]*font-family:"Georgia"/);
+    expect(css).toMatch(/\.h-c1\{[^}]*font-weight:700/);
+    expect(css).toMatch(/\.h-c1 \.ch-prefix\{[^}]*text-transform:uppercase/);
+    expect(css).toMatch(/\.c1\{[^}]*break-after:page/);
+  });
   it('decorative separator maps the chosen symbol to its glyph', () => {
     expect(L.normalizeSep({ kind: 'decorative', symbol: 'asterism' })).toMatchObject({ kind: 'decorative', text: '⁂' });
     expect(L.normalizeSep({ kind: 'decorative', symbol: 'stars' })).toMatchObject({ text: '* * *' });
