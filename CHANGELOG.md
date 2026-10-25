@@ -326,11 +326,11 @@
 ## 2026-10-24 — v0.8.7 — Discuție cu sursele (ca într-un caiet de cercetare), linia de comandă „scribner”, 13 bug-uri
 
 ### Cerința user
-> "import, consultă AI cu sursele, cu întrebare follow-up, alături de NotebookLM" · "CLI pentru NotebookLM și altele asemănătoare, ChatGPT/Claude Projects, Manus" · "bug hunter la dicționare, traducere online, AI, MCP, ecranul de început, română" · "să meargă și cu DeepL gratuit"
+> "import, consultă AI cu sursele, cu întrebare follow-up, alături de NotebookLM" · "CLI pentru NotebookLM și altele asemănătoare, ChatGPT, Manus" · "bug hunter la dicționare, traducere online, AI, MCP, ecranul de început, română" · "să meargă și cu DeepL gratuit"
 
 ### Rezultat
 - **Cercetare → Întreabă devine o discuție:** întrebări de continuare (ultimele 6 replici, cu buget de lungime), trimiteri [n] care deschid pasajul, alegerea surselor (manuscris, cercetare, note, dosare), import de surse (PDF, DOCX, TXT, MD, HTML, RTF, ODT, pagini web, text lipit), „Salvează ca notă”, „Inserează în document” (note de subsol sau legături), „Copiază”, 2–3 întrebări sugerate; discuțiile se păstrează în proiect (`research-chats.json`); răspunsul curge pe ecran și se poate opri.
-- **Linia de comandă `scribner`** (`cli/scribner.cjs`, `scribner.cmd` instalat lângă program, opțiune în installer pentru PATH): info, list, cat, search, stats, compile, export-sources cu `--target notebooklm|gemini|chatgpt|claude|manus|generic`, export-notebooklm, export-docs, backup, snapshot, import, ask cu `--session`, mcp.
+- **Linia de comandă `scribner`** (`cli/scribner.cjs`, `scribner.cmd` instalat lângă program, opțiune în installer pentru PATH): info, list, cat, search, stats, compile, export-sources cu `--target notebooklm|gemini|chatgpt|manus|generic`, export-notebooklm, export-docs, backup, snapshot, import, ask cu `--session`, mcp.
 - **DeepL gratuit:** cheile API Free (`:fx`) merg automat; fără cont se deschide pagina DeepL.
 - **Bug-uri:** meniul de dicționare cădea la un emoji pe limita de 5000 de caractere; dicționare și erori AI în engleză; timpul depășit scris corect („10 secunde”); acțiune AI pe text gol nu mai costă; cheia API ascunsă din mesajele de eroare; config Claude Desktop cu BOM sau `mcpServers` neobișnuit; ecranul de început: proiecte dispărute marcate „(lipsește)”, „Golește lista” nu mai dispare, Enter creează proiectul, titluri lungi; clic dreapta pe „cuvânt--altul”; „Înlocuiește” după traducere păstrează aldinul și cursivul, corecturile de gramatică schimbă doar cuvintele corectate.
 - **MCP verificat în rulare:** doar-citire refuză scrierile, snapshot înainte de scriere, jurnalul agentului, lock fără pierderi, diacritice și emoji.

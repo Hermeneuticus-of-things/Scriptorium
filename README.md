@@ -169,7 +169,7 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
   <img src="./assets/readme/research.png" width="100%" alt="Panoul Cercetare în proiect: o întrebare și o întrebare de continuare, răspunsuri cu trimiteri [1], [2], sursele folosite și întrebări propuse sub răspuns">
 </p>
 
-În **Cercetare → Întreabă** discuți cu sursele tale: primești răspunsul cu trimiteri [1], [2], iar un clic te duce la pasaj. Continui discuția, alegi ce surse folosește (manuscrisul, cercetarea, notele sau anumite dosare), aduci PDF, Word, text sau pagini web și salvezi răspunsul ca notă ori îl inserezi în text, cu trimiterile ca note de subsol. Fără AI, panoul doar caută în surse. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT**, **Claude Projects** sau **Manus**, gata împărțită.
+În **Cercetare → Întreabă** discuți cu sursele tale: primești răspunsul cu trimiteri [1], [2], iar un clic te duce la pasaj. Continui discuția, alegi ce surse folosește (manuscrisul, cercetarea, notele sau anumite dosare), aduci PDF, Word, text sau pagini web și salvezi răspunsul ca notă ori îl inserezi în text, cu trimiterile ca note de subsol. Fără AI, panoul doar caută în surse. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT** sau **Manus**, gata împărțită.
 
 ### Agenți AI
 

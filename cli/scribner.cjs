@@ -124,8 +124,8 @@ Export:
   compile <proiect> --format docx|epub|odt|rtf|html|md|txt|latex|fountain|fdx|pdf [--preset nume] [-o fișier]
   export-notebooklm <proiect> -o <folder>    surse .md pentru NotebookLM (max. 50)
   export-sources <proiect> -o <folder> [--format md|txt|docx] [--per chapter|document] [--max-sources N]
-         [--target notebooklm|gemini|chatgpt|claude|manus|generic]
-                                             surse pentru NotebookLM, Gemini, ChatGPT/Claude Projects, Manus
+         [--target notebooklm|gemini|chatgpt|manus|generic]
+                                             surse pentru NotebookLM, Gemini, ChatGPT, Manus
   export-docs <proiect> -o <folder> --format docx|md|txt|html|rtf|odt   câte un fișier pe document
   backup <proiect> [-o folder] [--no-zip]
 
@@ -160,8 +160,8 @@ Export:
   compile <project> --format docx|epub|odt|rtf|html|md|txt|latex|fountain|fdx|pdf [--preset name] [-o file]
   export-notebooklm <project> -o <folder>    .md sources for NotebookLM (max 50)
   export-sources <project> -o <folder> [--format md|txt|docx] [--per chapter|document] [--max-sources N]
-         [--target notebooklm|gemini|chatgpt|claude|manus|generic]
-                                             sources for NotebookLM, Gemini, ChatGPT/Claude Projects, Manus
+         [--target notebooklm|gemini|chatgpt|manus|generic]
+                                             sources for NotebookLM, Gemini, ChatGPT, Manus
   export-docs <project> -o <folder> --format docx|md|txt|html|rtf|odt   one file per document
   backup <project> [-o folder] [--no-zip]
 
@@ -776,8 +776,8 @@ const commands = {
 };
 
 // ---------------------------------------------------------------- export-sources
-const TARGET_LIMITS = { generic: 1000, notebooklm: 50, gemini: 1000, chatgpt: 1000, claude: 1000, manus: 1000 };
-// Generic "sources for AI notebooks" (NotebookLM, Gemini, ChatGPT/Claude Projects, Manus): one file per chapter (or per document) + research + notes +
+const TARGET_LIMITS = { generic: 1000, notebooklm: 50, gemini: 1000, chatgpt: 1000, manus: 1000 };
+// Generic "sources for AI notebooks" (NotebookLM, Gemini, ChatGPT, Manus): one file per chapter (or per document) + research + notes +
 // an index with synopses, built with the same source builder as the NotebookLM export.
 async function exportSources(dir, project, outRoot, { format, per, maxSources }) {
   const { buildSources } = require('../lib/notebookLm.cjs');

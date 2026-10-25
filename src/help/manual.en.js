@@ -307,15 +307,15 @@ scribner snapshot "D:\\\\Carti\\\\Drumul spre munte.scribner" "Chapter 1" --name
 scribner import "D:\\Texts\\Novel.docx" -o "D:\\\\Carti\\\\Novel.scribner" --split h1
 scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP server for AI agents</pre>
 <p>Add <code>--json</code> for script-friendly output and <code>--lang en</code> for English messages. Exit codes: 0 ok, 1 error, 2 bad usage. PDF is made only in the app (<em>Compile → PDF</em>); from the terminal use <code>--format docx</code> or <code>html</code>.</p>
-<h4>Your book as sources for NotebookLM, Gemini, ChatGPT, Claude Projects or Manus</h4>
+<h4>Your book as sources for NotebookLM, Gemini, ChatGPT or Manus</h4>
 <pre>scribner export-sources "D:\\\\Carti\\\\Drumul spre munte.scribner" -o "D:\\NotebookLM"</pre>
-<p>This writes the folder <code>Surse - Drumul spre munte</code>: <code>00 - Cuprins</code> (outline with synopses), one file per chapter, research and notes, plus <code>sources.json</code> (the source list). Options: <code>--per document</code> (one file per document instead of per chapter), <code>--format txt</code> or <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (at most 50 sources; chapters are merged) or <code>gemini</code>, <code>chatgpt</code>, <code>claude</code>, <code>manus</code>.</p>
+<p>This writes the folder <code>Surse - Drumul spre munte</code>: <code>00 - Cuprins</code> (outline with synopses), one file per chapter, research and notes, plus <code>sources.json</code> (the source list). Options: <code>--per document</code> (one file per document instead of per chapter), <code>--format txt</code> or <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (at most 50 sources; chapters are merged) or <code>gemini</code>, <code>chatgpt</code>, <code>manus</code>.</p>
 <ol>
 <li>Run the command above.</li>
 <li>Open <a href="https://notebooklm.google.com">notebooklm.google.com</a> → <em>New notebook</em> → <em>Add sources</em> → <em>Upload</em> and select every file in the folder (not <code>sources.json</code>).</li>
 <li>Ask the notebook about the book: characters, timeline, contradictions between chapters.</li>
 </ol>
-<p>For the NotebookLM limit there is also <code>scribner export-notebooklm … -o folder</code>, which merges chapters to stay within 50 sources. The same folder can be uploaded to a Gemini Gem, a ChatGPT project, a Claude project or Manus (manus.im). After writing more, run the command again and replace the sources.</p>`,
+<p>For the NotebookLM limit there is also <code>scribner export-notebooklm … -o folder</code>, which merges chapters to stay within 50 sources. The same folder can be uploaded to a Gemini Gem, a ChatGPT project or Manus (manus.im). After writing more, run the command again and replace the sources.</p>`,
       },
       {
         id: 'yours-sync',
