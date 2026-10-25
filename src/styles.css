@@ -321,7 +321,14 @@ legend { color: var(--muted); padding: 0 4px; }
 .prose .current-paragraph { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); border-radius: 4px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-soft) 55%, transparent); }
 .ghost-completion { color: var(--muted); opacity: .6; pointer-events: none; }
 .ghost-completion::after { content: ' ⇥'; font-size: .7em; }
-.page { zoom: var(--zoom, 1); }
+.page { position: relative; }
+/* Zoom enlarges the text only: the page keeps its width (no sideways scrolling). */
+.page .ProseMirror { font-size: calc(var(--editor-font-size) * var(--zoom, 1)); }
+.page .doc-title { zoom: var(--zoom, 1); }
+.page-resize { position: absolute; top: 0; bottom: 0; width: 10px; cursor: ew-resize; z-index: 2; }
+.page-resize.left { left: -6px; }
+.page-resize.right { right: -6px; }
+.page-resize:hover { background: color-mix(in srgb, var(--accent) 25%, transparent); }
 .page.page-view { max-width: 148mm; min-height: 210mm; padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
 .page.invisibles .ProseMirror p::after, .page.invisibles .ProseMirror h1::after, .page.invisibles .ProseMirror h2::after, .page.invisibles .ProseMirror h3::after { content: '¶'; color: var(--muted); opacity: .5; margin-left: 2px; }
 .page.invisibles .ProseMirror br::after { content: '↵'; }
@@ -536,3 +543,20 @@ legend { color: var(--muted); padding: 0 4px; }
 
 /* Typewriter mode: room below (and above) the text, so the line being written can sit mid-screen. */
 .page.typewriter { padding-bottom: 50vh; padding-top: 30vh; }
+
+/* Voice mini-player: a small floating window (drag by its title strip). */
+.mini-player { position: fixed; right: 24px; bottom: 48px; z-index: 40; width: 300px; background: var(--paper); color: var(--text); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.22); font-size: 13px; user-select: none; }
+.mini-head { display: flex; align-items: center; padding: 6px 8px 4px 12px; cursor: move; border-bottom: 1px solid var(--line); }
+.mini-title { flex: 1; font-weight: 600; }
+.mini-x { border: none; background: none; font-size: 16px; cursor: pointer; color: var(--muted); }
+.mini-row { display: flex; align-items: center; gap: 6px; padding: 6px 10px; }
+.mini-row select { flex: 1; min-width: 0; }
+.mini-row input[type=range] { width: 60px; }
+.mini-player .mini-row button { min-width: 30px; height: 28px; padding: 0 6px; border-radius: 6px; }
+.mini-player .mini-mic { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: #c62828; font-size: 16px; cursor: pointer; }
+.mini-player .mini-mic.on { background: #c62828; color: #fff; animation: mini-pulse 1.4s infinite; }
+@keyframes mini-pulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, #c62828 25%, transparent); } }
+.mini-level { flex: 1; }
+.mini-time, .mini-hint { color: var(--muted); }
+.mini-hint { flex: 1; }
+.mini-msg { padding: 0 10px 8px; color: var(--muted); font-size: 12px; }

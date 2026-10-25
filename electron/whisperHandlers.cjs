@@ -6,11 +6,12 @@
 const fs = require('fs');
 const path = require('path');
 const { createWhisperEngine } = require('../lib/whisperEngine.cjs');
+const { createTtsEngine } = require('../lib/ttsEngine.cjs');
 
 // Compressed audio, read whole into the window and decoded there: ~2–3 hours of MP3.
 const MAX_AUDIO = 150 * 1024 * 1024;
 
-module.exports = function register({ handle, app, net, assertOpened, store, pickedAudio, engineFactory = createWhisperEngine }) {
+module.exports = function register({ handle, app, net, assertOpened, store, pickedAudio, engineFactory = createWhisperEngine, allWindows = () => require('electron').BrowserWindow.getAllWindows(), getSettings = () => ({}), dtedFound = () => false }) {
   // Streams url to file. A write error (disk full) rejects instead of crashing the main process;
   // a failed download leaves no partial file behind.
   async function download(url, file, onBytes) {
@@ -48,19 +49,43 @@ module.exports = function register({ handle, app, net, assertOpened, store, pick
 
   const engine = engineFactory({ root: path.join(app.getPath('userData'), 'whisper'), download });
 
+  // Progress goes to every window: a download started at start-up shows wherever the writer looks.
+  const broadcast = (p) => {
+    for (const w of allWindows()) {
+      try {
+        if (!w.isDestroyed()) w.webContents.send('whisper:progress', p);
+      } catch {
+        /* window closed */
+      }
+    }
+  };
   handle('whisper:status', () => engine.status());
-  handle('whisper:install', (e, variant) =>
-    engine.install({
-      variant,
-      onProgress: (p) => {
-        try {
-          if (!e.sender.isDestroyed()) e.sender.send('whisper:progress', p);
-        } catch {
-          /* window closed */
-        }
-      },
-    }),
-  );
+  handle('whisper:install', (_e, variant) => engine.install({ variant, onProgress: broadcast }));
+  // Ready without a visit to Settings: on Windows, when neither the built-in engine nor D&TED is
+  // there, the engine downloads once in the background (kept in <userData>/whisper across
+  // updates). Settings → speechAutoInstall: false turns this off.
+  // Reading aloud (Piper + a Romanian voice, <userData>/tts), installed the same way.
+  const tts = createTtsEngine({ root: path.join(app.getPath('userData'), 'tts'), download });
+  const ttsProgress = (p) => broadcast({ ...p, tts: true });
+  handle('tts:status', () => tts.status());
+  handle('tts:install', () => tts.install({ onProgress: ttsProgress }));
+  handle('tts:synth', (_e, text, opts) => tts.synth(text, opts || {}));
+  engine.autoInstall = () => {
+    if (getSettings().speechAutoInstall === false) return null;
+    try {
+      const ts = tts.status();
+      if (ts.supported && !ts.installed && !ts.installing) tts.install({ onProgress: ttsProgress }).catch(() => null);
+    } catch {
+      /* retried at the next start */
+    }
+    try {
+      const st = engine.status();
+      if (!st.supported || st.installed || st.installing || dtedFound()) return null;
+      return engine.install({ variant: 'cpu', onProgress: broadcast }).catch(() => null); // retried at the next start
+    } catch {
+      return null;
+    }
+  };
   handle('whisper:remove', () => engine.remove());
   // 16 kHz mono 16-bit PCM (an ArrayBuffer / Uint8Array from the window) -> { text, segmente }.
   handle('whisper:transcribePcm', (_e, pcm, opts) => {

@@ -51,11 +51,13 @@ Name: "addtopath"; Description: "{cm:AddToPath}"; GroupDescription: "{cm:Command
 Source: "..\release\win-unpacked\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Command line: "scribner" from any terminal once {app} is on PATH (Ajutor → Ce faci tu → Linia de comandă).
 Source: "scribner.cmd"; DestDir: "{app}"; Flags: ignoreversion
+; MCP for any AI client, without naming a project: cmd /c "%LOCALAPPDATA%\Programs\Scribner\scribner-mcp.cmd".
+Source: "scribner-mcp.cmd"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\resources\app\build\icon.ico"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\resources\app\build\icon.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent

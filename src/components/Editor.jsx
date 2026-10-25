@@ -509,14 +509,50 @@ const Editor = forwardRef(function Editor(
       )}
       <div
         className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? `page-view page-${view.pageSize || 'a5'}` : ''} ${view.pageView && view.facing ? 'facing' : ''} ${view.invisibles ? 'invisibles' : ''}`}
-        style={view.zoom && view.zoom !== 100 ? { '--zoom': view.zoom / 100 } : undefined}
+        style={{
+          ...(view.zoom && view.zoom !== 100 ? { '--zoom': view.zoom / 100 } : {}),
+          // Width chosen by dragging the page edges (or the whole window, double-click on an edge).
+          ...(!compact && !view.pageView && view.fullWidth ? { maxWidth: 'none' } : {}),
+          ...(!compact && !view.pageView && !view.fullWidth && view.pageWidthPx ? { maxWidth: `${view.pageWidthPx}px` } : {}),
+        }}
       >
+        {onViewChange && !compact && !view.pageView && ['left', 'right'].map((side) => (
+          <div
+            key={side}
+            className={`page-resize ${side}`}
+            role="separator"
+            aria-orientation="vertical"
+            title={i18nT('ui.editor.latime_pagina')}
+            onDoubleClick={() => onViewChange({ ...view, fullWidth: !view.fullWidth })}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const page = e.currentTarget.parentElement;
+              const startX = e.clientX;
+              const startW = page.getBoundingClientRect().width;
+              let w = startW;
+              const move = (ev) => {
+                const dx = (ev.clientX - startX) * (side === 'right' ? 1 : -1);
+                w = Math.max(320, Math.round(startW + 2 * dx)); // the page stays centred: both edges move
+                page.style.maxWidth = `${w}px`;
+              };
+              const up = () => {
+                window.removeEventListener('mousemove', move);
+                window.removeEventListener('mouseup', up);
+                if (Math.abs(w - startW) < 3) return; // a click (or the first half of a double-click)
+                page.style.maxWidth = '';
+                onViewChange({ ...view, fullWidth: false, pageWidthPx: w });
+              };
+              window.addEventListener('mousemove', move);
+              window.addEventListener('mouseup', up);
+            }}
+          />
+        ))}
         <h2 className="doc-title" onClick={onTitleClick}>
           {title}
         </h2>
         {readOnly && <p className="hint">{i18nT('ui.editor.doar_citire')}</p>}
         {showFormatFind && <FormatFind editor={editor} styles={styles} onClose={() => { setShowFormatFind(false); editor.commands.focus(); }} />}
-        {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={(view.zoom || 100) / 100} />}
+        {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={1} />}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}
         <EditorContent editor={editor} className={scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'} />
       </div>

@@ -65,7 +65,7 @@ jobs:
           $p = Start-Process $setup.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/MERGETASKS=addtopath' -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "installer exit $($p.ExitCode)" }
           $app = Join-Path $env:LOCALAPPDATA 'Programs\Scribner'
-          foreach ($f in 'Scribner.exe','scribner.cmd','resources\app\cli\scribner.cjs','resources\app\mcp\server.mjs') { if (-not (Test-Path (Join-Path $app $f))) { throw "missing $f" } }
+          foreach ($f in 'Scribner.exe','scribner.cmd','scribner-mcp.cmd','resources\app\build\icon.ico','resources\app\cli\scribner.cjs','resources\app\mcp\server.mjs') { if (-not (Test-Path (Join-Path $app $f))) { throw "missing $f" } }
           $userPath = [Environment]::GetEnvironmentVariable('Path','User')
           if ($userPath -notlike "*$app*") { throw 'install folder not added to PATH' }
           & (Join-Path $app 'scribner.cmd') --version

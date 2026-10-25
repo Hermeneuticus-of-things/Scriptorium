@@ -1,5 +1,15 @@
 # CHANGELOG — Scriptorium
 
+
+## v0.9.9
+- Iconiță nouă (carte deschisă cu peniță, scris „SCRIBNER” sub ea) pentru program, installer, scurtătura de pe desktop și din meniul Start.
+- Pagina de scris: se lățește sau se îngustează trăgând de margini; dublu-clic pe margine = toată fereastra (și comanda „Pagina pe toată fereastra”).
+- Mărirea textului: Ctrl+= / Ctrl+- / Ctrl+0 și Ctrl+rotița mouse-ului; se mărește doar textul, pagina își păstrează lățimea.
+- Mini-player „Voce” (F8 sau butonul 🎙 din bară): dictare (●/❚❚/■) și citire cu voce tare, fereastră mică mutabilă.
+- Vocea de citire românească inclusă (Piper, „Mihai”), descărcată singură o dată la prima pornire; vocile sistemului rămân ca alternativă.
+- Dictarea e gata fără vizită în Setări: motorul se descarcă singur o dată, în fundal; dacă D&TED e instalat, e folosit el.
+- MCP: comandă generală, aceeași pe orice calculator și pentru orice client AI, fără nume de utilizator și fără carte (`cmd /c %LOCALAPPDATA%\Programs\Scribner\scribner-mcp.cmd`); fără `--project` serverul oferă proiectele din lista recentă.
+
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
 ### v0.9.8, a doua rundă pe toate nivelurile + lista cerută

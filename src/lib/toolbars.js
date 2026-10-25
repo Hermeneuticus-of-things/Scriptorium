@@ -30,11 +30,12 @@ export const TOP_ITEMS = [
   { id: 'irep', label: 'cmd.irep', glyph: '✓', command: 'irep', text: 'I-REP' },
   { id: 'ai', label: 'cmd.ai', glyph: '✦', command: 'ai', needs: 'ai', text: 'AI' },
   { id: 'aiMenu', label: 'ui.tb.aiMenu', kind: 'aiMenu', needs: 'desktop' },
+  { id: 'voice', label: 'cmd.speech', glyph: '🎙', command: 'speech', text: 'ui.tb.voice' },
   { id: 'settings', label: 'cmd.settings', glyph: '⚙', command: 'settings' },
   { id: 'help', label: 'cmd.help', glyph: '?', command: 'help' },
 ];
 // Decluttered default: navigation, title, view switch, Compile, Inspector (+ the AI menu on desktop).
-export const TOP_DEFAULT = ['home', 'back', 'forward', 'title', SPACE, 'views', 'compile', 'inspector', 'aiMenu'];
+export const TOP_DEFAULT = ['home', 'back', 'forward', 'title', SPACE, 'views', 'voice', 'compile', 'inspector', 'aiMenu'];
 
 // Format bar groups (ids used by components/FormatBar.jsx).
 export const FORMAT_ITEMS = [

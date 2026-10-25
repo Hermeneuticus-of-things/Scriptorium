@@ -342,6 +342,7 @@ function createWindow() {
     minHeight: 600,
     ...(offset ? { x: 80 + offset, y: 60 + offset } : {}),
     title: 'Scribner',
+    icon: path.join(__dirname, '..', 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -617,16 +618,10 @@ handle('doc:write', (e, dir, id, kind, html) => {
 // the open project. Packaged builds run the server with Electron's own Node.
 handle('mcp:info', (_e, dir) => {
   assertOpened(dir);
-  const server = path.join(__dirname, '..', 'mcp', 'server.mjs');
-  const packaged = app.isPackaged;
-  const command = packaged ? process.execPath : 'node';
-  const env = packaged ? { ELECTRON_RUN_AS_NODE: '1' } : {};
-  const q = (s) => (/[\s"]/.test(s) ? `"${s.replace(/"/g, '\\"')}"` : s);
-  const envPrefix = packaged ? '--env ELECTRON_RUN_AS_NODE=1 ' : '';
-  return {
-    claudeCode: `claude mcp add scribner ${envPrefix}-- ${q(command)} ${q(server)} --project ${q(dir)}`,
-    desktopJson: JSON.stringify({ mcpServers: { scribner: { command, args: [server, '--project', dir], env } } }, null, 2),
-  };
+  // The general form (no project, no user name): the same line for every book and computer.
+  const mc = require('../lib/mcpConfig.cjs');
+  const entry = app.isPackaged ? mcpEntry() : { command: 'node', args: [path.join(__dirname, '..', 'mcp', 'server.mjs')] };
+  return { claudeCode: mc.claudeCodeCommand(entry), desktopJson: JSON.stringify({ mcpServers: { scribner: entry } }, null, 2) };
 });
 
 // Reload the open project when files change outside the app (an AI agent via MCP,
@@ -774,7 +769,7 @@ require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
 require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai, noteSelfWrite, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 const pickedAudio = new Set();
-require('./whisperHandlers.cjs')({ handle, app, net, assertOpened, store, pickedAudio });
+const whisper = require('./whisperHandlers.cjs')({ handle, app, net, assertOpened, store, pickedAudio, getSettings: readSettings, dtedFound: () => Boolean(require('../lib/dted.cjs').locate({ custom: readSettings().dtedPath || '' })) });
 require('./dtedHandlers.cjs')({ handle, assertOpened, getSettings: readSettings, app, pickedAudio, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 
@@ -1159,6 +1154,7 @@ app.whenReady().then(() => {
   }
   scheduleBackups();
   createWindow();
+  setTimeout(() => whisper.autoInstall?.(), 5000); // dictation ready without a trip to Settings
   app.on('activate', () => {
     if (!BrowserWindow.getAllWindows().some((w) => w.isVisible())) createWindow();
   });

@@ -1,7 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#2f3b52"/>
-  <path d="M150 112h170l62 62v226H150z" fill="#f7f5f0"/>
-  <path d="M320 112v62h62" fill="#d9d3c4"/>
-  <path d="M188 230h156M188 274h156M188 318h110" stroke="#2f3b52" stroke-width="18" stroke-linecap="round"/>
-  <path d="M372 300l-96 96-30 8 8-30 96-96z" fill="#e8b04a" stroke="#2f3b52" stroke-width="10" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b3a67"/>
+      <stop offset="1" stop-color="#14193a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6d27a"/>
+      <stop offset="1" stop-color="#c98a2b"/>
+    </linearGradient>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf6ea"/>
+      <stop offset="1" stop-color="#ece2cb"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="104" fill="url(#bg)"/>
+  <!-- open book -->
+  <path d="M256 150 C 210 118 140 112 86 124 L 86 370 C 140 358 210 364 256 396 Z" fill="url(#page)"/>
+  <path d="M256 150 C 302 118 372 112 426 124 L 426 370 C 372 358 302 364 256 396 Z" fill="url(#page)"/>
+  <path d="M256 150 L 256 396" stroke="#c9b88f" stroke-width="5"/>
+  <!-- text lines left -->
+  <g stroke="#2b3a67" stroke-width="10" stroke-linecap="round" opacity=".55">
+    <path d="M118 170 C 160 162 200 166 230 180"/>
+    <path d="M118 206 C 160 198 200 202 230 216"/>
+    <path d="M118 242 C 160 234 200 238 230 252"/>
+    <path d="M118 278 C 150 272 175 274 200 282"/>
+  </g>
+  <!-- fountain pen nib, writing on right page -->
+  <g transform="translate(345 262) rotate(35) scale(0.78)">
+    <path d="M0 -150 C 34 -112 46 -60 34 -6 L 0 74 L -34 -6 C -46 -60 -34 -112 0 -150 Z" fill="url(#gold)" stroke="#7a4f12" stroke-width="6" stroke-linejoin="round"/>
+    <circle cx="0" cy="-58" r="13" fill="#14193a"/>
+    <path d="M0 -45 L 0 70" stroke="#14193a" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <!-- sound waves (dictation) -->
+  <g fill="none" stroke="#f6d27a" stroke-linecap="round" stroke-width="11">
+    <path d="M150 432 v -20"/><path d="M178 444 v -44"/><path d="M206 436 v -28"/><path d="M234 448 v -52"/><path d="M262 438 v -32"/><path d="M290 444 v -44"/><path d="M318 432 v -20"/>
+  </g>
 </svg>

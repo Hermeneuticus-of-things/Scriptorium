@@ -268,6 +268,10 @@ node scripts\ai-smoke.cjs openrouter</pre>
         html: `<p>Scribner ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>AI → Connect to Claude (MCP)…</em>. Installer paths on Windows (current user):</p>
 <pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
 Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs</pre>
+<p><strong>General command (the same on any computer, for any AI client; names no book and no user; the agent sees the projects in Scribner's recent list):</strong></p>
+<pre>claude mcp add scribner --scope user -- cmd /c %LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd</pre>
+<pre>"scribner": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\\\Programs\\\\Scribner\\\\scribner-mcp.cmd"] }</pre>
+<p>Add <code>--read-only</code> at the end for reading only. The forms below, with a named project, still work.</p>
 <p><strong>Claude Code:</strong></p>
 <pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
 <p><strong>OpenAI Codex:</strong></p>
