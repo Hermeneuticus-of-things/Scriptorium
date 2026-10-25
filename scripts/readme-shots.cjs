@@ -182,9 +182,9 @@ const SHOTS = {
     sub: 'Compari versiunile una lângă alta și te întorci oricând la cea bună.',
     async setup(p) {
       await pick(p, 'Începutul');
-      const tab = p.locator('.inspector .tabs button').nth(4);
+      const tab = p.locator('.inspector .tabs button[title*="Snapshot"]').first();
       await tab.click();
-      await p.locator('.snapshots > button').first().click();
+      await p.locator('.snapshots .snap-add').first().click(); // take a snapshot of the current text
       await p.waitForTimeout(300);
       await ed(p).click();
       await p.keyboard.press('Control+End');
@@ -192,7 +192,9 @@ const SHOTS = {
       await p.keyboard.insertText('Pe prag s-a oprit o clipă și a ascultat ploaia. Apoi a plecat fără să se uite înapoi.');
       await p.waitForTimeout(800);
       await tab.click();
-      await p.locator('.snapshots li').first().locator('button.link').nth(1).click();
+      await p.locator('.snapshots li').first().click(); // select it
+      await p.waitForTimeout(150);
+      await p.locator('.snapshots .snap-compare').first().click(); // show the diff vs the current text
       await p.waitForTimeout(400);
       await noCaret(p);
     },
@@ -237,7 +239,10 @@ const SHOTS = {
       await menuPick(p, 'Fișier', 'Compilează…');
       await p.waitForSelector('.compile-dialog');
       await p.locator('.compile-dialog .cd-formats li button', { hasText: 'Carte tipărită' }).first().click();
-      await p.locator('.compile-dialog .cd-tabs button').nth(5).click();
+      await p.locator('.compile-dialog .cd-tabs button').nth(1).click(); // Opțiuni
+      await p.locator('.compile-dialog button', { hasText: 'Editează formatul' }).first().click();
+      await p.waitForSelector('.cd-format-editor');
+      await p.locator('.cd-format-editor .cd-tabs button', { hasText: 'Pagină' }).first().click();
       await p.waitForTimeout(400);
     },
   },
@@ -328,7 +333,8 @@ const SHOTS = {
       const askQ = async (q) => {
         await box.fill(q);
         await p.locator('.research-chat .research-ask-btn').first().click();
-        await p.waitForFunction(() => !document.querySelector('.research-live'), null, { timeout: 15000 });
+        // Locator wait (goes through CDP) instead of waitForFunction, which the preview build's CSP blocks.
+        await p.locator('.research-live').first().waitFor({ state: 'detached', timeout: 15000 }).catch(() => {});
         await p.waitForTimeout(400);
       };
       await askQ('Ce culoare au ochii lui Andrei?');
@@ -347,7 +353,8 @@ const SHOTS = {
     async setup(p) {
       await caretEnd(p);
       await p.keyboard.press('F9');
-      await p.waitForFunction(() => document.querySelector('.pane .ProseMirror').innerText.includes('drumul urca'), null, { timeout: 6000 });
+      // Locator wait (CDP) instead of waitForFunction, which the preview build's CSP blocks.
+      await p.locator('.pane .ProseMirror', { hasText: 'drumul urca' }).first().waitFor({ timeout: 6000 }).catch(() => {});
       await p.waitForTimeout(250);
     },
   },
