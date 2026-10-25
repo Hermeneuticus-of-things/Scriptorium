@@ -56,6 +56,7 @@ import PacingView from './components/PacingView.jsx';
 import NameGeneratorDialog from './components/NameGeneratorDialog.jsx';
 import Scratchpad from './components/Scratchpad.jsx';
 import MiniPlayer from './components/MiniPlayer.jsx';
+import EditorFooter from './components/EditorFooter.jsx';
 import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
@@ -2473,7 +2474,9 @@ export default function App({ api: apiProp }) {
                     <LockIcon />
                   </button>
                 )}
-                <button onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title="Split editor" aria-label="Split editor"><SplitIcon /></button>
+                <button className="hdr-arrow" onClick={() => goSibling(-1)} title={tr('cmd.prevDoc')} aria-label={tr('cmd.prevDoc')}>▲</button>
+                <button className="hdr-arrow" onClick={() => goSibling(1)} title={tr('cmd.nextDoc')} aria-label={tr('cmd.nextDoc')}>▼</button>
+                <button className="split-btn" onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
               </div>
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type === 'file' && !selected.children && (
@@ -2505,6 +2508,16 @@ export default function App({ api: apiProp }) {
                 view={editorView}
                 onViewChange={setEditorView}
                 onManageStyles={() => setDialog('styles')}
+              />
+            )}
+            {view === 'editor' && selected && !isFolderView && selected.type !== 'file' && !composition && (
+              <EditorFooter
+                node={selected}
+                words={counts[selected.id] || 0}
+                chars={statusChars}
+                zoom={editorView.zoom || 100}
+                onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
+                onPatch={selected.root || selected.locked ? null : (patch) => patchNode(selected.id, patch)}
               />
             )}
             {isFolderView && (
@@ -2833,8 +2846,6 @@ export default function App({ api: apiProp }) {
         sync={conflict ? { state: 'conflict' } : offline || queued ? { state: 'pending', n: queued } : team.who ? { state: 'ok' } : null}
         team={team.who ? team : null}
         onTeam={() => setDialog('team')}
-        zoom={editorView.zoom || 100}
-        onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
       />
 
       {composition && <button className="exit-composition" onClick={() => setComposition(false)}>{tr('ui.app.iesi_esc')}</button>}

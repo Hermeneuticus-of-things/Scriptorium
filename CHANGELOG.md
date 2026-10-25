@@ -2,6 +2,15 @@
 
 
 ## v0.9.9
+- Inspector ca în programele de scris clasice: un singur panou o dată, ales din iconițele de jos (Note, Semne de carte și legături, Metadate, Snapshot-uri, Comentarii); Note e implicit, cu sinopsisul sus și comutatorul Document / Proiect.
+- Bara de jos a documentului: zoom, cuvinte, caractere și ținta documentului (buton cu fereastră mică și bară de progres).
+- Bara documentului: ▲▼ pentru documentul anterior / următor.
+- Corkboard: comenzile de vizualizare în bara de jos.
+- Outline: coloane implicite Sinopsis, Etichetă, Status.
+- Binder: indicațiile de taste mutate în tooltip-ul căutării (mai puțin text pe ecran).
+- Texte rămase în română în interfața engleză (Metadate, Previzualizare, Formate, Statistici, Linii, Liber, Aspect, Progres, Creat, Modificat…).
+- MCP: `scriv_outline` și `scriv_read` citesc un proiect .scriv pe loc, fără import; serverul își descrie uneltele clientului AI.
+- Mini-player Voce: și vocea Speechify, dacă e configurată.
 - Iconiță nouă (carte deschisă cu peniță, scris „SCRIBNER” sub ea) pentru program, installer, scurtătura de pe desktop și din meniul Start.
 - Pagina de scris: se lățește sau se îngustează trăgând de margini; dublu-clic pe margine = toată fereastra (și comanda „Pagina pe toată fereastra”).
 - Mărirea textului: Ctrl+= / Ctrl+- / Ctrl+0 și Ctrl+rotița mouse-ului; se mărește doar textul, pagina își păstrează lățimea.

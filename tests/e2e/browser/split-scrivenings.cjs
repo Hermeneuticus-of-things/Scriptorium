@@ -4,7 +4,7 @@ const { open, caretEnd, check, done } = require('./_helpers.cjs');
   const { browser, page, errors } = await open();
   const binder = (t) => page.locator('.binder').getByText(t, { exact: true });
   await binder('Drumul').click();
-  await page.locator('button[title="Split editor"]').click();
+  await page.locator('button.split-btn').click();
   await page.waitForSelector('.pane.second .ProseMirror');
   // pane 1 (focused first pane) shows the folder as Scrivenings
   await page.locator('.pane').first().click({ position: { x: 20, y: 60 } }).catch(() => {});

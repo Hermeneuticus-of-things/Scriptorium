@@ -6,12 +6,12 @@ const TABS = () => ([
   ['proiect', tr('group.project')],
   ['etichete', tr('ui.advancedSearchDialog.etichete')],
   ['statusuri', tr('ui.projectSettingsDialog.statusuri')],
-  ['metadate', 'Metadate'],
+  ['metadate', tr('ui.common.metadate')],
   ['sectiuni', tr('ui.projectSettingsDialog.tipuri_de_sectiune')],
   ['formatare', tr('ui.projectSettingsDialog.formatare_implicita')],
-  ['autocomplete', 'Auto-completare'],
+  ['autocomplete', tr('ui.common.autocomplete')],
   ['backup', 'Backup'],
-  ['foldere', 'Foldere speciale'],
+  ['foldere', tr('ui.common.foldere_speciale')],
 ]);
 const FONTS = ['', 'Georgia, serif', "'Times New Roman', serif", "'Palatino Linotype', Palatino, serif", 'Garamond, serif', 'Arial, sans-serif', "'Courier New', monospace"];
 

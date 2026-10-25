@@ -17,11 +17,11 @@ const BASE_COLUMNS = (project) => ([
   { id: 'total', label: t('ui.outliner.total_cuvinte'), num: true },
   { id: 'chars', label: t('ui.historyDialog.caractere'), num: true },
   { id: 'target', label: t('ui.inspector.tinta'), num: true },
-  { id: 'progress', label: 'Progres' },
-  { id: 'created', label: 'Creat' },
-  { id: 'modified', label: 'Modificat' },
+  { id: 'progress', label: t('ui.common.progres') },
+  { id: 'created', label: t('ui.common.creat') },
+  { id: 'modified', label: t('ui.common.modificat') },
 ]);
-const DEFAULT_COLUMNS = ['synopsis', 'label', 'status', 'include', 'words'];
+const DEFAULT_COLUMNS = ['synopsis', 'label', 'status'];
 
 function loadColumns() {
   try {

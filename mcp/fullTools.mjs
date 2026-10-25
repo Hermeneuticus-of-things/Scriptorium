@@ -62,6 +62,7 @@ const templates = require('../lib/templates.cjs');
 const importers = require('../lib/importers.cjs');
 const { splitHtml } = require('../lib/docxImport.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
+const { scrivOutline, scrivRead } = require('../lib/scrivRead.cjs');
 const exporters = require('../lib/exporters.cjs');
 const teamStore = require('../lib/teamStore.cjs');
 const { exportScriv } = require('../lib/scrivExport.cjs');
@@ -381,6 +382,31 @@ export function registerFullTools(ctx) {
       return `${entries.length} intrări bibliografice importate.`;
     },
     W,
+  );
+
+  // Scrivener projects (.scriv) read in place, without importing: an agent asked about a .scriv
+  // finds them here (read only; import_scriv turns one into a Scribner project).
+  tool(
+    'scriv_outline',
+    'Citește binder-ul unui proiect Scrivener (.scriv) fără să-l importe: titlu, tip, nivel și id pentru fiecare element. Doar citire.',
+    { scriv_path: z.string() },
+    (_dir, { scriv_path }) => {
+      const src = existingDir(scriv_path, 'scriv_path');
+      if (hiddenPath(fs.realpathSync.native(src))) throw new Error('Nu citesc din foldere ascunse.');
+      return scrivOutline(src);
+    },
+    { global: true },
+  );
+  tool(
+    'scriv_read',
+    'Textul unui element dintr-un proiect Scrivener (.scriv), ca text simplu, fără import (kind: content sau notes). Id-ul vine din scriv_outline. Doar citire.',
+    { scriv_path: z.string(), id: z.string(), kind: z.enum(['content', 'notes']).default('content') },
+    (_dir, { scriv_path, id, kind }) => {
+      const src = existingDir(scriv_path, 'scriv_path');
+      if (hiddenPath(fs.realpathSync.native(src))) throw new Error('Nu citesc din foldere ascunse.');
+      return scrivRead(src, id, kind);
+    },
+    { global: true },
   );
 
   tool(

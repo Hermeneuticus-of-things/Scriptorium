@@ -420,8 +420,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         <button onClick={() => setAllCollapsed(false)} title={tr('ui.binder.extinde_tot')}>⊞</button>
         <button onClick={() => setAllCollapsed(true)} title={tr('ui.binder.restrange_tot')}>⊟</button>
       </div>
-      <input className="search" type="search" aria-label={tr('ui.binder.cauta_in_proiect')} placeholder={tr('ui.binder.cauta_in_proiect')} value={query} onChange={(e) => setQuery(e.target.value)} />
-      <p className="tip">{tr('ui.binder.ctrl_shift_clic_selectie_multipla')}</p>
+      <input className="search" type="search" aria-label={tr('ui.binder.cauta_in_proiect')} placeholder={tr('ui.binder.cauta_in_proiect')} title={tr('ui.binder.ctrl_shift_clic_selectie_multipla')} value={query} onChange={(e) => setQuery(e.target.value)} />
       {filterIds ? (
         <ul className="tree collection-list" role="listbox" aria-multiselectable="true" tabIndex={0} ref={treeRef} aria-activedescendant={selected && filterIds.includes(selected) ? rowDomId(selected) : undefined} aria-label={tr('ui.binder.colectia_x', { filterTitle: filterTitle })}>
           {filterIds.length === 0 && <li className="muted" role="presentation">{tr('ui.binder.colectia_e_goala')}</li>}

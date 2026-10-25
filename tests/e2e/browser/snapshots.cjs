@@ -7,7 +7,7 @@ const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
   await page.locator('.binder-row', { hasText: 'Începutul' }).first().click();
   await page.waitForTimeout(250);
   if (!(await page.locator('.inspector .tabs').count())) { await page.keyboard.press('Control+Shift+I'); await page.waitForTimeout(200); }
-  const tab = page.locator('.inspector .tabs button').nth(4);
+  const tab = page.locator('.inspector .tabs button').nth(3);
   await tab.click();
   await page.waitForTimeout(150);
   const original = await ed(page).innerText();

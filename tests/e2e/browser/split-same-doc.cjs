@@ -2,7 +2,7 @@
 const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
-  await page.locator('button[title="Split editor"]').click();
+  await page.locator('button.split-btn').click();
   await page.waitForSelector('.pane.second .ProseMirror');
   const p1 = ed(page);
   const p2 = page.locator('.pane.second .ProseMirror');

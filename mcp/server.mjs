@@ -310,7 +310,15 @@ function addProject(dir) {
 // ---------------------------------------------------------------------------
 // Server
 
-const server = new McpServer({ name: 'scribner', version: '0.3.0' });
+// What the client tells the model about this server: the book projects it can reach, and that a
+// `.scriv` project can also be read in place (scriv_outline / scriv_read) or imported (import_scriv).
+const server = new McpServer(
+  { name: 'scribner', version: '0.3.0' },
+  {
+    instructions:
+      'Scribner: program de scris cărți lungi. Unelte pentru proiectele .scribner date la pornire sau din lista recentă (argumentul project = numele sau calea; project_info, list_binder, read_document, write_document, search, compile…). Un proiect Scrivener (.scriv) se citește pe loc cu scriv_outline și scriv_read sau se importă cu import_scriv. Fiecare scriere face întâi un snapshot.',
+  },
+);
 
 tool('project_info', 'Titlul, autorul, țintele, etichetele, statusurile, profilul editorial și numărul de cuvinte al proiectului.', { project }, (dir) => {
   const p = load(dir);

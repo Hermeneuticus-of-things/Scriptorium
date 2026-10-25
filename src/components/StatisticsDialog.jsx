@@ -37,7 +37,7 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal wide" role="dialog" aria-label="Statistici" onClick={(e) => e.stopPropagation()}>
-        <h2>Statistici</h2>
+        <h2>{t('ui.common.statistici')}</h2>
         <div className="tabs" role="tablist">
           {[['project', t('group.project')], ['words', t('ui.statisticsDialog.frecventa_cuvintelor')], ['sentences', t('ui.stats.fraze_tab')], ['pos', t('ui.statisticsDialog.parti_de_vorbire')]].map(([k, l]) => (
             <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>

@@ -35,6 +35,43 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
   const sysCtl = useRef(null);
   const boxRef = useRef(null);
 
+  const [cloudReady, setCloudReady] = useState(false); // a cloud voice set up in Settings
+  useEffect(() => {
+    if (!api.servicesStatus || !api.speakCloud) return;
+    api.servicesStatus().then((st) => {
+      const ok = Boolean(st.services.speechify && st.services.speechify.configured);
+      setCloudReady(ok);
+      if (ok) setVoice('speechify');
+    }, () => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const playCloud = async (text) => {
+    const my = ++run.current;
+    setReading('loading');
+    try {
+      const res = await api.speakCloud({ text });
+      if (my !== run.current) return;
+      const queue = [...res.chunks];
+      setReading('speaking');
+      while (queue.length) {
+        const el = new Audio(`data:audio/${res.format || 'mp3'};base64,${queue.shift()}`);
+        el.playbackRate = rate;
+        audio.current = el;
+        await new Promise((resolve) => {
+          el.onended = resolve;
+          el.onerror = resolve;
+          el.play().catch(resolve);
+        });
+        if (my !== run.current) return;
+      }
+      setReading('idle');
+    } catch (e) {
+      if (my === run.current) {
+        setMsg(e.message);
+        setReading('idle');
+      }
+    }
+  };
   const refresh = () => {
     api.whisperStatus?.().then(setEngineState, () => {});
     api.ttsStatus?.().then(setTtsState, () => {});
@@ -120,6 +157,7 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
     const text = getText();
     if (!text?.trim()) return setMsg(tr('ui.speechBar.nu_exista_text_de_citit'));
     stopAll();
+    if (voice === 'speechify' && cloudReady) return playCloud(text);
     if (builtIn && !voice) return playBuiltIn(text);
     if (!ttsSupported()) return setMsg(tr('ui.speechBar.citirea_cu_voce_tare_nu'));
     setReading('speaking');
@@ -206,6 +244,7 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
         <button onClick={doPause} disabled={reading !== 'speaking'} title={tr('ui.speechBar.pauza')} aria-label={tr('ui.speechBar.pauza')}>❚❚</button>
         <button onClick={doStop} disabled={reading === 'idle'} title={tr('ui.speechBar.opreste')} aria-label={tr('ui.speechBar.opreste')}>■</button>
         <select value={voice} onChange={(e) => { doStop(); setVoice(e.target.value); }} title={tr('ui.speechBar.voce')} aria-label={tr('ui.speechBar.voce')}>
+          {cloudReady && <option value="speechify">Speechify</option>}
           {builtIn && <option value="">{tr('ui.mini.vocea_scribner')}</option>}
           {voices.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}
         </select>

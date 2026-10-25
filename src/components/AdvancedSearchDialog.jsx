@@ -10,7 +10,7 @@ const FIELD_LABELS = () => ({
   notes: tr('ui.advancedSearchDialog.note'),
   synopsis: tr('ui.advancedSearchDialog.sinopsis'),
   keywords: tr('ui.advancedSearchDialog.cuvinte_cheie'),
-  custom: 'Metadate',
+  custom: tr('ui.common.metadate'),
 });
 const FIELDS = Object.keys(FIELD_LABELS());
 
