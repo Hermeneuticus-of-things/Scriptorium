@@ -260,6 +260,10 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
     - fără D&TED instalat, comenzile apar cu un link de instalare; nimic nu pleacă pe internet; procesul rulează din main, renderer-ul nu pornește programe;
     - teste: protocolul JSON simulat, anularea, erori (lipsă model, fără microfon), scenariu de browser cu un D&TED fals.
 12. **[x] v0.9.0 — Motorul de recunoaștere a vorbirii încorporat în Scribner** (whisper.cpp + large-v3-turbo, descărcat din Setări; detalii în docs/DTED.md §7). Rămâne: proba reală pe Windows (descărcare, microfon, NVIDIA).
+13. **[ ] Mai multe limbi** (traducere, dictare, interfață). Extinderea suportului de limbi pe trei planuri:
+    - **Interfață:** dincolo de română și engleză — fișiere de traducere noi pentru `src/lib/i18n.js` / `src/lib/i18n-ui.js` și alegerea limbii în Setări → Limbă; de verificat textele care încă au șiruri fixe (ex. etichetele serviciilor din `lib/services.cjs`, care acum sunt doar în română).
+    - **Traducere:** mai multe limbi-țintă în meniul de traducere și la DeepL/Google (lista `LANG_NAMES` și perechile din `src/lib/lookups.js`: dexonline/Wiktionary/Linguee/IATE).
+    - **Dictare și transcriere:** recunoaștere în mai multe limbi — motorul Whisper e deja multilingv, de expus alegerea limbii de dictare în bara D&TED și la transcrierea fișierelor audio, pe lângă modelul `eek` optimizat pentru română.
 
 ## Dictare: modelul eek (v0.9.7)
 
