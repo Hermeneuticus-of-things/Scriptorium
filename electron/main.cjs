@@ -848,6 +848,29 @@ handle('media:openExternal', async (_e, dir, file) => {
   return true;
 });
 
+// Bookmarks to files outside the project: chosen in a dialog; opened only when the saved project
+// lists that exact path as a bookmark (the window cannot open arbitrary paths), never programs.
+const RUNNABLE = /\.(exe|bat|cmd|com|msi|scr|ps1|vbs|js|jse|wsf|lnk|sh|command|app|jar|appimage|desktop)$/i;
+handle('bookmark:chooseFile', async (e) => {
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), { properties: ['openFile'] });
+  if (res.canceled || !res.filePaths[0]) return null;
+  const p = res.filePaths[0];
+  if (RUNNABLE.test(p)) throw new Error(`Programele nu pot fi semne de carte: ${path.basename(p)}`);
+  return { path: p, name: path.basename(p) };
+});
+handle('bookmark:openFile', async (_e, dir, file) => {
+  assertOpened(dir);
+  if (typeof file !== 'string' || !path.isAbsolute(file) || RUNNABLE.test(file)) throw new Error('Fișier invalid.');
+  const project = store.loadProject(dir, { readOnly: true });
+  let listed = (project.bookmarks || []).some((b) => b && b.file === file);
+  if (!listed) store.walk(project.tree || [], (n) => { if (!listed && (n.bookmarks || []).some((b) => b && b.file === file)) listed = true; });
+  if (!listed) throw new Error('Fișierul nu este printre semnele de carte ale proiectului (salvează proiectul și încearcă din nou).');
+  if (!fs.existsSync(file)) throw new Error(`Fișierul nu mai există: ${file}`);
+  const err = await shell.openPath(file);
+  if (err) throw new Error(err);
+  return true;
+});
+
 handle('backup:now', async (_e, dir) => {
   assertOpened(dir);
   const s = backupSettings();

@@ -311,6 +311,17 @@ export function createMockApi() {
       state.projects[dir] = structuredClone(project);
       return true;
     },
+    // Bookmarks to outside files: in the browser demo the "chosen" file is typed in a prompt
+    // (or set by a test in window.__demoBookmarkFile); opening only records the request.
+    async chooseBookmarkFile() {
+      const p = (typeof window !== 'undefined' && window.__demoBookmarkFile) || (typeof window !== 'undefined' && window.prompt ? window.prompt('Fișier', '/home/demo/Documente/schita.pdf') : null);
+      if (!p) return null;
+      return { path: p, name: p.split(/[\\/]/).pop() };
+    },
+    async openBookmarkFile(dir, file) {
+      if (typeof window !== 'undefined') window.__demoOpenedFiles = [...(window.__demoOpenedFiles || []), file];
+      return true;
+    },
     async readDoc(dir, id, kind) {
       return files[key(dir, id, kind)] || '';
     },
