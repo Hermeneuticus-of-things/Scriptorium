@@ -33,6 +33,12 @@ describe('compile layout extras', () => {
     expect(L.commentsTo(html, 'inline')).toContain('cuvânt [o notă]');
     expect(L.commentsTo(html, 'strip')).toBe(html); // strip/export handled elsewhere, unchanged here
   });
+  it('per-layout synopsis/notes go before or after the section', () => {
+    const node = { synopsis: 'Rezumat X', notes: '', title: 'T' };
+    expect(L.extrasHtml(node, { synopsis: 'before', notes: 'none' }, {}).before).toContain('Rezumat X');
+    expect(L.extrasHtml(node, { synopsis: 'after', notes: 'none' }, {}).after).toContain('Rezumat X');
+    expect(L.extrasHtml(node, { synopsis: 'none', notes: 'none' }, {})).toEqual({ before: '', after: '' });
+  });
   it('style overrides emit CSS; remove drops the rule', () => {
     const styles = [{ id: 's1', name: 'Citat', type: 'para' }];
     const css = L.styleOverrideCss(styles, { s1: { sizePct: 120, bold: true, color: '#333333' } });

@@ -1030,6 +1030,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <th>{tr('ui.compileDialog.p23.leadCaps')}</th>
                     <th>{tr('ui.compileDialog.p23.columns')}</th>
                     <th>{tr('ui.compileDialog.p23.firstIndent')}</th>
+                    <th>{tr('ui.compileDialog.p23.synopsis')}</th>
+                    <th>{tr('ui.compileDialog.p23.layoutNotes')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1073,6 +1075,20 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                             <option value="inherit">{tr('ui.compileDialog.p23.fiMostenit')}</option>
                             <option value="none">{tr('ui.compileDialog.p23.fiNone')}</option>
                             <option value="indent">{tr('ui.compileDialog.p23.fiIndent')}</option>
+                          </select>
+                        </td>
+                        <td>
+                          <select aria-label={tr('ui.compileDialog.p23.synopsis')} value={l.synopsis || 'none'} onChange={(e) => setLayout(t, 'synopsis', e.target.value)}>
+                            <option value="none">{tr('ui.compileDialog.nimic')}</option>
+                            <option value="before">{tr('ui.compileDialog.p23.inainte')}</option>
+                            <option value="after">{tr('ui.compileDialog.p23.dupa')}</option>
+                          </select>
+                        </td>
+                        <td>
+                          <select aria-label={tr('ui.compileDialog.p23.layoutNotes')} value={l.notes || 'none'} onChange={(e) => setLayout(t, 'notes', e.target.value)}>
+                            <option value="none">{tr('ui.compileDialog.nimic')}</option>
+                            <option value="before">{tr('ui.compileDialog.p23.inainte')}</option>
+                            <option value="after">{tr('ui.compileDialog.p23.dupa')}</option>
                           </select>
                         </td>
                       </tr>
