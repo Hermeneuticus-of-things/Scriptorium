@@ -421,6 +421,9 @@ export const FORMAT_KINDS = [
   ['revision', 'Revizii'],
   ['style', 'Stil (paragraf sau caractere)'],
   ['bookmark', 'Semne de carte'],
+  ['link', 'Linkuri'],
+  ['image', 'Imagini'],
+  ['table', 'Tabele'],
 ];
 
 /**
@@ -437,11 +440,14 @@ export function findFormatting(doc, kind, value = null) {
     revision: (m) => m.type.name === 'revision' && (!v || Number(m.attrs.level) === Number(v)),
     style: (m) => m.type.name === 'charStyle' && (!v || m.attrs.name === v),
     bookmark: (m) => m.type.name === 'bookmark' && (!v || m.attrs.name === v),
+    link: (m) => m.type.name === 'link',
   }[kind];
   const out = markTest ? markRanges(doc, markTest, (m) => JSON.stringify(m.attrs)) : [];
   doc.descendants((node, pos) => {
     if (kind === 'footnote' && node.type.name === 'footnote') out.push({ from: pos, to: pos + node.nodeSize });
     if (kind === 'annotation' && node.type.name === 'annotation') out.push({ from: pos, to: pos + node.nodeSize });
+    if (kind === 'image' && node.type.name === 'image') out.push({ from: pos, to: pos + node.nodeSize });
+    if (kind === 'table' && node.type.name === 'table') out.push({ from: pos, to: pos + node.nodeSize });
     if (kind === 'style' && node.isTextblock && node.attrs.styleName && (!v || node.attrs.styleName === v)) {
       out.push({ from: pos + 1, to: pos + node.nodeSize - 1 });
     }
