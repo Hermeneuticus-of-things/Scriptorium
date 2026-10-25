@@ -289,6 +289,8 @@ const flat = (nodes, out = []) => {
     await restore.click();
     await win.waitForTimeout(300);
     await save();
+    // The write after Save lands asynchronously (slow CI disks): wait for it instead of reading once.
+    await waitFor(() => docOnDisk(alfa.id) === original, 3000);
     const now = docOnDisk(alfa.id);
     check('restore puts the snapshot text back on disk', now === original, now.slice(0, 120));
     check('restore shows the snapshot text in the editor', !/TEXT DUPĂ SNAPSHOT/.test(await ed().innerText()));
