@@ -86,6 +86,16 @@ const NEW_READ_TOOLS = (ctx) => ({
 // Every renderer API (electron/preload.cjs) is either reachable over MCP (tool name) or GUI-only
 // (reason). A new preload function makes this test fail until it is listed here.
 const PRELOAD_COVERAGE = {
+  deleteHistory: 'gui: ștergerea zilelor din istoricul scrisului se face din fereastra Istoric',
+  scratchOpenWindow: 'gui: fereastra separată de notițe (scratchpad)',
+  scratchSetOnTop: 'gui: fereastra de notițe mereu deasupra',
+  scratchChooseFolder: 'gui: dosarul notițelor se alege într-un dialog',
+  scratchClearFolder: 'gui: notițele revin în setări',
+  scratchReadFolder: 'gui: notițele din dosarul ales de autor',
+  scratchWriteFolder: 'gui: notițele din dosarul ales de autor',
+  scratchProjects: 'gui: proiectele deschise în alte ferestre',
+  scratchSend: 'gui: trimite o notiță în proiectul din altă fereastră',
+  onScratchReceive: 'gui: notiță primită din fereastra de notițe',
   mcpConnectInfo: 'gui: legarea programului la Claude se face din interfață (Ajutor)',
   mcpConnectDesktop: 'gui: scrie configurarea Claude Desktop la cererea autorului',
   isMisspelled: 'gui: corectorul ortografic al ferestrei (corecturi învățate)',

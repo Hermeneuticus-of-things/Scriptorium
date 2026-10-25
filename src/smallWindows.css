@@ -1,0 +1,35 @@
+/* P11 small windows */
+.scratchpad .sp-body:empty::before { content: attr(data-placeholder); opacity: .5; }
+.scratchpad .sp-body p { margin: 0 0 .4em; }
+.scratchpad .sp-format button { min-width: 26px; padding: 1px 6px; }
+.scratchpad .sp-folder.on { font-weight: 600; }
+.scratchpad.standalone { border: 0; border-radius: 0; }
+
+.app .comp-bar .comp-zoom { background: transparent; color: inherit; border: 1px solid rgba(255,255,255,.25); border-radius: 4px; font-size: 12px; }
+.app .comp-bar .comp-zoom option { color: #222; }
+.app .comp-bar .comp-progress progress { width: 70px; height: 8px; vertical-align: middle; }
+
+.targets-panel .tp-compact { margin-left: auto; background: transparent; border: 0; cursor: pointer; color: inherit; }
+.targets-panel.compact .tp-pct { display: none; }
+
+.freq-actions { display: flex; gap: 10px; align-items: center; margin: 4px 0; }
+.freq-chart { display: grid; gap: 2px; margin: 6px 0; max-height: 260px; overflow: auto; }
+.freq-chart-row { display: grid; grid-template-columns: 110px 1fr 50px; gap: 6px; align-items: center; font-size: 12px; }
+.freq-chart-word { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.freq-chart-bar { display: block; height: 10px; background: var(--accent, #4a6fa5); border-radius: 2px; min-width: 2px; }
+.freq-chart-n { text-align: right; }
+.freq-table th button.link { font-weight: 600; }
+
+.text-stats-panel { position: fixed; z-index: 900; width: 250px; background: var(--panel, #fff); color: var(--text, #222); border: 1px solid var(--border, #ccc); border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,.25); font-size: 13px; }
+.text-stats-panel .fp-title { display: flex; align-items: center; padding: 4px 8px; cursor: move; border-bottom: 1px solid var(--border, #ccc); font-weight: 600; }
+.text-stats-panel .ts-scope { margin: 6px 8px 0; }
+.text-stats-panel .ts-list { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 6px 8px 8px; }
+.text-stats-panel .ts-list dt { text-align: right; font-weight: 600; }
+.text-stats-panel .ts-list dd { margin: 0; }
+
+.history-range { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.history-dialog tr.selected td { background: var(--selection, #dde8ff); }
+
+.snap-copy-row { display: flex; justify-content: flex-end; margin: 4px 0; }
+
+.layouts-dialog .layout-thumb { flex: none; border-radius: 2px; }

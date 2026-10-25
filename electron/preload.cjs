@@ -100,6 +100,20 @@ contextBridge.exposeInMainWorld('api', {
   restoreBackup: (dir, file) => call('backup:restore', dir, file),
   recordHistory: (dir, counts) => call('history:record', dir, counts),
   getHistory: (dir) => call('history:get', dir),
+  deleteHistory: (dir, dates) => call('history:delete', dir, dates),
+  scratchOpenWindow: () => call('scratch:openWindow'),
+  scratchSetOnTop: (on) => call('scratch:setOnTop', on),
+  scratchChooseFolder: () => call('scratch:chooseFolder'),
+  scratchClearFolder: () => call('scratch:clearFolder'),
+  scratchReadFolder: () => call('scratch:readFolder'),
+  scratchWriteFolder: (notes) => call('scratch:writeFolder', notes),
+  scratchProjects: () => call('scratch:projects'),
+  scratchSend: (wcId, payload) => call('scratch:send', wcId, payload),
+  onScratchReceive: (fn) => {
+    const listener = (_e, payload) => fn(payload);
+    ipcRenderer.on('scratch:receive', listener);
+    return () => ipcRenderer.removeListener('scratch:receive', listener);
+  },
   exportCompiled: (dir, project, format, options) => call('compile:export', dir, project, format, options),
   exportCompileFormat: (fileName, text) => call('compile:exportFormat', fileName, text),
   previewCompiled: (dir, project, options) => call('compile:preview', dir, project, options),

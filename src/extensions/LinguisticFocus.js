@@ -1,10 +1,12 @@
 // Linguistic Focus (Scrivener: View > Linguistic Focus): dims every word except
 // the chosen part of speech. Uses the heuristic tagger in ../lib/pos.js.
-// Commands: setLinguisticFocus(cls | null, lang?) with cls in noun/verb/adj/adv/conj.
+// Commands: setLinguisticFocus(cls | null, lang?) with cls in noun/verb/adj/adv/conj/pron/prep.
+// The chosen words also carry `.pos-focus`, so a highlight style (body.lf-highlight) can colour
+// them instead of fading the rest.
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import { guessLang, tagText } from '../lib/pos.js';
+import { guessLang, tagText, isPreposition } from '../lib/pos.js';
 import { updateBlockDecorations } from '../editor/decoRanges.js';
 
 // Faded runs are dimmed with a text colour, not the shared `.faded` class: `opacity` below 1
@@ -13,7 +15,13 @@ import { updateBlockDecorations } from '../editor/decoRanges.js';
 // The rule is a class (one shared declaration) rather than an inline style on every span, which
 // keeps style recalculation cheap; it is injected once so it works without the app stylesheet.
 const FADED = { class: 'pos-faded' };
-const FADED_CSS = '.ProseMirror .pos-faded { color: color-mix(in srgb, currentColor calc(var(--fade-opacity, .28) * 100%), transparent); }';
+const FOCUS = { class: 'pos-focus' };
+const FADED_CSS = [
+  '.ProseMirror .pos-faded { color: color-mix(in srgb, currentColor calc(var(--fade-opacity, .28) * 100%), transparent); }',
+  // Highlight style: the rest keeps its colour, the chosen class gets a coloured background.
+  '.lf-highlight .ProseMirror .pos-faded { color: inherit; }',
+  '.lf-highlight .ProseMirror .pos-focus { background: var(--lf-color, #ffe58a); color: #111; border-radius: 2px; }',
+].join('\n');
 function ensureFadedCss(doc) {
   if (!doc || doc.getElementById('pos-faded-css')) return;
   const el = doc.createElement('style');
@@ -24,6 +32,12 @@ function ensureFadedCss(doc) {
 
 export const linguisticFocusKey = new PluginKey('linguisticFocus');
 
+/** Does a tagged word belong to the focused class? 'prep' is picked out of the tagger's 'other'. */
+export function matchesClass(w, cls, lang) {
+  if (cls === 'prep') return w.tag === 'other' && isPreposition(w.word, lang);
+  return w.tag === cls;
+}
+
 /** Fading decorations for one text block at `pos`. */
 export function blockLinguisticDecorations(node, pos, cls, lang) {
   const decos = [];
@@ -32,8 +46,9 @@ export function blockLinguisticDecorations(node, pos, cls, lang) {
   let last = 0;
   const start = pos + 1;
   for (const w of tagText(text, l)) {
-    if (w.tag === cls) {
+    if (matchesClass(w, cls, l)) {
       if (w.from > last) decos.push(Decoration.inline(start + last, start + w.from, FADED));
+      decos.push(Decoration.inline(start + w.from, start + w.to, FOCUS));
       last = w.to;
     }
   }

@@ -36,17 +36,26 @@ function FloatingPanel({ title, className, onClose, children, width = 280, x = 1
   );
 }
 
-const POS = ['noun', 'verb', 'adj', 'adv', 'conj'];
+const POS = ['noun', 'verb', 'adj', 'adv', 'pron', 'prep', 'conj'];
 
-/** View > Linguistic Focus: one part of speech stays clear, the rest fades. */
+/**
+ * View > Linguistic Focus: one part of speech stays clear (or is coloured), the rest fades.
+ * "Dialogue" uses the editor's dialogue focus (view.focus = 'dialogue').
+ */
 export function LinguisticFocusPanel({ view, setView, onClose }) {
-  const cur = view.posFocus || '';
+  const dialogue = view.focus === 'dialogue';
+  const cur = dialogue ? 'dialogue' : view.posFocus || '';
+  const pick = (id) => {
+    if (id === 'dialogue') setView({ posFocus: '', focus: 'dialogue' });
+    else setView({ posFocus: id, ...(dialogue ? { focus: 'off' } : {}) });
+  };
+  const style = view.posStyle || 'fade';
   return (
-    <FloatingPanel title={t('ui.mw.lf_title')} className="linguistic-focus-panel" onClose={() => { setView({ posFocus: '' }); onClose(); }}>
-      {['', ...POS].map((id) => (
+    <FloatingPanel title={t('ui.mw.lf_title')} className="linguistic-focus-panel" onClose={() => { setView({ posFocus: '', ...(dialogue ? { focus: 'off' } : {}) }); onClose(); }}>
+      {['', ...POS, 'dialogue'].map((id) => (
         <label key={id || 'off'} style={{ display: 'flex', gap: 6 }}>
-          <input type="radio" name="lf" value={id} checked={cur === id} onChange={() => setView({ posFocus: id })} />
-          {id ? t(`ui.mw.lf_${id}`) : t('ui.mw.lf_off')}
+          <input type="radio" name="lf" value={id} checked={cur === id} onChange={() => pick(id)} />
+          {id === 'dialogue' ? t('ui.p11.lf_dialogue') : id === 'pron' || id === 'prep' ? t(`ui.p11.lf_${id}`) : id ? t(`ui.mw.lf_${id}`) : t('ui.mw.lf_off')}
         </label>
       ))}
       <label>
@@ -58,9 +67,23 @@ export function LinguisticFocusPanel({ view, setView, onClose }) {
         </select>
       </label>
       <label>
-        {t('ui.mw.lf_fade')}
-        <input type="range" min="0.05" max="0.8" step="0.05" value={view.fadeOpacity ?? 0.28} onChange={(e) => setView({ fadeOpacity: Number(e.target.value) })} aria-label={t('ui.mw.lf_fade')} style={{ width: '100%' }} />
+        {t('ui.p11.lf_style')}{' '}
+        <select className="lf-style" value={style} onChange={(e) => setView({ posStyle: e.target.value })} aria-label={t('ui.p11.lf_style')}>
+          <option value="fade">{t('ui.p11.lf_style_fade')}</option>
+          <option value="highlight">{t('ui.p11.lf_style_highlight')}</option>
+        </select>
       </label>
+      {style === 'highlight' ? (
+        <label>
+          {t('ui.p11.lf_color')}{' '}
+          <input type="color" className="lf-color" value={view.posColor || '#ffe58a'} onChange={(e) => setView({ posColor: e.target.value })} aria-label={t('ui.p11.lf_color')} />
+        </label>
+      ) : (
+        <label>
+          {t('ui.mw.lf_fade')}
+          <input type="range" min="0.05" max="0.8" step="0.05" value={view.fadeOpacity ?? 0.28} onChange={(e) => setView({ fadeOpacity: Number(e.target.value) })} aria-label={t('ui.mw.lf_fade')} style={{ width: '100%' }} />
+        </label>
+      )}
     </FloatingPanel>
   );
 }

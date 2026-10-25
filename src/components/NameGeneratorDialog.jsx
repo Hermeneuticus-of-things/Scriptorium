@@ -1,9 +1,34 @@
-import React, { useMemo, useState } from 'react';
-import { CULTURES, generateNames } from '../lib/nameGenerator.js';
+import React, { useMemo, useRef, useState } from 'react';
+import { CULTURES, generateNames, parseNameList, customCultures } from '../lib/nameGenerator.js';
 import { t as tr } from '../lib/i18n.js';
 
-/** Props: onClose(), onInsert?(text) — inserts the chosen name in the editor. */
-export default function NameGeneratorDialog({ onClose, onInsert }) {
+/**
+ * Props: onClose(), onInsert?(text) — inserts the chosen name in the editor;
+ * customLists [{id, label, m, f, last}] + onCustomLists(lists): the author's own name lists.
+ */
+export default function NameGeneratorDialog({ onClose, onInsert, customLists = [], onCustomLists }) {
+  const [startsWith, setStartsWith] = useState('');
+  const [importKind, setImportKind] = useState('any');
+  const fileRef = useRef(null);
+  const extra = useMemo(() => customCultures(customLists), [customLists]);
+  const allKeys = [...Object.keys(CULTURES), ...Object.keys(extra)];
+  const cultureLabel = (k) => (extra[k] ? extra[k].label : tr(`culture.${k}`));
+  const importList = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const parsed = parseNameList(await f.text(), importKind);
+    if (!parsed.m.length && !parsed.f.length && !parsed.last.length) return;
+    const id = `${Date.now().toString(36)}`;
+    onCustomLists?.([...customLists, { id, label: f.name.replace(/\.[^.]+$/, ''), ...parsed }]);
+    setFirstOrigins((o) => [...o, `custom:${id}`]);
+    if (parsed.last.length) setLastOrigins((o) => [...o, `custom:${id}`]);
+  };
+  const removeList = (id) => {
+    onCustomLists?.(customLists.filter((l) => l.id !== id));
+    setFirstOrigins((o) => (o.filter((k) => k !== `custom:${id}`).length ? o.filter((k) => k !== `custom:${id}`) : ['ro']));
+    setLastOrigins((o) => (o.filter((k) => k !== `custom:${id}`).length ? o.filter((k) => k !== `custom:${id}`) : ['ro']));
+  };
   const [firstOrigins, setFirstOrigins] = useState(['ro']);
   const [lastOrigins, setLastOrigins] = useState(['ro']);
   const [rarity, setRarity] = useState(0.5);
@@ -14,19 +39,19 @@ export default function NameGeneratorDialog({ onClose, onInsert }) {
   const [part, setPart] = useState('full');
   const [seed, setSeed] = useState(() => Date.now());
   const names = useMemo(
-    () => generateNames({ firstOrigins, lastOrigins, gender, count, matchInitials: alliteration, doubleLast, rarity, seed, firstOnly: part === 'first', lastOnly: part === 'last' }),
-    [firstOrigins, lastOrigins, gender, count, alliteration, doubleLast, rarity, seed, part],
+    () => generateNames({ firstOrigins, lastOrigins, gender, count, matchInitials: alliteration, doubleLast, rarity, seed, firstOnly: part === 'first', lastOnly: part === 'last', startsWith, extraCultures: extra }),
+    [firstOrigins, lastOrigins, gender, count, alliteration, doubleLast, rarity, seed, part, startsWith, extra],
   );
   const toggle = (list, setList, k) => setList(list.includes(k) ? (list.length > 1 ? list.filter((x) => x !== k) : list) : [...list, k]);
   const origins = (id, label, list, setList) => (
     <fieldset className="ng-origins" aria-label={label}>
       <legend>{label}</legend>
-      {Object.keys(CULTURES).map((k) => (
+      {allKeys.map((k) => (
         <label key={k} className="check" style={{ display: 'inline-flex', marginRight: 8 }}>
-          <input type="checkbox" data-origin={`${id}-${k}`} checked={list.includes(k)} onChange={() => toggle(list, setList, k)} /> {tr(`culture.${k}`)}
+          <input type="checkbox" data-origin={`${id}-${k}`} checked={list.includes(k)} onChange={() => toggle(list, setList, k)} /> {cultureLabel(k)}
         </label>
       ))}
-      <button type="button" className="link" onClick={() => setList(Object.keys(CULTURES))}>{tr('ui.g4.ngToate')}</button>
+      <button type="button" className="link" onClick={() => setList(allKeys)}>{tr('ui.g4.ngToate')}</button>
     </fieldset>
   );
   const copy = (t) => navigator.clipboard?.writeText(t).catch(() => {});
@@ -56,6 +81,8 @@ export default function NameGeneratorDialog({ onClose, onInsert }) {
             <option value="first">{tr('ui.nameGeneratorDialog.doar_prenume')}</option>
             <option value="last">{tr('ui.nameGeneratorDialog.doar_nume_de_familie')}</option>
           </select>
+          <label htmlFor="ng-starts">{tr('ui.p11.ng_starts')}</label>
+          <input id="ng-starts" className="ng-starts" maxLength={3} value={startsWith} placeholder={tr('ui.p11.ng_starts_ph')} onChange={(e) => setStartsWith(e.target.value)} />
           <label htmlFor="ng-count">{tr('ui.nameGeneratorDialog.numar')}</label>
           <input id="ng-count" type="number" min={1} max={100} value={count} onChange={(e) => setCount(Math.max(1, Math.min(100, +e.target.value || 1)))} />
           <span />
@@ -67,10 +94,32 @@ export default function NameGeneratorDialog({ onClose, onInsert }) {
             <input type="checkbox" checked={doubleLast} onChange={(e) => setDoubleLast(e.target.checked)} /> {tr('ui.g4.ngDuble')}
           </label>
         </div>
+        {onCustomLists && (
+          <fieldset className="ng-lists">
+            <legend>{tr('ui.p11.ng_lists')}</legend>
+            {customLists.map((l) => (
+              <span key={l.id} className="ng-list" style={{ marginRight: 8 }}>
+                {l.label} <small className="muted">({(l.m || []).length + (l.f || []).length} / {(l.last || []).length})</small>{' '}
+                <button type="button" className="link" aria-label={tr('btn.delete')} onClick={() => removeList(l.id)}>×</button>
+              </span>
+            ))}
+            <span style={{ display: 'inline-flex', gap: 6 }}>
+              <select aria-label={tr('ui.p11.ng_kind')} value={importKind} onChange={(e) => setImportKind(e.target.value)}>
+                <option value="any">{tr('ui.p11.ng_kind_any')}</option>
+                <option value="m">{tr('ui.nameGeneratorDialog.masculin')}</option>
+                <option value="f">{tr('ui.nameGeneratorDialog.feminin')}</option>
+                <option value="last">{tr('ui.p11.ng_kind_last')}</option>
+              </select>
+              <button type="button" className="ng-import" onClick={() => fileRef.current?.click()}>{tr('ui.p11.ng_import')}</button>
+              <input ref={fileRef} type="file" accept=".txt,.csv,text/plain" hidden onChange={importList} />
+            </span>
+            <p className="muted small">{tr('ui.p11.ng_import_hint')}</p>
+          </fieldset>
+        )}
         <ul style={{ maxHeight: 260, overflow: 'auto', margin: '10px 0', padding: 0, listStyle: 'none' }}>
           {names.map((n) => (
             <li key={n.full} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-              <span title={`${tr(`culture.${n.culture}`)}${n.lastCulture && n.lastCulture !== n.culture ? ` / ${tr(`culture.${n.lastCulture}`)}` : ''}, ${n.gender === 'f' ? tr('ui.nameGeneratorDialog.feminin') : tr('ui.nameGeneratorDialog.masculin')}`}>{n.full}</span>
+              <span title={`${cultureLabel(n.culture)}${n.lastCulture && n.lastCulture !== n.culture ? ` / ${cultureLabel(n.lastCulture)}` : ''}, ${n.gender === 'f' ? tr('ui.nameGeneratorDialog.feminin') : tr('ui.nameGeneratorDialog.masculin')}`}>{n.full}</span>
               <span>
                 <button onClick={() => copy(n.full)}>{tr('ui.aiPanel.copiaza')}</button>
                 {onInsert && <button onClick={() => onInsert(n.full)}>{tr('ui.aiPanel.insereaza')}</button>}
