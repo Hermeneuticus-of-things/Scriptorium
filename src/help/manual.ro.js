@@ -793,15 +793,16 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'yours-services',
         title: 'Cheile serviciilor: DeepL, Google, LanguageTool, Speechify, Zotero',
-        html: `<p>Deschide <em>Setări → Servicii și conturi</em>. Fiecare serviciu are linkul <em>Unde găsesc cheia</em>. Lipești cheia, apeși <em>Salvează</em>; cheia e criptată pe calculatorul tău și nu mai poate fi citită din interfață.</p>
+        html: `<p>Deschide <em>Setări → Servicii și conturi</em>. La fiecare serviciu lipești cheia (și, dacă vrei, <em>Email cont</em> + <em>Parolă cont</em> pentru păstrarea login-ului), apeși <em>Salvează</em> — totul se criptează pe calculatorul tău și nu mai poate fi citit din interfață. Butonul <em>Testează conexiunea</em> face o cerere reală și îți spune dacă cheia e acceptată.</p>
 <ul>
-<li><strong>DeepL</strong>: contul gratuit dă 500.000 de caractere pe lună.</li>
-<li><strong>Google Cloud Translation</strong>: cheie din Google Cloud Console, cu Cloud Translation API activat.</li>
-<li><strong>LanguageTool</strong>: merge fără cont; cu Premium pui e-mailul și cheia API.</li>
-<li><strong>Speechify</strong>: cheia din consola Speechify API și ID-ul vocii (de exemplu <code>george</code>).</li>
-<li><strong>Zotero</strong>: ID-ul numeric de utilizator și o cheie din <em>zotero.org/settings/keys</em>; apoi <em>Fișier → Importă bibliografia din Zotero</em>.</li>
+<li><strong>DeepL</strong> — cheia din <a href="https://www.deepl.com/your-account/keys">deepl.com/your-account/keys</a>. Contul gratuit (cheia se termină în <code>:fx</code>) dă 500.000 de caractere pe lună.</li>
+<li><strong>Google Cloud Translation</strong> — cheie din <a href="https://console.cloud.google.com/apis/credentials">Google Cloud Console</a>, cu două condiții: (1) activează <a href="https://console.cloud.google.com/apis/library/translate.googleapis.com">Cloud Translation API</a>; (2) la cheie, în <em>API restrictions</em>, pune <em>Don't restrict key</em> sau adaugă <em>Cloud Translation API</em> în listă — altfel Google o blochează cu <code>API_KEY_SERVICE_BLOCKED</code> (403). Proiectul trebuie să aibă facturare activă.</li>
+<li><strong>LanguageTool</strong> — merge și fără cont (gratuit); cu Premium pui e-mailul și cheia din <a href="https://languagetool.org/editor/settings/access-tokens">languagetool.org</a>.</li>
+<li><strong>Speechify</strong> — cheia din <a href="https://console.sws.speechify.com/api-keys">consola Speechify API</a> (produsul de developer) și ID-ul vocii (de exemplu <code>george</code>). Atenție: abonamentul obișnuit Speechify (app.speechify.com, premium de utilizator) <em>nu</em> dă cheie API — accesul de API e un produs separat.</li>
+<li><strong>Zotero</strong> — ID-ul numeric de utilizator și o cheie din <a href="https://www.zotero.org/settings/keys">zotero.org/settings/keys</a>; apoi <em>Fișier → Importă bibliografia din Zotero</em>.</li>
 </ul>
-<p>Verificare: selectezi un paragraf, clic dreapta, <em>În program: DeepL</em> sau <em>Verifică gramatica</em>.</p>`,
+<p>Pentru servicii care merg cu cont (nu cu cheie), pui <em>Email cont</em> + <em>Parolă cont</em> la serviciul respectiv; iar orice alt serviciu îl adaugi la <em>Alte conturi</em> (nume, site, utilizator, parolă). Login-ul se păstrează, dar acțiunea care cheamă serviciul (ex. citirea Speechify) tot cheia API o pornește.</p>
+<p>Verificare rapidă: <em>Testează conexiunea</em>, sau selectezi un paragraf, clic dreapta, <em>În program: DeepL</em> / <em>Verifică gramatica</em>.</p>`,
       },
       {
         id: 'yours-ai',

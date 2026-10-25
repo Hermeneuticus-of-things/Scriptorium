@@ -247,7 +247,16 @@ export const MANUAL_EN = [
       {
         id: 'yours-services',
         title: 'Service keys: DeepL, Google, LanguageTool, Speechify, Zotero',
-        html: `<p>Open <em>Settings → Services and accounts</em>. Each service has a <em>Where do I find the key</em> link. Paste the key and press <em>Save</em>; it is encrypted on your computer and cannot be read back from the interface. Zotero needs your numeric user ID too; then use <em>File → Import bibliography from Zotero</em>.</p>`,
+        html: `<p>Open <em>Settings → Services and accounts</em>. For each service paste the key (and, if you like, an <em>Account email</em> + <em>Account password</em> to keep the login), press <em>Save</em> — everything is encrypted on your computer and cannot be read back from the interface. The <em>Test connection</em> button makes one real request and tells you whether the key is accepted.</p>
+<ul>
+<li><strong>DeepL</strong> — key from <a href="https://www.deepl.com/your-account/keys">deepl.com/your-account/keys</a>. The free account (key ends in <code>:fx</code>) gives 500,000 characters a month.</li>
+<li><strong>Google Cloud Translation</strong> — key from the <a href="https://console.cloud.google.com/apis/credentials">Google Cloud Console</a>, with two conditions: (1) enable the <a href="https://console.cloud.google.com/apis/library/translate.googleapis.com">Cloud Translation API</a>; (2) on the key, under <em>API restrictions</em>, choose <em>Don't restrict key</em> or add <em>Cloud Translation API</em> to the list — otherwise Google blocks it with <code>API_KEY_SERVICE_BLOCKED</code> (403). The project needs billing enabled.</li>
+<li><strong>LanguageTool</strong> — works without an account (free); with Premium add your email and a key from <a href="https://languagetool.org/editor/settings/access-tokens">languagetool.org</a>.</li>
+<li><strong>Speechify</strong> — key from the <a href="https://console.sws.speechify.com/api-keys">Speechify API console</a> (the developer product) and a voice id (e.g. <code>george</code>). Note: the regular Speechify subscription (app.speechify.com, consumer premium) does <em>not</em> give an API key — API access is a separate product.</li>
+<li><strong>Zotero</strong> — your numeric user ID and a key from <a href="https://www.zotero.org/settings/keys">zotero.org/settings/keys</a>; then <em>File → Import bibliography from Zotero</em>.</li>
+</ul>
+<p>For services you log into with an account (not a key), fill <em>Account email</em> + <em>Account password</em> on that service, or add any other service under <em>Other accounts</em> (name, site, user, password). The login is stored, but the action that calls the service (e.g. Speechify reading) still runs on the API key.</p>
+<p>Quick check: <em>Test connection</em>, or select a paragraph, right-click, <em>In the app: DeepL</em> / <em>Check grammar</em>.</p>`,
       },
       {
         id: 'yours-ai',
