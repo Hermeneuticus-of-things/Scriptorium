@@ -48,6 +48,7 @@ import AiJobBar from './components/AiJobBar.jsx';
 import McpConnectDialog from './components/McpConnectDialog.jsx';
 import { buildMenuLayout, nativeMenuSpec, AI_ONLY_COMMANDS } from './lib/menuLayout.js';
 import FloatingInspector from './components/FloatingInspector.jsx';
+import CompositionBar from './components/CompositionBar.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
 import ProjectNotesTabs from './components/ProjectNotesTabs.jsx';
 import TimelineView from './components/TimelineView.jsx';
@@ -2331,6 +2332,7 @@ export default function App({ api: apiProp }) {
     <div
       className={`app ${composition ? 'composition' : ''} ${composition && settings.compPaper !== false ? 'comp-paper' : ''} ${composition && settings.compBgImage ? 'has-bg-image' : ''}`}
       data-fit={settings.compBgImageFit || 'cover'}
+      data-comp-align={composition ? settings.compAlign || 'center' : undefined}
       onContextMenu={onEditorContextMenu}
       style={
         composition
@@ -2811,7 +2813,21 @@ export default function App({ api: apiProp }) {
         onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
       />
 
-      {composition && <button className="exit-composition" onClick={() => setComposition(false)}>{tr('ui.app.iesi_esc')}</button>}
+      {composition && (
+        <CompositionBar
+          settings={settings}
+          onSettings={async (patch) => { setSettings((s) => ({ ...s, ...patch })); await api.setSettings(patch); }}
+          zoom={editorView.zoom || 100}
+          onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
+          words={selected ? counts[selected.id] || 0 : 0}
+          chars={selected ? statusChars : 0}
+          inspectorOn={showFloatInspector}
+          onInspector={() => setShowFloatInspector((v) => !v)}
+          onGoto={() => setDialog('goto')}
+          onExit={() => setComposition(false)}
+          onError={(e) => setToast(e.message)}
+        />
+      )}
       {composition && settings.compShowTargets && selected && (
         <div className="comp-targets">
           <span>{tr('ui.statusBar.document')}: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
