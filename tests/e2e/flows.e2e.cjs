@@ -165,7 +165,12 @@ const flat = (nodes, out = []) => {
     fs.mkdirSync(path.join(W, 'projects'), { recursive: true });
     await answer(path.join(W, 'projects'));
     await win.getByPlaceholder('Titlul cărții').fill('Flows');
-    await win.locator('select').filter({ has: win.locator('option[value="blank"]') }).first().selectOption('blank');
+    // template chooser: categories on the left, cards in the middle
+    for (const cat of await win.locator('.tpl-cats [role=option]').all()) {
+      if (await win.locator('.tpl-card[data-tpl="blank"]').count()) break;
+      await cat.click();
+    }
+    await win.locator('.tpl-card[data-tpl="blank"]').click();
     await win.getByRole('button', { name: 'Creează' }).click();
     await win.waitForSelector('.pane .ProseMirror', { timeout: 20000 });
     dir = await currentDir();
