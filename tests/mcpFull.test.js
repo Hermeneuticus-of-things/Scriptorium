@@ -113,6 +113,8 @@ const PRELOAD_COVERAGE = {
   mcpInfo: 'gui: comanda de conectare MCP',
   readStylesFromProject: 'gui: import de stiluri din dialogul Stiluri',
   addMediaFiles: 'import_files',
+  addMediaData: 'import_files',
+  archiveWebPage: 'import_web_page',
   importFiles: 'import_files',
   importOpml: 'import_files',
   exportDocuments: 'export_documents',

@@ -935,10 +935,10 @@ Comparație cu programul clasic (versiunea 3 pentru Windows), verificată în co
 ### MACRO: fluxuri întregi, cap-coadă
 
 - [ ] **Flux șablon → compile fără ruptură**: programul clasic leagă șablonul de proiect de un format de compile implicit, de tipurile de secțiune și de stilurile proprii, astfel încât un proiect nou compilează corect din prima → Scribner aplică șablonul doar structurii din binder (`lib/templates.cjs`); formatul de compile se alege separat.
-- [ ] **PDF în panoul editorului cu căutare și pagina ținută minte**: programul clasic afișează PDF-ul cu pagini, căutare și copiere de text → Scribner îl afișează în `MediaView.jsx` prin vizualizatorul încorporat, fără căutare legată de proiect.
-- [ ] **Pagina PDF-ului și poziția din audio/video ținute minte per document**: clasicul redeschide la aceeași pagină / secundă → Scribner pornește mereu de la început.
-- [ ] **Pagină web importată ca arhivă locală, vizualizabilă offline**: clasicul o salvează ca fișier în proiect → Scribner o salvează ca text sau legătură.
-- [ ] **Transcriere cu media alături**: clasicul are taste pentru pauză și „înapoi câteva secunde” cât timp cursorul e în text → `MiniPlayer.jsx` nu are scurtături globale active din editor.
+- [x] **PDF în panoul editorului cu căutare și pagina ținută minte**: programul clasic afișează PDF-ul cu pagini, căutare și copiere de text → Scribner îl afișează în `MediaView.jsx` prin vizualizatorul încorporat, fără căutare legată de proiect. *(Q12: `PdfViewer.jsx` — bară proprie cu pagină / mărire / căutare peste vizualizatorul încorporat, adnotări evidențiere/notă per pagină ținute în `node.media.annotations`, copiate în notele documentului la cerere.)*
+- [x] **Pagina PDF-ului și poziția din audio/video ținute minte per document**: clasicul redeschide la aceeași pagină / secundă → Scribner pornește mereu de la început. *(Q12: `node.media.page`/`zoom`/`time`/`rate`.)*
+- [x] **Pagină web importată ca arhivă locală, vizualizabilă offline**: clasicul o salvează ca fișier în proiect → Scribner o salvează ca text sau legătură. *(Q12: Documente → „Arhivează o pagină web în Cercetare…”, `buildWebArchive` în `lib/importers.cjs`, IPC `research:archiveWeb`, afișată în cadru izolat fără scripturi.)*
+- [x] **Transcriere cu media alături**: clasicul are taste pentru pauză și „înapoi câteva secunde” cât timp cursorul e în text → `MiniPlayer.jsx` nu are scurtături globale active din editor. *(Q12: `MediaPlayerView.jsx` — Ctrl+Alt+P / ← / → / T active și din textul din panoul de alături; momentul se inserează în text sau în notele fișierului.)*
 - [ ] **Referințe ale documentului și ale proiectului** (listă de URL-uri, fișiere, documente din proiect în Inspector) → Scribner are doar legăturile din text și semnele de carte.
 - [ ] **Înlocuire în tot proiectul cu domeniu** (text, titluri, sinopsis, note) și cu listă de documente afectate → `AdvancedSearchDialog.jsx` înlocuiește fără bife de domeniu pe câmpuri.
 - [ ] **Sincronizare cu varianta mobilă prin dosar cloud**, cu conflicte rezolvate pe document → Scribner are doar sincronizare cu dosar extern (`lib/folderSync.cjs`) și dosar de echipă.
@@ -1021,7 +1021,7 @@ MACRO 12, MEGA 10, MEZZO 10, MICRO 11, NANO 14. Total 57; primele 50 intră în 
 - **Q9 Meniul contextual pe text** (NANO 9): `src/components/ContextMenu.jsx`, `electron/v10Handlers.cjs` (handler nou; `main.cjs` rămâne la Q7).
 - **Q10 Confirmări, stări goale, mesaje** (MICRO 1–3, 7, 10–11): `src/components/DialogA11y.jsx`, `src/components/StatusBar.jsx`, `src/lib/i18n.js`.
 - **Q11 Comenzi și tooltip-uri** (MICRO 4–6): `src/components/FormatBar.jsx`, `src/components/ToolbarCustomizeDialog.jsx`, `src/components/QuickRef.jsx`.
-- **Q12 Cercetare în panou** (MACRO 2–5): `src/components/MediaView.jsx`, `src/components/MiniPlayer.jsx`, `src/components/ResearchPanel.jsx`, `lib/importers.cjs`.
+- **Q12 Cercetare în panou** (MACRO 2–5) — făcut: vizualizatoare PDF/imagine/pagină web/audio/video în panoul editorului și în panoul împărțit, fișiere trase din sistem pe binder → Cercetare (`media:addData`): `src/components/MediaView.jsx`, `src/components/MiniPlayer.jsx`, `src/components/ResearchPanel.jsx`, `lib/importers.cjs`.
 - **Q13 Referințe, înlocuire cu domeniu, flux de revizie** (MACRO 6–7, 12): `src/components/AdvancedSearchDialog.jsx`, `src/components/Inspector.jsx`, `src/components/SnapshotsPane.jsx`, `lib/trackChanges.cjs`.
 - **Q14 Șablon → compile, ferestre multiple, sincronizare** (MACRO 1, 8–9; MEGA 9): `lib/templates.cjs`, `lib/folderSync.cjs`, `electron/windowHandlers.cjs` (nou), `src/components/Home.jsx`.
 
