@@ -93,8 +93,23 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] === '--read-only') readOnly = true;
 }
 for (const p of (process.env.SCRIBNER_PROJECTS || '').split(path.delimiter).filter(Boolean)) projects.push(path.resolve(p));
+// No --project: the projects in Scribner's recent list (on this computer), so one general command
+// works for everyone and names no book. Missing folders are skipped.
 if (!projects.length) {
-  process.stderr.write('Folosire: scribner-mcp --project <cale către proiect.scribner> [--project …] [--read-only]\n');
+  const recent = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(process.env.SCRIBNER_USER_DATA ? path.resolve(process.env.SCRIBNER_USER_DATA) : defaultUserData(), 'settings.json'), 'utf8')).recent || [];
+    } catch {
+      return [];
+    }
+  })();
+  for (const r of recent) {
+    const d = typeof r === 'string' ? r : r && r.dir;
+    if (d && fs.existsSync(path.join(d, 'project.json')) && !projects.includes(path.resolve(d))) projects.push(path.resolve(d));
+  }
+}
+if (!projects.length) {
+  process.stderr.write('Niciun proiect: deschide unul în Scribner (intră în lista recentă) sau dă --project <cale către proiect.scribner> [--project …] [--read-only]\n');
   process.exit(2);
 }
 for (const p of projects) {

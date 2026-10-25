@@ -452,11 +452,19 @@ Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installe
 
 **Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
 
-Programul instalat pornește serverul fără Node.js (Windows, instalare pentru utilizatorul curent):
+Programul instalat pornește serverul fără Node.js. Comanda generală e aceeași pe orice calculator (Windows) și nu numește nicio carte: agentul vede proiectele din lista recentă din Scribner.
 
 ```bat
-claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "%LOCALAPPDATA%\Programs\Scribner\Scribner.exe" "%LOCALAPPDATA%\Programs\Scribner\resources\app\mcp\server.mjs" --project "D:\Carti\Cartea mea.scribner"
+claude mcp add scribner --scope user -- cmd /c %LOCALAPPDATA%\Programs\Scribner\scribner-mcp.cmd
 ```
+
+Pentru orice alt client cu configurare JSON (Claude Desktop, Cursor, Windsurf, LM Studio, Gemini; la VS Code cheia e `servers`):
+
+```json
+"scribner": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd"] }
+```
+
+`--read-only` la sfârșit permite doar citirea; `--project "<folder>.scribner"` limitează agentul la un singur proiect.
 
 Din cod sursă, cu Node.js:
 

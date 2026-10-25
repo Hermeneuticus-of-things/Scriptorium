@@ -55,7 +55,7 @@ import RelationMap from './components/RelationMap.jsx';
 import PacingView from './components/PacingView.jsx';
 import NameGeneratorDialog from './components/NameGeneratorDialog.jsx';
 import Scratchpad from './components/Scratchpad.jsx';
-import SpeechBar from './components/SpeechBar.jsx';
+import MiniPlayer from './components/MiniPlayer.jsx';
 import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
@@ -233,7 +233,14 @@ export default function App({ api: apiProp }) {
   const team = useTeam({ api, dir, settings, docId: selectedId });
   // D&TED dictation (text at the cursor, or replacing the selection) and audio transcription.
   // The built-in recogniser (default, desktop) or the separate D&TED program (Settings).
-  const speechMode = settings?.speechEngine === 'dted' || !api.whisperStatus ? 'dted' : 'local';
+  // Nothing chosen yet: D&TED when it is installed (its eek model is the most accurate), otherwise
+  // the built-in engine, which downloads itself once in the background.
+  const [dtedInstalled, setDtedInstalled] = useState(false);
+  useEffect(() => {
+    if (!api.dtedStatus || settings?.speechEngine) return;
+    api.dtedStatus().then((r) => setDtedInstalled(Boolean(r?.found)), () => {});
+  }, [api, settings?.speechEngine]);
+  const speechMode = settings?.speechEngine === 'dted' || !api.whisperStatus || (!settings?.speechEngine && dtedInstalled) ? 'dted' : 'local';
   const speechApi = useMemo(
     () => (speechMode === 'local' ? createLocalSpeech(api, { terms: () => settingsRef.current?.dtedTerms || '' }) : api),
     [api, speechMode],
@@ -1258,6 +1265,19 @@ export default function App({ api: apiProp }) {
     setSettings(await api.getSettings());
   };
   const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
+  const setZoom = (z) => setEditorView({ ...editorViewRef.current, zoom: Math.min(400, Math.max(50, Math.round(z))) });
+  const editorViewRef = useRef(editorView);
+  editorViewRef.current = editorView;
+  // Ctrl + mouse wheel over the text: larger / smaller text (the page keeps its width).
+  useEffect(() => {
+    const onWheel = (e) => {
+      if (!(e.ctrlKey || e.metaKey) || !e.target.closest?.('.page')) return;
+      e.preventDefault();
+      setZoom((editorViewRef.current.zoom || 100) + (e.deltaY < 0 ? 10 : -10));
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  });
 
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
   // Layouts (Window > Layouts): named combinations of views and panels.
@@ -1663,8 +1683,10 @@ export default function App({ api: apiProp }) {
         if (!layer) setComposition(false);
         return;
       }
-      const combo = keyFromEvent(e);
+      let combo = keyFromEvent(e);
       if (!combo) return;
+      // Ctrl and + on the number pad, or Ctrl+Shift+= on the main keys: the same as Ctrl+=.
+      if (combo === 'Ctrl++' || combo === 'Ctrl+Shift++') combo = commandsRef.current.zoomIn?.key || combo;
       // A dialog is open: only Save still works behind it.
       const inDialog = document.querySelector('.modal-backdrop');
       // Typing in a field outside the editor: plain, Shift- or Alt-only keys belong to the field.
@@ -2073,6 +2095,10 @@ export default function App({ api: apiProp }) {
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
+    ['view', 'zoomIn', tr('cmd.zoomIn'), () => setZoom((editorView.zoom || 100) + 10)],
+    ['view', 'zoomOut', tr('cmd.zoomOut'), () => setZoom((editorView.zoom || 100) - 10)],
+    ['view', 'zoomReset', tr('cmd.zoomReset'), () => setZoom(100)],
+    ['view', 'pageFull', tr('cmd.pageFull'), () => setEditorView({ ...editorView, fullWidth: !editorView.fullWidth })],
     ['view', 'composition', tr('cmd.composition'), () => { setView('editor'); setComposition((c) => !c); }],
     ['view', 'toggleInspector', tr('cmd.toggleInspector'), () => setShowInspector((v) => !v)],
     ['view', 'toggleBinder', tr('cmd.toggleBinder'), () => setHideBinder((v) => !v)],
@@ -2951,7 +2977,7 @@ export default function App({ api: apiProp }) {
         />
       )}
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
-      {showSpeech && <SpeechBar api={api} getText={speechText} onInsertText={(t) => activeHandle()?.replaceSelection(t)} onClose={() => setShowSpeech(false)} />}
+      {showSpeech && <MiniPlayer api={api} dict={dict} getText={speechText} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (
