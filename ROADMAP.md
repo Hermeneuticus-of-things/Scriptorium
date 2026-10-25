@@ -1110,3 +1110,19 @@ accesibilitate și ignoră input-ul sintetic din fundal). Pattern consistent pe 
 (meniuri, Opțiuni, Inspector pe tab-uri, Ținte, Compile): **Scribner e la paritate sau superset**, cu
 extrasele proprii păstrate (AI, MCP, dictare). Goluri reale găsite și reparate: „Curățare text" (meniuri)
 și „Deschide folderul de backup" (Opțiuni).
+
+### Metodă nouă: inventar din resursele binare (fără capturi)
+`scripts/ui-audit/extract-qm.py` citește tabela de traduceri Qt a programului clasic (`ScrivenerApp_ro.qm`)
+și scoate, ca text, **toate** etichetele de interfață grupate pe componentă (context Qt): 6702 intrări,
+~70 de componente (meniuri, Opțiuni pe sub-pagini, Compile + sub-editoare, Inspector, Corkboard, Ținte,
+Statistici, Scratchpad, Generator de nume, Teme etc.). E doar **observație** a inventarului (ce elemente
+există), nu copiere de cod/resurse — pe baza lui se construiește paritatea în codul propriu Scribner.
+Costă mult mai puțin decât capturile de ecran. Stringurile programului clasic NU se urcă în depozit.
+
+Comparație pe componente (text), rezultat consistent — **Scribner la paritate sau superset**:
+- **Corecturi**: Scribner are smart quotes/dashes/ellipsis, fracții (½ — pe care clasicul NU le are),
+  capitalizare propoziții, auto-replace. Diferă doar specificul englez (Capitalize 'i', ordinale 1st/2nd).
+- **Corkboard**: grid / linii / freeform în ambele. Clasicul are în plus „Commit freeform order".
+- **Scratchpad**: „Send to project" + append în ambele.
+- **Editor (opțiuni)**: paritate; diferă randarea nativă (font hinting) și „copyholder" (al 3-lea editor).
+- [ ] Opțional minor: Corkboard „Commit freeform order" (rearanjează binderul după pozițiile din freeform).
