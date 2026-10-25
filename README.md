@@ -470,7 +470,7 @@ Pentru orice alt client cu configurare JSON (Claude Desktop, Cursor, Windsurf, L
 
 **Prin rețea** (alt calculator, server de acasă, tunel): `--http 9123` pornește serverul pe `http://127.0.0.1:9123/mcp` (Streamable HTTP). Fiecare cerere are nevoie de `Authorization: Bearer <token>` (din `--token` sau `SCRIBNER_MCP_TOKEN`; fără ele, tokenul se generează și se afișează o dată). `--host` schimbă adresa ascultată, de exemplu adresa Tailscale.
 
-**Nume private** (`--anonymize`): numele din `<proiect>/private-names.txt`, adresele de email și numerele de telefon ajung la modelul AI ca jetoane (`$ENT:PERSON:…`); jetoanele din ce scrie agentul înapoi redevin numele reale pe calculatorul tău. Toată arhitectura: `docs/MCP_ARHITECTURA.md`.
+**Nume private** (`--anonymize`, oprit implicit): doar numele scrise în `<proiect>/private-names.txt` ajung la modelul AI ca jetoane (`$ENT:PERSON:…`); `+email` și `+telefon` pe câte un rând ascund și emailurile și telefoanele. Personajele și datele inventate dintr-un roman rămân vizibile; jetoanele din ce scrie agentul înapoi redevin numele reale pe calculatorul tău. Toată arhitectura: `docs/MCP_ARHITECTURA.md`.
 
 Din cod sursă, cu Node.js:
 

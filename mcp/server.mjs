@@ -251,8 +251,8 @@ function textIndexOf(html, target, from = 0) {
   return -1;
 }
 
-// --anonymize: the private names come from <project>/private-names.txt (one per line) of every
-// project in this session; e-mail addresses and phone numbers are always covered.
+// --anonymize: only what <project>/private-names.txt lists (one name per line; "+email" and
+// "+telefon" add e-mail addresses and phone numbers). Characters and invented details stay as they are.
 const { createAnonymizer } = require('../lib/anonymize.cjs');
 let anon = null;
 function anonymizer() {
@@ -266,7 +266,10 @@ function anonymizer() {
         /* no list for this project */
       }
     }
-    anon = createAnonymizer(names);
+    // Lines "+email" / "+telefon" in the list also hide e-mail addresses / phone numbers; in a
+    // novel they are usually invented, so by default only the listed names are hidden.
+    const flags = new Set(names.map((n) => n.trim().toLowerCase()));
+    anon = createAnonymizer(names.filter((n) => !/^\s*\+/.test(n)), { emails: flags.has('+email'), phones: flags.has('+telefon') });
   }
   return anon;
 }
