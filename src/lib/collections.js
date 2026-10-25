@@ -192,3 +192,50 @@ export function setKeywordParent(project, name, parent) {
   ensureDef(out, name).parent = p;
   return out;
 }
+
+/** Documents a keyword dropped on `targetId` goes to: the whole selection when the target is part of it. */
+export function keywordDropTargets(targetId, selectedIds = []) {
+  const sel = [...selectedIds];
+  return sel.includes(targetId) ? sel : [targetId];
+}
+
+/** Adds keyword `name` to the documents `ids` (no duplicates; roots skipped); returns a new project. */
+export function addKeywordToDocs(project, ids, name) {
+  const k = String(name || '').trim();
+  const out = structuredClone(project);
+  if (!k) return out;
+  const want = new Set(ids);
+  mapNodes(out.tree || [], (n) => {
+    if (!want.has(n.id) || n.root) return;
+    if (!(n.keywords || []).includes(k)) n.keywords = [...(n.keywords || []), k];
+  });
+  ensureDef(out, k);
+  return out;
+}
+
+/** Keyword tree rows in display order: [{...kw, depth, hasChildren}]; children of collapsed names are hidden. */
+export function keywordTreeRows(keywords, collapsed = {}) {
+  const names = new Set(keywords.map((k) => k.name));
+  const byParent = new Map();
+  for (const k of keywords) {
+    const p = k.parent && names.has(k.parent) ? k.parent : null;
+    if (!byParent.has(p)) byParent.set(p, []);
+    byParent.get(p).push(k);
+  }
+  const out = [];
+  const seen = new Set();
+  const visit = (p, depth, hidden) => {
+    for (const k of byParent.get(p) || []) {
+      if (seen.has(k.name)) continue;
+      seen.add(k.name);
+      const hasChildren = (byParent.get(k.name) || []).length > 0;
+      if (!hidden) out.push({ ...k, depth, hasChildren });
+      visit(k.name, depth + 1, hidden || Boolean(collapsed[k.name]));
+    }
+  };
+  visit(null, 0, false);
+  for (const k of keywords) if (!seen.has(k.name)) out.push({ ...k, depth: 0, hasChildren: false });
+  return out;
+}
+
+export const KEYWORD_MIME = 'text/x-scribner-keyword';

@@ -5,6 +5,9 @@ import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TrashIcon } from './
 import ContextMenu from './ContextMenu.jsx';
 import { t as tr } from '../lib/i18n.js';
 import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
+import { ICONS } from './Inspector.jsx';
+import { KEYWORD_MIME, keywordDropTargets } from '../lib/collections.js';
+import { labelColorIn as labelColorInOf, labelTint } from '../lib/settingsDefaults.js';
 
 function iconFor(node) {
   if (node.root === 'trash') return <TrashIcon />;
@@ -35,8 +38,17 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder }) {
-  const tintIcons = labelTintIcons ?? Boolean(project.labelTintIcons);
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword }) {
+  const colorIn = labelColorInOf({ labelColorIn });
+  const tintIcons = labelTintIcons ?? (labelColorIn ? colorIn.icons : Boolean(project.labelTintIcons));
+  const rowTint = (node) => (colorIn.binder && node.label && labelColor[node.label] ? labelTint(labelColor[node.label]) : '');
+  const selectionFor = (id) => (selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [id]);
+  // A keyword dragged from the Keywords window: added to the row (or the whole selection it belongs to).
+  const keywordDrag = (e) => onDropKeyword && [...(e.dataTransfer?.types || [])].includes(KEYWORD_MIME);
+  const keywordDrop = (e, id) => {
+    const name = e.dataTransfer.getData(KEYWORD_MIME);
+    if (name) onDropKeyword(keywordDropTargets(id, [...selectedIds]), name);
+  };
   // Behaviours from Options: Enter = 'rename' | 'newDoc' | 'open' ('edit' = 'open');
   // double-click = 'rename' | 'quickRef' | 'open' ('openQuickRef' = 'quickRef').
   const enterMode = binderEnter === 'edit' ? 'open' : binderEnter;
@@ -174,6 +186,54 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         { label: tr('ui.binder.include_in_compile'), checked: node.includeInCompile !== false, disabled: isRootNode, action: () => onPatchItems(ids, { includeInCompile: node.includeInCompile === false }) },
         { label: tr('ui.binder.favorit'), checked: Boolean(node.favorite), disabled: isRootNode, action: () => onPatchItems(ids, { favorite: !node.favorite }) });
     }
+    const extra = [];
+    const manual = (collections || []).filter((c) => c.type !== 'search');
+    if (onAddToCollection && !isRootNode) {
+      extra.push({ label: tr('ui.binder.adauga_la_colectie'), submenu: [
+        ...manual.map((c) => ({ label: c.title, checked: ids.every((x) => (c.ids || []).includes(x)), action: () => onAddToCollection(c.id, ids) })),
+        ...(onNewCollection ? [...(manual.length ? ['-'] : []), { label: tr('ui.binder.colectie_noua_din_selectie'), action: () => onNewCollection(ids) }] : []),
+      ] });
+    }
+    const activeCol = (collections || []).find((c) => c.id === activeCollectionId);
+    if (onRemoveFromCollection && activeCol && activeCol.type !== 'search' && filterIds) {
+      extra.push({ label: tr('ui.binder.scoate_din_colectie'), action: () => onRemoveFromCollection(activeCol.id, ids) });
+    }
+    if (onConvert && !isRootNode && node.type !== 'file') {
+      extra.push(
+        { label: tr('ui.app.converteste_in_dosar'), disabled: node.type === 'folder', action: () => onConvert(ids, 'folder') },
+        { label: tr('ui.app.converteste_in_document_text'), disabled: node.type !== 'folder', action: () => onConvert(ids, 'text') },
+      );
+    }
+    if (onPatchItems && !isRootNode) {
+      const custom = node.icon && /\p{Extended_Pictographic}/u.test(node.icon) ? node.icon : '';
+      extra.push({ label: tr('ui.binder.schimba_iconita'), submenu: [
+        { label: tr('ui.binder.iconita_implicita'), checked: !custom, action: () => onPatchItems(ids, { icon: null }) },
+        '-',
+        ...ICONS.map((ic) => ({ label: ic, checked: custom === ic, action: () => onPatchItems(ids, { icon: ic }) })),
+      ] });
+      const types = project.sectionTypes || [];
+      if (types.length) {
+        extra.push({ label: tr('ui.inspector.tip_sectiune'), submenu: [
+          { label: tr('ui.inspector.dupa_nivel'), checked: !node.sectionType, action: () => onPatchItems(ids, { sectionType: null }) },
+          '-',
+          ...types.map((ty) => ({ label: ty.title, checked: node.sectionType === ty.title, action: () => onPatchItems(ids, { sectionType: ty.title }) })),
+        ] });
+      }
+    }
+    if (onSortChildren && node.children) {
+      extra.push({ label: tr('ui.binder.sorteaza_copiii'), disabled: node.children.length < 2, submenu: [
+        { label: tr('ui.binder.sort_az'), action: () => onSortChildren(id, false) },
+        { label: tr('ui.binder.sort_za'), action: () => onSortChildren(id, true) },
+      ] });
+    }
+    if (onGroup && !isRootNode && !filterIds) extra.push({ label: tr('ui.binder.grupeaza'), shortcut: 'Ctrl+Alt+G', action: () => onGroup(ids) });
+    if (extra.length) items.push('-', ...extra);
+    const more = [];
+    if (onCopyLink && !isRootNode) more.push({ label: tr('ui.binder.copiaza_legatura'), action: () => onCopyLink(id) });
+    if (onSnapshot && !isRootNode) more.push({ label: tr('ui.binder.snapshot'), disabled: !ids.some((x) => findById(x)?.node.type === 'text'), action: () => onSnapshot(ids) });
+    if (onDuplicate && !isRootNode && node.children && node.children.length) more.push({ label: tr('ui.binder.duplica_fara_sub'), disabled: ids.length > 1, action: () => onDuplicate(id, false) });
+    if (onShowInExplorer && !isRootNode) more.push({ label: tr('ui.binder.arata_in_explorer'), action: () => onShowInExplorer(id) });
+    if (more.length) items.push('-', ...more);
     items.push('-',
       { label: tr('ui.binder.deschide_in_quick_reference'), disabled: !onQuickRef || isRootNode, action: () => onQuickRef(id) },
       { label: tr('ui.binder.deschide_in_panoul_2'), disabled: Boolean(node.children), action: () => onSelect(id, { alt: true }) },
@@ -254,13 +314,16 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           aria-selected={selectedId === node.id || selectedIds.has(node.id)}
           aria-expanded={node.children ? Boolean(isOpen) : undefined}
           aria-label={node.title || tr('ui.app.fara_titlu')}
-          className={`binder-row ${selectedId === node.id ? 'selected' : selectedIds.has(node.id) ? 'multi' : ''} ${hint ? `drop-${hint}` : ''} ${node.root ? 'root' : ''} ${hint && copying ? 'drop-copy' : ''} ${node.separator ? 'separator' : ''}`}
+          className={`binder-row ${selectedId === node.id ? 'selected' : selectedIds.has(node.id) ? 'multi' : ''} ${hint ? `drop-${hint}` : ''} ${node.root ? 'root' : ''} ${hint && copying ? 'drop-copy' : ''} ${node.separator ? 'separator' : ''} ${rowTint(node) ? 'tinted' : ''}`}
           data-node-id={node.id}
-          style={{ paddingLeft: 8 + depth * 14 }}
+          style={{ paddingLeft: 8 + depth * 14, ...(rowTint(node) ? { '--row-tint': rowTint(node) } : null) }}
           draggable={!node.root}
           onDragStart={(e) => {
-            setDrag(dragIds(node.id, selectedIds));
+            const ids = dragIds(node.id, selectedIds);
+            setDrag(ids);
             e.dataTransfer.effectAllowed = onCopy ? 'copyMove' : 'move';
+            // lets other panes (collection tabs) receive the dragged documents
+            try { e.dataTransfer.setData('text/x-scribner-ids', JSON.stringify(ids)); } catch { /* not supported */ }
           }}
           onDragEnd={() => {
             hoverExpand(node, null);
@@ -269,6 +332,12 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             setCopying(false);
           }}
           onDragOver={(e) => {
+            if (!drag && keywordDrag(e) && !node.root) {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'copy';
+              if (!dropHint || dropHint.id !== node.id || dropHint.pos !== 'keyword') setDropHint({ id: node.id, pos: 'keyword' });
+              return;
+            }
             if (!drag || drag.includes(node.id)) return;
             e.preventDefault();
             const copy = Boolean(e.altKey && onCopy);
@@ -278,9 +347,11 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             hoverExpand(node, pos);
             if (!dropHint || dropHint.id !== node.id || dropHint.pos !== pos) setDropHint({ id: node.id, pos });
           }}
+          onDragLeave={() => dropHint?.pos === 'keyword' && dropHint.id === node.id && setDropHint(null)}
           onDrop={(e) => {
             e.preventDefault();
-            if (drag) doDrop(drag, node.id, dropPosition(e, node), e.altKey);
+            if (!drag && keywordDrag(e) && !node.root) keywordDrop(e, node.id);
+            else if (drag) doDrop(drag, node.id, dropPosition(e, node), e.altKey);
             setDrag(null);
             setDropHint(null);
             setCopying(false);
@@ -367,7 +438,11 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         const mod = e.ctrlKey || e.metaKey;
         const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'outdent', ArrowRight: 'indent' };
         const key = e.key;
-        if (mod && !e.altKey && !e.shiftKey && map[key]) {
+        if (mod && e.altKey && !e.shiftKey && (key === 'g' || key === 'G') && onGroup && !filterIds && selected && !isRoot) {
+          e.preventDefault();
+          e.stopPropagation();
+          onGroup(selectionFor(selected));
+        } else if (mod && !e.altKey && !e.shiftKey && map[key]) {
           e.preventDefault();
           if (!filterIds) onKeyMove(map[key]);
         } else if (mod && !e.altKey && (key === 'z' || key === 'Z' || key === 'y' || key === 'Y')) {
@@ -438,8 +513,22 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
                   role="option"
                   id={rowDomId(id)}
                   aria-selected={selectedId === id || selectedIds.has(id)}
-                  className={`binder-row ${selectedId === id ? 'selected' : selectedIds.has(id) ? 'multi' : ''}`}
+                  className={`binder-row ${selectedId === id ? 'selected' : selectedIds.has(id) ? 'multi' : ''} ${rowTint(node) ? 'tinted' : ''} ${dropHint && dropHint.id === id && dropHint.pos === 'keyword' ? 'drop-keyword' : ''}`}
+                  style={rowTint(node) ? { '--row-tint': rowTint(node) } : undefined}
                   data-node-id={id}
+                  onDragOver={(e) => {
+                    if (!keywordDrag(e)) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                    if (!dropHint || dropHint.id !== id) setDropHint({ id, pos: 'keyword' });
+                  }}
+                  onDragLeave={() => setDropHint(null)}
+                  onDrop={(e) => {
+                    if (!keywordDrag(e)) return;
+                    e.preventDefault();
+                    keywordDrop(e, id);
+                    setDropHint(null);
+                  }}
                   onClick={(e) => select(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
                   onContextMenu={(e) => openContext(e, id)}
                 >
