@@ -3,13 +3,13 @@ import { binderNav } from '../lib/tree.js';
 import { htmlToText } from '../lib/text.js';
 import { DocumentIcon, FolderIcon } from './Icons.jsx';
 import { t, uiLocale } from '../lib/i18n.js';
-import { noneLabel, noneStatus } from '../lib/projectSettings.js';
+import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
 
 // Columns the outline can show (Scrivener: Outliner > Columns).
-const BASE_COLUMNS = () => ([
+const BASE_COLUMNS = (project) => ([
   { id: 'synopsis', label: t('ui.advancedSearchDialog.sinopsis') },
-  { id: 'label', label: t('ui.binder.eticheta') },
-  { id: 'status', label: 'Status' },
+  { id: 'label', label: labelTitleOf(project, t) },
+  { id: 'status', label: statusTitleOf(project, t) },
   { id: 'keywords', label: t('ui.advancedSearchDialog.cuvinte_cheie') },
   { id: 'sectionType', label: t('ui.inspector.tip_sectiune') },
   { id: 'include', label: t('ui.outliner.in_compile') },
@@ -43,7 +43,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   const [dropHint, setDropHint] = useState(null);
   const bodyRef = useRef(null);
   const fields = project.customFields || [];
-  const allColumns = [...BASE_COLUMNS(), ...fields.map((f) => ({ id: `custom:${f.title}`, label: f.title }))];
+  const allColumns = [...BASE_COLUMNS(project), ...fields.map((f) => ({ id: `custom:${f.title}`, label: f.title }))];
 
   const saveColumns = (next) => {
     setColumns(next);

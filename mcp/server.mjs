@@ -262,7 +262,7 @@ function outsideProjects(p, what = 'output_path') {
     return process.platform === 'win32' || process.platform === 'darwin' ? r.toLowerCase() : r;
   };
   const real = norm(p);
-  if (hiddenPath(path.resolve(p))) throw new Error(`${what}: nu scriu în foldere sau fișiere ascunse ori de sistem.`);
+  if (hiddenPath(path.resolve(p)) || hiddenPath(real)) throw new Error(`${what}: nu scriu în foldere sau fișiere ascunse ori de sistem.`);
   if (projects.map(norm).some((pd) => real === pd || real.startsWith(pd + path.sep))) throw new Error(`${what} nu poate fi în interiorul unui proiect.`);
   return path.resolve(p); // the comparison form is only for the check; the caller keeps its spelling
 }
@@ -273,7 +273,15 @@ function hiddenPath(abs) {
 // An existing file is replaced only when this server wrote it (a re-compile to the same place).
 const writtenByServer = new Set();
 function freshOutput(abs) {
-  if (fs.existsSync(abs) && !writtenByServer.has(abs)) throw new Error(`Fișierul există deja: ${abs}. Alege alt nume sau șterge-l întâi.`);
+  // A link at the output path (even a dangling one) would send the write somewhere else.
+  let st = null;
+  try {
+    st = fs.lstatSync(abs);
+  } catch {
+    /* new file */
+  }
+  if (st && st.isSymbolicLink()) throw new Error(`La ${abs} este o legătură (symlink); nu scriu prin ea.`);
+  if (st && !writtenByServer.has(abs)) throw new Error(`Fișierul există deja: ${abs}. Alege alt nume sau șterge-l întâi.`);
   writtenByServer.add(abs);
   return abs;
 }
@@ -465,8 +473,8 @@ tool(
     mutate(dir, (p) => {
     n = nodeOrThrow(p, input.id);
     if (n.root) throw new Error('Rădăcinile nu au metadate editabile.');
-    if (input.label && !p.labels.some((l) => l.name === input.label)) throw new Error(`Etichetă necunoscută. Disponibile: ${p.labels.map((l) => l.name).join(', ')}`);
-    if (input.status && !p.statuses.includes(input.status)) throw new Error(`Status necunoscut. Disponibile: ${p.statuses.join(', ')}`);
+    if (input.label !== undefined && !p.labels.some((l) => l.name === input.label)) throw new Error(`Etichetă necunoscută. Disponibile: ${p.labels.map((l) => l.name).join(', ')}`);
+    if (input.status !== undefined && !p.statuses.includes(input.status)) throw new Error(`Status necunoscut. Disponibile: ${p.statuses.join(', ')}`);
     patch = {};
     for (const [k, v] of [['title', input.title], ['synopsis', input.synopsis], ['label', input.label], ['status', input.status], ['keywords', input.keywords], ['includeInCompile', input.include_in_compile], ['target', input.target]]) {
       if (v !== undefined) patch[k] = v;

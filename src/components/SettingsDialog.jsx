@@ -1,6 +1,6 @@
 import { LANG_NAMES } from '../lib/lookups.js';
 import ServicesPanel from './ServicesPanel.jsx';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
 import { colorFor, newMachineId } from '../lib/team.js';
 import { listsFor, profileId } from '../lib/editorial.js';
@@ -87,7 +87,21 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [dtedCheck, setDtedCheck] = useState('');
   const [dtedState, setDtedState] = useState(null); // {model, model_folosit, modele} after Verifică
   // Saves the D&TED path first, so the check uses what was typed.
+  // Verifică and the model list act on the engine at once; Cancel puts back what was saved.
+  const dtedTouched = useRef(false);
+  const cancel = async () => {
+    if (dtedTouched.current) {
+      try {
+        await api.setSettings({ dtedPath: init.dtedPath || '', dtedModel: init.dtedModel || 'auto' });
+        await api.dtedSetModel?.(init.dtedModel || 'auto');
+      } catch {
+        /* the engine may be gone; the saved settings are back anyway */
+      }
+    }
+    onClose();
+  };
   const checkDted = async () => {
+    dtedTouched.current = true;
     setDtedCheck(t('ui.dted.verific'));
     try {
       await api.setSettings({ dtedPath: s.dtedPath.trim() });
@@ -700,6 +714,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
                     onChange={async (e) => {
                       const nume = e.target.value;
                       setS((p) => ({ ...p, dtedModel: nume }));
+                      dtedTouched.current = true;
                       try {
                         await api.setSettings({ dtedModel: nume });
                         setDtedState(await api.dtedSetModel(nume));
@@ -765,7 +780,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const visibleTabs = TABS.filter((k) => panes[k]);
 
   return (
-    <div className="modal-backdrop" onClick={() => (!dirty || window.confirm(t('ui.settingsDialog.renunti'))) && onClose()}>
+    <div className="modal-backdrop" onClick={() => (!dirty || window.confirm(t('ui.settingsDialog.renunti'))) && cancel()}>
       <div className="modal settings-dialog" role="dialog" aria-label={t('set.title')} onClick={(e) => e.stopPropagation()} onChangeCapture={() => setDirty(true)}>
         <h2>{t('set.title')}</h2>
         <div className="tabs" role="tablist">
@@ -777,7 +792,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         </div>
         <div role="tabpanel" style={{ minHeight: 260, marginTop: 8 }}>{panes[tab]}</div>
         <div className="actions">
-          <button onClick={onClose}>{t('btn.cancel')}</button>
+          <button onClick={cancel}>{t('btn.cancel')}</button>
           <button className="primary" onClick={save}>{t('btn.save')}</button>
         </div>
       </div>

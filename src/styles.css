@@ -3,7 +3,7 @@
   --panel: #ecE8df;
   --paper: #fffdf8;
   --text: #2a2723;
-  --muted: #7a736a;
+  --muted: #645d55;
   --line: #d9d3c7;
   --accent: #8a5a2b;
   --accent-soft: #e9dccb;
@@ -15,15 +15,15 @@
 @media (prefers-color-scheme: dark) {
   :root[data-theme='system'] {
     --bg: #1d1c1a; --panel: #262422; --paper: #2b2926; --text: #e9e4da; --muted: #a39b8f;
-    --line: #3c3934; --accent: #d9a066; --accent-soft: #4a3a2a; color-scheme: dark;
+    --line: #3c3934; --accent: #d9a066; --accent-soft: #4a3a2a; --danger: #f2766d; --ok: #6fcf73; color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
   --bg: #1d1c1a; --panel: #262422; --paper: #2b2926; --text: #e9e4da; --muted: #a39b8f;
-  --line: #3c3934; --accent: #d9a066; --accent-soft: #4a3a2a; color-scheme: dark;
+  --line: #3c3934; --accent: #d9a066; --accent-soft: #4a3a2a; --danger: #f2766d; --ok: #6fcf73; color-scheme: dark;
 }
 :root[data-theme='sepia'] {
-  --bg: #efe4cf; --panel: #e6d8bd; --paper: #f7eedb; --text: #4a3b28; --muted: #85725a;
+  --bg: #efe4cf; --panel: #e6d8bd; --paper: #f7eedb; --text: #4a3b28; --muted: #6b5a43;
   --line: #d4c19f; --accent: #8a5a2b; --accent-soft: #e2cfac;
 }
 
@@ -533,3 +533,6 @@ legend { color: var(--muted); padding: 0 4px; }
 @media (max-width: 600px) { .menubar { flex-wrap: wrap; } } /* wraps, never clips the dropdowns */
 .menu-pop { max-width: calc(100vw - 8px); }
 .menu-pop button span { white-space: normal; }
+
+/* Typewriter mode: room below (and above) the text, so the line being written can sit mid-screen. */
+.page.typewriter { padding-bottom: 50vh; padding-top: 30vh; }

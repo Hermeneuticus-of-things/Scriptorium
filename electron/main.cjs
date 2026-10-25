@@ -217,7 +217,7 @@ function assertOpened(dir) {
 // language pack must be installed in the OS; on Linux the dictionaries download on demand.
 const { lookupGroups } = require('../src/lib/lookups.js');
 
-function setupSpelling(win) {
+function applySpellLanguages(win) {
   const ses = win.webContents.session;
   const langs = (readSettings().spellLanguages || ['ro', 'en-US']).filter((l) => ses.availableSpellCheckerLanguages.length === 0 || ses.availableSpellCheckerLanguages.includes(l));
   try {
@@ -225,6 +225,9 @@ function setupSpelling(win) {
   } catch {
     /* system spellchecker (Windows/macOS) decides the languages */
   }
+}
+function setupSpelling(win) {
+  applySpellLanguages(win);
   // Words ignored for this session ("Ignoră"): no suggestions menu for them.
   const ignored = new Set();
   const lookup = (url) => shell.openExternal(url);
@@ -471,6 +474,8 @@ handle('settings:set', (_e, patch) => {
   if (rest.recent !== undefined) rest.recent = (Array.isArray(rest.recent) ? rest.recent : []).filter((r) => r && (cur.recent || []).some((c) => c.dir === r.dir));
   if (rest.backupDir !== undefined && rest.backupDir && rest.backupDir !== cur.backupDir && rest.backupDir !== chosenBackupDir) delete rest.backupDir;
   writeSettings({ ...readSettings(), ...rest });
+  // A new spelling language takes effect now in every window, not at the next start.
+  if (rest.spellLanguages !== undefined) for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) applySpellLanguages(w);
   if (apiKeys && typeof apiKeys === 'object') {
     for (const [p, k] of Object.entries(apiKeys)) if (aiProviders.PRESETS[p] && typeof k === 'string') setApiKey(k, p);
   }
@@ -923,6 +928,7 @@ handle('import:scriv', async (e) => {
 
 handle('compile:export', async (e, dir, project, format, options) => {
   assertOpened(dir);
+  options = { ...(options || {}), projectDir: dir }; // media only from the opened project
   const read = (id) => store.readDoc(dir, id);
   const info = compile.OUTPUT_FORMATS[format];
   if (!info) throw new Error(`Format necunoscut: ${format}`);

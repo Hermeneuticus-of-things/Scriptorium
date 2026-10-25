@@ -9,7 +9,7 @@ export function dialogueWords(text) {
   let n = 0;
   for (const para of String(text || '').split(/\n+/)) {
     if (/^\s*[—–-]\s*\S/.test(para)) { n += words(para); continue; }
-    for (const m of para.match(/„[^”]*”|"[^"]*"|«[^»]*»|“[^”]*”/g) || []) n += words(m);
+    for (const m of para.match(/„[^”"]*[”"]|"[^"]*"|«[^»]*»|“[^”]*”/g) || []) n += words(m);
   }
   return n;
 }

@@ -36,7 +36,7 @@ import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintT
 import { AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, NotesIcon, OutlineIcon, ScriveningsIcon, SearchIcon, SnapshotIcon, SplitIcon } from './components/Icons.jsx';
 import { TOP_ITEMS, topItemAvailable, toolbarPrefs, setFormatLayout } from './lib/toolbars.js';
 import ToolbarCustomizeDialog from './components/ToolbarCustomizeDialog.jsx';
-import { mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
+import { measure, mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
 import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
 import PrintPreviewDialog from './components/PrintPreviewDialog.jsx';
@@ -334,6 +334,21 @@ export default function App({ api: apiProp }) {
   const [aiProgress, setAiProgress] = useState(null);
   const [showSpeech, setShowSpeech] = useState(false);
   const [activeCollectionId, setActiveCollectionId] = useState(null);
+  // Notes of every item, loaded only while the active saved search looks in the Notes field.
+  const [collectionNotes, setCollectionNotes] = useState({});
+  useEffect(() => {
+    const col = activeCollectionId && project ? (project.collections || []).find((c) => c.id === activeCollectionId) : null;
+    const f = col?.type === 'search' ? col.search?.options?.fields : null;
+    if (!col || col.type !== 'search' || (f && f.length && !f.includes('notes')) || !dir || !api.readDoc) return undefined;
+    let alive = true;
+    const ids = flatten(project.tree).filter((n) => !n.root).map((n) => n.id);
+    Promise.all(ids.map((id) => api.readDoc(dir, id, 'notes').then((h) => [id, h || ''], () => [id, '']))).then((pairs) => {
+      if (alive) setCollectionNotes(Object.fromEntries(pairs));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [activeCollectionId, project?.collections, project?.tree, dir, api]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
   // Copyholder: a reference pane beside the editor (and the split), read-only unless toggled.
@@ -376,7 +391,7 @@ export default function App({ api: apiProp }) {
   const [queued, setQueued] = useState(0);
   const queuedRef = useRef(0);
   const retryTimer = useRef(null);
-  const [sessionStart, setSessionStart] = useState(0);
+  const [sessionStart, setSessionStart] = useState(null); // {words, chars} at the session's start; null = take it now
   const [widths, setWidths] = useState({ binder: 260, side: 320 });
   const [nav, setNav] = useState({ stack: [], index: -1 });
   const editorRefs = useRef(new Map()); // id -> Editor handle (main, scrivenings, split)
@@ -469,8 +484,55 @@ export default function App({ api: apiProp }) {
     const trashIds = new Set(flatten(trash.children).map((n) => n.id));
     let total = 0;
     for (const [id, c] of Object.entries(counts)) if (!trashIds.has(id)) total += c;
-    return { draft: sumWords(project.tree[0], counts), total };
-  }, [project, counts]);
+    // Targets count the whole Manuscript, or only what goes into Compile (Project Targets option).
+    const onlyCompiled = Boolean(project.targets?.countOnlyCompiled);
+    const counted = onlyCompiled ? compiledNodes(project.tree[0]) : flatten(project.tree[0].children || []);
+    const tWords = counted.reduce((s, n) => s + (counts[n.id] || 0), 0);
+    const tChars = counted.reduce((s, n) => s + charsOf(n.id, docs[n.id]), 0);
+    return { draft: sumWords(project.tree[0], counts), total, tWords, tChars, draftChars: tChars };
+  }, [project, counts, docs, charsOf]);
+
+  // Session start by the reset rule: at every open, at midnight (kept across opens the same day),
+  // or by hand (kept until "Reset session" in Project Targets).
+  const sessionKey = dir ? `scribner-session:${dir}` : null;
+  const resetSession = useCallback(() => {
+    const base = { date: new Date().toDateString(), words: totals.tWords || 0, chars: totals.tChars || 0 };
+    try {
+      if (sessionKey) localStorage.setItem(sessionKey, JSON.stringify(base));
+    } catch {
+      /* storage off: the session lasts while the window is open */
+    }
+    notified.current.session = false;
+    setSessionStart(base);
+  }, [sessionKey, totals.tWords, totals.tChars]);
+  useEffect(() => {
+    if (!project || sessionStart) return;
+    const mode = project.targets?.sessionReset || 'midnight';
+    let stored = null;
+    try {
+      stored = JSON.parse(localStorage.getItem(sessionKey) || 'null');
+    } catch {
+      /* unreadable */
+    }
+    if (stored && (mode === 'manual' || (mode === 'midnight' && stored.date === new Date().toDateString()))) setSessionStart(stored);
+    else resetSession();
+  }, [project, sessionStart, sessionKey, resetSession]);
+  useEffect(() => {
+    if ((project?.targets?.sessionReset || 'midnight') !== 'midnight' || !sessionStart) return undefined;
+    const timer = setInterval(() => {
+      if (sessionStart.date && sessionStart.date !== new Date().toDateString()) resetSession();
+    }, 60000);
+    return () => clearInterval(timer);
+  }, [project?.targets?.sessionReset, sessionStart, resetSession]);
+  const tg = project?.targets || {};
+  const wpp = Number(tg.wordsPerPage) || 250;
+  const draftValue = measure({ words: totals.tWords || 0, chars: totals.tChars || 0 }, tg.draftType || 'Words', wpp);
+  const sessionValue = measure(
+    { words: Math.max(0, (totals.tWords || 0) - (sessionStart?.words || 0)), chars: Math.max(0, (totals.tChars || 0) - (sessionStart?.chars || 0)) },
+    tg.sessionType || 'Words',
+    wpp,
+  );
+  const unitName = (type) => (type === 'Characters' ? tr('ui.inspector.caractere') : type === 'Pages' ? tr('ui.targetsDialog.pagini') : tr('ui.inspector.cuvinte'));
 
   const totalsRef = useRef(totals);
   totalsRef.current = totals;
@@ -657,16 +719,17 @@ export default function App({ api: apiProp }) {
     if (!project || project.targets?.notify === false) return;
     const t = project.targets || {};
     const checks = [
-      ['session', t.session, Math.max(0, totals.draft - sessionStart), tr('ui.app.ai_atins_tinta_sesiunii')],
-      ['draft', t.draft, totals.draft, tr('ui.app.ai_atins_tinta_cartii')],
+      ['session', t.session, sessionValue, tr('ui.app.ai_atins_tinta_sesiunii'), t.sessionType],
+      ['draft', t.draft, draftValue, tr('ui.app.ai_atins_tinta_cartii'), t.draftType],
     ];
-    for (const [key, target, value, msg] of checks) {
+    if (!sessionStart) return;
+    for (const [key, target, value, msg, type] of checks) {
       if (target > 0 && value >= target && !notified.current[key]) {
         notified.current[key] = true;
-        setToast(tr('ui.app.x_x_cuvinte', { msg: msg, v1: value.toLocaleString(uiLocale()) }));
+        setToast(`${msg}: ${value.toLocaleString(uiLocale())} ${unitName(type)}.`);
       }
     }
-  }, [project, totals.draft, sessionStart]);
+  }, [project, draftValue, sessionValue, sessionStart]);
 
   // Remember UI state per project.
   useEffect(() => {
@@ -775,7 +838,8 @@ export default function App({ api: apiProp }) {
       setCopyholder(ui.copyholder?.id && findNode(res.project.tree, ui.copyholder.id) ? { id: ui.copyholder.id, editable: Boolean(ui.copyholder.editable) } : null);
       const openCounts = Object.fromEntries(entries.map(([id, h]) => [id, wordCount(h)]));
       const draftAtOpen = sumWords(res.project.tree[0], openCounts);
-      setSessionStart(draftAtOpen);
+      setSessionStart(null); // set from the first totals (sessionBaseline), by the project's reset rule
+      void draftAtOpen;
       const sOpen = settingsRef.current?.sharingSync || {};
       if (res.project.syncFolder && (res.project.syncAuto || sOpen.syncOnOpen) && api.syncAuto) {
         api.syncAuto(res.dir, { ...res.project, syncAuto: true, syncFormat: res.project.syncFormat || sOpen.format || 'rtf' }, 'open').then((r) => r?.action === 'in' && setToast(tr('ui.app.sincronizare_automata_x_actualizate_x', { length: r.updated.length, length1: r.created.length }))).catch(() => {});
@@ -1734,7 +1798,7 @@ export default function App({ api: apiProp }) {
   const binderProject = binderProjectOf(project, hoistNode);
   const editorAreaClass = `editor-area ${editorView.hideFormatBar ? 'hide-formatbar' : ''} ${editorView.hideComments ? 'hide-comments' : ''} ${editorView.hideRevisions ? 'hide-revisions' : ''}`;
   const activeCollection = activeCollectionId ? (project.collections || []).find((c) => c.id === activeCollectionId) : null;
-  const collectionIds = activeCollection ? collectionNodes(project, activeCollection, docs).map((n) => n.id) : null;
+  const collectionIds = activeCollection ? collectionNodes(project, activeCollection, docs, collectionNotes).map((n) => n.id) : null;
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
   const splitNode = splitId ? findNode(project.tree, splitId) : null;
   const copyNode = copyholder ? findNode(project.tree, copyholder.id) : null;
@@ -2608,6 +2672,8 @@ export default function App({ api: apiProp }) {
                   onJumpToComment={(index, c, id) => {
                     go(id);
                     setView('editor');
+                    // after the editor shows that document: select the comment's text
+                    setTimeout(() => editorRefs.current.get(id)?.selectComment?.(index), 80);
                   }}
                 />
               )}
@@ -2732,9 +2798,9 @@ export default function App({ api: apiProp }) {
         words={selected ? (isFolderView ? scrivSections.reduce((s, n) => s + (counts[n.id] || 0), 0) : counts[selected.id] || 0) : 0}
         chars={selected && !isFolderView ? statusChars : 0}
         selectionCount={selectedIds.size}
-        totalDraft={totals.draft}
+        totalDraft={draftValue}
         draftTarget={project.targets?.draft || 0}
-        sessionWords={Math.max(0, totals.draft - sessionStart)}
+        sessionWords={sessionValue}
         sessionTarget={project.targets?.session || 0}
         saveState={saveState}
         onSync={() => conflict && setConflict((c) => c && { ...c, open: true })}
@@ -2749,7 +2815,7 @@ export default function App({ api: apiProp }) {
       {composition && settings.compShowTargets && selected && (
         <div className="comp-targets">
           <span>{tr('ui.statusBar.document')}: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
-          <span>{tr('ui.statusBar.session')}: {Math.max(0, totals.draft - sessionStart)}{project.targets?.session ? ` / ${project.targets.session}` : ''}</span>
+          <span>{tr('ui.statusBar.session')}: {sessionValue}{project.targets?.session ? ` / ${project.targets.session}` : ''}</span>
         </div>
       )}
 
@@ -3000,8 +3066,9 @@ export default function App({ api: apiProp }) {
       {dialog === 'targets' && (
         <TargetsDialog
           project={project}
-          draftWords={totals.draft}
+          draftWords={totals.tWords}
           draftChars={totals.draftChars}
+          onResetSession={resetSession}
           onSave={(targets) => {
             saveProject({ ...project, targets });
             setDialog(null);
@@ -3144,6 +3211,16 @@ function Toasts({ error, onCloseError, toast, onCloseToast }) {
       </div>
     </>
   );
+}
+
+// Items of a container that go into Compile (an excluded folder excludes what is inside it).
+function compiledNodes(node, out = []) {
+  for (const c of node.children || []) {
+    if (!c.includeInCompile) continue;
+    out.push(c);
+    compiledNodes(c, out);
+  }
+  return out;
 }
 
 function sumWords(node, counts) {

@@ -12,6 +12,10 @@ export const noneLabel = (name, t) => (name === NONE ? t('ui.corkboard.fara_etic
 export const noneStatus = (name, t) => (name === NONE ? t('ui.corkboard.fara_status') : (getLanguage() === 'en' && BUILTIN_STATUSES_EN[name]) || name);
 export const DEFAULT_LABEL_TITLE = 'Etichetă';
 export const DEFAULT_STATUS_TITLE = 'Status';
+// The names the writer gave the Label and Status fields (Project Settings); the defaults follow
+// the interface language.
+export const labelTitleOf = (project, tr) => (project?.labelTitle && project.labelTitle !== DEFAULT_LABEL_TITLE ? project.labelTitle : tr('ui.binder.eticheta'));
+export const statusTitleOf = (project, tr) => (project?.statusTitle && project.statusTitle !== DEFAULT_STATUS_TITLE ? project.statusTitle : tr('ui.app.status'));
 export const FIELD_TYPES = ['text', 'checkbox', 'list', 'date'];
 
 const clone = (x) => structuredClone(x);

@@ -2,6 +2,23 @@
 
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
+### v0.9.8, a doua rundă pe toate nivelurile + lista cerută
+- Colecțiile din căutare salvată care includ câmpul Note încarcă notele (găsesc aceleași documente ca dialogul).
+- Ținte: unitatea (cuvinte/caractere/pagini) se aplică la bara de stare și la notificări; caracterele se numără exact; „numără doar ce intră în Compile” are efect; sesiunea se resetează la miezul nopții, la deschidere sau manual (buton „Începe o sesiune nouă acum”).
+- Numele date câmpurilor Etichetă și Status (Setările proiectului) apar în Outline, Binder, Inspector și Corkboard.
+- Corkboard pe rânduri: o cartonașă trasă în alt rând primește eticheta/statusul rândului; Ctrl+←/→ mută în rândul ei.
+- Setări D&TED: Anulează readuce calea și modelul salvate (Verifică și lista de modele acționează imediat asupra motorului).
+- MCP: tipare regex periculoase ((a+)+) refuzate (și în aplicație); adrese IPv6 cu IPv4 local (::ffff:127.0.0.1, NAT64, 6to4) blocate; legături simbolice la ieșire refuzate; căi ascunse verificate și după legături; folderul de export existent nu se suprascrie; `set_metadata` cu etichetă goală refuzat; `import_files` validează toate căile înainte de a scrie.
+- CLI: `backup -o` și `import -o` nu mai pot scrie în interiorul unui proiect; comenzi ca `__proto__` nu mai dau eroare JS.
+- Istoricul scrisului: un history.json stricat e pus deoparte, nu șters; scriere atomică.
+- Compile: textul adnotărilor cu stiluri în interior nu mai intră în carte; regulile regex cu `\-` merg.
+- Import: OPML cu `>` în atribute și entități duble corect; fișiere text Windows-1250 și UTF-16 fără BOM.
+- Editorial: majuscula după `'` se corectează; Ritm: dialog cu ghilimele amestecate, zecimale cu virgulă.
+- Cuvinte-cheie: unirea prin redenumire nu mai creează bucle de părinți.
+- Contrast: culorile de eroare și succes în tema întunecată, gri-ul în temele luminoase.
+- Desktop: limba corectorului se schimbă imediat; Compile citește media doar din proiectul deschis.
+- Mod mașină de scris: rândul curent stă la mijloc; Comentarii › Salt selectează comentariul; fereastra de Ajutor ține focusul; după un dialog focusul revine în text, nu pe meniu.
+
 ### v0.9.8, căutare separată pe MCP
 - Căutare/înlocuire cu tipar care poate potrivi gol (`x*`, `^`, `\b`) pe text cu emoji: nu mai blochează serverul MCP și nici aplicația.
 - `editorial_autofix` sare documentele blocate (fără snapshot) și le numește; `glossary_add` verifică blocarea înainte de snapshot.

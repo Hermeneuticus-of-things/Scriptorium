@@ -143,6 +143,19 @@ export function renameKeyword(project, old, nextName) {
     if (d.parent === old) d.parent = target;
     if (d.parent === d.name) d.parent = null;
   }
+  // A merge may close a loop (A→C, C→B, then A renamed to B): the keyword that would be its own
+  // ancestor loses its parent.
+  const all = out.keywordDefs || [];
+  for (const d of all) {
+    const seen = new Set([d.name]);
+    for (let cur = d.parent; cur; cur = all.find((x) => x.name === cur)?.parent || null) {
+      if (seen.has(cur)) {
+        d.parent = null;
+        break;
+      }
+      seen.add(cur);
+    }
+  }
   return out;
 }
 

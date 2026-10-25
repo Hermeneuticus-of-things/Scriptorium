@@ -59,6 +59,8 @@ const Editor = forwardRef(function Editor(
   },
   ref,
 ) {
+  const typewriterRef = useRef(typewriter);
+  typewriterRef.current = typewriter;
   const histRef = useRef(null); // { base, groups } recorded for historyKey
   const replaying = useRef(false);
   const [showFind, setShowFind] = useState(false);
@@ -120,7 +122,7 @@ const Editor = forwardRef(function Editor(
       onBlur: () => flushRef.current(),
       onDestroy: () => flushRef.current(),
       onSelectionUpdate: ({ editor: ed }) => {
-        if (!typewriter) return;
+        if (!typewriterRef.current) return; // a ref: turning the mode on reaches editors already open
         const { node } = ed.view.domAtPos(ed.state.selection.from);
         const el = node.nodeType === 1 ? node : node.parentElement;
         el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -295,6 +297,16 @@ const Editor = forwardRef(function Editor(
       },
       // A read-only editor (locked document, snapshot view) is left alone: false tells the caller.
       replaceSelectionHtml: (h) => Boolean(editor && !editor.isDestroyed && editor.isEditable && editor.chain().focus().insertContent(h).run()),
+      // Selects the index-th comment's text (Inspector › Comments › Go to).
+      selectComment: (index) => {
+        if (!editor || editor.isDestroyed) return false;
+        const el = editor.view.dom.querySelectorAll('[data-comment]')[index];
+        if (!el) return false;
+        const from = editor.view.posAtDOM(el, 0);
+        const to = editor.view.posAtDOM(el, el.childNodes.length);
+        editor.chain().focus().setTextSelection({ from, to }).scrollIntoView().run();
+        return true;
+      },
       // Inserts after the selection (never over it); a single paragraph goes inline at the caret.
       insertHtmlAfter: (h) => {
         if (!editor || editor.isDestroyed || !editor.isEditable) return false;

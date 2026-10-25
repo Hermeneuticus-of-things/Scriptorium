@@ -609,7 +609,7 @@ const commands = {
     const dir = resolveProject(pos[0]);
     const backup = require('../lib/backup.cjs');
     const keep = intOpt(opt, '--keep', 1, 10);
-    const file = await backup.backupProject(dir, opt['-o'] ? path.resolve(cleanPath(opt['-o'])) : undefined, keep, { zip: !opt['--no-zip'] });
+    const file = await backup.backupProject(dir, opt['-o'] ? notInside(dir, path.resolve(cleanPath(opt['-o']))) : undefined, keep, { zip: !opt['--no-zip'] });
     if (opt['--json']) return json({ file });
     out(T.backupDone(file));
   },
@@ -630,6 +630,10 @@ const commands = {
     const srcPath = path.resolve(cleanPath(src));
     if (!fs.existsSync(srcPath)) throw new Error(T.notFound(srcPath));
     const target = needOut(opt);
+    // Never a project inside another project's folder (unless the target is that project).
+    for (let up = path.dirname(path.resolve(target)); up !== path.dirname(up); up = path.dirname(up)) {
+      if (fs.existsSync(path.join(up, 'project.json'))) throw new UsageError(`Ieșirea (-o) e în interiorul proiectului ${up}. Alege alt folder.`);
+    }
     if (/\.scriv$/i.test(srcPath) || fs.statSync(srcPath).isDirectory()) {
       const { importScriv } = require('../lib/scrivImport.cjs');
       const parent = /\.scribner$/i.test(target) ? path.dirname(target) : target;
@@ -846,8 +850,8 @@ async function main(argv) {
     out(T.help);
     return cmd || opt['--help'] || opt['-h'] ? 0 : 2;
   }
-  const fn = commands[cmd];
-  if (!fn) {
+  const fn = Object.hasOwn(commands, cmd) ? commands[cmd] : null;
+  if (typeof fn !== 'function') {
     process.stderr.write(`${T.unknownCommand(cmd)}\n`);
     return 2;
   }

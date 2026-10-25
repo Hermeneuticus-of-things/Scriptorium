@@ -190,11 +190,19 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] Texte netraduse: formatting.js (FORMAT_KINDS, bara de imagine), pacing.js, PacingView, AiPanel („scrie”, „Respinge”), BackupDialog, EditorialPanel, CompileDialog (Interior/Exterior), collections.js, panelsExtra (Notă din ciorne, părți de vorbire), meniul Ajutor din main.cjs, mesajele webApi.js; 7 chei i18n nefolosite.
 - [ ] search.js/team.js: regex de tag care înțelege `>` în atribute; decodare `&amp;amp;` într-o singură trecere.
 - [ ] sanitize.js: toate URL-urile din srcset, style cu `\`, atributele background/poster.
-- [ ] Colecție din căutare salvată cu câmpul Note: să încarce notele (App.jsx collectionNodes).
-- [ ] Ținte: draftChars real, comparații pe unitatea aleasă, sessionReset (miezul nopții/manual), countOnlyCompiled.
-- [ ] labelTitle/statusTitle afișate în Outline, Binder, Corkboard, Inspector.
-- [ ] Corkboard pe rânduri: tragerea între grupuri schimbă eticheta/statusul; Ctrl+←/→ în grup.
-- [ ] Setări D&TED: aplicate abia la Salvează; modelul afișat din starea motorului.
+- [x] Colecție din căutare salvată cu câmpul Note: să încarce notele (App.jsx collectionNodes).
+- [x] Ținte: draftChars real, comparații pe unitatea aleasă, sessionReset (miezul nopții/manual), countOnlyCompiled.
+- [x] labelTitle/statusTitle afișate în Outline, Binder, Corkboard, Inspector.
+- [x] Corkboard pe rânduri: tragerea între grupuri schimbă eticheta/statusul; Ctrl+←/→ în grup.
+- [x] Setări D&TED: aplicate abia la Salvează; modelul afișat din starea motorului.
 - [ ] Panoul editorial: selectează exact problema, nu tot fragmentul.
 - [ ] Mărunte: blocare echipă la redenumire din Outline/Corkboard; zile de scris toate debifate; semn pentru semn de carte în coș; ceasul dictării în pauză.
 - [ ] Note de proiect: ștergerea filei să șteargă și fișierul notes/<id>.html.
+- [ ] Deschiderea unui proiect din linia de comandă / a doua lansare (argv).
+- [ ] Poziția și mărimea ferestrei salvate și ținute pe ecran.
+- [ ] Căutare/înlocuire în vederea compusă pe toate secțiunile.
+- [ ] Personalizarea barei: lista „Disponibile” din tastatură; tragerea pe poziția următoare.
+- [ ] Referința rapidă: text actualizat și ținută pe ecran; Setări la 800x600 (butoanele); Inspectorul sub 900 px.
+- [ ] Layout-uri cu același nume; comenzi duplicate în meniuri.
+- [ ] MCP: DNS rebinding la import_web_page (conexiune la IP-ul verificat); mesaje zod în română; move_item before/after rădăcină și trashedFrom.
+- [ ] Compile: regulile cu ^/$ pe paragraf; Editorial: autofix în adnotări, spații duble lângă adnotări.

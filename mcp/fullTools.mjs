@@ -80,7 +80,42 @@ export const FULL_TOOL_NAMES = [];
 
 // Web pages for a client: only public addresses (no localhost, LAN or cloud metadata, checked
 // again after each redirect) and at most 20 MB, so a page cannot reach the user's own network.
-const PRIVATE_IP = /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|::1$|::$|f[cd]|fe[89ab]|::ffff:(127|10|192\.168|169\.254)\.)/i;
+// Private, loopback, link-local, CGNAT and documentation ranges; IPv6 forms that carry an IPv4
+// address (mapped ::ffff:a.b.c.d, NAT64 64:ff9b::, 6to4 2002::, compatible ::a.b.c.d) are unwrapped.
+let blockList = null;
+async function isPrivateAddress(addr) {
+  const net = await import('node:net');
+  if (!blockList) {
+    blockList = new net.BlockList();
+    for (const [a, n] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.0.0.0', 24], ['192.168.0.0', 16], ['198.18.0.0', 15], ['224.0.0.0', 3]]) blockList.addSubnet(a, n, 'ipv4');
+    for (const [a, n] of [['::', 127], ['fc00::', 7], ['fe80::', 10], ['fec0::', 10], ['ff00::', 8]]) blockList.addSubnet(a, n, 'ipv6');
+  }
+  if (net.isIPv4(addr)) return blockList.check(addr, 'ipv4');
+  if (!net.isIPv6(addr)) return true;
+  const full = expandV6(addr);
+  const v4of = (hi, lo) => `${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`;
+  const w = full.map((x) => parseInt(x, 16));
+  const embedded =
+    w.slice(0, 5).every((x) => x === 0) && (w[5] === 0xffff || w[5] === 0) ? v4of(w[6], w[7]) // mapped / compatible
+    : w[0] === 0x64 && w[1] === 0xff9b ? v4of(w[6], w[7]) // NAT64
+    : w[0] === 0x2002 ? v4of(w[1], w[2]) // 6to4
+    : null;
+  if (embedded && blockList.check(embedded, 'ipv4')) return true;
+  return blockList.check(addr, 'ipv6');
+}
+function expandV6(a) {
+  let s = a.toLowerCase().replace(/%.*$/, '');
+  const m = /(\d+\.\d+\.\d+\.\d+)$/.exec(s);
+  if (m) {
+    const p = m[1].split('.').map(Number);
+    s = s.slice(0, -m[1].length) + `${((p[0] << 8) | p[1]).toString(16)}:${((p[2] << 8) | p[3]).toString(16)}`;
+  }
+  const [head, tail] = s.split('::');
+  const h = head ? head.split(':') : [];
+  const t = tail !== undefined ? (tail ? tail.split(':') : []) : [];
+  const fill = tail !== undefined ? Array(8 - h.length - t.length).fill('0') : [];
+  return [...h, ...fill, ...t].map((x) => x || '0');
+}
 async function publicFetch(href, max = 20 * 1024 * 1024) {
   const dns = await import('node:dns/promises');
   let url = href;
@@ -90,7 +125,7 @@ async function publicFetch(href, max = 20 * 1024 * 1024) {
     const host = u.hostname.replace(/^\[|\]$/g, '');
     const addrs = await dns.lookup(host, { all: true }).catch(() => []);
     if (!addrs.length) throw new Error(`Adresa nu există: ${host}`);
-    if (process.env.SCRIBNER_MCP_ALLOW_LOCAL_WEB !== '1' && (/^localhost$/i.test(host) || addrs.some((a) => PRIVATE_IP.test(a.address)))) throw new Error('Adresele locale sau din rețeaua proprie nu se descarcă.');
+    if (process.env.SCRIBNER_MCP_ALLOW_LOCAL_WEB !== '1' && (/^localhost$/i.test(host) || (await Promise.all(addrs.map((a) => isPrivateAddress(a.address)))).some(Boolean))) throw new Error('Adresele locale sau din rețeaua proprie nu se descarcă.');
     const r = await fetch(u.href, { redirect: 'manual' });
     if (r.status >= 300 && r.status < 400 && r.headers.get('location')) {
       url = new URL(r.headers.get('location'), u.href).href;
@@ -149,14 +184,24 @@ export function registerFullTools(ctx) {
   const existingFile = (p) => {
     const abs = path.resolve(p);
     // Hidden places (.ssh, .aws, dotfiles) are not read for a client.
-    if (hiddenPath(abs)) throw new Error(`Nu import din foldere sau fișiere ascunse ori de sistem: ${abs}`);
     if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) throw new Error(`Fișier inexistent: ${abs}`);
+    // Also where a link really points (a link to ~/.ssh/id_rsa is the key itself).
+    if (hiddenPath(abs) || hiddenPath(fs.realpathSync.native(abs))) throw new Error(`Nu import din foldere sau fișiere ascunse ori de sistem: ${abs}`);
     return abs;
   };
   // Output folder named by the client: must exist (or be creatable) and lie outside every project.
+  const madeDirs = new Set();
   const outputDir = (p) => {
     const abs = outsideProjects(p, 'output_dir');
+    if (fs.existsSync(abs) && fs.lstatSync(abs).isSymbolicLink()) throw new Error(`output_dir: ${abs} este o legătură (symlink); nu scriu prin ea.`);
     fs.mkdirSync(abs, { recursive: true });
+    return abs;
+  };
+  // The folder an export fills: a folder the user already has (non-empty) is not written over,
+  // only one this server made earlier in the session.
+  const freshDir = (abs) => {
+    if (fs.existsSync(abs) && !madeDirs.has(abs) && fs.readdirSync(abs).length) throw new Error(`Folderul există deja și nu e gol: ${abs}. Alege alt folder sau șterge-l întâi.`);
+    madeDirs.add(abs);
     return abs;
   };
   const outputFile = (p) => {
@@ -251,8 +296,8 @@ export function registerFullTools(ctx) {
       if (parent_id) containerOrThrow(p0, parent_id);
       const texts = [];
       const media = [];
-      for (const f of files) {
-        const file = existingFile(f);
+      const checked = files.map(existingFile); // every path first: nothing is written for a list with a bad one
+      for (const file of checked) {
         const base = path.basename(file).replace(/\.[^.]+$/, '');
         const ext = path.extname(file).toLowerCase();
         if (ext === '.opml') {
@@ -381,7 +426,7 @@ export function registerFullTools(ctx) {
     async (dir, { output_dir, format, ids, with_notes, with_synopsis, with_meta, track_changes }) => {
       const p = load(dir);
       if (ids) ids.forEach((id) => nodeOrThrow(p, id));
-      const outDir = outsideProjects(path.join(outputDir(output_dir), exporters.safeName(p.title || 'Export')));
+      const outDir = freshDir(outsideProjects(path.join(outputDir(output_dir), exporters.safeName(p.title || 'Export'))));
       const res = await exporters.exportDocuments(p, dir, (id) => readDocSafe(dir, id), (id) => readDocSafe(dir, id, 'notes'), ids || null, outDir, {
         format,
         withNotes: with_notes,

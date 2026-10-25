@@ -6,6 +6,9 @@ export function buildRegex({ query, regex, caseSensitive, wholeWord }) {
   if (!query) return null;
   let src = regex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   if (wholeWord) src = `(?<![\\p{L}\\p{N}\\p{M}_])(?:${src})(?![\\p{L}\\p{N}\\p{M}_])`;
+  // A repeated group that itself repeats ((a+)+, (\w*)*…) can take forever on a long text:
+  // refused like an invalid pattern, so neither the app nor the MCP server can hang on it.
+  if (regex && (/\((?:[^()\\]|\\.)*[+*}](?:[^()\\]|\\.)*\)\s*[+*{]/.test(query) || query.length > 500)) return null;
   try {
     return new RegExp(src, `g${caseSensitive ? '' : 'i'}u`);
   } catch {
