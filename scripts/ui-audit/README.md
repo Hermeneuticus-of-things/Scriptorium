@@ -27,6 +27,18 @@ Scara de decizie (conform regulii „calitate prin unelte, nu prin credit"):
    Verdicte: `gap` (de adăugat în Scribner), `alias` (există sub alt nume → `aliases.json`),
    `skip` (extra proprii Scribner — AI, MCP, dictare — sau irelevant). Extrasele Scribner nu se scot.
 
+## Desktop 3 și captură de pe desktop inactiv
+Capturile se fac prin **PrintWindow** (fereastra se desenează singură în contextul grafic), nu prin
+`CopyFromScreen`. Diferența: `CopyFromScreen` ia doar pixelii vizibili de pe **desktopul activ**, deci
+pică dacă fereastra e acoperită (alt proiect, un panou always-on-top) sau pe alt desktop virtual —
+exact cazul în care „captura nu apărea" / apărea conținut greșit. PrintWindow merge și când fereastra e
+acoperită **sau pe un desktop virtual inactiv**; UI Automation la fel nu cere fereastra vizibilă.
+
+De aceea ferestrele de captură se țin pe un **desktop dedicat (Desktop 3)**: `place-desktop3.ps1
+-Process Scrivener` le mută acolo (modulul `VirtualDesktop`). Meniurile și dialogurile deschise în timpul
+capturii apar pe Desktop 3, nu pe ecranul de lucru al utilizatorului, iar captura funcționează cu Desktop
+3 inactiv. Captura Scribner (Playwright) desenează pagina direct, deci e deja independentă de desktop.
+
 ## OCR (scurtături + text UI)
 `ocr.ps1` folosește **Tesseract** (local) cu pachetele `ron+eng` (diacritice române + scurtături ASCII),
 cu upscale 3× și ieșire TSV (casete per cuvânt). Dacă Tesseract lipsește, cade pe OCR-ul Windows.

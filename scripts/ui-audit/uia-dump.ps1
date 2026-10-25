@@ -27,12 +27,24 @@ public delegate bool CB(System.IntPtr h, System.IntPtr l);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool EnumWindows(CB cb, System.IntPtr l);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint pid);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h);
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool PrintWindow(System.IntPtr h, System.IntPtr dc, uint flags);
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern System.IntPtr GetAncestor(System.IntPtr h, uint flags);
 public static System.Collections.Generic.List<System.IntPtr> Of(uint[] pids) {
   var r = new System.Collections.Generic.List<System.IntPtr>();
   EnumWindows((h, l) => { uint p; GetWindowThreadProcessId(h, out p); if (IsWindowVisible(h) && System.Array.IndexOf(pids, p) >= 0) r.Add(h); return true; }, System.IntPtr.Zero);
   return r;
 }
 "@
+# PrintWindow asks the window to paint itself into our DC — works when the window is occluded or on an
+# inactive virtual desktop (CopyFromScreen only grabs the visible, active desktop). PW_RENDERFULLCONTENT=2.
+function Grab-Window($hwnd) {
+  $top = [UA.Win]::GetAncestor($hwnd, 2); if ($top -eq [IntPtr]::Zero) { $top = $hwnd }
+  $el = $A::FromHandle($top); $r = $el.Current.BoundingRectangle
+  $w = [int]$r.Width; $h = [int]$r.Height; if ($w -lt 2 -or $h -lt 2) { return $null }
+  $b = New-Object System.Drawing.Bitmap $w, $h; $g = [System.Drawing.Graphics]::FromImage($b); $dc = $g.GetHdc()
+  [UA.Win]::PrintWindow($top, $dc, 2) | Out-Null; $g.ReleaseHdc($dc); $g.Dispose()
+  return @{ bmp = $b; x = [int]$r.X; y = [int]$r.Y }
+}
 # Top-level visible windows of the process, found by handle (UIA root enumeration misses some, e.g. Qt windows)
 function Windows-Of($name) {
   $ids = [uint32[]]@((Get-Process -Name $name -ErrorAction SilentlyContinue).Id)
@@ -61,8 +73,18 @@ function Node($e, $d) {
 }
 function Shot($e, $file) {
   $r = $e.Current.BoundingRectangle; if ($r.Width -lt 2) { return }
-  $b = New-Object System.Drawing.Bitmap ([int]$r.Width), ([int]$r.Height)
-  $g = [System.Drawing.Graphics]::FromImage($b); $g.CopyFromScreen([int]$r.X, [int]$r.Y, 0, 0, $b.Size); $b.Save($file); $g.Dispose(); $b.Dispose()
+  $hwnd = [IntPtr]$e.Current.NativeWindowHandle
+  if ($hwnd -eq [IntPtr]::Zero) { $hwnd = [IntPtr]$main.Current.NativeWindowHandle }
+  $grab = Grab-Window $hwnd; if (-not $grab) { return }
+  try {
+    # crop the full-window grab to this element's rectangle (relative to the window's top-left)
+    $cx = [int]($r.X - $grab.x); $cy = [int]($r.Y - $grab.y)
+    $cw = [Math]::Min([int]$r.Width, $grab.bmp.Width - $cx); $ch = [Math]::Min([int]$r.Height, $grab.bmp.Height - $cy)
+    if ($cx -ge 0 -and $cy -ge 0 -and $cw -gt 1 -and $ch -gt 1) {
+      $crop = $grab.bmp.Clone((New-Object System.Drawing.Rectangle $cx, $cy, $cw, $ch), $grab.bmp.PixelFormat)
+      $crop.Save($file); $crop.Dispose()
+    } else { $grab.bmp.Save($file) }
+  } finally { $grab.bmp.Dispose() }
 }
 function Find-Item($root, $name) {
   $c = New-Object System.Windows.Automation.PropertyCondition($A::NameProperty, $name)
@@ -159,12 +181,19 @@ if ($Close -and $dlg) {
   Start-Sleep -Milliseconds 400
 }
 # Shortcut text by OCR of the popup region: the accessibility layer of some toolkits leaves it out.
-function Ocr-Region($x, $y, $w, $h) {
+function Ocr-Region($hwnd, $x, $y, $w, $h) {
+  # Grab the popup window via PrintWindow (occlusion / inactive-desktop proof), crop to the region.
+  $grab = Grab-Window $hwnd; if (-not $grab) { return @() }
   $png = Join-Path $env:TEMP ("ua-ocr-{0}.png" -f [guid]::NewGuid().ToString('N').Substring(0, 8))
-  $b = New-Object System.Drawing.Bitmap ([int]$w), ([int]$h); $g = [System.Drawing.Graphics]::FromImage($b)
-  $g.CopyFromScreen([int]$x, [int]$y, 0, 0, $b.Size); $b.Save($png); $g.Dispose(); $b.Dispose()
+  try {
+    $cx = [int]($x - $grab.x); $cy = [int]($y - $grab.y)
+    $cw = [Math]::Min([int]$w, $grab.bmp.Width - $cx); $ch = [Math]::Min([int]$h, $grab.bmp.Height - $cy)
+    if ($cx -lt 0 -or $cy -lt 0 -or $cw -lt 2 -or $ch -lt 2) { return @() }
+    $crop = $grab.bmp.Clone((New-Object System.Drawing.Rectangle $cx, $cy, $cw, $ch), $grab.bmp.PixelFormat)
+    $crop.Save($png); $crop.Dispose()
+  } finally { $grab.bmp.Dispose() }
   $rows = & powershell -NoProfile -File (Join-Path $PSScriptRoot 'ocr.ps1') $png
-  Remove-Item $png
+  Remove-Item $png -ErrorAction SilentlyContinue
   foreach ($r in $rows) { $p = $r -split "`t"; [pscustomobject]@{ y = [int]$p[0] + $y; x = [int]$p[1] + $x; text = $p[2] } }
 }
 function Popup-Items($item, $depth) {
@@ -176,7 +205,8 @@ function Popup-Items($item, $depth) {
   if ($rects) {
     $x0 = ($rects | Measure-Object X -Minimum).Minimum; $y0 = ($rects | Measure-Object Y -Minimum).Minimum
     $x1 = ($rects | ForEach-Object { $_.X + $_.Width } | Measure-Object -Maximum).Maximum; $y1 = ($rects | ForEach-Object { $_.Y + $_.Height } | Measure-Object -Maximum).Maximum
-    $ocr = @(Ocr-Region $x0 $y0 ($x1 - $x0) ($y1 - $y0))
+    $phwnd = [IntPtr]$host_.Current.NativeWindowHandle; if ($phwnd -eq [IntPtr]::Zero) { $phwnd = [IntPtr]$item.Current.NativeWindowHandle }
+    $ocr = @(Ocr-Region $phwnd $x0 $y0 ($x1 - $x0) ($y1 - $y0))
   }
   $out = @()
   foreach ($k in $kids) {
