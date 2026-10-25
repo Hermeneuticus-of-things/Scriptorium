@@ -30,7 +30,7 @@ Exemplu de unealtă de scriere: `write_document(id, content)` pune textul direct
 
 Cu `--anonymize`, înainte ca textul să plece spre model:
 
-1. **APPEND / PACK:** numele din `<proiect>/private-names.txt` (câte unul pe rând), adresele de email și numerele de telefon devin jetoane fixe, de forma `$ENT:PERSON:7f3a1c`, `$ENT:EMAIL:…`, `$ENT:PHONE:…`. Același nume dă mereu același jeton, deci modelul poate urmări personajul fără să-i știe numele.
+1. **APPEND / PACK:** doar ce e scris în `<proiect>/private-names.txt` (câte un nume pe rând) devine jeton fix, de forma `$ENT:PERSON:7f3a1c`. Rândurile `+email` și `+telefon` ascund și adresele de email și numerele de telefon (`$ENT:EMAIL:…`, `$ENT:PHONE:…`). Într-un roman, personajele, emailurile și telefoanele inventate rămân vizibile: modelul are nevoie de ele ca să ajute la text; pe listă intră doar oameni reali (o dedicație, un model real al unui personaj, date de contact reale). Același nume dă mereu același jeton, deci modelul poate urmări personajul fără să-i știe numele.
 2. **HYDRATE:** jetoanele din ce trimite agentul înapoi (argumentele uneltelor) se înlocuiesc local cu valorile reale, pe calculatorul autorului, înainte de scrierea pe disc.
 
 Implementare: `lib/anonymize.cjs`; test: `tests/mcpAnonymize.test.js`.

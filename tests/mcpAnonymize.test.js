@@ -17,12 +17,14 @@ afterAll(() => client?.close().catch(() => {}));
 
 describe('anonymizer', () => {
   it('packs names, e-mails and phones into stable tokens and hydrates them back', () => {
-    const a = createAnonymizer(['Ilinca', 'Ana']);
+    const a = createAnonymizer(['Ilinca', 'Ana'], { emails: true, phones: true });
     const packed = a.pack('Ilinca scrie Anei? Ana: ana@ex.ro, 0722 123 456. Anastasia rămâne.');
     expect(packed).not.toMatch(/Ilinca|ana@ex\.ro|0722/);
     expect(packed).toContain('Anastasia'); // whole words only
     expect(a.pack('Ilinca')).toBe(a.pack('Ilinca'));
     expect(a.hydrate(packed)).toBe('Ilinca scrie Anei? Ana: ana@ex.ro, 0722 123 456. Anastasia rămâne.');
+    // fiction: only the listed names, invented e-mails and phones stay
+    expect(createAnonymizer(['Ana']).pack('Ana: ana@ex.ro, 0722 123 456')).toMatch(/^\$ENT:PERSON:[0-9a-f]{6}: ana@ex\.ro, 0722 123 456$/);
   });
 });
 
