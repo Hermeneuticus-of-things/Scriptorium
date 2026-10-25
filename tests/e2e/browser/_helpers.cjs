@@ -1,6 +1,9 @@
 // Shared helpers for browser repro scripts (run with: node tests/e2e/browser/<file>.cjs
 // against `npx vite preview --port 4183`). Not picked up by vitest (include: tests/**/*.test.js).
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+// Prefer a locally installed Playwright; fall back to the CI location.
+let chromium;
+try { ({ chromium } = require('playwright')); }
+catch { ({ chromium } = require('/opt/node22/lib/node_modules/playwright')); }
 const URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
 
 async function open({ beforeOpen } = {}) {
