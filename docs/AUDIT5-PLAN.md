@@ -40,7 +40,7 @@ captură pe Desktop 3 când chiar e nevoie de vizual. Inventarul extras: `%TEMP%
 
 ## P2/P3 — editorul de format Compile (defalcare pe referință)
 Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe măsură ce faci.
-- [ ] **Integrare motor** din `wip/p2-p3-compile` (compileLayouts.cjs, placeholders.cjs, compile.cjs), teste verzi.
+- [x] **Integrare motor** din `wip/p2-p3-compile` (compileLayouts.cjs, placeholders.cjs, compile.cjs), teste verzi.
 - [ ] **Section Layouts** (`SCRCompileFormatSectionLayouts`, `SCRSectionLayoutEditor`): per tip de secțiune —
   arată titlu, prefix/sufix titlu, caz titlu, aliniere, pagină nouă înainte, arată text, separator înainte,
   prima linie (drop cap / versale lead-in / fără indent).
@@ -51,7 +51,10 @@ Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe m
   pagină, antet/subsol, numerotare, prima pagină.
 - [ ] **Styles** (`SCRCompileFormatStyles`): suprascrieri de stil (remove, font, mărime %, culoare,
   bold/italic, indent, aliniere, clasă CSS, stil Word).
-- [ ] **Section separators** (`SCRCompileFormatSectionSeparators`): none/space/text/page/decorative/section/oddPage.
+- [x] **Section separators** (decorative: * * *, ⁂, ❦, linie — făcut)
+- [x] **Prima frază layout**: drop cap, versale lead-in, coloane (făcut)
+- [x] **Footnotes & comments**: moduri strip/export/footnotes/inline (făcut)
+- [~] **Section separators (orig)** (`SCRCompileFormatSectionSeparators`): none/space/text/page/decorative/section/oddPage.
 - [ ] **Footnotes & comments** (`SCRCompileFormatFootnotesAndComments`): note de subsol/final, comentarii
   (strip/export/footnotes/inline).
 - [ ] **Tables & lists** (`SCRCompileFormatTablesAndLists`, `SCRCompileFormatTables`).
