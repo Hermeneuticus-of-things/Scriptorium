@@ -112,7 +112,7 @@ export function registerFullTools(ctx) {
   };
   const existingFile = (p) => {
     const abs = path.resolve(p);
-    // Hidden places (.ssh, .aws, dotfiles, AppData) are not read for a client.
+    // Hidden places (.ssh, .aws, dotfiles) are not read for a client.
     if (hiddenPath(abs)) throw new Error(`Nu import din foldere sau fișiere ascunse ori de sistem: ${abs}`);
     if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) throw new Error(`Fișier inexistent: ${abs}`);
     return abs;

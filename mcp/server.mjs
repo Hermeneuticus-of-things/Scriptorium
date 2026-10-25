@@ -266,9 +266,9 @@ function outsideProjects(p, what = 'output_path') {
   if (projects.map(norm).some((pd) => real === pd || real.startsWith(pd + path.sep))) throw new Error(`${what} nu poate fi în interiorul unui proiect.`);
   return path.resolve(p); // the comparison form is only for the check; the caller keeps its spelling
 }
-// Hidden or start-up places (dotfiles, .ssh, AppData, Start Menu) are never read or written for a client.
+// Hidden or start-up places (dotfiles, .ssh, Start Menu, autostart) are never read or written for a client.
 function hiddenPath(abs) {
-  return abs.split(/[\\/]+/).some((seg) => (seg.startsWith('.') && seg !== '.' && seg !== '..') || /^(appdata|start menu|startup|autostart|launchagents)$/i.test(seg));
+  return abs.split(/[\\/]+/).some((seg) => (seg.startsWith('.') && seg !== '.' && seg !== '..') || /^(start menu|startup|autostart|launchagents)$/i.test(seg));
 }
 // An existing file is replaced only when this server wrote it (a re-compile to the same place).
 const writtenByServer = new Set();

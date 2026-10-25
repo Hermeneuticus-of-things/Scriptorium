@@ -3,7 +3,7 @@
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
 ### v0.9.8, căutare pe MCP, importuri și Compile
-- MCP: `compile` și exporturile nu mai suprascriu fișiere existente străine; nicio cale ascunsă sau de pornire (.ssh, AppData, Startup) nu se citește sau scrie; blocările din echipă se judecă după ceasul serverului, nu al celuilalt calculator; un dosar cu un document blocat nu se mai mută sau trimite la coș.
+- MCP: `compile` și exporturile nu mai suprascriu fișiere existente străine; nicio cale ascunsă sau de pornire (.ssh, Startup) nu se citește sau scrie; blocările din echipă se judecă după ceasul serverului, nu al celuilalt calculator; un dosar cu un document blocat nu se mai mută sau trimite la coș.
 - Îmbinarea project.json păstrează schimbările ambelor părți în obiecte (`custom`) și liste (cuvinte-cheie, colecții, etichete).
 - Import .scriv: niciun element nu mai citește fișiere din afara proiectului; UUID repetat primește id nou; etichete `__proto__` ignorate; `content.rtf` folder nu mai oprește importul.
 - RTF: legăturile `javascript:` nu mai trec; escape-urile stricate nu mai produc caractere NUL.
