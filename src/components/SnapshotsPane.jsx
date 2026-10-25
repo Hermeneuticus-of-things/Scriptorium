@@ -24,6 +24,31 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
   const [current, setCurrent] = useState(-1);
   const diffRef = useRef(null);
   const listRef = useRef(null);
+  const previewRef = useRef(null);
+  const [hasPick, setHasPick] = useState(false);
+  // Selected text inside the snapshot preview (or the comparison), as HTML.
+  const pickedHtml = () => {
+    const sel = window.getSelection?.();
+    const box = previewRef.current || diffRef.current;
+    if (!sel || sel.isCollapsed || !sel.rangeCount || !box) return '';
+    const r = sel.getRangeAt(0);
+    if (!box.contains(r.commonAncestorContainer)) return '';
+    const d = document.createElement('div');
+    d.appendChild(r.cloneContents());
+    d.querySelectorAll('del').forEach((x) => x.remove());
+    return sanitizeHtml(d.innerHTML);
+  };
+  useEffect(() => {
+    const on = () => setHasPick(Boolean(pickedHtml()));
+    document.addEventListener('selectionchange', on);
+    return () => document.removeEventListener('selectionchange', on);
+  });
+  // Copies the selected part of the snapshot into the document at the cursor (App listens).
+  const copyToDocument = () => {
+    const h = pickedHtml();
+    if (!h) return;
+    window.dispatchEvent(new CustomEvent('scribner:insert-html', { detail: { html: h, docId: node.id } }));
+  };
 
   const reload = async (notify = true) => {
     const list = await api.listSnapshots(dir, node.id).catch((e) => { onError(e); return []; });
@@ -178,7 +203,12 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
           </ul>
         </>
       )}
-      {!comparing && one && <div className="snap-preview prose" aria-readonly="true" dangerouslySetInnerHTML={{ __html: sanitizeHtml(one.html) }} />}
+      {(one || comparing) && (
+        <div className="snap-copy-row">
+          <button className="snap-copy-to-doc" disabled={!hasPick} onMouseDown={(e) => e.preventDefault()} onClick={copyToDocument} title={tr('ui.p11.sn_copy_hint')}>{tr('ui.p11.sn_copy')}</button>
+        </div>
+      )}
+      {!comparing && one && <div ref={previewRef} className="snap-preview prose" aria-readonly="true" dangerouslySetInnerHTML={{ __html: sanitizeHtml(one.html) }} />}
       {!comparing && !one && snaps.length > 0 && <p className="muted small">{tr('ui.snap.select_hint')}</p>}
       {comparing && !chosen.length && snaps.length > 0 && <p className="muted small">{tr('ui.snap.select_hint')}</p>}
       {diff && (

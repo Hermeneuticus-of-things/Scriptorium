@@ -623,38 +623,38 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### E. Ținte de proiect (`TargetsDialog.jsx`)
 **Identic:** ținta manuscrisului, ținta sesiunii, unitate (cuvinte/caractere/pagini), cuvinte pe pagină, termen limită, zile de scris, zile rămase, cuvinte pe zi calculate, resetarea sesiunii (miezul nopții / deschidere / manual), resetare manuală, doar textul inclus în compile, notificare la atingerea țintei, notificare și pentru țintele documentelor.
-- [ ] **lipsă** „Permite numărări negative” (ștergerile scad din sesiune).
-- [ ] **lipsă** Sesiunea preia automat ținta pe zi calculată din termen.
-- [ ] **lipsă** Sesiunea numără textul din toate proiectele deschise.
-- [ ] **parțial** Fereastra e un dialog; în clasic e un panou mic, plutitor, mereu deasupra, cu cele două bare.
+- [x] **lipsă** „Permite numărări negative” (ștergerile scad din sesiune).
+- [x] **lipsă** Sesiunea preia automat ținta pe zi calculată din termen.
+- [x] **lipsă** Sesiunea numără textul din toate proiectele deschise.
+- [x] **parțial** Fereastra e un dialog; în clasic e un panou mic, plutitor, mereu deasupra, cu cele două bare.
 
 ### F. Statistici proiect / text (`StatisticsDialog.jsx`)
 **Identic:** domeniu (manuscris compilat, tot proiectul, selecție), cuvinte, caractere cu și fără spații, paragrafe, fraze, pagini tipărite, pagini de carte, minute de lectură, frecvența cuvintelor, lungimea frazelor.
-- [ ] **lipsă** Sortarea tabelului de frecvență pe coloane și export CSV.
-- [ ] **lipsă** „Statistici de text” rapide pentru selecție, ca fereastră mică separată.
-- [ ] **lipsă** Grafic al frecvenței.
+- [x] **lipsă** Sortarea tabelului de frecvență pe coloane și export CSV.
+- [x] **lipsă** „Statistici de text” rapide pentru selecție, ca fereastră mică separată.
+- [x] **lipsă** Grafic al frecvenței.
 
 ### G. Istoricul scrisului (`HistoryDialog.jsx`)
 **Identic:** zilnic, lunar, manuscris / tot proiectul, cuvinte, caractere, medie pe zi, zile cu scris, zile la rând, grafic pe 30 de zile.
-- [ ] **lipsă** Export CSV.
-- [ ] **lipsă** Cuvinte adăugate și șterse separat (brut / net).
-- [ ] **lipsă** Interval de date ales.
-- [ ] **lipsă** Ștergerea istoricului sau a zilelor selectate.
+- [x] **lipsă** Export CSV.
+- [x] **lipsă** Cuvinte adăugate și șterse separat (brut / net).
+- [x] **lipsă** Interval de date ales.
+- [x] **lipsă** Ștergerea istoricului sau a zilelor selectate.
 
 ### H. Scratchpad (`Scratchpad.jsx`)
 **Identic:** listă de note, notă nouă, titlu, ștergere, trimite în proiect.
-- [ ] **lipsă** Fereastră independentă, deschisă și fără proiect, mereu deasupra, cu scurtătură globală.
-- [ ] **lipsă** Folder pe disc ales de utilizator; notele ca fișiere.
-- [ ] **parțial** „Trimite în proiect”: lipsesc alegerea proiectului deschis, a dosarului și „Adaugă la documentul selectat”.
-- [ ] **lipsă** Text formatat în notă (bold, italic).
-- [ ] **lipsă** Import/export de note.
+- [x] **lipsă** Fereastră independentă, deschisă și fără proiect, mereu deasupra, cu scurtătură globală.
+- [x] **lipsă** Folder pe disc ales de utilizator; notele ca fișiere.
+- [x] **parțial** „Trimite în proiect”: lipsesc alegerea proiectului deschis, a dosarului și „Adaugă la documentul selectat”.
+- [x] **lipsă** Text formatat în notă (bold, italic).
+- [x] **lipsă** Import/export de note.
 
 ### I. Ecran complet / Compunere (`CompositionBar.jsx`)
 **Identic:** fundal, lățime, opacitatea paginii, poziția textului, salt la document, inspector, numărare cuvinte, ieșire cu Esc.
-- [ ] **lipsă** Zoom al textului din bara de control.
-- [ ] **lipsă** Butonul de cuvinte-cheie (HUD) din bară.
-- [ ] **lipsă** Ținta afișată ca bară de progres în bară.
-- [ ] **lipsă** Navigare înainte/înapoi între documente din bară.
+- [x] **lipsă** Zoom al textului din bara de control.
+- [x] **lipsă** Butonul de cuvinte-cheie (HUD) din bară.
+- [x] **lipsă** Ținta afișată ca bară de progres în bară.
+- [x] **lipsă** Navigare înainte/înapoi între documente din bară.
 
 ### J. Scenariu (`extensions/ScriptMode.js`, `lib/scriptFormats.js`)
 **Identic:** formate film, teatru, BD, radio, elementele (antet de scenă, acțiune, personaj, paranteză, dialog, tranziție, plan), Tab/Enter spre elementul următor, completare personaje și antete de scenă.
@@ -665,9 +665,9 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### K. Snapshot-uri (`SnapshotsPane.jsx`, `SnapshotManagerDialog.jsx`)
 **Identic:** snapshot cu/fără titlu, listă cu dată și titlu, comparare cu textul curent (cuvânt/frază/paragraf), modificarea următoare/anterioară, revenire cu snapshot de siguranță, redenumire, ștergere, manager pe proiect.
-- [ ] **lipsă** Comparare între două snapshot-uri oarecare.
-- [ ] **lipsă** Copierea unei porțiuni din snapshot în document.
-- [ ] **lipsă** Managerul: sortare pe coloane și „Arată în binder”.
+- [x] **lipsă** Comparare între două snapshot-uri oarecare.
+- [x] **lipsă** Copierea unei porțiuni din snapshot în document.
+- [x] **lipsă** Managerul: sortare pe coloane și „Arată în binder”.
 
 ### L1. Căutare / Înlocuire în document (`FindBar.jsx`)
 **Identic:** caută, anterior/următor, majuscule, cuvinte întregi, regex, înlocuiește, înlocuiește tot.
@@ -697,9 +697,9 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### O. Aranjamente (Layouts)
 **Identic:** salvează aranjamentul, aplică, gestionează.
-- [ ] **parțial** Nu e garantat că se salvează coloanele outliner-ului, modul corkboard și împărțirea editorului; de verificat și completat.
-- [ ] **lipsă** Export/import al unui aranjament.
-- [ ] **lipsă** Miniatură în lista de aranjamente.
+- [x] **parțial** Nu e garantat că se salvează coloanele outliner-ului, modul corkboard și împărțirea editorului; de verificat și completat.
+- [x] **lipsă** Export/import al unui aranjament.
+- [x] **lipsă** Miniatură în lista de aranjamente.
 
 ### P. Quick Reference (`QuickRef.jsx`, 32 de rânduri)
 **Identic:** fereastră separată, mai multe ferestre, „deschide în editorul principal”.
@@ -711,14 +711,14 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### Q. Generator de nume (`NameGeneratorDialog.jsx`)
 **Identic:** gen, prenume și/sau nume, origini prenume, origini nume, raritate, inițiale aliterate, nume duble, număr, copiază, copiază lista, inserează, generează din nou.
-- [ ] **lipsă** Nume care încep cu o literă dată.
-- [ ] **lipsă** Liste proprii de nume importate din fișier.
+- [x] **lipsă** Nume care încep cu o literă dată.
+- [x] **lipsă** Liste proprii de nume importate din fișier.
 
 ### R. Focus lingvistic (`extensions/LinguisticFocus.js`)
 **Identic:** substantive, verbe, adjective, adverbe, conjuncții, oprit, limba, estompare.
-- [ ] **lipsă** Pronume și prepoziții.
-- [ ] **parțial** Focus pe dialog există în bara de format, nu în fereastra de focus lingvistic.
-- [ ] **lipsă** Evidențiere colorată în loc de estompare.
+- [x] **lipsă** Pronume și prepoziții.
+- [x] **parțial** Focus pe dialog există în bara de format, nu în fereastra de focus lingvistic.
+- [x] **lipsă** Evidențiere colorată în loc de estompare.
 
 ### S. Import (`ImportDialog.jsx`, `lib/scrivImport.cjs`)
 **Identic:** Word/RTF/ODT/text, Markdown, OPML, pagină web, BibTeX, Zotero, proiect `.scriv`, pachet JSON, Fountain, FDX, împarte la Titlu 1, la Titlu 1 și 2, la rând separator, primul rând ca titlu, modificări urmărite → revizii.

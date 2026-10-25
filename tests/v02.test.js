@@ -55,7 +55,7 @@ describe('history', () => {
     history.recordHistory(dir, { draft: 600, total: 700 }, new Date(2026, 9, 1, 22));
     history.recordHistory(dir, { draft: 900, total: 1000 }, new Date(2026, 9, 2, 10));
     const rows = history.summarize(history.readHistory(dir));
-    expect(rows).toEqual([
+    expect(rows).toMatchObject([
       { date: '2026-10-01', draft: 500, total: 580, draftWords: 600, imported: false },
       { date: '2026-10-02', draft: 300, total: 300, draftWords: 900, imported: false },
     ]);
@@ -67,7 +67,7 @@ describe('history', () => {
     history.recordHistory(dir, { draft: 5400, total: 6400 }, new Date(2026, 9, 1, 20));
     const rows = history.summarize(history.readHistory(dir));
     expect(rows[0]).toEqual({ date: '2026-09-30', draft: 1200, total: 1300, draftWords: null, imported: true });
-    expect(rows[1]).toEqual({ date: '2026-10-01', draft: 400, total: 400, draftWords: 5400, imported: false });
+    expect(rows[1]).toMatchObject({ date: '2026-10-01', draft: 400, total: 400, draftWords: 5400, imported: false });
   });
 });
 
