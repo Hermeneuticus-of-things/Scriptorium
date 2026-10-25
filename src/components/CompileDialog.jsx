@@ -1173,6 +1173,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <select value={xf.comments || 'strip'} onChange={(e) => setIn(['transforms', 'comments'], e.target.value)}>
                       <option value="strip">{tr('ui.compileDialog.se_elimina')}</option>
                       <option value="export">{tr('ui.compileDialog.comentarii_word_doar_docx')}</option>
+                      <option value="footnotes">{tr('ui.compileDialog.p23.comToFootnotes')}</option>
+                      <option value="inline">{tr('ui.compileDialog.p23.comInline')}</option>
                     </select>
                   </label>
                   <p className="muted small">{tr('ui.compileDialog.adnotarile_din_text_nu_ajung')}</p>
