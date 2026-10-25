@@ -58,6 +58,7 @@ const FORMAT_TABS = () => ([
   ['separatoare', tr('ui.compileDialog.separatoare')],
   ['inlocuiri', tr('ui.compileDialog.inlocuiri')],
   ['note', tr('ui.advancedSearchDialog.note')],
+  ['stiluri', tr('ui.compileDialog.p23.stiluri')],
   ['pagina', tr('ui.compileDialog.pagina')],
 ]);
 
@@ -436,6 +437,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const ty = format.typography || {};
   const page = format.page;
   const sep = format.separators || {};
+  const projStyles = stylesOf(project);
+  const ovr = format.styleOverrides || {};
+  const setOverride = (st, patch) => setIn(['styleOverrides', st.id], { ...(ovr[st.id] || ovr[st.name] || {}), ...patch });
   const reps = format.replacements || [];
 
   const toggleIn = (list, setList, v) => setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -1179,6 +1183,42 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   </label>
                   <p className="muted small">{tr('ui.compileDialog.adnotarile_din_text_nu_ajung')}</p>
                                   </fieldset>
+                  </fieldset>
+                )}
+                {fmtTab === 'stiluri' && (
+                  <fieldset disabled={!editable}>
+                    <legend>{tr('ui.compileDialog.p23.stiluri')}</legend>
+                    {!projStyles.length && <p className="muted small">{tr('ui.compileDialog.p23.faraStiluri')}</p>}
+                    {projStyles.length > 0 && (
+                      <table className="cd-table">
+                        <thead>
+                          <tr>
+                            <th>{tr('ui.advancedSearchDialog.titlu')}</th>
+                            <th>{tr('ui.compileDialog.p23.elimina')}</th>
+                            <th>%</th>
+                            <th>B</th>
+                            <th>I</th>
+                            <th>{tr('ui.compileDialog.p23.culoare')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {projStyles.map((st) => {
+                            const o = ovr[st.id] || ovr[st.name] || {};
+                            return (
+                              <tr key={st.id}>
+                                <td>{st.name}</td>
+                                <td><input type="checkbox" aria-label={`${tr('ui.compileDialog.p23.elimina')}: ${st.name}`} checked={Boolean(o.remove)} onChange={(e) => setOverride(st, { remove: e.target.checked })} /></td>
+                                <td><input type="number" min="10" max="400" step="5" style={{ width: '4em' }} aria-label={`% ${st.name}`} value={o.sizePct || 100} disabled={o.remove} onChange={(e) => setOverride(st, { sizePct: Math.max(10, Number(e.target.value) || 100) })} /></td>
+                                <td><input type="checkbox" aria-label={`B ${st.name}`} checked={o.bold === true} disabled={o.remove} onChange={(e) => setOverride(st, { bold: e.target.checked })} /></td>
+                                <td><input type="checkbox" aria-label={`I ${st.name}`} checked={o.italic === true} disabled={o.remove} onChange={(e) => setOverride(st, { italic: e.target.checked })} /></td>
+                                <td><input type="color" aria-label={`${tr('ui.compileDialog.p23.culoare')} ${st.name}`} value={o.color || '#000000'} disabled={o.remove} onChange={(e) => setOverride(st, { color: e.target.value })} /></td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                    <p className="muted small">{tr('ui.compileDialog.p23.stiluriInfo')}</p>
                   </fieldset>
                 )}
                 {fmtTab === 'pagina' && (
