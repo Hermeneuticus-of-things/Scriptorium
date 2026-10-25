@@ -35,7 +35,9 @@ const openedDirs = new Set();
 const dirtyDirs = new Set();
 let backupTimer = null;
 
-const BACKUP_DEFAULTS = { backupOnClose: true, backupEveryMin: 0, backupKeep: 10, backupDir: '', backupOnOpen: false, backupZip: true };
+const BACKUP_DEFAULTS = { backupOnClose: true, backupEveryMin: 0, backupKeep: backup.DEFAULT_KEEP, backupDir: '', backupOnOpen: false, backupOnSave: false, backupDateName: true, backupZip: true };
+// Backup on manual save (Ctrl+S): at most once a minute per project.
+const saveBackupDue = backup.makeSaveThrottle(60 * 1000);
 
 function backupSettings() {
   return { ...BACKUP_DEFAULTS, ...readSettings() };
@@ -51,7 +53,7 @@ async function backupAll() {
   backupRunning = (async () => {
     for (const dir of list) {
       try {
-        await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, { zip: s.backupZip !== false });
+        await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
       } catch (err) {
         console.error('Backup eșuat pentru', dir, err);
         dirtyDirs.add(path.resolve(dir));
@@ -342,6 +344,7 @@ function createWindow() {
     minHeight: 600,
     ...(offset ? { x: 80 + offset, y: 60 + offset } : {}),
     title: 'Scribner',
+    icon: path.join(__dirname, '..', 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -447,6 +450,8 @@ handle('settings:get', () => {
     layouts: s.layouts || [],
     backupOnClose: b.backupOnClose,
     backupOnOpen: Boolean(b.backupOnOpen),
+    backupOnSave: Boolean(b.backupOnSave),
+    backupDateName: b.backupDateName !== false,
     backupZip: b.backupZip !== false,
     backupEveryMin: b.backupEveryMin,
     backupKeep: b.backupKeep,
@@ -617,16 +622,10 @@ handle('doc:write', (e, dir, id, kind, html) => {
 // the open project. Packaged builds run the server with Electron's own Node.
 handle('mcp:info', (_e, dir) => {
   assertOpened(dir);
-  const server = path.join(__dirname, '..', 'mcp', 'server.mjs');
-  const packaged = app.isPackaged;
-  const command = packaged ? process.execPath : 'node';
-  const env = packaged ? { ELECTRON_RUN_AS_NODE: '1' } : {};
-  const q = (s) => (/[\s"]/.test(s) ? `"${s.replace(/"/g, '\\"')}"` : s);
-  const envPrefix = packaged ? '--env ELECTRON_RUN_AS_NODE=1 ' : '';
-  return {
-    claudeCode: `claude mcp add scribner ${envPrefix}-- ${q(command)} ${q(server)} --project ${q(dir)}`,
-    desktopJson: JSON.stringify({ mcpServers: { scribner: { command, args: [server, '--project', dir], env } } }, null, 2),
-  };
+  // The general form (no project, no user name): the same line for every book and computer.
+  const mc = require('../lib/mcpConfig.cjs');
+  const entry = app.isPackaged ? mcpEntry() : { command: 'node', args: [path.join(__dirname, '..', 'mcp', 'server.mjs')] };
+  return { claudeCode: mc.claudeCodeCommand(entry), desktopJson: JSON.stringify({ mcpServers: { scribner: entry } }, null, 2) };
 });
 
 // Reload the open project when files change outside the app (an AI agent via MCP,
@@ -774,12 +773,15 @@ require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
 require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai, noteSelfWrite, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 const pickedAudio = new Set();
-require('./whisperHandlers.cjs')({ handle, app, net, assertOpened, store, pickedAudio });
+const whisper = require('./whisperHandlers.cjs')({ handle, app, net, assertOpened, store, pickedAudio, getSettings: readSettings, dtedFound: () => Boolean(require('../lib/dted.cjs').locate({ custom: readSettings().dtedPath || '' })) });
 require('./dtedHandlers.cjs')({ handle, assertOpened, getSettings: readSettings, app, pickedAudio, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
+require('./updateHandlers.cjs')({ handle, app, net, shell, BrowserWindow, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }) });
 
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
+// Menu items the window does itself (clipboard, window size); anything else goes to the renderer.
+const NATIVE_ROLES = new Set(['cut', 'copy', 'paste', 'pasteAndMatchStyle', 'minimize', 'togglefullscreen']);
 handle('menu:set', (e, spec) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   const items = (list) =>
@@ -788,6 +790,10 @@ handle('menu:set', (e, spec) => {
         ? { type: 'separator' }
         : Array.isArray(it.items)
         ? { label: it.label, submenu: items(it.items) }
+        : it.role === 'toggleMaximize'
+        ? { label: it.label, click: () => win && !win.isDestroyed() && (win.isMaximized() ? win.unmaximize() : win.maximize()) }
+        : it.role && NATIVE_ROLES.has(it.role)
+        ? { label: it.label, role: it.role, enabled: !it.disabled, accelerator: it.key ? it.key.replace('Ctrl', 'CmdOrCtrl') : undefined, registerAccelerator: false }
         : {
             label: it.label,
             enabled: !it.disabled,
@@ -845,7 +851,27 @@ handle('media:openExternal', async (_e, dir, file) => {
 handle('backup:now', async (_e, dir) => {
   assertOpened(dir);
   const s = backupSettings();
-  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, { zip: s.backupZip !== false });
+  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
+});
+// File > Back Up To…: one backup in a folder chosen in a dialog (remembered as the next default).
+handle('backup:to', async (e, dir) => {
+  assertOpened(dir);
+  const s = backupSettings();
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Backup în…',
+    defaultPath: s.backupToDir || s.backupDir || undefined,
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (res.canceled || !res.filePaths[0]) return null;
+  writeSettings({ ...readSettings(), backupToDir: res.filePaths[0] });
+  return backup.backupProject(dir, res.filePaths[0], s.backupKeep, backup.backupOptions(s));
+});
+// Manual save: a backup when "back up on each manual save" is on, throttled to once a minute.
+handle('backup:onSave', async (_e, dir) => {
+  assertOpened(dir);
+  const s = backupSettings();
+  if (!s.backupOnSave || !saveBackupDue(dir)) return null;
+  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 handle('backup:list', (_e, dir) => {
   assertOpened(dir);
@@ -873,7 +899,7 @@ handle('history:get', (_e, dir) => {
   return history.summarize(history.readHistory(dir));
 });
 
-handle('import:file', async (e, mode, separator) => {
+handle('import:file', async (e, mode, separator, opts) => {
   const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
     title: 'Importă text',
     properties: ['openFile', 'multiSelections'],
@@ -883,7 +909,7 @@ handle('import:file', async (e, mode, separator) => {
   const parts = [];
   for (const file of res.filePaths) {
     const html = await fileToHtml(file);
-    parts.push(...splitHtml(html, mode, separator, path.basename(file).replace(/\.[^.]+$/, '')));
+    parts.push(...splitHtml(html, mode, separator, path.basename(file).replace(/\.[^.]+$/, ''), { firstLineTitle: Boolean(opts && opts.firstLineTitle) }));
   }
   return parts;
 });
@@ -915,7 +941,9 @@ handle('snap:list', (_e, dir, id) => {
 
 handle('import:scriv', async (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
-  const src = await dialog.showOpenDialog(win, { title: 'Alege folderul proiectului Scrivener (.scriv)', properties: ['openDirectory'] });
+  // The .scrivx file inside the project (on Windows a .scriv project is a folder: open it and pick
+  // its .scrivx). importScriv takes either the file or the folder.
+  const src = await dialog.showOpenDialog(win, { title: 'Alege proiectul .scriv (fișierul .scrivx din el)', properties: ['openFile'], filters: [{ name: 'Proiect .scriv', extensions: ['scrivx'] }] });
   if (src.canceled) return null;
   const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Scribner?', properties: ['openDirectory', 'createDirectory'] });
   if (dest.canceled) return null;
@@ -990,6 +1018,10 @@ const snapPath = (dir, id, file) => {
   if (!/^[A-Za-z0-9-]+$/.test(String(id)) || !/^[\w.-]+\.json$/.test(String(file))) throw new Error('Snapshot invalid');
   return path.join(dir, 'snapshots', id, file);
 };
+handle('snap:counts', (_e, dir) => {
+  assertOpened(dir);
+  return store.snapshotCounts(dir);
+});
 handle('snap:delete', (e, dir, id, file) => {
   assertOpened(dir);
   assertOwner(e.sender, dir);
@@ -1153,12 +1185,19 @@ if (!gotLock) {
 app.whenReady().then(() => {
   if (!gotLock) return;
   try {
+    const migrated = backup.migrateBackupKeep(readSettings(), fs.existsSync(settingsFile()));
+    if (migrated) writeSettings(migrated);
+  } catch (err) {
+    console.error('Migrarea setărilor de backup a eșuat', err);
+  }
+  try {
     migrateAiKeys();
   } catch (err) {
     console.error('Migrarea cheii API a eșuat', err);
   }
   scheduleBackups();
   createWindow();
+  setTimeout(() => whisper.autoInstall?.(), 5000); // dictation ready without a trip to Settings
   app.on('activate', () => {
     if (!BrowserWindow.getAllWindows().some((w) => w.isVisible())) createWindow();
   });

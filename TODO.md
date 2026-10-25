@@ -206,3 +206,14 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] Layout-uri cu același nume; comenzi duplicate în meniuri.
 - [ ] MCP: DNS rebinding la import_web_page (conexiune la IP-ul verificat); mesaje zod în română; move_item before/after rădăcină și trashedFrom.
 - [ ] Compile: regulile cu ^/$ pe paragraf; Editorial: autofix în adnotări, spații duble lângă adnotări.
+
+## Session 2026-10-25
+### Request: lățime editor, zoom, dictare și citire native, iconiță, comandă MCP generală
+- [x] Pagina lățită prin tragere / toată fereastra; zoom pe text (Ctrl+=/-/0, Ctrl+rotiță)
+- [x] Mini-player Voce (dictare + citire), F8 și buton în bară
+- [x] Voce românească inclusă (Piper) și motor de dictare descărcate automat o dată
+- [x] Iconiță cu numele Scribner
+- [x] Comandă MCP generală fără date personale (scribner-mcp.cmd)
+- [~] Interfața 1:1 cu programul de referință (vezi ROADMAP.md, „Cereri 25.10.2026”)
+- [ ] Import/export și MCP direct din `.scrivx`; `scriv_search`
+- [ ] Skill mcp-builder cu evaluări pentru serverul MCP

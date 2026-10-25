@@ -65,7 +65,7 @@ jobs:
           $p = Start-Process $setup.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/MERGETASKS=addtopath' -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "installer exit $($p.ExitCode)" }
           $app = Join-Path $env:LOCALAPPDATA 'Programs\Scribner'
-          foreach ($f in 'Scribner.exe','scribner.cmd','resources\app\cli\scribner.cjs','resources\app\mcp\server.mjs') { if (-not (Test-Path (Join-Path $app $f))) { throw "missing $f" } }
+          foreach ($f in 'Scribner.exe','scribner.cmd','scribner-mcp.cmd','resources\app\build\icon.ico','resources\app\cli\scribner.cjs','resources\app\mcp\server.mjs') { if (-not (Test-Path (Join-Path $app $f))) { throw "missing $f" } }
           $userPath = [Environment]::GetEnvironmentVariable('Path','User')
           if ($userPath -notlike "*$app*") { throw 'install folder not added to PATH' }
           & (Join-Path $app 'scribner.cmd') --version
@@ -119,4 +119,6 @@ jobs:
               exit 0
             fi
           fi
-          gh release create "$TAG" release/*.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Scribner $TAG" --generate-notes
+          # Checksums for the in-app updater and for anyone verifying a download by hand.
+          (cd release && sha256sum *.exe > SHA256SUMS)
+          gh release create "$TAG" release/*.exe release/SHA256SUMS --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Scribner $TAG" --generate-notes

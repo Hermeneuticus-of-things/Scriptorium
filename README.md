@@ -371,6 +371,14 @@ O versiune nouă apare în Releases de fiecare dată când iese, automat.
 La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 lecții scurte, în care înveți lucrând. Manualul complet se deschide oricând cu F1.
 
 
+### Actualizări
+
+Programul își caută singur versiunile noi pe pagina de versiuni a proiectului de pe GitHub: o dată pe zi (la 10 secunde după pornire, dacă ultima verificare are peste 24 de ore, și apoi la fiecare 24 de ore cât timp rămâne deschis). Când apare o versiune nouă, jos se arată o singură dată un anunț discret „Versiune nouă x.y.z — Actualizează”. Verificarea automată se oprește din Setări → General („Verifică automat actualizările”).
+
+Oricând: **Ajutor → Caută actualizări…** (sau din paleta de comenzi; se poate pune și un buton „Actualizare” în bara de sus). Fereastra arată versiunea ta și pe cea nouă, ce aduce, apoi **Descarcă și instalează** (cu progres) și **Instalează și repornește**: lucrul se salvează, instalatorul rulează fără întrebări, închide programul și îl pornește din nou. Varianta portabilă descarcă fișierul nou și deschide dosarul în care se află; îl pornești în locul celui vechi.
+
+Siguranță: doar prin https, doar către adresele GitHub; fișierul descărcat se verifică după dimensiune și după amprenta SHA-256 publicată (fișierul `SHA256SUMS` al fiecărei versiuni), altfel nu este folosit. Cererile repetate sunt condiționate (ETag), iar la limita de cereri GitHub programul așteaptă și reîncearcă mai târziu.
+
 ### Întrebări
 
 **Am nevoie de internet?** Nu. Scribner merge pe calculatorul tău și textele rămân la tine. Internetul îți trebuie doar pentru DeepL, dicționarele online și AI.
@@ -452,11 +460,25 @@ Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installe
 
 **Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
 
-Programul instalat pornește serverul fără Node.js (Windows, instalare pentru utilizatorul curent):
+Programul instalat pornește serverul fără Node.js. Comanda generală e aceeași pe orice calculator (Windows) și nu numește nicio carte: agentul vede proiectele din lista recentă din Scribner.
 
 ```bat
-claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "%LOCALAPPDATA%\Programs\Scribner\Scribner.exe" "%LOCALAPPDATA%\Programs\Scribner\resources\app\mcp\server.mjs" --project "D:\Carti\Cartea mea.scribner"
+claude mcp add scribner --scope user -- cmd /c %LOCALAPPDATA%\Programs\Scribner\scribner-mcp.cmd
 ```
+
+Pentru orice alt client cu configurare JSON (Claude Desktop, Cursor, Windsurf, LM Studio, Gemini; la VS Code cheia e `servers`):
+
+```json
+"scribner": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd"] }
+```
+
+`--read-only` la sfârșit permite doar citirea; `--project "<folder>.scribner"` limitează agentul la un singur proiect.
+
+**Ce primește clientul AI.** Unelte (peste 80, fiecare marcată „doar citire” sau „modifică”), resurse (`scribner://projects`, `scribner://binder`, `scribner://doc/<id>`, `scribner://ghid`) și șabloane de lucru (`revizie_capitol`, `rezumat_proiect`, `importa_scriv`). Fiecare scriere face întâi un snapshot și e notată în `agent-log.jsonl`; documentele blocate de colegi nu se ating.
+
+**Prin rețea** (alt calculator, server de acasă, tunel): `--http 9123` pornește serverul pe `http://127.0.0.1:9123/mcp` (Streamable HTTP). Fiecare cerere are nevoie de `Authorization: Bearer <token>` (din `--token` sau `SCRIBNER_MCP_TOKEN`; fără ele, tokenul se generează și se afișează o dată). `--host` schimbă adresa ascultată, de exemplu adresa Tailscale.
+
+**Nume private** (`--anonymize`, oprit implicit): doar numele scrise în `<proiect>/private-names.txt` ajung la modelul AI ca jetoane (`$ENT:PERSON:…`); `+email` și `+telefon` pe câte un rând ascund și emailurile și telefoanele. Personajele și datele inventate dintr-un roman rămân vizibile; jetoanele din ce scrie agentul înapoi redevin numele reale pe calculatorul tău. Toată arhitectura: `docs/MCP_ARHITECTURA.md`.
 
 Din cod sursă, cu Node.js:
 

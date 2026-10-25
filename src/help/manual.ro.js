@@ -826,6 +826,15 @@ node scripts\ai-smoke.cjs nvidia</pre>
         title: 'Legarea de Claude, Codex și alți agenți AI (MCP)',
         html: `<p>Scribner are un server MCP inclus (peste 70 de unelte: binder, documente, note, metadate, snapshot-uri, căutare, Compile). Orice agent AI care știe MCP îl poate folosi. <strong>Nu ai nevoie de Node.js</strong>: programul instalat pornește serverul singur, cu variabila <code>ELECTRON_RUN_AS_NODE=1</code>. Agentul vede doar proiectele puse după <code>--project</code>; cu <code>--read-only</code> doar citește. Fiecare scriere face întâi un snapshot și se notează în <code>agent-log.jsonl</code> din proiect.</p>
 <p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>AI → Conectează la Claude (MCP)…</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
+<h4>Comanda generală (aceeași pe orice calculator, pentru orice client AI)</h4>
+<p>Nu numește nicio carte și niciun utilizator: agentul vede proiectele din lista recentă din Scribner (deschide cartea o dată în Scribner).</p>
+<pre>claude mcp add scribner --scope user -- cmd /c %LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd</pre>
+<p>Pentru clienții cu fișier JSON (Claude Desktop, Cursor, Windsurf, LM Studio, Gemini; la VS Code cheia e <code>servers</code>):</p>
+<pre>"scribner": {
+  "command": "cmd",
+  "args": ["/c", "%LOCALAPPDATA%\\\\Programs\\\\Scribner\\\\scribner-mcp.cmd"]
+}</pre>
+<p>Codex: <code>codex mcp add scribner -- cmd /c %LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd</code>. Doar citire: adaugă <code>--read-only</code> la sfârșit. Variantele de mai jos, cu proiect anume, rămân valabile.</p>
 <p>Căile de mai jos sunt cele ale installerului pe Windows (instalare pentru utilizatorul curent). Înlocuiește <code>Nume</code> cu numele tău de utilizator și calea proiectului cu a ta. Varianta portabilă: folosește calea unde ai pus-o.</p>
 <pre>Program:  C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
 Server:   C:\\Users\\Nume\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs

@@ -88,13 +88,37 @@ store.writeDoc = (dir, id, kind, html) => {
 const args = process.argv.slice(2);
 const projects = [];
 let readOnly = false;
+let anonymizeOn = false; // --anonymize: private names, e-mails and phones go out as tokens
+// --http <port>: Streamable HTTP instead of stdio (another computer, a home server, a tunnel).
+let httpPort = 0;
+let httpHost = '127.0.0.1';
+let httpToken = process.env.SCRIBNER_MCP_TOKEN || '';
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--project' && args[i + 1]) projects.push(path.resolve(args[++i]));
   else if (args[i] === '--read-only') readOnly = true;
+  else if (args[i] === '--anonymize') anonymizeOn = true;
+  else if (args[i] === '--http' && args[i + 1]) httpPort = Number(args[++i]);
+  else if (args[i] === '--host' && args[i + 1]) httpHost = args[++i];
+  else if (args[i] === '--token' && args[i + 1]) httpToken = args[++i];
 }
 for (const p of (process.env.SCRIBNER_PROJECTS || '').split(path.delimiter).filter(Boolean)) projects.push(path.resolve(p));
+// No --project: the projects in Scribner's recent list (on this computer), so one general command
+// works for everyone and names no book. Missing folders are skipped.
 if (!projects.length) {
-  process.stderr.write('Folosire: scribner-mcp --project <cale către proiect.scribner> [--project …] [--read-only]\n');
+  const recent = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(process.env.SCRIBNER_USER_DATA ? path.resolve(process.env.SCRIBNER_USER_DATA) : defaultUserData(), 'settings.json'), 'utf8')).recent || [];
+    } catch {
+      return [];
+    }
+  })();
+  for (const r of recent) {
+    const d = typeof r === 'string' ? r : r && r.dir;
+    if (d && fs.existsSync(path.join(d, 'project.json')) && !projects.includes(path.resolve(d))) projects.push(path.resolve(d));
+  }
+}
+if (!projects.length) {
+  process.stderr.write('Niciun proiect: deschide unul în Scribner (intră în lista recentă) sau dă --project <cale către proiect.scribner> [--project …] [--read-only]\n');
   process.exit(2);
 }
 for (const p of projects) {
@@ -227,19 +251,55 @@ function textIndexOf(html, target, from = 0) {
   return -1;
 }
 
+// --anonymize: only what <project>/private-names.txt lists (one name per line; "+email" and
+// "+telefon" add e-mail addresses and phone numbers). Characters and invented details stay as they are.
+const { createAnonymizer } = require('../lib/anonymize.cjs');
+let anon = null;
+function anonymizer() {
+  if (!anonymizeOn) return null;
+  if (!anon) {
+    const names = [];
+    for (const d of projects) {
+      try {
+        names.push(...fs.readFileSync(path.join(d, 'private-names.txt'), 'utf8').split(/\r?\n/));
+      } catch {
+        /* no list for this project */
+      }
+    }
+    // Lines "+email" / "+telefon" in the list also hide e-mail addresses / phone numbers; in a
+    // novel they are usually invented, so by default only the listed names are hidden.
+    const flags = new Set(names.map((n) => n.trim().toLowerCase()));
+    anon = createAnonymizer(names.filter((n) => !/^\s*\+/.test(n)), { emails: flags.has('+email'), phones: flags.has('+telefon') });
+  }
+  return anon;
+}
+
 function tool(name, description, shape, handler, { writes = false, global = false } = {}) {
-  server.registerTool(name, { title: name, description, inputSchema: shape }, async (input) => {
+  // Hints for the client's approval gates: reads run freely, changes ask, and the ones that remove
+  // or overwrite text are marked destructive (they still take a snapshot or backup first).
+  const annotations = {
+    readOnlyHint: !writes,
+    destructiveHint: writes && /^(trash|empty|delete|remove|replace|restore|merge|split|write|set_notes|convert|apply|rename|editorial_autofix)/.test(name),
+    idempotentHint: !writes,
+    openWorldHint: /web|lookup|import_web|zotero/.test(name),
+  };
+  server.registerTool(name, { title: name, description, inputSchema: shape, annotations }, async (input) => {
     try {
       if (writes) requireWritable();
       const dir = global ? null : projectDir(input.project);
       if (writes && dir) for (const id of [input.id, ...(Array.isArray(input.ids) && name !== 'replace' ? input.ids : [])]) assertUnlocked(dir, id);
       // Moving or trashing a folder moves the locked documents inside it too.
       if (writes && dir && /^(trash_item|move_item|merge_documents|empty_trash)$/.test(name)) assertSubtreeUnlocked(dir, name === 'empty_trash' ? [store.loadProject(dir, { readOnly: true }).tree.find((n) => n.root === 'trash')?.id] : [input.id, ...(Array.isArray(input.ids) ? input.ids : [])]);
-      const result = await handler(dir, input);
-      if (writes) log(dir || (result && typeof result === 'object' && result.dir) || projects[0], name, input, result);
-      return text(result);
+      const an = anonymizer();
+      const args = an ? an.hydrate(input) : input; // tokens the agent sends back become real names here
+      const result = await handler(dir, args);
+      if (writes) log(dir || (result && typeof result === 'object' && result.dir) || projects[0], name, args, result);
+      const out = text(result);
+      if (an) out.content = out.content.map((c) => (c.type === 'text' ? { ...c, text: an.pack(c.text) } : c));
+      return out;
     } catch (err) {
-      return { content: [{ type: 'text', text: `Eroare: ${err.message}` }], isError: true };
+      const an = anonymizer();
+      return { content: [{ type: 'text', text: `Eroare: ${an ? an.pack(err.message) : err.message}` }], isError: true };
     }
   });
 }
@@ -295,7 +355,15 @@ function addProject(dir) {
 // ---------------------------------------------------------------------------
 // Server
 
-const server = new McpServer({ name: 'scribner', version: '0.3.0' });
+// What the client tells the model about this server: the book projects it can reach, and that a
+// `.scriv` project can also be read in place (scriv_outline / scriv_read) or imported (import_scriv).
+const server = new McpServer(
+  { name: 'scribner', version: '0.3.0' },
+  {
+    instructions:
+      'Scribner: program de scris cărți lungi. Unelte pentru proiectele .scribner date la pornire sau din lista recentă (argumentul project = numele sau calea; project_info, list_binder, read_document, write_document, search, compile…). Un proiect Scrivener (.scriv) se citește pe loc cu scriv_outline și scriv_read sau se importă cu import_scriv. Fiecare scriere face întâi un snapshot.',
+  },
+);
 
 tool('project_info', 'Titlul, autorul, țintele, etichetele, statusurile, profilul editorial și numărul de cuvinte al proiectului.', { project }, (dir) => {
   const p = load(dir);
@@ -356,6 +424,7 @@ tool(
       status: n.status,
       keywords: n.keywords || [],
       custom: n.custom || {},
+      target: n.target ? { value: n.target, unit: n.targetType === 'Characters' ? 'caractere' : 'cuvinte' } : null,
       words: store.wordCount(html),
       notes: store.htmlToText(store.readDoc(dir, id, 'notes')).trim(),
       content: body,
@@ -727,7 +796,8 @@ registerFullTools({
 server.registerResource('binder', 'scribner://binder', { title: 'Binder', description: 'Structura proiectului principal', mimeType: 'application/json' }, async (uri) => {
   const p = load(projects[0]);
   const slim = (n) => ({ id: n.id, title: n.title, type: n.root ? `root:${n.root}` : n.type, children: n.children ? n.children.map(slim) : undefined });
-  return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(p.tree.map(slim), null, 2) }] };
+  const t = JSON.stringify(p.tree.map(slim), null, 2);
+  return { contents: [{ uri: uri.href, mimeType: 'application/json', text: anonymizer() ? anonymizer().pack(t) : t }] };
 });
 
 server.registerResource(
@@ -739,8 +809,106 @@ server.registerResource(
     },
   }),
   { title: 'Document', description: 'Textul unui document în format manuscript', mimeType: 'text/markdown' },
-  async (uri, { id }) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: htmlToManuscript(store.readDoc(projects[0], id)) }] }),
+  async (uri, { id }) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: ((t) => (anonymizer() ? anonymizer().pack(t) : t))(htmlToManuscript(store.readDoc(projects[0], anonymizer() ? anonymizer().hydrate(id) : id))) }] }),
 );
 
-await server.connect(new StdioServerTransport());
+// The projects this server can reach (names and folders), for clients that read resources first.
+server.registerResource('projects', 'scribner://projects', { title: 'Proiecte', description: 'Proiectele Scribner disponibile în această sesiune', mimeType: 'application/json' }, async (uri) => ({
+  contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(projects.map((d) => ({ name: path.basename(d).replace(/\.scribner$/i, ''), dir: d, title: (() => { try { return load(d).title; } catch { return ''; } })() })), null, 2) }],
+}));
+
+// A short guide for the agent: how the work is organised and what is safe (read when unsure).
+server.registerResource('ghid', 'scribner://ghid', { title: 'Ghid pentru agent', description: 'Cum lucrezi cu proiectele Scribner prin acest server', mimeType: 'text/markdown' }, async (uri) => ({
+  contents: [{ uri: uri.href, mimeType: 'text/markdown', text: [
+    '# Scribner: ghid pentru agent',
+    '- Proiectele: resursa scribner://projects; argumentul `project` = numele sau calea (implicit primul).',
+    '- Structura: `list_binder` (Manuscris, Cercetare, Coș). Textul: `read_document` (format manuscript, html sau text).',
+    '- Caută: `search`; înlocuiește: `replace` (sare documentele blocate de colegi).',
+    '- Scrie: `write_document`, `set_notes`, `set_metadata`, `add_comment`. Fiecare scriere face întâi un snapshot; `restore_snapshot` o anulează.',
+    '- Proiecte .scriv: `scriv_outline`, `scriv_read`, `scriv_search` pe loc; `import_scriv` le transformă în proiecte Scribner.',
+    '- Ce faci e notat în agent-log.jsonl din proiect. Cu --read-only uneltele de scriere sunt refuzate.',
+    '- Nu scrie fără acordul autorului: propune întâi, aplică doar ce a aprobat.',
+  ].join('\n') }],
+}));
+
+// Ready-made workflows the client can offer as commands (prompt templates). They only describe the
+// work; every change still goes through the tools above (snapshot first, locks respected).
+const promptText = (text) => ({ messages: [{ role: 'user', content: { type: 'text', text } }] });
+server.registerPrompt(
+  'revizie_capitol',
+  { title: 'Revizuiește un capitol', description: 'Citește un capitol, propune corecturi de stil și le aplică doar după confirmare.', argsSchema: { titlu: z.string().describe('Titlul capitolului din binder') } },
+  ({ titlu }) => promptText(`În proiectul Scribner, găsește cu list_binder documentul sau dosarul „${titlu}”, citește-l cu read_document și propune corecturi (gramatică, repetiții, ritm), fiecare cu fragmentul exact. Nu scrie nimic până nu confirm; după confirmare aplică doar ce am aprobat, cu replace sau write_document (fiecare scriere face snapshot).`),
+);
+server.registerPrompt(
+  'rezumat_proiect',
+  { title: 'Rezumatul cărții', description: 'Un rezumat pe capitole al manuscrisului, fără modificări.' },
+  () => promptText('Folosește project_info și list_binder, apoi read_document pe fiecare capitol din Manuscris. Fă un rezumat pe capitole (2–3 fraze fiecare) și o listă de personaje cu prima apariție. Doar citire: nu modifica nimic.'),
+);
+server.registerPrompt(
+  'importa_scriv',
+  { title: 'Citește un proiect .scriv', description: 'Citește un proiect .scriv pe loc și, la cerere, îl importă.', argsSchema: { cale: z.string().describe('Folderul .scriv') } },
+  ({ cale }) => promptText(`Citește proiectul .scriv din „${cale}” cu scriv_outline, apoi textele cu scriv_read. Spune-mi ce conține. Dacă îți cer, importă-l cu import_scriv într-un folder pe care ți-l dau.`),
+);
+
+if (httpPort) await serveHttp();
+else await server.connect(new StdioServerTransport());
+
+// Streamable HTTP, stateless JSON, one request at a time. Every request carries
+// "Authorization: Bearer <token>"; without --token / SCRIBNER_MCP_TOKEN a random one is made and
+// printed once. Listens on 127.0.0.1 unless --host says otherwise (e.g. a Tailscale address).
+async function serveHttp() {
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const { StreamableHTTPServerTransport } = await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
+  if (!httpToken) {
+    httpToken = crypto.randomBytes(24).toString('hex');
+    process.stderr.write(`Token MCP (pune-l în clientul AI ca „Authorization: Bearer …”): ${httpToken}\n`);
+  }
+  const expected = Buffer.from(`Bearer ${httpToken}`);
+  let queue = Promise.resolve();
+  const srv = http.createServer((req, res) => {
+    const got = Buffer.from(String(req.headers.authorization || ''));
+    if (got.length !== expected.length || !crypto.timingSafeEqual(got, expected)) {
+      res.writeHead(401, { 'content-type': 'application/json' }).end('{"error":"token lipsă sau greșit"}');
+      return;
+    }
+    if (new URL(req.url, 'http://x').pathname !== '/mcp') {
+      res.writeHead(404).end();
+      return;
+    }
+    if (req.method !== 'POST') {
+      res.writeHead(405, { allow: 'POST' }).end();
+      return;
+    }
+    const chunks = [];
+    let size = 0;
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > 50 * 1024 * 1024) req.destroy();
+      else chunks.push(c);
+    });
+    req.on('end', () => {
+      queue = queue.then(async () => {
+        let body;
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        } catch {
+          res.writeHead(400).end('{"error":"JSON invalid"}');
+          return;
+        }
+        const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+        await server.connect(transport);
+        try {
+          await transport.handleRequest(req, res, body);
+        } finally {
+          await server.close().catch(() => {});
+        }
+      }).catch((e) => {
+        if (!res.headersSent) res.writeHead(500).end(JSON.stringify({ error: e.message }));
+      });
+    });
+  });
+  await new Promise((resolve) => srv.listen(httpPort, httpHost, resolve));
+  process.stderr.write(`Scribner MCP pe http://${httpHost}:${httpPort}/mcp\n`);
+}
 process.stderr.write(`Scribner MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);

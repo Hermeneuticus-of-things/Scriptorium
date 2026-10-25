@@ -38,6 +38,8 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   await page.locator('.binder >> text=Document legat nou').first().click();
   await page.waitForTimeout(400);
   const insp = page.locator('.side');
+  await insp.locator('[role=tab]').nth(1).click(); // Bookmarks and links pane
+  await page.waitForTimeout(200);
   const bm = await insp.locator('ul.bookmarks').first().innerText().catch(() => '');
   check('target got a back-link bookmark', bm.includes(sourceTitle), `${sourceTitle} vs ${bm}`);
   const inc = await insp.locator('.incoming-links').innerText().catch(() => '');

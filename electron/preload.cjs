@@ -25,6 +25,9 @@ contextBridge.exposeInMainWorld('api', {
   dtedSetModel: (nume) => call('dted:setModel', nume),
   whisperStatus: () => call('whisper:status'),
   whisperInstall: (variant) => call('whisper:install', variant),
+  ttsStatus: () => call('tts:status'),
+  ttsInstall: () => call('tts:install'),
+  ttsSynth: (text, opts) => call('tts:synth', text, opts),
   whisperRemove: () => call('whisper:remove'),
   whisperTranscribePcm: (pcm, opts) => call('whisper:transcribePcm', pcm, opts),
   whisperReadAudio: (file) => call('whisper:readAudio', file),
@@ -47,15 +50,15 @@ contextBridge.exposeInMainWorld('api', {
   },
   teamWrite: (dir, name, text, opts) => call('team:write', dir, name, text, opts),
   importScriv: () => call('import:scriv'),
-  importFile: (mode, separator) => call('import:file', mode, separator),
+  importFile: (mode, separator, opts) => call('import:file', mode, separator, opts),
   readMedia: (dir, file) => call('media:read', dir, file),
   mcpInfo: (dir) => call('mcp:info', dir),
   readStylesFromProject: () => call('styles:readFromProject'),
   addMediaFiles: (dir) => call('media:add', dir),
-  importFiles: (dir, mode, separator) => call('io:importFiles', dir, mode, separator),
+  importFiles: (dir, mode, separator, opts) => call('io:importFiles', dir, mode, separator, opts),
   importOpml: () => call('io:importOpml'),
   exportDocuments: (dir, project, ids, options) => call('io:exportDocuments', dir, project, ids, options),
-  exportOpml: (dir, project) => call('io:exportOpml', dir, project),
+  exportOpml: (dir, project, opts) => call('io:exportOpml', dir, project, opts),
   exportCsv: (dir, project, wordCounts) => call('io:exportCsv', dir, project, wordCounts),
   saveProjectAs: (dir, newTitle) => call('io:saveAs', dir, newTitle),
   printDocument: (html, title) => call('io:printDocument', html, title),
@@ -89,6 +92,8 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('project:changed', listener);
   },
   backupNow: (dir) => call('backup:now', dir),
+  backupTo: (dir) => call('backup:to', dir),
+  backupOnSave: (dir) => call('backup:onSave', dir),
   listBackups: (dir) => call('backup:list', dir),
   restoreBackup: (dir, file) => call('backup:restore', dir, file),
   recordHistory: (dir, counts) => call('history:record', dir, counts),
@@ -113,12 +118,15 @@ contextBridge.exposeInMainWorld('api', {
   editorPackage: (dir, project, options) => call('editor:package', dir, project, options),
   deleteSnapshot: (dir, id, file) => call('snap:delete', dir, id, file),
   renameSnapshot: (dir, id, file, name) => call('snap:rename', dir, id, file, name),
+  snapshotCounts: (dir) => call('snap:counts', dir),
   listAllTemplates: () => call('io:listTemplates'),
   saveAsTemplate: (dir, meta) => call('io:saveAsTemplate', dir, meta),
   deleteTemplate: (id) => call('io:deleteTemplate', id),
+  exportTemplate: (id) => call('io:exportTemplate', id),
+  importTemplate: () => call('io:importTemplate'),
   newFromTemplate: (title, templateId) => call('io:newFromTemplate', title, templateId),
-  importText: (mode, separator) => call('io:importText', mode, separator),
-  importWebPage: (url, dir) => call('io:importWebPage', url, dir),
+  importText: (mode, separator, opts) => call('io:importText', mode, separator, opts),
+  importWebPage: (url, dir, opts) => call('io:importWebPage', url, dir, opts),
   getPageSetup: (project) => call('io:getPageSetup', project),
   setPageSetup: (setup) => call('io:setPageSetup', setup),
   printPreview: (dir, project, options) => call('io:printPreview', dir, project, options),
@@ -143,6 +151,21 @@ contextBridge.exposeInMainWorld('api', {
   openLink: (url) => call('app:openLink', url),
   copyText: (text) => call('app:copyText', text),
   // Error log (Help → Report a problem): { entries, env }; new errors arrive through onAppError.
+  // Updates (Help → Check for updates): latest release info, download with progress, install and restart.
+  updateCheck: () => call('update:check'),
+  updateConfigure: () => call('update:configure'),
+  updateDownload: () => call('update:download'),
+  updateInstall: () => call('update:install'),
+  onUpdateProgress: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('update:progress', listener);
+    return () => ipcRenderer.removeListener('update:progress', listener);
+  },
+  onUpdateAvailable: (fn) => {
+    const listener = (_e, p) => fn(p);
+    ipcRenderer.on('update:available', listener);
+    return () => ipcRenderer.removeListener('update:available', listener);
+  },
   getErrorLog: () => call('errors:get'),
   clearErrorLog: () => call('errors:clear'),
   logError: (info) => call('errors:log', info),

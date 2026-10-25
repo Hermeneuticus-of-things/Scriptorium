@@ -7,7 +7,9 @@ export default function McpConnectDialog({ api, dir, onClose }) {
   const [readOnly, setReadOnly] = useState(false);
   const [info, setInfo] = useState(null);
   const [msg, setMsg] = useState('');
-  const opts = { projects: dir ? [dir] : [], readOnly };
+  // No project in the command: the agent sees the projects in Scribner's recent list, so the line
+  // can be shared or pasted into any AI client without naming the book or the computer.
+  const opts = { projects: [], readOnly };
 
   useEffect(() => {
     api.mcpConnectInfo(opts).then(setInfo).catch((e) => setMsg(e.message));
@@ -35,7 +37,7 @@ export default function McpConnectDialog({ api, dir, onClose }) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal wide" role="dialog" aria-label={t('ui.mcp.titlu')} onClick={(e) => e.stopPropagation()}>
         <h2>{t('ui.mcp.titlu')}</h2>
-        <p className="muted small">{dir ? t('ui.mcp.proiect', { dir }) : t('ui.mcp.fara_proiect')}</p>
+        <p className="muted small">{t('ui.mcp.general')}</p>
         <label className="check">
           <input type="checkbox" checked={readOnly} onChange={(e) => setReadOnly(e.target.checked)} /> {t('ui.mcp.doar_citire')}
         </label>
@@ -46,6 +48,13 @@ export default function McpConnectDialog({ api, dir, onClose }) {
         <p className="muted small">{t('ui.mcp.code_tip')}</p>
         {info && <pre className="mcp-command">{info.command}</pre>}
         <button onClick={copy} disabled={!info}>{t('ui.mcp.copiaza_comanda')}</button>
+        {info && (
+          <>
+            <h4>{t('ui.mcp.alti_clienti')}</h4>
+            <p className="muted small">{t('ui.mcp.alti_tip')}</p>
+            <pre className="mcp-command">{JSON.stringify({ mcpServers: { scribner: info.entry } }, null, 2)}</pre>
+          </>
+        )}
         {msg && <p className="muted small" role="status">{msg}</p>}
         <div className="actions">
           <span className="spacer" />

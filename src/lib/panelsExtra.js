@@ -51,6 +51,7 @@ export function parseComments(html) {
     const s = g[0];
     return {
       index,
+      start: s.start,
       text: attr(s.open, 'data-comment'),
       on: g.map((x) => stripTags(src.slice(x.openEnd, x.closeStart))).join(''),
       color: attr(s.open, 'data-comment-color'),
@@ -102,9 +103,39 @@ export function parseFootnotes(html) {
   let m;
   while ((m = re.exec(src))) {
     const before = stripTags(src.slice(Math.max(0, m.index - 400), m.index)).replace(/\s+/g, ' ');
-    out.push({ index: out.length, kind: m[1] ? 'linked' : 'inline', text: unesc(m[2]), on: stripTags(m[3]), before: before.slice(-60).trimStart() });
+    out.push({ index: out.length, start: m.index, end: m.index + m[0].length, kind: m[1] ? 'linked' : 'inline', text: unesc(m[2]), on: stripTags(m[3]), before: before.slice(-60).trimStart() });
   }
   return out;
+}
+
+/**
+ * Edit (patch = {text}) or delete (patch = null) footnote number `index` (parseFootnotes order).
+ * Deleting an inline note removes its marker; a linked note keeps its anchor text.
+ */
+export function updateFootnote(html, index, patch) {
+  const src = String(html || '');
+  const f = parseFootnotes(src)[index];
+  if (!f) return src;
+  const whole = src.slice(f.start, f.end);
+  const openEnd = whole.indexOf('>') + 1;
+  const open = whole.slice(0, openEnd);
+  const inner = whole.slice(openEnd, whole.length - '</span>'.length);
+  if (patch === null) return src.slice(0, f.start) + (f.kind === 'linked' ? inner : '') + src.slice(f.end);
+  const name = f.kind === 'linked' ? 'data-linked-footnote' : 'data-footnote';
+  const v = esc(patch.text ?? f.text);
+  let next = open.replace(new RegExp(`\\s${name}="[^"]*"`), ` ${name}="${v}"`);
+  if (/\stitle="/.test(next)) next = next.replace(/\stitle="[^"]*"/, ` title="${v}"`);
+  return src.slice(0, f.start) + next + whole.slice(openEnd) + src.slice(f.end);
+}
+
+/**
+ * Comments and footnotes of a document in one list, in text order (Inspector › Comments & Notes):
+ * [{kind: 'comment'|'footnote', index (within its kind), text, on, color?, author?, date?, before?}].
+ */
+export function parseAnnotations(html) {
+  const comments = parseComments(html).map((c) => ({ ...c, kind: 'comment' }));
+  const notes = parseFootnotes(html).map((f) => ({ ...f, footKind: f.kind, kind: 'footnote' }));
+  return [...comments, ...notes].sort((a, b) => a.start - b.start || (a.kind === 'comment' ? -1 : 1));
 }
 
 /**

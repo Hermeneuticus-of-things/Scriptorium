@@ -267,3 +267,81 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 - [x] Scribner: alegerea modelului în Setări, „Folosit acum”, mesaj pentru D&TED vechi
 - [ ] D&TED 0.4.2 publicat (Windows)
 - [ ] Motorul încorporat cu un model românesc descărcabil liber (eek cere acces aprobat individual)
+
+## Cereri 25.10.2026 (lista completă, în ordinea în care au venit)
+
+Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
+
+1. [x] Fereastra de scris prea îngustă: pagina se lățește trăgând de margini, dublu-clic = toată fereastra.
+2. [x] Mărirea textului cât e nevoie: Ctrl+= / Ctrl+- / Ctrl+0, Ctrl+rotiță, zoom în bara documentului.
+3. [x] Dictare instalată și activată din prima, fără instalare de fiecare dată (descărcare automată o dată; D&TED folosit dacă există).
+4. [x] Mini-player nativ de dictare (F8, 🎙): dictare + citire, fereastră mică mutabilă.
+5. [x] Voce de citire (TTS) inclusă, nativă: voce românească „Mihai” (Piper), descărcată singură o dată.
+6. [x] Iconiță proprie pentru program, installer, desktop și Start, cu scris „SCRIBNER” sub ea.
+7. [x] Comanda MCP generală, fără date personale (fără nume de utilizator, fără carte), aceeași pentru orice client AI (`scribner-mcp.cmd`).
+8. [x] Date personale scoase din repo-urile publice (dted: test cu nume; rapoartele ascund orice cale).
+9. [ ] Date personale (adrese de email) în scripturile din CCDEW `.claude/helpers` — așteaptă decizia autorului.
+10. [~] Interfața 1:1 cu programul clasic de scris, pe toate nivelurile (ferestre, setări, dialoguri intermediare):
+    - [x] Inspector pe panouri cu iconițe jos (Note, Semne de carte, Metadate, Snapshot-uri, Comentarii); secțiuni pliabile, doar ce trebuie vizibil
+    - [x] Bara de jos a documentului (zoom, cuvinte, caractere, țintă)
+    - [x] ▲▼ în bara documentului; corkboard cu bara de comenzi jos; Outline cu coloanele implicite clasice
+    - [x] Compile pe trei coloane (formate, așezări de secțiuni, conținut/opțiuni/metadate) + „Editează formatul…”
+    - [x] Ținte în panou plutitor cu bare de progres; Statistici manuscris/selecție alăturate
+    - [x] Mod compunere cu bara de comenzi la marginea de jos (fundal, poziția paginii, mărime text, lățime, estompare)
+    - [x] Bara de formatare implicită mai scurtă
+    - [x] Proiect nou: șabloane pe categorii cu fișe; Setările proiectului cu listă verticală
+    - [ ] Căutare rapidă în bara de sus cu rezultatele în binder
+    - [ ] Bara de sus implicită (Binder, Adaugă, Dosar, vederi, căutare, Referință rapidă, Compunere, Compile, Inspector)
+    - [ ] Bara documentului comună pentru ambele panouri (meniul titlului, blocare pe loc)
+    - [ ] Comparare și restul ferestrelor: Cuvinte cheie, Colecții, Import/Export, Generator de nume, Referință rapidă, meniuri
+11. [x] Mesajul „niciun server MCP Scrivener”: serverul Scribner citește și proiecte .scriv pe loc (`scriv_outline`, `scriv_read`), are prompts și resurse.
+12. [x] Import pornind și de la fișierul `.scrivx` (nu doar de la folderul `.scriv`), în aplicație și în MCP; `scriv_search` în proiectul .scriv. Exportul scrie un folder `.scriv` complet (cu `.scrivx` în el).
+13. [x] Evaluare MCP după ghidul mcp-builder: `mcp/eval/` (carte de test + 10 întrebări) verificată de `tests/mcpEval.test.js`; adnotări readOnly/destructive pe fiecare unealtă; `read_document` arată și ținta.
+14. [ ] Bug-uri rămase din vânătoarea pe niveluri (lista din TODO.md, secțiunea 25.10).
+15. [ ] Arhitectura AI pe trei straturi (propunerea din 25.10), ce lipsește față de ce există deja:
+    - există: panou AI lateral, AI pe selecție cu Accept/Respinge, cercetare în proiect (RAG), server MCP complet, furnizori locali (Ollama, LM Studio) și în cloud
+    - [ ] diff vizual roșu/verde la propunerile AI (acum: text propus + Accept/Respinge)
+    - [ ] Ctrl+K inline: casetă de comandă AI în editor (Ctrl+K e acum „împarte”; altă tastă)
+    - [ ] căutare hibridă lexicală + semantică (embeddings locale) în cercetarea din proiect
+    - [ ] Scribner ca client MCP (servere externe: bibliografie, dicționare) pentru asistentul intern
+    - [ ] unealtă MCP de adnotare pe interval exact de caractere (acum: comentariu după citat)
+16. [x] MCP pe cele cinci categorii: unelte (cu adnotări), resurse (proiecte, binder, documente, ghid), șabloane de lucru, transport prin rețea (`--http` cu token), securitate (doar citire, snapshot înainte de scriere, blocări, căi ascunse refuzate, adrese locale blocate la import web).
+17. [x] Agentul AI ca orchestrator, Scribner ca execuție: documentat în `docs/MCP_ARHITECTURA.md`; date private împachetate/rehidratate local (`--anonymize`).
+
+## Clonare în detaliu, funcție cu funcție (audit 25.10.2026, 48 de puncte)
+
+Grupuri de lucru (în paralel, câte un grup pe fișiere separate):
+- **G0 Snapshot-uri** [~]: + / −, sortare Dată/Titlu, redenumire, comparare cu ◀ ▶ și între două snapshot-uri, „Revino la acesta” cu confirmare, Snapshot cu titlu (Ctrl+Shift+5), Manager de snapshot-uri, snapshot la salvarea manuală, semn în binder.
+- **G1 Meniuri și scurtături** [~] (rămâne: Fixează pe loc, lista ferestrelor deschise): meniuri Inserare, Format, Fereastră separate; Editare completă (Anulează/Refă, Lipește potrivind stilul, Copiere specială, Transformări, submeniu Găsește); Găsește următorul/anteriorul; Mergi la ca submeniu cu tot binder-ul (favorite sus); Vizualizare: Mașină de scris, Caractere invizibile, Pagină, Fixează pe loc, Bara antet/subsol, Culoarea etichetei în…; Mod revizie în Format (punctele 1–4, 7–10, 31, 39).
+- **G2 Binder, colecții, etichete, cuvinte cheie** [ ]: meniul contextual complet (Adaugă la colecție, Convertește, Schimbă iconița, Tip secțiune, Sortează, Grupează, Copiază legătura, Snapshot, Arată în Explorer); „Culoarea etichetei în” binder/fișe/Outline/iconițe; colecții: redenumire pe tab, tab permanent Rezultatele căutării, tragere pe tab; cuvinte cheie ca arbore cu tragere pe documente și fișe; benzi de culoare pe fișe; hoist fără ieșire automată; Outline cu sinopsis sub titlu și culoarea etichetei (punctele 5, 11–22, F).
+- **G3 Inspector, editor, text** [x]: Comentarii și note de subsol într-o singură listă în ordinea textului, cu + Comentariu / + Notă și note editabile; comentariu pe cuvântul de sub cursor; culoarea implicită a comentariilor; semne de carte Document/Proiect în același panou; subsol „Cuvinte: 37 din 1.234”; culorile reviziilor în Setări; spațiere 1,0/1,2/1,5/2,0/2,5/3,0/Alta; Scrivenings fără titluri implicit (punctele 23–32, 35).
+- **G4 Import, export, backup, șabloane, generator de nume** [ ]: Importă și împarte (separator #, primul rând ca titlu); titlu și conversie la importul web; OPML cu note; backup la deschidere/la salvare/cu dată în nume/zip, păstrează 5; Salvează ca șablon în Fișier și Opțiuni în fereastra de șabloane; generator de nume cu mai multe origini, raritate, nume duble, inițiale (punctele 44–48, G).
+- **G5 Mai mari, runda următoare** [ ]: căutarea din bara de sus cu rezultatele în binder și opțiuni (6); panoul de stiluri lateral (33); Fixează pe loc pe fiecare panou (36); istoric înapoi/înainte pe panou cu listă (38); panou Focus lingvistic (40); riglă cu indentări și tab-uri trase (34); pagina la mărimea din Page Setup (43).
+
+## Ferestre și funcții lipsă (audit 2)
+
+Inventar al ferestrelor, panourilor, dialogurilor și funcțiilor programului clasic de scris (ediția 3 pentru Windows), comparat cu `src/` și `lib/`. Stare: [x] există · [~] parțial · [ ] lipsește. Grupurile G1–G5 de mai sus (meniuri, binder, Inspector, import/export) nu se repetă aici.
+
+**Există deja** (verificat în cod): Configurare pagină (hârtie, orientare, margini, antet/subsol, aplicată la Tipărire, Previzualizare și PDF); Ciorne (Scratchpad) cu „Trimite în proiect”; Istoricul scrisului pe zile și luni (`history.json`, unealta MCP `writing_history`); Statistici proiect/selecție; Ținte proiect și sesiune; Referință rapidă (mai multe ferestre); Layout-uri: salvare, aplicare, gestionare; Mod scenariu (scenariu, piesă de teatru US/UK, bandă desenată, radio) cu Tab/Enter, completare de personaje și de antete de scenă; Corecție automată (listă în Setări, corecturi învățate); Șabloane de document (dosar de șabloane → Nou din șablon) și șabloane de proiect; Metadate personalizate, Tipuri de secțiune, Etichete, Stări; Semne de carte; Împarte / Unește documente; Tabele și liste; Note de subsol, comentarii, adnotări; Stiluri; Teme de aspect; Sincronizare cu dosar extern; Snapshot-uri cu manager; Colecții; Favorite; Căutare în proiect, căutare avansată, înlocuire în proiect; Dicționar/sinonime (căutare externă); Ecran complet / Compunere cu bara de opțiuni; Mașină de scris; Etichete de substituție (ajutor); Compile cu designer de format; Import/Export (DOCX, RTF, ODT, OPML, Fountain, FDX, LaTeX, EPUB, folder `.scriv`); Generator de nume; Backup.
+
+### G6 Pagină și vizualizare
+- [x] Vedere pagină la mărimea din Configurare pagină (hârtie, orientare peisaj, margini), comanda „Vedere pagină la mărimea din Configurare pagină”; până acum vederea pagină avea doar A5/A4/Letter fixe
+- [x] Focus lingvistic ca fereastră plutitoare (substantive, verbe, adjective, adverbe, conjuncții, oprit, limba, estompare); până acum doar submeniu
+- [ ] Numerotarea rândurilor în editor
+- [ ] Zoom independent pe fiecare panou al editorului împărțit
+
+### G7 Inserare și text
+- [x] Caractere speciale (Inserare): tabel pe categorii (punctuație, diacritice, matematică, monede, simboluri, săgeți, greacă, spații speciale), cod Unicode, inserare la cursor
+- [x] Listă de completare automată (Proiect) + Ctrl+Space în editor
+- [ ] Ecuații (editor de formule)
+- [ ] Copiază / lipește formatarea și rigla (pensula de format)
+- [ ] Iconițe personalizate pentru documente (Schimbă iconița e în G2)
+
+### G8 Metadate și organizare
+- [x] Panou plutitor de cuvinte cheie (HUD): filtrare, culoare, număr de documente, dublu-clic/Aplică pune sau scoate cuvântul pe documentele selectate
+- [~] Căutare rapidă în bara de sus (rămâne în G5)
+
+### G9 Sincronizare și altele
+- [ ] Sincronizare cu aplicația mobilă (prin dosar în cloud): există doar sincronizarea cu un dosar extern
+- [ ] Verificare de actualizări din Ajutor (există opțiunea în Setări, fără fereastră proprie)
+- [ ] Înregistrare/licență (nu se aplică: program liber)

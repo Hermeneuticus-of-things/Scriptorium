@@ -47,6 +47,7 @@ export function PickNodeDialog({ title, items, onPick, onClose, emptyText = t('u
 export function ImportSplitDialog({ onImport, onClose }) {
   const [mode, setMode] = useState('none');
   const [separator, setSeparator] = useState('#');
+  const [firstLineTitle, setFirstLineTitle] = useState(false);
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" role="dialog" aria-label={t('ui.batchADialogs.importa_fisiere')} onClick={(e) => e.stopPropagation()}>
@@ -66,12 +67,15 @@ export function ImportSplitDialog({ onImport, onClose }) {
             <input value={separator} onChange={(e) => setSeparator(e.target.value)} />
           </label>
         )}
+        <label className="check">
+          <input type="checkbox" checked={firstLineTitle} onChange={(e) => setFirstLineTitle(e.target.checked)} /> {t('ui.g4.primulRandTitlu')}
+        </label>
         <div className="row-actions">
           <button onClick={onClose}>{t('ui.batchADialogs.renunta')}</button>
           <button
             className="primary"
             onClick={() => {
-              onImport(mode, separator || '#');
+              onImport(mode, separator || '#', { firstLineTitle });
               onClose();
             }}
           >

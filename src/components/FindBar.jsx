@@ -3,14 +3,31 @@ import { t } from '../lib/i18n.js';
 import { buildRegex } from '../lib/search.js';
 import { findRanges, replaceRanges } from '../editor/docSearch.js';
 
+// Last search (Edit › Find › Find Next / Previous / Use Selection for Find), shared by all editors.
+export const lastFind = { query: '', opts: { caseSensitive: false, wholeWord: false, regex: false } };
+
+// Next (dir 1) or previous (dir -1) match of the last search after/before the selection, wrapping.
+export function findAgain(editor, dir = 1) {
+  const re = lastFind.query ? buildRegex({ query: lastFind.query, ...lastFind.opts }) : null;
+  if (!editor || editor.isDestroyed || !re) return false;
+  const ranges = findRanges(editor.state.doc, re);
+  if (!ranges.length) return false;
+  const { from, to } = editor.state.selection;
+  const r = dir > 0 ? ranges.find((x) => x.from >= to && !(x.from === from && x.to === to)) || ranges[0] : [...ranges].reverse().find((x) => x.to <= from) || ranges[ranges.length - 1];
+  editor.chain().focus().setTextSelection({ from: r.from, to: r.to }).scrollIntoView().run();
+  return true;
+}
+
 // Ctrl+F bar for the current document.
 export default function FindBar({ editor, onClose }) {
   const [query, setQuery] = useState(() => {
     const { from, to } = editor.state.selection;
-    return from === to ? '' : editor.state.doc.textBetween(from, to, ' ').slice(0, 80);
+    return from === to ? lastFind.query : editor.state.doc.textBetween(from, to, ' ').slice(0, 80);
   });
   const [replacement, setReplacement] = useState('');
-  const [opts, setOpts] = useState({ caseSensitive: false, wholeWord: false, regex: false });
+  const [opts, setOpts] = useState(() => ({ ...lastFind.opts }));
+  lastFind.query = query;
+  lastFind.opts = opts;
   const [index, setIndex] = useState(0);
   const [version, setVersion] = useState(0);
   const input = useRef(null);
