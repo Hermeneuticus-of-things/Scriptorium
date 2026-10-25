@@ -44,9 +44,24 @@ export const DEFAULT_SETTINGS = {
   backupDir: '',
   // AI
   aiEnabled: true,
+  // Where the label colour is shown (View > Use label colour in)
+  labelColorIn: { binder: false, cards: true, outliner: false, icons: true },
 };
 
 export const withDefaults = (settings) => ({ ...DEFAULT_SETTINGS, ...(settings || {}) });
+
+/** settings.labelColorIn with every key filled in (a partial object keeps the other defaults). */
+export const labelColorIn = (settings) => ({ ...DEFAULT_SETTINGS.labelColorIn, ...((settings && settings.labelColorIn) || {}) });
+
+/** Light row tint from a label colour (#rgb / #rrggbb), readable on light and dark themes. */
+export function labelTint(color, alpha = 0.18) {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(color || '').trim());
+  if (!m) return '';
+  let h = m[1];
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const n = parseInt(h, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
 
 /** Sets CSS custom properties on <html> from settings; empty values remove the variable. */
 export function applySettingsCss(settings, root = typeof document !== 'undefined' ? document.documentElement : null) {

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { cardHeight } from '../lib/panelsExtra.js';
 import { FolderIcon } from './Icons.jsx';
 import { t } from '../lib/i18n.js';
+import { KEYWORD_MIME, keywordDropTargets } from '../lib/collections.js';
 import { NONE, labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
 
 const SIZES = { mic: 180, mediu: 230, mare: 300 };
@@ -40,11 +41,14 @@ function SynopsisImage({ file, readMedia }) {
   return url ? <img className="card-image" src={url} alt="" /> : null;
 }
 
-function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins, selected, tabStop, editing, onSelect, onKey, onEndEdit }) {
+function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins, selected, tabStop, editing, onSelect, onKey, onEndEdit, tintCards = true, keywordStrips = true, onDropKeyword }) {
+  const [kwOver, setKwOver] = useState(false);
+  const isKw = (e) => onDropKeyword && [...(e.dataTransfer?.types || [])].includes(KEYWORD_MIME);
+  const stripColors = keywordStrips ? (n.keywords || []).map((k) => keywordColors[k]).filter(Boolean) : [];
   return (
     <article
-      className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''}`}
-      style={{ borderTopColor: colors[n.label] || 'transparent', ...(colors[n.label] ? { '--label-color': colors[n.label] } : {}), ...style }}
+      className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''} ${kwOver ? 'drop-keyword' : ''}`}
+      style={{ borderTopColor: (tintCards && colors[n.label]) || 'transparent', ...(tintCards && colors[n.label] ? { '--label-color': colors[n.label] } : {}), ...style }}
       data-card-id={n.id}
       role="gridcell"
       tabIndex={tabStop ? 0 : -1} // one Tab stop for the board; arrows move between cards
@@ -52,6 +56,26 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
       aria-label={n.title || t('ui.app.fara_titlu')}
       onFocus={(e) => e.target === e.currentTarget && onSelect?.(n.id)}
       {...dragProps}
+      onDragOver={(e) => {
+        if (isKw(e)) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+          if (!kwOver) setKwOver(true);
+          return;
+        }
+        dragProps?.onDragOver?.(e);
+      }}
+      onDragLeave={() => kwOver && setKwOver(false)}
+      onDrop={(e) => {
+        if (isKw(e)) {
+          e.preventDefault();
+          setKwOver(false);
+          const name = e.dataTransfer.getData(KEYWORD_MIME);
+          if (name) onDropKeyword(n.id, name);
+          return;
+        }
+        dragProps?.onDrop?.(e);
+      }}
       onMouseDown={(e) => {
         if (!e.target.closest('textarea, input, button')) onSelect?.(n.id);
         dragProps?.onMouseDown?.(e); // the freeform drag must not replace selection
@@ -60,7 +84,12 @@ function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps,
       onDoubleClick={(e) => !e.target.closest('textarea, input, header') && onOpen(n.id)}
     >
       {pins && <span className="card-pin" style={{ background: colors[n.label] || undefined }} aria-hidden="true" />}
-      {n.label && n.label !== 'Fără' && colors[n.label] && <span className="card-tint" style={{ background: colors[n.label] }} />}
+      {tintCards && n.label && n.label !== 'Fără' && colors[n.label] && <span className="card-tint" style={{ background: colors[n.label] }} />}
+      {stripColors.length > 0 && (
+        <span className="card-kw-strip" aria-hidden="true">
+          {stripColors.map((c, i) => <span key={i} style={{ background: c }} />)}
+        </span>
+      )}
       <header onDoubleClick={() => onOpen(n.id)} title={t('ui.corkboard.dublu_clic_deschide_enter_editeaza')}>
         {editing ? (
           <input
@@ -138,7 +167,7 @@ export default function Corkboard(props) {
   return <CorkboardBoard {...props} folder={Array.isArray(folders) && folders.length === 1 ? folders[0] : props.folder} />;
 }
 
-function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia }) {
+function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia, labelColorIn = null, onDropKeyword, selectedIds = null }) {
   const [drag, setDrag] = useState(null);
   const [hint, setHint] = useState(null);
   const [sel, setSel] = useState(null);
@@ -225,7 +254,8 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
     }
   };
   const cardState = (n) => ({ selected: sel === n.id, tabStop: sel && items.some((x) => x.id === sel) ? sel === n.id : n.id === items[0]?.id, editing: editing === n.id, onSelect: setSel, onKey, onEndEdit: (id) => (setEditing(null), focusCard(id)) });
-  const common = { colors, keywordColors, onOpen, onPatch, readMedia, pins: Boolean(cork.pins) };
+  const dropKeyword = onDropKeyword ? (id, name) => onDropKeyword(keywordDropTargets(id, selectedIds ? [...selectedIds] : sel ? [sel] : []), name) : undefined;
+  const common = { colors, keywordColors, onOpen, onPatch, readMedia, pins: Boolean(cork.pins), tintCards: labelColorIn?.cards !== false, keywordStrips: cork.keywordStrips !== false, onDropKeyword: dropKeyword };
 
   // Freeform: cards keep {x, y} in node.corkPos; "Fixează ordinea" writes the visual
   // order (top-to-bottom, left-to-right) back to the binder.
@@ -340,6 +370,9 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
             </label>
             <label className="check">
               <input type="checkbox" checked={Boolean(cork.labelFill)} onChange={(e) => setCork({ labelFill: e.target.checked })} /> {t('ui.corkboard.labelFill')}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={cork.keywordStrips !== false} onChange={(e) => setCork({ keywordStrips: e.target.checked })} /> {t('ui.corkboard.benzi_cuvinte_cheie')}
             </label>
           </div>
         </details>
