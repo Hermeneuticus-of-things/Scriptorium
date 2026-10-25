@@ -3068,11 +3068,10 @@ export default function App({ api: apiProp }) {
           project={project}
           draftWords={totals.tWords}
           draftChars={totals.draftChars}
+          draftValue={draftValue}
+          sessionValue={sessionValue}
           onResetSession={resetSession}
-          onSave={(targets) => {
-            saveProject({ ...project, targets });
-            setDialog(null);
-          }}
+          onSave={(targets) => saveProject({ ...project, targets })}
           onClose={() => setDialog(null)}
         />
       )}
