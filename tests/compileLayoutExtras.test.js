@@ -18,6 +18,10 @@ describe('compile layout extras', () => {
   it('no change when no first-paragraph option is set', () => {
     expect(L.firstParagraph('<p>plain</p>', {})).toBe('<p>plain</p>');
   });
+  it('first-paragraph indent sets data-first', () => {
+    expect(L.firstParagraph('<p>text</p>', { firstIndent: 'none' })).toBe('<p data-first="none">text</p>');
+    expect(L.firstParagraph('<p>text</p>', { firstIndent: 'indent' })).toBe('<p data-first="indent">text</p>');
+  });
   it('columns emit a multi-column rule in the layout CSS', () => {
     const css = L.layoutCss([{ cls: 'lay1', lay: { columns: 2 } }]);
     expect(css).toMatch(/\.lay1\{[^}]*column-count:2/);

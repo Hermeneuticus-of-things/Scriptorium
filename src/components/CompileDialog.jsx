@@ -1029,6 +1029,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <th>{tr('ui.compileDialog.p23.dropCap')}</th>
                     <th>{tr('ui.compileDialog.p23.leadCaps')}</th>
                     <th>{tr('ui.compileDialog.p23.columns')}</th>
+                    <th>{tr('ui.compileDialog.p23.firstIndent')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1067,6 +1068,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                         <td><input type="checkbox" aria-label={tr('ui.compileDialog.p23.dropCap')} checked={Boolean(l.dropCap)} onChange={(e) => setLayout(t, 'dropCap', e.target.checked)} /></td>
                         <td><input type="number" min="0" max="20" style={{ width: '3.5em' }} aria-label={tr('ui.compileDialog.p23.leadCaps')} value={l.firstWordsSmallCaps || 0} onChange={(e) => setLayout(t, 'firstWordsSmallCaps', Math.max(0, Number(e.target.value) || 0))} /></td>
                         <td><input type="number" min="1" max="3" style={{ width: '3.5em' }} aria-label={tr('ui.compileDialog.p23.columns')} value={l.columns || 1} onChange={(e) => setLayout(t, 'columns', Math.min(3, Math.max(1, Number(e.target.value) || 1)))} /></td>
+                        <td>
+                          <select aria-label={tr('ui.compileDialog.p23.firstIndent')} value={l.firstIndent || 'inherit'} onChange={(e) => setLayout(t, 'firstIndent', e.target.value)}>
+                            <option value="inherit">{tr('ui.compileDialog.p23.fiMostenit')}</option>
+                            <option value="none">{tr('ui.compileDialog.p23.fiNone')}</option>
+                            <option value="indent">{tr('ui.compileDialog.p23.fiIndent')}</option>
+                          </select>
+                        </td>
                       </tr>
                     );
                   })}
