@@ -3,6 +3,7 @@ import { citationParts } from '../lib/aiSession.js';
 import { DEFAULT_SCOPE, noteTitle, scopeChips, toggleScope, turnToInsertHtml, turnToNoteHtml, turnToPlain, visibleAnswer } from '../lib/researchChat.js';
 import '../ai.css';
 import { t } from '../lib/i18n.js';
+import { confirmDialog } from '../lib/appDialog.js';
 
 const kindLabels = () => ({ docs: t('ui.researchChat.manuscris'), research: t('ui.advancedSearchDialog.cercetare'), notes: t('ui.advancedSearchDialog.note') });
 const kindName = (k) => (k === 'notes' ? t('ui.researchChat.k_note') : k === 'research' ? t('ui.researchChat.k_cercetare') : t('ui.researchChat.k_manuscris'));
@@ -222,7 +223,7 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
     setError(null);
   };
   const removeChat = async () => {
-    if (!chat || !window.confirm(t('ui.researchChat.stergi_conversatia'))) return;
+    if (!chat || !(await confirmDialog({ message: t('ui.researchChat.stergi_conversatia'), okLabel: t('ui.dlg.sterge'), danger: true }))) return;
     if (api.ragChatDelete) await api.ragChatDelete(dir, chat.id).catch(() => {});
     setChats((list) => list.filter((c) => c.id !== chat.id));
     setChatId(null);

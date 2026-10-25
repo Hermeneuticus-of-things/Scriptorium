@@ -1,9 +1,9 @@
 // Scenario: project Find & Replace — Replace All updates every open editor (split pane,
 // Scrivenings), takes a snapshot, and a later edit in the other pane does not bring the old text back.
-const { open, caretEnd, check, done } = require('./_helpers.cjs');
+const { open, caretEnd, check, done, onAppDialog } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
-  page.on('dialog', (d) => d.accept());
+  onAppDialog(page, (d) => d.accept());
   const binder = (t) => page.locator('.binder').getByText(t, { exact: true });
   await binder('Drumul').click();
   await page.locator('button.split-btn').click();

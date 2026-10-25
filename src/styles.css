@@ -678,3 +678,17 @@ legend { color: var(--muted); padding: 0 4px; }
 .tpl-menu > button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .tpl-menu .recent { list-style: none; margin: 0; padding: 0; }
 @media (max-width: 640px) { .tpl-body { flex-direction: column; } .tpl-cats { flex-basis: auto; } }
+
+/* Q10: in-app confirmations / prompts, empty states, status-bar messages */
+.app-dialog-backdrop { z-index: 40; }
+.app-dialog { width: min(440px, 92vw); }
+.app-dialog h3 { margin: 0; }
+.app-dialog-msg { margin: 0; white-space: pre-wrap; }
+.app-dialog-input { width: 100%; box-sizing: border-box; }
+.app-dialog-dontask { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+.app-dialog .primary.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.empty-state { padding: 24px 16px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.empty-state p { margin: 0; }
+.empty-state-title { font-weight: 600; }
+.statusbar .status-msg:empty { display: none; }
+.statusbar .status-msg { color: var(--muted); }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { t as tr, categoryLabel } from '../lib/i18n.js';
+import { confirmDialog } from '../lib/appDialog.js';
 
 // Recent projects: pinned ones (settings.recentPinned = [dir]) first, in pin order.
 export function orderRecent(recent = [], pinned = []) {
@@ -34,8 +35,8 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
     }
   };
   const togglePin = (dir) => saveSettings({ recentPinned: pinned.includes(dir) ? pinned.filter((d) => d !== dir) : [...pinned, dir] });
-  const clearRecent = () => {
-    if (!window.confirm(tr('ui.home.golesti_lista_de_proiecte_recente'))) return;
+  const clearRecent = async () => {
+    if (!(await confirmDialog({ message: tr('ui.home.golesti_lista_de_proiecte_recente'), okLabel: tr('ui.dlg.goleste_lista') }))) return;
     saveSettings({ recent: (settings.recent || []).filter((r) => pinned.includes(r.dir)) });
   };
   const recent = orderRecent(settings.recent || [], pinned);
@@ -56,7 +57,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
     return api.newProject(title.trim(), chosen ? templateId : 'novel');
   };
   const removeTemplate = async () => {
-    if (!chosen || !chosen.user || !window.confirm(tr('ui.home.stergi_sablonul_x', { name: chosen.name }))) return;
+    if (!chosen || !chosen.user || !(await confirmDialog({ message: tr('ui.home.stergi_sablonul_x', { name: chosen.name }), okLabel: tr('ui.dlg.sterge'), danger: true }))) return;
     try {
       await api.deleteTemplate(chosen.id);
       setTemplateId('novel');

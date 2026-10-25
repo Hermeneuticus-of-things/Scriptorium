@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { noteToDocument } from '../lib/panelsExtra.js';
 import { t } from '../lib/i18n.js';
+import { confirmDialog } from '../lib/appDialog.js';
 
 /**
  * Floating scratchpad (notes independent of the project).
@@ -72,10 +73,10 @@ export default function Scratchpad({ load, save, onClose, onSendToProject }) {
           {notes.map((n) => (
             <li key={n.id} onClick={() => setSel(n.id)} style={{ padding: '4px 6px', cursor: 'pointer', background: n.id === sel ? 'var(--selection, #dde8ff)' : undefined, display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title || t('ui.app.fara_titlu')}</span>
-              <button onClick={(e) => { e.stopPropagation(); if (confirm(t('ui.scratchpad.stergi_nota'))) remove(n.id); }} title={t('btn.delete')}>🗑</button>
+              <button onClick={async (e) => { e.stopPropagation(); if (await confirmDialog({ message: t('ui.scratchpad.stergi_nota'), okLabel: t('ui.dlg.sterge'), danger: true })) remove(n.id); }} title={t('btn.delete')}>🗑</button>
             </li>
           ))}
-          {!notes.length && <li style={{ padding: 6, opacity: 0.6 }}>{t('ui.scratchpad.nicio_nota')}</li>}
+          {!notes.length && <li style={{ padding: 6, opacity: 0.6 }}>{t('ui.scratchpad.nicio_nota')} {t('ui.empty.scratch_hint')}</li>}
         </ul>
         {cur ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { buildRegex, findInHtml } from '../lib/search.js';
 import { flatten } from '../lib/tree.js';
 import { t } from '../lib/i18n.js';
+import { confirmDialog } from '../lib/appDialog.js';
+import { EmptyState } from './AppDialogHost.jsx';
 
 export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClose, initialQuery = '' }) {
   const [query, setQuery] = useState(initialQuery);
@@ -36,7 +38,7 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
   const replaceAll = async () => {
     const ids = results.map((r) => r.node.id);
     if (!ids.length) return;
-    if (!window.confirm(t('ui.findDialog.inlocuiesti_x_aparitii_in_x', { total: total, length: ids.length }))) return;
+    if (!(await confirmDialog({ message: t('ui.findDialog.inlocuiesti_x_aparitii_in_x', { total: total, length: ids.length }), okLabel: t('ui.dlg.inlocuieste_tot') }))) return;
     setBusy(true);
     try {
       const n = await onReplaceAll(ids, re, replacement);
@@ -68,6 +70,7 @@ export default function FindDialog({ project, docs, onOpen, onReplaceAll, onClos
         </div>
         {invalid && <p className="warn">{t('ui.advancedSearchDialog.expresie_regulata_invalida')}</p>}
         {re && <p className="muted">{total} {t('ui.findDialog.aparitii_in_text')} {results.length} {t('ui.findDialog.documente_inclusiv_titluri_si_sinopsis')}</p>}
+        {re && !results.length && <EmptyState title={t('ui.empty.cautare')} hint={t('ui.empty.cautare_hint')} />}
         <div className="results">
           {results.map(({ node, hits, inTitle, inSyn }) => (
             <div key={node.id} className="result">

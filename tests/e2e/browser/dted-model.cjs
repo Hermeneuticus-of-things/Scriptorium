@@ -7,7 +7,7 @@ const URL = process.env.URL || 'http://localhost:4183/?demo&dted';
   const page = await browser.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  page.on('dialog', (d) => d.accept());
+  require('./_helpers.cjs').onAppDialog(page, (d) => d.accept());
   await page.goto(URL);
   await page.getByText('Deschide proiect .scribner').first().click();
   await page.locator('.pane .ProseMirror').first().waitFor();

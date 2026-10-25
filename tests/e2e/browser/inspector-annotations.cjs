@@ -2,11 +2,11 @@
 // cursor, + Footnote, edit in place, click jumps, delete), Document/Project bookmarks in one pane,
 // footer "Words: x of y" on a selection, line spacing menu in the format bar, Scrivenings titles
 // hidden by default.
-const { open, ed, check, done } = require('./_helpers.cjs');
+const { open, ed, check, done, onAppDialog } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
   await page.setViewportSize({ width: 1400, height: 900 });
-  page.on('dialog', (d) => d.accept());
+  onAppDialog(page, (d) => d.accept());
   await page.locator('.binder-row', { hasText: 'Începutul' }).first().click();
   await page.waitForTimeout(250);
   if (!(await page.locator('.inspector .tabs').count())) { await page.keyboard.press('Control+Shift+I'); await page.waitForTimeout(200); }

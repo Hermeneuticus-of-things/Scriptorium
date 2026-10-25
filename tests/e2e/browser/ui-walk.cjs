@@ -75,7 +75,8 @@ async function walk(seed, lang, theme, vp) {
   const errors = [];
   p.on('pageerror', (e) => errors.push(String(e)));
   p.on('console', (m) => m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text()) && errors.push(m.text()));
-  p.on('dialog', (d) => d.dismiss().catch(() => {}));
+  p.on('dialog', (d) => d.dismiss().catch(() => {})); // native ones left (About)
+  require('./_helpers.cjs').onAppDialog(p, (d) => d.dismiss());
   p.on('popup', (w) => w.close().catch(() => {}));
   await p.goto(URL);
   await p.getByText('Deschide proiect .scribner').first().click();

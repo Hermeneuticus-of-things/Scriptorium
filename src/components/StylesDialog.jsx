@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { STYLE_KINDS, duplicateShortcuts, isParaStyle, normalizeShortcut, stylesOf } from '../lib/styles.js';
 import { t, builtinName } from '../lib/i18n.js';
+import { confirmDialog, promptDialog } from '../lib/appDialog.js';
 
 const EMPTY = () => ({ name: t('ui.stylesDialog.stil_nou'), type: 'para', bold: false, italic: false, smallCaps: false, underline: false, align: '', indent: 0, size: 100, color: '' });
 
@@ -30,8 +31,8 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
     setStyles((all) => [...all, { ...EMPTY(), id }]);
     setSel(styles.length);
   };
-  const remove = () => {
-    if (!window.confirm(t('ui.stylesDialog.stergi_stilul_x_textul_care', { name: st.name }))) return;
+  const remove = async () => {
+    if (!(await confirmDialog({ message: t('ui.stylesDialog.stergi_stilul_x_textul_care', { name: st.name }), okLabel: t('ui.dlg.sterge'), danger: true }))) return;
     setStyles((all) => all.filter((_, i) => i !== sel));
     setSel(0);
   };
@@ -43,7 +44,7 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
     try {
       const incoming = await api.readStylesFromProject();
       if (!incoming) return;
-      const mode = window.prompt(t('ui.stylesDialog.stilurile_cu_acelasi_nume_pastreaza'), t('ui.stylesDialog.pastreaza'));
+      const mode = await promptDialog({ message: t('ui.stylesDialog.stilurile_cu_acelasi_nume_pastreaza'), value: t('ui.stylesDialog.pastreaza'), okLabel: t('ui.dlg.importa') });
       if (mode === null) return;
       setStyles((all) => {
         const out = [...all];

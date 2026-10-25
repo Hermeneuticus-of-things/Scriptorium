@@ -358,6 +358,19 @@ function createWindow() {
   setupSpelling(win);
   const wcId = win.webContents.id;
   win.on('closed', () => releaseWindow(wcId));
+  // The renderer blocks unload while a compile / export is running (CompileDialog): ask first.
+  win.webContents.on('will-prevent-unload', (e) => {
+    const en = String(readSettings().language || '').startsWith('en');
+    const choice = dialog.showMessageBoxSync(win, {
+      type: 'warning',
+      buttons: en ? ['Close anyway', 'Wait'] : ['Închide oricum', 'Așteaptă'],
+      defaultId: 1,
+      cancelId: 1,
+      message: en ? 'A compile or export is still running.' : 'O compilare sau un export este încă în curs.',
+      detail: en ? 'If you close now, the output file may be incomplete.' : 'Dacă închizi acum, fișierul rezultat poate rămâne incomplet.',
+    });
+    if (choice === 0) e.preventDefault(); // preventDefault here = let the window close
+  });
   // A crashed or reloaded renderer has lost its project: free it for other windows.
   win.webContents.on('render-process-gone', () => releaseWindow(wcId));
   win.webContents.on('did-navigate', () => {

@@ -4,6 +4,7 @@ import {
   createCollection, renameCollection, recolorCollection, deleteCollection, addToCollection, removeFromCollection,
 } from '../lib/collections.js';
 import { SearchIcon } from './Icons.jsx';
+import { confirmDialog, promptDialog } from '../lib/appDialog.js';
 
 /** Id of the permanent tab that lists the last project search results. */
 export const SEARCH_RESULTS_TAB = '__search_results__';
@@ -73,9 +74,9 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
 
   const close = () => setMenuFor(null);
 
-  const create = (ids) => {
+  const create = async (ids) => {
     close();
-    const title = window.prompt(t('ui.advancedSearchDialog.numele_colectiei'), t('ui.collectionsBar.colectie_noua'));
+    const title = await promptDialog({ message: t('ui.advancedSearchDialog.numele_colectiei'), value: t('ui.collectionsBar.colectie_noua'), okLabel: t('ui.dlg.creeaza') });
     if (!title || !title.trim()) return;
     const { project: next, id } = createCollection(project, { title: title.trim(), type: 'manual', ids });
     onChange(next);
@@ -96,9 +97,9 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
     el.click();
   };
 
-  const remove = (c) => {
+  const remove = async (c) => {
     close();
-    if (!window.confirm(t('ui.collectionsBar.stergi_colectia_x_documentele_nu', { title: c.title }))) return;
+    if (!(await confirmDialog({ message: t('ui.collectionsBar.stergi_colectia_x_documentele_nu', { title: c.title }), okLabel: t('ui.dlg.sterge_colectia'), danger: true }))) return;
     onChange(deleteCollection(project, c.id));
     if (active === c.id) onSelect(null);
   };

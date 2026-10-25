@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NONE, FIELD_TYPES, makeDraft, applyProjectSettings, validateDraft, moveItem } from '../lib/projectSettings.js';
 import { t as tr } from '../lib/i18n.js';
+import { confirmDialog } from '../lib/appDialog.js';
 
 const TABS = () => ([
   ['sectiuni', tr('ui.projectSettingsDialog.tipuri_de_sectiune')],
@@ -132,8 +133,8 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             type="button"
             title={tr('btn.delete')}
             disabled={i === 0}
-            onClick={() => {
-              if (it.orig && !window.confirm(tr('ui.projectSettingsDialog.stergi_x_documentele_care_il', { name: it.name, NONE: NONE }))) return;
+            onClick={async () => {
+              if (it.orig && !(await confirmDialog({ message: tr('ui.projectSettingsDialog.stergi_x_documentele_care_il', { name: it.name, NONE: NONE }), okLabel: tr('ui.dlg.sterge'), danger: true }))) return;
               removeAt(key, i);
             }}
           >
@@ -322,8 +323,8 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                   <Reorder i={i} n={d.customFields.length} onMove={move('customFields', false)} />
                   <button
                     type="button"
-                    onClick={() => {
-                      if (f.orig && !window.confirm(tr('ui.projectSettingsDialog.stergi_campul_x_valorile_lui', { title: f.title }))) return;
+                    onClick={async () => {
+                      if (f.orig && !(await confirmDialog({ message: tr('ui.projectSettingsDialog.stergi_campul_x_valorile_lui', { title: f.title }), okLabel: tr('ui.dlg.sterge'), danger: true }))) return;
                       removeAt('customFields', i);
                     }}
                   >
@@ -348,8 +349,8 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                   <button
                     type="button"
                     title={tr('btn.delete')}
-                    onClick={() => {
-                      if (t.orig && !window.confirm(tr('ui.projectSettingsDialog.stergi_tipul_de_sectiune_x', { title: t.title }))) return;
+                    onClick={async () => {
+                      if (t.orig && !(await confirmDialog({ message: tr('ui.projectSettingsDialog.stergi_tipul_de_sectiune_x', { title: t.title }), okLabel: tr('ui.dlg.sterge'), danger: true }))) return;
                       const removedId = t.id;
                       setD((x) => ({
                         ...x,

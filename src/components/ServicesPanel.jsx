@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { t } from '../lib/i18n.js';
+import { confirmDialog } from '../lib/appDialog.js';
 
 // Settings → "Servicii și conturi": keys for DeepL, Google Translate, LanguageTool, Zotero and a list
 // of other logins. Secrets are typed here and sent once to the main process; they are never read back.
@@ -92,7 +93,7 @@ export default function ServicesPanel({ api }) {
             {a.url && <button type="button" className="link" onClick={() => (api.openLink ? api.openLink(a.url) : window.open(a.url, '_blank', 'noopener'))}>{t('ui.services.deschide_site')}</button>}
             {a.hasPassword && <button type="button" className="link" onClick={() => api.copyAccountPassword(a.id).then(() => setMsg(t('ui.services.parola_copiata'))).catch((e) => setMsg(e.message))}>{t('ui.services.copiaza_parola')}</button>}
             <button type="button" className="link" onClick={() => setAcc({ ...a, password: undefined })}>{t('ui.services.editeaza')}</button>
-            <button type="button" className="link" onClick={() => window.confirm(t('ui.services.stergi_contul', { name: a.name })) && api.deleteAccount(a.id).then(load).catch((e) => setMsg(e.message))}>{t('ui.services.sterge')}</button>
+            <button type="button" className="link" onClick={async () => (await confirmDialog({ message: t('ui.services.stergi_contul', { name: a.name }), okLabel: t('ui.dlg.sterge'), danger: true })) && api.deleteAccount(a.id).then(load).catch((e) => setMsg(e.message))}>{t('ui.services.sterge')}</button>
           </li>
         ))}
       </ul>

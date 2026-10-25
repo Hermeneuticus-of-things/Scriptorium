@@ -97,6 +97,11 @@ const flat = (nodes, out = []) => {
     window.prompt = (_m, d) => d ?? '';
     window.alert = () => {};
     window.Notification = undefined;
+    // In-app confirmations / prompts (AppDialogHost): the same answers — OK, default text.
+    if (!window.__appDialogStub) {
+      window.__appDialogStub = new MutationObserver(() => document.querySelector('.app-dialog .app-dialog-ok')?.click());
+      window.__appDialogStub.observe(document.body, { childList: true, subtree: true });
+    }
   });
   await win.waitForSelector('text=Proiect nou', { timeout: 30000 });
   await stubRenderer();

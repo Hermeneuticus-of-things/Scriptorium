@@ -10,6 +10,7 @@ import { parseAnnotations, updateComment, updateFootnote } from '../lib/panelsEx
 import BookmarksPanel from './BookmarksPanel.jsx';
 import { t as tr, uiLocale } from '../lib/i18n.js';
 import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
+import { confirmDialog, promptDialog } from '../lib/appDialog.js';
 
 // Survives the remount App does on every selection change (key = selected id),
 // so "Lock Inspector" keeps showing the pinned document while navigating.
@@ -381,8 +382,8 @@ function AnnotationsPane({ items, editable, canAdd, authorName, onAdd, onJump, o
               authorName={authorName}
               onJump={() => onJump(it)}
               onEdit={(patch) => onEdit(it, patch)}
-              onDelete={(ask = true) => {
-                if (ask && it.kind === 'comment' && it.text && !window.confirm(tr('ui.inspector.stergi_comentariul_textul_ramane'))) return;
+              onDelete={async (ask = true) => {
+                if (ask && it.kind === 'comment' && it.text && !(await confirmDialog({ message: tr('ui.inspector.stergi_comentariul_textul_ramane'), okLabel: tr('ui.dlg.sterge_comentariul'), danger: true, dontAskAgainKey: 'deleteComment' }))) return;
                 setEditingKey(null);
                 onDelete(it);
               }}
@@ -655,8 +656,8 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs, rea
             ))}
           </select>
           <button
-            onClick={() => {
-              const url = window.prompt(tr('ui.inspector.adresa_web'), 'https://');
+            onClick={async () => {
+              const url = await promptDialog({ message: tr('ui.inspector.adresa_web'), value: 'https://', okLabel: tr('ui.dlg.adauga') });
               if (url && /^https?:\/\//.test(url)) setBookmarks([...bookmarks, { url }]);
             }}
           >

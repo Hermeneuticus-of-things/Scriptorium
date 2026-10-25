@@ -71,6 +71,8 @@ const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
 import { applySettingsCss, labelColorIn as labelColorInOf } from './lib/settingsDefaults.js';
 import { hideCursorWhileTyping } from './lib/appearance.js';
 import DialogA11y from './components/DialogA11y.jsx';
+import AppDialogHost from './components/AppDialogHost.jsx';
+import { confirmDialog, promptDialog, statusMessage } from './lib/appDialog.js';
 import { setLanguage, cmdLabel, groupLabel, builtinName, t as tr, uiLocale } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
 import FindDialog from './components/FindDialog.jsx';
@@ -1128,6 +1130,7 @@ export default function App({ api: apiProp }) {
     const nextSel = selectionAfterRemoval(tree, ids);
     for (const id of ids) tree = moveToTrash(tree, id);
     setTreeU(tree);
+    statusMessage(tr('ui.status.mutate_in_cos', { n: ids.length }));
     // like Scrivener: the selection moves to the neighbour, not into the trash
     const sel = nextSel && findNode(tree, nextSel) ? nextSel : tree[0].id;
     setSelectedId(sel);
@@ -1438,7 +1441,7 @@ export default function App({ api: apiProp }) {
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
   // Layouts (Window > Layouts): named combinations of views and panels.
   const saveLayout = async () => {
-    const name = window.prompt('Numele layout-ului:', `Layout ${(settings.layouts || []).length + 1}`);
+    const name = await promptDialog({ message: tr('ui.dlg.numele_layoutului'), value: `Layout ${(settings.layouts || []).length + 1}`, okLabel: tr('ui.dlg.salveaza') });
     if (!name) return;
     const layout = { name, view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, split: Boolean(splitId), copyholder };
     const layouts = [...(settings.layouts || []).filter((l) => l.name !== name), layout];
@@ -1590,7 +1593,7 @@ export default function App({ api: apiProp }) {
       report(new Error(tr('ui.app.selecteaza_cel_putin_doua_documente')));
       return;
     }
-    if (!window.confirm(tr('ui.app.unesti_x_documente_in_x', { length: nodes.length, title: nodes[0].title }))) return;
+    if (!(await confirmDialog({ message: tr('ui.app.unesti_x_documente_in_x', { length: nodes.length, title: nodes[0].title }), okLabel: tr('ui.dlg.uneste'), dontAskAgainKey: 'mergeDocuments' }))) return;
     await flush();
     const [first, ...rest] = nodes;
     await api.takeSnapshot(dir, first.id, tr('ui.app.automat_inainte_de_unire')).catch(report);
@@ -1608,6 +1611,7 @@ export default function App({ api: apiProp }) {
     if (mergedNotes) queueWrite(first.id, 'notes', mergedNotes);
     setEditorHtml(first.id, html);
     go(first.id);
+    statusMessage(tr('ui.status.documente_unite', { n: nodes.length }));
   };
 
   // Advanced search replace: text, notes, titles and synopses, with a snapshot of every changed document.
@@ -1756,7 +1760,7 @@ export default function App({ api: apiProp }) {
     return created.map(([id]) => id);
   };
   const importWebSource = async () => {
-    const url = window.prompt(tr('ui.researchChat.pagina_web_adresa'), 'https://');
+    const url = await promptDialog({ message: tr('ui.researchChat.pagina_web_adresa'), value: 'https://', okLabel: tr('ui.dlg.importa') });
     if (!url || url === 'https://') return false;
     await flush();
     const page = await api.importWebPage(url, dir);
@@ -1778,7 +1782,7 @@ export default function App({ api: apiProp }) {
     else if (res.media.length) saveProject({ ...pj, tree });
   };
   const saveAs = async () => {
-    const title = window.prompt(tr('ui.app.titlul_copiei'), tr('ui.app.x_copie', { title: project.title }));
+    const title = await promptDialog({ message: tr('ui.app.titlul_copiei'), value: tr('ui.app.x_copie', { title: project.title }), okLabel: tr('ui.dlg.salveaza') });
     if (!title) return;
     await flush();
     const copy = await api.saveProjectAs(dir, title);
@@ -1925,6 +1929,7 @@ export default function App({ api: apiProp }) {
     return (
       <>
         <DialogA11y />
+        <AppDialogHost settings={settings} onSettings={(patch) => { setSettings((s) => ({ ...s, ...patch })); api.setSettings(patch).catch(report); }} />
         <Home
           api={api}
           settings={settings}
@@ -2315,7 +2320,7 @@ export default function App({ api: apiProp }) {
     }],
     ['document', 'snapshotTitled', tr('cmd.snapshotTitled'), async () => {
       if (!selected || selected.root) return;
-      const name = window.prompt(tr('ui.inspector.titlul_snapshot_ului'), 'Snapshot');
+      const name = await promptDialog({ message: tr('ui.inspector.titlul_snapshot_ului'), value: 'Snapshot', okLabel: tr('ui.dlg.creeaza') });
       if (name === null) return;
       await takeSnapshotOf(selected.id, name.trim() || 'Snapshot');
     }],
@@ -2626,8 +2631,8 @@ export default function App({ api: apiProp }) {
           collections={project.collections || []}
           activeCollectionId={activeCollectionId}
           onAddToCollection={(cid, ids) => saveProject(addToCollection(project, cid, ids))}
-          onNewCollection={(ids) => {
-            const title = window.prompt(tr('ui.advancedSearchDialog.numele_colectiei'), tr('ui.collectionsBar.colectie_noua'));
+          onNewCollection={async (ids) => {
+            const title = await promptDialog({ message: tr('ui.advancedSearchDialog.numele_colectiei'), value: tr('ui.collectionsBar.colectie_noua'), okLabel: tr('ui.dlg.creeaza') });
             if (!title || !title.trim()) return;
             const r = createCollection(project, { title: title.trim(), type: 'manual', ids });
             saveProject(r.project);
@@ -2662,12 +2667,13 @@ export default function App({ api: apiProp }) {
             if (id) setSelectedId(id);
           }}
           onTrash={trashSelection}
-          onEmptyTrash={() => {
+          onEmptyTrash={async () => {
             const trash = project.tree.find((n) => n.root === 'trash');
             if (!trash || !(trash.children || []).length) return;
-            if (!window.confirm(tr('ui.app.golesti_cosul_documentele_din_cos'))) return;
+            if (!(await confirmDialog({ title: tr('ui.dlg.goleste_cosul'), message: tr('ui.app.golesti_cosul_documentele_din_cos'), okLabel: tr('ui.dlg.goleste_cosul'), danger: true }))) return;
             const gone = new Set(flatten(trash.children).map((n) => n.id));
             setTree(emptyTrash(project.tree));
+            statusMessage(tr('ui.status.cos_golit'));
             if (gone.has(selectedId)) setSelectedId(project.tree[0].id); // not a blank editor
           }}
         />
@@ -3501,6 +3507,7 @@ export default function App({ api: apiProp }) {
         />
       )}
       <DialogA11y />
+      <AppDialogHost settings={settings} onSettings={(patch) => { setSettings((s) => ({ ...s, ...patch })); api.setSettings(patch).catch(report); }} />
       <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
       <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
       <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />

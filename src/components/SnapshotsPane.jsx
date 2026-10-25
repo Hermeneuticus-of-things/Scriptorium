@@ -6,6 +6,7 @@ import { htmlToText } from '../lib/text.js';
 import { sanitizeHtml } from '../lib/sanitize.js';
 import { diffText, DIFF_LEVELS } from '../lib/snapshotDiff.js';
 import { sortSnapshots, toggleSort, selectSnapshot, changeStarts, stepChange } from '../lib/snapshotList.js';
+import { confirmDialog, promptDialog } from '../lib/appDialog.js';
 
 const LEVELS_COARSE_FIRST = [...DIFF_LEVELS].reverse(); // paragraf, frază, sintagmă, cuvânt
 
@@ -71,7 +72,7 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
   };
 
   const take = async () => {
-    const name = window.prompt(tr('ui.inspector.nume_snapshot'), tr('ui.inspector.inainte_de_revizie_x', { v0: new Date().toLocaleDateString(uiLocale()) }));
+    const name = await promptDialog({ message: tr('ui.inspector.nume_snapshot'), value: tr('ui.inspector.inainte_de_revizie_x', { v0: new Date().toLocaleDateString(uiLocale()) }), okLabel: tr('ui.dlg.creeaza') });
     if (name === null) return;
     await flush?.();
     await api.takeSnapshot(dir, node.id, name || 'Snapshot').catch(onError);
@@ -80,14 +81,14 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
   const removeSelected = async () => {
     if (!chosen.length) return;
     const msg = chosen.length === 1 ? tr('ui.inspector.stergi_snapshot_ul_x_nu', { name: chosen[0].name }) : tr('ui.snap.delete_n_confirm', { n: chosen.length });
-    if (!window.confirm(msg)) return;
+    if (!(await confirmDialog({ message: msg, okLabel: tr('ui.dlg.sterge'), danger: true }))) return;
     for (const s of chosen) await api.deleteSnapshot(dir, node.id, s.file).catch(onError);
     setSelected([]);
     await reload();
   };
   const rollBack = async () => {
     if (!one || !canRestore) return;
-    if (!window.confirm(tr('ui.snap.rollback_confirm', { name: one.name }))) return;
+    if (!(await confirmDialog({ message: tr('ui.snap.rollback_confirm', { name: one.name }), okLabel: tr('ui.dlg.revino') }))) return;
     await flush?.();
     await api.takeSnapshot(dir, node.id, tr('ui.snap.before_rollback')).catch(onError);
     onRestore(one.html);

@@ -59,4 +59,56 @@ async function menuCmd(page, label, { wait = 300 } = {}) {
   }
   throw new Error(`menu item not found: ${label}`);
 }
-module.exports = { open, ed, caretEnd, check, done, menuPick, menuCmd };
+// In-app confirmations / prompts (src/components/AppDialogHost.jsx) replace window.confirm/prompt.
+// onAppDialog(page, handler, { once }) answers them by clicking the dialog's own buttons; the
+// handler gets an object shaped like Playwright's Dialog: type(), message(), accept(text?), dismiss().
+function onAppDialog(page, handler, { once = false } = {}) {
+  let busy = false;
+  let stopped = false;
+  const stop = () => { stopped = true; clearInterval(timer); };
+  const tick = async () => {
+    if (busy || stopped || page.isClosed()) return;
+    busy = true;
+    try {
+      const dlg = page.locator('.app-dialog').first();
+      if (await dlg.count()) {
+        const type = await dlg.getAttribute('data-type');
+        const message = (await dlg.locator('.app-dialog-msg').count()) ? await dlg.locator('.app-dialog-msg').innerText() : '';
+        let answered = false;
+        await handler({
+          type: () => type,
+          message: () => message,
+          accept: async (text) => {
+            if (text !== undefined && type === 'prompt') await dlg.locator('.app-dialog-input').fill(String(text));
+            await dlg.locator('.app-dialog-ok').click();
+            answered = true;
+          },
+          dismiss: async () => { await dlg.locator('.app-dialog-cancel').click(); answered = true; },
+        });
+        if (answered) {
+          await dlg.waitFor({ state: 'detached', timeout: 2000 }).catch(() => {});
+          if (once) stop();
+        }
+      }
+    } catch {
+      /* page navigating / closed */
+    }
+    busy = false;
+  };
+  const timer = setInterval(tick, 40);
+  timer.unref?.();
+  page.on('close', stop);
+  return stop;
+}
+// Waits for the next in-app dialog and answers it (text for a prompt; dismiss: true = Cancel).
+// Returns its message.
+async function answerAppDialog(page, { text, dismiss = false, timeout = 3000 } = {}) {
+  const dlg = page.locator('.app-dialog').first();
+  await dlg.waitFor({ timeout });
+  const message = (await dlg.locator('.app-dialog-msg').count()) ? await dlg.locator('.app-dialog-msg').innerText() : '';
+  if (text !== undefined) await dlg.locator('.app-dialog-input').fill(String(text));
+  await dlg.locator(dismiss ? '.app-dialog-cancel' : '.app-dialog-ok').click();
+  await dlg.waitFor({ state: 'detached', timeout });
+  return message;
+}
+module.exports = { open, ed, caretEnd, check, done, menuPick, menuCmd, onAppDialog, answerAppDialog };

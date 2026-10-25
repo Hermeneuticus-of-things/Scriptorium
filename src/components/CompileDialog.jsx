@@ -6,6 +6,7 @@ import { styleCss, stylesOf } from '../lib/styles.js';
 import formatsSource from '../../lib/compileFormats.cjs?raw';
 import { t as tr, builtinName } from '../lib/i18n.js';
 import { noneLabel, noneStatus } from '../lib/projectSettings.js';
+import { confirmDialog, promptDialog, statusMessage } from '../lib/appDialog.js';
 
 function readPresets() {
   try {
@@ -152,6 +153,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [fmtTab, setFmtTab] = useState('separatoare');
   const [assigning, setAssigning] = useState(false); // "Assign layouts…" sub-dialog
   const [busy, setBusy] = useState(false);
+  // Closing the window during a compile / export asks first (main: will-prevent-unload).
+  useEffect(() => {
+    if (!busy) return undefined;
+    const guard = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', guard);
+    return () => window.removeEventListener('beforeunload', guard);
+  }, [busy]);
   const [done, setDone] = useState('');
   const [preview, setPreview] = useState(null);
 
@@ -187,7 +195,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
       copy.basedOn = format.basedOn || format.id;
       copy.id = newCustomId();
       copy.global = true;
-      copy.name = window.prompt('Numele formatului global', format.name) || format.name;
+      copy.name = (await promptDialog({ message: tr('ui.dlg.numele_formatului_global'), value: format.name, okLabel: tr('ui.dlg.salveaza') })) || format.name;
       await saveGlobals([...globals, copy]);
       setFormatId(copy.id);
     } catch (e) {
@@ -215,13 +223,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     setFormats((l) => [...l, copy]);
     setFormatId(copy.id);
   };
-  const rename = () => {
+  const rename = async () => {
     if (!editable) return;
-    const name = window.prompt('Numele formatului', format.name);
+    const name = await promptDialog({ message: tr('ui.dlg.numele_formatului'), value: format.name, okLabel: tr('ui.dlg.redenumeste') });
     if (name && name.trim()) setIn(['name'], name.trim());
   };
-  const remove = () => {
-    if (!editable || !window.confirm(tr('ui.compileDialog.stergi_formatul_x', { name: format.name }))) return;
+  const remove = async () => {
+    if (!editable || !(await confirmDialog({ message: tr('ui.compileDialog.stergi_formatul_x', { name: format.name }), okLabel: tr('ui.dlg.sterge'), danger: true }))) return;
     if (isGlobal) saveGlobals(globals.filter((f) => f.id !== formatId)).catch(onError);
     else setFormats((l) => l.filter((f) => f.id !== formatId));
     setFormatId((PRESETS[0] || {}).id);
@@ -294,7 +302,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
         return;
       }
       const file = await api.exportCompiled(dir, next, output, await buildOptions(next));
-      if (file) setDone(file);
+      if (file) { setDone(file); statusMessage(tr('ui.status.compilare_terminata')); }
     } catch (e) {
       onError(e);
     } finally {

@@ -33,6 +33,7 @@ import LineNumbers from './LineNumbers.jsx';
 import StylesPanel from './StylesPanel.jsx';
 import EquationDialog from './EquationDialog.jsx';
 import { latexFromAlt } from '../lib/latexMath.js';
+import { promptDialog } from '../lib/appDialog.js';
 
 const Editor = forwardRef(function Editor(
   {
@@ -186,8 +187,7 @@ const Editor = forwardRef(function Editor(
           }
           if (mod && !e.shiftKey && e.key.toLowerCase() === 'l') {
             e.preventDefault();
-            const href = window.prompt(i18nT('ui.formatBar.linkPrompt'), editor?.getAttributes('link').href || 'https://');
-            if (href) editor?.chain().focus().extendMarkRange('link').setLink({ href }).run();
+            promptDialog({ message: i18nT('ui.formatBar.linkPrompt'), value: editor?.getAttributes('link').href || 'https://' }).then((href) => { if (href) editor?.chain().focus().extendMarkRange('link').setLink({ href }).run(); });
             return true;
           }
           return false;
@@ -226,10 +226,11 @@ const Editor = forwardRef(function Editor(
             return true;
           }
           if (node.type.name !== 'footnote' || readOnly) return false;
-          const text = window.prompt(i18nT('ui.editor.footnotePrompt'), node.attrs.text);
+          promptDialog({ message: i18nT('ui.editor.footnotePrompt'), value: node.attrs.text }).then((text) => {
           // Emptied: the note goes away instead of staying as an empty numbered note.
           if (text !== null && !text.trim()) editor?.chain().deleteRange({ from: nodePos, to: nodePos + node.nodeSize }).run();
           else if (text !== null) editor?.chain().setNodeSelection(nodePos).updateAttributes('footnote', { text }).run();
+          });
           return true;
         },
       },
@@ -523,25 +524,25 @@ const Editor = forwardRef(function Editor(
   if (!editor) return null;
   const chain = () => editor.chain().focus();
 
-  const addComment = () => {
+  const addComment = async () => {
     if (editor.state.selection.empty && !selectAround(editor.view, undefined, 'word')) return;
-    const text = window.prompt(i18nT('ui.editor.commentPrompt'));
+    const text = await promptDialog({ message: i18nT('ui.editor.commentPrompt'), okLabel: i18nT('ui.dlg.adauga') });
     if (text) addCommentNow(text);
   };
-  const addFootnote = () => {
-    const text = window.prompt(i18nT('ui.editor.footnotePrompt'));
+  const addFootnote = async () => {
+    const text = await promptDialog({ message: i18nT('ui.editor.footnotePrompt'), okLabel: i18nT('ui.dlg.insereaza') });
     if (text) chain().insertFootnote(text).run();
   };
-  const addAnnotation = () => {
-    const text = window.prompt(i18nT('ui.formatBar.annotationBtn') + ':');
+  const addAnnotation = async () => {
+    const text = await promptDialog({ message: i18nT('ui.formatBar.annotationBtn') + ':', okLabel: i18nT('ui.dlg.insereaza') });
     if (text) chain().insertAnnotation(text).run();
   };
   const insertImage = () => imageInput.current?.click();
   // Linked footnote on the selection (or the word at the caret); none there: an inline one.
-  const addLinkedFootnote = () => {
+  const addLinkedFootnote = async () => {
     if (editor.state.selection.empty) editor.commands.selectWord?.();
     if (editor.state.selection.empty) return addFootnote();
-    const text = window.prompt(i18nT('ui.editor.footnotePrompt'));
+    const text = await promptDialog({ message: i18nT('ui.editor.footnotePrompt'), okLabel: i18nT('ui.dlg.insereaza') });
     if (text) chain().setLinkedFootnote(text).run();
   };
   actionsRef.current = { addComment, addFootnote, addLinkedFootnote, addAnnotation, insertImage };

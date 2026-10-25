@@ -975,17 +975,17 @@ Comparație cu programul clasic (versiunea 3 pentru Windows), verificată în co
 
 ### MICRO: valori implicite, texte, stări
 
-- [ ] **Confirmări uniforme cu verbe pe butoane** (Golește coșul / Anulează) → `confirm()` nativ în ~18 fișiere, cu OK/Cancel.
-- [ ] **Bifă „nu mai întreba”** la confirmările repetitive → lipsește.
-- [ ] **Stări goale cu îndemn** (corkboard gol, colecție goală, căutare fără rezultate, coș gol, note goale) → niciun tipar comun în `src/`.
+- [x] **Confirmări uniforme cu verbe pe butoane** (Golește coșul / Anulează) → `confirm()` nativ în ~18 fișiere, cu OK/Cancel.
+- [x] **Bifă „nu mai întreba”** la confirmările repetitive → lipsește.
+- [~] **Stări goale cu îndemn** (corkboard gol, colecție goală, căutare fără rezultate, coș gol, note goale) → niciun tipar comun în `src/`.
 - [ ] **Comenzi dezactivate când nu se aplică** (Împarte la cursor fără cursor, Combină cu un singur document) → rămân active și nu fac nimic.
 - [ ] **Tooltip cu scurtătura** pe fiecare buton din bara de unelte → `title=` fără scurtătură.
 - [ ] **Ordinea și gruparea meniurilor** ca în programul clasic, cu separatoare pe grupe → de aliniat în `Menu.jsx`.
-- [ ] **Mesaje scurte în bara de stare** („Salvat”, „3 documente mutate”, „Compilare terminată”) → lipsesc.
+- [x] **Mesaje scurte în bara de stare** („Salvat”, „3 documente mutate”, „Compilare terminată”) → lipsesc.
 - [ ] **Unități la marginile paginii** (cm / in / pt după sistem) → o singură unitate.
 - [ ] **Document nou intră direct în redenumire** cu „Fără titlu” selectat → de verificat în binder, corkboard și outliner.
 - [ ] **Numărătoare pe dosar** în corkboard/outliner („12 documente, 8.430 cuvinte”) → lipsește.
-- [ ] **Avertizare la închidere cu compilare/export în curs** → lipsește.
+- [x] **Avertizare la închidere cu compilare/export în curs** → lipsește.
 
 ### NANO: tastatură, cursor, memorie per document
 
@@ -1020,6 +1020,7 @@ MACRO 12, MEGA 10, MEZZO 10, MICRO 11, NANO 14. Total 57; primele 50 intră în 
 - **Q8 Focus, modificatori, selecție comună** (NANO 6–8; MEZZO 8–9): `src/lib/focusOrder.js` (nou), `src/components/Menu.jsx`, `src/components/ShortcutsDialog.jsx`.
 - **Q9 Meniul contextual pe text** (NANO 9): `src/components/ContextMenu.jsx`, `electron/v10Handlers.cjs` (handler nou; `main.cjs` rămâne la Q7).
 - **Q10 Confirmări, stări goale, mesaje** (MICRO 1–3, 7, 10–11): `src/components/DialogA11y.jsx`, `src/components/StatusBar.jsx`, `src/lib/i18n.js`.
+  - Făcut: `src/lib/appDialog.js` + `AppDialogHost.jsx` (confirmDialog / promptDialog cu verbe pe butoane, „Nu mai întreba” în setări, resetabil din Setări › General › Avertismente), toate `confirm()`/`prompt()` înlocuite; stare goală la căutare; mesaje în bara de stare (coș, unire, compilare); avertizare la închidere în timpul compilării. Rămas: stări goale în corkboard / colecție / coș (fișiere Q3/Q6), numărătoarea pe dosar (MICRO 10, Corkboard/Outliner).
 - **Q11 Comenzi și tooltip-uri** (MICRO 4–6): `src/components/FormatBar.jsx`, `src/components/ToolbarCustomizeDialog.jsx`, `src/components/QuickRef.jsx`.
 - **Q12 Cercetare în panou** (MACRO 2–5): `src/components/MediaView.jsx`, `src/components/MiniPlayer.jsx`, `src/components/ResearchPanel.jsx`, `lib/importers.cjs`.
 - **Q13 Referințe, înlocuire cu domeniu, flux de revizie** (MACRO 6–7, 12): `src/components/AdvancedSearchDialog.jsx`, `src/components/Inspector.jsx`, `src/components/SnapshotsPane.jsx`, `lib/trackChanges.cjs`.

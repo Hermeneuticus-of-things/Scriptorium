@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { t } from '../lib/i18n.js';
+import { confirmDialog } from '../lib/appDialog.js';
 
 export default function BackupDialog({ flush, api, dir, onOpenProject, onClose, onError }) {
   const [list, setList] = useState([]);
@@ -23,7 +24,7 @@ export default function BackupDialog({ flush, api, dir, onOpenProject, onClose, 
   };
 
   const restore = async (file) => {
-    if (!window.confirm(t('ui.backupDialog.restaurarea_creeaza_o_copie_separata'))) return;
+    if (!(await confirmDialog({ message: t('ui.backupDialog.restaurarea_creeaza_o_copie_separata'), okLabel: t('ui.dlg.restaureaza') }))) return;
     try {
       onOpenProject(await api.restoreBackup(dir, file));
       onClose();

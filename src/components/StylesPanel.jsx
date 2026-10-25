@@ -2,6 +2,7 @@ import React from 'react';
 import { useEditorState } from '@tiptap/react';
 import { deleteStyle, isCharStyle, isParaStyle, renameStyle, styleFromLook } from '../lib/styles.js';
 import { builtinName, t as tr } from '../lib/i18n.js';
+import { confirmDialog, promptDialog } from '../lib/appDialog.js';
 
 // Styles side panel (Format › Styles › Panel): the project's paragraph and character styles;
 // a click applies, the style under the cursor is marked, + makes one from the selection.
@@ -26,8 +27,8 @@ export default function StylesPanel({ editor, styles = [], onStylesChange, onMan
     const align = ['center', 'right', 'justify'].find((a) => editor.isActive({ textAlign: a })) || '';
     return { bold: editor.isActive('bold'), italic: editor.isActive('italic'), underline: editor.isActive('underline'), smallCaps: editor.isActive('smallCaps'), color: editor.getAttributes('textStyle').color || '', align };
   };
-  const add = (type) => {
-    const name = window.prompt(tr('ui.g5.numeStil'), tr('ui.stylesDialog.stil_nou'));
+  const add = async (type) => {
+    const name = await promptDialog({ message: tr('ui.g5.numeStil'), value: tr('ui.stylesDialog.stil_nou'), okLabel: tr('ui.dlg.creeaza') });
     if (!name || !name.trim()) return;
     const next = styleFromLook(styles, name, type, look());
     onStylesChange?.(next);
@@ -35,12 +36,12 @@ export default function StylesPanel({ editor, styles = [], onStylesChange, onMan
     if (type === 'para') editor.chain().focus().setParagraphStyle(st.id).run();
     else if (!cur.empty) editor.chain().focus().setCharStyle(st.id).run();
   };
-  const rename = (st) => {
-    const name = window.prompt(tr('ui.g5.numeStil'), builtinName('style', st));
+  const rename = async (st) => {
+    const name = await promptDialog({ message: tr('ui.g5.numeStil'), value: builtinName('style', st), okLabel: tr('ui.dlg.redenumeste') });
     if (name && name.trim()) onStylesChange?.(renameStyle(styles, st.id, name));
   };
-  const remove = (st) => {
-    if (window.confirm(tr('ui.stylesDialog.stergi_stilul_x_textul_care', { name: builtinName('style', st) }))) onStylesChange?.(deleteStyle(styles, st.id));
+  const remove = async (st) => {
+    if (await confirmDialog({ message: tr('ui.stylesDialog.stergi_stilul_x_textul_care', { name: builtinName('style', st) }), okLabel: tr('ui.dlg.sterge'), danger: true })) onStylesChange?.(deleteStyle(styles, st.id));
   };
   const row = (st) => {
     const on = st.id === cur.para || st.id === cur.char;

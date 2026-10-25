@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { t, uiLocale } from '../lib/i18n.js';
+import { StatusMessage } from './AppDialogHost.jsx';
 import { editorSelectionText, selectionStats } from '../lib/text.js';
 
 // Live word/character count of the text selected in an editor (null when nothing is selected).
@@ -39,6 +40,7 @@ export default function StatusBar({ node, words, chars = 0, selectionCount = 1, 
       {sel && <span className="sel-count">{t('ui.statusBar.selection', { words: sel.words.toLocaleString(uiLocale()), chars: sel.chars.toLocaleString(uiLocale()) })}</span>}
       {selectionCount > 1 && <span>{t('ui.app.x_documente_selectate', { length: selectionCount })}</span>}
       {node && node.target > 0 && <Progress value={words} max={node.target} label={t('ui.inspector.tinta_document')} />}
+      <StatusMessage />
       <span className="spacer" />
       <span>{t('ui.statusBar.draft')}: {totalDraft.toLocaleString(uiLocale())} {t('ui.inspector.cuvinte')}</span>
       <Progress value={totalDraft} max={draftTarget} label={t('ui.statusBar.carte')} />

@@ -10,13 +10,14 @@ import { POS_CLASSES } from '../lib/pos.js';
 import { listBookmarks } from '../editor/formatting.js';
 import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS } from '../lib/editorMenus.js';
 import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
+import { promptDialog } from '../lib/appDialog.js';
 
 const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Verdana', 'Calibri', 'Courier New', 'Courier Prime'];
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
 const LINE_SPACINGS = [1, 1.2, 1.5, 2, 2.5, 3];
 const LIST_TYPES = [['1', '1. 2. 3.'], ['a', 'a. b. c.'], ['A', 'A. B. C.'], ['i', 'i. ii. iii.'], ['I', 'I. II. III.']];
-const ask = (label, cur) => {
-  const v = window.prompt(label, cur ?? '');
+const ask = async (label, cur) => {
+  const v = await promptDialog({ message: label, value: String(cur ?? '') });
   if (v === null) return undefined;
   const n = parseFloat(String(v).replace(',', '.'));
   return Number.isFinite(n) ? n : null;
@@ -368,9 +369,9 @@ export default function FormatBar({
   };
   const titleCase = (t) => t.toLocaleLowerCase('ro').replace(/(^|\s)(\p{L})/gu, (m, sp, ch) => sp + ch.toLocaleUpperCase('ro'));
 
-  const insertLinkExternal = () => {
+  const insertLinkExternal = async () => {
     const prev = editor.getAttributes('link').href || 'https://';
-    const href = window.prompt(tr('ui.formatBar.linkPrompt'), prev);
+    const href = await promptDialog({ message: tr('ui.formatBar.linkPrompt'), value: prev });
     if (href === null) return;
     if (!href) chain().extendMarkRange('link').unsetLink().run();
     else chain().extendMarkRange('link').setLink({ href }).run();
@@ -477,8 +478,8 @@ export default function FormatBar({
 
   const p = s.para;
   const setPara = (attrs) => chain().setParagraphFormat(attrs).run();
-  const num = (label, key, cur) => {
-    const v = ask(label, cur);
+  const num = async (label, key, cur) => {
+    const v = await ask(label, cur);
     if (v !== undefined) setPara({ [key]: v });
   };
   // Line spacing as in the classic paragraph bar: 1.0 / 1.2 / 1.5 / 2.0 / 2.5 / 3.0 / Other…
@@ -500,7 +501,7 @@ export default function FormatBar({
     { label: tr('ui.formatBar.indentRight', { v: p.indentRight ?? 0 }), action: () => num(tr('ui.formatBar.indentRightPrompt'), 'indentRight', p.indentRight) },
     { label: tr('ui.formatBar.incIndent'), action: () => setPara({ indentLeft: (p.indentLeft || 0) + 1 }) },
     { label: tr('ui.formatBar.decIndent'), action: () => setPara({ indentLeft: Math.max(0, (p.indentLeft || 0) - 1) || null }) },
-    { label: tr('ui.formatBar.tabStops'), action: () => { const v = window.prompt(tr('ui.formatBar.tabStopsPrompt'), p.tabStops || ''); if (v !== null) setPara({ tabStops: v.replace(/\s+/g, '') || null }); } },
+    { label: tr('ui.formatBar.tabStops'), action: async () => { const v = await promptDialog({ message: tr('ui.formatBar.tabStopsPrompt'), value: p.tabStops || '' }); if (v !== null) setPara({ tabStops: v.replace(/\s+/g, '') || null }); } },
     '-',
     { label: `${p.dir === 'rtl' ? '✓ ' : ''}${tr('ui.formatBar.rtl')}`, action: () => chain().toggleRtl().run() },
     { label: `${view.ruler ? '✓ ' : ''}${tr('ui.formatBar.ruler')}`, action: () => setView({ ruler: !view.ruler }) },
@@ -514,8 +515,8 @@ export default function FormatBar({
     { label: tr('ui.formatBar.selectParagraph'), shortcut: 'Ctrl+Alt+Shift+P', action: () => chain().selectParagraph().run() },
   ];
 
-  const addBookmark = () => {
-    const name = window.prompt(tr('ui.formatBar.bookmarkPrompt'), s.hasSelection ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' ').slice(0, 40) : '');
+  const addBookmark = async () => {
+    const name = await promptDialog({ message: tr('ui.formatBar.bookmarkPrompt'), value: s.hasSelection ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' ').slice(0, 40) : '', okLabel: tr('ui.dlg.adauga') });
     if (name) chain().setBookmark(name.trim()).run();
   };
   const bookmarkItems = [
@@ -529,7 +530,7 @@ export default function FormatBar({
 
   const imageItems = [
     ...['25%', '50%', '75%', '100%'].map((w) => ({ label: tr('ui.formatBar.width', { w }), action: () => chain().setImageFormat({ width: w }).run() })),
-    { label: tr('ui.formatBar.widthCustom'), action: () => { const w = window.prompt(tr('ui.formatBar.widthPrompt'), editor.getAttributes('image').width || ''); if (w !== null) chain().setImageFormat({ width: w.trim() || null }).run(); } },
+    { label: tr('ui.formatBar.widthCustom'), action: async () => { const w = await promptDialog({ message: tr('ui.formatBar.widthPrompt'), value: editor.getAttributes('image').width || '' }); if (w !== null) chain().setImageFormat({ width: w.trim() || null }).run(); } },
     { label: tr('ui.formatBar.originalSize'), action: () => chain().setImageFormat({ width: null, height: null }).run() },
     '-',
     { label: tr('ui.formatBar.inline'), action: () => chain().setImageFormat({ align: null }).run() },

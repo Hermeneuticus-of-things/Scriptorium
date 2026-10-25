@@ -1,6 +1,6 @@
 // G5 classic features: line numbers, zoom per pane, format painter, ruler, styles panel,
 // lock in place per pane, per-pane history with recent list, equation editor.
-const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
+const { open, ed, caretEnd, check, done, menuCmd, answerAppDialog } = require('./_helpers.cjs');
 
 (async () => {
   const { browser, page, errors } = await open();
@@ -136,16 +136,16 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   const ps = await page.evaluate(() => document.querySelector('.pane .ProseMirror').editor.state.selection.$from.parent.attrs.styleName);
   check('click applies paragraph style', ps === 'centrat', String(ps));
   check('panel shows the current style', (await panel.locator('li.on[data-style-id="centrat"]').count()) === 1 && (await panel.locator('.styles-current').innerText()).includes('Centrat'));
-  page.once('dialog', (d) => d.accept('Stil G5'));
   await panel.locator('.style-add-para').click();
+  await answerAppDialog(page, { text: 'Stil G5' });
   await page.waitForTimeout(200);
   check('+ from selection adds a style', (await panel.locator('li[data-style-id="stil-g5"]').count()) === 1);
-  page.once('dialog', (d) => d.accept('Stil G5 nou'));
   await panel.locator('li[data-style-id="stil-g5"] .style-rename').click();
+  await answerAppDialog(page, { text: 'Stil G5 nou' });
   await page.waitForTimeout(150);
   check('rename style', (await panel.locator('li[data-style-id="stil-g5"]').innerText()).includes('Stil G5 nou'));
-  page.once('dialog', (d) => d.accept());
   await panel.locator('li[data-style-id="stil-g5"] .style-delete').click();
+  await answerAppDialog(page);
   await page.waitForTimeout(150);
   check('delete style', (await panel.locator('li[data-style-id="stil-g5"]').count()) === 0);
   await panel.locator('.styles-panel-head button').click();

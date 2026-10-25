@@ -3,6 +3,8 @@ import { searchProject, buildTerms } from '../lib/projectSearch.js';
 import { listKeywords } from '../lib/collections.js';
 import { flatten } from '../lib/tree.js';
 import { t as tr } from '../lib/i18n.js';
+import { confirmDialog, promptDialog } from '../lib/appDialog.js';
+import { EmptyState } from './AppDialogHost.jsx';
 
 const FIELD_LABELS = () => ({
   title: tr('ui.advancedSearchDialog.titlu'),
@@ -83,7 +85,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
 
   const replaceAll = async () => {
     if (!query || !replaceable.length || !onReplace) return;
-    if (!window.confirm(tr('ui.advancedSearchDialog.inlocuiesti_aparitiile_din_x_documente', { length: replaceable.length }))) return;
+    if (!(await confirmDialog({ message: tr('ui.advancedSearchDialog.inlocuiesti_aparitiile_din_x_documente', { length: replaceable.length }), okLabel: tr('ui.dlg.inlocuieste_tot') }))) return;
     setBusy(true);
     try {
       const n = await onReplace(criteria, replacement);
@@ -94,8 +96,8 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
     }
   };
 
-  const saveAsCollection = () => {
-    const title = window.prompt(tr('ui.advancedSearchDialog.numele_colectiei'), query || tr('ui.advancedSearchDialog.cautare_salvata'));
+  const saveAsCollection = async () => {
+    const title = await promptDialog({ message: tr('ui.advancedSearchDialog.numele_colectiei'), value: query || tr('ui.advancedSearchDialog.cautare_salvata'), okLabel: tr('ui.dlg.salveaza') });
     if (title && title.trim()) onSaveAsCollection?.(title.trim(), criteria);
   };
 
@@ -187,6 +189,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
             {results.length} {results.length === 1 ? 'document' : tr('ui.advancedSearchDialog.documente')}.
           </p>
         )}
+        {(hasQuery || hasFilter) && !invalid && !results.length && <EmptyState title={tr('ui.empty.cautare')} hint={tr('ui.empty.cautare_hint')} />}
         <div className="results">
           {results.map(({ node, fields: counts, snippets }) => (
             <div key={node.id} className="result">

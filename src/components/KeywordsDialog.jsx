@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { listKeywords, addKeyword, renameKeyword, deleteKeyword, setKeywordColor, keywordTreeRows, KEYWORD_MIME } from '../lib/collections.js';
 import { t } from '../lib/i18n.js';
+import { confirmDialog } from '../lib/appDialog.js';
 
 const CSS = `
 .kw-modeless { background: transparent; pointer-events: none; justify-content: flex-end; align-items: flex-start; }
@@ -65,22 +66,22 @@ export default function KeywordsDialog({ project, onSave, onClose, onSearchKeywo
     setEditing(name);
   };
 
-  const commitRename = (k, value) => {
+  const commitRename = async (k, value) => {
     setEditing(null);
     const target = String(value || '').trim();
     if (!target || target === k.name) return;
-    if (keywords.some((x) => x.name === target) && !window.confirm(t('ui.keywordsDialog.x_exista_deja_unesti_cele', { target }))) return;
+    if (keywords.some((x) => x.name === target) && !(await confirmDialog({ message: t('ui.keywordsDialog.x_exista_deja_unesti_cele', { target }), okLabel: t('ui.dlg.uneste') }))) return;
     setDraft(renameKeyword(draft, k.name, target));
     setSel(target);
     setTimeout(() => listRef.current?.focus(), 0);
   };
 
-  const remove = (k) => {
+  const remove = async (k) => {
     if (!k) return;
     const msg = k.count
       ? t('ui.keywordsDialog.stergi_x_va_fi_scos', { name: k.name, count: k.count, v2: k.count === 1 ? 'document' : t('ui.advancedSearchDialog.documente') })
       : t('ui.keywordsDialog.stergi_x', { name: k.name });
-    if (!window.confirm(msg)) return;
+    if (!(await confirmDialog({ message: msg, okLabel: t('ui.dlg.sterge'), danger: true }))) return;
     const i = rows.findIndex((r) => r.name === k.name);
     setDraft(deleteKeyword(draft, k.name));
     setSel(rows[i + 1]?.name || rows[i - 1]?.name || null);

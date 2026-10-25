@@ -7,6 +7,7 @@ import { colorFor, newMachineId } from '../lib/team.js';
 import { listsFor, profileId } from '../lib/editorial.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
 import AI_PRESETS from '../../lib/aiPresets.json';
+import { confirmDialog, resetDontAsk, dontAskCount } from '../lib/appDialog.js';
 
 // Base URL is editable only for local / custom servers; cloud presets use their fixed URL.
 const EDITABLE_URL = new Set(['ollama', 'lmstudio', 'custom']);
@@ -286,6 +287,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <input type="number" min="1" max="120" value={s.autosaveSec} onChange={set('autosaveSec')} />
         </label>
         {check('checkUpdates', t('set.checkUpdates'))}
+        <WarningsReset />
         {project && (
           <div className="row">
             <label>
@@ -693,7 +695,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const visibleTabs = TABS.filter((k) => panes[k]);
 
   return (
-    <div className="modal-backdrop" onClick={() => (!dirty || window.confirm(t('ui.settingsDialog.renunti'))) && cancel()}>
+    <div className="modal-backdrop" onClick={async () => (!dirty || (await confirmDialog({ message: t('ui.settingsDialog.renunti'), okLabel: t('ui.dlg.renunta'), cancelLabel: t('ui.dlg.continua_editarea') }))) && cancel()}>
       <div className="modal settings-dialog" role="dialog" aria-label={t('set.title')} onClick={(e) => e.stopPropagation()} onChangeCapture={() => setDirty(true)}>
         <h2>{t('set.title')}</h2>
         <div className="tabs" role="tablist">
@@ -738,7 +740,7 @@ function LocalEngine({ api, onError }) {
     }
   };
   const remove = async () => {
-    if (!window.confirm(t('ui.dted.sterge_confirma'))) return;
+    if (!(await confirmDialog({ message: t('ui.dted.sterge_confirma'), okLabel: t('ui.dlg.sterge'), danger: true }))) return;
     try {
       setSt(await api.whisperRemove());
     } catch (e) {
@@ -793,6 +795,18 @@ function PersonalDictionary({ api, onError }) {
           </div>
         ))}
       </div>
+    </fieldset>
+  );
+}
+
+// Settings > General > Warnings: confirmations hidden with „Nu mai întreba” come back.
+function WarningsReset() {
+  const [n, setN] = useState(() => dontAskCount());
+  return (
+    <fieldset className="warnings-reset">
+      <legend>{t('ui.dlg.avertismente')}</legend>
+      <p className="muted small">{n ? t('ui.dlg.avertismente_ascunse', { n }) : t('ui.dlg.avertismente_toate')}</p>
+      <button type="button" disabled={!n} onClick={() => { resetDontAsk(); setN(0); }}>{t('ui.dlg.reseteaza_avertismentele')}</button>
     </fieldset>
   );
 }

@@ -1,9 +1,9 @@
 // Audit 2 windows: Page View at the Page Setup size, Linguistic Focus panel, Keywords HUD,
 // Special Characters, Auto-complete list + Ctrl+Space. Run against `npx vite preview` (SCRIBNER_URL).
-const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
+const { open, ed, caretEnd, check, done, menuCmd, onAppDialog } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
-  page.on('dialog', (d) => d.accept());
+  onAppDialog(page, (d) => d.accept());
   await page.locator('.binder-row', { hasText: 'Începutul' }).first().click();
   await page.waitForTimeout(250);
 

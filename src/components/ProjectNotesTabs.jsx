@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Notes } from './Inspector.jsx';
 import { LEGACY_NOTES_ID, addNoteTab, projectNoteTabs, removeNoteTab, renameNoteTab } from '../lib/projectNotes.js';
 import { t as tr } from '../lib/i18n.js';
+import { confirmDialog, promptDialog } from '../lib/appDialog.js';
 
 // Project notes with tabs. Props:
 //   tabs           project.projectNotes (may be undefined for old projects)
@@ -32,19 +33,19 @@ export default function ProjectNotesTabs({ tabs: rawTabs, readNote, onNoteChange
     };
   }, [cur.id, readNote, onError]);
 
-  const add = () => {
-    const title = window.prompt(tr('ui.projectNotesTabs.titlul_filei_de_note'), tr('ui.projectNotesTabs.note_x', { v0: tabs.length + 1 }));
+  const add = async () => {
+    const title = await promptDialog({ message: tr('ui.projectNotesTabs.titlul_filei_de_note'), value: tr('ui.projectNotesTabs.note_x', { v0: tabs.length + 1 }), okLabel: tr('ui.dlg.creeaza') });
     if (title === null) return;
     const res = addNoteTab(tabs, title);
     onTabsChange(res.tabs);
     setActive(res.tab.id);
   };
-  const rename = () => {
-    const title = window.prompt(tr('ui.projectNotesTabs.titlul_filei'), cur.title);
+  const rename = async () => {
+    const title = await promptDialog({ message: tr('ui.projectNotesTabs.titlul_filei'), value: cur.title, okLabel: tr('ui.dlg.redenumeste') });
     if (title) onTabsChange(renameNoteTab(tabs, cur.id, title));
   };
-  const remove = () => {
-    if (!window.confirm(tr('ui.projectNotesTabs.stergi_fila_x_si_notele', { title: cur.title }))) return;
+  const remove = async () => {
+    if (!(await confirmDialog({ message: tr('ui.projectNotesTabs.stergi_fila_x_si_notele', { title: cur.title }), okLabel: tr('ui.dlg.sterge'), danger: true }))) return;
     onTabsChange(removeNoteTab(tabs, cur.id));
     onRemoveNote?.(cur.id);
     setActive(tabs[0].id);

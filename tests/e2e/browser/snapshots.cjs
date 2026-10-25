@@ -1,13 +1,13 @@
 // Inspector snapshots: take (+) → edit → compare shows the change (with ◀ ▶ navigation) → rename
 // inline → roll back (confirm mentions the automatic snapshot) brings the old text back → delete (−)
 // → the Snapshots Manager lists the document; the text survives a document switch.
-const { open, ed, caretEnd, check, done, menuPick } = require('./_helpers.cjs');
+const { open, ed, caretEnd, check, done, menuPick, onAppDialog } = require('./_helpers.cjs');
 const SHOTS = process.env.SNAP_SHOTS || '';
 (async () => {
   const { browser, page, errors } = await open();
   await page.setViewportSize({ width: 1280, height: 800 });
   const dialogs = [];
-  page.on('dialog', (d) => { dialogs.push(d.message()); d.accept(); });
+  onAppDialog(page, async (d) => { dialogs.push(d.message()); await d.accept(); });
   await page.locator('.binder-row', { hasText: 'Începutul' }).first().click();
   await page.waitForTimeout(250);
   if (!(await page.locator('.inspector .tabs').count())) { await page.keyboard.press('Control+Shift+I'); await page.waitForTimeout(200); }
