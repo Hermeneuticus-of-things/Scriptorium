@@ -5,8 +5,24 @@ import { t as tr, uiLocale } from '../lib/i18n.js';
 import { documentsWithSnapshots } from '../lib/snapshotList.js';
 import SnapshotsPane from './SnapshotsPane.jsx';
 
-export default function SnapshotManagerDialog({ api, dir, project, counts, docs, canRestore, flush, onRestore, onChanged, onOpen, onError, onClose }) {
-  const list = useMemo(() => documentsWithSnapshots(project.tree, counts), [project, counts]);
+const SORTERS = {
+  title: (a, b) => a.title.localeCompare(b.title),
+  count: (a, b) => a.count - b.count,
+  last: (a, b) => (Date.parse(a.last || 0) || 0) - (Date.parse(b.last || 0) || 0),
+};
+/** Sorts the manager's document rows by 'title' | 'count' | 'last' (null = binder order). */
+export function sortManagerRows(rows, sort) {
+  if (!sort || !SORTERS[sort.key]) return rows;
+  const k = sort.dir === 'desc' ? -1 : 1;
+  return [...rows].sort((a, b) => SORTERS[sort.key](a, b) * k || a.title.localeCompare(b.title));
+}
+
+export default function SnapshotManagerDialog({ api, dir, project, counts, docs, canRestore, flush, onRestore, onChanged, onOpen, onReveal, onError, onClose }) {
+  const [sort, setSort] = useState(null); // {key, dir}; null = binder order
+  const list = useMemo(() => sortManagerRows(documentsWithSnapshots(project.tree, counts), sort), [project, counts, sort]);
+  const sortBy = (key) => setSort((s) => (s?.key === key ? (s.dir === 'asc' ? { key, dir: 'desc' } : null) : { key, dir: key === 'title' ? 'asc' : 'desc' }));
+  const ariaSort = (key) => (sort?.key === key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none');
+  const arrow = (key) => (sort?.key === key ? (sort.dir === 'asc' ? ' ▲' : ' ▼') : '');
   const [docId, setDocId] = useState(null);
   useEffect(() => {
     if (!docId && list.length) setDocId(list[0].id);
@@ -32,9 +48,9 @@ export default function SnapshotManagerDialog({ api, dir, project, counts, docs,
           <div className="snap-manager-body">
             <div className="snap-manager-docs">
               <div className="snap-head snap-head-3" role="row">
-                <span role="columnheader">{tr('ui.snap.col_document')}</span>
-                <span role="columnheader">{tr('ui.snap.col_count')}</span>
-                <span role="columnheader">{tr('ui.snap.col_last')}</span>
+                <span role="columnheader" aria-sort={ariaSort('title')}><button className="link sm-sort-title" onClick={() => sortBy('title')}>{tr('ui.snap.col_document')}{arrow('title')}</button></span>
+                <span role="columnheader" aria-sort={ariaSort('count')}><button className="link sm-sort-count" onClick={() => sortBy('count')}>{tr('ui.snap.col_count')}{arrow('count')}</button></span>
+                <span role="columnheader" aria-sort={ariaSort('last')}><button className="link sm-sort-last" onClick={() => sortBy('last')}>{tr('ui.snap.col_last')}{arrow('last')}</button></span>
               </div>
               <ul role="listbox" aria-label={tr('ui.snap.col_document')} onKeyDown={moveKey}>
                 {list.map((d) => (
@@ -54,6 +70,7 @@ export default function SnapshotManagerDialog({ api, dir, project, counts, docs,
                   </li>
                 ))}
               </ul>
+              {onReveal && <button className="sm-reveal link" disabled={!current} onClick={() => { onReveal(current.id); onClose(); }}>{tr('ui.p11.sn_reveal')}</button>}
             </div>
             <div className="snap-manager-pane">
               {current && (

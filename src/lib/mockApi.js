@@ -166,6 +166,7 @@ export function createMockApi() {
     }
   };
   const history = {};
+  const scratchFiles = {}; // scratchpad notes folder (demo)
   const files = {};
   const snaps = {};
   let snapSeq = 0;
@@ -270,7 +271,10 @@ export function createMockApi() {
     async recordHistory(dir, counts) {
       const day = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
       const h = (history[dir] ||= {});
-      if (!h[day]) h[day] = { draftStart: counts.draft, totalStart: counts.total };
+      if (!h[day]) h[day] = { draftStart: counts.draft, totalStart: counts.total, draftEnd: counts.draft, added: 0, deleted: 0 };
+      const d = counts.draft - h[day].draftEnd;
+      if (d > 0) h[day].added += d;
+      else h[day].deleted -= d;
       Object.assign(h[day], { draftEnd: counts.draft, totalEnd: counts.total });
       return true;
     },
@@ -280,7 +284,49 @@ export function createMockApi() {
         draft: d.draftEnd - d.draftStart,
         total: d.totalEnd - d.totalStart,
         draftWords: d.draftEnd,
+        draftAdded: d.added || 0,
+        draftDeleted: d.deleted || 0,
       }));
+    },
+    async deleteHistory(dir, dates) {
+      if (dates == null) history[dir] = {};
+      else for (const d of dates) delete (history[dir] || {})[d];
+      return Object.keys(history[dir] || {}).length;
+    },
+    // Scratchpad: no separate window in the browser (the caller shows the panel); the notes "folder"
+    // lives in memory so the folder mode can be tried.
+    async scratchOpenWindow() {
+      return false;
+    },
+    async scratchSetOnTop(on) {
+      return Boolean(on);
+    },
+    async scratchChooseFolder() {
+      state.settings.scratchFolder = 'Notițe (demo)';
+      return state.settings.scratchFolder;
+    },
+    async scratchClearFolder() {
+      state.settings.scratchFolder = '';
+      return true;
+    },
+    async scratchReadFolder() {
+      if (!state.settings.scratchFolder) return null;
+      return Object.entries(scratchFiles).map(([file, content]) => ({ id: file, file, title: file.replace(/\.html?$/i, ''), html: (content.match(/<body[^>]*>([\s\S]*)<\/body>/i) || [null, content])[1].trim(), updated: Date.now() }));
+    },
+    async scratchWriteFolder(notes) {
+      if (!state.settings.scratchFolder) throw new Error('Nu e ales niciun dosar pentru notițe.');
+      for (const k of Object.keys(scratchFiles)) delete scratchFiles[k];
+      for (const n of notes || []) if (/\.html$/i.test(n.file || '')) scratchFiles[n.file] = String(n.content || '');
+      return Object.keys(scratchFiles).length;
+    },
+    async scratchProjects() {
+      return [];
+    },
+    async scratchSend() {
+      throw new Error('Trimiterea între ferestre funcționează doar în aplicația desktop.');
+    },
+    onScratchReceive() {
+      return () => {};
     },
     async backupOnSave() {
       return null; // backups exist only in the desktop app
