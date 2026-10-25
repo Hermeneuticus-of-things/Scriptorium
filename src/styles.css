@@ -107,8 +107,6 @@ textarea { resize: vertical; width: 100%; }
 .app.composition .toolbar, .app.composition .binder, .app.composition .statusbar, .app.composition .format-bar { display: none; }
 .app.composition .workspace { background: var(--bg); }
 .app.composition .page { border: none; box-shadow: none; background: transparent; margin-top: 10vh; }
-.exit-composition { position: fixed; top: 10px; right: 10px; opacity: .3; }
-.exit-composition:hover { opacity: 1; }
 
 /* Corkboard */
 .corkboard { padding: 16px 20px; }
@@ -590,3 +588,18 @@ legend { color: var(--muted); padding: 0 4px; }
 .corkboard > .cork-head { order: 99; position: sticky; bottom: 0; z-index: 2; margin-top: auto; background: var(--panel); border-top: 1px solid var(--line); padding: 4px 8px; }
 [data-ui='classic'] .corkboard { padding-bottom: 0; }
 [data-ui='classic'] .corkboard > .cork-head { margin: auto -16px 0; border-bottom: none; border-top: 1px solid var(--sc-line); }
+/* Composition control strip: hidden below the bottom edge, slides up near it */
+.comp-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 16px; background: rgba(24, 23, 21, 0.92); color: #f3efe6; font-size: 12px; box-shadow: 0 -2px 12px rgba(0,0,0,.3); transform: translateY(100%); opacity: 0; transition: transform .2s ease, opacity .2s ease; }
+.comp-bar.shown { transform: none; opacity: 1; }
+.comp-bar .comp-bar-group { flex-direction: row; margin: 0; color: inherit; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.comp-bar-label { opacity: .75; }
+.comp-bar-val { min-width: 3.2em; font-variant-numeric: tabular-nums; }
+.comp-bar input[type='range'] { width: 72px; }
+.comp-bar input[type='color'] { width: 26px; height: 22px; padding: 0; border: 1px solid rgba(255,255,255,.3); background: none; }
+.app .comp-bar .comp-bar-btn { box-shadow: none; min-height: 0; padding: 3px 9px; border-radius: 4px; border: 1px solid rgba(255,255,255,.25); background: transparent; color: inherit; cursor: pointer; font-size: 12px; }
+.app .comp-bar .comp-bar-btn:hover, .app .comp-bar .comp-bar-btn:focus-visible { background: rgba(255,255,255,.12); }
+.app .comp-bar .comp-bar-btn.on { background: rgba(255,255,255,.22); }
+.comp-bar-count { opacity: .8; font-variant-numeric: tabular-nums; }
+.comp-bar-spacer { flex: 1; }
+.app.composition[data-comp-align='left'] .page { margin-left: 5vw; margin-right: auto; }
+.app.composition[data-comp-align='right'] .page { margin-left: auto; margin-right: 5vw; }

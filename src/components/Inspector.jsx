@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { tabKeys } from '../lib/tabKeys.js';
 import { incomingLinks } from '../lib/backlinks.js';
 import { findNode, rootOf } from '../lib/tree.js';
@@ -39,10 +39,17 @@ export function Notes({ initial, onChange, placeholder }) {
 
 function NotesLoader({ api, dir, id, onChange, onError, placeholder }) {
   const [html, setHtml] = useState(null);
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+  // Loaded once per document: a new onError on every render must not reload (and rebuild) the notes editor.
   useEffect(() => {
+    let alive = true;
     setHtml(null);
-    api.readDoc(dir, id, 'notes').then(setHtml).catch(onError);
-  }, [api, dir, id, onError]);
+    api.readDoc(dir, id, 'notes').then((h) => alive && setHtml(h), (e) => onErrorRef.current?.(e));
+    return () => {
+      alive = false;
+    };
+  }, [api, dir, id]);
   if (html === null) return null;
   return <Notes key={id} initial={html} onChange={onChange} placeholder={placeholder} />;
 }

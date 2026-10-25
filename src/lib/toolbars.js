@@ -63,8 +63,12 @@ export const FORMAT_ITEMS = [
   { id: 'copySpecial', label: 'ui.fb.copySpecial' },
   { id: 'undo', label: 'ui.fb.undo' },
 ];
-// Everything stays in the format bar by default; what does not fit goes into the » overflow.
-export const FORMAT_DEFAULT = FORMAT_ITEMS.map((i) => i.id);
+// Default format bar: the everyday groups only (paragraph style, font and size, bold/italic/underline,
+// colour/highlight, alignment, paragraph menu with line spacing, lists, image and table).
+// Everything else can be added through customization; what does not fit goes into the » overflow.
+// Saved bars are untouched: normalizeList keeps them and appends only ids not in `seen`.
+const FORMAT_BASIC = ['block', 'font', 'bui', 'color', 'highlight', 'align', 'paragraph', 'lists', 'image', 'table'];
+export const FORMAT_DEFAULT = FORMAT_ITEMS.map((i) => i.id).filter((id) => FORMAT_BASIC.includes(id));
 
 export const DISPLAY_MODES = ['iconText', 'icon', 'text'];
 export const BARS = {
