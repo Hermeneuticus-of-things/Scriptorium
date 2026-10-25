@@ -1065,3 +1065,16 @@ sarcini structurate), sunt puține.
   + intrare în `tests/mcpFull.test.js`.
 - [ ] Comutator unic „Backup automat pornit/oprit" (clasic: master toggle) — Scribner are comutatoare
   separate (la închidere/deschidere/salvare); de evaluat dacă merită un singur comutator-umbrelă.
+
+### Inspector
+Structura se potrivește: ambele au 5 tab-uri — Note, Semne de carte/linkuri, Detalii (Metadate),
+Snapshot-uri, Comentarii și note de subsol. Inspectorul Scribner (verificat în cod) e complet:
+icoană + culoare, tip de secțiune, etichetă, status, include în compile, pagină nouă înainte,
+compilează așa cum e, cuvinte cheie, țintă (+ unitate + notificare), subtitlu, câmpuri personalizate,
+date creat/modificat, număr de cuvinte, linkuri, snapshot-uri, comentarii/note.
+
+Comparația nano a conținutului tab-urilor din programul clasic e **blocată pe acest calculator**:
+(1) câmpurile Inspectorului clasic nu sunt expuse prin stratul de accesibilitate (widget-uri Qt custom);
+(2) partea dreaptă a ecranului, unde stă Inspectorul, e acoperită de un panou always-on-top al
+utilizatorului, deci nici captura de ecran + OCR nu-l poate citi. Nu se mută ferestrele utilizatorului.
+- [ ] De reluat când panoul always-on-top e ascuns temporar, sau pe un ecran liber.
