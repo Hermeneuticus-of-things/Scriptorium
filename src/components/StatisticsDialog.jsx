@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { sortFrequency, frequencyCsv, quickTextStats } from '../lib/smallWindows.js';
 import { posDistribution } from '../lib/panelsExtra.js';
 import { guessLang } from '../lib/pos.js';
 import { projectStats, projectText, wordFrequency, sentenceLengths } from '../lib/stats.js';
@@ -21,6 +22,8 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
   const [scope, setScope] = useState('draft');
   const [minLength, setMinLength] = useState(4);
   const [withStopwords, setWithStopwords] = useState(false);
+  const [freqSort, setFreqSort] = useState({ key: 'count', dir: 'desc' });
+  const [freqChart, setFreqChart] = useState(false);
   const hasSelection = Boolean(selectionIds && selectionIds.length);
 
   const opts = useMemo(
@@ -38,6 +41,18 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
     () => (tab === 'words' ? wordFrequency(text, { minLength: Math.max(1, Number(minLength) || 1), stopwords: withStopwords ? null : undefined }) : []),
     [tab, text, minLength, withStopwords],
   );
+  const freqRows = useMemo(() => sortFrequency(freq, freqSort.key, freqSort.dir), [freq, freqSort]);
+  const sortBy = (key) => setFreqSort((f) => (f.key === key ? { key, dir: f.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: key === 'word' ? 'asc' : 'desc' }));
+  const ariaSort = (key) => (freqSort.key === key ? (freqSort.dir === 'asc' ? 'ascending' : 'descending') : 'none');
+  const arrow = (key) => (freqSort.key === key ? (freqSort.dir === 'asc' ? ' ▲' : ' ▼') : '');
+  const exportFreq = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([frequencyCsv(freqRows)], { type: 'text/csv' }));
+    a.download = 'frecventa-cuvintelor.csv';
+    a.click();
+  };
+  const top = freq.slice(0, 25);
+  const maxFreq = Math.max(1, ...top.map((f) => f.count));
   const sent = useMemo(() => (tab === 'sentences' ? sentenceLengths(text) : null), [tab, text]);
   const pos = useMemo(() => (tab === 'pos' ? posDistribution(text, project.language === 'en' || (!project.language && guessLang(text) === 'en') ? 'en' : 'ro') : []), [tab, text, project.language]);
   const maxBucket = sent ? Math.max(1, ...sent.histogram.map((h) => h.count)) : 1;
@@ -120,13 +135,34 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
                 <input type="checkbox" checked={withStopwords} onChange={(e) => setWithStopwords(e.target.checked)} /> {t('ui.statisticsDialog.include_cuvintele_de_legatura')}
               </label>
             </div>
+            {freq.length > 0 && (
+              <div className="row freq-actions">
+                <label className="check"><input type="checkbox" className="freq-chart-toggle" checked={freqChart} onChange={(e) => setFreqChart(e.target.checked)} /> {t('ui.p11.st_chart')}</label>
+                <button className="freq-csv" onClick={exportFreq}>{t('ui.p11.st_csv')}</button>
+              </div>
+            )}
+            {freq.length > 0 && freqChart && (
+              <div className="freq-chart" aria-label={t('ui.p11.st_chart')} role="img">
+                {top.map((f) => (
+                  <div key={f.word} className="freq-chart-row" title={`${f.word}: ${f.count}`}>
+                    <span className="freq-chart-word">{f.word}</span>
+                    <span className="freq-chart-bar" style={{ width: `${(f.count / maxFreq) * 100}%` }} />
+                    <span className="freq-chart-n">{fmt(f.count)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {freq.length === 0 ? (
               <p className="muted">{t('ui.statisticsDialog.nu_exista_cuvinte_pentru_criteriile')}</p>
             ) : (
-              <table className="history-table">
-                <thead><tr><th>{t('ui.statisticsDialog.cuvant')}</th><th className="num">{t('ui.statisticsDialog.aparitii')}</th><th className="num">Procent</th></tr></thead>
+              <table className="history-table freq-table">
+                <thead><tr>
+                  <th aria-sort={ariaSort('word')}><button className="link freq-sort-word" onClick={() => sortBy('word')}>{t('ui.statisticsDialog.cuvant')}{arrow('word')}</button></th>
+                  <th className="num" aria-sort={ariaSort('count')}><button className="link freq-sort-count" onClick={() => sortBy('count')}>{t('ui.statisticsDialog.aparitii')}{arrow('count')}</button></th>
+                  <th className="num" aria-sort={ariaSort('percent')}><button className="link freq-sort-percent" onClick={() => sortBy('percent')}>{t('ui.p11.st_percent')}{arrow('percent')}</button></th>
+                </tr></thead>
                 <tbody>
-                  {freq.map((f) => (
+                  {freqRows.map((f) => (
                     <tr key={f.word}>
                       <td>{f.word}</td>
                       <td className="num">{fmt(f.count)}</td>
@@ -191,6 +227,51 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
           <button className="primary" onClick={onClose}>{t('btn.close')}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Quick text statistics: a small floating window that follows the text selected in the editor
+ * (the whole document when nothing is selected). getText() returns {text, selection: bool}.
+ */
+export function TextStatsPanel({ getText, onClose }) {
+  const [data, setData] = useState(() => getText());
+  const [pos, setPos] = useState({ x: Math.max(16, window.innerWidth - 300), y: 120 });
+  const drag = useRef(null);
+  useEffect(() => {
+    let raf = 0;
+    const update = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => setData(getText())); };
+    document.addEventListener('selectionchange', update);
+    const timer = setInterval(update, 1500);
+    return () => { document.removeEventListener('selectionchange', update); clearInterval(timer); cancelAnimationFrame(raf); };
+  }, [getText]);
+  const st = quickTextStats(data.text);
+  const down = (e) => {
+    if (e.target.closest('button')) return;
+    drag.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
+    const move = (ev) => drag.current && setPos({ x: Math.max(0, ev.clientX - drag.current.dx), y: Math.max(0, ev.clientY - drag.current.dy) });
+    const up = () => { drag.current = null; window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+  return (
+    <div className="floating-panel text-stats-panel" role="dialog" aria-label={t('ui.p11.ts_title')} onKeyDown={(e) => e.key === 'Escape' && onClose()} style={{ left: pos.x, top: pos.y }}>
+      <div className="fp-title" onMouseDown={down}>
+        <span style={{ flex: 1 }}>{t('ui.p11.ts_title')}</span>
+        <button className="fp-close" aria-label={t('btn.close')} onClick={onClose}>×</button>
+      </div>
+      <p className="muted small ts-scope">{data.selection ? t('ui.p11.ts_selection') : t('ui.p11.ts_document')}</p>
+      <dl className="ts-list">
+        <dt className="ts-words">{fmt(st.words)}</dt><dd>{t('ui.inspector.cuvinte')}</dd>
+        <dt>{fmt(st.chars)}</dt><dd>{t('ui.statisticsDialog.caractere_cu_spatii')}</dd>
+        <dt>{fmt(st.charsNoSpaces)}</dt><dd>{t('ui.statisticsDialog.caractere_fara_spatii')}</dd>
+        <dt>{fmt(st.sentences)}</dt><dd>{t('ui.stats.fraze')}</dd>
+        <dt>{fmt(st.paragraphs)}</dt><dd>{t('ui.stats.paragrafe')}</dd>
+        <dt>{st.averageSentence.toLocaleString(uiLocale())}</dt><dd>{t('ui.statisticsDialog.cuvinte_pe_fraza_in_medie')}</dd>
+        <dt>{st.pages.toLocaleString(uiLocale())}</dt><dd>{t('ui.statisticsDialog.pagini_tiparite')}</dd>
+        <dt>{fmt(st.readingMinutes)}</dt><dd>{t('ui.statisticsDialog.minute_de_lectura')}</dd>
+      </dl>
     </div>
   );
 }

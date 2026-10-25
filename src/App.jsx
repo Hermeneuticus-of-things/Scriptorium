@@ -39,6 +39,11 @@ import { AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, 
 import { TOP_ITEMS, topItemAvailable, toolbarPrefs, setFormatLayout } from './lib/toolbars.js';
 import ToolbarCustomizeDialog from './components/ToolbarCustomizeDialog.jsx';
 import { measure, mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
+import { deadlinePlan } from './lib/stats.js';
+import { publishSession, unpublishSession, combinedSession, sessionDelta } from './lib/smallWindows.js';
+import { captureLayout, upsertLayout, OUTLINER_COLUMNS_KEY } from './lib/layouts.js';
+import { TextStatsPanel } from './components/StatisticsDialog.jsx';
+import './smallWindows.css';
 import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
 import PrintPreviewDialog from './components/PrintPreviewDialog.jsx';
@@ -113,7 +118,8 @@ import { applyTextEdits, replaceRangeText } from './lib/serviceApply.js';
 import { mergeBibliography } from './lib/bibMerge.js';
 import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
-import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
+import { PickNodeDialog, ImportSplitDialog } from './components/BatchADialogs.jsx';
+import LayoutsDialog from './components/LayoutsDialog.jsx';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 import { mergeProject } from './lib/projectMerge.js';
@@ -558,11 +564,36 @@ export default function App({ api: apiProp }) {
   const tg = project?.targets || {};
   const wpp = Number(tg.wordsPerPage) || 250;
   const draftValue = measure({ words: totals.tWords || 0, chars: totals.tChars || 0 }, tg.draftType || 'Words', wpp);
-  const sessionValue = measure(
-    { words: Math.max(0, (totals.tWords || 0) - (sessionStart?.words || 0)), chars: Math.max(0, (totals.tChars || 0) - (sessionStart?.chars || 0)) },
+  // Session: deletions count against it only when the author allows negative counts.
+  const ownSessionValue = measure(
+    { words: sessionDelta(totals.tWords, sessionStart?.words, tg.allowNegative), chars: sessionDelta(totals.tChars, sessionStart?.chars, tg.allowNegative) },
     tg.sessionType || 'Words',
     wpp,
   );
+  // Text written in the projects open in other windows (published through localStorage).
+  const [otherSessionTick, setOtherSessionTick] = useState(0);
+  useEffect(() => {
+    if (!dir || !sessionStart) return undefined;
+    publishSession(localStorage, dir, ownSessionValue);
+    return undefined;
+  }, [dir, sessionStart, ownSessionValue]);
+  useEffect(() => {
+    if (!dir) return undefined;
+    const beat = setInterval(() => { publishSession(localStorage, dir, ownSessionValueRef.current); setOtherSessionTick((n) => n + 1); }, 30000);
+    const onStorage = (e) => e.key && e.key.startsWith('scribner-session-live:') && setOtherSessionTick((n) => n + 1);
+    window.addEventListener('storage', onStorage);
+    return () => { clearInterval(beat); window.removeEventListener('storage', onStorage); unpublishSession(localStorage, dir); };
+  }, [dir]);
+  const ownSessionValueRef = useRef(0);
+  ownSessionValueRef.current = ownSessionValue;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const sessionValue = useMemo(() => (tg.sessionAllProjects && dir ? combinedSession(localStorage, dir, ownSessionValue) : ownSessionValue), [tg.sessionAllProjects, dir, ownSessionValue, otherSessionTick]);
+  // Session target: typed in, or the words a day still needed to meet the deadline.
+  const sessionTargetValue = useMemo(() => {
+    if (!tg.sessionFromDeadline || (tg.sessionType || 'Words') !== (tg.draftType || 'Words')) return Number(tg.session) || 0;
+    const plan = deadlinePlan({ draft: Number(tg.draft) || 0, deadline: tg.deadline, writingDays: tg.writingDays }, draftValue);
+    return plan ? plan.perDay : Number(tg.session) || 0;
+  }, [tg.sessionFromDeadline, tg.session, tg.sessionType, tg.draftType, tg.draft, tg.deadline, tg.writingDays, draftValue]);
   const unitName = (type) => (type === 'Characters' ? tr('ui.inspector.caractere') : type === 'Pages' ? tr('ui.targetsDialog.pagini') : tr('ui.inspector.cuvinte'));
 
   const totalsRef = useRef(totals);
@@ -753,7 +784,7 @@ export default function App({ api: apiProp }) {
     if (!project || project.targets?.notify === false) return;
     const t = project.targets || {};
     const checks = [
-      ['session', t.session, sessionValue, tr('ui.app.ai_atins_tinta_sesiunii'), t.sessionType],
+      ['session', sessionTargetValue, sessionValue, tr('ui.app.ai_atins_tinta_sesiunii'), t.sessionType],
       ['draft', t.draft, draftValue, tr('ui.app.ai_atins_tinta_cartii'), t.draftType],
     ];
     if (!sessionStart) return;
@@ -763,7 +794,7 @@ export default function App({ api: apiProp }) {
         setToast(`${msg}: ${value.toLocaleString(uiLocale())} ${unitName(type)}.`);
       }
     }
-  }, [project, draftValue, sessionValue, sessionStart]);
+  }, [project, draftValue, sessionValue, sessionStart, sessionTargetValue]);
 
   // Remember UI state per project.
   useEffect(() => {
@@ -1099,6 +1130,53 @@ export default function App({ api: apiProp }) {
     for (const id of selectionList()) tree = updateNode(tree, id, { separator: !findNode(tree, id).separator });
     setTree(tree);
   };
+  // A part of a snapshot copied into the document at the cursor (SnapshotsPane).
+  useEffect(() => {
+    const onInsert = (e) => {
+      const ed = activeTipTap();
+      if (!ed || ed.isDestroyed) return setToast(tr('ui.mw.sc_no_editor'));
+      ed.chain().focus().insertContent(e.detail?.html || '').run();
+      return undefined;
+    };
+    window.addEventListener('scribner:insert-html', onInsert);
+    return () => window.removeEventListener('scribner:insert-html', onInsert);
+  });
+  // Scratchpad note → project: a new document in a folder, or appended to the selected document.
+  const scratchToProject = ({ title, html, mode, folderId }) => {
+    if (!project) return;
+    if (mode === 'append') {
+      const target = selected && !selected.children && !selected.root ? selected : null;
+      if (!target) return setToast(tr('ui.p11.sp_no_doc'));
+      const next = appendHtml(docs[target.id], html);
+      writeDocNow(target.id, next);
+      setEditorHtml(target.id, next);
+      return setToast(tr('ui.p11.sp_appended', { title: target.title }));
+    }
+    const parent = (folderId && findNode(project.tree, folderId)) || findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research');
+    const node = newNode('text', title || tr('ui.app.din_scratchpad'));
+    setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] }));
+    setDocs((d) => ({ ...d, [node.id]: html }));
+    api.writeDoc(dir, node.id, 'docs', html).catch(report);
+    return setToast(tr('ui.app.trimis_in_x', { title: parent.title }));
+  };
+  const scratchToProjectRef = useRef(scratchToProject);
+  scratchToProjectRef.current = scratchToProject;
+  useEffect(() => (api.onScratchReceive ? api.onScratchReceive((p) => scratchToProjectRef.current(p)) : undefined), [api]);
+  // Quick text statistics: the editor's selection, or the whole current document.
+  const textStatsSource = useCallback(() => {
+    const ed = activeTipTap();
+    if (!ed || ed.isDestroyed) return { text: '', selection: false };
+    const { from, to, empty } = ed.state.selection;
+    return empty ? { text: ed.state.doc.textBetween(0, ed.state.doc.content.size, '\n\n'), selection: false } : { text: ed.state.doc.textBetween(from, to, '\n\n'), selection: true };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+  // Linguistic Focus: highlight style colours the chosen words instead of fading the rest.
+  useEffect(() => {
+    const on = Boolean(editorView.posFocus) && editorView.posStyle === 'highlight';
+    document.body.classList.toggle('lf-highlight', on);
+    if (editorView.posColor) document.body.style.setProperty('--lf-color', editorView.posColor);
+    else document.body.style.removeProperty('--lf-color');
+  }, [editorView.posFocus, editorView.posStyle, editorView.posColor]);
   const revealInBinder = () => {
     if (!selectedId) return;
     setHideBinder(false);
@@ -1384,15 +1462,32 @@ export default function App({ api: apiProp }) {
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
   // Layouts (Window > Layouts): named combinations of views and panels.
   const saveLayout = async () => {
-    const name = window.prompt('Numele layout-ului:', `Layout ${(settings.layouts || []).length + 1}`);
+    const name = window.prompt(tr('ui.p11.ly_name'), `Layout ${(settings.layouts || []).length + 1}`);
     if (!name) return;
-    const layout = { name, view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, split: Boolean(splitId), copyholder };
-    const layouts = [...(settings.layouts || []).filter((l) => l.name !== name), layout];
+    const layout = captureLayout(name, currentLayoutState());
+    const layouts = upsertLayout(settings.layouts, layout);
     await api.setSettings({ layouts });
     setSettings(await api.getSettings());
     setToast(`Layout „${name}” salvat.`);
   };
+  // Everything a layout keeps: views, panels, widths, split, outliner columns, the board's mode.
+  const currentLayoutState = () => {
+    let outlinerColumns;
+    try { outlinerColumns = JSON.parse(localStorage.getItem(OUTLINER_COLUMNS_KEY) || 'null') || undefined; } catch { /* none */ }
+    const board = selected && selected.children ? selected : selectedId ? findParent(project.tree, selectedId) : null;
+    return { view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
+  };
+  const [layoutRev, setLayoutRev] = useState(0);
   const applyLayout = (l) => {
+    if (Array.isArray(l.outlinerColumns)) {
+      try { localStorage.setItem(OUTLINER_COLUMNS_KEY, JSON.stringify(l.outlinerColumns)); } catch { /* not critical */ }
+      setLayoutRev((n) => n + 1);
+    }
+    if (l.cork && l.cork.folderId && findNode(project.tree, l.cork.folderId)) {
+      const { folderId, ...board } = l.cork;
+      setTree(updateNode(project.tree, folderId, { cork: board }));
+    }
+    if (l.splitId && findNode(project.tree, l.splitId)) setSplitId(l.splitId);
     setView(l.view || 'editor');
     setShowInspector(l.showInspector !== false);
     setShowAi(Boolean(l.showAi));
@@ -2167,7 +2262,7 @@ export default function App({ api: apiProp }) {
     { label: tr('cmd.backups'), action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
     { label: tr('ui.app.setarile_proiectului_etichete_statusuri_metadate'), action: () => setDialog('projectSettings') },
-    { label: tr('cmd.targets'), action: () => setDialog('targets') },
+    { label: tr('cmd.targets'), action: () => setFloats((f) => ({ ...f, targets: !f.targets })) },
     { label: tr('cmd.stats'), action: () => setDialog('stats') },
     { label: tr('cmd.styles'), action: () => setDialog('styles') },
     { label: tr('cmd.compile'), action: () => flush().then(() => setDialog('compile')) },
@@ -2224,8 +2319,9 @@ export default function App({ api: apiProp }) {
     ['project', 'newText', tr('cmd.newText'), () => addItem('text')],
     ['project', 'newFolder', tr('cmd.newFolder'), () => addItem('folder')],
     ['project', 'projectSettings', tr('cmd.projectSettings'), () => setDialog('projectSettings')],
-    ['project', 'targets', tr('cmd.targets'), () => setDialog('targets')],
+    ['project', 'targets', tr('cmd.targets'), () => setFloats((f) => ({ ...f, targets: !f.targets }))],
     ['project', 'stats', tr('cmd.stats'), () => setDialog('stats')],
+    ['project', 'textStats', tr('cmd.textStats'), () => setFloats((f) => ({ ...f, ts: !f.ts }))],
     ['project', 'keywords', tr('cmd.keywords'), () => setDialog('keywords')],
     ['project', 'history', tr('cmd.history'), async () => {
       await flush();
@@ -2726,6 +2822,7 @@ export default function App({ api: apiProp }) {
             )}
             {view === 'outline' && (
               <Outliner
+                key={`outliner-${layoutRev}`}
                 project={project}
                 docs={docs}
                 root={selected && selected.children ? selected : project.tree[0]}
@@ -2998,7 +3095,7 @@ export default function App({ api: apiProp }) {
         totalDraft={draftValue}
         draftTarget={project.targets?.draft || 0}
         sessionWords={sessionValue}
-        sessionTarget={project.targets?.session || 0}
+        sessionTarget={sessionTargetValue}
         saveState={saveState}
         onSync={() => conflict && setConflict((c) => c && { ...c, open: true })}
         sync={conflict ? { state: 'conflict' } : offline || queued ? { state: 'pending', n: queued } : team.who ? { state: 'ok' } : null}
@@ -3017,6 +3114,13 @@ export default function App({ api: apiProp }) {
           inspectorOn={showFloatInspector}
           onInspector={() => setShowFloatInspector((v) => !v)}
           onGoto={() => setDialog('goto')}
+          onPrev={() => goSibling(-1)}
+          onNext={() => goSibling(1)}
+          onKeywords={() => setFloats((f) => ({ ...f, kh: !f.kh }))}
+          keywordsOn={Boolean(floats.kh)}
+          target={selected?.target || 0}
+          sessionValue={sessionValue}
+          sessionTarget={settings.compShowTargets ? 0 : sessionTargetValue}
           onExit={() => setComposition(false)}
           onError={(e) => setToast(e.message)}
         />
@@ -3024,7 +3128,7 @@ export default function App({ api: apiProp }) {
       {composition && settings.compShowTargets && selected && (
         <div className="comp-targets">
           <span>{tr('ui.statusBar.document')}: {counts[selected.id] || 0}{selected.target ? ` / ${selected.target}` : ''}</span>
-          <span>{tr('ui.statusBar.session')}: {sessionValue}{project.targets?.session ? ` / ${project.targets.session}` : ''}</span>
+          <span>{tr('ui.statusBar.session')}: {sessionValue}{sessionTargetValue ? ` / ${sessionTargetValue}` : ''}</span>
         </div>
       )}
 
@@ -3148,8 +3252,18 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'mcp' && api.mcpConnectInfo && <McpConnectDialog api={api} dir={dir} onClose={() => setDialog(null)} />}
-      {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} />}
-      {showScratch && <Scratchpad onSendToProject={({ title, html }) => { const parent = findNode(project.tree, project.inboxFolder || '') || project.tree.find((n) => n.root === 'research'); const node = newNode('text', title || tr('ui.app.din_scratchpad')); setTree(updateNode(project.tree, parent.id, { children: [...(parent.children || []), node] })); setDocs((d) => ({ ...d, [node.id]: html })); api.writeDoc(dir, node.id, 'docs', html).catch(report); setToast(tr('ui.app.trimis_in_x', { title: parent.title })); }} load={() => settings.scratchpad || []} save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)} onClose={() => setShowScratch(false)} />}
+      {dialog === 'names' && <NameGeneratorDialog onClose={() => setDialog(null)} onInsert={(t) => activeHandle()?.replaceSelection(t)} customLists={settings.nameLists || []} onCustomLists={(nameLists) => { setSettings((s) => ({ ...s, nameLists })); api.setSettings({ nameLists }).catch(report); }} />}
+      {showScratch && (
+        <Scratchpad
+          api={api}
+          onSendToProject={scratchToProject}
+          folders={flatten(project.tree).filter((n) => Array.isArray(n.children) && n.type !== 'text').map((n) => ({ id: n.id, title: n.title }))}
+          canAppend={Boolean(selected && !selected.children && !selected.root)}
+          load={() => settings.scratchpad || []}
+          save={(notes) => api.setSettings({ scratchpad: notes }).catch(report)}
+          onClose={() => setShowScratch(false)}
+        />
+      )}
       {serviceResult && (
         <ServiceResultDialog
           source={serviceResult.source}
@@ -3209,6 +3323,14 @@ export default function App({ api: apiProp }) {
           }}
           onChanged={refreshSnapCounts}
           onOpen={(id) => go(id)}
+          onReveal={(id) => {
+            go(id);
+            setHideBinder(false);
+            setActiveCollectionId(null);
+            if (hoistId && hoistId !== id && !ancestorIds(project.tree, id).includes(hoistId)) setHoistId(null);
+            setRevealId(null);
+            setTimeout(() => setRevealId(id), 0);
+          }}
           onError={report}
           onClose={() => setDialog(null)}
         />
@@ -3291,7 +3413,7 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'stats' && <StatisticsDialog project={project} docs={docs} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} />}
-      {dialog === 'targets' && (
+      {floats.targets && (
         <TargetsDialog
           project={project}
           draftWords={totals.tWords}
@@ -3300,7 +3422,7 @@ export default function App({ api: apiProp }) {
           sessionValue={sessionValue}
           onResetSession={resetSession}
           onSave={(targets) => saveProject({ ...project, targets })}
-          onClose={() => setDialog(null)}
+          onClose={() => setFloats((f) => ({ ...f, targets: false }))}
         />
       )}
       {dialog === 'styles' && (
@@ -3362,6 +3484,12 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep, opts) => importFilesCmd(mode, sep, opts).catch(report)} onClose={() => setDialog(null)} />}
+      {floats.ts && (
+        <TextStatsPanel
+          getText={textStatsSource}
+          onClose={() => setFloats((f) => ({ ...f, ts: false }))}
+        />
+      )}
       {floats.lf && <LinguisticFocusPanel view={editorView} setView={(patch) => setEditorView({ ...editorView, ...patch })} onClose={() => setFloats((f) => ({ ...f, lf: false }))} />}
       {floats.kh && project && (
         <KeywordsHud
@@ -3374,7 +3502,7 @@ export default function App({ api: apiProp }) {
       {floats.sc && <SpecialCharsDialog onInsert={insertSpecialChar} onClose={() => setFloats((f) => ({ ...f, sc: false }))} />}
       {dialog === 'autoComplete' && project && <AutoCompleteDialog list={project.autoComplete || []} onSave={(list) => saveProject({ ...projectRef.current, autoComplete: list })} onClose={() => setDialog(null)} />}
       {dialog === 'layouts' && (
-        <LayoutsDialog layouts={settings.layouts || []} onChange={(l) => saveLayouts(l).catch(report)} onApply={applyLayout} onClose={() => setDialog(null)} />
+        <LayoutsDialog layouts={settings.layouts || []} onChange={(l) => saveLayouts(l).catch(report)} onApply={applyLayout} onError={report} onClose={() => setDialog(null)} />
       )}
       {dialog === 'shortcuts' && (
         <ShortcutsDialog

@@ -372,3 +372,21 @@ export function guessLang(text) {
   const en = (t.match(/ (?:the|and|of|to|is|in|that|it|was|with) /g) || []).length;
   return en > ro ? 'en' : 'ro';
 }
+
+// Prepositions (Linguistic Focus: "prep"). The tagger files them under 'other' with the articles
+// and determiners; this list picks them out of that class without changing the tagger's output.
+export const PREPOSITIONS = {
+  ro: set(`în in pe la de cu din spre pentru prin fără fara sub peste între intre după dupa lângă langa către catre
+    despre până pana asupra contra datorită datorita printre dintre dinspre înspre inspre deasupra dedesubtul
+    împotriva impotriva înaintea inaintea înapoia inapoia alături alaturi conform potrivit grație gratie față fata
+    lângă dinaintea dinapoia întru intru`),
+  en: set(`in on at by with from to of into onto over under about above below between through during without
+    within against among upon off toward towards beside besides behind across along around beyond near past
+    since until till via per amid amidst beneath underneath inside outside throughout despite except like unlike`),
+};
+
+/** True when `word` (any case) is a preposition in `lang` ('ro' | 'en'). */
+export function isPreposition(word, lang = 'ro') {
+  const w = String(word || '').toLocaleLowerCase();
+  return (PREPOSITIONS[lang] || PREPOSITIONS.ro).has(w);
+}

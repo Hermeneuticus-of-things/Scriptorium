@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import Scratchpad from './components/Scratchpad.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { createMockApi } from './lib/mockApi.js';
 import { createWebApi } from './lib/webApi.js';
@@ -47,8 +48,11 @@ function setupPwa() {
 const api = pickApi();
 installErrorCapture(window, api);
 if (api.isWeb) setupPwa();
+// ?scratchpad: the separate notes window (opened from the app or by the global shortcut).
+const scratchWindow = new URLSearchParams(window.location.search).has('scratchpad');
+if (scratchWindow) document.title = 'Scratchpad';
 createRoot(document.getElementById('root')).render(
   <ErrorBoundary api={api}>
-    <App api={api} />
+    {scratchWindow ? <Scratchpad api={api} standalone onClose={() => window.close()} /> : <App api={api} />}
   </ErrorBoundary>,
 );

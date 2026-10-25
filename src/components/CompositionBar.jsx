@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { t as tr } from '../lib/i18n.js';
+import { progressPct } from '../lib/smallWindows.js';
+
+const ZOOMS = [75, 100, 125, 150, 175, 200, 250, 300];
 
 const EDGE = 70; // px from the bottom edge that reveal the bar
 
@@ -7,7 +10,7 @@ const EDGE = 70; // px from the bottom edge that reveal the bar
  * Control strip for composition mode. It slides up when the mouse nears the bottom edge
  * (or when it has keyboard focus) and stays hidden otherwise.
  */
-export default function CompositionBar({ settings, onSettings, zoom, onZoom, words, chars, inspectorOn, onInspector, onGoto, onExit, onError }) {
+export default function CompositionBar({ settings, onSettings, zoom, onZoom, words, chars, inspectorOn, onInspector, onGoto, onExit, onError, target = 0, sessionValue = 0, sessionTarget = 0, onPrev, onNext, onKeywords, keywordsOn = false }) {
   const [near, setNear] = useState(false);
   const [focused, setFocused] = useState(false);
   const ref = useRef(null);
@@ -73,9 +76,12 @@ export default function CompositionBar({ settings, onSettings, zoom, onZoom, wor
         ))}
       </div>
       <label className="comp-bar-group">
-        <span className="comp-bar-label">{tr('ui.comp.scale')}</span>
-        <input type="range" min="50" max="300" step="10" value={zoom} onChange={(e) => onZoom(Number(e.target.value))} />
-        <span className="comp-bar-val">{zoom}%</span>
+        <span className="comp-bar-label">{tr('ui.p11.comp_zoom')}</span>
+        <select className="comp-zoom" aria-label={tr('ui.p11.comp_zoom')} value={ZOOMS.includes(zoom) ? zoom : ''} onChange={(e) => onZoom(Number(e.target.value))}>
+          {!ZOOMS.includes(zoom) && <option value="">{zoom}%</option>}
+          {ZOOMS.map((z) => <option key={z} value={z}>{z}%</option>)}
+        </select>
+        <input type="range" min="50" max="300" step="10" value={zoom} aria-label={tr('ui.comp.scale')} onChange={(e) => onZoom(Number(e.target.value))} />
       </label>
       <label className="comp-bar-group">
         <span className="comp-bar-label">{tr('ui.comp.width')}</span>
@@ -86,9 +92,26 @@ export default function CompositionBar({ settings, onSettings, zoom, onZoom, wor
         <input type="range" min="0" max="100" step="5" value={fade} onChange={(e) => onSettings({ compFade: Number(e.target.value) })} />
       </label>
       <button className={`comp-bar-btn ${inspectorOn ? 'on' : ''}`} aria-pressed={inspectorOn} onClick={onInspector}>{tr('ui.comp.inspector')}</button>
+      {onKeywords && <button className={`comp-bar-btn comp-keywords ${keywordsOn ? 'on' : ''}`} aria-pressed={keywordsOn} onClick={onKeywords} title={tr('ui.p11.comp_keywords')}>{tr('ui.p11.comp_keywords_short')}</button>}
       <span className="comp-bar-count">{tr('ui.comp.count', { words, chars })}</span>
+      {(target > 0 || sessionTarget > 0) && (
+        <span className="comp-bar-group comp-progress">
+          {target > 0 && (
+            <span title={tr('ui.p11.comp_doc_target', { n: words, target })}>
+              <progress className="comp-doc-progress" max="100" value={progressPct(words, target)} aria-label={tr('ui.p11.comp_doc_target', { n: words, target })} />
+            </span>
+          )}
+          {sessionTarget > 0 && (
+            <span title={tr('ui.p11.comp_session_target', { n: sessionValue, target: sessionTarget })}>
+              <progress className="comp-session-progress" max="100" value={progressPct(sessionValue, sessionTarget)} aria-label={tr('ui.p11.comp_session_target', { n: sessionValue, target: sessionTarget })} />
+            </span>
+          )}
+        </span>
+      )}
       <span className="comp-bar-spacer" />
+      {onPrev && <button className="comp-bar-btn comp-prev" onClick={onPrev} title={tr('cmd.prevDoc')} aria-label={tr('cmd.prevDoc')}>◀</button>}
       <button className="comp-bar-btn" onClick={onGoto}>{tr('ui.comp.goto')}</button>
+      {onNext && <button className="comp-bar-btn comp-next" onClick={onNext} title={tr('cmd.nextDoc')} aria-label={tr('cmd.nextDoc')}>▶</button>}
       <button className="comp-bar-btn exit-composition" onClick={onExit}>{tr('ui.app.iesi_esc')}</button>
     </div>
   );

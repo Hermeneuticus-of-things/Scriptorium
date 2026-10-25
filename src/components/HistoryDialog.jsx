@@ -1,44 +1,64 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { monthlyHistory } from '../lib/panelsExtra.js';
+import { filterHistoryRange, historyCsv, historyTotals } from '../lib/smallWindows.js';
 import { t, uiLocale } from '../lib/i18n.js';
 
 export default function HistoryDialog({ api, dir, onClose, onError }) {
-  const [rows, setRows] = useState(null);
+  const [all, setAll] = useState(null);
   const [mode, setMode] = useState('daily');
-  const months = useMemo(() => monthlyHistory(rows || []), [rows]);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [picked, setPicked] = useState([]);
+  const reload = () => api.getHistory(dir).then((r) => { setAll(r || []); setPicked([]); }).catch(onError);
   useEffect(() => {
-    api.getHistory(dir).then(setRows).catch(onError);
-  }, [api, dir, onError]);
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, dir]);
+  const rows = useMemo(() => filterHistoryRange(all || [], from, to), [all, from, to]);
+  const months = useMemo(() => monthlyHistory(rows), [rows]);
 
-  if (!rows) return null;
+  if (!all) return null;
   // Characters are shown when the history records them (row.draftChars).
   const hasChars = rows.some((r) => r.draftChars != null);
+  const hasGross = rows.some((r) => r.draftAdded != null);
   const fmt = (n) => Number(n || 0).toLocaleString(uiLocale());
   const maxMonth = Math.max(1, ...months.map((m) => m.draft));
   const last = rows.slice(-30);
-  const max = Math.max(1, ...last.map((r) => r.draft));
-  const totalWritten = rows.reduce((s, r) => s + Math.max(0, r.draft), 0);
-  const days = rows.filter((r) => r.draft > 0).length;
-  let streak = 0;
-  for (let i = rows.length - 1; i >= 0 && rows[i].draft > 0; i--) streak++;
+  const max = Math.max(1, ...last.map((r) => Math.max(r.draft, r.draftAdded || 0)));
+  const tot = historyTotals(rows);
+  const canDelete = Boolean(api.deleteHistory);
 
   const exportCsv = () => {
-    const csv = ['data,cuvinte_manuscris,cuvinte_total,manuscris_la_final_de_zi,caractere_manuscris', ...rows.map((r) => `${r.date},${r.draft},${r.total},${r.draftWords ?? ''},${r.draftChars ?? ''}`)].join('\n');
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.href = URL.createObjectURL(new Blob([historyCsv(rows)], { type: 'text/csv' }));
     a.download = 'istoric-scriere.csv';
     a.click();
   };
+  const del = async (dates) => {
+    const msg = dates ? t('ui.p11.hi_delete_days_confirm', { n: dates.length }) : t('ui.p11.hi_delete_all_confirm');
+    if (!window.confirm(msg)) return;
+    await api.deleteHistory(dir, dates).catch(onError);
+    await reload();
+  };
+  const toggle = (date) => setPicked((p) => (p.includes(date) ? p.filter((d) => d !== date) : [...p, date]));
+  const shown = [...rows].reverse().slice(0, 120);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label="Istoric scriere" onClick={(e) => e.stopPropagation()}>
+      <div className="modal wide history-dialog" role="dialog" aria-label={t('ui.history.titlu')} onClick={(e) => e.stopPropagation()}>
         <h2>{t('ui.history.titlu')}</h2>
+        <div className="row history-range">
+          <label>{t('ui.p11.hi_from')} <input type="date" className="hi-from" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+          <label>{t('ui.p11.hi_to')} <input type="date" className="hi-to" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+          {(from || to) && <button className="link" onClick={() => { setFrom(''); setTo(''); }}>{t('ui.p11.hi_all_dates')}</button>}
+        </div>
         <div className="stats">
-          <div><strong>{totalWritten.toLocaleString(uiLocale())}</strong><span>{t('ui.historyDialog.cuvinte_scrise_in_manuscris')}</span></div>
-          <div><strong>{days}</strong><span>{t('ui.historyDialog.zile_cu_scris')}</span></div>
-          <div><strong>{days ? Math.round(totalWritten / days).toLocaleString(uiLocale()) : 0}</strong><span>{t('ui.historyDialog.medie_pe_zi_de_scris')}</span></div>
-          <div><strong>{streak}</strong><span>{t('ui.historyDialog.zile_la_rand')}</span></div>
+          <div><strong className="hi-net">{fmt(tot.net)}</strong><span>{t('ui.p11.hi_net')}</span></div>
+          {hasGross && <div><strong className="hi-added">{fmt(tot.added)}</strong><span>{t('ui.p11.hi_added')}</span></div>}
+          {hasGross && <div><strong className="hi-deleted">{fmt(tot.deleted)}</strong><span>{t('ui.p11.hi_deleted')}</span></div>}
+          <div><strong>{tot.days}</strong><span>{t('ui.historyDialog.zile_cu_scris')}</span></div>
+          <div><strong>{fmt(tot.average)}</strong><span>{t('ui.historyDialog.medie_pe_zi_de_scris')}</span></div>
+          <div><strong>{tot.streak}</strong><span>{t('ui.historyDialog.zile_la_rand')}</span></div>
         </div>
         <div className="seg" role="tablist">
           <button className={mode === 'daily' ? 'on' : ''} onClick={() => setMode('daily')}>{t('ui.history.zilnic')}</button>
@@ -85,22 +105,36 @@ export default function HistoryDialog({ api, dir, onClose, onError }) {
         )}
         {mode === 'daily' && <table className="history-table">
           <thead>
-            <tr><th>{t('ui.historyDialog.data')}</th><th className="num">{t('ui.stats.manuscris')}</th><th className="num">{t('ui.advancedSearchDialog.tot_proiectul')}</th>{hasChars && <th className="num">{t('ui.historyDialog.caractere')}</th>}<th className="num">Total manuscris</th></tr>
+            <tr>
+              {canDelete && <th aria-label={t('ui.p11.hi_pick')} />}
+              <th>{t('ui.historyDialog.data')}</th>
+              <th className="num">{t('ui.p11.hi_net_short')}</th>
+              {hasGross && <th className="num">{t('ui.p11.hi_added_short')}</th>}
+              {hasGross && <th className="num">{t('ui.p11.hi_deleted_short')}</th>}
+              <th className="num">{t('ui.advancedSearchDialog.tot_proiectul')}</th>
+              {hasChars && <th className="num">{t('ui.historyDialog.caractere')}</th>}
+              <th className="num">{t('ui.p11.hi_total_draft')}</th>
+            </tr>
           </thead>
           <tbody>
-            {[...rows].reverse().slice(0, 60).map((r) => (
-              <tr key={r.date}>
+            {shown.map((r) => (
+              <tr key={r.date} className={picked.includes(r.date) ? 'selected' : ''}>
+                {canDelete && <td><input type="checkbox" className="hi-pick" aria-label={r.date} checked={picked.includes(r.date)} onChange={() => toggle(r.date)} /></td>}
                 <td>{r.date}{r.imported && <small className="muted"> · .scriv</small>}</td>
-                <td className="num">{r.draft.toLocaleString(uiLocale())}</td>
-                <td className="num">{r.total.toLocaleString(uiLocale())}</td>
+                <td className="num">{fmt(r.draft)}</td>
+                {hasGross && <td className="num hi-row-added">{r.draftAdded == null ? '' : fmt(r.draftAdded)}</td>}
+                {hasGross && <td className="num hi-row-deleted">{r.draftDeleted == null ? '' : fmt(r.draftDeleted)}</td>}
+                <td className="num">{fmt(r.total)}</td>
                 {hasChars && <td className="num">{fmt(r.draftChars)}</td>}
-                <td className="num">{r.draftWords == null ? '' : r.draftWords.toLocaleString(uiLocale())}</td>
+                <td className="num">{r.draftWords == null ? '' : fmt(r.draftWords)}</td>
               </tr>
             ))}
           </tbody>
         </table>}
         <div className="actions">
-          <button onClick={exportCsv} disabled={!rows.length}>Export CSV</button>
+          {canDelete && <button className="hi-delete-days" disabled={!picked.length} onClick={() => del(picked)}>{t('ui.p11.hi_delete_days', { n: picked.length })}</button>}
+          {canDelete && <button className="hi-delete-all danger" disabled={!all.length} onClick={() => del(null)}>{t('ui.p11.hi_delete_all')}</button>}
+          <button onClick={exportCsv} disabled={!rows.length}>{t('ui.p11.hi_csv')}</button>
           <button className="primary" onClick={onClose}>{t('btn.close')}</button>
         </div>
       </div>

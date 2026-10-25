@@ -89,12 +89,49 @@ export function pickByRarity(rng, arr, rarity = 0.5) {
   return arr[Math.min(arr.length - 1, Math.floor(x * arr.length))];
 }
 
-const validOrigins = (list, fallback) => {
-  const keys = Object.keys(CULTURES);
-  const ok = (Array.isArray(list) ? list : []).filter((k) => CULTURES[k]);
+const validOrigins = (list, fallback, cultures = CULTURES) => {
+  const keys = Object.keys(cultures);
+  const ok = (Array.isArray(list) ? list : []).filter((k) => cultures[k]);
   if (ok.length) return ok;
-  return fallback === 'mix' || !CULTURES[fallback] ? keys : [fallback];
+  return fallback === 'mix' || !cultures[fallback] ? keys : [fallback];
 };
+
+/** Folds case and diacritics for the "starts with" filter (Ș = S, É = E). */
+const fold = (s) => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase();
+
+/**
+ * A custom name list imported from a text file: one name per line; lines may be prefixed
+ * "m:", "f:" (forenames) or "n:" / "last:" (surnames). Without prefixes every line is used
+ * as `kind` ('m' | 'f' | 'any' forenames, or 'last').
+ */
+export function parseNameList(text, kind = 'any') {
+  const out = { m: [], f: [], last: [] };
+  for (const raw of String(text || '').split(/\r?\n/)) {
+    const line = raw.replace(/#.*$/, '').trim();
+    if (!line) continue;
+    const m = line.match(/^(m|f|n|last|nume|prenume)\s*[:;]\s*(.+)$/i);
+    const k = m ? m[1].toLowerCase() : null;
+    const name = (m ? m[2] : line).trim();
+    if (!name || name.length > 60) continue;
+    const to = k === 'm' ? ['m'] : k === 'f' ? ['f'] : k === 'n' || k === 'last' || k === 'nume' ? ['last'] : k === 'prenume' ? ['m', 'f'] : kind === 'last' ? ['last'] : kind === 'm' ? ['m'] : kind === 'f' ? ['f'] : ['m', 'f'];
+    for (const t of to) if (!out[t].includes(name)) out[t].push(name);
+  }
+  return out;
+}
+
+/** Cultures map from the author's lists [{id, label, m, f, last}] (keys "custom:<id>"). */
+export function customCultures(lists) {
+  const out = {};
+  for (const l of lists || []) {
+    if (!l || !l.id) continue;
+    const m = (l.m || []).length ? l.m : l.f || [];
+    const f = (l.f || []).length ? l.f : l.m || [];
+    const last = l.last || [];
+    if (!m.length && !last.length) continue;
+    out[`custom:${l.id}`] = { label: l.label || l.id, m, f, last: last.length ? last : m };
+  }
+  return out;
+}
 
 /**
  * @param {{culture?: string|'mix', firstOrigins?: string[], lastOrigins?: string[], gender?: 'm'|'f'|'any',
@@ -108,8 +145,17 @@ const validOrigins = (list, fallback) => {
 export function generateNames(opts = {}) {
   const { culture = 'ro', gender = 'any', count = 10, seed, firstOnly = false, lastOnly = false, doubleLast = false, rarity = 0.5 } = opts;
   const matchInitials = Boolean(opts.matchInitials || opts.alliteration);
-  const firstKeys = validOrigins(opts.firstOrigins, culture);
-  const ownLast = (Array.isArray(opts.lastOrigins) ? opts.lastOrigins : []).filter((k) => CULTURES[k]);
+  // startsWith: names begin with these letters (the forename, or the surname for "surname only").
+  const start = fold(opts.startsWith || '').trim();
+  const starts = (n) => !start || fold(n).startsWith(start);
+  const base = { ...CULTURES, ...(opts.extraCultures || {}) };
+  const CULT = {};
+  for (const [k, c] of Object.entries(base)) {
+    CULT[k] = start ? { ...c, m: lastOnly ? c.m : c.m.filter(starts), f: lastOnly ? c.f : c.f.filter(starts), last: lastOnly ? c.last.filter(starts) : c.last } : c;
+  }
+  const firstKeys = validOrigins(opts.firstOrigins, culture, CULT).filter((k) => (lastOnly ? CULT[k].last.length : CULT[k].m.length || CULT[k].f.length));
+  const ownLast = (Array.isArray(opts.lastOrigins) ? opts.lastOrigins : []).filter((k) => CULT[k] && CULT[k].last.length);
+  if (!firstKeys.length) return [];
   // Without separate surname origins the surname comes from the forename's origin.
   const sameOrigin = !ownLast.length;
   const lastKeys = sameOrigin ? firstKeys : ownLast;
@@ -119,11 +165,13 @@ export function generateNames(opts = {}) {
   const n = Math.max(1, Math.min(500, count | 0));
   for (let tries = 0; out.length < n && tries < n * 40; tries++) {
     const cKey = pick(rng, firstKeys);
-    const c = CULTURES[cKey];
+    const c = CULT[cKey];
     const lKey = sameOrigin ? cKey : pick(rng, lastKeys);
-    const lc = CULTURES[lKey];
+    const lc = CULT[lKey];
     const g = gender === 'm' || gender === 'f' ? gender : rng() < 0.5 ? 'm' : 'f';
     const first = pickByRarity(rng, c[g], rarity);
+    if (!first && !lastOnly) continue;
+    if (!lc.last.length) continue;
     let lastPool = lc.last;
     if (matchInitials && !firstOnly) {
       const al = lc.last.filter((l) => initial(l) === initial(first));
