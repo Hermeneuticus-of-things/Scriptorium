@@ -1049,3 +1049,19 @@ scurtătură (multe sunt zgomot OCR — tratate ca semnal slab, neimplementate o
 - [ ] Șterge textul tăiat (clasic: Edit › Text Tidying › Delete Struck-Through Text) — comandă pe editor.
 - [ ] Rest de triat din cele 468: multe sunt echivalente sub alt nume (alias) sau intrări dinamice/niche;
   de confirmat una câte una înainte de implementare.
+
+### Opțiuni / Setări
+Capturate: dialogul Opțiuni clasic (43 de pagini) și Setările Scribner (11 tab-uri, prin DOM).
+Scribner acoperă toate categoriile clasice (General, Editare, Comportamente, Aspect, Corecturi,
+Tastatură, Partajare, Backup) plus extrasele proprii (AI, Servicii și conturi, Limbă). Comparație
+deterministă: 252 setări clasice, 264 Scribner; majoritatea „diferențelor" sunt aceeași setare sub alt
+nume (alias). Golurile reale, confirmate manual pe datele deterministe (OmniRoute fiind nesigur la
+sarcini structurate), sunt puține.
+
+- [x] **Deschide folderul de backup** (clasic: Opțiuni › Backup › „Open backup folder…") — buton nou în
+  tab-ul Backup care deschide folderul efectiv de backup în managerul de fișiere. `electron/main.cjs`
+  (IPC `settings:openBackupFolder`), `electron/preload.cjs`, `lib/backup.cjs` (`effectiveBackupDir`, pur +
+  testat), `src/components/SettingsDialog.jsx`, `src/lib/i18n.js`, teste `tests/g4ImportExportBackup.test.js`
+  + intrare în `tests/mcpFull.test.js`.
+- [ ] Comutator unic „Backup automat pornit/oprit" (clasic: master toggle) — Scribner are comutatoare
+  separate (la închidere/deschidere/salvare); de evaluat dacă merită un singur comutator-umbrelă.

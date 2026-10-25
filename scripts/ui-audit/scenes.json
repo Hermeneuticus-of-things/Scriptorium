@@ -1,5 +1,5 @@
 [
-  { "id": "options", "classic": { "path": "File>Options...", "tabs": true, "close": true }, "scribner": { "menu": ["Tools", "Settings…"] } },
+  { "id": "options", "classic": { "path": "File>Options...", "tabs": true, "close": true }, "scribner": { "command": "settings", "waitFor": ".settings-dialog", "allTabs": true } },
   { "id": "project-settings", "classic": { "path": "Project>Project Settings...", "tabs": true, "close": true }, "scribner": { "menu": ["Project", "Project settings (labels, statuses, metadata, section types)…"] } },
   { "id": "compile", "classic": { "path": "File>Compile...", "tabs": true, "close": true }, "scribner": { "menu": ["File", "Compile…"] } },
   { "id": "page-setup", "classic": { "path": "File>Page Setup...", "tabs": true, "close": true }, "scribner": { "menu": ["File", "Printing", "Page setup…"] } },

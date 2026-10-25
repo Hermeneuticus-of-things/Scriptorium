@@ -109,6 +109,7 @@ const PRELOAD_COVERAGE = {
   getSettings: 'gui: setările aplicației (temă, chei API); serverul citește doar backup / liste editoriale',
   setSettings: 'gui: setările aplicației și cheile API nu se schimbă din agent',
   chooseBackupDir: 'gui: dialog de folder (backup_now primește backup_dir)',
+  openBackupFolder: 'gui: deschide folderul de backup în managerul de fișiere',
   listTemplates: 'list_templates',
   newProject: 'create_project',
   openProject: 'gui: serverul primește proiectele în linia de comandă',

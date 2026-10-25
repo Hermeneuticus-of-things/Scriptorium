@@ -87,7 +87,10 @@ function axNode(a) {
     };
     const out = [];
     const seen = new Set();
-    for (const el of document.querySelectorAll('button,a,input,select,textarea,summary,label,h1,h2,h3,h4,h5,h6,[role]')) {
+    // When a dialog is open, capture only inside it (the main window stays in the DOM behind the backdrop).
+    const modals = [...document.querySelectorAll('.modal, [role="dialog"]')].filter((m) => m.getBoundingClientRect().width > 0);
+    const root = modals.length ? modals[modals.length - 1] : document.body;
+    for (const el of root.querySelectorAll('button,a,input,select,textarea,summary,label,h1,h2,h3,h4,h5,h6,[role]')) {
       const role = roleOf(el);
       if (!role || !vis(el)) continue;
       const name = labelText(el);
@@ -119,20 +122,37 @@ function axNode(a) {
       it.click();
       return true;
     }, labelPath);
-    for (const s of SCENES.filter((x) => x.scribner)) {
-      const r = s.scribner.menu ? await clickMenu(s.scribner.menu) : true;
-      if (s.scribner.keys) for (const k of s.scribner.keys) await win.keyboard.press(k);
-      if (s.scribner.click) await win.locator(s.scribner.click).first().click({ button: s.scribner.button || 'left' }).catch((e) => console.log(s.id, e.message.split('\n')[0]));
-      await win.waitForTimeout(700);
-      if (r !== true) console.log(s.id, r);
+    // Dispatch an in-app command straight to the renderer (menu:command) — the reliable way to open
+    // Scribner's own dialogs, which a native-menu click does not always surface in the capture.
+    const command = (id) => app.evaluate(({ BrowserWindow }, id) => BrowserWindow.getAllWindows()[0].webContents.send('menu:command', id), id);
+    const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
+    for (const s of SCENES.filter((x) => x.scribner && (!only || x.id === only))) {
+      const sc = s.scribner;
+      if (sc.command) await command(sc.command);
+      else if (sc.menu) { const r = await clickMenu(sc.menu); if (r !== true) console.log(s.id, r); }
+      if (sc.keys) for (const k of sc.keys) await win.keyboard.press(k);
+      if (sc.click) await win.locator(sc.click).first().click({ button: sc.button || 'left' }).catch((e) => console.log(s.id, e.message.split('\n')[0]));
+      if (sc.waitFor) await win.waitForSelector(sc.waitFor, { timeout: 4000 }).catch(() => console.log(s.id, 'waitFor missing:', sc.waitFor));
+      await win.waitForTimeout(600);
       await snap(s.id);
-      for (const t of s.scribner.tabs || []) {
+      // Iterate every tab inside the opened dialog/area (allTabs), or named tabs.
+      if (sc.allTabs) {
+        const scope = sc.waitFor || '.modal';
+        const tabs = await win.locator(`${scope} [role="tab"]`).all().catch(() => []);
+        for (let i = 0; i < tabs.length; i++) {
+          const name = (await tabs[i].textContent().catch(() => '') || `t${i}`).replace(/\s+/g, ' ').trim();
+          await tabs[i].click().catch(() => {});
+          await win.waitForTimeout(300);
+          await snap(`${s.id}--${(name || `t${i}`).replace(/[^\w]+/g, '_').slice(0, 24)}`);
+        }
+      }
+      for (const t of sc.tabs || []) {
         await win.getByRole('tab', { name: t }).or(win.getByRole('button', { name: t, exact: true })).first().click().catch(() => console.log(s.id, 'tab missing', t));
         await win.waitForTimeout(300);
         await snap(`${s.id}--${t.replace(/[^\w]+/g, '_')}`);
       }
       await win.keyboard.press('Escape'); await win.keyboard.press('Escape');
-      if (s.scribner.after) await clickMenu(s.scribner.after);
+      if (sc.after) await clickMenu(sc.after);
       await win.waitForTimeout(300);
     }
   }

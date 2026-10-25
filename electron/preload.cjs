@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('api', {
   getSettings: () => call('settings:get'),
   setSettings: (patch) => call('settings:set', patch),
   chooseBackupDir: () => call('settings:chooseBackupDir'),
+  openBackupFolder: (dir) => call('settings:openBackupFolder', dir),
   listTemplates: () => call('templates:list'),
   newProject: (title, templateId) => call('project:new', title, templateId),
   openProject: (dir) => call('project:open', dir),
