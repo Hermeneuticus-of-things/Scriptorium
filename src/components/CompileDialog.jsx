@@ -57,7 +57,6 @@ const FORMAT_TABS = () => ([
   ['inlocuiri', tr('ui.compileDialog.inlocuiri')],
   ['note', tr('ui.advancedSearchDialog.note')],
   ['pagina', tr('ui.compileDialog.pagina')],
-  ['metadate', tr('ui.common.metadate')],
 ]);
 
 const LAYOUT_DEFAULTS = {
@@ -448,7 +447,6 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
         </div>
         <div className="cd-body">
           <aside className="cd-formats">
-            <h3>{tr('ui.common.formate')}</h3>
             <h3>{tr('ui.compileDialog.formate')}</h3>
             <ul>
               {all.map((f) => (
@@ -691,10 +689,10 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
         {preview !== null && (
           <div className="cd-preview">
             <div className="row">
-              <strong>Previzualizare</strong>
+              <strong>{tr('ui.common.previzualizare')}</strong>
               <button type="button" onClick={() => setPreview(null)}>{tr('ui.compileDialog.inchide_previzualizarea')}</button>
             </div>
-            <iframe title="Previzualizare" sandbox="" srcDoc={preview} />
+            <iframe title={tr('ui.common.previzualizare')} sandbox="" srcDoc={preview} />
           </div>
         )}
 
@@ -702,7 +700,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
         <div className="actions">
           <button type="button" onClick={onClose}>{tr('btn.close')}</button>
           <button type="button" onClick={persist}>{tr('ui.compileDialog.salveaza_setarile')}</button>
-          <button type="button" disabled={busy} onClick={showPreview}>Previzualizare</button>
+          <button type="button" disabled={busy} onClick={showPreview}>{tr('ui.common.previzualizare')}</button>
           <button type="button" className="primary" disabled={busy} onClick={run}>{busy ? tr('ui.compileDialog.se_compileaza') : tr('ui.compileDialog.compileaza')}</button>
         </div>
 
@@ -992,80 +990,6 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <button type="button" onClick={() => setIn(['page'], null)}>{tr('ui.compileDialog.fara_setari_de_pagina')}</button>
                     </div>
                   )}
-                </fieldset>
-              )}
-
-              {tab === 'metadate' && (
-                <div>
-                  <p className="muted small">{tr('ui.compileDialog.pentru_epub_titlul_si_autorul')}</p>
-                  <div className="row">
-                    <label>
-                      {tr('ui.advancedSearchDialog.titlu')}
-                      <input value={epub.title || ''} placeholder={project.title} onChange={(e) => setEpub({ ...epub, title: e.target.value })} />
-                    </label>
-                    <label>
-                      Autor
-                      <input value={epub.author || ''} placeholder={project.author} onChange={(e) => setEpub({ ...epub, author: e.target.value })} />
-                    </label>
-                    <label>
-                      {tr('set.tab.language')}
-                      <input value={epub.language || ''} placeholder="ro" onChange={(e) => setEpub({ ...epub, language: e.target.value })} />
-                    </label>
-                  </div>
-                  <div className="row">
-                    <label>
-                      {tr('ui.compileDialog.editura')}
-                      <input value={epub.publisher || ''} onChange={(e) => setEpub({ ...epub, publisher: e.target.value })} />
-                    </label>
-                    <label>
-                      ISBN
-                      <input value={epub.isbn || ''} onChange={(e) => setEpub({ ...epub, isbn: e.target.value })} />
-                    </label>
-                    <label>
-                      {tr('ui.compileDialog.identificator_daca_nu_exista_isbn')}
-                      <input value={epub.identifier || ''} onChange={(e) => setEpub({ ...epub, identifier: e.target.value })} />
-                    </label>
-                  </div>
-                  <label>
-                    Descriere
-                    <textarea rows="3" value={epub.description || ''} onChange={(e) => setEpub({ ...epub, description: e.target.value })} />
-                  </label>
-                  <label>
-                    {tr('ui.compileDialog.subiecte_separate_prin_virgula')}
-                    <input value={Array.isArray(epub.subjects) ? epub.subjects.join(', ') : epub.subjects || ''} onChange={(e) => setEpub({ ...epub, subjects: e.target.value })} />
-                  </label>
-                  <label>
-                    {tr('ui.compileDialog.coperta_imagine_din_cercetare')}
-                    <select value={coverId} onChange={(e) => setCoverId(e.target.value)}>
-                      <option value="">{tr('ui.compileDialog.fara_coperta')}</option>
-                      {images.map((n) => (
-                        <option key={n.id} value={n.id}>{n.title}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
-
-        {preview !== null && (
-          <div className="cd-preview">
-            <div className="row">
-              <strong>{tr('ui.common.previzualizare')}</strong>
-              <button type="button" onClick={() => setPreview(null)}>{tr('ui.compileDialog.inchide_previzualizarea')}</button>
-            </div>
-            <iframe title="Previzualizare" sandbox="" srcDoc={preview} />
-          </div>
-        )}
-
-        {done && <p className="ok">Salvat: {done}</p>}
-        <div className="actions">
-          <button type="button" onClick={onClose}>{tr('btn.close')}</button>
-          <button type="button" onClick={persist}>{tr('ui.compileDialog.salveaza_setarile')}</button>
-          <button type="button" disabled={busy} onClick={showPreview}>{tr('ui.common.previzualizare')}</button>
-          <button type="button" className="primary" disabled={busy} onClick={run}>{busy ? tr('ui.compileDialog.se_compileaza') : tr('ui.compileDialog.compileaza')}</button>
-        </div>
                                   </fieldset>
                   </fieldset>
                 )}

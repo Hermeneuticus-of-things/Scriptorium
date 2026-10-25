@@ -153,58 +153,6 @@ export default function TargetsDialog({ project, draftWords, draftChars, draftVa
     >
       <div className="tp-title" onPointerDown={onDragStart} title={tr('ui.targetsDialog.trage')}>
         <h2>{tr('ui.targetsDialog.tinte_de_scris')}</h2>
-        <fieldset>
-          <legend>Manuscris</legend>
-          <div className="row">
-            <label>{tr('ui.targetsDialog.tinta_manuscrisului')}<input type="number" min="0" value={draft} onChange={(e) => setDraft(e.target.value)} /></label>
-            <label>{tr('ui.inspector.unitate')}<TypeSelect value={draftType} onChange={setDraftType} /></label>
-          </div>
-          {(draftType === 'Pages' || sessionType === 'Pages') && (
-            <label>
-              {tr('ui.targetsDialog.cuvinte_pe_pagina')}
-              <input type="number" min="50" max="1000" step="10" value={wordsPerPage} onChange={(e) => setWordsPerPage(e.target.value)} />
-            </label>
-          )}
-          <p className="muted small">{tr('ui.targetsDialog.acum')} {fmt(current)} {unit}{draftChars == null && draftType === 'Characters' ? ' (estimare)' : ''}</p>
-          <div className="row">
-            <label>
-              {tr('ui.targetsDialog.termen_limita')}
-              <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-            </label>
-            <button type="button" onClick={() => setDeadline('')} disabled={!deadline}>{tr('ui.targetsDialog.fara_termen')}</button>
-          </div>
-          <p className="muted">Zile de scris</p>
-          <div className="checks">
-            {DAYS().map(([d, l]) => (
-              <label key={d} className="check">
-                <input type="checkbox" checked={writingDays.includes(d)} onChange={() => toggleDay(d)} /> {l}
-              </label>
-            ))}
-          </div>
-          {plan ? (
-            <div className="stats">
-              <div><strong>{fmt(plan.remaining)}</strong><span>{unit} {tr('ui.targetsDialog.ramase')}</span></div>
-              <div><strong>{fmt(plan.daysLeft)}</strong><span>{tr('ui.targetsDialog.zile_de_scris_ramase')}</span></div>
-              <div><strong>{fmt(plan.perDay)}</strong><span>{unit} {tr('ui.targetsDialog.pe_zi')}</span></div>
-              <div><strong>{plan.overdue ? tr('ui.targetsDialog.depasit') : plan.remaining === 0 ? tr('ui.targetsDialog.atinsa') : tr('ui.targetsDialog.in_grafic')}</strong><span>stare</span></div>
-            </div>
-          ) : (
-            <p className="muted">{tr('ui.targetsDialog.alege_un_termen_limita_pentru')} {unit} {tr('ui.targetsDialog.ai_de_scris_pe_zi')}</p>
-          )}
-        </fieldset>
-        <fieldset>
-          <legend>Sesiune</legend>
-          <div className="row">
-            <label>{tr('ui.targetsDialog.tinta_sesiunii')}<input type="number" min="0" value={session} onChange={(e) => setSession(e.target.value)} /></label>
-            <label>{tr('ui.inspector.unitate')}<TypeSelect value={sessionType} onChange={setSessionType} /></label>
-          </div>
-          <label>
-            Resetarea sesiunii
-            <select value={sessionReset} onChange={(e) => setSessionReset(e.target.value)}>
-              <option value="midnight">{tr('ui.targetsDialog.la_miezul_noptii')}</option>
-              <option value="open">{tr('ui.targetsDialog.la_deschiderea_proiectului')}</option>
-              <option value="manual">{tr('ui.targetsDialog.manual')}</option>
-            </select>
         <button type="button" className="tp-close" aria-label={tr('btn.close')} onClick={onClose}>×</button>
       </div>
       <div className="tp-body">

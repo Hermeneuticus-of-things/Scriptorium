@@ -2,6 +2,10 @@
 
 
 ## v0.9.9
+- Compile pe trei coloane (formate · așezări de secțiuni · Conținut/Opțiuni/Metadate) și „Editează formatul…” separat.
+- Ținte într-un panou plutitor cu bare de progres; Statistici cu manuscrisul și selecția alăturate.
+- Modul compunere: bara de comenzi apare la marginea de jos (fundal, poziția paginii, mărimea textului, lățimea, estomparea, Inspector, Mergi la, Ieșire).
+- Bara de formatare implicită mai scurtă (restul în »).
 - Inspector ca în programele de scris clasice: un singur panou o dată, ales din iconițele de jos (Note, Semne de carte și legături, Metadate, Snapshot-uri, Comentarii); Note e implicit, cu sinopsisul sus și comutatorul Document / Proiect.
 - Bara de jos a documentului: zoom, cuvinte, caractere și ținta documentului (buton cu fereastră mică și bară de progres).
 - Bara documentului: ▲▼ pentru documentul anterior / următor.

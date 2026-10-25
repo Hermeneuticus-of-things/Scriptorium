@@ -267,3 +267,34 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 - [x] Scribner: alegerea modelului în Setări, „Folosit acum”, mesaj pentru D&TED vechi
 - [ ] D&TED 0.4.2 publicat (Windows)
 - [ ] Motorul încorporat cu un model românesc descărcabil liber (eek cere acces aprobat individual)
+
+## Cereri 25.10.2026 (lista completă, în ordinea în care au venit)
+
+Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
+
+1. [x] Fereastra de scris prea îngustă: pagina se lățește trăgând de margini, dublu-clic = toată fereastra.
+2. [x] Mărirea textului cât e nevoie: Ctrl+= / Ctrl+- / Ctrl+0, Ctrl+rotiță, zoom în bara documentului.
+3. [x] Dictare instalată și activată din prima, fără instalare de fiecare dată (descărcare automată o dată; D&TED folosit dacă există).
+4. [x] Mini-player nativ de dictare (F8, 🎙): dictare + citire, fereastră mică mutabilă.
+5. [x] Voce de citire (TTS) inclusă, nativă: voce românească „Mihai” (Piper), descărcată singură o dată.
+6. [x] Iconiță proprie pentru program, installer, desktop și Start, cu scris „SCRIBNER” sub ea.
+7. [x] Comanda MCP generală, fără date personale (fără nume de utilizator, fără carte), aceeași pentru orice client AI (`scribner-mcp.cmd`).
+8. [x] Date personale scoase din repo-urile publice (dted: test cu nume; rapoartele ascund orice cale).
+9. [ ] Date personale (adrese de email) în scripturile din CCDEW `.claude/helpers` — așteaptă decizia autorului.
+10. [~] Interfața 1:1 cu programul clasic de scris, pe toate nivelurile (ferestre, setări, dialoguri intermediare):
+    - [x] Inspector pe panouri cu iconițe jos (Note, Semne de carte, Metadate, Snapshot-uri, Comentarii); secțiuni pliabile, doar ce trebuie vizibil
+    - [x] Bara de jos a documentului (zoom, cuvinte, caractere, țintă)
+    - [x] ▲▼ în bara documentului; corkboard cu bara de comenzi jos; Outline cu coloanele implicite clasice
+    - [x] Compile pe trei coloane (formate, așezări de secțiuni, conținut/opțiuni/metadate) + „Editează formatul…”
+    - [x] Ținte în panou plutitor cu bare de progres; Statistici manuscris/selecție alăturate
+    - [x] Mod compunere cu bara de comenzi la marginea de jos (fundal, poziția paginii, mărime text, lățime, estompare)
+    - [x] Bara de formatare implicită mai scurtă
+    - [~] Proiect nou: șabloane pe categorii cu fișe; Setările proiectului cu listă verticală (în lucru)
+    - [ ] Căutare rapidă în bara de sus cu rezultatele în binder
+    - [ ] Bara de sus implicită (Binder, Adaugă, Dosar, vederi, căutare, Referință rapidă, Compunere, Compile, Inspector)
+    - [ ] Bara documentului comună pentru ambele panouri (meniul titlului, blocare pe loc)
+    - [ ] Comparare și restul ferestrelor: Cuvinte cheie, Colecții, Import/Export, Generator de nume, Referință rapidă, meniuri
+11. [x] Mesajul „niciun server MCP Scrivener”: serverul Scribner citește și proiecte .scriv pe loc (`scriv_outline`, `scriv_read`), are prompts și resurse.
+12. [ ] Import/export pornind și de la fișierul `.scrivx` (nu doar de la folderul `.scriv`), în aplicație și în MCP; căutare în proiectul .scriv (`scriv_search`).
+13. [ ] Skill / instrument „mcp-builder” cu teste pentru serverul MCP Scribner (evaluări automate ale uneltelor).
+14. [ ] Bug-uri rămase din vânătoarea pe niveluri (lista din TODO.md, secțiunea 25.10).

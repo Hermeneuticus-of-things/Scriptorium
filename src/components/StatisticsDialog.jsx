@@ -44,8 +44,6 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label="Statistici" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('ui.common.statistici')}</h2>
       <div className="modal wide" role="dialog" aria-label={t('ui.statisticsDialog.statistici')} onClick={(e) => e.stopPropagation()}>
         <h2>{t('ui.statisticsDialog.statistici')}</h2>
         <div className="tabs" role="tablist">

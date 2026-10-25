@@ -340,7 +340,7 @@ const flat = (nodes, out = []) => {
     await win.keyboard.press('Control+End');
     await win.keyboard.type(' Ultimul');
     await cmd('compile');
-    await win.waitForSelector('text=Format de ieșire', { timeout: 5000 });
+    await win.waitForSelector('text=Compilează pentru', { timeout: 5000 });
     await win.locator('select').filter({ has: win.locator('option[value="txt"]') }).first().selectOption('txt');
     const f = path.join(W, 'quick.txt');
     await answer(f);
@@ -357,7 +357,7 @@ const flat = (nodes, out = []) => {
       step = `compile ${fmt}`;
       const file = path.join(W, `out.${fmt}`);
       await cmd('compile');
-      await win.waitForSelector('text=Format de ieșire', { timeout: 5000 });
+      await win.waitForSelector('text=Compilează pentru', { timeout: 5000 });
       await win.locator('select').filter({ has: win.locator(`option[value="${fmt}"]`) }).first().selectOption(fmt);
       await answer(file);
       await win.locator('.modal button.primary', { hasText: 'Compilează' }).click();
@@ -469,7 +469,7 @@ const flat = (nodes, out = []) => {
     await menuClick('Editor');
     check('menu: editor view', Boolean(await waitFor(() => win.locator('.toolbar .seg button.on', { hasText: 'Editor' }).count(), 2000)));
     // Dialogs from the menu
-    for (const [label, sel] of [['Mergi la…', '.modal'], ['Caută și înlocuiește în proiect…', '.modal[aria-label="Caută în proiect"]'], ['Compilează…', 'text=Format de ieșire'], ['Statistici…', '.modal']]) {
+    for (const [label, sel] of [['Mergi la…', '.modal'], ['Caută și înlocuiește în proiect…', '.modal[aria-label="Caută în proiect"]'], ['Compilează…', 'text=Compilează pentru'], ['Statistici…', '.modal']]) {
       const r = await menuClick(label);
       check(`menu: "${label}" opens its dialog`, r === true && Boolean(await waitFor(() => win.locator(sel).count(), 3000)), String(r));
       await closeModal();
