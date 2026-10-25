@@ -92,6 +92,14 @@ describe('importWebPage (offline images)', () => {
     await expect(importWebPage('nu e url', { fetch: fakeFetch({}) })).rejects.toThrow(/invalid/);
     await expect(importWebPage('https://ex.ro/x', { fetch: fakeFetch({}) })).rejects.toThrow(/404/);
   });
+
+  it('sends a Chrome User-Agent so sites do not block the import', async () => {
+    let headers = null;
+    const fetch = async (_url, init) => { headers = (init && init.headers) || null; return res('<body>hi</body>', { type: 'text/html' }); };
+    await importWebPage('https://ex.ro/p', { fetch });
+    expect(headers['User-Agent']).toMatch(/Chrome\//);
+    expect(headers['Accept-Language']).toBeTruthy();
+  });
 });
 
 describe('image limits', () => {
