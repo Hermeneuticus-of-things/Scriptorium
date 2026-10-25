@@ -10,6 +10,7 @@ import { POS_CLASSES } from '../lib/pos.js';
 import { listBookmarks } from '../editor/formatting.js';
 import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS } from '../lib/editorMenus.js';
 import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
+import { revisionRoundLabel } from '../lib/editingPrefs.js';
 
 const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Verdana', 'Calibri', 'Courier New', 'Courier Prime'];
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
@@ -451,7 +452,7 @@ export default function FormatBar({
 
   const revisionItems = [
     { label: view.revision ? tr('ui.formatBar.revisionStop', { n: view.revision }) : tr('ui.formatBar.revisionOff'), action: () => setView({ revision: 0 }), disabled: !view.revision },
-    ...[1, 2, 3, 4, 5].map((n) => ({ label: tr('ui.formatBar.revisionRound', { n }), action: () => setView({ revision: n }) })),
+    ...[1, 2, 3, 4, 5].map((n) => ({ label: revisionRoundLabel(n), action: () => setView({ revision: n }) })),
     '-',
     { label: tr('ui.formatBar.acceptRevisions'), action: () => chain().removeRevisions().run() },
     ...(view.revision ? [{ label: tr('ui.formatBar.removeRound', { n: view.revision }), action: () => chain().removeRevisions(view.revision).run() }] : []),

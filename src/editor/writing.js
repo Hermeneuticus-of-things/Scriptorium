@@ -5,6 +5,7 @@ import { Extension, InputRule, Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { eventShortcut, isCharStyle, nextStyleId, styleForShortcut } from '../lib/styles.js';
+import { editingPrefs } from '../lib/editingPrefs.js';
 
 export const REVISION_COLORS = ['#c62828', '#1565c0', '#2e7d32', '#6a1b9a', '#ef6c00'];
 
@@ -155,6 +156,15 @@ export const Revision = Mark.create({
               if (m.type === type && (!level || m.attrs.level === level)) tr.removeMark(pos, pos + node.nodeSize, m);
             }
           });
+          // Text struck in revision mode (Options → Editing → Revisions) is removed for good.
+          const del = state.schema.marks.revisionDel;
+          if (del) {
+            const gone = [];
+            state.doc.descendants((node, pos) => {
+              if (node.isText && node.marks.some((m) => m.type === del && (!level || m.attrs.level === level))) gone.push([pos, pos + node.nodeSize]);
+            });
+            for (const [a, b] of gone.reverse()) tr.delete(tr.mapping.map(a), tr.mapping.map(b));
+          }
           if (dispatch) dispatch(tr);
           return true;
         },
@@ -286,7 +296,9 @@ export const AutoComplete = Extension.create({
       if (!empty || !$from.parent.isTextblock) return null;
       // Only the end of the paragraph matters: a bounded window keeps typing fast in huge paragraphs.
       const before = $from.parent.textBetween(Math.max(0, $from.parentOffset - 256), $from.parentOffset, undefined, '￼');
-      const m = /([\p{L}][\p{L}\p{M}'’-]{2,})$/u.exec(before);
+      // Options → Editing: suggestions start after N letters (default 3).
+      const min = Math.max(1, Math.min(10, Number(editingPrefs().acMinLetters) || 3));
+      const m = new RegExp(`([\\p{L}][\\p{L}\\p{M}'’-]{${min - 1},})$`, 'u').exec(before);
       if (!m) return null;
       const after = $from.parent.textBetween($from.parentOffset, Math.min($from.parent.content.size, $from.parentOffset + 64), undefined, '￼');
       if (/^[\p{L}]/u.test(after)) return null;

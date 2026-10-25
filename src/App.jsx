@@ -67,6 +67,8 @@ import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
 import { applySettingsCss } from './lib/settingsDefaults.js';
+import { setEditingPrefs, correctionOptions } from './lib/editingPrefs.js';
+import { resetFormattingHtml } from './editor/editingOptions.js';
 import DialogA11y from './components/DialogA11y.jsx';
 import { setLanguage, cmdLabel, groupLabel, builtinName, t as tr, uiLocale } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
@@ -196,6 +198,8 @@ export default function App({ api: apiProp }) {
   settingsRef.current = settings;
   const openResultRef = useRef(null);
   if (settings) setLanguage(settings.language || 'ro');
+  // Options → Editing / Corrections read live (new titles, auto-complete, zoom, CSS variables).
+  if (settings) setEditingPrefs(settings);
   useEffect(() => {
     if (settings) applySettingsCss(settings);
   }, [settings]);
@@ -1367,6 +1371,8 @@ export default function App({ api: apiProp }) {
     setSettings(await api.getSettings());
   };
   const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
+  // Options → Editing: the zoom of documents opened while no zoom was chosen (100 = none).
+  const defaultZoom = Math.min(400, Math.max(50, Number(settings?.defaultZoom) || 100));
   const setZoom = (z) => setEditorView({ ...editorViewRef.current, zoom: Math.min(400, Math.max(50, Math.round(z))) });
   const editorViewRef = useRef(editorView);
   editorViewRef.current = editorView;
@@ -1375,7 +1381,7 @@ export default function App({ api: apiProp }) {
     const onWheel = (e) => {
       if (!(e.ctrlKey || e.metaKey) || !e.target.closest?.('.page')) return;
       e.preventDefault();
-      setZoom((editorViewRef.current.zoom || 100) + (e.deltaY < 0 ? 10 : -10));
+      setZoom((editorViewRef.current.zoom || defaultZoom) + (e.deltaY < 0 ? 10 : -10));
     };
     window.addEventListener('wheel', onWheel, { passive: false });
     return () => window.removeEventListener('wheel', onWheel);
@@ -1599,6 +1605,26 @@ export default function App({ api: apiProp }) {
     return total;
   };
 
+  // Options → Editing → Formatting: every text document loses its direct formatting.
+  const convertAllFormatting = async () => {
+    await flush();
+    const docs = docsNow();
+    const next = {};
+    for (const [id, html] of Object.entries(docs)) {
+      const node = findNode(projectRef.current.tree, id);
+      if (!node || node.locked || team.lockOf(id) || typeof html !== 'string') continue;
+      const out = resetFormattingHtml(html);
+      if (out === html) continue;
+      await api.takeSnapshot(dir, id, tr('ui.edit.snapshotConvert')).catch(report);
+      await api.writeDoc(dir, id, 'docs', out);
+      next[id] = out;
+    }
+    setDocs((d) => ({ ...d, ...next }));
+    for (const [id, html] of Object.entries(next)) setEditorHtml(id, html);
+    if (Object.keys(next).length) recordHistory();
+    return Object.keys(next).length;
+  };
+
   const replaceAllInProject = async (ids, re, replacement) => {
     await flush();
     const docs = docsNow();
@@ -1748,7 +1774,17 @@ export default function App({ api: apiProp }) {
     api.printDocument(`<h1>${(selected?.title || '').replace(/</g, '&lt;')}</h1>${html}`, selected?.title).catch(report);
   };
 
-  const words = useMemo(() => (project ? projectWords(project, docs) : []), [project, docs]);
+  const acTitles = Boolean(settings?.acTitles);
+  const words = useMemo(() => {
+    if (!project) return [];
+    const base = projectWords(project, docs);
+    if (!acTitles) return base;
+    // Options → Editing: document titles are proposed too.
+    const titles = [];
+    const walk = (nodes) => (nodes || []).forEach((n) => { if (n.title && /^[\p{L}]/u.test(n.title) && !/\s/.test(n.title.trim())) titles.push(n.title.trim()); walk(n.children); });
+    walk(project.tree);
+    return [...new Set([...base, ...titles])];
+  }, [project, docs, acTitles]);
   // Character count for the status bar: htmlToText parses the whole document, so only redo it
   // when that document's text changes.
   const selectedHtml = selectedId ? docs[selectedId] || '' : '';
@@ -1943,6 +1979,9 @@ export default function App({ api: apiProp }) {
     // Read live: new or learned replacements apply without rebuilding the editors.
     getReplacements: replacementsNow,
     onLearn: settings.learnCorrections === false ? null : learnFromEdit,
+    // Options → Corrections (two capitals, Caps Lock, days, exceptions, spelling, grammar) and
+    // Options → Editing (quotes, auto-pairs, drag selection, caret, paste, revisions).
+    ...correctionOptions(settings),
   };
   const corrKey = JSON.stringify(corrections);
   const toolbars = toolbarPrefs(settings.toolbars);
@@ -2207,9 +2246,9 @@ export default function App({ api: apiProp }) {
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
-    ['view', 'zoomIn', tr('cmd.zoomIn'), () => setZoom((editorView.zoom || 100) + 10)],
-    ['view', 'zoomOut', tr('cmd.zoomOut'), () => setZoom((editorView.zoom || 100) - 10)],
-    ['view', 'zoomReset', tr('cmd.zoomReset'), () => setZoom(100)],
+    ['view', 'zoomIn', tr('cmd.zoomIn'), () => setZoom((editorView.zoom || defaultZoom) + 10)],
+    ['view', 'zoomOut', tr('cmd.zoomOut'), () => setZoom((editorView.zoom || defaultZoom) - 10)],
+    ['view', 'zoomReset', tr('cmd.zoomReset'), () => setZoom(defaultZoom)],
     ['view', 'pageFull', tr('cmd.pageFull'), () => setEditorView({ ...editorView, fullWidth: !editorView.fullWidth })],
     ['view', 'composition', tr('cmd.composition'), () => { setView('editor'); setComposition((c) => !c); }],
     ['view', 'toggleInspector', tr('cmd.toggleInspector'), () => setShowInspector((v) => !v)],
@@ -2658,7 +2697,7 @@ export default function App({ api: apiProp }) {
                 words={counts[selected.id] || 0}
                 selectedWords={selWords}
                 chars={statusChars}
-                zoom={editorView.zoom || 100}
+                zoom={editorView.zoom || defaultZoom}
                 onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
                 onPatch={selected.root || selected.locked ? null : (patch) => patchNode(selected.id, patch)}
               />
@@ -3010,7 +3049,7 @@ export default function App({ api: apiProp }) {
         <CompositionBar
           settings={settings}
           onSettings={async (patch) => { setSettings((s) => ({ ...s, ...patch })); await api.setSettings(patch); }}
-          zoom={editorView.zoom || 100}
+          zoom={editorView.zoom || defaultZoom}
           onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
           words={selected ? counts[selected.id] || 0 : 0}
           chars={selected ? statusChars : 0}
@@ -3172,6 +3211,7 @@ export default function App({ api: apiProp }) {
           project={project}
           dir={dir}
           onProjectChange={saveProject}
+          onConvertFormatting={convertAllFormatting}
           onClose={async () => {
             setDialog(null);
             setSettingsTab('');

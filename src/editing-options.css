@@ -1,0 +1,40 @@
+/* --- Options → Editing / Corrections --------------------------------------- */
+/* Default paragraph: alignment, side indents, space before (inline paragraph styles win). */
+.prose .ProseMirror > p { margin-left: var(--para-indent-left, 0); margin-right: var(--para-indent-right, 0); margin-top: var(--para-space-before, 0); }
+.prose .ProseMirror > p:not([style*='text-align']) { text-align: var(--para-align, start); }
+.prose .ProseMirror { tab-size: var(--para-tab-size, 8); }
+/* Extra room after the end of the text, so the last line can be scrolled up. */
+.prose .ProseMirror { padding-bottom: var(--editor-end-space, 0); }
+/* Wide / steady caret: the system caret is hidden and a drawn one follows the cursor. */
+.ProseMirror.custom-caret-on { caret-color: transparent; }
+.ProseMirror .custom-caret { position: relative; display: inline-block; width: 0; height: 1em; vertical-align: text-bottom; pointer-events: none; }
+.ProseMirror .custom-caret::after { content: ''; position: absolute; left: 0; top: 0; bottom: -0.15em; width: var(--caret-width, 2px); background: var(--text, currentColor); animation: custom-caret-blink var(--caret-blink, 1000ms) steps(1) infinite; }
+:root[data-custom-caret='off'] .ProseMirror.custom-caret-on { caret-color: auto; }
+:root[data-custom-caret='off'] .ProseMirror .custom-caret { display: none; }
+@keyframes custom-caret-blink { 50% { opacity: 0; } }
+/* Grammar marks (blue wavy underline) and struck revision deletions. */
+.ProseMirror .grammar-issue { text-decoration: underline wavy #1e88e5; text-decoration-skip-ink: none; text-underline-offset: 3px; }
+.ProseMirror .grammar-spaces, .ProseMirror .grammar-spaceBefore { background: color-mix(in srgb, #1e88e5 18%, transparent); }
+.prose s.revision-del { text-decoration: line-through; text-decoration-thickness: 2px; }
+.prose s.revision-del[data-revision-del='1'] { color: var(--rev-1); }
+.prose s.revision-del[data-revision-del='2'] { color: var(--rev-2); }
+.prose s.revision-del[data-revision-del='3'] { color: var(--rev-3); }
+.prose s.revision-del[data-revision-del='4'] { color: var(--rev-4); }
+.prose s.revision-del[data-revision-del='5'] { color: var(--rev-5); }
+.editor-area.hide-revisions s.revision-del { display: none; }
+/* Fonts for notes (document and project) and for comments / footnotes. */
+.notes .ProseMirror, .project-notes-tabs .ProseMirror { font-family: var(--notes-font, inherit); font-size: var(--notes-font-size, inherit); }
+.annot-item, .comment-bubble { font-family: var(--annot-font, inherit); font-size: var(--annot-font-size, inherit); }
+/* Settings panes. */
+.editing-pane .subtabs { margin-bottom: 8px; }
+.mini-ruler { position: relative; height: 26px; margin: 6px 0 2px; border-bottom: 1px solid var(--line); background: var(--panel); font-size: 10px; }
+.mini-ruler .tick { position: absolute; bottom: 0; height: 6px; border-left: 1px solid var(--muted); }
+.mini-ruler .tick .lbl { position: absolute; top: -12px; left: 2px; color: var(--muted); }
+.mini-ruler .marker { position: absolute; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; margin-left: -5px; }
+.mini-ruler .marker.first { top: 0; border-top: 7px solid var(--accent); }
+.mini-ruler .marker.left, .mini-ruler .marker.right { bottom: 0; border-bottom: 7px solid var(--accent); }
+.mini-ruler .marker.tab { bottom: 0; width: 6px; height: 6px; border: 0; border-left: 2px solid var(--text); border-bottom: 2px solid var(--text); margin-left: -1px; }
+.para-preview { width: 16em; max-width: 100%; border: 1px solid var(--line); padding: 4px 0; font-family: var(--editor-font); font-size: 12px; background: var(--bg); }
+.para-preview p { margin-top: 0; }
+.rev-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); }
+.find-bar .find-mode { flex: 0 0 auto; }

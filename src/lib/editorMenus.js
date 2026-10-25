@@ -3,6 +3,7 @@
 import { getHTMLFromFragment } from '@tiptap/core';
 import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linkedToFootnotes } from './noteConvert.js';
 import { isParaStyle } from './styles.js';
+import { revisionRoundLabel } from './editingPrefs.js';
 
 export const TEXT_COLORS = ['#b3261e', '#c77700', '#2e7d32', '#1565c0', '#6a1b9a', '#5d4037', '#757575'];
 export const HIGHLIGHTS = ['#fff176', '#a5d6a7', '#90caf9', '#f8bbd0', '#ffcc80'];
@@ -193,7 +194,7 @@ export function editorMenus(ctx) {
     ] },
     { label: L('revisionMode'), submenu: [
       { label: check(!rev, L('revisionOff')), action: () => setView({ ...view, revision: 0 }) },
-      ...[1, 2, 3, 4, 5].map((n) => ({ label: check(rev === n, t('ui.formatBar.revisionRound', { n })), action: () => setView({ ...view, revision: n }) })),
+      ...[1, 2, 3, 4, 5].map((n) => ({ label: check(rev === n, revisionRoundLabel(n)), action: () => setView({ ...view, revision: n }) })),
       '-',
       { label: t('ui.formatBar.acceptRevisions'), action: on((c) => c.removeRevisions().run()) },
     ] },

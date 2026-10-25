@@ -1,5 +1,7 @@
 import { LANG_NAMES } from '../lib/lookups.js';
 import ServicesPanel from './ServicesPanel.jsx';
+import CorrectionsPane from './CorrectionsPane.jsx';
+import EditingPane from './EditingPane.jsx';
 import React, { useRef, useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
 import { colorFor, newMachineId } from '../lib/team.js';
@@ -26,7 +28,7 @@ const FONTS = [
   ["'Courier New', monospace", 'Courier New'],
 ];
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, initialTab }) {
+export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, initialTab, onConvertFormatting }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
   const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
   const [tab, setTab] = useState(() => (TABS.includes(initialTab) ? initialTab : 'general'));
@@ -213,7 +215,6 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const setEdL = (k, v) => setEdLists((all) => ({ ...all, [edBase]: { ...all[edBase], [k]: v } }));
 
   const num = (v, d) => (Number.isFinite(Number(v)) && v !== '' ? Number(v) : d);
-  const editRepl = (i, k, v) => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.map((r, j) => (j === i ? { ...r, [k]: v, learned: false } : r)) }));
 
   const save = async () => {
     try {
@@ -436,57 +437,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         {check('typewriter', t('set.typewriter'))}
       </>
     ),
-    corrections: (
-      <>
-        {check('smartQuotes', t('set.smartQuotes'))}
-        {check('smartDashes', t('set.smartDashes'))}
-        {check('smartEllipsis', t('set.smartEllipsis'))}
-        {check('smartFractions', t('ui.settingsDialog.fractii_1_2_3_4'))}
-        {check('autoCapitalize', t('set.autoCapitalize'))}
-        <label>
-          {t('set.spellLangs')}
-          <input value={s.spellLanguages} onChange={set('spellLanguages')} placeholder="ro, en-US" />
-        </label>
-        {api.listDictionaryWords && <PersonalDictionary api={api} onError={onError} />}
-        <fieldset>
-          <legend>{t('set.replacements')}</legend>
-          {check('learnCorrections', t('ui.settingsDialog.invata_corecturile'))}
-          {s.autoReplacements.map((r, i) => (
-            <div className="row" key={i}>
-              <input aria-label={t('set.replaceFrom')} placeholder={t('set.replaceFrom')} value={r.from} onChange={(e) => editRepl(i, 'from', e.target.value)} />
-              <input aria-label={t('set.replaceTo')} placeholder={t('set.replaceTo')} value={r.to} onChange={(e) => editRepl(i, 'to', e.target.value)} />
-              {r.learned && <span className="muted small">{t('ui.settingsDialog.invatat')}</span>}
-              <button onClick={() => setS((p) => ({ ...p, autoReplacements: p.autoReplacements.filter((_, j) => j !== i) }))}>{t('btn.remove')}</button>
-            </div>
-          ))}
-          <button onClick={() => setS((p) => ({ ...p, autoReplacements: [...p.autoReplacements, { from: '', to: '' }] }))}>{t('btn.add')}</button>
-        </fieldset>
-      </>
-    ),
-    editing: (
-      <>
-        <div className="row">
-          <label>
-            {t('set.paraIndent')}
-            <input type="number" min="0" max="5" step="0.5" value={s.paragraphIndent} onChange={set('paragraphIndent')} />
-          </label>
-          <label>
-            {t('set.paraSpacing')}
-            <input type="number" min="0" max="3" step="0.1" value={s.paragraphSpacing} onChange={set('paragraphSpacing')} />
-          </label>
-        </div>
-        <label>
-          {t('set.defaultView')}
-          <select value={s.defaultView} onChange={set('defaultView')}>
-            <option value="editor">{t('cmd.viewEditor')}</option>
-            <option value="corkboard">{t('cmd.viewCorkboard')}</option>
-            <option value="outline">{t('cmd.viewOutline')}</option>
-          </select>
-        </label>
-        {check('showInvisibles', t('set.showInvisibles'))}
-        {check('autoBacklinks', t('set.autoBacklinks'))}
-      </>
-    ),
+    corrections: <CorrectionsPane s={s} setS={setS} settings={init} api={api} onError={onError} />,
+    editing: <EditingPane s={s} setS={setS} settings={init} onConvertFormatting={onConvertFormatting} />,
     backup: api.chooseBackupDir ? (
       <>
         {check('backupOnClose', t('set.backupOnClose'))}
@@ -884,32 +836,5 @@ function LocalEngine({ api, onError }) {
       </div>
       {msg && <p className="muted small" role="status">{msg}</p>}
     </div>
-  );
-}
-
-// Personal dictionary: words added with "Adaugă în dicționar"; they can be removed here.
-function PersonalDictionary({ api, onError }) {
-  const [words, setWords] = React.useState(null);
-  const [filter, setFilter] = React.useState('');
-  const load = () => api.listDictionaryWords().then((w) => setWords([...w].sort((a, b) => a.localeCompare(b, 'ro')))).catch(onError);
-  React.useEffect(() => {
-    load();
-  }, []);
-  if (!words) return null;
-  const shown = words.filter((w) => w.toLowerCase().includes(filter.toLowerCase()));
-  return (
-    <fieldset>
-      <legend>{t('ui.settingsDialog.dictionar_personal')}{words.length})</legend>
-      {words.length > 8 && <input placeholder={t('ui.settingsDialog.cauta_cuvant')} value={filter} onChange={(e) => setFilter(e.target.value)} />}
-      {!words.length && <p className="muted">{t('ui.settingsDialog.gol_cuvintele_intra_aici_din')}</p>}
-      <div style={{ maxHeight: 160, overflow: 'auto' }}>
-        {shown.map((w) => (
-          <div key={w} className="row" style={{ justifyContent: 'space-between' }}>
-            <span>{w}</span>
-            <button className="link" onClick={() => api.removeDictionaryWord(w).then(load).catch(onError)}>{t('btn.delete')}</button>
-          </div>
-        ))}
-      </div>
-    </fieldset>
   );
 }

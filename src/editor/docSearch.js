@@ -1,8 +1,49 @@
 // Find & replace inside one ProseMirror document. Matches run per text block, so a
 // match can span bold/italic runs but never crosses a paragraph boundary.
 
+/** A character without its diacritics (ă→a, ș→s, é→e), kept 1:1 so offsets stay valid. */
+export function foldChar(c) {
+  const f = c.normalize('NFD').replace(/\p{M}/gu, '');
+  return f.length === c.length ? f : c;
+}
+/** Text without diacritics, same length as the input. */
+export function foldText(text) {
+  let out = '';
+  for (let i = 0; i < text.length; i++) out += foldChar(text[i]);
+  return out;
+}
+
+const LETTER = '[\\p{L}\\p{N}\\p{M}_]';
+
+/**
+ * Regex for the find bar. mode: 'contains' (anywhere), 'starts' (at the start of a word),
+ * 'word' (whole word). ignoreDiacritics folds the query; findRanges folds the text with
+ * { fold: true }. Returns null for an empty or invalid query.
+ */
+export function buildDocRegex({ query, mode = 'contains', caseSensitive = false, regex = false, ignoreDiacritics = false, wholeWord = false }) {
+  if (!query) return null;
+  const q = ignoreDiacritics ? foldText(query) : query;
+  if (regex && (/\((?:[^()\\]|\\.)*[+*}](?:[^()\\]|\\.)*\)\s*[+*{]/.test(q) || q.length > 500)) return null;
+  let src = regex ? q : q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = wholeWord && mode === 'contains' ? 'word' : mode;
+  if (m === 'starts' || m === 'word') src = `(?<!${LETTER})(?:${src})`;
+  if (m === 'word') src += `(?!${LETTER})`;
+  try {
+    return new RegExp(src, `g${caseSensitive ? '' : 'i'}u`);
+  } catch {
+    return null;
+  }
+}
+
+/** Keeps the ranges that lie inside scope {from, to} (search in selection). */
+export function rangesWithin(ranges, scope) {
+  if (!scope || scope.from >= scope.to) return ranges;
+  return ranges.filter((r) => r.from >= scope.from && r.to <= scope.to);
+}
+
 // Returns [{from, to}] document ranges for every match of `re` (a /g regex).
-export function findRanges(doc, re) {
+// opts.fold: match against the text without diacritics (the regex must be folded too).
+export function findRanges(doc, re, opts = {}) {
   const ranges = [];
   if (!re) return ranges;
   doc.descendants((node, pos) => {
@@ -20,6 +61,7 @@ export function findRanges(doc, re) {
         text += '￼';
       }
     });
+    if (opts.fold) text = foldText(text);
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(text))) {
@@ -68,4 +110,37 @@ export function replaceRanges(editor, ranges, replacement, { regex = false } = {
   }
   editor.view.dispatch(tr);
   return ranges.length;
+}
+
+// Search history of the find bar (most recent first), kept in this browser profile.
+const HISTORY_KEY = 'scribner-find-history';
+export function loadFindHistory(storage = typeof localStorage !== 'undefined' ? localStorage : null) {
+  try {
+    const v = JSON.parse(storage?.getItem(HISTORY_KEY) || '[]');
+    return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+/** Puts `query` first in the history (no duplicates, at most `max` entries) and saves it. */
+export function pushFindHistory(query, storage = typeof localStorage !== 'undefined' ? localStorage : null, max = 20) {
+  const q = String(query ?? '');
+  const list = loadFindHistory(storage);
+  if (!q.trim()) return list;
+  const next = [q, ...list.filter((x) => x !== q)].slice(0, max);
+  try {
+    storage?.setItem(HISTORY_KEY, JSON.stringify(next));
+  } catch {
+    /* private window: history only for this session */
+  }
+  return next;
+}
+/** Forgets the search history. */
+export function clearFindHistory(storage = typeof localStorage !== 'undefined' ? localStorage : null) {
+  try {
+    storage?.removeItem(HISTORY_KEY);
+  } catch {
+    /* nothing stored */
+  }
+  return [];
 }

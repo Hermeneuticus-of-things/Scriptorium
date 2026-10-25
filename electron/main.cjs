@@ -221,6 +221,12 @@ const { lookupGroups } = require('../src/lib/lookups.js');
 
 function applySpellLanguages(win) {
   const ses = win.webContents.session;
+  // Options → Corrections → "Check spelling as you type": off turns the checker off everywhere.
+  try {
+    ses.setSpellCheckerEnabled?.(readSettings().spellCheckLive !== false);
+  } catch {
+    /* older Electron: the editor's spellcheck attribute still applies */
+  }
   const langs = (readSettings().spellLanguages || ['ro', 'en-US']).filter((l) => ses.availableSpellCheckerLanguages.length === 0 || ses.availableSpellCheckerLanguages.includes(l));
   try {
     if (langs.length) ses.setSpellCheckerLanguages(langs);
@@ -480,7 +486,7 @@ handle('settings:set', (_e, patch) => {
   if (rest.backupDir !== undefined && rest.backupDir && rest.backupDir !== cur.backupDir && rest.backupDir !== chosenBackupDir) delete rest.backupDir;
   writeSettings({ ...readSettings(), ...rest });
   // A new spelling language takes effect now in every window, not at the next start.
-  if (rest.spellLanguages !== undefined) for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) applySpellLanguages(w);
+  if (rest.spellLanguages !== undefined || rest.spellCheckLive !== undefined) for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) applySpellLanguages(w);
   if (apiKeys && typeof apiKeys === 'object') {
     for (const [p, k] of Object.entries(apiKeys)) if (aiProviders.PRESETS[p] && typeof k === 'string') setApiKey(k, p);
   }

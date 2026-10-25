@@ -10,6 +10,7 @@ import './script.css';
 import './behaviour.css';
 import './panels-extra.css';
 import './editor-extra.css';
+import './editing-options.css';
 import './help/help.css';
 import './ai.css';
 import './scrivener-theme.css';

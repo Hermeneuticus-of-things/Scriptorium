@@ -412,29 +412,29 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### A5. Opțiuni: Editare / Opțiuni
 **Identic:** defilare tip mașină de scris, caractere invizibile, vizualizare implicită (editor/corkboard/outline), legătură înapoi automată.
-- [ ] **lipsă** Mașină de scris: poziția rândului (procent din înălțime), nu doar mijlocul.
-- [ ] **lipsă** Evidențierea rândului curent (opțiune).
-- [ ] **lipsă** Lățimea cursorului și clipirea lui.
-- [ ] **lipsă** Spațiu suplimentar după finalul documentului (derulare dincolo de final).
-- [ ] **lipsă** Zoom implicit al editorului pentru documentele deschise.
-- [ ] **lipsă** Titlul implicit al documentelor noi.
-- [ ] **lipsă** Închiderea automată a parantezelor și ghilimelelor.
-- [ ] **parțial** Completare automată: lista e pe proiect; lipsesc opțiunile „propune după N litere” și „include titlurile documentelor”.
-- [ ] **lipsă** „Selectează cuvinte întregi la tragere”.
+- [x] **lipsă** Mașină de scris: poziția rândului (procent din înălțime), nu doar mijlocul.
+- [x] **lipsă** Evidențierea rândului curent (opțiune).
+- [x] **lipsă** Lățimea cursorului și clipirea lui.
+- [x] **lipsă** Spațiu suplimentar după finalul documentului (derulare dincolo de final).
+- [x] **lipsă** Zoom implicit al editorului pentru documentele deschise.
+- [x] **lipsă** Titlul implicit al documentelor noi.
+- [x] **lipsă** Închiderea automată a parantezelor și ghilimelelor.
+- [x] **parțial** Completare automată: lista e pe proiect; lipsesc opțiunile „propune după N litere” și „include titlurile documentelor”.
+- [x] **lipsă** „Selectează cuvinte întregi la tragere”.
 
 ### A6. Opțiuni: Editare / Formatare
 **Identic:** font implicit, mărime, interlinie, indentarea primei linii, spațiu după paragraf.
-- [ ] **parțial** Lipsește mini-editorul cu riglă pentru formatarea implicită: aliniere, indent stânga/dreapta, spațiu înainte, tab-uri.
-- [ ] **lipsă** Font separat pentru notițe (notele documentului și ale proiectului).
-- [ ] **lipsă** Font implicit pentru notele de subsol și comentarii.
-- [ ] **lipsă** „Aplică formatarea implicită textului lipit”.
-- [ ] **lipsă** „Convertește documentele existente la formatarea implicită” pe tot proiectul (există pe document, în bara de format).
-- [ ] **lipsă** Unități de măsură pentru riglă și indent (cm / in / pt).
+- [x] **parțial** Lipsește mini-editorul cu riglă pentru formatarea implicită: aliniere, indent stânga/dreapta, spațiu înainte, tab-uri.
+- [x] **lipsă** Font separat pentru notițe (notele documentului și ale proiectului).
+- [x] **lipsă** Font implicit pentru notele de subsol și comentarii.
+- [x] **lipsă** „Aplică formatarea implicită textului lipit”.
+- [x] **lipsă** „Convertește documentele existente la formatarea implicită” pe tot proiectul (există pe document, în bara de format).
+- [x] **lipsă** Unități de măsură pentru riglă și indent (cm / in / pt). (P6: opțiunea și mini-rigla din Opțiuni; rigla editorului `Ruler.jsx` încă în cm, de citit `rulerUnits`.)
 
 ### A7. Opțiuni: Editare / Revizii
 **Identic:** culorile celor 5 runde.
-- [ ] **lipsă** Ștergerile în modul revizie apar tăiate în culoarea rundei (în loc să dispară).
-- [ ] **lipsă** Nume editabile pentru runde.
+- [x] **lipsă** Ștergerile în modul revizie apar tăiate în culoarea rundei (în loc să dispară).
+- [x] **lipsă** Nume editabile pentru runde.
 
 ### A8. Opțiuni: Partajare (Import, Export, Sincronizare)
 **Identic:** formatul implicit la export fișiere, păstrează dosarele, include notele, include metadatele, sincronizare cu folder extern, formatul fișierelor sincronizate, sincronizează notele, la deschidere, la închidere.
@@ -468,15 +468,15 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### A11. Opțiuni: Corecturi / Corecție automată
 **Identic:** ghilimele automate, liniuță din --, elipsă din trei puncte, fracții, majusculă la început de propoziție, limbi pentru corector, înlocuiri automate, învățarea corecturilor, dicționar personal.
-- [ ] **lipsă** Corectează DOuă MAjuscule la început de cuvânt.
-- [ ] **lipsă** Majusculă pentru numele zilelor (pentru limbile care o cer).
-- [ ] **lipsă** Corectează apăsarea accidentală a Caps Lock.
-- [ ] **lipsă** Excepții la majuscula automată (abrevieri: „dr.”, „etc.”, „nr.”).
-- [ ] **lipsă** Verificarea ortografiei în timp ce scrii: pornit/oprit global.
-- [ ] **lipsă** Verificarea gramaticii ca opțiune separată.
-- [ ] **lipsă** Ignoră cuvintele scrise cu MAJUSCULE, cele cu cifre și adresele web.
-- [ ] **lipsă** Alegerea perechii de ghilimele („…”, "…", «…», ‚…’) și a celor simple.
-- [ ] **lipsă** Lista de înlocuiri: import/export fișier.
+- [x] **lipsă** Corectează DOuă MAjuscule la început de cuvânt.
+- [x] **lipsă** Majusculă pentru numele zilelor (pentru limbile care o cer).
+- [x] **lipsă** Corectează apăsarea accidentală a Caps Lock.
+- [x] **lipsă** Excepții la majuscula automată (abrevieri: „dr.”, „etc.”, „nr.”).
+- [x] **lipsă** Verificarea ortografiei în timp ce scrii: pornit/oprit global.
+- [x] **lipsă** Verificarea gramaticii ca opțiune separată.
+- [x] **lipsă** Ignoră cuvintele scrise cu MAJUSCULE, cele cu cifre și adresele web.
+- [x] **lipsă** Alegerea perechii de ghilimele („…”, "…", «…», ‚…’) și a celor simple.
+- [x] **lipsă** Lista de înlocuiri: import/export fișier.
 
 ### A12. Opțiuni: Tastatură (`ShortcutsDialog.jsx`)
 **Identic:** scurtătură proprie pentru fiecare comandă, editare.
@@ -671,10 +671,10 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### L1. Căutare / Înlocuire în document (`FindBar.jsx`)
 **Identic:** caută, anterior/următor, majuscule, cuvinte întregi, regex, înlocuiește, înlocuiește tot.
-- [ ] **lipsă** Mod „Conține / Începe cu / Cuvânt întreg”.
-- [ ] **lipsă** Doar în selecție.
-- [ ] **lipsă** Istoricul căutărilor.
-- [ ] **lipsă** Ignoră diacriticele.
+- [x] **lipsă** Mod „Conține / Începe cu / Cuvânt întreg”.
+- [x] **lipsă** Doar în selecție.
+- [x] **lipsă** Istoricul căutărilor.
+- [x] **lipsă** Ignoră diacriticele.
 
 ### L2. Căutare și înlocuire în proiect (`AdvancedSearchDialog.jsx`, `FindDialog.jsx`)
 **Identic:** domenii (tot, titlu, text, sinopsis, note, cuvinte-cheie, etichete, stări, metadate), oricare cuvânt / toate / expresia exactă / regex, majuscule, cuvinte întregi, include coșul, doar incluse în compile, înlocuire în proiect cu confirmare, salvare ca colecție.

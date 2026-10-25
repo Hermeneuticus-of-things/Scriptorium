@@ -11,7 +11,8 @@ import { TextStyle, Color, FontFamily, FontSize } from '@tiptap/extension-text-s
 import { Superscript } from '@tiptap/extension-superscript';
 import { Subscript } from '@tiptap/extension-subscript';
 import { LinguisticFocus } from '../extensions/LinguisticFocus.js';
-import { Corrections } from './corrections.js';
+import { Corrections, smartQuote } from './corrections.js';
+import { EditingOptions, RevisionDeletion } from './editingOptions.js';
 import { Invisibles } from './invisibles.js';
 import { AllCaps, Bookmark, ListStyle, PageBreak, ParagraphFormat, PreserveFormat, ScaledImage, SmallCaps } from './formatting.js';
 import { LineHighlight } from './lineHighlight.js';
@@ -204,7 +205,13 @@ export function romanianQuote(before, ch) {
 
 export const RomanianQuotes = Extension.create({
   name: 'romanianQuotes',
+  addOptions() {
+    // Pairs chosen in Options → Corrections (corrections.js QUOTE_STYLES); 'ro' = „…” and «…».
+    return { double: 'ro', single: 'ro' };
+  },
   addInputRules() {
+    const { double, single } = this.options;
+    const custom = double !== 'ro' || single !== 'ro';
     return [
       new InputRule({
         find: /["']$/,
@@ -212,7 +219,9 @@ export const RomanianQuotes = Extension.create({
           const $from = state.doc.resolve(range.from);
           if ($from.parent.type.spec.code || $from.marks().some((m) => m.type.spec.code)) return null;
           const before = $from.parent.textBetween(Math.max(0, $from.parentOffset - 256), $from.parentOffset, undefined, '\ufffc');
-          state.tr.insertText(romanianQuote(before, match[0]), range.from, range.to);
+          const q = custom ? smartQuote(before, match[0], double, single) : romanianQuote(before, match[0]);
+          if (q === match[0]) return null;
+          state.tr.insertText(q, range.from, range.to);
           return undefined;
         },
       }),
@@ -240,11 +249,16 @@ export function buildExtensions({ placeholder = tr('ui.editor.placeholder'), sma
   // corrections: {smartDashes, smartEllipsis, autoCapitalize, replacements}; null keeps the
   // historical behaviour (dashes/ellipsis only through Typography when smartQuotes is on).
   const corr = corrections ? { smartDashes: true, smartEllipsis: true, autoCapitalize: false, smartFractions: false, replacements: [], ...corrections } : null;
+  // corrections.editing: Options → Editing (auto-pairs, drag selection, caret, paste, revisions).
+  const editing = corr?.editing || {};
+  if (corr) delete corr.editing;
   const ext = [
     RedoKeys,
     ParagraphStyle,
     CharStyle,
     Revision,
+    RevisionDeletion,
+    EditingOptions.configure({ ...editing, smartQuotes }),
     WritingFocus,
     AutoComplete.configure({ getWords }),
     WikiLink.configure({ getTargets: getLinkTargets, onMissing: onMissingLink }),
@@ -280,7 +294,7 @@ export function buildExtensions({ placeholder = tr('ui.editor.placeholder'), sma
   if (corr) ext.push(Corrections.configure(corr));
   if (smartQuotes) {
     ext.push(
-      RomanianQuotes,
+      RomanianQuotes.configure({ double: editing.quoteStyle || 'ro', single: editing.singleQuoteStyle || 'ro' }),
       Typography.configure({
         // Quotes come from RomanianQuotes.
         openDoubleQuote: false,

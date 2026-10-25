@@ -1,4 +1,8 @@
 import { t as tr } from './i18n.js';
+import { editingPrefs } from './editingPrefs.js';
+
+// Options → Editing: the title given to new documents and folders ('' = the built-in one).
+const defaultTitle = (type) => String((type === 'folder' ? editingPrefs().defaultFolderTitle : editingPrefs().defaultDocTitle) || '').trim();
 export function htmlToText(html) {
   const el = document.createElement('div');
   el.innerHTML = (html || '').replace(/<\/(p|h[1-6]|li|blockquote|div|td|th|tr|pre|dt|dd|figcaption)>/gi, '$&\n').replace(/<br\s*\/?>/gi, '\n');
@@ -17,7 +21,7 @@ export function wordCount(html) {
 export function newNode(type, title) {
   const node = {
     id: crypto.randomUUID(),
-    title: title || tr(type === 'folder' ? 'cmd.newFolder' : 'cmd.newText'),
+    title: title || defaultTitle(type) || tr(type === 'folder' ? 'cmd.newFolder' : 'cmd.newText'),
     type,
     synopsis: '',
     label: 'Fără',

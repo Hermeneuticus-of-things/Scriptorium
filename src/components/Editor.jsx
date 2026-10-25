@@ -20,6 +20,8 @@ const HISTORY_CACHE = new Map(); // key → { base, groups: [[stepJSON]], html }
 const HISTORY_MAX_GROUPS = 400;
 const HISTORY_MAX_DOCS = 30;
 import { buildExtensions } from '../editor/extensions.js';
+import { editingPrefs } from '../lib/editingPrefs.js';
+import { typewriterScroll } from '../editor/editingOptions.js';
 import { resolveWikiLink } from '../editor/writing.js';
 import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc.js';
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
@@ -141,9 +143,7 @@ const Editor = forwardRef(function Editor(
           }
         }
         if (!typewriterRef.current) return; // a ref: turning the mode on reaches editors already open
-        const { node } = ed.view.domAtPos(ed.state.selection.from);
-        const el = node.nodeType === 1 ? node : node.parentElement;
-        el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        typewriterScroll(ed.view, editingPrefs().typewriterPos);
       },
       editorProps: {
         // Right-click on unselected text selects the word under the pointer, so the context
@@ -467,7 +467,7 @@ const Editor = forwardRef(function Editor(
     editor.commands.setFocusMode(view.focus || 'off');
     editor.commands.setCurrentParagraphHighlight(Boolean(view.currentParagraph));
     editor.commands.setRevisionLevel(readOnly ? 0 : view.revision || 0);
-    editor.commands.setCurrentLineHighlight(Boolean(view.currentLine));
+    editor.commands.setCurrentLineHighlight(Boolean(view.currentLine ?? editingPrefs().highlightCurrentLine));
     editor.commands.setFadeOpacity(view.fadeOpacity ?? 0.28);
   }, [editor, view.focus, view.currentParagraph, view.currentLine, view.fadeOpacity, view.revision, readOnly]);
 
