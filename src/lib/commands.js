@@ -69,6 +69,7 @@ export const DEFAULT_KEYS = {
   compile: 'Ctrl+Shift+E',
   quickRef: 'Ctrl+Shift+R',
   snapshot: 'Ctrl+5',
+  snapshotTitled: 'Ctrl+Shift+5',
   stats: 'Ctrl+Alt+Shift+I',
   targets: 'Ctrl+Shift+T',
   saveAs: 'Ctrl+Shift+S',

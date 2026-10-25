@@ -18,6 +18,7 @@ export const SUBMENUS = {
     ['menu.sync', ['syncOut', 'syncIn']],
     ['menu.print', ['pageSetup', 'printPreview', 'print']],
   ],
+  document: [['menu.snapshots', ['snapshot', 'snapshotTitled', 'snapshotSelection', 'snapshotManager']]],
   edit: [['menu.select', ['selectWord', 'selectSentence', 'selectParagraph']]],
   view: [
     ['menu.bookViews', ['viewTimeline', 'viewRelations', 'viewPacing']],

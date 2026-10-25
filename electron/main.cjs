@@ -987,6 +987,10 @@ const snapPath = (dir, id, file) => {
   if (!/^[A-Za-z0-9-]+$/.test(String(id)) || !/^[\w.-]+\.json$/.test(String(file))) throw new Error('Snapshot invalid');
   return path.join(dir, 'snapshots', id, file);
 };
+handle('snap:counts', (_e, dir) => {
+  assertOpened(dir);
+  return store.snapshotCounts(dir);
+});
 handle('snap:delete', (e, dir, id, file) => {
   assertOpened(dir);
   assertOwner(e.sender, dir);
