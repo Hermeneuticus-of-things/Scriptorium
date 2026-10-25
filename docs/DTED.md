@@ -135,9 +135,10 @@ Dictarea și transcrierea merg acum și fără D&TED. Scribner are propriul moto
   - `tests/e2e/browser/whisper.cjs`: descărcarea din Setări, microfonul fals din Chromium, fișierul audio.
 - **Rămâne la autor:** proba pe Windows, cu descărcarea reală și cu microfonul.
 
-## 8. Modelul eek (v0.9.7, D&TED v0.4.1)
+## 8. Modelul eek (v0.9.7)
 
-- D&TED v0.4 folosește implicit modelul **eek** (`eek/whisper-turbo-ro-en`, Whisper turbo antrenat pe română): 5,8% cuvinte greșite față de 10,9% la `large-v3-turbo` standard (măsurători în `docs/MODELE_ROMANA.md` din D&TED).
+- D&TED folosește implicit modelul **eek** (`eek/whisper-turbo-ro-en`, Whisper turbo antrenat pe română): 5,4% cuvinte greșite față de 10,9% la `large-v3-turbo` standard (măsurători în `docs/MODELE_ROMANA.md` din D&TED).
+- Compatibilitatea Scribner ↔ D&TED e dată de **protocolul serviciului (protocol 1)**, nu de un anume număr de versiune: orice D&TED care pornește cu `--serviciu` și vorbește protocol 1 merge (vezi §2); modelul se alege cu `auto`, deci eek e folosit automat când e instalat.
 - Protocolul serviciului are comanda `{"cmd":"model","nume":…}`, iar `stare` raportează `model`, `model_folosit` și `modele` `[{nume, descriere, instalat}]`.
 - În Scribner: `lib/dted.cjs` `state()` / `setModel()`; IPC `dted:setModel`; setarea `dtedModel` (implicit `auto`), aplicată la prima cerere după fiecare pornire a serviciului; în *Setări → Servicii și conturi → D&TED → Verifică* apare lista modelelor (cele neinstalate sunt dezactivate) și „Folosit acum”.
 - Un D&TED mai vechi (fără comanda `model`) merge mai departe, doar fără listă.
