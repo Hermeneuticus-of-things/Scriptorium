@@ -61,7 +61,10 @@ describe('compile formats', () => {
   it('ships the Romanian presets', () => {
     expect(F.PRESETS.map((p) => p.name)).toEqual(['Manuscris standard', 'Carte tipărită (paperback)', 'E-book', 'Modern', 'Citire PDF A5', 'Implicit (Default)', 'Times New Roman (dublu spațiat)', 'Courier (manuscris clasic)', 'Roman cu părți numerotate', 'Non-ficțiune', 'Povestire', 'Scenariu de film', 'Piesă de teatru', 'Scenariu de bandă desenată', 'Scenariu radio', 'Poezie', 'E-book ficțiune', 'Exemplar de corectură']);
     const ms = F.PRESETS[0];
-    expect(ms.typography).toMatchObject({ fontFamily: 'Times New Roman', fontSizePt: 12, lineSpacing: 2 });
+    // Default manuscript: body Georgia 10pt, chapter titles 12pt bold, section subtitles 10pt bold.
+    expect(ms.typography).toMatchObject({ fontFamily: 'Georgia', fontSizePt: 10, lineSpacing: 2 });
+    expect(ms.layouts['Capitol']).toMatchObject({ titleSizePt: 12, titleBold: true });
+    expect(ms.layouts['Secțiune']).toMatchObject({ titleSizePt: 10, titleBold: true });
     expect(ms.separators.sameType.text).toBe('#');
     expect(ms.page.header.right).toContain('<$p>');
     const pb = F.PRESETS[1];
