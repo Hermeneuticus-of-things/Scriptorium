@@ -53,7 +53,10 @@ export const DEFAULT_KEYS = {
   split: 'Ctrl+K',
   splitTitle: 'Ctrl+Shift+K',
   duplicate: 'Ctrl+D',
-  goto: 'Ctrl+G',
+  // Edit › Find › Find Next / Previous take Ctrl+G; the Go To dialog moves to Ctrl+Alt+G.
+  goto: 'Ctrl+Alt+G',
+  findNext: 'Ctrl+G',
+  findPrev: 'Ctrl+Shift+G',
   prevDoc: 'Ctrl+Alt+↑',
   nextDoc: 'Ctrl+Alt+↓',
   merge: 'Ctrl+Shift+M',
