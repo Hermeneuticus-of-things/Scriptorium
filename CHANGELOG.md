@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.4
+- Ajutor (F1): secțiunea „Cheile serviciilor" rescrisă cu linkuri corecte și capcanele de configurare — DeepL (`:fx` gratuit), Google (activează Cloud Translation API + deblochează cheia, altfel `API_KEY_SERVICE_BLOCKED`), Speechify (cheie de API, nu premium de utilizator), Zotero, plus email/parolă și butonul „Testează conexiunea". Textul din panoul Google e mai clar, iar o cheie restricționată (403) primește o indicație în mesaj.
+
 ## v0.10.3
 - Servicii și conturi: buton **„Testează conexiunea"** la fiecare serviciu cu API (DeepL, Google, LanguageTool, Speechify, Zotero, GitHub) — face o cerere minimă cu cheia pusă și spune dacă e acceptată; mesaj clar dacă lipsește cheia. (`lib/serviceTest.cjs`)
 
