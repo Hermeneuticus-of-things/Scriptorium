@@ -18,20 +18,34 @@ describe('service accounts', () => {
     s = svc.setService(s, 'deepl', { apiKey: 'abc:fx' }, safe);
     expect(JSON.stringify(s)).not.toContain('lt-secret');
     expect(JSON.stringify(s)).not.toContain('abc:fx');
-    expect(svc.getService(s, 'languagetool', safe)).toEqual({ username: 'ana@ex.ro', apiKey: 'lt-secret' });
+    expect(svc.getService(s, 'languagetool', safe)).toMatchObject({ username: 'ana@ex.ro', apiKey: 'lt-secret' });
     const st = svc.serviceStatus(s, safe);
     expect(st.deepl.configured).toBe(true);
     expect(st.googleTranslate.configured).toBe(false);
     expect(st.languagetool.fields).toEqual([
       { id: 'username', label: 'E-mail cont', secret: false, set: true, value: 'ana@ex.ro' },
       { id: 'apiKey', label: 'Cheie API', secret: true, set: true, value: '' },
+      { id: 'password', label: 'Parolă cont', secret: true, set: false, value: '' },
     ]);
     expect(JSON.stringify(st)).not.toContain('lt-secret');
+  });
+  it('services also take an email + password login (encrypted); configured when any field is set', () => {
+    let s = svc.setService({}, 'speechify', { email: 'ion@ex.ro', password: 'pw123' }, safe);
+    expect(JSON.stringify(s)).not.toContain('pw123'); // password encrypted
+    expect(svc.getService(s, 'speechify', safe)).toMatchObject({ email: 'ion@ex.ro', password: 'pw123' });
+    const st = svc.serviceStatus(s, safe);
+    expect(st.speechify.configured).toBe(true); // just the login counts as set up
+    const pw = st.speechify.fields.find((f) => f.id === 'password');
+    const em = st.speechify.fields.find((f) => f.id === 'email');
+    expect(pw).toMatchObject({ secret: true, set: true, value: '' }); // secret value never sent to the UI
+    expect(em).toMatchObject({ secret: false, set: true, value: 'ion@ex.ro' });
+    // DeepL and others also expose the login fields.
+    expect(svc.serviceStatus({}, safe).deepl.fields.map((f) => f.id)).toEqual(['apiKey', 'email', 'password']);
   });
   it('an empty value deletes one field; deleting all fields removes the service', () => {
     let s = svc.setService({}, 'zotero', { userId: '123', apiKey: 'z' }, safe);
     s = svc.setService(s, 'zotero', { apiKey: '' }, safe);
-    expect(svc.getService(s, 'zotero', safe)).toEqual({ userId: '123', apiKey: '' });
+    expect(svc.getService(s, 'zotero', safe)).toMatchObject({ userId: '123', apiKey: '' });
     s = svc.setService(s, 'zotero', { userId: '' }, safe);
     expect(s.services.zotero).toBeUndefined();
     expect(() => svc.setService({}, 'nope', {}, safe)).toThrow();
