@@ -166,4 +166,11 @@ describe('name generator options', () => {
       expect(n.first[0]).toBe(n.last[0]);
     }
   });
+  it('forename filters: ends with and contains', () => {
+    const e = generateNames({ firstOrigins: ['ro'], firstOnly: true, endsWith: 'a', count: 15, seed: 3 });
+    expect(e.length).toBeGreaterThan(0);
+    for (const n of e) expect(n.first.toLowerCase().endsWith('a')).toBe(true);
+    const c = generateNames({ firstOrigins: ['ro'], firstOnly: true, contains: 'ri', count: 15, seed: 3 });
+    for (const n of c) expect(n.first.toLowerCase()).toContain('ri');
+  });
 });

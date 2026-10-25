@@ -145,13 +145,17 @@ export function customCultures(lists) {
 export function generateNames(opts = {}) {
   const { culture = 'ro', gender = 'any', count = 10, seed, firstOnly = false, lastOnly = false, doubleLast = false, rarity = 0.5 } = opts;
   const matchInitials = Boolean(opts.matchInitials || opts.alliteration);
-  // startsWith: names begin with these letters (the forename, or the surname for "surname only").
+  // Name filters applied to the forename (or the surname for "surname only"): begins with / ends with /
+  // contains these letters. Empty fields impose no constraint.
   const start = fold(opts.startsWith || '').trim();
-  const starts = (n) => !start || fold(n).startsWith(start);
+  const end = fold(opts.endsWith || '').trim();
+  const has = fold(opts.contains || '').trim();
+  const anyFilter = Boolean(start || end || has);
+  const matches = (n) => { const f = fold(n); return (!start || f.startsWith(start)) && (!end || f.endsWith(end)) && (!has || f.includes(has)); };
   const base = { ...CULTURES, ...(opts.extraCultures || {}) };
   const CULT = {};
   for (const [k, c] of Object.entries(base)) {
-    CULT[k] = start ? { ...c, m: lastOnly ? c.m : c.m.filter(starts), f: lastOnly ? c.f : c.f.filter(starts), last: lastOnly ? c.last.filter(starts) : c.last } : c;
+    CULT[k] = anyFilter ? { ...c, m: lastOnly ? c.m : c.m.filter(matches), f: lastOnly ? c.f : c.f.filter(matches), last: lastOnly ? c.last.filter(matches) : c.last } : c;
   }
   const firstKeys = validOrigins(opts.firstOrigins, culture, CULT).filter((k) => (lastOnly ? CULT[k].last.length : CULT[k].m.length || CULT[k].f.length));
   const ownLast = (Array.isArray(opts.lastOrigins) ? opts.lastOrigins : []).filter((k) => CULT[k] && CULT[k].last.length);
