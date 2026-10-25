@@ -29,7 +29,9 @@ ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 ShowLanguageDialog=auto
+; In-app update runs Setup /SILENT /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS: close the running program, start it again.
 CloseApplications=yes
+RestartApplications=yes
 ; The optional PATH entry: running terminals are told about the change (install and uninstall).
 ChangesEnvironment=yes
 
