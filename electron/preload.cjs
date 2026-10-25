@@ -189,6 +189,8 @@ contextBridge.exposeInMainWorld('api', {
   toggleFullScreen: (on) => call('window:fullScreen', on),
   recheckSpelling: () => call('spell:recheck'),
   openMediaExternal: (dir, file) => call('media:openExternal', dir, file),
+  chooseBookmarkFile: () => call('bookmark:chooseFile'),
+  openBookmarkFile: (dir, file) => call('bookmark:openFile', dir, file),
   releaseProject: () => call('project:release'),
   exportBundle: (dir) => call('project:exportBundle', dir),
   importBundle: () => call('project:importBundle'),

@@ -76,6 +76,7 @@ import BackupDialog from './components/BackupDialog.jsx';
 import ImportDialog, { WebImportDialog } from './components/ImportDialog.jsx';
 import Menu from './components/Menu.jsx';
 import StatusBar from './components/StatusBar.jsx';
+import { defaultTemplateFor, newNodeDefaults, nodeFromTemplate, resolveTemplatePlaceholders } from './lib/projectSettings.js';
 import {
   findNode,
   findParent,
@@ -1044,11 +1045,41 @@ export default function App({ api: apiProp }) {
 
   // New items go after the selection (inside it when it is a folder), are selected and put in
   // rename mode in the binder (Scrivener); Enter on the title then moves the cursor to the editor.
+  // The folder a new item lands in (same rule as insertNear).
+  const parentForNew = (anchorId) => {
+    const sel = anchorId && findNode(project.tree, anchorId);
+    if (!sel) return project.tree[0];
+    return sel.children ? sel : findParent(project.tree, anchorId);
+  };
+  // Template sheet -> new item fields + text, placeholders (<$date>, <$n>…) resolved.
+  const fromTemplate = (tpl, parent) => {
+    const { fields, ctx } = nodeFromTemplate(tpl, { siblings: parent?.children || [], author: project.author || settings?.authorName || '' });
+    const resolve = (h) => resolveTemplatePlaceholders(h, ctx);
+    return { fields, resolve };
+  };
   const addItem = (type, title, html, anchorId = selectedId) => {
-    const node = newNode(type, title);
+    const node = Object.assign(newNode(type, title), newNodeDefaults(project));
+    // A folder can name the template its new documents start from (Inspector).
+    const parent = parentForNew(anchorId);
+    const tpl = type === 'text' && html == null && !title ? defaultTemplateFor(project, parent) : null;
+    let tplHtml = null;
+    if (tpl) {
+      const { fields, resolve } = fromTemplate(tpl, parent);
+      Object.assign(node, fields);
+      const cached = docsNow()[tpl.id];
+      if (cached != null) tplHtml = resolve(cached);
+      else api.readDoc(dir, tpl.id, 'docs').then((h) => {
+        if (!h) return;
+        const r = resolve(h);
+        setDocs((d) => ({ ...d, [node.id]: r }));
+        setEditorHtml(node.id, r);
+        api.writeDoc(dir, node.id, 'docs', r).catch(report);
+      }).catch(report);
+      api.readDoc(dir, tpl.id, 'notes').then((n) => n && api.writeDoc(dir, node.id, 'notes', resolve(n))).catch(report);
+    }
     setTreeU(insertNear(project.tree, anchorId, node));
-    if (!title && !hideBinder) setRenameId(node.id);
-    const content = html ?? (type === 'text' ? '<p></p>' : '');
+    if (!title && !tpl && !hideBinder) setRenameId(node.id);
+    const content = html ?? tplHtml ?? (type === 'text' ? '<p></p>' : '');
     setDocs((d) => ({ ...d, [node.id]: content }));
     if (content) api.writeDoc(dir, node.id, 'docs', content).catch(report);
     go(node.id);
@@ -1417,20 +1448,18 @@ export default function App({ api: apiProp }) {
     if (id) go(id);
   };
 
-  // New document from a Template Sheet: copies its text, notes, synopsis, label and keywords.
+  // New document from a Template Sheet: copies its text, notes, synopsis, label, status,
+  // keywords and custom metadata; placeholders such as <$date> and <$n> are filled in.
   const newFromTemplate = async (tpl) => {
     await flush();
     const node = newNode(tpl.type === 'folder' ? 'folder' : 'text', tpl.title);
-    Object.assign(node, {
-      synopsis: tpl.synopsis || '',
-      label: tpl.label || 'Fără',
-      keywords: [...(tpl.keywords || [])],
-      custom: tpl.custom ? { ...tpl.custom } : undefined,
-      includeInCompile: true,
-    });
+    const { fields, resolve } = fromTemplate(tpl, parentForNew(selectedId));
+    Object.assign(node, fields);
     setTree(insertNear(project.tree, selectedId, node));
-    const html = docsNow()[tpl.id] ?? (await api.readDoc(dir, tpl.id, 'docs'));
-    const notes = await api.readDoc(dir, tpl.id, 'notes');
+    const rawHtml = docsNow()[tpl.id] ?? (await api.readDoc(dir, tpl.id, 'docs'));
+    const html = rawHtml ? resolve(rawHtml) : rawHtml;
+    const rawNotes = await api.readDoc(dir, tpl.id, 'notes');
+    const notes = rawNotes ? resolve(rawNotes) : rawNotes;
     if (html) await api.writeDoc(dir, node.id, 'docs', html);
     if (notes) await api.writeDoc(dir, node.id, 'notes', notes);
     setDocs((d) => ({ ...d, [node.id]: html || '' }));
@@ -2856,6 +2885,8 @@ export default function App({ api: apiProp }) {
                   }}
                   latestHtml={(id) => docsNow()[id]}
                   onProjectBookmarksChange={(bookmarks) => saveProject({ ...project, bookmarks })}
+                  onProjectNoteChange={(id, html) => queueWrite(id, 'notes', html)}
+                  onProjectNoteTabsChange={(projectNotes) => saveProject({ ...project, projectNotes })}
                   onAddAnnotation={(kind, id) => {
                     const h = editorRefs.current.get(id);
                     if (!h) return false;
@@ -3279,6 +3310,8 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'projectSettings' && (
         <ProjectSettingsDialog
+          api={api}
+          dir={dir}
           project={project}
           folders={flatten(project.tree)
             .filter((n) => n.children && n.type !== 'file')

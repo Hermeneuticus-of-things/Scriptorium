@@ -496,18 +496,18 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### B. Setări proiect, toate taburile (`ProjectSettingsDialog.jsx`)
 **Identic:** etichete (nume, culoare, ordine, adaugă, șterge), statusuri (nume, ordine, adaugă, șterge), metadate proprii (text, text pe mai multe rânduri, bifă, listă cu opțiuni, dată, valoare implicită, titlul coloanei), tipuri de secțiune (adaugă, șterge, tip implicit după nivel), formatare implicită pe proiect, listă de completare automată, foldere speciale (șabloane, importuri, scratchpad), autor (nume, prenume, completare), titlu prescurtat, subtitlu, backup pe proiect (excludere, la închidere, la N minute).
-- [ ] **lipsă** Etichete: titlul câmpului redenumibil („Etichetă” → „Punct de vedere”) folosit apoi în Inspector și Outliner.
-- [ ] **lipsă** Etichete și statusuri: valoare implicită pentru documentele noi.
-- [ ] **lipsă** Statusuri: titlul câmpului redenumibil.
-- [ ] **lipsă** Metadate proprii: alinierea coloanei (stânga/centru/dreapta) și încadrarea textului.
-- [ ] **lipsă** Metadate proprii: tip „număr” cu sortare numerică.
-- [ ] **parțial** Tipuri de secțiune: tipul implicit e „după nivel”; lipsește distincția dosar / document cu copii / document simplu pe fiecare nivel.
-- [ ] **lipsă** Proprietățile proiectului: limba principală (pentru corector și compile).
-- [ ] **lipsă** Proprietățile proiectului: editura, ISBN, adresă, drepturi (azi doar în formatul de compile).
-- [ ] **lipsă** Tab „Icoane”: icoane proprii (importă imagine, redenumește, șterge).
-- [ ] **lipsă** Dosarul destinație pentru „Adaugă selecția la document” / note primite din alte aplicații.
-- [ ] **lipsă** Formatare implicită: „folosește setarea globală” (anularea suprascrierii pe proiect).
-- [ ] **lipsă** Export/import al etichetelor, statusurilor și metadatelor pentru alt proiect.
+- [x] **P10** Etichete: titlul câmpului redenumibil („Etichetă” → „Punct de vedere”) folosit apoi în Inspector și Outliner (`project.labelTitle`, `labelTitleOf`).
+- [x] **P10** Etichete și statusuri: valoare implicită pentru documentele noi (`defaultLabel`/`defaultStatus`, urmează redenumirea/ștergerea; `newNodeDefaults` în App și `store.newNode(…, project)`; și valorile implicite ale metadatelor proprii).
+- [x] **P10** Statusuri: titlul câmpului redenumibil (`project.statusTitle`).
+- [x] **P10** Metadate proprii: alinierea coloanei (stânga/centru/dreapta, `field.align`) și încadrarea textului (`wraps`, câmp pe mai multe rânduri în Inspector). Folosirea alinierii în coloanele Outliner rămâne pentru pachetul Outliner.
+- [x] **P10** Metadate proprii: tip „număr” cu sortare numerică (valoarea se salvează ca Number; Outliner compară numerele ca numere; `compareCustomValues`).
+- [x] **P10** Tipuri de secțiune: tabel pe niveluri 1–4 × dosar / document cu copii / document simplu + „celelalte niveluri” (`sectionTypeDepths`, `sectionTypeIdFor`). De legat în `lib/compile.cjs` (azi citește doar `sectionTypeLevels`).
+- [x] **P10** Proprietățile proiectului: limba principală (`project.language`). De legat la corector și compile (fișiere în afara P10).
+- [x] **P10** Proprietățile proiectului: editura, ISBN, adresă, drepturi (`publisher`, `isbn`, `address`, `rights`).
+- [x] **P10** Tab „Icoane”: icoane proprii (importă imagine, redenumește, șterge; alegere în Inspector ca `icon:<id>`). Afișarea lor în binder rămâne pentru pachetul Binder.
+- [x] **P10** Dosarul destinație pentru „Adaugă selecția la document” / note primite din alte aplicații (exista deja: `inboxFolder`, folosit de Scratchpad).
+- [x] **P10** Formatare implicită: „folosește setarea globală” (anularea suprascrierii pe proiect), panou nou `DefaultFormatPane.jsx` cu riglă (indent prima linie / stânga / dreapta), aliniere, spațiu înainte/după, font pentru notițe și note de subsol.
+- [x] **P10** Export/import al etichetelor, statusurilor, metadatelor și tipurilor de secțiune pentru alt proiect (fișier `.meta.json`).
 
 ### C. Configurare pagină (`PageSetupDialog.jsx`)
 **Identic:** hârtie (A4, Letter, Legal, personalizat), lățime/înălțime, orientare portret/peisaj, margini sus/jos/stânga/dreapta, antet stânga/centru/dreapta, subsol stânga/centru/dreapta, fără antet pe prima pagină, substituenți, mărime pt, spațiere rânduri, previzualizare tipărire.
@@ -737,9 +737,9 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### U. Șabloane de document
 **Identic:** dosar de șabloane, document nou din șablon.
-- [ ] **lipsă** Substituenți rezolvați la crearea documentului (data, numerotare în titlu).
-- [ ] **lipsă** Șablon implicit pentru documentele noi dintr-un dosar anume.
-- [ ] **parțial** De verificat că eticheta, statusul, cuvintele-cheie și metadatele se copiază din șablon.
+- [x] **P10** Substituenți rezolvați la crearea documentului: `<$date>`, `<$time>`, `<$year>`, `<$n>` (numerotare în titlu), `<$title>`, `<$author>`, în titlu, sinopsis, text și notițe.
+- [x] **P10** Șablon implicit pentru documentele noi dintr-un dosar anume (Inspector › Semne de carte pe dosar; „Document nou” în acel dosar pornește din șablon).
+- [x] **P10** Eticheta, statusul, cuvintele-cheie, metadatele, icoana și tipul de secțiune se copiază din șablon (statusul lipsea; `nodeFromTemplate`, testat).
 
 ### V. Alegerea șablonului de proiect (`Home.jsx`, `SaveTemplateDialog.jsx`)
 **Identic:** categorii, proiect gol, titlu, descriere, salvează ca șablon (categorie, descriere, icoană, include conținut), import/export șablon, șablon implicit, ștergere, proiecte recente fixate.
@@ -748,15 +748,15 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### W. Semne de carte (`BookmarksPanel.jsx`, tab în Inspector)
 **Identic:** semne ale documentului și ale proiectului, adaugă documentul curent, previzualizare la clic, deschide la dublu-clic, elimină.
-- [ ] **lipsă** Fișiere externe în lista de semne de carte (adresa web există doar în Inspector).
-- [ ] **lipsă** Reordonare prin tragere.
+- [x] **P10** Fișiere externe (și adrese web) în semnele de carte ale documentului și ale proiectului (`chooseBookmarkFile` / `openBookmarkFile`: se deschide doar o cale salvată ca semn de carte, niciodată un program).
+- [x] **P10** Reordonare prin tragere (ambele liste).
 
 ### X. Inspector, fiecare tab (`Inspector.jsx`)
 **Identic:** sinopsis text, sinopsis imagine, titlu, subtitlu, etichetă, status, tip secțiune, include în compile, cuvinte-cheie, câmpuri proprii, note document, note proiect, semne de carte, snapshot-uri, comentarii, note de subsol, creat/modificat, ținta documentului, legături de intrare, blocare inspector, icoană și culoarea ei, favorit.
-- [ ] **lipsă** „Pagină nouă înainte” și „Compilează așa cum e” pe document.
-- [ ] **lipsă** Sinopsis din primele rânduri ale textului, fără AI.
-- [ ] **lipsă** Comentarii: filtru (doar comentarii / doar note) și culoare per comentariu.
-- [ ] **parțial** Mai multe note de proiect: există `ProjectNotesTabs.jsx`, dar nu ca taburi în inspector.
+- [x] **P10** „Pagină nouă înainte” și „Compilează așa cum e” pe document (`node.pageBreakBefore`, `node.compileAsIs`). Efectul lor în `lib/compile.cjs` rămâne pentru pachetul de compile.
+- [x] **P10** Sinopsis din primele fraze ale textului, fără AI (`synopsisFromText`).
+- [x] **P10** Comentarii: filtru (toate / comentarii / note de subsol, ținut minte) și culoare per comentariu.
+- [x] **P10** Mai multe note de proiect ca taburi în inspector (`ProjectNotesTabs` în Notițe › Proiect).
 
 ### Y. Corkboard, opțiunile panoului (`Corkboard.jsx`)
 **Identic:** grilă, liber, linii după etichetă/status/cuvânt-cheie, mărime, formă, liniat, umplere etichetă, proporție, spațiere, fișă nouă după selecție, fixează ordinea, aranjează pe linii.
