@@ -44,14 +44,19 @@ const PAGE_SIZES = [
 
 const FONTS = ['Times New Roman', 'Georgia', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Calibri'];
 
+// Right-hand column of the window: what goes in, how, and the book's metadata.
 const TABS = () => ([
-  ['continut', tr('ui.compileDialog.continut')],
-  ['sectiuni', tr('ui.compileDialog.sectiuni')],
+  ['continut', tr('ui.compileDialog.continut'), '☰'],
+  ['optiuni', tr('ui.compileDialog.optiuni'), '⚙'],
+  ['metadate', tr('ui.compileDialog.metadate'), 'ℹ'],
+]);
+
+// Tabs of the "Edit format…" sub-dialog: settings stored in the format itself.
+const FORMAT_TABS = () => ([
   ['separatoare', tr('ui.compileDialog.separatoare')],
   ['inlocuiri', tr('ui.compileDialog.inlocuiri')],
   ['note', tr('ui.advancedSearchDialog.note')],
   ['pagina', tr('ui.compileDialog.pagina')],
-  ['metadate', 'Metadate'],
 ]);
 
 const LAYOUT_DEFAULTS = {
@@ -143,6 +148,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [epub, setEpub] = useState({ language: 'ro', ...(pc.epub || {}) });
   const [coverId, setCoverId] = useState(pc.coverId || '');
   const [tab, setTab] = useState('continut');
+  const [editing, setEditing] = useState(false); // "Edit format…" sub-dialog
+  const [fmtTab, setFmtTab] = useState('separatoare');
+  const [assigning, setAssigning] = useState(false); // "Assign layouts…" sub-dialog
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState('');
   const [preview, setPreview] = useState(null);
@@ -378,18 +386,80 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     </div>
   );
 
+  // --- binder items for the Contents tab --------------------------------------------
+  const contentRoots = () => {
+    if (scope === 'folder' && rootId) {
+      let found = null;
+      walk(project.tree, (n) => {
+        if (n.id === rootId) found = n;
+      });
+      return found ? [found] : [];
+    }
+    return (project.tree[0] && project.tree[0].children) || [];
+  };
+  const contentItems = [];
+  walk(contentRoots(), (n, depth) => {
+    if (scope === 'selection' && !selectionIds.includes(n.id)) return;
+    contentItems.push({ n, depth });
+  });
+  const setIncluded = (id, on) => {
+    const mapTree = (nodes) => (nodes || []).map((n) => (n.id === id ? { ...n, includeInCompile: on } : n.children ? { ...n, children: mapTree(n.children) } : n));
+    onProjectChange({ ...project, tree: mapTree(project.tree), compile: settings() });
+  };
+  const layoutSummary = (l) =>
+    [l.showTitle ? tr('ui.compileDialog.arata_titlul') : null, l.showText ? tr('ui.compileDialog.arata_textul') : null, l.pageBreakBefore ? tr('ui.compileDialog.pagina_noua') : null]
+      .filter(Boolean)
+      .join(' · ') || tr('ui.compileDialog.nimic');
+
+  // A dialog drawn on top of the Compile window; Esc / its backdrop close only this layer.
+  const subDialog = (label, onDone, children, cls = '') => (
+    <div
+      className="modal-backdrop cd-sub-backdrop"
+      onClick={(e) => {
+        e.stopPropagation();
+        onDone();
+      }}
+    >
+      <div className={`modal wide cd-sub ${cls}`} role="dialog" aria-label={label} onClick={(e) => e.stopPropagation()}>
+        <h3>{label}</h3>
+        {children}
+        <div className="actions">
+          <button type="button" className="primary" onClick={onDone}>{tr('btn.close')}</button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal wide compile-dialog" role="dialog" aria-label={tr('ui.compileDialog.compileaza')} onClick={(e) => e.stopPropagation()}>
         <style>{CSS}</style>
         <h2>{tr('ui.compileDialog.compileaza')}</h2>
+        <div className="cd-top">
+          <label className="cd-compile-for">
+            <span>{tr('ui.compileDialog.compileaza_pentru')}</span>
+            <select value={output} onChange={(e) => setOutput(e.target.value)}>
+              {OUTPUTS().map(([id, label]) => (
+                <option key={id} value={id}>{label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
         <div className="cd-body">
           <aside className="cd-formats">
-            <h3>Formate</h3>
+            <h3>{tr('ui.compileDialog.formate')}</h3>
             <ul>
               {all.map((f) => (
                 <li key={f.id}>
-                  <button type="button" className={f.id === formatId ? 'active' : ''} onClick={() => setFormatId(f.id)}>
+                  <button
+                    type="button"
+                    className={f.id === formatId ? 'active' : ''}
+                    onClick={() => setFormatId(f.id)}
+                    onDoubleClick={() => {
+                      setFormatId(f.id);
+                      setEditing(true);
+                    }}
+                  >
                     {builtinName('format', f)}
                     {f.builtin ? '' : f.global && !formats.some((x) => x.id === f.id) ? ' 🌐' : ' ✎'}
                   </button>
@@ -397,6 +467,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               ))}
             </ul>
             <div className="cd-format-actions">
+              <button type="button" onClick={() => setEditing(true)}>{tr('ui.compileDialog.editeaza_formatul')}</button>
               <button type="button" onClick={duplicate}>{tr('cmd.duplicate')}</button>
               <button type="button" onClick={rename} disabled={!editable}>{tr('set.binderDbl.rename')}</button>
               <button type="button" onClick={remove} disabled={!editable}>{tr('btn.delete')}</button>
@@ -410,21 +481,38 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
             {!editable && <p className="muted small">{tr('ui.compileDialog.formatele_predefinite_nu_se_modifica')}</p>}
           </aside>
 
+          <section className="cd-layouts" aria-label={tr('ui.compileDialog.asezari_sectiuni')}>
+            <h3>{tr('ui.compileDialog.asezari_sectiuni')}</h3>
+            <ul className="cd-layout-cards">
+              {typeTitles.map((t) => {
+                const l = layoutOf(t);
+                return (
+                  <li key={t} className="cd-layout-card">
+                    <div className={`cd-layout-thumb${l.pageBreakBefore ? ' pb' : ''}`} aria-hidden="true" style={{ textAlign: l.titleAlign || 'center' }}>
+                      {l.showTitle && (
+                        <span className={`cd-thumb-title ${l.titleCase}`}>
+                          {(l.titlePrefix || '').replace(/\n/g, ' ')}
+                          {t}
+                          {(l.titleSuffix || '').replace(/\n/g, ' ')}
+                        </span>
+                      )}
+                      {l.showText && <span className="cd-thumb-lines" />}
+                    </div>
+                    <div className="cd-layout-name">{t}</div>
+                    <div className="muted small">{layoutSummary(l)}</div>
+                  </li>
+                );
+              })}
+            </ul>
+            <button type="button" onClick={() => setAssigning(true)}>{tr('ui.compileDialog.atribuie_asezari')}</button>
+          </section>
+
           <section className="cd-main">
-            <div className="row">
-              <label>
-                {tr('ui.compileDialog.format_de_iesire')}
-                <select value={output} onChange={(e) => setOutput(e.target.value)}>
-                  {OUTPUTS().map(([id, label]) => (
-                    <option key={id} value={id}>{label}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <nav className="cd-tabs" role="tablist" onKeyDown={tabKeys(TABS().map(([id]) => id), tab, setTab)}>
-              {TABS().map(([id, label]) => (
+            <nav className="cd-tabs cd-icon-tabs" role="tablist" onKeyDown={tabKeys(TABS().map(([id]) => id), tab, setTab)}>
+              {TABS().map(([id, label, icon]) => (
                 <button key={id} type="button" role="tab" aria-selected={tab === id} tabIndex={tab === id ? 0 : -1} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
-                  {label}
+                  <span className="cd-tab-icon" aria-hidden="true">{icon}</span>
+                  <span>{label}</span>
                 </button>
               ))}
             </nav>
@@ -451,6 +539,21 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <input type="radio" checked={scope === 'selection'} disabled={!selectionIds.length} onChange={() => setScope('selection')} /> {tr('ui.compileDialog.selectia_n', { n: selectionIds.length })}
                     </label>
                   </fieldset>
+                  <ul className="cd-items" aria-label={tr('ui.compileDialog.elemente_incluse')}>
+                    {contentItems.map(({ n, depth }) => (
+                      <li key={n.id} style={{ paddingLeft: `${depth * 1.1}em` }}>
+                        <label className="check">
+                          <input type="checkbox" checked={n.includeInCompile !== false} onChange={(e) => setIncluded(n.id, e.target.checked)} />
+                          <span className="cd-item-icon" aria-hidden="true">{n.type === 'folder' ? '📁' : '📄'}</span> {n.title}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {tab === 'optiuni' && (
+                <div>
                   <div className="row">
                     <label>
                       {tr('ui.compileDialog.materie_de_inceput_front_matter')}
@@ -527,88 +630,186 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                 </div>
               )}
 
-              {tab === 'sectiuni' && (
-                <fieldset disabled={!editable}>
-                  <p className="muted small">
-                    {tr('ui.compileDialog.fiecare_tip_de_sectiune_primeste')}
-                  </p>
+              {tab === 'metadate' && (
+                <div>
+                                  <div>
+                  <p className="muted small">{tr('ui.compileDialog.pentru_epub_titlul_si_autorul')}</p>
                   <div className="row">
-                    {[['folder', tr('ui.compileDialog.dosare')], ['container', tr('ui.compileDialog.documente_cu_subdocumente')], ['file', tr('group.document')]].map(([k, label]) => (
-                      <label key={k}>
-                        {label}
-                        <select value={(format.defaultLayouts || {})[k] || ''} onChange={(e) => setIn(['defaultLayouts', k], e.target.value)}>
-                          {typeTitles.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
-                      </label>
-                    ))}
+                    <label>
+                      {tr('ui.advancedSearchDialog.titlu')}
+                      <input value={epub.title || ''} placeholder={project.title} onChange={(e) => setEpub({ ...epub, title: e.target.value })} />
+                    </label>
+                    <label>
+                      Autor
+                      <input value={epub.author || ''} placeholder={project.author} onChange={(e) => setEpub({ ...epub, author: e.target.value })} />
+                    </label>
+                    <label>
+                      {tr('set.tab.language')}
+                      <input value={epub.language || ''} placeholder="ro" onChange={(e) => setEpub({ ...epub, language: e.target.value })} />
+                    </label>
                   </div>
-                  <table className="cd-table">
-                    <thead>
-                      <tr>
-                        <th>{tr('ui.compileDialog.tip_de_sectiune')}</th>
-                        <th>{tr('ui.advancedSearchDialog.titlu')}</th>
-                        <th>Prefix</th>
-                        <th>Sufix</th>
-                        <th>Litere</th>
-                        <th>Aliniere</th>
-                        <th>{tr('ui.compileDialog.pagina_noua')}</th>
-                        <th>Text</th>
-                        <th>{tr('ui.compileDialog.separator_inainte')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {typeTitles.map((t) => {
-                        const l = layoutOf(t);
-                        return (
-                          <tr key={t}>
-                            <td>{t}</td>
-                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.arata_titlul')} checked={l.showTitle} onChange={(e) => setLayout(t, 'showTitle', e.target.checked)} /></td>
-                            <td><input aria-label="Prefix" value={l.titlePrefix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titlePrefix', e.target.value.replace(/\\n/g, '\n'))} /></td>
-                            <td><input aria-label="Sufix" value={l.titleSuffix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titleSuffix', e.target.value.replace(/\\n/g, '\n'))} /></td>
-                            <td>
-                              <select aria-label="Litere" value={l.titleCase} onChange={(e) => setLayout(t, 'titleCase', e.target.value)}>
-                                <option value="normal">Normale</option>
-                                <option value="upper">MAJUSCULE</option>
-                                <option value="smallcaps">{tr('ui.compileDialog.majuscule_mici')}</option>
-                              </select>
-                            </td>
-                            <td>
-                              <select aria-label="Aliniere" value={l.titleAlign || 'center'} onChange={(e) => setLayout(t, 'titleAlign', e.target.value)}>
-                                <option value="center">{tr('ui.compileDialog.centru')}</option>
-                                <option value="left">{tr('ui.compileDialog.stanga_2')}</option>
-                                <option value="right">{tr('ui.compileDialog.dreapta')}</option>
-                              </select>
-                            </td>
-                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.pagina_noua')} checked={Boolean(l.pageBreakBefore)} onChange={(e) => setLayout(t, 'pageBreakBefore', e.target.checked)} /></td>
-                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.arata_textul')} checked={l.showText} onChange={(e) => setLayout(t, 'showText', e.target.checked)} /></td>
-                            <td>
-                              <select aria-label={tr('ui.compileDialog.separator_inainte')} value={l.separatorBefore} onChange={(e) => setLayout(t, 'separatorBefore', e.target.value)}>
-                                <option value="auto">{tr('ui.compileDialog.automat')}</option>
-                                <option value="none">{tr('ui.compileDialog.nimic')}</option>
-                                <option value="text">Text</option>
-                                <option value="page">{tr('ui.compileDialog.pagina_noua')}</option>
-                              </select>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </fieldset>
+                  <div className="row">
+                    <label>
+                      {tr('ui.compileDialog.editura')}
+                      <input value={epub.publisher || ''} onChange={(e) => setEpub({ ...epub, publisher: e.target.value })} />
+                    </label>
+                    <label>
+                      ISBN
+                      <input value={epub.isbn || ''} onChange={(e) => setEpub({ ...epub, isbn: e.target.value })} />
+                    </label>
+                    <label>
+                      {tr('ui.compileDialog.identificator_daca_nu_exista_isbn')}
+                      <input value={epub.identifier || ''} onChange={(e) => setEpub({ ...epub, identifier: e.target.value })} />
+                    </label>
+                  </div>
+                  <label>
+                    Descriere
+                    <textarea rows="3" value={epub.description || ''} onChange={(e) => setEpub({ ...epub, description: e.target.value })} />
+                  </label>
+                  <label>
+                    {tr('ui.compileDialog.subiecte_separate_prin_virgula')}
+                    <input value={Array.isArray(epub.subjects) ? epub.subjects.join(', ') : epub.subjects || ''} onChange={(e) => setEpub({ ...epub, subjects: e.target.value })} />
+                  </label>
+                  <label>
+                    {tr('ui.compileDialog.coperta_imagine_din_cercetare')}
+                    <select value={coverId} onChange={(e) => setCoverId(e.target.value)}>
+                      <option value="">{tr('ui.compileDialog.fara_coperta')}</option>
+                      {images.map((n) => (
+                        <option key={n.id} value={n.id}>{n.title}</option>
+                      ))}
+                    </select>
+                  </label>
+                                  </div>
+                </div>
               )}
+            </div>
+          </section>
+        </div>
 
-              {tab === 'separatoare' && (
-                <fieldset disabled={!editable}>
+        {preview !== null && (
+          <div className="cd-preview">
+            <div className="row">
+              <strong>Previzualizare</strong>
+              <button type="button" onClick={() => setPreview(null)}>{tr('ui.compileDialog.inchide_previzualizarea')}</button>
+            </div>
+            <iframe title="Previzualizare" sandbox="" srcDoc={preview} />
+          </div>
+        )}
+
+        {done && <p className="ok">Salvat: {done}</p>}
+        <div className="actions">
+          <button type="button" onClick={onClose}>{tr('btn.close')}</button>
+          <button type="button" onClick={persist}>{tr('ui.compileDialog.salveaza_setarile')}</button>
+          <button type="button" disabled={busy} onClick={showPreview}>Previzualizare</button>
+          <button type="button" className="primary" disabled={busy} onClick={run}>{busy ? tr('ui.compileDialog.se_compileaza') : tr('ui.compileDialog.compileaza')}</button>
+        </div>
+
+        {assigning &&
+          subDialog(
+            tr('ui.compileDialog.atribuie_asezari'),
+            () => setAssigning(false),
+            <div className="cd-panel">
+              <fieldset disabled={!editable}>
+                              <fieldset disabled={!editable}>
+              <p className="muted small">
+                {tr('ui.compileDialog.fiecare_tip_de_sectiune_primeste')}
+              </p>
+              <div className="row">
+                {[['folder', tr('ui.compileDialog.dosare')], ['container', tr('ui.compileDialog.documente_cu_subdocumente')], ['file', tr('group.document')]].map(([k, label]) => (
+                  <label key={k}>
+                    {label}
+                    <select value={(format.defaultLayouts || {})[k] || ''} onChange={(e) => setIn(['defaultLayouts', k], e.target.value)}>
+                      {typeTitles.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+              <table className="cd-table">
+                <thead>
+                  <tr>
+                    <th>{tr('ui.compileDialog.tip_de_sectiune')}</th>
+                    <th>{tr('ui.advancedSearchDialog.titlu')}</th>
+                    <th>Prefix</th>
+                    <th>Sufix</th>
+                    <th>Litere</th>
+                    <th>Aliniere</th>
+                    <th>{tr('ui.compileDialog.pagina_noua')}</th>
+                    <th>Text</th>
+                    <th>{tr('ui.compileDialog.separator_inainte')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {typeTitles.map((t) => {
+                    const l = layoutOf(t);
+                    return (
+                      <tr key={t}>
+                        <td>{t}</td>
+                        <td><input type="checkbox" aria-label={tr('ui.compileDialog.arata_titlul')} checked={l.showTitle} onChange={(e) => setLayout(t, 'showTitle', e.target.checked)} /></td>
+                        <td><input aria-label="Prefix" value={l.titlePrefix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titlePrefix', e.target.value.replace(/\\n/g, '\n'))} /></td>
+                        <td><input aria-label="Sufix" value={l.titleSuffix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titleSuffix', e.target.value.replace(/\\n/g, '\n'))} /></td>
+                        <td>
+                          <select aria-label="Litere" value={l.titleCase} onChange={(e) => setLayout(t, 'titleCase', e.target.value)}>
+                            <option value="normal">Normale</option>
+                            <option value="upper">MAJUSCULE</option>
+                            <option value="smallcaps">{tr('ui.compileDialog.majuscule_mici')}</option>
+                          </select>
+                        </td>
+                        <td>
+                          <select aria-label="Aliniere" value={l.titleAlign || 'center'} onChange={(e) => setLayout(t, 'titleAlign', e.target.value)}>
+                            <option value="center">{tr('ui.compileDialog.centru')}</option>
+                            <option value="left">{tr('ui.compileDialog.stanga_2')}</option>
+                            <option value="right">{tr('ui.compileDialog.dreapta')}</option>
+                          </select>
+                        </td>
+                        <td><input type="checkbox" aria-label={tr('ui.compileDialog.pagina_noua')} checked={Boolean(l.pageBreakBefore)} onChange={(e) => setLayout(t, 'pageBreakBefore', e.target.checked)} /></td>
+                        <td><input type="checkbox" aria-label={tr('ui.compileDialog.arata_textul')} checked={l.showText} onChange={(e) => setLayout(t, 'showText', e.target.checked)} /></td>
+                        <td>
+                          <select aria-label={tr('ui.compileDialog.separator_inainte')} value={l.separatorBefore} onChange={(e) => setLayout(t, 'separatorBefore', e.target.value)}>
+                            <option value="auto">{tr('ui.compileDialog.automat')}</option>
+                            <option value="none">{tr('ui.compileDialog.nimic')}</option>
+                            <option value="text">Text</option>
+                            <option value="page">{tr('ui.compileDialog.pagina_noua')}</option>
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+                              </fieldset>
+              </fieldset>
+            </div>,
+            'cd-assign',
+          )}
+
+        {editing &&
+          subDialog(
+            tr('ui.compileDialog.editeaza_format_x', { name: builtinName('format', format) }),
+            () => setEditing(false),
+            <>
+              {!editable && <p className="muted small">{tr('ui.compileDialog.formatele_predefinite_nu_se_modifica')}</p>}
+              <nav className="cd-tabs" role="tablist" onKeyDown={tabKeys(FORMAT_TABS().map(([id]) => id), fmtTab, setFmtTab)}>
+                {FORMAT_TABS().map(([id, label]) => (
+                  <button key={id} type="button" role="tab" aria-selected={fmtTab === id} tabIndex={fmtTab === id ? 0 : -1} className={fmtTab === id ? 'active' : ''} onClick={() => setFmtTab(id)}>
+                    {label}
+                  </button>
+                ))}
+              </nav>
+              <div className="cd-panel">
+                {fmtTab === 'separatoare' && (
+                  <fieldset disabled={!editable}>
+                                  <fieldset disabled={!editable}>
                   {sepEditor('sameType', tr('ui.compileDialog.intre_sectiuni_de_acelasi_tip'))}
                   {sepEditor('differentType', tr('ui.compileDialog.intre_sectiuni_de_tipuri_diferite'))}
                   <p className="muted small">{tr('ui.compileDialog.o_sectiune_care_incepe_pe')}</p>
-                </fieldset>
-              )}
-
-              {tab === 'inlocuiri' && (
-                <fieldset disabled={!editable}>
+                                  </fieldset>
+                  </fieldset>
+                )}
+                {fmtTab === 'inlocuiri' && (
+                  <fieldset disabled={!editable}>
+                                  <fieldset disabled={!editable}>
                   <legend>{tr('ui.compileDialog.transformari')}</legend>
                   {[
                     ['smartQuotes', 'Ghilimele drepte → „…”'],
@@ -652,11 +853,12 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   <button type="button" onClick={() => setIn(['replacements'], [...reps, { find: '', replace: '', regex: false, wholeWord: false, caseSensitive: false }])}>
                     {tr('ui.compileDialog.adauga_inlocuire')}
                   </button>
-                </fieldset>
-              )}
-
-              {tab === 'note' && (
-                <fieldset disabled={!editable}>
+                                  </fieldset>
+                  </fieldset>
+                )}
+                {fmtTab === 'note' && (
+                  <fieldset disabled={!editable}>
+                                  <fieldset disabled={!editable}>
                   <label>
                     Notele de subsol
                     <select value={xf.notes || 'footnotes'} onChange={(e) => setIn(['transforms', 'notes'], e.target.value)}>
@@ -684,11 +886,12 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     </select>
                   </label>
                   <p className="muted small">{tr('ui.compileDialog.adnotarile_din_text_nu_ajung')}</p>
-                </fieldset>
-              )}
-
-              {tab === 'pagina' && (
-                <fieldset disabled={!editable}>
+                                  </fieldset>
+                  </fieldset>
+                )}
+                {fmtTab === 'pagina' && (
+                  <fieldset disabled={!editable}>
+                                  <fieldset disabled={!editable}>
                   <legend>Text</legend>
                   <div className="row">
                     <label>
@@ -787,80 +990,13 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <button type="button" onClick={() => setIn(['page'], null)}>{tr('ui.compileDialog.fara_setari_de_pagina')}</button>
                     </div>
                   )}
-                </fieldset>
-              )}
-
-              {tab === 'metadate' && (
-                <div>
-                  <p className="muted small">{tr('ui.compileDialog.pentru_epub_titlul_si_autorul')}</p>
-                  <div className="row">
-                    <label>
-                      {tr('ui.advancedSearchDialog.titlu')}
-                      <input value={epub.title || ''} placeholder={project.title} onChange={(e) => setEpub({ ...epub, title: e.target.value })} />
-                    </label>
-                    <label>
-                      Autor
-                      <input value={epub.author || ''} placeholder={project.author} onChange={(e) => setEpub({ ...epub, author: e.target.value })} />
-                    </label>
-                    <label>
-                      {tr('set.tab.language')}
-                      <input value={epub.language || ''} placeholder="ro" onChange={(e) => setEpub({ ...epub, language: e.target.value })} />
-                    </label>
-                  </div>
-                  <div className="row">
-                    <label>
-                      {tr('ui.compileDialog.editura')}
-                      <input value={epub.publisher || ''} onChange={(e) => setEpub({ ...epub, publisher: e.target.value })} />
-                    </label>
-                    <label>
-                      ISBN
-                      <input value={epub.isbn || ''} onChange={(e) => setEpub({ ...epub, isbn: e.target.value })} />
-                    </label>
-                    <label>
-                      {tr('ui.compileDialog.identificator_daca_nu_exista_isbn')}
-                      <input value={epub.identifier || ''} onChange={(e) => setEpub({ ...epub, identifier: e.target.value })} />
-                    </label>
-                  </div>
-                  <label>
-                    Descriere
-                    <textarea rows="3" value={epub.description || ''} onChange={(e) => setEpub({ ...epub, description: e.target.value })} />
-                  </label>
-                  <label>
-                    {tr('ui.compileDialog.subiecte_separate_prin_virgula')}
-                    <input value={Array.isArray(epub.subjects) ? epub.subjects.join(', ') : epub.subjects || ''} onChange={(e) => setEpub({ ...epub, subjects: e.target.value })} />
-                  </label>
-                  <label>
-                    {tr('ui.compileDialog.coperta_imagine_din_cercetare')}
-                    <select value={coverId} onChange={(e) => setCoverId(e.target.value)}>
-                      <option value="">{tr('ui.compileDialog.fara_coperta')}</option>
-                      {images.map((n) => (
-                        <option key={n.id} value={n.id}>{n.title}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
-
-        {preview !== null && (
-          <div className="cd-preview">
-            <div className="row">
-              <strong>Previzualizare</strong>
-              <button type="button" onClick={() => setPreview(null)}>{tr('ui.compileDialog.inchide_previzualizarea')}</button>
-            </div>
-            <iframe title="Previzualizare" sandbox="" srcDoc={preview} />
-          </div>
-        )}
-
-        {done && <p className="ok">Salvat: {done}</p>}
-        <div className="actions">
-          <button type="button" onClick={onClose}>{tr('btn.close')}</button>
-          <button type="button" onClick={persist}>{tr('ui.compileDialog.salveaza_setarile')}</button>
-          <button type="button" disabled={busy} onClick={showPreview}>Previzualizare</button>
-          <button type="button" className="primary" disabled={busy} onClick={run}>{busy ? tr('ui.compileDialog.se_compileaza') : tr('ui.compileDialog.compileaza')}</button>
-        </div>
+                                  </fieldset>
+                  </fieldset>
+                )}
+              </div>
+            </>,
+            'cd-format-editor',
+          )}
       </div>
     </div>
   );
@@ -868,8 +1004,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
 
 const CSS = `
 .compile-dialog{max-width:1100px;width:95vw}
-.compile-dialog .cd-body{display:flex;gap:1em;min-height:420px}
-.compile-dialog .cd-formats{flex:0 0 210px;border-right:1px solid var(--border,#ddd);padding-right:.8em}
+.compile-dialog .cd-body{min-height:420px}
+.compile-dialog .cd-formats{border-right:1px solid var(--border,#ddd);padding-right:.8em}
 .compile-dialog .cd-formats ul{list-style:none;margin:0;padding:0}
 .compile-dialog .cd-formats li button{width:100%;text-align:left;margin:1px 0}
 .compile-dialog .cd-formats li button.active,.compile-dialog .cd-tabs button.active{font-weight:700;outline:2px solid var(--accent,#4a7)}
