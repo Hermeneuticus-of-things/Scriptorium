@@ -48,6 +48,7 @@ import ResearchPanel from './components/ResearchPanel.jsx';
 import AiJobBar from './components/AiJobBar.jsx';
 import McpConnectDialog from './components/McpConnectDialog.jsx';
 import { buildMenuLayout, nativeMenuSpec, AI_ONLY_COMMANDS } from './lib/menuLayout.js';
+import { editorMenus } from './lib/editorMenus.js';
 import FloatingInspector from './components/FloatingInspector.jsx';
 import CompositionBar from './components/CompositionBar.jsx';
 import BookmarksPanel from './components/BookmarksPanel.jsx';
@@ -64,7 +65,7 @@ import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
 import { applySettingsCss } from './lib/settingsDefaults.js';
 import DialogA11y from './components/DialogA11y.jsx';
-import { setLanguage, cmdLabel, groupLabel, t as tr, uiLocale } from './lib/i18n.js';
+import { setLanguage, cmdLabel, groupLabel, builtinName, t as tr, uiLocale } from './lib/i18n.js';
 import SettingsDialog from './components/SettingsDialog.jsx';
 import FindDialog from './components/FindDialog.jsx';
 import HistoryDialog from './components/HistoryDialog.jsx';
@@ -2082,7 +2083,7 @@ export default function App({ api: apiProp }) {
   ];
 
   const navigateMenu = [
-    { label: tr('cmd.goto'), shortcut: 'Ctrl+G', action: () => setDialog('goto') },
+    { label: tr('cmd.goto'), shortcut: shortcutFor('goto', settings), action: () => setDialog('goto') },
     { label: tr('cmd.prevDoc'), shortcut: 'Ctrl+Alt+↑', action: () => goSibling(-1) },
     { label: tr('cmd.nextDoc'), shortcut: 'Ctrl+Alt+↓', action: () => goSibling(1) },
     { label: tr('ui.app.dosarul_parinte'), action: () => {
@@ -2091,8 +2092,8 @@ export default function App({ api: apiProp }) {
     } },
     { label: tr('cmd.back'), shortcut: 'Alt+←', action: back },
     { label: tr('cmd.forward'), shortcut: 'Alt+→', action: forward },
-    '-',
-    ...(favorites.length ? favorites.map((f) => ({ label: `★ ${f.title}`, action: () => go(f.id) })) : [{ label: tr('ui.app.niciun_favorit_bifeaza_favorit_in'), action: () => {}, disabled: true }]),
+    // Favorites are listed first in Navigate › Go To; this line only explains how to add one.
+    ...(favorites.length ? [] : ['-', { label: tr('ui.app.niciun_favorit_bifeaza_favorit_in'), action: () => {}, disabled: true }]),
   ];
 
   const projectMenu = [
@@ -2136,7 +2137,11 @@ export default function App({ api: apiProp }) {
     ['file', 'backupTo', tr('cmd.backupTo'), () => flush().then(() => api.backupTo(dir)).then((f) => f && setToast(tr('ui.g4.backupFacut', { file: f }))).catch(report), !api.backupTo],
     ['file', 'closeProject', tr('cmd.closeProject'), closeProject],
     ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
+    ['edit', 'findNext', tr('cmd.findNext'), () => { const h = editorHandle(); if (h && !h.findAgain(1)) h.openFind(); }],
+    ['edit', 'findPrev', tr('cmd.findPrev'), () => { const h = editorHandle(); if (h && !h.findAgain(-1)) h.openFind(); }],
+    ['edit', 'findUseSel', tr('cmd.findUseSel'), () => editorHandle()?.useSelectionForFind()],
     ['edit', 'findProject', tr('cmd.findProject'), () => { setFindSeed(''); setDialog('find'); }],
+    ['edit', 'findFormat', tr('cmd.findFormat'), () => editorHandle()?.openFormatFind()],
     ['edit', 'advSearch', tr('cmd.advSearch'), () => { setSearchSeed(''); setDialog('advsearch'); }],
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
@@ -2307,8 +2312,22 @@ export default function App({ api: apiProp }) {
     const c = commands[id];
     return c && { id, label: c.label, action: c.run, disabled: c.disabled, shortcut: c.key };
   };
+  const edMenus = editorMenus({
+    t: tr,
+    handle: editorHandle,
+    view: editorView,
+    setView: setEditorView,
+    settings,
+    setSettings: (patch) => { setSettings((s) => ({ ...s, ...patch })); api.setSettings(patch).catch(report); },
+    styles: projectStyles,
+    styleName: (st) => builtinName('style', st),
+    run: (id) => commandsRef.current[id]?.run(),
+    desktop: Boolean(api.setAppMenu),
+  });
   const menuLayout = buildMenuLayout(commands, {
-    extras: { document: documentMenu, nav: navigateMenu, project: projectMenu },
+    extras: { document: documentMenu, nav: navigateMenu, project: projectMenu, edit: edMenus.edit, insert: edMenus.insert, format: edMenus.format, view: edMenus.view, window: edMenus.window },
+    after: { edit: [commands.appendSelection && menuItem('appendSelection'), ...edMenus.editAfter].filter(Boolean) },
+    goto: { tree: project.tree, go: (id) => { go(id); setView('editor'); }, skip: (n) => n.root === 'trash' },
     label: (k) => tr(k),
     item: menuItem,
   });
@@ -2498,7 +2517,7 @@ export default function App({ api: apiProp }) {
 
         <section className={`workspace ${(splitNode || copyNode) && view === 'editor' ? 'split' : ''} ${copyNode && view === 'editor' ? 'has-copyholder' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
           <div className={`pane ${editorAreaClass}`}>
-            {view === 'editor' && selected && !composition && (
+            {view === 'editor' && selected && !composition && !editorView.hideHeaderBar && (
               <div className="sc-header-bar">
                 <button onClick={back} disabled={nav.index <= 0} title={tr('ui.app.inapoi_alt')} aria-label={tr('cmd.back')}><BackIcon /></button>
                 <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title={tr('ui.app.inainte_alt')} aria-label={tr('cmd.forward')}><ForwardIcon /></button>
@@ -2562,7 +2581,7 @@ export default function App({ api: apiProp }) {
                 onManageStyles={() => setDialog('styles')}
               />
             )}
-            {view === 'editor' && selected && !isFolderView && selected.type !== 'file' && !composition && (
+            {view === 'editor' && selected && !isFolderView && selected.type !== 'file' && !composition && !editorView.hideFooterBar && (
               <EditorFooter
                 node={selected}
                 words={counts[selected.id] || 0}

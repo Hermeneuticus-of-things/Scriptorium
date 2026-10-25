@@ -8,20 +8,12 @@ import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linked
 import { isParaStyle } from '../lib/styles.js';
 import { POS_CLASSES } from '../lib/pos.js';
 import { listBookmarks } from '../editor/formatting.js';
+import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS } from '../lib/editorMenus.js';
 import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
 
-const TEXT_COLORS = ['#b3261e', '#c77700', '#2e7d32', '#1565c0', '#6a1b9a', '#5d4037', '#757575'];
-const HIGHLIGHTS = ['#fff176', '#a5d6a7', '#90caf9', '#f8bbd0', '#ffcc80'];
 const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Verdana', 'Calibri', 'Courier New', 'Courier Prime'];
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
 const LIST_TYPES = [['1', '1. 2. 3.'], ['a', 'a. b. c.'], ['A', 'A. B. C.'], ['i', 'i. ii. iii.'], ['I', 'I. II. III.']];
-const TIME_FORMATS = [
-  ['time', () => new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })],
-  ['dateTime', () => new Date().toLocaleString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })],
-  ['dateShort', () => new Date().toLocaleDateString('ro-RO')],
-  ['dateIso', () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }],
-  ['weekdayDate', () => new Date().toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })],
-];
 const ask = (label, cur) => {
   const v = window.prompt(label, cur ?? '');
   if (v === null) return undefined;
@@ -29,15 +21,6 @@ const ask = (label, cur) => {
   return Number.isFinite(n) ? n : null;
 };
 const SPECIAL = ['„', '”', '«', '»', '—', '–', '…', '§', '¶', '†', '•', '°', '×', 'ā', 'ī', 'ū', 'ṛ', 'ṝ', 'ḷ', 'ṅ', 'ñ', 'ṭ', 'ḍ', 'ṇ', 'ś', 'ṣ', 'ḥ', 'ṃ', 'Ā', 'Ī', 'Ū', 'Ś', 'Ṣ'];
-const PLACEHOLDERS = [
-  ['<$n>', 'phN'],
-  ['<$t>', 'phT'],
-  ['<$projecttitle>', 'phProject'],
-  ['<$author>', 'phAuthor'],
-  ['<$wc>', 'phWc'],
-  ['<$date>', 'phDate'],
-  ['<$p>', 'phP'],
-];
 
 function Swatches({ colors, onPick, onClear, clearLabel }) {
   return (
