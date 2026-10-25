@@ -202,6 +202,8 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
   };
 
   const d = dict?.dictation;
+  // Clipping / distortion: the mic level is at (or near) the top, so the recording is too loud.
+  const clipping = Boolean(d && !d.paused && (d.level || 0) >= 0.92);
   const pct = progress?.totalMb ? Math.round((progress.mb / progress.totalMb) * 100) : null;
   const engineLine = progress
     ? tr(progress.tts ? 'ui.mini.descarc_vocea' : 'ui.mini.descarc_motorul', { p: pct ?? 0 })
@@ -228,7 +230,10 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
         </button>
         {d ? (
           <>
-            <meter className="mini-level" min="0" max="1" value={d.paused ? 0 : d.level || 0} aria-label={tr('ui.dted.nivel')} />
+            <div className="mini-meter-wrap">
+              <meter className={`mini-level ${clipping ? 'clip' : ''}`} min="0" max="1" low="0.75" high="0.9" optimum="0.5" value={d.paused ? 0 : d.level || 0} aria-label={tr('ui.dted.nivel')} />
+              {clipping && <span className="mini-clip" title={tr('ui.mini.prea_tare_tip')}>⚠ {tr('ui.mini.prea_tare')}</span>}
+            </div>
             <span className="mini-time">{clock((Date.now() - d.since) / 1000)}</span>
             <button onClick={dict.togglePause} disabled={!d.id} title={d.paused ? tr('ui.dted.continua') : tr('ui.dted.pauza')}>{d.paused ? '▶' : '❚❚'}</button>
             <button onClick={dict.cancel} title={tr('ui.dted.anuleaza_tip')} aria-label={tr('ui.dted.anuleaza')}>✕</button>

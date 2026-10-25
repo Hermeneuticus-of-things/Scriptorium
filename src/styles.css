@@ -590,7 +590,7 @@ legend { color: var(--muted); padding: 0 4px; }
 .page.typewriter { padding-bottom: 50vh; padding-top: 30vh; }
 
 /* Voice mini-player: a small floating window (drag by its title strip). */
-.mini-player { position: fixed; right: 24px; bottom: 48px; z-index: 40; width: 300px; background: var(--paper); color: var(--text); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.22); font-size: 13px; user-select: none; }
+.mini-player { position: fixed; right: 24px; bottom: 48px; z-index: 40; width: 360px; background: var(--paper); color: var(--text); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.22); font-size: 14px; user-select: none; }
 .mini-head { display: flex; align-items: center; padding: 6px 8px 4px 12px; cursor: move; border-bottom: 1px solid var(--line); }
 .mini-title { flex: 1; font-weight: 600; }
 .mini-x { border: none; background: none; font-size: 16px; cursor: pointer; color: var(--muted); }
@@ -601,7 +601,15 @@ legend { color: var(--muted); padding: 0 4px; }
 .mini-player .mini-mic { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: #c62828; font-size: 16px; cursor: pointer; }
 .mini-player .mini-mic.on { background: #c62828; color: #fff; animation: mini-pulse 1.4s infinite; }
 @keyframes mini-pulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, #c62828 25%, transparent); } }
-.mini-level { flex: 1; }
+.mini-meter-wrap { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.mini-level { flex: 1; height: 16px; min-width: 40px; border-radius: 4px; }
+/* The mic level turns green → yellow → red as it nears the top, so you see distortion coming. */
+.mini-level::-webkit-meter-bar { background: var(--panel); border-radius: 4px; }
+.mini-level::-webkit-meter-optimum-value { background: #2e7d32; }
+.mini-level::-webkit-meter-suboptimum-value { background: #f9a825; }
+.mini-level::-webkit-meter-even-less-good-value { background: #c62828; }
+.mini-level.clip { outline: 2px solid #c62828; }
+.mini-clip { color: #c62828; font-weight: 700; font-size: 12px; white-space: nowrap; }
 .mini-time, .mini-hint { color: var(--muted); }
 .mini-hint { flex: 1; }
 .mini-msg { padding: 0 10px 8px; color: var(--muted); font-size: 12px; }

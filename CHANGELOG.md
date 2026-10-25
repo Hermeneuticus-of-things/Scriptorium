@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.6
+- Mini-player voce: fereastră mai mare, bara de nivel a microfonului mai mare (verde → galben → roșu pe măsură ce se apropie de maxim) și un avertisment „prea tare" când semnalul distorsionează. Dictarea tot nu pornește singură — microfonul pornește doar la click.
+
 ## v0.10.5
 - Import pagini web: cererile (pagină și imagini) trimit acum un User-Agent de Chrome și anteturi Accept/Accept-Language, ca site-urile cu protecție anti-bot să nu mai blocheze importul. Afectează doar paginile aduse din web.
 
