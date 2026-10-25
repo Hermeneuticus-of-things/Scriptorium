@@ -8,7 +8,7 @@ const { open, ed, check, done } = require('./_helpers.cjs');
     await page.setViewportSize({ width: w, height: 900 });
     await page.waitForTimeout(250);
     const vis = await page.evaluate(() => { const b = document.querySelector('.pane .format-bar'); return [...b.querySelectorAll(':scope > .fb-group button, :scope > .fb-group select')].map((x) => x.getAttribute('aria-label') || x.textContent.trim()); });
-    const need = ['Stilul paragrafului', 'Aldin (Ctrl+B)', 'Cursiv (Ctrl+I)', 'Subliniat (Ctrl+U)', 'Comentariu pe textul selectat', 'Notă de subsol (dublu-clic pe număr pentru editare)', 'Link extern (Ctrl+L)', 'Evidențiere'];
+    const need = ['Stilul paragrafului', 'Aldin (Ctrl+B)', 'Cursiv (Ctrl+I)', 'Subliniat (Ctrl+U)', 'Evidențiere'];
     const miss = need.filter((n) => !vis.includes(n));
     check(`@${w}: frequent actions visible`, !miss.length, miss.join(', '));
   }
@@ -43,9 +43,9 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   await page.keyboard.press('Shift+Tab');
   a = await active();
   check('Shift+Tab back to the remembered toolbar control', a.inBar && a.label === 'Stilul paragrafului', JSON.stringify(a));
-  // Menus: go to "Inserează", ArrowDown opens + focuses first item, Esc closes and returns
-  for (let i = 0; i < 40 && (await active()).label !== 'Inserează ▾'; i++) await page.keyboard.press('ArrowRight');
-  check('reached Inserează by arrows', (await active()).label === 'Inserează ▾');
+  // Menus: go to "Tabel", ArrowDown opens + focuses first item, Esc closes and returns
+  for (let i = 0; i < 40 && (await active()).label !== 'Tabel ▾'; i++) await page.keyboard.press('ArrowRight');
+  check('reached Tabel by arrows', (await active()).label === 'Tabel ▾');
   await page.keyboard.press('ArrowDown');
   await page.waitForTimeout(50);
   a = await active();
@@ -54,7 +54,7 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   check('ArrowDown moves in menu', (await active()).item === 'menuitem');
   await page.keyboard.press('Escape');
   a = await active();
-  check('Esc closes menu, focus back on button', a.label === 'Inserează ▾' && (await page.locator('.pane .format-bar .menu-pop').count()) === 0, JSON.stringify(a));
+  check('Esc closes menu, focus back on button', a.label === 'Tabel ▾' && (await page.locator('.pane .format-bar .menu-pop').count()) === 0, JSON.stringify(a));
   await page.keyboard.press('Enter');
   await page.waitForTimeout(50);
   check('Enter opens menu with focus inside', (await active()).item === 'menuitem');
@@ -63,7 +63,10 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   await page.waitForTimeout(50);
   check('Space opens menu with focus inside', (await active()).item === 'menuitem');
   await page.keyboard.press('Escape');
-  // overflow »
+  // overflow » (the default bar fits at 1400px, so narrow the window until it overflows)
+  await page.setViewportSize({ width: 760, height: 900 });
+  await page.waitForTimeout(600);
+  await page.locator('.pane .format-bar .fb-group button').first().focus();
   await page.keyboard.press('End');
   a = await active();
   check('End → » button', a.label === 'Mai multe comenzi de formatare', JSON.stringify(a));

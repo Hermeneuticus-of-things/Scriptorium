@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS = {
   compWidth: 40,
   compPaper: true,
   compFade: 100,
+  compAlign: 'center',
   // Corrections
   smartQuotes: true,
   smartDashes: true,
