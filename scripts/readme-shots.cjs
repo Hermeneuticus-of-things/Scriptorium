@@ -14,7 +14,10 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+// Prefer a locally installed Playwright; fall back to the CI location.
+let chromium;
+try { ({ chromium } = require('playwright')); }
+catch { ({ chromium } = require('/opt/node22/lib/node_modules/playwright')); }
 const { menuPick, menuCmd, caretEnd } = require('../tests/e2e/browser/_helpers.cjs');
 
 const URL = process.env.SCRIBNER_URL || 'http://localhost:4183/?demo';
