@@ -476,7 +476,7 @@ const flat = (nodes, out = []) => {
     await menuClick('Editor');
     check('menu: editor view', Boolean(await waitFor(() => win.locator('.toolbar .seg button.on', { hasText: 'Editor' }).count(), 2000)));
     // Dialogs from the menu
-    for (const [label, sel] of [['Mergi la…', '.modal'], ['Caută și înlocuiește în proiect…', '.modal[aria-label="Caută în proiect"]'], ['Compilează…', 'text=Compilează pentru'], ['Statistici…', '.modal']]) {
+    for (const [label, sel] of [['Mergi la (dialog)…', '.modal'], ['Caută și înlocuiește în proiect…', '.modal[aria-label="Caută în proiect"]'], ['Compilează…', 'text=Compilează pentru'], ['Statistici…', '.modal']]) {
       const r = await menuClick(label);
       check(`menu: "${label}" opens its dialog`, r === true && Boolean(await waitFor(() => win.locator(sel).count(), 3000)), String(r));
       await closeModal();
@@ -505,8 +505,8 @@ const flat = (nodes, out = []) => {
     check('Ctrl+2: corkboard', Boolean(await waitFor(() => win.locator('.toolbar .seg button.on', { hasText: 'Corkboard' }).count(), 2000)));
     await win.keyboard.press('Control+1');
     check('Ctrl+1: editor', Boolean(await waitFor(() => win.locator('.toolbar .seg button.on', { hasText: 'Editor' }).count(), 2000)));
-    await win.keyboard.press('Control+g');
-    check('Ctrl+G: go to dialog', Boolean(await waitFor(() => win.locator('.modal').count(), 2000)));
+    await win.keyboard.press('Control+Alt+g');
+    check('Ctrl+Alt+G: go to dialog', Boolean(await waitFor(() => win.locator('.modal').count(), 2000)));
     await closeModal();
     await binderRow('Alfa').click();
     const alfa = nodeBy('Alfa');
