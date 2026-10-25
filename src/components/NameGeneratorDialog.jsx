@@ -8,6 +8,8 @@ import { t as tr } from '../lib/i18n.js';
  */
 export default function NameGeneratorDialog({ onClose, onInsert, customLists = [], onCustomLists }) {
   const [startsWith, setStartsWith] = useState('');
+  const [endsWith, setEndsWith] = useState('');
+  const [contains, setContains] = useState('');
   const [importKind, setImportKind] = useState('any');
   const fileRef = useRef(null);
   const extra = useMemo(() => customCultures(customLists), [customLists]);
@@ -39,8 +41,8 @@ export default function NameGeneratorDialog({ onClose, onInsert, customLists = [
   const [part, setPart] = useState('full');
   const [seed, setSeed] = useState(() => Date.now());
   const names = useMemo(
-    () => generateNames({ firstOrigins, lastOrigins, gender, count, matchInitials: alliteration, doubleLast, rarity, seed, firstOnly: part === 'first', lastOnly: part === 'last', startsWith, extraCultures: extra }),
-    [firstOrigins, lastOrigins, gender, count, alliteration, doubleLast, rarity, seed, part, startsWith, extra],
+    () => generateNames({ firstOrigins, lastOrigins, gender, count, matchInitials: alliteration, doubleLast, rarity, seed, firstOnly: part === 'first', lastOnly: part === 'last', startsWith, endsWith, contains, extraCultures: extra }),
+    [firstOrigins, lastOrigins, gender, count, alliteration, doubleLast, rarity, seed, part, startsWith, endsWith, contains, extra],
   );
   const toggle = (list, setList, k) => setList(list.includes(k) ? (list.length > 1 ? list.filter((x) => x !== k) : list) : [...list, k]);
   const origins = (id, label, list, setList) => (
@@ -83,6 +85,10 @@ export default function NameGeneratorDialog({ onClose, onInsert, customLists = [
           </select>
           <label htmlFor="ng-starts">{tr('ui.p11.ng_starts')}</label>
           <input id="ng-starts" className="ng-starts" maxLength={3} value={startsWith} placeholder={tr('ui.p11.ng_starts_ph')} onChange={(e) => setStartsWith(e.target.value)} />
+          <label htmlFor="ng-ends">{tr('ui.nameGeneratorDialog.ng_ends')}</label>
+          <input id="ng-ends" className="ng-starts" maxLength={3} value={endsWith} onChange={(e) => setEndsWith(e.target.value)} />
+          <label htmlFor="ng-contains">{tr('ui.nameGeneratorDialog.ng_contains')}</label>
+          <input id="ng-contains" className="ng-starts" maxLength={5} value={contains} onChange={(e) => setContains(e.target.value)} />
           <label htmlFor="ng-count">{tr('ui.nameGeneratorDialog.numar')}</label>
           <input id="ng-count" type="number" min={1} max={100} value={count} onChange={(e) => setCount(Math.max(1, Math.min(100, +e.target.value || 1)))} />
           <span />
