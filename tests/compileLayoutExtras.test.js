@@ -53,6 +53,12 @@ describe('compile layout extras', () => {
     expect(css).toMatch(/\.h-c1 \.ch-prefix\{[^}]*text-transform:uppercase/);
     expect(css).toMatch(/\.c1\{[^}]*break-after:page/);
   });
+  it('custom CSS is returned for HTML and EPUB, style tags stripped', () => {
+    const fmt = { html: { css: '.x{color:red}' }, ebook: { css: '<style>.y{color:blue}</style>' } };
+    expect(L.customCss(fmt, 'html')).toBe('.x{color:red}');
+    expect(L.customCss(fmt, 'epub')).toBe('.y{color:blue}');
+    expect(L.customCss({}, 'html')).toBe('');
+  });
   it('decorative separator maps the chosen symbol to its glyph', () => {
     expect(L.normalizeSep({ kind: 'decorative', symbol: 'asterism' })).toMatchObject({ kind: 'decorative', text: '⁂' });
     expect(L.normalizeSep({ kind: 'decorative', symbol: 'stars' })).toMatchObject({ text: '* * *' });

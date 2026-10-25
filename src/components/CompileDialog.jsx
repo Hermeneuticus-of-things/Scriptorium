@@ -1408,6 +1408,19 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     </div>
                   )}
                                   </fieldset>
+                  <fieldset disabled={!editable}>
+                    <legend>{tr('ui.compileDialog.p23.cssTitlu')}</legend>
+                    <textarea
+                      className="cd-css"
+                      rows={5}
+                      spellCheck={false}
+                      aria-label={tr('ui.compileDialog.p23.cssTitlu')}
+                      placeholder={'.synopsis { font-style: italic; }'}
+                      value={(format.html && format.html.css) || (format.ebook && format.ebook.css) || ''}
+                      onChange={(e) => { setIn(['html', 'css'], e.target.value); setIn(['ebook', 'css'], e.target.value); }}
+                    />
+                    <p className="muted small">{tr('ui.compileDialog.p23.cssInfo')}</p>
+                  </fieldset>
                   </fieldset>
                 )}
               </div>
