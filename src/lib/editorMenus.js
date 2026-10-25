@@ -27,6 +27,10 @@ const SIZE_STEPS = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72
 
 export const titleCase = (t) => t.toLocaleLowerCase('ro').replace(/(^|\s)(\p{L})/gu, (m, sp, ch) => sp + ch.toLocaleUpperCase('ro'));
 export const curlyQuotes = (t) => t.replace(/(^|[\s(\[—–-])"/g, '$1„').replace(/"/g, '”');
+// Text-tidying transforms (pure, operate on the selected text as lines joined by \n).
+export const collapseSpaces = (t) => t.replace(/[ \t]{2,}/g, ' ');
+export const stripLeadingTabs = (t) => t.replace(/^\t+/gm, '');
+export const collapseBlankLines = (t) => t.replace(/\n[ \t]*(?:\n[ \t]*)+/g, '\n');
 // Comments unwrapped, footnotes and annotations dropped.
 export const withoutNotes = (html) =>
   html
@@ -130,6 +134,11 @@ export function editorMenus(ctx) {
       '-',
       { label: L('curlyQuotes'), action: transform(curlyQuotes) },
       { label: L('plainText'), action: on((c) => c.unsetAllMarks().run()) },
+    ] },
+    { label: L('textTidy'), submenu: [
+      { label: L('tidySpaces'), action: transform(collapseSpaces) },
+      { label: L('tidyBlankLines'), action: transform(collapseBlankLines) },
+      { label: L('tidyLeadingTabs'), action: transform(stripLeadingTabs) },
     ] },
   ];
 

@@ -42,6 +42,20 @@ function parseMaybeSse(raw) {
   if (content) return { choices: [{ message: { content } }], model: last.model };
   return last;
 }
+// Extract the first balanced {...} object, tolerating prose/markdown/multiple objects around it.
+function firstJsonObject(s) {
+  const i = s.indexOf('{');
+  if (i < 0) return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let j = i; j < s.length; j++) {
+    const c = s[j];
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) { try { return JSON.parse(s.slice(i, j + 1)); } catch { return null; } } }
+  }
+  return null;
+}
 async function judge(scene, rows, context = '') {
   const payload = rows.map((r, i) => ({ id: i, kind: r.kind, el: r.el || r.where, detail: r.detail }));
   const key = crypto.createHash('sha256').update(MODEL + '\n' + scene + '\n' + context + '\n' + JSON.stringify(payload)).digest('hex').slice(0, 24);
@@ -59,8 +73,7 @@ async function judge(scene, rows, context = '') {
   const data = parseMaybeSse(raw);
   let txt = data.choices?.[0]?.message?.content ?? '{}';
   txt = txt.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
-  const m = txt.match(/\{[\s\S]*\}/);
-  const parsed = m ? JSON.parse(m[0]) : { verdicts: [] };
+  const parsed = firstJsonObject(txt) || { verdicts: [] };
   // normalize: models vary on key names (id/index/item, scribnerLabel/match, note/reason)
   const verdicts = (parsed.verdicts || parsed.results || []).map((v, i) => {
     let id = typeof v.id === 'number' ? v.id : typeof v.index === 'number' ? v.index : i;
