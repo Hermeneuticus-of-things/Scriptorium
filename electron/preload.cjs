@@ -113,6 +113,7 @@ contextBridge.exposeInMainWorld('api', {
   editorPackage: (dir, project, options) => call('editor:package', dir, project, options),
   deleteSnapshot: (dir, id, file) => call('snap:delete', dir, id, file),
   renameSnapshot: (dir, id, file, name) => call('snap:rename', dir, id, file, name),
+  snapshotCounts: (dir) => call('snap:counts', dir),
   listAllTemplates: () => call('io:listTemplates'),
   saveAsTemplate: (dir, meta) => call('io:saveAsTemplate', dir, meta),
   deleteTemplate: (id) => call('io:deleteTemplate', id),

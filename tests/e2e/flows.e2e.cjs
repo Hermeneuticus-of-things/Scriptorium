@@ -279,9 +279,10 @@ const flat = (nodes, out = []) => {
     check('text changed after snapshot', /TEXT DUPĂ SNAPSHOT/.test(docOnDisk(alfa.id)));
     if (!(await win.locator('.side').count())) await cmd('toggleInspector');
     await win.locator('.side button[aria-label="Snapshot-uri"]').click();
-    const restore = win.locator('.snapshots li', { has: win.locator('strong', { hasText: /^Snapshot / }) }).first().locator('button', { hasText: 'Restaurează' });
-    await restore.waitFor({ timeout: 4000 });
-    await restore.click();
+    const row = win.locator('.snapshots li', { has: win.locator('strong', { hasText: /^Snapshot / }) }).first();
+    await row.waitFor({ timeout: 4000 });
+    await row.click();
+    await win.locator('.snapshots button.snap-rollback', { hasText: 'Revino la acesta' }).click();
     await win.waitForTimeout(300);
     await save();
     const now = docOnDisk(alfa.id);

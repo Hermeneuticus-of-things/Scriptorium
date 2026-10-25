@@ -38,6 +38,7 @@ export const DEFAULT_SETTINGS = {
   autoBacklinks: false,
   // Backup
   backupOnClose: true,
+  snapshotOnSave: false,
   backupEveryMin: 0,
   backupKeep: 10,
   backupDir: '',

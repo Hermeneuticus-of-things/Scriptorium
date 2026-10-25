@@ -168,6 +168,7 @@ export function createMockApi() {
   const history = {};
   const files = {};
   const snaps = {};
+  let snapSeq = 0;
   const authorJournal = {}; // dir -> I-EDIT journal rows
   const team = {}; // dir -> { name: text } (team/ files on the desktop)
   // ?demo&team: a second writer ("Ana") works on the first chapter, for trying team work alone
@@ -304,12 +305,26 @@ export function createMockApi() {
       return true;
     },
     async takeSnapshot(dir, id, name) {
-      const s = { file: String(Date.now()), name: name || 'Snapshot', date: new Date().toISOString(), html: files[key(dir, id)] || '' };
+      const s = { file: `${Date.now()}-${(snapSeq += 1)}`, name: name || 'Snapshot', date: new Date().toISOString(), html: files[key(dir, id)] || '' };
       (snaps[id] ||= []).unshift(s);
       return s;
     },
     async listSnapshots(_dir, id) {
       return snaps[id] || [];
+    },
+    async deleteSnapshot(_dir, id, file) {
+      snaps[id] = (snaps[id] || []).filter((s) => s.file !== file);
+      return true;
+    },
+    async renameSnapshot(_dir, id, file, name) {
+      const s = (snaps[id] || []).find((x) => x.file === file);
+      if (s) s.name = String(name || 'Snapshot');
+      return true;
+    },
+    async snapshotCounts() {
+      const out = {};
+      for (const [id, list] of Object.entries(snaps)) if (list.length) out[id] = { count: list.length, last: list.reduce((m, s) => (s.date > m ? s.date : m), '') };
+      return out;
     },
     // I-EDIT journal of the author's changes (MODIFICARI_AUTOR.jsonl on the desktop).
     async appendAuthorJournal(dir, rows) {

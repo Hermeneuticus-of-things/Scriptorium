@@ -4,12 +4,10 @@ import { incomingLinks } from '../lib/backlinks.js';
 import { findNode, rootOf } from '../lib/tree.js';
 import { BookmarkIcon, CommentIcon, LockIcon, MetaIcon, NotesIcon, SnapshotIcon, UnlockIcon } from './Icons.jsx';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { diffText, DIFF_LEVELS } from '../lib/snapshotDiff.js';
+import SnapshotsPane from './SnapshotsPane.jsx';
 import { buildExtensions } from '../editor/extensions.js';
-import { htmlToText } from '../lib/text.js';
 import { parseComments, updateComment } from '../lib/panelsExtra.js';
 import { t as tr, uiLocale } from '../lib/i18n.js';
-import { sanitizeHtml } from '../lib/sanitize.js';
 import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
 
 // Survives the remount App does on every selection change (key = selected id),
@@ -97,14 +95,9 @@ export default function Inspector({
   api, dir, project, node: selectedNode, html: selectedHtml, words: selectedWords, allKeywords, linkTargets = [], onOpen, onPatch: onPatchSelected,
   onNotesChange: onNotesSelected, onProjectNotesChange, onRestore, onError, flush,
   // Optional (batch C): lock, comments, per-id callbacks.
-  docs = null, counts = null, onPatchNode, onNotesChangeFor, onLockChange, teamLockOf = () => null, authorName = '', onJumpToComment, onHtmlChange,
+  docs = null, counts = null, onPatchNode, onNotesChangeFor, onLockChange, teamLockOf = () => null, onSnapshotsChanged, authorName = '', onJumpToComment, onHtmlChange,
 }) {
   const [tab, setTab] = useState('meta');
-  const [snaps, setSnaps] = useState([]);
-  const [preview, setPreview] = useState(null);
-  const [compare, setCompare] = useState(null);
-  const [compareB, setCompareB] = useState(null); // second snapshot for snapshot-vs-snapshot diff
-  const [diffLevel, setDiffLevel] = useState('word');
   const [lockedId, setLockedIdState] = useState(() => (lockMemory.dir === dir && lockMemory.id && findIn(project.tree, lockMemory.id) ? lockMemory.id : null));
   const setLockedId = (id) => {
     lockMemory.dir = dir;
@@ -122,37 +115,9 @@ export default function Inspector({
   const onNotesChange = pinnedOther ? (onNotesChangeFor ? (h) => onNotesChangeFor(lockedNode.id, h) : noop) : onNotesSelected;
   const editComment = (index, patch) => onHtmlChange && onHtmlChange(updateComment(html, index, patch), node.id);
 
-  useEffect(() => {
-    if (tab === 'snapshots') api.listSnapshots(dir, node.id).then(setSnaps).catch(onError);
-  }, [api, dir, node.id, tab, onError]);
-
   const notes = useMemo(() => annotations(html), [html]);
 
-  const take = async () => {
-    const name = window.prompt(tr('ui.inspector.nume_snapshot'), tr('ui.inspector.inainte_de_revizie_x', { v0: new Date().toLocaleDateString(uiLocale()) }));
-    if (name === null) return;
-    await flush();
-    await api.takeSnapshot(dir, node.id, name).catch(onError);
-    setSnaps(await api.listSnapshots(dir, node.id));
-  };
-
   const isRoot = Boolean(node.root);
-  const diff = compare ? diffText(htmlToText(compare.html), htmlToText(compareB ? compareB.html : html), diffLevel) : null;
-
-  const renameSnap = async (s) => {
-    const name = window.prompt(tr('ui.inspector.titlul_snapshot_ului'), s.name);
-    if (!name || name === s.name) return;
-    await api.renameSnapshot(dir, node.id, s.file, name).catch(onError);
-    setSnaps(await api.listSnapshots(dir, node.id));
-  };
-  const deleteSnap = async (s) => {
-    if (!window.confirm(tr('ui.inspector.stergi_snapshot_ul_x_nu', { name: s.name }))) return;
-    await api.deleteSnapshot(dir, node.id, s.file).catch(onError);
-    if (preview === s) setPreview(null);
-    if (compare === s) setCompare(null);
-    if (compareB === s) setCompareB(null);
-    setSnaps(await api.listSnapshots(dir, node.id));
-  };
 
   return (
     <aside className={`inspector ${lockedId ? 'inspector-locked' : ''}`}>
@@ -294,57 +259,17 @@ export default function Inspector({
       )}
 
       {tab === 'snapshots' && (
-        <div className="snapshots">
-          <button onClick={take}>{tr('ui.inspector.snapshot_acum')}</button>
-          {snaps.length === 0 && <p className="muted">{tr('ui.inspector.niciun_snapshot_fa_unul_inainte')}</p>}
-          <ul>
-            {snaps.map((s) => (
-              <li key={s.file}>
-                <div>
-                  <strong>{s.name}</strong>
-                  <br />
-                  <small>{new Date(s.date).toLocaleString(uiLocale())}</small>
-                </div>
-                <button className="link" onClick={() => { setCompare(null); setPreview(preview === s ? null : s); }}>{preview === s ? tr('ui.inspector.ascunde') : tr('ui.inspector.vezi')}</button>
-                <button className="link" onClick={() => { setPreview(null); setCompareB(null); setCompare(compare === s ? null : s); }} title={tr('ui.inspector.compara_cu_textul_curent')}>{compare === s && !compareB ? tr('ui.inspector.ascunde') : tr('ui.inspector.compara')}</button>
-                {compare && compare !== s && (
-                  <button className="link" onClick={() => setCompareB(compareB === s ? null : s)} title={tr('ui.inspector.compara_cele_doua_snapshot_uri')}>{compareB === s ? tr('ui.inspector.cu_textul_curent') : tr('ui.inspector.cu_acesta')}</button>
-                )}
-                {api.renameSnapshot && <button className="link" onClick={() => renameSnap(s)} title={tr('set.binderDbl.rename')}>✎</button>}
-                {api.deleteSnapshot && <button className="link" onClick={() => deleteSnap(s)} title={tr('ui.inspector.sterge_snapshot_ul')}>🗑</button>}
-                {!pinnedOther && !node.locked && !teamLockOf(node.id) && <button
-                  className="link"
-                  onClick={async () => {
-                    if (!window.confirm(tr('ui.inspector.restaurezi_acest_snapshot_textul_curent'))) return;
-                    await flush();
-                    await api.takeSnapshot(dir, node.id, tr('ui.inspector.automat_inainte_de_restaurare'));
-                    onRestore(s.html);
-                    setSnaps(await api.listSnapshots(dir, node.id));
-                  }}
-                >
-                  {tr('ui.backupDialog.restaureaza')}
-                </button>}
-              </li>
-            ))}
-          </ul>
-          {preview && <div className="snap-preview prose" dangerouslySetInnerHTML={{ __html: sanitize(preview.html) }} />}
-          {diff && (
-            <div className="snap-preview diff">
-              <p className="muted">
-                <del>{tr('ui.inspector.sters')}</del> {tr('ui.inspector.fata_de')}{compare.name}” · <ins>{tr('ui.inspector.adaugat')}</ins> {tr('ui.inspector.in')} {compareB ? `„${compareB.name}”` : tr('ui.inspector.textul_curent')}
-              </p>
-              <label className="diff-level">
-                {tr('ui.inspector.diffLevel')}{' '}
-                <select value={diffLevel} onChange={(e) => setDiffLevel(e.target.value)}>
-                  {DIFF_LEVELS.map((l) => <option key={l} value={l}>{tr(`ui.inspector.diff_${l}`)}</option>)}
-                </select>
-              </label>
-              {diff.map((part, i) =>
-                part.added ? <ins key={i}>{part.value}</ins> : part.removed ? <del key={i}>{part.value}</del> : <span key={i}>{part.value}</span>,
-              )}
-            </div>
-          )}
-        </div>
+        <SnapshotsPane
+          api={api}
+          dir={dir}
+          node={node}
+          html={html}
+          canRestore={!pinnedOther && !node.locked && !teamLockOf(node.id)}
+          flush={flush}
+          onRestore={onRestore}
+          onError={onError}
+          onChanged={onSnapshotsChanged}
+        />
       )}
     </aside>
   );
@@ -603,5 +528,3 @@ function titleOf(project, id) {
   return t;
 }
 
-// Snapshot HTML is our own editor output, but strip anything executable anyway.
-const sanitize = sanitizeHtml;
