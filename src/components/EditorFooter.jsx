@@ -50,3 +50,63 @@ export default function EditorFooter({ node, words = 0, selectedWords = 0, chars
     </div>
   );
 }
+
+const zoomOptions = (zoom) => [...new Set([75, 100, 125, 150, 175, 200, 250, 300, zoom])].sort((a, b) => a - b);
+
+// Footer under Scrivenings: totals over all the documents shown together.
+export function ScriveningsFooter({ count = 0, words = 0, chars = 0, selectedWords = 0, zoom = 100, onZoom }) {
+  const fmt = (n) => n.toLocaleString(uiLocale());
+  return (
+    <div className="editor-footer scriv-footer">
+      {onZoom && (
+        <select className="zoom-select" value={zoom} onChange={(e) => onZoom(Number(e.target.value))} title={tr('ui.statusBar.zoom')} aria-label={tr('ui.statusBar.zoom')}>
+          {zoomOptions(zoom).map((z) => <option key={z} value={z}>{z}%</option>)}
+        </select>
+      )}
+      <span className="spacer" />
+      <span className="footer-docs">{tr('ui.p8.docsShown', { n: fmt(count) })}</span>
+      <span className="footer-words">
+        {tr('ui.footer.cuvinte')}: {selectedWords > 0 ? tr('ui.footer.x_din_y', { x: fmt(selectedWords), y: fmt(words) }) : fmt(words)}
+      </span>
+      <span>{tr('ui.footer.caractere')}: {fmt(chars)}</span>
+      <span className="spacer" />
+    </div>
+  );
+}
+
+const CARD_SIZES = ['mic', 'mediu', 'mare'];
+// Footer under the corkboard / outliner: item count, words of the folder and the view's own
+// controls. kind: 'corkboard' | 'outline'; folder: the folder shown; onPatchFolder(patch).
+export function ViewFooter({ kind, folder, count = 0, words = 0, onPatchFolder }) {
+  const fmt = (n) => n.toLocaleString(uiLocale());
+  if (!folder) return null;
+  const cork = { mode: 'grid', size: 'mediu', ratio: '3:5', ...(folder.cork || {}) };
+  const setCork = (patch) => onPatchFolder?.({ cork: { ...cork, ...patch } });
+  const sizeIdx = Math.max(0, CARD_SIZES.indexOf(cork.size));
+  return (
+    <div className={`editor-footer view-footer view-footer-${kind}`}>
+      {kind === 'corkboard' && onPatchFolder && (
+        <>
+          <span className="cork-foot-modes" role="group" aria-label={tr('ui.p8.boardMode')}>
+            {['grid', 'lines', 'free'].map((m) => (
+              <button key={m} className={`link ${cork.mode === m ? 'on' : ''}`} data-mode={m} onClick={() => setCork({ mode: m })}>{tr(`ui.p8.mode_${m}`)}</button>
+            ))}
+          </span>
+          <label className="cork-foot-size">
+            {tr('ui.corkboard.marimea_fiselor')}{' '}
+            <input type="range" min="0" max="2" step="1" value={sizeIdx} onChange={(e) => setCork({ size: CARD_SIZES[Number(e.target.value)] })} aria-valuetext={tr(`ui.p8.size_${CARD_SIZES[sizeIdx]}`)} />
+          </label>
+          <select className="cork-foot-ratio" value={cork.ratio} onChange={(e) => setCork({ ratio: e.target.value })} title={tr('ui.corkboard.proportie')} aria-label={tr('ui.corkboard.proportie')}>
+            <option value="3:5">3 × 5</option>
+            <option value="4:6">4 × 6</option>
+            <option value="1:1">1 × 1</option>
+            <option value="4:3">4 × 3</option>
+          </select>
+        </>
+      )}
+      <span className="spacer" />
+      <span className="footer-docs">{tr('ui.p8.itemsShown', { n: fmt(count) })}</span>
+      <span className="footer-words">{tr('ui.footer.cuvinte')}: {fmt(words)}</span>
+    </div>
+  );
+}

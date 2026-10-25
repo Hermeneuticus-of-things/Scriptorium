@@ -1,3 +1,4 @@
+import { convertToPlainText, removeAllComments, removeAllFootnotes } from '../lib/textOps.js';
 import { t as i18nT } from '../lib/i18n.js';
 import { TextSelection } from '@tiptap/pm/state';
 import { sentenceAt, wordAt } from '../lib/textRange.js';
@@ -44,6 +45,7 @@ const Editor = forwardRef(function Editor(
     corrections = null,
     showInvisibles = false,
     compact = false,
+    tools = false,
     linkTargets = [],
     words = [],
     styles = [],
@@ -461,6 +463,10 @@ const Editor = forwardRef(function Editor(
         setEquation(latex !== null ? { latex, pos: from } : { latex: '', pos: null });
         return true;
       },
+      // Format › Text: whole-document clean-ups (one undo step each).
+      removeAllComments: () => { const n = removeAllComments(editor); flushRef.current(); return n; },
+      removeAllFootnotes: () => { const n = removeAllFootnotes(editor); flushRef.current(); return n; },
+      convertToPlainText: () => { const ok = convertToPlainText(editor); flushRef.current(); return ok; },
     }),
     [editor],
   );
@@ -603,7 +609,7 @@ const Editor = forwardRef(function Editor(
       <input ref={imageInput} type="file" accept="image/*" hidden onChange={onImageFile} />
       {equation && <EquationDialog initial={equation.latex} onInsert={putEquation} onClose={() => { setEquation(null); editor.commands.focus(); }} />}
       {showStylesPanel && !compact && <StylesPanel editor={editor} styles={styles} readOnly={readOnly} onStylesChange={onStylesChange} onManage={onManageStyles} onClose={onCloseStylesPanel} />}
-      {!readOnly && !compact && (
+      {!readOnly && (!compact || tools) && (
         <FormatBar
           editor={editor}
           linkTargets={linkTargets}
@@ -620,7 +626,8 @@ const Editor = forwardRef(function Editor(
         />
       )}
       <div
-        className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? `page-view page-${view.pageSize || 'a5'}` : ''} ${view.pageView && view.facing ? 'facing' : ''} ${view.invisibles ? 'invisibles' : ''}`}
+        className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? `page-view page-${view.pageSize || 'a5'}` : ''} ${view.pageView && view.facing ? 'facing' : ''} ${view.invisibles ? 'invisibles' : ''} ${view.hyphenate ? 'hyphenate' : ''}`}
+        lang={view.hyphenate ? view.hyphenLang || document.documentElement.lang || 'ro' : undefined}
         style={{
           ...(view.zoom && view.zoom !== 100 ? { '--zoom': view.zoom / 100 } : {}),
           // Width chosen by dragging the page edges (or the whole window, double-click on an edge).
@@ -664,7 +671,7 @@ const Editor = forwardRef(function Editor(
         </h2>
         {readOnly && <p className="hint">{i18nT('ui.editor.doar_citire')}</p>}
         {showFormatFind && <FormatFind editor={editor} styles={styles} onClose={() => { setShowFormatFind(false); editor.commands.focus(); }} />}
-        {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={1} />}
+        {view.ruler && !readOnly && (!compact || tools) && <Ruler editor={editor} zoom={1} />}
         {view.lineNumbers && !compact && <LineNumbers editor={editor} mode={view.lineNumbers === 'paragraphs' ? 'paragraphs' : 'lines'} />}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}
         <EditorContent editor={editor} className={`${scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'}${view.lineNumbers && !compact ? ' with-line-numbers' : ''}`} />

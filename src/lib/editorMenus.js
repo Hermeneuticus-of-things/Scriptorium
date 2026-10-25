@@ -203,6 +203,16 @@ export function editorMenus(ctx) {
       { label: t('ui.formatBar.fnToLinked'), action: () => ed() && footnotesToLinked(ed()) },
       { label: t('ui.formatBar.linkedToFn'), action: () => ed() && linkedToFootnotes(ed()) },
     ] },
+    { label: t('ui.p8.textMenu'), submenu: [
+      { label: t('ui.p8.removeComments'), action: () => handle()?.removeAllComments?.() },
+      { label: t('ui.p8.removeFootnotes'), action: () => handle()?.removeAllFootnotes?.() },
+      { label: t('ui.p8.toPlainText'), action: () => handle()?.convertToPlainText?.() },
+      '-',
+      { label: check(view.hyphenate, t('ui.p8.hyphenate')), action: () => setView({ ...view, hyphenate: !view.hyphenate }) },
+      '-',
+      // the menus go two levels deep: the placeholders are listed here directly
+      ...PLACEHOLDERS.map(([code, k]) => ({ label: `${t('ui.p8.insertPlaceholder')}: ${code}  ${t(`ui.formatBar.${k}`)}`, action: on((c) => c.insertContent(code.replace(/</g, '&lt;')).run()) })),
+    ] },
     '-',
     { label: t('ui.formatBar.copyFormat'), shortcut: 'Ctrl+Alt+C', action: on((c) => c.copyFormat().run()) },
     { label: t('ui.formatBar.pasteFormat'), shortcut: 'Ctrl+Alt+V', action: on((c) => c.pasteFormat().run()) },

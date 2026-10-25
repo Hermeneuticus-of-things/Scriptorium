@@ -42,9 +42,11 @@ export function recentList(h, max = 15) {
  * Which pane a binder click opens in: the active pane unless it is locked in place, then the
  * other pane when it is open and free. null = both locked (nothing changes).
  */
-export function routeSelection({ active = 'main', locks = {}, hasSplit = false }) {
+export function routeSelection({ active = 'main', locks = {}, hasSplit = false, linked = false }) {
   const other = active === 'main' ? 'split' : 'main';
   const usable = (p) => !locks[p] && (p === 'main' || hasSplit);
+  // Linked panes: the active pane drives, what it picks opens in the other one.
+  if (linked && hasSplit && usable(other)) return other;
   if (usable(active)) return active;
   if (usable(other)) return other;
   return null;
@@ -60,4 +62,27 @@ export function paneZoom(view = {}, pane = 'main') {
 export function withPaneZoom(view = {}, pane, z) {
   const v = Math.min(400, Math.max(50, Math.round(z)));
   return pane === 'split' ? { ...view, zoom2: v } : { ...view, zoom: v };
+}
+
+/**
+ * Entries of the header's title menu: the pane's recent documents and the documents next to
+ * the current one (same folder). titleOf(id) → title or null (gone).
+ */
+export function titleMenuEntries({ history, siblings = [], currentId, titleOf = () => null, max = 15 }) {
+  const recent = recentList(history || { stack: [], index: -1 }, max)
+    .filter((x) => titleOf(x.id) !== null)
+    .map((x) => ({ id: x.id, index: x.index, title: titleOf(x.id), current: x.current }));
+  const near = siblings.filter((n) => n && n.id).slice(0, 40).map((n) => ({ id: n.id, title: n.title || '—', current: n.id === currentId }));
+  return { recent, near };
+}
+
+/** Totals over several documents (Scrivenings footer): {words, chars}. */
+export function sumCounts(ids = [], counts = {}, charsOf = () => 0) {
+  let words = 0;
+  let chars = 0;
+  for (const id of ids) {
+    words += Number(counts[id]) || 0;
+    chars += Number(charsOf(id)) || 0;
+  }
+  return { words, chars };
 }

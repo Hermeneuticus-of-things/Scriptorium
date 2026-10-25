@@ -62,9 +62,9 @@ import Scratchpad from './components/Scratchpad.jsx';
 import { LinguisticFocusPanel, KeywordsHud, SpecialCharsDialog, AutoCompleteDialog } from './components/MissingWindows.jsx';
 import { pageViewVars, wordBefore, completeFromList, completionSuffix, toggleKeywordOn } from './lib/missingWindows.js';
 import MiniPlayer from './components/MiniPlayer.jsx';
-import EditorFooter from './components/EditorFooter.jsx';
-import PaneNav from './components/PaneNav.jsx';
-import { jumpHistory, paneZoom, pushHistory, routeSelection, stepHistory, withPaneZoom } from './lib/panes.js';
+import EditorFooter, { ScriveningsFooter, ViewFooter } from './components/EditorFooter.jsx';
+import EditorHeader from './components/EditorHeader.jsx';
+import { jumpHistory, paneZoom, pushHistory, routeSelection, stepHistory, withPaneZoom, sumCounts } from './lib/panes.js';
 import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
@@ -880,7 +880,7 @@ export default function App({ api: apiProp }) {
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
-      setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split) } : {});
+      setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split), linked: Boolean(ui.paneLocks.linked) } : {});
       setSplitNav({ stack: [], index: -1 });
       setCopyholder(ui.copyholder?.id && findNode(res.project.tree, ui.copyholder.id) ? { id: ui.copyholder.id, editable: Boolean(ui.copyholder.editable) } : null);
       const openCounts = Object.fromEntries(entries.map(([id, h]) => [id, wordCount(h)]));
@@ -938,6 +938,8 @@ export default function App({ api: apiProp }) {
     go(r.id, { push: false });
   };
   const titleOfNode = (id) => { const n = project && findNode(project.tree, id); return n ? n.title : null; };
+  // Documents in the same folder as id (header title menu).
+  const siblingsOf = (id) => { if (!project) return []; const p = findParent(project.tree, id); return (p ? p.children : project.tree) || []; };
   const toggleLockPane = (pane = activePaneRef.current) => setPaneLocks((l) => ({ ...l, [pane]: !l[pane] }));
 
   const go = async (id, { push = true } = {}) => {
@@ -994,7 +996,7 @@ export default function App({ api: apiProp }) {
       return;
     }
     // Split editor: the click opens in the pane used last, unless it is locked in place.
-    const target = routeSelection({ active: activePaneRef.current, locks: paneLocks, hasSplit: Boolean(splitId) && view === 'editor' });
+    const target = routeSelection({ active: activePaneRef.current, locks: paneLocks, hasSplit: Boolean(splitId) && view === 'editor', linked: Boolean(paneLocks.linked) });
     if (!target) return;
     if (target === 'split') {
       const node = findNode(project.tree, id);
@@ -2672,10 +2674,28 @@ export default function App({ api: apiProp }) {
         <section className={`workspace ${(splitNode || copyNode) && view === 'editor' ? 'split' : ''} ${copyNode && view === 'editor' ? 'has-copyholder' : ''} ${editorView.splitHorizontal ? 'split-h' : ''}`}>
           <div className={`pane ${editorAreaClass}`}>
             {view === 'editor' && selected && !composition && !editorView.hideHeaderBar && (
-              <div className="sc-header-bar">
-                <PaneNav pane="main" history={nav} titleOf={titleOfNode} onBack={back} onForward={forward} onJump={mainJump} />
-                <DocumentIcon />
-                <strong style={{ flex: 1 }}>{selected.title}</strong>
+              <EditorHeader
+                pane="main"
+                className="sc-header-bar"
+                node={selected}
+                history={nav}
+                titleOf={titleOfNode}
+                onBack={back}
+                onForward={forward}
+                onJump={mainJump}
+                siblings={siblingsOf(selected.id)}
+                onOpenDoc={(id) => go(id)}
+                onPrev={() => goSibling(-1)}
+                onNext={() => goSibling(1)}
+                locked={Boolean(paneLocks.main)}
+                onToggleLock={() => toggleLockPane('main')}
+                linked={Boolean(paneLocks.linked)}
+                onToggleLink={() => setPaneLocks((l) => ({ ...l, linked: !l.linked }))}
+                splitOpen={Boolean(splitId)}
+                onSplit={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)}
+                onOpenOther={selected.root ? undefined : () => flush().then(() => setSplitId(selected.id))}
+                onQuickRef={selected.root ? undefined : () => openQuickRef(selected.id)}
+              >
                 {selected.locked && <LockIcon title={tr('ui.app.blocat')} />}
                 {team.live.filter((p) => p.doc === selected.id).map((p) => (
                   <span key={p.machine} className="team-chip" style={{ borderColor: p.color }} title={tr('ui.team.lucreaza_acum', { name: p.who })}>
@@ -2698,11 +2718,7 @@ export default function App({ api: apiProp }) {
                     <LockIcon />
                   </button>
                 )}
-                <button className="hdr-arrow" onClick={() => goSibling(-1)} title={tr('cmd.prevDoc')} aria-label={tr('cmd.prevDoc')}>▲</button>
-                <button className="hdr-arrow" onClick={() => goSibling(1)} title={tr('cmd.nextDoc')} aria-label={tr('cmd.nextDoc')}>▼</button>
-                <button className={`pane-lock ${paneLocks.main ? 'on' : ''}`} onClick={() => toggleLockPane('main')} aria-pressed={Boolean(paneLocks.main)} title={paneLocks.main ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLoc')}>{paneLocks.main ? <LockIcon /> : <UnlockIcon />}</button>
-                <button className="split-btn" onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
-              </div>
+              </EditorHeader>
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type === 'file' && !selected.children && (
               <MediaView api={api} dir={dir} node={selected} onError={report} />
@@ -2774,6 +2790,11 @@ export default function App({ api: apiProp }) {
                 onOpen={(id) => go(id)}
               />
             )}
+            {isFolderView && !editorView.hideFooterBar && (() => {
+              const ids = scrivSections.map((n) => n.id);
+              const tot = sumCounts(ids, counts, (id) => (docs[id] || '').replace(/<[^>]+>/g, '').length);
+              return <ScriveningsFooter count={ids.length} words={tot.words} chars={tot.chars} selectedWords={selWords} zoom={paneZoom(editorView, 'main')} onZoom={(z) => setZoom(z, 'main')} />;
+            })()}
             {view === 'timeline' && <TimelineView project={project} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
             {view === 'relations' && <RelationMap project={project} docs={docs} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
             {view === 'pacing' && <PacingView project={project} docs={docs} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
@@ -2816,6 +2837,11 @@ export default function App({ api: apiProp }) {
                 onDropKeyword={dropKeyword}
               />
             )}
+            {view === 'corkboard' && !editorView.hideFooterBar && (() => {
+              const f = selected && selected.children ? selected : findParent(project.tree, selectedId) || project.tree[0];
+              const kids = (f && f.children) || [];
+              return <ViewFooter kind="corkboard" folder={f} count={kids.length} words={sumCounts(flatten(kids).map((n) => n.id), counts).words} onPatchFolder={f ? (patch) => patchNode(f.id, patch) : null} />;
+            })()}
             {view === 'outline' && (
               <Outliner
                 project={project}
@@ -2832,18 +2858,39 @@ export default function App({ api: apiProp }) {
                 labelColorIn={colorIn}
               />
             )}
+            {view === 'outline' && !editorView.hideFooterBar && (() => {
+              const f = selected && selected.children ? selected : project.tree[0];
+              const all = flatten(f.children || []);
+              return <ViewFooter kind="outline" folder={f} count={all.length} words={sumCounts(all.map((n) => n.id), counts).words} />;
+            })()}
           </div>
           {splitNode && view === 'editor' && (
             <div className={`pane second ${editorAreaClass}`}>
-              <div className="pane-head">
-                <PaneNav pane="split" history={splitNav} titleOf={titleOfNode} onBack={() => splitStep(-1)} onForward={() => splitStep(1)} onJump={splitJump} />
-                <span className="pane-title" title={splitNode.title}>{splitNode.title}</span>
-                <button className={`pane-lock ${paneLocks.split ? 'on' : ''}`} onClick={() => toggleLockPane('split')} aria-pressed={Boolean(paneLocks.split)} title={paneLocks.split ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLocPanou2')}>{paneLocks.split ? <LockIcon /> : <UnlockIcon />}</button>
-                <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? tr('ui.app.split_vertical') : tr('ui.app.split_orizontal')}</button>
-                <button className="link" onClick={swapPanes}>{tr('ui.app.inverseaza')}</button>
-                <button className="link" onClick={() => go(splitNode.id)}>{tr('ui.app.deschide_in_principal')}</button>
-                <button className="link" onClick={() => setSplitId(null)}>{tr('btn.close')}</button>
-              </div>
+              <EditorHeader
+                pane="split"
+                className="pane-head"
+                node={splitNode}
+                history={splitNav}
+                titleOf={titleOfNode}
+                onBack={() => splitStep(-1)}
+                onForward={() => splitStep(1)}
+                onJump={splitJump}
+                siblings={siblingsOf(splitNode.id)}
+                onOpenDoc={(id) => flush().then(() => setSplitId(id))}
+                onPrev={() => { const id = siblingInOrder(project.tree, splitNode.id, -1); if (id) flush().then(() => setSplitId(id)); }}
+                onNext={() => { const id = siblingInOrder(project.tree, splitNode.id, 1); if (id) flush().then(() => setSplitId(id)); }}
+                locked={Boolean(paneLocks.split)}
+                onToggleLock={() => toggleLockPane('split')}
+                linked={Boolean(paneLocks.linked)}
+                onToggleLink={() => setPaneLocks((l) => ({ ...l, linked: !l.linked }))}
+                splitOpen
+                splitHorizontal={Boolean(editorView.splitHorizontal)}
+                onToggleOrientation={() => toggleView('splitHorizontal')}
+                onSwap={swapPanes}
+                onOpenInMain={() => go(splitNode.id)}
+                onQuickRef={() => openQuickRef(splitNode.id)}
+                onClose={() => setSplitId(null)}
+              />
               {splitNode.children ? (
                 <p className="hint">{tr('ui.app.alege_un_document_cu_alt')}</p>
               ) : (
@@ -3437,6 +3484,15 @@ export default function App({ api: apiProp }) {
             y={q.y}
             readOnly={inTrash(q.id) || Boolean(n.locked) || mainIds.has(q.id) || n.type !== 'text'}
             smartQuotes={smartQuotes}
+            q={q}
+            words={counts[q.id] || 0}
+            api={api}
+            dir={dir}
+            onError={report}
+            onUpdate={(patch) => setQuickRefs((all) => all.map((r) => (r.id === q.id ? { ...r, ...patch } : r)))}
+            onPatch={n.root || n.locked || inTrash(q.id) ? null : (patch) => patchNode(q.id, patch)}
+            loadNotes={(id) => api.readDoc(dir, id, 'notes')}
+            onNotesChange={inTrash(q.id) ? null : (id, html) => queueWrite(id, 'notes', html)}
             onChange={(html) => writeDocNow(q.id, html)}
             onMove={(x, y) => setQuickRefs((all) => all.map((r) => (r.id === q.id ? { ...r, x, y } : r)))}
             onClose={() => setQuickRefs((all) => all.filter((r) => r.id !== q.id))}

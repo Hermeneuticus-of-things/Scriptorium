@@ -13,7 +13,7 @@ import { Subscript } from '@tiptap/extension-subscript';
 import { LinguisticFocus } from '../extensions/LinguisticFocus.js';
 import { Corrections } from './corrections.js';
 import { Invisibles } from './invisibles.js';
-import { AllCaps, Bookmark, ListStyle, PageBreak, ParagraphFormat, PreserveFormat, ScaledImage, SmallCaps } from './formatting.js';
+import { AllCaps, Bookmark, LetterSpacing, ListStyle, PageBreak, ParagraphFormat, PreserveFormat, ScaledImage, SmallCaps } from './formatting.js';
 import { LineHighlight } from './lineHighlight.js';
 import { AutoComplete, CharStyle, ParagraphStyle, Revision, WikiLink, WritingFocus } from './writing.js';
 
@@ -265,6 +265,7 @@ export function buildExtensions({ placeholder = tr('ui.editor.placeholder'), sma
     Color,
     FontFamily,
     FontSize,
+    LetterSpacing,
     SmallCaps,
     AllCaps,
     Bookmark,

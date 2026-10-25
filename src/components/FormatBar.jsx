@@ -15,6 +15,10 @@ const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'B
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
 const LINE_SPACINGS = [1, 1.2, 1.5, 2, 2.5, 3];
 const LIST_TYPES = [['1', '1. 2. 3.'], ['a', 'a. b. c.'], ['A', 'A. B. C.'], ['i', 'i. ii. iii.'], ['I', 'I. II. III.']];
+// Numbering with a closing parenthesis, and legal numbering (1.1, 1.2, 1.2.1).
+const LIST_PAREN = [['1', '1) 2) 3)'], ['a', 'a) b) c)'], ['A', 'A) B) C)'], ['i', 'i) ii) iii)'], ['I', 'I) II) III)']];
+// Character spacing steps (em): condensed … expanded.
+const LETTER_SPACINGS = ['-0.05em', '-0.02em', '0.02em', '0.05em', '0.1em', '0.2em'];
 const ask = (label, cur) => {
   const v = window.prompt(label, cur ?? '');
   if (v === null) return undefined;
@@ -336,6 +340,7 @@ export default function FormatBar({
       smallCaps: ed.isActive('smallCaps'),
       allCaps: ed.isActive('allCaps'),
       fontFamily: ed.getAttributes('textStyle').fontFamily || '',
+      letterSpacing: ed.getAttributes('textStyle').letterSpacing || '',
       fontSize: ed.getAttributes('textStyle').fontSize || '',
       image: ed.isActive('image'),
       para: { ...ed.state.selection.$from.parent.attrs },
@@ -577,6 +582,30 @@ export default function FormatBar({
           {s.fontFamily && !FONTS.includes(s.fontFamily) && <option value={s.fontFamily}>{s.fontFamily}</option>}
           {FONTS.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
         </select>
+        <span className="fb-font-preview" data-label={tr('ui.p8.fontPreview')} style={{ display: 'contents' }}>
+          <Menu
+            label={<span style={{ fontFamily: s.fontFamily || undefined }}>Aa</span>}
+            title={tr('ui.p8.fontPreview')}
+            items={[
+              { id: 'font:default', label: tr('ui.formatBar.defaultFont'), action: () => chain().unsetFontFamily().run() },
+              '-',
+              ...FONTS.map((f) => ({ id: `font:${f}`, label: <span className="font-preview-item" style={{ fontFamily: `"${f}"` }}>{s.fontFamily === f ? '✓ ' : ''}{f} <span className="muted">— {tr('ui.p8.fontSample')}</span></span>, action: () => chain().setFontFamily(f).run() })),
+            ]}
+          />
+        </span>
+        <span className="fb-letter-spacing" data-label={tr('ui.p8.letterSpacing')} style={{ display: 'contents' }}>
+          <Menu
+            label={<span aria-hidden="true">a↔b</span>}
+            title={tr('ui.p8.letterSpacing')}
+            items={[
+              { id: 'ls:normal', label: `${!s.letterSpacing ? '✓ ' : ''}${tr('ui.p8.lsNormal')}`, action: () => chain().unsetLetterSpacing().run() },
+              '-',
+              ...LETTER_SPACINGS.map((v) => ({ id: `ls:${v}`, label: `${s.letterSpacing === v ? '✓ ' : ''}${tr(parseFloat(v) < 0 ? 'ui.p8.lsCondensed' : 'ui.p8.lsExpanded', { v })}`, action: () => chain().setLetterSpacing(v).run() })),
+              '-',
+              { id: 'ls:custom', label: tr('ui.p8.lsCustom'), action: () => { const v = ask(tr('ui.p8.lsPrompt'), parseFloat(s.letterSpacing) || 0); if (v === null || v === undefined) return; if (v === 0) chain().unsetLetterSpacing().run(); else chain().setLetterSpacing(`${v}em`).run(); } },
+            ]}
+          />
+        </span>
         <select className="size-select" value={s.fontSize} onChange={(e) => (e.target.value ? chain().setFontSize(e.target.value).run() : chain().unsetFontSize().run())} title={tr('ui.formatBar.size')} aria-label={tr('ui.formatBar.size')}>
           <option value="">–</option>
           {s.fontSize && !SIZES.includes(parseFloat(s.fontSize)) && <option value={s.fontSize}>{s.fontSize}</option>}
@@ -613,7 +642,13 @@ export default function FormatBar({
     g(5, <>
         {btn('•', s.bullet, () => chain().toggleBulletList().run(), tr('ui.formatBar.bullets'))}
         {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), tr('ui.formatBar.ordered'))}
-        <span data-label={tr('ui.formatBar.listType')} style={{ display: 'contents' }}><Menu label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} /></span>
+        <span data-label={tr('ui.formatBar.listType')} style={{ display: 'contents' }}><Menu label="a/i" items={[
+          ...LIST_TYPES.map(([t, label]) => ({ id: `lt:${t}`, label, action: () => chain().setOrderedListFormat('dot', t).run() })),
+          '-',
+          ...LIST_PAREN.map(([t, label]) => ({ id: `lp:${t}`, label, action: () => chain().setOrderedListFormat('paren', t).run() })),
+          '-',
+          { id: 'll', label: `1.1  1.2  1.2.1  — ${tr('ui.p8.legalList')}`, action: () => chain().setOrderedListFormat('legal').run() },
+        ]} /></span>
         {btn('⇥', null, () => chain().sinkListItem('listItem').run(), tr('ui.formatBar.sink'), !s.inList)}
         {btn('⇤', null, () => chain().liftListItem('listItem').run(), tr('ui.formatBar.lift'), !s.inList)}
     </>),

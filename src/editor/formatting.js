@@ -641,10 +641,66 @@ export const ScaledImage = Image.extend({
   },
 });
 
-export const ListStyle = Extension.create({
-  name: 'listStyle',
+// Character spacing (tracking) on the text style: <span style="letter-spacing: 0.1em">.
+const SPACING_OK = /^-?\d*\.?\d+(em|px|pt)$/;
+export const LetterSpacing = Extension.create({
+  name: 'letterSpacing',
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        letterSpacing: {
+          default: null,
+          parseHTML: (el) => (SPACING_OK.test(el.style.letterSpacing || '') ? el.style.letterSpacing : null),
+          renderHTML: (a) => (a.letterSpacing && SPACING_OK.test(a.letterSpacing) ? { style: `letter-spacing: ${a.letterSpacing}` } : {}),
+        },
+      },
+    }];
+  },
   addCommands() {
     return {
+      setLetterSpacing:
+        (v) =>
+        ({ chain }) =>
+          (v && SPACING_OK.test(v) ? chain().setMark('textStyle', { letterSpacing: v }).run() : chain().setMark('textStyle', { letterSpacing: null }).removeEmptyTextStyle().run()),
+      unsetLetterSpacing:
+        () =>
+        ({ chain }) =>
+          chain().setMark('textStyle', { letterSpacing: null }).removeEmptyTextStyle().run(),
+    };
+  },
+});
+
+// Numbering formats of ordered lists beyond the marker type: 'paren' = "a)", 'legal' = "1.1.".
+export const LIST_FORMATS = ['dot', 'paren', 'legal'];
+
+export const ListStyle = Extension.create({
+  name: 'listStyle',
+  addGlobalAttributes() {
+    return [{
+      types: ['orderedList'],
+      attributes: {
+        listFormat: {
+          default: null,
+          parseHTML: (el) => (['paren', 'legal'].includes(el.getAttribute('data-list-format')) ? el.getAttribute('data-list-format') : null),
+          renderHTML: (a) => (a.listFormat ? { 'data-list-format': a.listFormat, 'data-list-marker': a.type || '1' } : {}),
+        },
+      },
+    }];
+  },
+  addCommands() {
+    return {
+      // format: 'dot' | 'paren' | 'legal' (with an optional marker type) — creates the list if needed.
+      setOrderedListFormat:
+        (format, type) =>
+        ({ editor, chain }) => {
+          const c = chain();
+          if (!editor.isActive('orderedList')) c.toggleOrderedList();
+          const attrs = { listFormat: format === 'paren' || format === 'legal' ? format : null };
+          if (type !== undefined) attrs.type = type === '1' ? null : type;
+          if (format === 'legal') attrs.type = null;
+          return c.updateAttributes('orderedList', attrs).run();
+        },
       // type: '1' | 'a' | 'A' | 'i' | 'I' — creates an ordered list if needed.
       setOrderedListType:
         (type) =>
