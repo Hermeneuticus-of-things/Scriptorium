@@ -2,6 +2,7 @@
 
 
 ## v0.9.9
+- MCP `--anonymize`: nume private (private-names.txt), emailuri și telefoane trimise modelului ca jetoane și rehidratate local la scriere; `docs/MCP_ARHITECTURA.md` descrie toată legătura agent ↔ Scribner.
 - MCP prin rețea: `--http <port>` (Streamable HTTP, cu token obligatoriu, pe 127.0.0.1 implicit, `--host` pentru alt calculator); resursa `scribner://ghid` cu regulile de lucru pentru agent.
 - Proiect nou: șabloanele pe categorii (stânga), fișe cu iconiță (mijloc), descriere dedesubt; Opțiuni▾ și Deschide recent▾ jos.
 - Setările proiectului cu listă verticală de file în stânga.
