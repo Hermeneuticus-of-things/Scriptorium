@@ -9,7 +9,8 @@ import { buildExtensions } from '../editor/extensions.js';
 import { parseAnnotations, updateComment, updateFootnote } from '../lib/panelsExtra.js';
 import BookmarksPanel from './BookmarksPanel.jsx';
 import { t as tr, uiLocale } from '../lib/i18n.js';
-import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
+import { moveTo, labelTitleOf, noneLabel, noneStatus, statusTitleOf, synopsisFromText, parseNumberField, customIconOf, CUSTOM_ICON_PREFIX } from '../lib/projectSettings.js';
+import ProjectNotesTabs from './ProjectNotesTabs.jsx';
 
 // Survives the remount App does on every selection change (key = selected id),
 // so "Lock Inspector" keeps showing the pinned document while navigating.
@@ -129,6 +130,8 @@ export default function Inspector({
   docs = null, counts = null, onPatchNode, onNotesChangeFor, onLockChange, teamLockOf = () => null, onSnapshotsChanged, authorName = '', onJumpToComment, onHtmlChange,
   // G3: + Comment / + Note from the Inspector, footnote jumps, project bookmarks.
   onAddAnnotation, onJumpToFootnote, onProjectBookmarksChange, latestHtml,
+  // P10: project notes as tabs (each tab its own file), project note tab list.
+  onProjectNoteChange, onProjectNoteTabsChange,
 }) {
   const [tab, setTab] = useState('notes');
   const [notesOf, setNotesOf] = useState('doc'); // Notes pane: this document or the whole project
@@ -165,6 +168,8 @@ export default function Inspector({
   const annots = useMemo(() => parseAnnotations(shownHtml), [shownHtml]);
 
   const isRoot = Boolean(node.root);
+  const fmt = project.defaultFormatting || {};
+  const notesStyle = { fontFamily: fmt.notesFont || undefined, fontSize: fmt.notesSize ? `${fmt.notesSize}px` : undefined };
 
   return (
     <aside className={`inspector ${lockedId ? 'inspector-locked' : ''}`}>
@@ -220,6 +225,14 @@ export default function Inspector({
               <label className="check">
                 <input type="checkbox" checked={node.includeInCompile !== false} onChange={(e) => onPatch({ includeInCompile: e.target.checked })} />
                 {tr('ui.binder.include_in_compile')}
+              </label>
+              <label className="check">
+                <input type="checkbox" className="insp-page-break" checked={Boolean(node.pageBreakBefore)} onChange={(e) => onPatch({ pageBreakBefore: e.target.checked })} />
+                {tr('ui.inspector.pagina_noua_inainte')}
+              </label>
+              <label className="check">
+                <input type="checkbox" className="insp-as-is" checked={Boolean(node.compileAsIs)} onChange={(e) => onPatch({ compileAsIs: e.target.checked })} />
+                {tr('ui.inspector.compileaza_asa_cum_e')}
               </label>
             </Section>
           )}
@@ -279,21 +292,50 @@ export default function Inspector({
               defaultValue={node.synopsis || ''}
               onBlur={(e) => e.target.value !== (node.synopsis || '') && onPatch({ synopsis: e.target.value })}
             />
+            {!isRoot && (
+              <div className="row">
+                <button
+                  className="insp-synopsis-from-text"
+                  disabled={!synopsisFromText(shownHtml)}
+                  title={tr('ui.inspector.sinopsis_din_text_tip')}
+                  onClick={() => {
+                    if (node.synopsis && !window.confirm(tr('ui.inspector.sinopsis_inlocuiesti'))) return;
+                    onPatch({ synopsis: synopsisFromText(latestHtml?.(node.id) ?? shownHtml) });
+                  }}
+                >
+                  {tr('ui.inspector.sinopsis_din_text')}
+                </button>
+              </div>
+            )}
             {!isRoot && <SynopsisImagePicker api={api} dir={dir} node={node} onPatch={onPatch} onError={onError} />}
           </Section>
           <div className="seg" role="group" aria-label={tr('ui.advancedSearchDialog.note')}>
             <button className={notesOf === 'doc' ? 'on' : ''} aria-pressed={notesOf === 'doc'} onClick={() => setNotesOf('doc')}>{tr('ui.inspector.note_document')}</button>
             <button className={notesOf === 'project' ? 'on' : ''} aria-pressed={notesOf === 'project'} onClick={() => setNotesOf('project')}>{tr('group.project')}</button>
           </div>
-          {notesOf === 'doc' ? (
-            <NotesLoader key="doc" api={api} dir={dir} id={node.id} onChange={onNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_acest_document')} />
-          ) : (
-            <NotesLoader key="project" api={api} dir={dir} id="project-notes" onChange={onProjectNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_tot_proiectul')} />
-          )}
+          <div className="insp-notes-body" style={notesStyle}>
+            {notesOf === 'doc' ? (
+              <NotesLoader key="doc" api={api} dir={dir} id={node.id} onChange={onNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_acest_document')} />
+            ) : onProjectNoteChange && onProjectNoteTabsChange && api ? (
+              <div className="insp-project-notes">
+                <ProjectNotesTabs
+                  tabs={project.projectNotes}
+                  readNote={(id) => api.readDoc(dir, id, 'notes')}
+                  onNoteChange={onProjectNoteChange}
+                  onTabsChange={onProjectNoteTabsChange}
+                  onError={onError}
+                />
+              </div>
+            ) : (
+              <NotesLoader key="project" api={api} dir={dir} id="project-notes" onChange={onProjectNotesChange} onError={onError} placeholder={tr('ui.inspector.note_pentru_tot_proiectul')} />
+            )}
+          </div>
         </div>
       )}
       {tab === 'bookmarks' && !isRoot && (
         <DocumentExtras
+          api={api}
+          dir={dir}
           project={project}
           node={node}
           onPatch={onPatch}
@@ -339,10 +381,26 @@ export default function Inspector({
 // Comments and footnotes of the document in ONE list, in text order (as in the classic
 // Inspector's "Comments & Footnotes" pane): + Comment / + Footnote add at the cursor, a click
 // on an item jumps to its place in the text, the note text is edited in place.
+const ANNOT_FILTER_KEY = 'scribner-annot-filter';
 function AnnotationsPane({ items, editable, canAdd, authorName, onAdd, onJump, onEdit, onDelete }) {
   const [editingKey, setEditingKey] = useState(null);
   const [pending, setPending] = useState(null); // kind just added: its new (empty) item opens for editing
   const [hint, setHint] = useState('');
+  const [filter, setFilter] = useState(() => {
+    try {
+      return ['comment', 'footnote'].includes(localStorage.getItem(ANNOT_FILTER_KEY)) ? localStorage.getItem(ANNOT_FILTER_KEY) : 'all';
+    } catch {
+      return 'all';
+    }
+  });
+  const setFilterSaved = (k) => {
+    setFilter(k);
+    try {
+      localStorage.setItem(ANNOT_FILTER_KEY, k);
+    } catch {
+      /* storage off */
+    }
+  };
   const keyOf = (it) => `${it.kind}:${it.index}`;
   useEffect(() => {
     if (!pending) return;
@@ -356,20 +414,32 @@ function AnnotationsPane({ items, editable, canAdd, authorName, onAdd, onJump, o
     setHint('');
     const ok = await onAdd(kind);
     if (ok === false) setHint(kind === 'comment' ? tr('ui.inspector.annot_no_word') : tr('ui.inspector.annot_no_editor'));
-    else setPending(kind);
+    else {
+      if (filter !== 'all' && filter !== kind) setFilter('all'); // the new note must be visible
+      setPending(kind);
+    }
   };
   let footNo = 0;
+  const numbered = items.map((it) => ({ it, no: it.kind === 'footnote' ? (footNo += 1) : 0 }));
+  const shown = filter === 'all' ? numbered : numbered.filter(({ it }) => it.kind === filter);
+  const nC = items.filter((it) => it.kind === 'comment').length;
   return (
     <div className="annotations annot-pane">
       <div className="annot-toolbar row">
         <button className="annot-add-comment" disabled={!canAdd} onClick={() => add('comment')} title={tr('ui.inspector.annot_add_comment_tip')}>+ {tr('ui.inspector.annot_comment')}</button>
         <button className="annot-add-footnote" disabled={!canAdd} onClick={() => add('footnote')} title={tr('ui.inspector.annot_add_footnote_tip')}>+ {tr('ui.inspector.annot_footnote')}</button>
       </div>
+      {items.length > 0 && (
+        <div className="seg annot-filter" role="group" aria-label={tr('ui.inspector.annot_filtru')}>
+          {[['all', tr('ui.inspector.annot_toate'), items.length], ['comment', tr('ui.inspector.annot_doar_comentarii'), nC], ['footnote', tr('ui.inspector.annot_doar_note'), items.length - nC]].map(([k, label, n]) => (
+            <button key={k} className={filter === k ? 'on' : ''} aria-pressed={filter === k} onClick={() => setFilterSaved(k)}>{label} ({n})</button>
+          ))}
+        </div>
+      )}
       {hint && <p className="muted small annot-hint" role="status">{hint}</p>}
       {items.length === 0 && <p className="muted">{tr('ui.inspector.annot_empty')}</p>}
       <ul className="annot-list">
-        {items.map((it) => {
-          const no = it.kind === 'footnote' ? (footNo += 1) : 0;
+        {shown.map(({ it, no }) => {
           return (
             <AnnotationItem
               key={`${keyOf(it)}:${it.start}`}
@@ -542,10 +612,38 @@ function CustomFields({ project, node, onPatch }) {
             </label>
           );
         }
+        const align = { textAlign: f.align && f.align !== 'left' ? f.align : undefined };
+        if (f.type === 'number') {
+          return (
+            <label key={f.id}>
+              {f.title}
+              <input
+                key={`${node.id}:${v ?? ''}`}
+                className="insp-number-field"
+                type="number"
+                step="any"
+                style={align}
+                defaultValue={v ?? ''}
+                onBlur={(e) => {
+                  const nv = parseNumberField(e.target.value);
+                  if (nv !== (v ?? '')) set(f.title, nv);
+                }}
+              />
+            </label>
+          );
+        }
+        if (f.type === 'text' && f.wraps) {
+          return (
+            <label key={f.id}>
+              {f.title}
+              <textarea key={`${node.id}:${v || ''}`} rows={3} style={align} defaultValue={v || ''} onBlur={(e) => e.target.value !== (v || '') && set(f.title, e.target.value)} />
+            </label>
+          );
+        }
         return (
           <label key={f.id}>
             {f.title}
-            <input type={f.type === 'date' ? 'date' : 'text'} defaultValue={f.type === 'date' && v ? String(v).slice(0, 10) : v || ''} onBlur={(e) => e.target.value !== (v || '') && set(f.title, e.target.value)} />
+            <input key={`${node.id}:${v || ''}`} type={f.type === 'date' ? 'date' : 'text'} style={align} defaultValue={f.type === 'date' && v ? String(v).slice(0, 10) : v || ''} onBlur={(e) => e.target.value !== (v || '') && set(f.title, e.target.value)} />
           </label>
         );
       })}
@@ -557,7 +655,22 @@ export const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥
 
 // Icon, section type, lock, favorite and bookmarks (Scrivener: Inspector > Bookmarks).
 const BM_SCOPE_KEY = 'scribner-bookmarks-scope';
-function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs, readDoc, onProjectBookmarksChange, onError }) {
+function CustomIconImg({ api, dir, file }) {
+  const [url, setUrl] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    if (file && api?.readMedia) api.readMedia(dir, file).then((u) => alive && setUrl(u)).catch(() => {});
+    return () => { alive = false; };
+  }, [api, dir, file]);
+  return url ? <img className="insp-custom-icon" src={url} alt="" width={18} height={18} /> : null;
+}
+
+function DocumentExtras({ api, dir, project, node, onPatch, linkTargets, onOpen, docs, readDoc, onProjectBookmarksChange, onError }) {
+  const customIcon = customIconOf(project, node.icon);
+  const tplFolder = project.templateFolder ? findNode(project.tree || [], project.templateFolder) : null;
+  const templates = tplFolder?.children || [];
+  const isContainer = node.type === 'folder' || Array.isArray(node.children);
+  const [dragFrom, setDragFrom] = useState(null);
   const [scope, setScopeState] = useState(() => {
     try {
       return localStorage.getItem(BM_SCOPE_KEY) === 'project' && onProjectBookmarksChange ? 'project' : 'doc';
@@ -584,12 +697,20 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs, rea
       <div className="row">
         <label>
           {tr('ui.inspector.icoana')}
-          <select value={node.icon && /\p{Extended_Pictographic}/u.test(node.icon) ? node.icon : ''} onChange={(e) => onPatch({ icon: e.target.value || null })}>
-            <option value="">{tr('ui.inspector.implicita')}</option>
-            {ICONS.map((i) => (
-              <option key={i} value={i}>{i}</option>
-            ))}
-          </select>
+          <span className="row">
+            {customIcon && <CustomIconImg api={api} dir={dir} file={customIcon.file} />}
+            <select className="insp-icon" value={customIcon ? node.icon : node.icon && /\p{Extended_Pictographic}/u.test(node.icon) ? node.icon : ''} onChange={(e) => onPatch({ icon: e.target.value || null })}>
+              <option value="">{tr('ui.inspector.implicita')}</option>
+              {(project.customIcons || []).length > 0 && (
+                <optgroup label={tr('ui.inspector.icoane_proiect')}>
+                  {project.customIcons.map((ic) => <option key={ic.id} value={`${CUSTOM_ICON_PREFIX}${ic.id}`}>{ic.name}</option>)}
+                </optgroup>
+              )}
+              {ICONS.map((i) => (
+                <option key={i} value={i}>{i}</option>
+              ))}
+            </select>
+          </span>
         </label>
         <label>
           {tr('ui.inspector.culoare_icoana')}
@@ -618,6 +739,15 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs, rea
           <input type="checkbox" checked={Boolean(node.favorite)} onChange={(e) => onPatch({ favorite: e.target.checked })} /> {tr('ui.binder.favorit')}
         </label>
       </div>
+      {isContainer && templates.length > 0 && node.id !== project.templateFolder && (
+        <label>
+          {tr('ui.inspector.sablon_implicit')}
+          <select className="insp-default-template" value={node.defaultTemplate || ''} onChange={(e) => onPatch({ defaultTemplate: e.target.value || null })}>
+            <option value="">{tr('ui.inspector.niciun_sablon')}</option>
+            {templates.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+          </select>
+        </label>
+      )}
       <div className="seg bookmark-scope" role="group" aria-label={tr('ui.inspector.bm_scope')}>
         <button className={scope === 'doc' ? 'on' : ''} aria-pressed={scope === 'doc'} onClick={() => setScope('doc')}>{tr('ui.inspector.bm_document')}</button>
         <button className={scope === 'project' ? 'on' : ''} aria-pressed={scope === 'project'} disabled={!onProjectBookmarksChange} onClick={() => setScope('project')}>{tr('group.project')}</button>
@@ -631,15 +761,26 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs, rea
           onChange={onProjectBookmarksChange}
           onOpen={(id) => onOpen?.(id)}
           onError={onError}
-        />
+          chooseFile={api?.chooseBookmarkFile ? () => api.chooseBookmarkFile() : null}
+          openFile={api?.openBookmarkFile ? (p) => api.openBookmarkFile(dir, p) : null}        />
       ) : (
       <div className="doc-bookmarks">
         <span>{tr('ui.inspector.bm_doc_title')}</span>
         <ul className="bookmarks">
           {bookmarks.map((b, i) => (
-            <li key={i}>
+            <li
+              key={i}
+              draggable
+              className={dragFrom === i ? 'dragging' : ''}
+              onDragStart={(e) => { setDragFrom(i); e.dataTransfer.effectAllowed = 'move'; }}
+              onDragOver={(e) => dragFrom != null && e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); if (dragFrom != null) setBookmarks(moveTo(bookmarks, dragFrom, i)); setDragFrom(null); }}
+              onDragEnd={() => setDragFrom(null)}
+            >
               {b.url ? (
                 <a href={b.url} target="_blank" rel="noreferrer">{b.url}</a>
+              ) : b.file ? (
+                <button className="link bm-file" title={b.file} onClick={() => api?.openBookmarkFile?.(dir, b.file).catch?.((e) => onError?.(e))}>📎 {b.title || b.file.split(/[\\/]/).pop()}</button>
               ) : (
                 <button className="link" onClick={() => onOpen?.(b.id)}>{linkTargets.find((t) => t.id === b.id)?.title || tr('ui.inspector.document_sters')}</button>
               )}
@@ -662,7 +803,23 @@ function DocumentExtras({ project, node, onPatch, linkTargets, onOpen, docs, rea
           >
             {tr('ui.inspector.link_web')}
           </button>
+          {api?.chooseBookmarkFile && (
+            <button
+              className="bm-add-file"
+              onClick={async () => {
+                try {
+                  const f = await api.chooseBookmarkFile();
+                  if (f?.path && !bookmarks.some((b) => b.file === f.path)) setBookmarks([...bookmarks, { file: f.path, title: f.name }]);
+                } catch (e) {
+                  onError?.(e);
+                }
+              }}
+            >
+              {tr('ui.inspector.fisier_extern')}
+            </button>
+          )}
         </div>
+        {bookmarks.length > 1 && <p className="muted small">{tr('ui.inspector.bm_trage')}</p>}
       </div>
       )}
       <div className="incoming-links">
