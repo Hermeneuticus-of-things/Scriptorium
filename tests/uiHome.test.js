@@ -50,7 +50,7 @@ describe('Home screen', () => {
   it('Enter in the title field creates the project', async () => {
     let made = null;
     const el = await render({ settings: { recent: [] }, api: { newProject: async (t, tpl) => { made = [t, tpl]; return null; } } });
-    const input = el.querySelector('input');
+    const input = el.querySelector('input:not([type=search])');
     await act(async () => {
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
       setter.call(input, 'Carte nouă');

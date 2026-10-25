@@ -143,7 +143,7 @@ describe('folder sync formats', () => {
   });
 
   it('reads sync options and auto-sync actions from the project', () => {
-    expect(folderSync.syncOptions({ syncFormat: 'md', syncDraftFormat: 'fountain' })).toEqual({ format: 'md', draftFormat: 'fountain', notesFormat: 'md', includeNotes: true });
+    expect(folderSync.syncOptions({ syncFormat: 'md', syncDraftFormat: 'fountain' })).toEqual({ format: 'md', draftFormat: 'fountain', notesFormat: 'md', includeNotes: true, prefixNumbers: true, collection: null });
     expect(folderSync.syncOptions({ syncFormat: 'x' }).format).toBe('rtf');
     expect(folderSync.autoSyncAction({ syncFolder: '/x' }, 'open')).toBeNull();
     expect(folderSync.autoSyncAction({ syncFolder: '/x', syncAuto: true }, 'open')).toBe('in');

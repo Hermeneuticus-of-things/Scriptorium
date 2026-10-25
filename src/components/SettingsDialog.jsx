@@ -1,8 +1,9 @@
 import { LANG_NAMES } from '../lib/lookups.js';
 import ServicesPanel from './ServicesPanel.jsx';
+import SharingPane, { sharingDefaults } from './SharingPane.jsx';
 import React, { useRef, useState } from 'react';
 import { DEFAULT_SETTINGS } from '../lib/settingsDefaults.js';
-import { colorFor, newMachineId } from '../lib/team.js';
+import { newMachineId } from '../lib/team.js';
 import { listsFor, profileId } from '../lib/editorial.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
 import AI_PRESETS from '../../lib/aiPresets.json';
@@ -171,12 +172,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     bg: settings.compBg || '', width: settings.compWidth || 40, paper: settings.compPaper !== false, fade: settings.compFade ?? 100,
     bgImage: settings.compBgImage || '', bgImageFit: settings.compBgImageFit || 'cover', showTargets: Boolean(settings.compShowTargets),
   });
-  const [sharing, setSharing] = useState({
-    sync: { format: 'rtf', notesFormat: 'same', syncOnOpen: false, syncOnClose: false, includeNotes: true, ...(settings.sharingSync || {}) },
-    export: { format: 'docx', includeNotes: false, includeMeta: false, keepFolders: true, ...(settings.sharingExport || {}) },
-  });
-  const setSync = (p) => setSharing((x) => ({ ...x, sync: { ...x.sync, ...p } }));
-  const setExp = (p) => setSharing((x) => ({ ...x, export: { ...x.export, ...p } }));
+  const [sharing, setSharing] = useState(() => sharingDefaults(settings));
   const pickBgImage = (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -237,6 +233,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         compShowTargets: comp.showTargets,
         sharingSync: sharing.sync,
         sharingExport: sharing.export,
+        sharingImport: sharing.import,
+        sharingMobile: sharing.mobile,
         backupEveryMin: Number(s.backupEveryMin) || 0,
         backupKeep: Math.max(1, Number(s.backupKeep) || 5),
         team: {
@@ -654,65 +652,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         )}
       </>
     ),
-    sharing: (
-      <>
-        <fieldset>
-          <legend>{t('ui.team.echipa')}</legend>
-          <p className="muted small">{t('ui.team.setari_explicatie')}</p>
-          <div className="row">
-            <label>
-              {t('ui.team.numele_tau')}
-              <input value={s.teamName} onChange={set('teamName')} maxLength={60} placeholder={t('ui.team.nume_exemplu')} />
-            </label>
-            <label>
-              {t('ui.team.culoarea')}
-              <input type="color" value={s.teamColor || (s.teamName.trim() ? colorFor(s.teamName.trim()) : '#2e7dd7')} onChange={set('teamColor')} />
-            </label>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</legend>
-          <div className="row">
-            <label>
-              Format text
-              <select value={sharing.sync.format} onChange={(e) => setSync({ format: e.target.value })}>
-                <option value="rtf">RTF</option>
-                <option value="txt">{t('ui.compileDialog.text_simplu')}</option>
-                <option value="md">Markdown</option>
-              </select>
-            </label>
-            <label>
-              {t('ui.settingsDialog.format_note')}
-              <select value={sharing.sync.notesFormat} onChange={(e) => setSync({ notesFormat: e.target.value })}>
-                <option value="same">{t('ui.settingsDialog.ca_textul')}</option>
-                <option value="rtf">RTF</option>
-                <option value="txt">{t('ui.compileDialog.text_simplu')}</option>
-                <option value="md">Markdown</option>
-              </select>
-            </label>
-          </div>
-          <label className="check"><input type="checkbox" checked={sharing.sync.includeNotes} onChange={(e) => setSync({ includeNotes: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_si_notele')}</label>
-          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnOpen} onChange={(e) => setSync({ syncOnOpen: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_la_deschiderea_proiectului')}</label>
-          <label className="check"><input type="checkbox" checked={sharing.sync.syncOnClose} onChange={(e) => setSync({ syncOnClose: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_la_inchiderea_proiectului')}</label>
-        </fieldset>
-        <fieldset>
-          <legend>{t('ui.settingsDialog.export_fisiere_implicit')}</legend>
-          <label>
-            Format
-            <select value={sharing.export.format} onChange={(e) => setExp({ format: e.target.value })}>
-              <option value="docx">DOCX</option>
-              <option value="rtf">RTF</option>
-              <option value="md">Markdown</option>
-              <option value="txt">{t('ui.compileDialog.text_simplu')}</option>
-              <option value="html">HTML</option>
-            </select>
-          </label>
-          <label className="check"><input type="checkbox" checked={sharing.export.keepFolders} onChange={(e) => setExp({ keepFolders: e.target.checked })} /> {t('ui.settingsDialog.pastreaza_structura_de_dosare')}</label>
-          <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> Include notele</label>
-          <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> Include metadatele</label>
-        </fieldset>
-      </>
-    ),
+    sharing: <SharingPane s={s} set={set} sharing={sharing} setSharing={setSharing} api={api} />,
     services: (
       <>
       {(api.dtedStatus || api.whisperStatus) && (

@@ -91,7 +91,10 @@ const BBC_RADIO = {
   enter: { 'scene-heading': 'direction', direction: 'character', character: 'dialogue', dialogue: 'character', sound: 'character', music: 'character' },
 };
 
-export const SCRIPT_FORMATS = { screenplay: SCREENPLAY, stageplay: STAGE_PLAY, 'stageplay-uk': STAGE_PLAY_UK, comic: COMIC, radio: BBC_RADIO };
+export const BUILTIN_FORMATS = { screenplay: SCREENPLAY, stageplay: STAGE_PLAY, 'stageplay-uk': STAGE_PLAY_UK, comic: COMIC, radio: BBC_RADIO };
+// The registry: built-in formats plus the author's own (setCustomFormats). The objects are
+// replaced in place so modules that imported them see the custom formats too.
+export const SCRIPT_FORMATS = { ...BUILTIN_FORMATS };
 export const SCRIPT_FORMAT_LIST = Object.values(SCRIPT_FORMATS);
 
 export function getFormat(id) {
@@ -129,6 +132,239 @@ export function isUppercase(formatId, elementId) {
 /** All element ids known to any format. */
 export const ALL_SCRIPT_ELEMENTS = [...new Set(SCRIPT_FORMAT_LIST.flatMap((f) => f.elements.map((e) => e.id)))];
 
+// ---------------------------------------------------------------- custom formats (format editor)
+// A custom format: { id: 'custom-…', label, defaultElement, custom: true,
+//   elements: [{ id, label, upper, fontFamily?, fontSizePt?, indentLeft (%), indentRight (%),
+//                align, spaceBefore (lines), bold, italic, underline, fdx? }],
+//   tab: {el: next}, enter: {el: next} }
+
+const ALIGNS = ['left', 'center', 'right', 'justify'];
+const slugId = (s) =>
+  String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+const num = (v, min, max, def) => {
+  const n = Number(v);
+  return v !== '' && v != null && Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
+};
+
+/** Element layout fields → the css object used by formatCss. */
+export function elementCss(e) {
+  const css = {};
+  if (e.spaceBefore) css.marginTop = `${e.spaceBefore}em`;
+  if (e.indentLeft) css.marginLeft = `${e.indentLeft}%`;
+  if (e.indentRight) css.marginRight = `${e.indentRight}%`;
+  if (e.align && e.align !== 'left') css.textAlign = e.align;
+  if (e.bold) css.fontWeight = 'bold';
+  if (e.italic) css.fontStyle = 'italic';
+  if (e.underline) css.textDecoration = 'underline';
+  if (e.fontFamily) css.fontFamily = `"${e.fontFamily}"`;
+  if (e.fontSizePt) css.fontSize = `${e.fontSizePt}pt`;
+  return css;
+}
+
+/** Built-in element css → editable layout fields (to start a custom format from a built-in one). */
+export function editableElement(e) {
+  const c = e.css || {};
+  const pct = (v) => (v && /%$/.test(v) ? Number(String(v).replace('%', '')) : 0);
+  return {
+    id: e.id,
+    label: e.label,
+    upper: Boolean(e.upper),
+    fontFamily: e.fontFamily || '',
+    fontSizePt: e.fontSizePt || 0,
+    indentLeft: e.indentLeft ?? pct(c.marginLeft),
+    indentRight: e.indentRight ?? pct(c.marginRight),
+    align: e.align || c.textAlign || 'left',
+    spaceBefore: e.spaceBefore ?? (c.marginTop ? Number(String(c.marginTop).replace('em', '')) || 0 : 0),
+    bold: e.bold ?? c.fontWeight === 'bold',
+    italic: e.italic ?? c.fontStyle === 'italic',
+    underline: e.underline ?? c.textDecoration === 'underline',
+    fdx: e.fdx || '',
+  };
+}
+
+/** Cleans a custom format (from the editor or a file). Returns null when it has no element. */
+export function normalizeCustomFormat(f) {
+  if (!f || typeof f !== 'object') return null;
+  const seen = new Set();
+  const elements = (Array.isArray(f.elements) ? f.elements : [])
+    .map((e) => {
+      const id = slugId(e && (e.id || e.label));
+      if (!id || seen.has(id)) return null;
+      seen.add(id);
+      const out = {
+        id,
+        label: String(e.label || id).slice(0, 60),
+        upper: Boolean(e.upper),
+        fontFamily: String(e.fontFamily || '').replace(/[^\w\s-]/g, '').slice(0, 60),
+        fontSizePt: num(e.fontSizePt, 0, 72, 0),
+        indentLeft: num(e.indentLeft, 0, 80, 0),
+        indentRight: num(e.indentRight, 0, 80, 0),
+        align: ALIGNS.includes(e.align) ? e.align : 'left',
+        spaceBefore: num(e.spaceBefore, 0, 5, 0),
+        bold: Boolean(e.bold),
+        italic: Boolean(e.italic),
+        underline: Boolean(e.underline),
+        fdx: String(e.fdx || '').slice(0, 40),
+      };
+      out.css = elementCss(out);
+      return out;
+    })
+    .filter(Boolean);
+  if (!elements.length) return null;
+  const ids = elements.map((e) => e.id);
+  const table = (t) => Object.fromEntries(Object.entries(t && typeof t === 'object' ? t : {}).filter(([k, v]) => ids.includes(k) && ids.includes(v)));
+  const label = String(f.label || 'Format propriu').slice(0, 80);
+  return {
+    id: String(f.id || '').startsWith('custom-') ? String(f.id).slice(0, 60) : `custom-${slugId(label) || 'format'}`,
+    label,
+    custom: true,
+    defaultElement: ids.includes(f.defaultElement) ? f.defaultElement : ids[0],
+    elements,
+    tab: table(f.tab),
+    enter: table(f.enter),
+  };
+}
+
+/** A custom format started from an existing one (built-in or custom). */
+export function copyFormat(fromId, label) {
+  const f = getFormat(fromId);
+  return normalizeCustomFormat({ label: label || `${f.label} (copie)`, defaultElement: f.defaultElement, elements: f.elements.map(editableElement), tab: { ...f.tab }, enter: { ...f.enter } });
+}
+
+/** Replaces the custom formats in the registry (built-in ones stay). Returns the cleaned list. */
+export function setCustomFormats(list) {
+  for (const k of Object.keys(SCRIPT_FORMATS)) if (!BUILTIN_FORMATS[k]) delete SCRIPT_FORMATS[k];
+  const clean = (Array.isArray(list) ? list : []).map(normalizeCustomFormat).filter(Boolean);
+  for (const f of clean) if (!BUILTIN_FORMATS[f.id]) SCRIPT_FORMATS[f.id] = f;
+  SCRIPT_FORMAT_LIST.length = 0;
+  SCRIPT_FORMAT_LIST.push(...Object.values(SCRIPT_FORMATS));
+  const ids = new Set(ALL_SCRIPT_ELEMENTS);
+  for (const f of clean) for (const e of f.elements) if (!ids.has(e.id)) (ids.add(e.id), ALL_SCRIPT_ELEMENTS.push(e.id));
+  // The editor's CSS for the custom formats (built-in ones are in src/script.css).
+  if (typeof document !== 'undefined') {
+    let style = document.getElementById('script-custom-css');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'script-custom-css';
+      document.head.appendChild(style);
+    }
+    style.textContent = clean.map((f) => formatCss(f.id)).join('\n');
+  }
+  return clean;
+}
+
+/** A format as a file (.scriptformat, JSON). */
+export function formatToFile(f) {
+  const clean = normalizeCustomFormat(f.custom ? f : { ...f, elements: f.elements.map(editableElement) });
+  const { css: _c, ...rest } = clean;
+  return JSON.stringify({ type: 'scribner-script-format', version: 1, format: { ...rest, elements: clean.elements.map(({ css: _x, ...e }) => e) } }, null, 2);
+}
+
+/** Reads a .scriptformat file; throws on anything else. */
+export function formatFromFile(text) {
+  let data;
+  try {
+    data = JSON.parse(String(text || ''));
+  } catch {
+    throw new Error('Fișierul nu este un format de scenariu.');
+  }
+  const f = normalizeCustomFormat(data && data.type === 'scribner-script-format' ? data.format : data);
+  if (!f) throw new Error('Formatul de scenariu nu are niciun element.');
+  return f;
+}
+
+/** "Tab: …, Enter: …" for the footer next to the current element. */
+export function elementHint(formatId, elementId) {
+  const f = getFormat(formatId);
+  const cur = f.elements.find((e) => e.id === elementId) || f.elements.find((e) => e.id === f.defaultElement);
+  const label = (id) => f.elements.find((e) => e.id === id)?.label || id;
+  if (!cur) return null;
+  return { element: cur.id, label: cur.label, tab: label(nextOnTab(f.id, cur.id)), enter: label(nextOnEnter(f.id, cur.id)) };
+}
+
+// ---------------------------------------------------------------- completion lists (editable)
+// project.scriptCompletion = { characters: [], places: [], transitions: [], extensions: [] }
+export const DEFAULT_TRANSITIONS = ['CUT TO:', 'FADE IN:', 'FADE OUT.', 'DISSOLVE TO:', 'MATCH CUT TO:', 'SMASH CUT TO:'];
+export const DEFAULT_EXTENSIONS = ['(V.O.)', '(O.S.)', "(CONT'D)"];
+const completion = { characters: [], places: [], transitions: DEFAULT_TRANSITIONS.slice(), extensions: DEFAULT_EXTENSIONS.slice() };
+
+const cleanList = (l) => [...new Set((Array.isArray(l) ? l : String(l || '').split(/\r?\n/)).map((x) => String(x).trim().toUpperCase()).filter(Boolean))].slice(0, 1000);
+
+/** Normalized completion lists (uppercase, unique, no empty lines). */
+export function normalizeCompletion(c = {}) {
+  c = c && typeof c === 'object' ? c : {};
+  return {
+    characters: cleanList(c.characters),
+    places: cleanList(c.places),
+    transitions: c.transitions ? cleanList(c.transitions) : DEFAULT_TRANSITIONS.slice(),
+    extensions: c.extensions ? cleanList(c.extensions) : DEFAULT_EXTENSIONS.slice(),
+  };
+}
+export function setCompletionLists(c) {
+  Object.assign(completion, normalizeCompletion(c));
+  return { ...completion };
+}
+export function getCompletionLists() {
+  return { ...completion };
+}
+/** Names typed in the document followed by the project's list (no duplicates). */
+export function mergedCharacters(fromDoc = []) {
+  return [...new Set([...(fromDoc || []), ...completion.characters])];
+}
+/** Scene headings from the document plus "INT. <place> - " for every place of the list. */
+export function mergedSceneHeadings(fromDoc = []) {
+  return [...new Set([...(fromDoc || []), ...completion.places.flatMap((p) => (/^(INT|EXT)/.test(p) ? [p] : [`INT. ${p} - `, `EXT. ${p} - `]))])];
+}
+/** Transition completions for a typed prefix. */
+export function completeTransition(prefix) {
+  const p = String(prefix || '').trim().toUpperCase();
+  if (!p) return [];
+  return completion.transitions.filter((t) => t.startsWith(p) && t !== p);
+}
+
+// ---------------------------------------------------------------- compile side
+// Output paragraph style of each element (Compile > Script settings): the Word / FDX style name,
+// the element's layout and whether it is uppercase.
+export function scriptStyleMap(formatId) {
+  const f = getFormat(formatId);
+  return Object.fromEntries(f.elements.map((e) => [e.id, { style: e.fdx || e.label, label: e.label, upper: Boolean(e.upper), css: e.css || elementCss(e) }]));
+}
+
+/**
+ * Dialogue split across pages (Compile: automatic "(MORE)" / "(CONT'D)"). blocks: [{el, text}] in
+ * order; linesPerPage: lines on a page; lineOf(block) the lines a block takes (default 1 per 60
+ * characters + its space before). Returns the blocks with page breaks inserted: where a dialogue
+ * is cut, "(MORE)" ends the page and the next page starts with "NAME (CONT'D)".
+ */
+export function paginateDialogue(blocks, linesPerPage = 55, lineOf = (b) => Math.max(1, Math.ceil(String(b.text || '').length / 60))) {
+  const out = [];
+  let used = 0;
+  let speaker = null;
+  for (const b of blocks || []) {
+    if (b.el === 'character') speaker = String(b.text || '').replace(/\s*\(CONT'D\)\s*$/i, '').trim();
+    else if (!['dialogue', 'parenthetical'].includes(b.el)) speaker = null;
+    const n = lineOf(b);
+    if (used + n > linesPerPage && used > 0) {
+      if (speaker && ['dialogue', 'parenthetical'].includes(b.el)) {
+        out.push({ el: 'more', text: '(MORE)' }, { el: 'page-break' }, { el: 'character', text: `${speaker} (CONT'D)` });
+        used = 1;
+      } else {
+        out.push({ el: 'page-break' });
+        used = 0;
+      }
+    }
+    out.push(b);
+    used += n;
+  }
+  return out;
+}
+
 const kebab = (s) => s.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
 
 /** CSS for one format, scoped as `.script-<format> p[data-script="…"]`. */
@@ -157,6 +393,7 @@ export function collectCharacters(html) {
 
 /** Autocomplete: names starting with prefix (case-insensitive, diacritics kept). */
 export function completeCharacter(names, prefix) {
+  names = mergedCharacters(names);
   const p = String(prefix || '').trim().toUpperCase();
   if (!p) return [];
   return names.filter((n) => n.startsWith(p) && n !== p);
@@ -181,7 +418,7 @@ export function completeSceneHeading(headings, prefix) {
   const p = String(prefix || '').replace(/^\s+/, '').toUpperCase();
   if (!p) return [];
   const places = [];
-  for (const h of headings || []) {
+  for (const h of mergedSceneHeadings(headings)) {
     places.push(h);
     // "INT. CASA - ZI" also offers "INT. CASA - " for a new time of day
     const dash = h.lastIndexOf(' - ');

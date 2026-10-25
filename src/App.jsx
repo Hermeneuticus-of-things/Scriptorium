@@ -65,7 +65,8 @@ import MiniPlayer from './components/MiniPlayer.jsx';
 import EditorFooter from './components/EditorFooter.jsx';
 import PaneNav from './components/PaneNav.jsx';
 import { jumpHistory, paneZoom, pushHistory, routeSelection, stepHistory, withPaneZoom } from './lib/panes.js';
-import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
+import { SCRIPT_FORMAT_LIST, BUILTIN_FORMATS, setCustomFormats, setCompletionLists } from './lib/scriptFormats.js';
+import { ScriptFormatEditor, ScriptCompletionDialog } from './components/ScriptFormatDialog.jsx';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
 import { applySettingsCss, labelColorIn as labelColorInOf } from './lib/settingsDefaults.js';
@@ -905,6 +906,7 @@ export default function App({ api: apiProp }) {
     await flush();
     parkQueue(dir);
     if (project?.syncFolder && (project.syncAuto || settings?.sharingSync?.syncOnClose)) await api.syncAuto?.(dir, { ...withSyncDefaults(project), syncAuto: true }, 'close').catch(() => {});
+    await mobileSyncRef.current?.('out').catch(() => {});
     api.releaseProject?.().catch(() => {});
     setProject(null);
     setDir(null);
@@ -1675,38 +1677,89 @@ export default function App({ api: apiProp }) {
   };
 
   // baseTree: lets a caller that also adds other nodes save everything in one project write.
+  // A part is {title, html, linkedFile?, linkedMtime?} (a document), {title, children} (a folder
+  // imported from disk with its structure) or {title, id, media} (a media file already in media/).
   const importParts = (parts, baseTree = projectRef.current.tree) => {
     let tree = baseTree;
     let anchor = selectedId;
     const created = [];
-    for (const p of parts) {
+    const build = (p) => {
+      if (p.media) return mediaNode(newNode, p);
+      if (p.children) return { ...newNode('folder', p.title), children: p.children.map(build) };
       const node = newNode('text', p.title);
+      if (p.linkedFile) Object.assign(node, { linkedFile: p.linkedFile, linkedMtime: p.linkedMtime || 0 });
+      created.push([node.id, p.html || '<p></p>']);
+      return node;
+    };
+    for (const p of parts) {
+      const node = build(p);
       tree = insertNear(tree, anchor, node);
       if (findNode(tree, anchor)?.children === undefined) anchor = node.id;
-      created.push([node.id, p.html || '<p></p>']);
     }
     saveProject({ ...projectRef.current, tree });
     setDocs((d) => ({ ...d, ...Object.fromEntries(created) }));
     Promise.all(created.map(([id, html]) => api.writeDoc(dir, id, 'docs', html))).catch(report);
     if (created.length) go(created[0][0]);
   };
+  // Linked documents: refreshed from their file when it changed on disk (a snapshot keeps the old text).
+  const refreshLinkedFiles = async (quiet = true) => {
+    const pj = projectRef.current;
+    if (!api.checkLinkedFiles || !pj || !dir) return 0;
+    const items = flatten(pj.tree).filter((n) => n.linkedFile).map((n) => ({ id: n.id, file: n.linkedFile, mtime: n.linkedMtime || 0 }));
+    if (!items.length) return 0;
+    const changed = (await api.checkLinkedFiles(items, settingsRef.current?.sharingImport || {})).filter((c) => !c.missing);
+    if (!changed.length) return 0;
+    await flush();
+    let tree = projectRef.current.tree;
+    for (const c of changed) {
+      await api.takeSnapshot?.(dir, c.id, tr('ui.p12.inainteDeActualizare')).catch(() => {});
+      await api.writeDoc(dir, c.id, 'docs', c.html);
+      setEditorHtml(c.id, c.html);
+      tree = updateNode(tree, c.id, { linkedMtime: c.mtime });
+    }
+    saveProject({ ...projectRef.current, tree });
+    setDocs((d) => ({ ...d, ...Object.fromEntries(changed.map((c) => [c.id, c.html])) }));
+    if (!quiet || changed.length) setToast(tr('ui.p12.fisiereLegateActualizate', { n: changed.length }));
+    return changed.length;
+  };
 
   // OPML outline → binder items with synopsis, label and status names.
   const importOpmlOutline = async () => {
-    const items = await api.importOpml();
+    const items = await api.importOpml({ noteTo: settings?.sharingImport?.opmlNoteTo || 'synopsis' });
     if (!items || !items.length) return;
     let tree = project.tree;
     let anchor = selectedId;
-    for (const node of opmlToNodes(items, project, newNode, tr('ui.app.fara_titlu'))) {
+    const nodes = opmlToNodes(items, project, newNode, tr('ui.app.fara_titlu'));
+    // Options > Sharing > Import: the outline's notes as the documents' text.
+    const texts = [];
+    const pair = (its, ns) => its.forEach((it, i) => {
+      if (it.html) texts.push([ns[i].id, it.html]);
+      pair(it.children || [], ns[i].children || []);
+    });
+    pair(items, nodes);
+    for (const node of nodes) {
       tree = insertNear(tree, anchor, node);
       anchor = node.id;
     }
     saveProject({ ...project, tree });
+    if (texts.length) {
+      setDocs((d) => ({ ...d, ...Object.fromEntries(texts) }));
+      await Promise.all(texts.map(([id, html]) => api.writeDoc(dir, id, 'docs', html)));
+    }
     setToast(`Import OPML: ${items.length} elemente de nivel superior.`);
   };
-  const importWeb = async ({ url, title = '', asText = false } = {}) => {
+  const importWeb = async ({ url, title = '', asText = false, as } = {}) => {
     if (!url) return setDialog('importWeb');
-    const page = await api.importWebPage(url, dir, { asText });
+    const page = await api.importWebPage(url, dir, { asText, as });
+    // As PDF / web archive: only a media file in Research.
+    if (!page.html && (page.media || []).length) {
+      const pj = projectRef.current;
+      let tree = pj.tree;
+      for (const m of page.media) tree = insertNear(tree, selectedId, mediaNode(newNode, { ...m, title: title || m.title }));
+      saveProject({ ...pj, tree });
+      go(page.media[0].id);
+      return;
+    }
     // The page and its images (saved offline in media/) go in with a single project save.
     const node = newNode('text', title || page.title || url);
     // The download can take seconds; the binder may have changed meanwhile.
@@ -1913,6 +1966,39 @@ export default function App({ api: apiProp }) {
     window.addEventListener('mouseup', up);
   };
 
+  const mobileSyncRef = useRef(null);
+  const refreshLinkedRef = useRef(null);
+  // Options > Sharing > Mobile app: read the phone's edits in when a project opens.
+  useEffect(() => {
+    if (dir) mobileSyncRef.current?.('open').catch(() => {});
+  }, [dir]);
+  // Options > Sharing > Sync: check the external folder and linked files every N minutes.
+  useEffect(() => {
+    const every = Number(settings?.sharingSync?.checkEveryMin) || 0;
+    if (!every || !dir) return undefined;
+    const tick = async () => {
+      const pj = projectRef.current;
+      try {
+        await refreshLinkedRef.current?.(true);
+        if (pj?.syncFolder && api.syncStatus) {
+          const st = await api.syncStatus(dir, pj, pj.syncFolder);
+          if (st && st.changed + st.newFiles + st.conflicts > 0) setToast(tr('ui.p12.syncModificari', { n: st.changed + st.newFiles, c: st.conflicts }));
+        }
+      } catch {
+        /* the next tick tries again */
+      }
+    };
+    const id = setInterval(tick, every * 60000);
+    return () => clearInterval(id);
+  }, [settings?.sharingSync?.checkEveryMin, dir, api]);
+  // Custom script formats (settings) and the project's completion lists feed the script editor.
+  useEffect(() => {
+    setCustomFormats(settings?.scriptFormatsCustom || []);
+  }, [settings?.scriptFormatsCustom]);
+  useEffect(() => {
+    setCompletionLists(project?.scriptCompletion || {});
+  }, [project?.scriptCompletion]);
+
   if (!settings) return <div className="loading">{tr('ui.app.se_incarca')}</div>;
 
   if (!project) {
@@ -2067,18 +2153,25 @@ export default function App({ api: apiProp }) {
       syncFormat: pj.syncFormat || d.format || 'rtf',
       syncNotesFormat: pj.syncNotesFormat || (d.notesFormat && d.notesFormat !== 'same' ? d.notesFormat : undefined),
       syncIncludeNotes: pj.syncIncludeNotes ?? d.includeNotes !== false,
+      syncPrefixNumbers: pj.syncPrefixNumbers ?? d.prefixNumbers !== false,
+      syncCollection: pj.syncCollection || (d.collection ? (pj.collections || []).find((c) => c.title === d.collection)?.id || null : null),
     };
   };
   const syncOutCmd = async () => {
     await flush();
     const sp = withSyncDefaults(project);
-    const r = await api.syncOut(dir, sp, project.syncFolder, { format: sp.syncFormat, notesFormat: sp.syncNotesFormat, includeNotes: sp.syncIncludeNotes });
+    const r = await api.syncOut(dir, sp, project.syncFolder, { format: sp.syncFormat, notesFormat: sp.syncNotesFormat, includeNotes: sp.syncIncludeNotes, prefixNumbers: sp.syncPrefixNumbers, collection: sp.syncCollection });
     if (r) saveProject({ ...project, syncFolder: r.folder });
   };
   const syncInCmd = async () => {
     await flush();
     const r = await api.syncIn(dir, project, project.syncFolder);
     if (!r) return;
+    await applySyncResult(r);
+  };
+  // Folder / mobile sync read back: new files into the binder, changed documents reloaded.
+  const applySyncResult = async (r) => {
+    const project = projectRef.current;
     let tree = project.tree;
     const notesRoot = tree.find((n) => n.root === 'research') || tree[1];
     for (const c of r.created) {
@@ -2092,6 +2185,18 @@ export default function App({ api: apiProp }) {
     setDocs((d) => ({ ...d, ...reload }));
     setToast(tr('ui.app.sincronizare_x_actualizate_x_conflicte', { length: r.updated.length, length1: r.conflicts.length, length2: r.created.length }));
   };
+  // Options > Sharing > Mobile app: sync through the cloud folder.
+  const mobileSync = async (event) => {
+    const m = settingsRef.current?.sharingMobile || {};
+    if (!api.mobileSync || !m.folder || !dir) return;
+    if (event === 'open' && !m.syncOnOpen) return;
+    if (event === 'out' && !m.syncOnClose) return;
+    await flush();
+    const r = await api.mobileSync(dir, projectRef.current, m.folder, event);
+    if (r && r.action === 'in') await applySyncResult(r);
+  };
+  mobileSyncRef.current = mobileSync;
+  refreshLinkedRef.current = refreshLinkedFiles;
   // Glossaries and print TOC as documents in Research (replaced when generated again).
   const generateGlossaries = async () => {
     await flush();
@@ -2374,7 +2479,12 @@ export default function App({ api: apiProp }) {
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', tr('cmd.speech'), () => setShowSpeech((v) => !v)],
     ['format', 'scriptOff', tr('cmd.scriptOff'), () => setScriptFormat(null).catch(report), !scriptFormat],
-    ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, tr('ui.app.mod_scenariu_x', { label: tr(`ui.scriptFormat.${f.id}`) }), () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
+    ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, tr('ui.app.mod_scenariu_x', { label: BUILTIN_FORMATS[f.id] ? tr(`ui.scriptFormat.${f.id}`) : f.label }), () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
+    ['format', 'scriptFormatEditor', tr('cmd.scriptFormatEditor'), () => setDialog('scriptFormats')],
+    ['format', 'scriptCompletion', tr('cmd.scriptCompletion'), () => setDialog('scriptCompletion'), !project],
+    ['file', 'importFolder', tr('cmd.importFolder'), () => api.importFolder(dir, settings?.sharingImport || {}).then((p) => p && importParts(p)).catch(report), !api.importFolder || !dir],
+    ['file', 'refreshLinked', tr('cmd.refreshLinked'), () => refreshLinkedFiles(false).then((n) => !n && setToast(tr('ui.p12.legateLaZi'))).catch(report), !api.checkLinkedFiles],
+    ['file', 'mobileSyncNow', tr('cmd.mobileSyncNow'), () => flush().then(() => api.mobileSync(dir, projectRef.current, settings?.sharingMobile?.folder, 'open')).then((r) => r && r.action === 'in' ? applySyncResult(r) : api.mobileSync(dir, projectRef.current, settings?.sharingMobile?.folder, 'out')).catch(report), !api.mobileSync || !settings?.sharingMobile?.folder],
     ['file', 'exportFdx', tr('cmd.exportFdx'), () => flush().then(() => exportScript('fdx')).catch(report), !api.exportScript || !scriptFormat],
     ['file', 'exportFountain', tr('cmd.exportFountain'), () => flush().then(() => exportScript('fountain')).catch(report), !api.exportScript || !scriptFormat],
     ['tools', 'settings', tr('cmd.settings'), () => setDialog('settings')],
@@ -2750,6 +2860,7 @@ export default function App({ api: apiProp }) {
                 zoom={paneZoom(editorView, 'main')}
                 onZoom={(z) => setZoom(z, 'main')}
                 onPatch={selected.root || selected.locked ? null : (patch) => patchNode(selected.id, patch)}
+                scriptFormat={scriptFormat}
               />
             )}
             {isFolderView && (
@@ -3204,7 +3315,9 @@ export default function App({ api: apiProp }) {
           onError={report}
         />
       )}
-      {dialog === 'printPreview' && printOpts && <PrintPreviewDialog api={api} dir={dir} project={project} options={printOpts} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'printPreview' && printOpts && <PrintPreviewDialog api={api} dir={dir} project={project} options={printOpts} onClose={() => setDialog(null)} onError={report} onSaveSetup={(ps) => { saveProject({ ...projectRef.current, pageSetup: ps }); api.setPageSetup?.(ps).catch(() => {}); setToast(tr('ui.p12.setariPastrate')); }} />}
+      {dialog === 'scriptFormats' && <ScriptFormatEditor formats={settings?.scriptFormatsCustom || []} current={scriptFormat} onSave={(list) => api.setSettings({ scriptFormatsCustom: list }).then(() => api.getSettings()).then(setSettings).catch(report)} onUse={(id) => setScriptFormat(id).catch(report)} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'scriptCompletion' && project && <ScriptCompletionDialog value={project.scriptCompletion} docsHtml={Object.values(docs).join('')} onSave={(c) => saveProject({ ...projectRef.current, scriptCompletion: c })} onClose={() => setDialog(null)} />}
       {dialog === 'toolbars' && (
         <ToolbarCustomizeDialog
           api={api}
@@ -3266,7 +3379,7 @@ export default function App({ api: apiProp }) {
       )}
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
       {showSpeech && <MiniPlayer api={api} dict={dict} getText={speechText} onClose={() => setShowSpeech(false)} />}
-      {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} defaults={settings?.sharingExport || {}} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
       {dialog === 'settings' && (
         <SettingsDialog
@@ -3423,8 +3536,8 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
-      {dialog === 'importWeb' && <WebImportDialog onImport={(o) => importWeb(o).catch(report)} onClose={() => setDialog(null)} />}
-      {dialog === 'import' && <ImportDialog api={api} target={selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'importWeb' && <WebImportDialog defaultAs={settings?.sharingImport?.webAs} canSaveFile={Boolean(dir) && !api.isWeb && !api.isMock} onImport={(o) => importWeb(o).catch(report)} onClose={() => setDialog(null)} />}
+      {dialog === 'import' && <ImportDialog api={api} dir={dir} defaults={settings?.sharingImport || {}} target={selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
       {quickRefs.map((q) => {
         const n = findNode(project.tree, q.id);
         if (!n) return null;

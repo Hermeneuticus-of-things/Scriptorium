@@ -121,6 +121,32 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     return { action: 'out', folder: project.syncFolder, files: Object.keys(manifest.files).length, updated: [], conflicts: [], created: [], missing: [] };
   });
 
+  // Options > Sharing > Sync: periodic check of the external folder (read-only).
+  handle('v04:syncStatus', async (_e, dir, project, folder) => {
+    assertOpened(dir);
+    const f = folder || (project && project.syncFolder);
+    if (!f || !fs.existsSync(f)) return null;
+    return folderSync.syncStatus(project, f, reader(dir));
+  });
+
+  // Sync with the mobile app through a cloud folder (Dropbox, OneDrive, Google Drive…):
+  // <root>/<project title>/ holds Draft/ and Notes/ in Markdown with the sync manifest.
+  // event 'open' reads the phone's edits in (when the folder was synced before), anything else writes out.
+  handle('v04:mobileSync', async (e, dir, project, root, event = 'out') => {
+    // Without a project: only choose the cloud folder (Options > Sharing > Mobile app).
+    if (!dir) {
+      const picked = await pickFolder(e, 'Dosarul din cloud pentru aplicația mobilă');
+      return picked ? { root: picked } : null;
+    }
+    assertOpened(dir);
+    if (!root || !fs.existsSync(root)) throw new Error('Dosarul din cloud pentru aplicația mobilă nu există.');
+    const folder = path.join(root, `${safeName(project.title || 'Proiect')}.mobil`);
+    fs.mkdirSync(folder, { recursive: true });
+    if (event !== 'out' && folderSync.readManifest(folder)) return { action: 'in', folder, ...syncInto(dir, project, folder) };
+    const manifest = folderSync.syncOut(project, folder, reader(dir), { format: 'md', includeNotes: true, prefixNumbers: true });
+    return { action: 'out', folder, files: Object.keys(manifest.files).length };
+  });
+
   // File > Import > Bibliography (Zotero BibTeX / CSL-JSON)
   handle('v04:importBibliography', async (e) => {
     const res = await dialog.showOpenDialog(winOf(e), {

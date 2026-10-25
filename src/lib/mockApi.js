@@ -261,10 +261,27 @@ export function createMockApi() {
       }
       return true;
     },
+    // The built-in templates as lib/templates.cjs lists them (tests/p12.test.js keeps the two in step).
     async listTemplates() {
       return [
-        { id: 'blank', name: 'Gol' },
-        { id: 'novel', name: 'Roman' },
+        {"id": "tutorial", "name": "Tutorial Scribner", "category": "Generale", "description": "Un proiect-ghid care arată pe rând binderul, corkboardul, outlinerul și compunerea finală."},
+        {"id": "blank", "name": "Gol", "category": "Generale", "description": "Un proiect gol: un singur document în Manuscris."},
+        {"id": "novel", "name": "Roman", "category": "Ficțiune", "description": "Capitole cu scene, fișe de personaje și de locuri, sinopsis și cronologie."},
+        {"id": "parts", "name": "Roman cu părți", "category": "Ficțiune", "description": "Roman împărțit în părți, fiecare cu capitolele și scenele ei."},
+        {"id": "stories", "name": "Volum de povestiri", "category": "Ficțiune", "description": "Volum de povestiri, fiecare povestire într-un dosar propriu."},
+        {"id": "nonfiction", "name": "Non-ficțiune", "category": "Non-ficțiune", "description": "Introducere, capitole cu secțiuni, concluzii; surse și citate în Cercetare."},
+        {"id": "shortStory", "name": "Povestire (format manuscris)", "category": "Ficțiune", "description": "Povestire în formatul standard de manuscris, cu pagina de titlu completată."},
+        {"id": "novelFormatted", "name": "Roman formatat (front matter)", "category": "Ficțiune", "description": "Roman cu pagina de titlu, copyright, dedicație și paginile de final."},
+        {"id": "screenplay", "name": "Scenariu de film", "category": "Scenariu", "description": "Scenariu de film în trei acte, cu antete de scenă, acțiune, personaje și dialog."},
+        {"id": "stagePlay", "name": "Piesă de teatru", "category": "Scenariu", "description": "Piesă de teatru pe acte și scene, cu indicații scenice și distribuție."},
+        {"id": "essay", "name": "Eseu", "category": "Non-ficțiune", "description": "Eseu argumentativ: teză, argumente, contraargumente, concluzie."},
+        {"id": "thesis", "name": "Teză / lucrare de licență", "category": "Non-ficțiune", "description": "Lucrare academică: introducere, stadiul cercetării, metodologie, rezultate, bibliografie."},
+        {"id": "lectureNotes", "name": "Note de curs", "category": "Non-ficțiune", "description": "Note de curs organizate pe prelegeri, cu bibliografie și întrebări."},
+        {"id": "recipes", "name": "Colecție de rețete", "category": "Non-ficțiune", "description": "Colecție de rețete pe categorii, cu ingrediente și mod de preparare."},
+        {"id": "poetry", "name": "Volum de poezie", "category": "Poezie", "description": "Volum de poezie pe cicluri, cu fragmente și surse de inspirație."},
+        {"id": "nonfictionNotes", "name": "Non-ficțiune cu note", "category": "Non-ficțiune", "description": "Non-ficțiune cu note de subsol, bibliografie, fișe de lectură și index."},
+        {"id": "comicScript", "name": "Benzi desenate (scenariu)", "category": "Scenariu", "description": "Scenariu de benzi desenate pe pagini și panouri, cu baloane și text narativ."},
+        {"id": "readingList", "name": "Listă de lectură", "category": "Diverse", "description": "Listă de lectură: de citit, în curs, citite, cu fișă pentru fiecare carte."},
       ];
     },
     async recordHistory(dir, counts) {

@@ -20,6 +20,7 @@ const ro = {
   // commands
   'cmd.save': 'Salvează acum', 'cmd.compile': 'Compilează…', 'cmd.import': 'Importă Word / text / Markdown…',
   'cmd.importFiles': 'Importă fișiere (RTF, ODT, HTML, Fountain, media)…', 'cmd.importOpml': 'Importă OPML…',
+  'cmd.scriptFormatEditor': 'Formate de scenariu…', 'cmd.scriptCompletion': 'Lista de completare a scenariului…', 'cmd.importFolder': 'Importă dosar…', 'cmd.refreshLinked': 'Actualizează documentele legate', 'cmd.mobileSyncNow': 'Sincronizează cu aplicația mobilă acum',
   'cmd.importWeb': 'Importă pagină web…', 'cmd.exportFiles': 'Exportă documente / OPML / CSV…', 'cmd.saveAs': 'Salvează ca…',
   'cmd.nameGen': 'Generator de nume…', 'cmd.scratchpad': 'Ciorne (Scratchpad)', 'cmd.speech': 'Mini-player voce: dictare și citire',
   'cmd.scriptOff': 'Mod scenariu: dezactivat', 'cmd.exportFdx': 'Exportă scenariu .fdx…', 'cmd.exportFountain': 'Exportă scenariu Fountain…',
@@ -207,6 +208,7 @@ const en = {
   'cmd.findNext': 'Find next', 'cmd.findPrev': 'Find previous', 'cmd.findUseSel': 'Use selection for find', 'cmd.findFormat': 'Find by formatting…',
   'cmd.save': 'Save now', 'cmd.compile': 'Compile…', 'cmd.import': 'Import Word / text / Markdown…',
   'cmd.importFiles': 'Import files (RTF, ODT, HTML, Fountain, media)…', 'cmd.importOpml': 'Import OPML…',
+  'cmd.scriptFormatEditor': 'Script formats…', 'cmd.scriptCompletion': 'Script auto-complete list…', 'cmd.importFolder': 'Import folder…', 'cmd.refreshLinked': 'Refresh linked documents', 'cmd.mobileSyncNow': 'Sync with the mobile app now',
   'cmd.importWeb': 'Import web page…', 'cmd.exportFiles': 'Export documents / OPML / CSV…', 'cmd.saveAs': 'Save as…',
   'cmd.nameGen': 'Name generator…', 'cmd.scratchpad': 'Scratchpad', 'cmd.speech': 'Voice mini-player: dictation and read aloud',
   'cmd.scriptOff': 'Script mode: off', 'cmd.exportFdx': 'Export screenplay (.fdx)…', 'cmd.exportFountain': 'Export Fountain script…',

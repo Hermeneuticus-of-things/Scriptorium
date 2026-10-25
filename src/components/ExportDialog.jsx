@@ -22,13 +22,24 @@ function findParentFolder(tree, id) {
   return found;
 }
 
-export default function ExportDialog({ api, dir, project, selectionIds = [], onClose, onError }) {
+// The metadata CSV columns (lib/exporters.cjs CSV_COLUMNS) and their labels.
+export const CSV_COLUMNS = ['id', 'title', 'path', 'type', 'label', 'status', 'keywords', 'synopsis', 'section_type', 'include_in_compile', 'words', 'target', 'created', 'modified'];
+const CSV_DEFAULT = ['id', 'title', 'path', 'type', 'label', 'status', 'keywords', 'section_type', 'include_in_compile', 'words', 'created', 'modified'];
+const NOTE_FORMATS = ['md', 'same', 'txt', 'rtf', 'html', 'docx', 'odt'];
+
+export default function ExportDialog({ api, dir, project, selectionIds = [], defaults = {}, onClose, onError }) {
   const [tab, setTab] = useState('docs');
   const [scope, setScope] = useState(selectionIds.length ? 'selection' : 'all');
-  const [format, setFormat] = useState('docx');
-  const [withNotes, setWithNotes] = useState(true);
+  const [format, setFormat] = useState(defaults.format || 'docx');
+  const [withNotes, setWithNotes] = useState(defaults.includeNotes ?? true);
   const [withSynopsis, setWithSynopsis] = useState(true);
-  const [withMeta, setWithMeta] = useState(false);
+  const [withMeta, setWithMeta] = useState(Boolean(defaults.includeMeta));
+  const [notesFormat, setNotesFormat] = useState(defaults.notesFormat || 'md');
+  const [notesAs, setNotesAs] = useState(defaults.notesAs || 'word');
+  const [withSnapshots, setWithSnapshots] = useState(false);
+  const customKeys = [...new Set((project.customFields || project.customMetadata || []).map((d) => (typeof d === 'string' ? d : d.id || d.name)).filter(Boolean))];
+  const [csvCols, setCsvCols] = useState(() => [...CSV_DEFAULT, ...customKeys.map((k) => `custom:${k}`)]);
+  const toggleCol = (c) => setCsvCols((cols) => (cols.includes(c) ? cols.filter((x) => x !== c) : [...cols, c]));
   const [trackChanges, setTrackChanges] = useState(false);
   const [opmlText, setOpmlText] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -42,13 +53,14 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
     try {
       if (tab === 'docs') {
         const ids = scope === 'selection' ? selectionIds : scope === 'folder' && folder ? [folder.id] : null;
-        const res = await api.exportDocuments(dir, project, ids, { format, withNotes, withSynopsis, withMeta, trackChanges: format === 'docx' && trackChanges });
+        const res = await api.exportDocuments(dir, project, ids, { format, withNotes, withSynopsis, withMeta, notesFormat, notesAs, withSnapshots, trackChanges: format === 'docx' && trackChanges });
         if (res) setDone(t('ui.exportDialog.au_fost_exportate_x_documente', { count: res.count, dir: res.dir }));
       } else if (tab === 'opml') {
         const file = await api.exportOpml(dir, project, { includeText: opmlText });
         if (file) setDone(t('ui.exportDialog.schita_a_fost_salvata_in', { file: file }));
       } else {
-        const file = await api.exportCsv(dir, project);
+        const order = [...CSV_COLUMNS, ...customKeys.map((k) => `custom:${k}`)];
+        const file = await api.exportCsv(dir, project, undefined, { columns: order.filter((c) => csvCols.includes(c)) });
         if (file) setDone(t('ui.exportDialog.metadatele_au_fost_salvate_in', { file: file }));
       }
     } catch (e) {
@@ -108,7 +120,26 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
                   <input type="checkbox" checked={trackChanges} onChange={(e) => setTrackChanges(e.target.checked)} /> {t('ui.compileDialog.reviziile_ca_modificari_urmarite_word')}
                 </label>
               )}
+              <label className="check">
+                <input type="checkbox" checked={withSnapshots} onChange={(e) => setWithSnapshots(e.target.checked)} /> {t('ui.p12.exportSnapshoturi')}
+              </label>
             </div>
+            <div className="row">
+              <label>
+                {t('ui.p12.formatNotite')}
+                <select value={notesFormat} disabled={!withNotes} onChange={(e) => setNotesFormat(e.target.value)} aria-label={t('ui.p12.formatNotite')}>
+                  {NOTE_FORMATS.map((f) => <option key={f} value={f}>{f === 'same' ? t('ui.settingsDialog.ca_textul') : f.toUpperCase()}</option>)}
+                </select>
+              </label>
+              <label>
+                {t('ui.p12.noteSiComentarii')}
+                <select value={notesAs} onChange={(e) => setNotesAs(e.target.value)} aria-label={t('ui.p12.noteSiComentarii')}>
+                  <option value="word">{t('ui.p12.caNoteWord')}</option>
+                  <option value="text">{t('ui.p12.caText')}</option>
+                </select>
+              </label>
+            </div>
+            <p className="muted small">{t('ui.p12.cercetareOriginal')}</p>
           </div>
         )}
         {tab === 'opml' && (
@@ -120,13 +151,23 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
           </div>
         )}
         {tab === 'csv' && (
-          <p className="muted">{t('ui.exportDialog.exporta_un_tabel_cu_metadatele')}</p>
+          <div className="fields">
+            <p className="muted">{t('ui.exportDialog.exporta_un_tabel_cu_metadatele')}</p>
+            <fieldset className="checks csv-columns" style={{ columns: 2 }}>
+              <legend>{t('ui.p12.coloane')}</legend>
+              {[...CSV_COLUMNS, ...customKeys.map((k) => `custom:${k}`)].map((c) => (
+                <label key={c} className="check">
+                  <input type="checkbox" checked={csvCols.includes(c)} onChange={() => toggleCol(c)} /> {c.startsWith('custom:') ? c.slice(7) : t(`ui.p12.col_${c}`)}
+                </label>
+              ))}
+            </fieldset>
+          </div>
         )}
 
         {done && <p className="muted" role="status">{done}</p>}
         <div className="actions">
           <button onClick={onClose}>{t('btn.close')}</button>
-          <button className="primary" disabled={busy} onClick={run}>{busy ? t('ui.exportDialog.se_exporta') : t('ui.exportDialog.exporta_2')}</button>
+          <button className="primary" disabled={busy || (tab === 'csv' && !csvCols.length)} onClick={run}>{busy ? t('ui.exportDialog.se_exporta') : t('ui.exportDialog.exporta_2')}</button>
         </div>
       </div>
     </div>

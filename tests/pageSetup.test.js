@@ -41,7 +41,7 @@ describe('page setup mapping', () => {
 
   it('gives printToPDF and print options with the same page', () => {
     const o = ps.pdfPrintOptions({ size: 'Letter', orientation: 'landscape', margins: { top: 2.54, bottom: 2.54, left: 5.08, right: 2.54 } });
-    expect(o).toEqual({ pageSize: { width: 11, height: 8.5 }, landscape: false, printBackground: false, preferCSSPageSize: true, displayHeaderFooter: false, margins: { top: 1, bottom: 1, left: 2, right: 1 } });
+    expect(o).toEqual({ pageSize: { width: 11, height: 8.5 }, landscape: false, printBackground: false, preferCSSPageSize: true, displayHeaderFooter: false, margins: { top: 1, bottom: 1, left: 2, right: 1 }, scale: 1 });
     expect(ps.printOptions({ size: '6x9' }).pageSize).toEqual({ width: 152400, height: 228600 });
   });
 

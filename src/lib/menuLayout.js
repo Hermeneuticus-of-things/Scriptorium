@@ -14,9 +14,9 @@ export const AI_ONLY_COMMANDS = new Set([
 // Submenus per menu: [label key, command ids]. A submenu takes the place of its first command.
 export const SUBMENUS = {
   file: [
-    ['menu.import', ['import', 'importFiles', 'importOpml', 'importWeb', 'transcribeAudio', 'importZotero', 'importBib', 'importBundle']],
+    ['menu.import', ['import', 'importFiles', 'importFolder', 'importOpml', 'importWeb', 'refreshLinked', 'transcribeAudio', 'importZotero', 'importBib', 'importBundle']],
     ['menu.export', ['exportFiles', 'exportScriv', 'exportLatex', 'exportPandoc', 'exportMmd', 'exportFdx', 'exportFountain', 'exportBundle', 'editorPackage']], // saveTemplate: top level of File (G4)
-    ['menu.sync', ['syncOut', 'syncIn']],
+    ['menu.sync', ['syncOut', 'syncIn', 'mobileSyncNow']],
     ['menu.print', ['pageSetup', 'printPreview', 'print']],
   ],
   document: [['menu.snapshots', ['snapshot', 'snapshotTitled', 'snapshotSelection', 'snapshotManager']]],
@@ -25,7 +25,7 @@ export const SUBMENUS = {
     ['menu.find', ['findDoc', 'findNext', 'findPrev', 'findUseSel', 'findProject', 'findFormat', 'advSearch']],
   ],
   // Script modes: the ids are generated (script_<format>), matched by prefix.
-  format: [['menu.scriptMode', ['scriptOff'], (id) => id.startsWith('script_')], ['menu.styles', ['styles', 'stylesPanel']]],
+  format: [['menu.scriptMode', ['scriptOff', 'scriptFormatEditor', 'scriptCompletion'], (id) => id.startsWith('script_')], ['menu.styles', ['styles', 'stylesPanel']]],
   view: [
     ['menu.bookViews', ['viewTimeline', 'viewRelations', 'viewPacing']],
     ['menu.posFocus', ['posNouns', 'posVerbs', 'posOff']],

@@ -21,6 +21,18 @@ export function groupTemplates(list = []) {
   return [...map.entries()].sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0], 'ro')).map(([category, templates]) => ({ category, templates }));
 }
 
+// Template search: every word of the query in the name, category or description (case and
+// diacritics ignored), across all categories (mirrors lib/templates.cjs searchTemplates).
+export function searchTemplates(list, query) {
+  const fold = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const words = fold(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return list || [];
+  return (list || []).filter((t) => {
+    const hay = fold(`${t.name} ${t.category || ''} ${categoryLabel(t.category || '')} ${t.description || ''}`);
+    return words.every((w) => hay.includes(w));
+  });
+}
+
 export default function Home({ api, settings: initialSettings, onOpen, onError, onSettings, onHelp, onTutorial }) {
   const [settings, setLocal] = useState(initialSettings);
   useEffect(() => setLocal(initialSettings), [initialSettings]);
@@ -94,7 +106,8 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
   const groups = groupTemplates(templates);
   const [category, setCategory] = useState(null);
   const activeCat = category && groups.some((g) => g.category === category) ? category : (groups.find((g) => g.templates.some((t) => t.id === templateId)) || groups[0])?.category;
-  const shown = groups.find((g) => g.category === activeCat)?.templates || [];
+  const [query, setQuery] = useState('');
+  const shown = query.trim() ? searchTemplates(templates, query) : groups.find((g) => g.category === activeCat)?.templates || [];
   const pickCategory = (c) => {
     setCategory(c);
     const g = groups.find((x) => x.category === c);
@@ -139,6 +152,19 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
       {api.isMock && <p className="warn">{tr('ui.home.mod_demonstrativ_in_browser_salvarea')}</p>}
       <section className="tpl-chooser" aria-label={tr('ui.home.proiect_nou')}>
         <h2>{tr('ui.home.proiect_nou')}</h2>
+        <input
+          type="search"
+          className="tpl-search"
+          value={query}
+          placeholder={tr('ui.p12.cautaSablon')}
+          aria-label={tr('ui.p12.cautaSablon')}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            const hits = searchTemplates(templates, e.target.value);
+            if (e.target.value.trim() && hits.length && !hits.some((x) => x.id === templateId)) setTemplateId(hits[0].id);
+          }}
+          onKeyDown={(e) => e.key === 'Escape' && setQuery('')}
+        />
         <div className="tpl-body">
           <ul className="tpl-cats" role="listbox" aria-label={tr('ui.home.categorii_sabloane')} aria-orientation="vertical" onKeyDown={catKeys}>
             {groups.map((g) => (
@@ -155,6 +181,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
             ))}
           </ul>
           <div className="tpl-main">
+            {query.trim() && !shown.length && <p className="muted small" role="status">{tr('ui.p12.niciunSablon')}</p>}
             <ul className="tpl-grid" role="listbox" aria-label={tr('ui.home.sablon')} onKeyDown={cardKeys}>
               {shown.map((t) => (
                 <li
