@@ -1008,6 +1008,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     <th>{tr('ui.compileDialog.pagina_noua')}</th>
                     <th>Text</th>
                     <th>{tr('ui.compileDialog.separator_inainte')}</th>
+                    <th>{tr('ui.compileDialog.p23.dropCap')}</th>
+                    <th>{tr('ui.compileDialog.p23.leadCaps')}</th>
+                    <th>{tr('ui.compileDialog.p23.columns')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1043,6 +1046,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                             <option value="page">{tr('ui.compileDialog.pagina_noua')}</option>
                           </select>
                         </td>
+                        <td><input type="checkbox" aria-label={tr('ui.compileDialog.p23.dropCap')} checked={Boolean(l.dropCap)} onChange={(e) => setLayout(t, 'dropCap', e.target.checked)} /></td>
+                        <td><input type="number" min="0" max="20" style={{ width: '3.5em' }} aria-label={tr('ui.compileDialog.p23.leadCaps')} value={l.firstWordsSmallCaps || 0} onChange={(e) => setLayout(t, 'firstWordsSmallCaps', Math.max(0, Number(e.target.value) || 0))} /></td>
+                        <td><input type="number" min="1" max="3" style={{ width: '3.5em' }} aria-label={tr('ui.compileDialog.p23.columns')} value={l.columns || 1} onChange={(e) => setLayout(t, 'columns', Math.min(3, Math.max(1, Number(e.target.value) || 1)))} /></td>
                       </tr>
                     );
                   })}
