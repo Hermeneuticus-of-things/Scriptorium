@@ -1,6 +1,13 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.1
+- Conectare MCP pentru mai mulți clienți: dialogul detectează, în funcție de calculator, ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie/îmbină configul fiecăruia dintr-un clic, cu copie de siguranță; fiecare cu schema și locul lui. (`lib/mcpConfig.cjs`, `src/components/McpConnectDialog.jsx`)
+- Token GitHub pentru actualizator în Setări → Servicii și conturi (criptat), cu variabila de mediu ca rezervă; necesar cât timp depozitul e privat.
+- Formatul Compile implicit „Manuscris standard”: corp Georgia 10 pt, titluri 12 pt bold, subtitluri 10 pt bold.
+- Curățare text (editor): comandă structurală care păstrează paragrafele și formatarea; CSS personalizat la Compile scris atomic (fără cursă la formatele globale).
+- Imaginile din README refăcute; scripturile de captură rulează și local (Playwright rezolvat pe lângă calea de CI).
+
 ## v0.9.9
 - Actualizare din aplicație de pe GitHub: verificare automată o dată pe zi (10 s după pornire dacă ultima verificare e mai veche de 24 h; cerere condiționată cu ETag, așteptare la limita de cereri), anunț „Versiune nouă” o singură dată pe versiune, Ajutor → Caută actualizări… cu note, descărcare cu progres, verificare dimensiune + SHA-256, instalare silențioasă și repornire (portabil: arată fișierul nou). Setare „Verifică automat actualizările” (pornită implicit); buton opțional „Actualizare” în bara de sus. Versiunile publică și `SHA256SUMS`; instalatorul are `RestartApplications=yes`. (`lib/updater.cjs`, `electron/updateHandlers.cjs`, `src/components/UpdateDialog.jsx`)
 - MCP `--anonymize` (oprit implicit): numele din private-names.txt (și, la cerere, emailurile și telefoanele) trimise modelului ca jetoane și rehidratate local la scriere; `docs/MCP_ARHITECTURA.md` descrie toată legătura agent ↔ Scribner.
