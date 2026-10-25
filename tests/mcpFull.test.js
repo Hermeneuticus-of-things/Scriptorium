@@ -195,6 +195,8 @@ const PRELOAD_COVERAGE = {
   compositionDisplay: 'gui: ferestre',
   recheckSpelling: 'gui: corector ortografic',
   openMediaExternal: 'gui: deschide aplicația externă',
+  chooseBookmarkFile: 'gui: dialogul de alegere a unui fișier pentru semnele de carte',
+  openBookmarkFile: 'gui: deschide un fișier extern din semnele de carte în aplicația lui',
   releaseProject: 'gui: ferestre',
   exportBundle: 'export_bundle',
   importBundle: 'import_bundle',

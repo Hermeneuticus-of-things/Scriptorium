@@ -1,6 +1,59 @@
-import React, { useState } from 'react';
-import { NONE, FIELD_TYPES, makeDraft, applyProjectSettings, validateDraft, moveItem } from '../lib/projectSettings.js';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  NONE, FIELD_TYPES, FIELD_ALIGNS, SECTION_DEPTHS, makeDraft, applyProjectSettings, validateDraft, moveItem, noneLabel, noneStatus,
+  exportMetaSettings, importMetaSettings, formatDraft, cleanDefaultFormatting, uniqueId,
+} from '../lib/projectSettings.js';
 import { t as tr } from '../lib/i18n.js';
+import DefaultFormatPane from './DefaultFormatPane.jsx';
+
+// Languages offered for the project (spelling and Compile); any BCP-47 tag can be typed too.
+const LANGS = ['ro', 'en', 'en-GB', 'fr', 'de', 'es', 'it', 'pt', 'hu', 'pl', 'ru', 'uk'];
+
+function IconPreview({ api, dir, file }) {
+  const [url, setUrl] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    if (file && api?.readMedia) api.readMedia(dir, file).then((u) => alive && setUrl(u)).catch(() => {});
+    return () => { alive = false; };
+  }, [api, dir, file]);
+  return url ? <img className="ps-icon-img" src={url} alt="" width={20} height={20} /> : <span className="ps-icon-img" />;
+}
+
+// Export / import of labels, statuses, custom metadata and section types (a small JSON file).
+function MetaTransfer({ getProject, onImport }) {
+  const fileRef = useRef(null);
+  const [msg, setMsg] = useState('');
+  const exportFile = () => {
+    const project = getProject();
+    const blob = new Blob([JSON.stringify(exportMetaSettings(project), null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${(project.title || 'proiect').replace(/[\\/:*?"<>|]+/g, '_')}.meta.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const importFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      onImport(JSON.parse(await file.text()));
+      setMsg(tr('ui.ps.import_ok'));
+    } catch {
+      setMsg(tr('ui.ps.import_invalid'));
+    }
+  };
+  return (
+    <div className="ps-transfer row">
+      <button type="button" className="ps-export-meta" onClick={exportFile}>{tr('ui.ps.export_meta')}</button>
+      <button type="button" className="ps-import-meta" onClick={() => fileRef.current?.click()}>{tr('ui.ps.import_meta')}</button>
+      <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={importFile} />
+      {msg && <span className="muted small" role="status">{msg}</span>}
+    </div>
+  );
+}
 
 const TABS = () => ([
   ['sectiuni', tr('ui.projectSettingsDialog.tipuri_de_sectiune')],
@@ -10,25 +63,23 @@ const TABS = () => ([
   ['statusuri', tr('ui.projectSettingsDialog.statusuri')],
   ['autocomplete', tr('ui.projectSettingsDialog.auto_completare')],
   ['foldere', tr('ui.projectSettingsDialog.foldere_speciale')],
+  ['icoane', tr('ui.ps.icoane')],
   ['backup', tr('ui.projectSettingsDialog.backup')],
   ['proiect', tr('group.project')],
-]);const FONTS = ['', 'Georgia, serif', "'Times New Roman', serif", "'Palatino Linotype', Palatino, serif", 'Garamond, serif', 'Arial, sans-serif', "'Courier New', monospace"];
+]);
 
 // Extra project settings kept outside lib/projectSettings.js (merged on save).
 function makeExtras(project) {
-  const f = project.defaultFormatting || {};
   const b = project.backup || {};
   return {
-    defaultFormatting: { font: f.font || '', size: f.size || '', lineHeight: f.lineHeight || '', firstIndent: f.firstIndent ?? '', spacing: f.spacing ?? '' },
+    defaultFormatting: { useGlobal: !project.defaultFormatting, f: formatDraft(project.defaultFormatting) },
     autoComplete: (project.autoComplete || []).join('\n'),
     backup: { override: Boolean(b.override), onClose: b.onClose !== false, everyMin: b.everyMin || 0, keep: b.keep || 10, exclude: Boolean(b.exclude) },
     importFolder: project.importFolder || null,
     inboxFolder: project.inboxFolder || null,
   };
 }
-const numOrNull = (v) => (v === '' || v == null || !Number.isFinite(Number(v)) ? null : Number(v));
-
-const TYPE_NAMES = () => ({ text: 'Text', checkbox: tr('ui.projectSettingsDialog.bifa'), list: tr('ui.projectSettingsDialog.lista'), date: tr('ui.projectSettingsDialog.data') });
+const TYPE_NAMES = () => ({ text: 'Text', number: tr('ui.ps.numar'), checkbox: tr('ui.projectSettingsDialog.bifa'), list: tr('ui.projectSettingsDialog.lista'), date: tr('ui.projectSettingsDialog.data') });
 const LEVELS = () => ([
   ['folders', tr('ui.compileDialog.dosare')],
   ['containers', tr('ui.compileDialog.documente_cu_subdocumente')],
@@ -53,6 +104,10 @@ const CSS = `
 .ps-field { border: 1px solid rgba(128,128,128,.3); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .ps-opts { margin-left: 16px; }
 .ps-errors { color: #b33; margin: 0; padding-left: 18px; }
+.ps-icon-img { display: inline-block; width: 20px; height: 20px; object-fit: contain; }
+.ps-depths { border-collapse: collapse; }
+.ps-depths th, .ps-depths td { padding: 3px 6px; text-align: left; }
+.ps-transfer { margin-top: 10px; gap: 6px; align-items: center; }
 `;
 
 function Reorder({ i, n, pinFirst, onMove }) {
@@ -66,12 +121,12 @@ function Reorder({ i, n, pinFirst, onMove }) {
 }
 
 // Project settings (Scrivener: Project > Project Settings).
-export default function ProjectSettingsDialog({ project, folders, onSave, onClose }) {
+export default function ProjectSettingsDialog({ project, folders, onSave, onClose, api, dir, initialTab }) {
   const [d, setD] = useState(() => makeDraft(project));
-  const [tab, setTab] = useState('sectiuni');
+  const [tab, setTab] = useState(initialTab || 'sectiuni');
   const [errors, setErrors] = useState([]);
   const [x, setX] = useState(() => makeExtras(project));
-  const setFmt = (p) => setX((o) => ({ ...o, defaultFormatting: { ...o.defaultFormatting, ...p } }));
+  const [iconErr, setIconErr] = useState('');
   const setBk = (p) => setX((o) => ({ ...o, backup: { ...o.backup, ...p } }));
 
   const tabKeys = (e) => {
@@ -95,13 +150,9 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
     const errs = validateDraft(d);
     setErrors(errs);
     if (errs.length) return;
-    const f = x.defaultFormatting;
-    const fmt = Object.fromEntries(
-      Object.entries({ font: f.font || null, size: numOrNull(f.size), lineHeight: numOrNull(f.lineHeight), firstIndent: numOrNull(f.firstIndent), spacing: numOrNull(f.spacing) }).filter(([, v]) => v != null),
-    );
     onSave({
       ...applyProjectSettings(project, d),
-      defaultFormatting: Object.keys(fmt).length ? fmt : null,
+      defaultFormatting: cleanDefaultFormatting(x.defaultFormatting.f, x.defaultFormatting.useGlobal),
       autoComplete: [...new Set(x.autoComplete.split('\n').map((l) => l.trim()).filter(Boolean))],
       backup: { ...x.backup, everyMin: Number(x.backup.everyMin) || 0, keep: Math.max(1, Number(x.backup.keep) || 10) },
       importFolder: x.importFolder,
@@ -110,6 +161,35 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
   };
 
   const fullFromParts = () => set({ author: [d.authorFirst, d.authorLast].filter(Boolean).join(' ') });
+  const doImport = (data) => setD((cur) => importMetaSettings(cur, data));
+  // The export takes what the dialog shows now (unsaved edits included).
+  const draftProject = () => {
+    try {
+      return validateDraft(d).length ? project : applyProjectSettings({ ...project, tree: [] }, d);
+    } catch {
+      return project;
+    }
+  };
+  const transfer = <MetaTransfer getProject={draftProject} onImport={doImport} />;
+
+  const addIcons = async () => {
+    setIconErr('');
+    try {
+      const added = (await api.addMediaFiles(dir)) || [];
+      const imgs = added.filter((a) => (a.media?.mime || '').startsWith('image/') && a.media?.file);
+      if (!imgs.length && added.length) setIconErr(tr('ui.ps.icon_not_image'));
+      setList('customIcons', (arr) => {
+        const ids = new Set(arr.map((i) => i.id));
+        return [...arr, ...imgs.map((a) => {
+          const id = uniqueId('ic', ids);
+          ids.add(id);
+          return { id, name: (a.media.name || a.title || id).replace(/\.[a-z0-9]+$/i, ''), file: a.media.file };
+        })];
+      });
+    } catch (e) {
+      setIconErr(String(e?.message || e));
+    }
+  };
 
   const renderSimpleList = (key, withColor) => (
     <ul className="ps-list">
@@ -158,7 +238,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
       const titles = new Set(arr.map((x) => x.title));
       let title = tr('ui.projectSettingsDialog.camp_nou');
       for (let k = 2; titles.has(title); k++) title = tr('ui.projectSettingsDialog.camp_nou_x', { k: k });
-      return [...arr, { id: '', title, type: 'text', options: [], default: '', wraps: false, orig: null }];
+      return [...arr, { id: '', title, type: 'text', options: [], default: '', wraps: false, align: 'left', orig: null }];
     });
 
   const addSectionType = () =>
@@ -209,7 +289,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             </label>
             <div className="row">
               <label>
-                Prenume autor
+                {tr('ui.ps.prenume_autor')}
                 <input value={d.authorFirst} onChange={(e) => set({ authorFirst: e.target.value })} />
               </label>
               <label>
@@ -224,6 +304,37 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             <div>
               <button type="button" onClick={fullFromParts}>{tr('ui.projectSettingsDialog.completeaza_din_prenume_si_nume')}</button>
             </div>
+            <h3>{tr('ui.ps.limba_si_editura')}</h3>
+            <label>
+              {tr('ui.ps.limba_principala')}
+              <input className="ps-language" list="ps-langs" value={d.language} placeholder="ro" onChange={(e) => set({ language: e.target.value })} />
+              <datalist id="ps-langs">{LANGS.map((l) => <option key={l} value={l} />)}</datalist>
+            </label>
+            <p className="muted small">{tr('ui.ps.limba_tip')}</p>
+            <label>{tr('ui.ps.editura')}<input className="ps-publisher" value={d.publisher} onChange={(e) => set({ publisher: e.target.value })} /></label>
+            <label>ISBN<input className="ps-isbn" value={d.isbn} onChange={(e) => set({ isbn: e.target.value })} /></label>
+            <label>{tr('ui.ps.adresa')}<textarea rows={3} value={d.address} onChange={(e) => set({ address: e.target.value })} /></label>
+            <label>{tr('ui.ps.drepturi')}<input value={d.rights} placeholder={`© ${new Date().getFullYear()} ${d.author || ''}`.trim()} onChange={(e) => set({ rights: e.target.value })} /></label>
+          </div>
+        )}
+
+        {tab === 'icoane' && (
+          <div className="fields">
+            <p className="muted">{tr('ui.ps.icoane_tip')}</p>
+            {d.customIcons.length === 0 && <p className="muted">{tr('ui.ps.nicio_icoana')}</p>}
+            <ul className="ps-list ps-icons">
+              {d.customIcons.map((ic, i) => (
+                <li key={ic.id} className="ps-item">
+                  <IconPreview api={api} dir={dir} file={ic.file} />
+                  <input value={ic.name} aria-label={tr('ui.keywordsDialog.nume')} onChange={(e) => patchAt('customIcons', i, { name: e.target.value })} />
+                  <button type="button" title={tr('btn.delete')} onClick={() => window.confirm(tr('ui.ps.sterge_icoana', { name: ic.name })) && removeAt('customIcons', i)}>✕</button>
+                </li>
+              ))}
+            </ul>
+            <div>
+              <button type="button" className="ps-add-icon" disabled={!api?.addMediaFiles} onClick={addIcons}>{tr('ui.ps.importa_icoana')}</button>
+            </div>
+            {iconErr && <p className="ps-errors" role="alert">{iconErr}</p>}
           </div>
         )}
 
@@ -237,7 +348,14 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             <div>
               <button type="button" onClick={() => addNamed('labels', tr('ui.projectSettingsDialog.eticheta_noua'), { color: '#888888' })}>{tr('ui.projectSettingsDialog.adauga_eticheta')}</button>
             </div>
+            <label>
+              {tr('ui.ps.implicit_documente_noi')}
+              <select className="ps-default-label" value={d.defaultLabel} onChange={(e) => set({ defaultLabel: e.target.value })}>
+                {d.labels.filter((l) => l.orig || l.name === NONE).map((l) => <option key={l.orig || l.name} value={l.orig || l.name}>{noneLabel(l.name, tr)}</option>)}
+              </select>
+            </label>
             <p className="muted">{tr('ui.projectSettingsDialog.eticheta')}{NONE}{tr('ui.projectSettingsDialog.ramane_prima_si_nu_poate')}</p>
+            {transfer}
           </div>
         )}
 
@@ -251,7 +369,14 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             <div>
               <button type="button" onClick={() => addNamed('statuses', tr('ui.projectSettingsDialog.status_nou'))}>{tr('ui.projectSettingsDialog.adauga_status')}</button>
             </div>
-            <p className="muted">Statusul „{NONE}{tr('ui.projectSettingsDialog.ramane_primul_si_nu_poate')}</p>
+            <label>
+              {tr('ui.ps.implicit_documente_noi')}
+              <select className="ps-default-status" value={d.defaultStatus} onChange={(e) => set({ defaultStatus: e.target.value })}>
+                {d.statuses.filter((s) => s.orig || s.name === NONE).map((s) => <option key={s.orig || s.name} value={s.orig || s.name}>{noneStatus(s.name, tr)}</option>)}
+              </select>
+            </label>
+            <p className="muted">{tr('ui.ps.status_none', { NONE })}</p>
+            {transfer}
           </div>
         )}
 
@@ -269,7 +394,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                     {tr('ui.projectSettingsDialog.tip')}
                     <select
                       value={f.type}
-                      onChange={(e) => fieldPatch(i, { type: e.target.value, default: e.target.value === 'checkbox' ? false : '' })}
+                      onChange={(e) => fieldPatch(i, { type: e.target.value, default: e.target.value === 'checkbox' ? false : '', ...(e.target.value === 'number' ? { align: 'right' } : {}) })}
                     >
                       {FIELD_TYPES.map((t) => (
                         <option key={t} value={t}>{TYPE_NAMES()[t]}</option>
@@ -290,10 +415,17 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                         ))}
                       </select>
                     ) : (
-                      <input type={f.type === 'date' ? 'date' : 'text'} value={f.default || ''} onChange={(e) => fieldPatch(i, { default: e.target.value })} />
+                      <input type={f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text'} step="any" value={f.default ?? ''} onChange={(e) => fieldPatch(i, { default: e.target.value })} />
                     )}
                   </label>
+                  <label>
+                    {tr('ui.ps.aliniere_coloana')}
+                    <select className="ps-field-align" value={f.align || 'left'} onChange={(e) => fieldPatch(i, { align: e.target.value })}>
+                      {FIELD_ALIGNS.map((a) => <option key={a} value={a}>{tr(`ui.ps.align_${a}`)}</option>)}
+                    </select>
+                  </label>
                 </div>
+                {f.type === 'number' && <p className="muted small">{tr('ui.ps.numar_tip')}</p>}
                 {f.type === 'text' && (
                   <label className="check">
                     <input type="checkbox" checked={Boolean(f.wraps)} onChange={(e) => fieldPatch(i, { wraps: e.target.checked })} /> {tr('ui.projectSettingsDialog.text_pe_mai_multe_randuri')}
@@ -335,6 +467,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             <div>
               <button type="button" onClick={addField}>{tr('ui.projectSettingsDialog.adauga_camp')}</button>
             </div>
+            {transfer}
           </div>
         )}
 
@@ -357,6 +490,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                         sectionTypeLevels: Object.fromEntries(
                           Object.entries(x.sectionTypeLevels).map(([k, v]) => [k, removedId && v === removedId ? null : v]),
                         ),
+                        sectionTypeDepths: x.sectionTypeDepths.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, removedId && v === removedId ? null : v]))),
                       }));
                     }}
                   >
@@ -370,20 +504,52 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             </div>
             <h3>{tr('ui.projectSettingsDialog.tip_implicit_dupa_nivel')}</h3>
             {d.sectionTypes.some((t) => !t.id) && <p className="muted">{tr('ui.projectSettingsDialog.tipurile_noi_pot_fi_alese')}</p>}
-            {LEVELS().map(([k, label]) => (
-              <label key={k}>
-                {label}
-                <select
-                  value={d.sectionTypeLevels[k] || ''}
-                  onChange={(e) => set({ sectionTypeLevels: { ...d.sectionTypeLevels, [k]: e.target.value || null } })}
-                >
-                  <option value="">(niciunul)</option>
-                  {d.sectionTypes.filter((t) => t.id).map((t) => (
-                    <option key={t.id} value={t.id}>{t.title}</option>
+            <p className="muted small">{tr('ui.ps.niveluri_tip')}</p>
+            <div className="ps-depths-wrap">
+              <table className="ps-depths">
+                <thead>
+                  <tr>
+                    <th>{tr('ui.ps.nivel')}</th>
+                    {LEVELS().map(([k, label]) => <th key={k}>{label}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.sectionTypeDepths.slice(0, SECTION_DEPTHS).map((row, depth) => (
+                    <tr key={depth}>
+                      <td>{depth + 1}</td>
+                      {LEVELS().map(([k, label]) => (
+                        <td key={k}>
+                          <select
+                            className={`ps-depth-${depth + 1}-${k}`}
+                            aria-label={`${tr('ui.ps.nivel')} ${depth + 1} · ${label}`}
+                            value={row[k] || ''}
+                            onChange={(e) => set({ sectionTypeDepths: d.sectionTypeDepths.map((r, j) => (j === depth ? { ...r, [k]: e.target.value || null } : r)) })}
+                          >
+                            <option value="">{tr('ui.ps.ca_restul')}</option>
+                            {d.sectionTypes.filter((t) => t.id).map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                          </select>
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </select>
-              </label>
-            ))}
+                  <tr>
+                    <td>{tr('ui.ps.restul_nivelurilor')}</td>
+                    {LEVELS().map(([k, label]) => (
+                      <td key={k}>
+                        <select
+                          aria-label={`${tr('ui.ps.restul_nivelurilor')} · ${label}`}
+                          value={d.sectionTypeLevels[k] || ''}
+                          onChange={(e) => set({ sectionTypeLevels: { ...d.sectionTypeLevels, [k]: e.target.value || null } })}
+                        >
+                          <option value="">(niciunul)</option>
+                          {d.sectionTypes.filter((t) => t.id).map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                        </select>
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -417,26 +583,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         )}
 
         {tab === 'formatare' && (
-          <div className="fields">
-            <p className="muted">{tr('ui.projectSettingsDialog.formatarea_folosita_pentru_documentele_noi')}</p>
-            <label>
-              Font
-              <select value={x.defaultFormatting.font} onChange={(e) => setFmt({ font: e.target.value })}>
-                {FONTS.map((f) => <option key={f} value={f}>{f ? f.split(',')[0].replace(/'/g, '') : tr('ui.projectSettingsDialog.din_optiuni')}</option>)}
-              </select>
-            </label>
-            <div className="row">
-              <label>{tr('ui.projectSettingsDialog.marime_px')}<input type="number" min="8" max="48" value={x.defaultFormatting.size} onChange={(e) => setFmt({ size: e.target.value })} /></label>
-              <label>{tr('ui.compileDialog.spatiere_randuri')}<input type="number" min="1" max="3" step="0.1" value={x.defaultFormatting.lineHeight} onChange={(e) => setFmt({ lineHeight: e.target.value })} /></label>
-            </div>
-            <div className="row">
-              <label>Indent prima linie (em)<input type="number" min="0" max="5" step="0.5" value={x.defaultFormatting.firstIndent} onChange={(e) => setFmt({ firstIndent: e.target.value })} /></label>
-              <label>{tr('set.paraSpacing')}<input type="number" min="0" max="3" step="0.1" value={x.defaultFormatting.spacing} onChange={(e) => setFmt({ spacing: e.target.value })} /></label>
-            </div>
-            <p className="pdx-format-sample" style={{ fontFamily: x.defaultFormatting.font || undefined, fontSize: numOrNull(x.defaultFormatting.size) || undefined, lineHeight: numOrNull(x.defaultFormatting.lineHeight) || undefined, textIndent: `${numOrNull(x.defaultFormatting.firstIndent) || 0}em` }}>
-              {tr('ui.projectSettingsDialog.asa_va_arata_textul_documentelor')}
-            </p>
-          </div>
+          <DefaultFormatPane value={x.defaultFormatting} onChange={(v) => setX((o) => ({ ...o, defaultFormatting: v }))} />
         )}
 
         {tab === 'autocomplete' && (
