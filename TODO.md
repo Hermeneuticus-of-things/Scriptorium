@@ -214,4 +214,6 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] Voce românească inclusă (Piper) și motor de dictare descărcate automat o dată
 - [x] Iconiță cu numele Scribner
 - [x] Comandă MCP generală fără date personale (scribner-mcp.cmd)
-- [ ] Interfața 1:1 cu programul de referință: ferestre, Setări, dialoguri intermediare (audit pe niveluri)
+- [~] Interfața 1:1 cu programul de referință (vezi ROADMAP.md, „Cereri 25.10.2026”)
+- [ ] Import/export și MCP direct din `.scrivx`; `scriv_search`
+- [ ] Skill mcp-builder cu evaluări pentru serverul MCP
