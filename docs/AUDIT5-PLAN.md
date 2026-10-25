@@ -17,10 +17,12 @@ captură pe Desktop 3 când chiar e nevoie de vizual. Inventarul extras: `%TEMP%
 ---
 
 ## UNDE AM RĂMAS
-- [ ] **P2/P3 — editorul de format Compile** (IN LUCRU). Motorul există în `wip/p2-p3-compile`
-  (`lib/compileLayouts.cjs` 599 linii, `lib/placeholders.cjs`, `lib/compile.cjs` refăcut) — merge curat.
-  Lipsește UI-ul `CompileLayoutEditor.jsx`. Pași: (1) integrează motorul; (2) construiește UI pe tab-uri;
-  (3) teste. Vezi defalcarea de mai jos.
+- [x] **P2/P3 — editorul de format Compile** — FĂCUT în esență (motor integrat + UI). Vezi defalcarea.
+  Rămas opțional: opțiuni markdown/LaTeX/HTML per ieșire, script settings, RTF compat (rafinamente).
+- [ ] **Următorul: verificare dialoguri rămase** din inventar (ProjectSettings, Statistici, Istoric,
+  NameGenerator, Find/Replace, QuickReference, ImportAndSplit, ThemeManager, NewProjectAssistant).
+  Metodă: compară etichetele din `scriv-strings.tsv` cu componentele Scribner (cod), implementează doar
+  golurile reale. Pattern de până acum: majoritatea sunt deja la paritate.
 
 ---
 
@@ -48,7 +50,7 @@ Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe m
 - [~] **Text layout orig** (`SCRCompileFormatTextLayout`): văduve/orfane, evită despărțirea propozițiilor între
   pagini, coloane (număr, spațiu, lățime, coloană centrată), cratimare, eliminare indent primă linie pe
   contexte, linii goale la ruptura de pagină, lățime imagini, prefix/sufix document.
-- [ ] **Page settings** (`SCRCompileFormatPageSettings`, `SCRCompileFormatPageSettings`): margini, dimensiune
+- [x] **Page settings** (`SCRCompileFormatPageSettings`, `SCRCompileFormatPageSettings`): margini, dimensiune
   pagină, antet/subsol, numerotare, prima pagină.
 - [x] **Styles** (tab nou: remove/marime%/bold/italic/culoare)
 - [x] **Footnotes & comments2** (moduri strip/export/footnotes/inline)
@@ -58,13 +60,13 @@ Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe m
 - [x] **Prima frază layout**: drop cap, versale lead-in, coloane (făcut)
 - [x] **Footnotes & comments**: moduri strip/export/footnotes/inline (făcut)
 - [~] **Section separators (orig)** (`SCRCompileFormatSectionSeparators`): none/space/text/page/decorative/section/oddPage.
-- [ ] **Footnotes & comments** (`SCRCompileFormatFootnotesAndComments`): note de subsol/final, comentarii
+- [x] **Footnotes & comments** (`SCRCompileFormatFootnotesAndComments`): note de subsol/final, comentarii
   (strip/export/footnotes/inline).
 - [ ] **Tables & lists** (`SCRCompileFormatTablesAndLists`, `SCRCompileFormatTables`).
 - [ ] **Markup / HTML / CSS / LaTeX** (`SCRCompileFormatMarkup/Html/Css/Latex`): opțiuni per ieșire.
-- [ ] **Transformations** (`SCRCompileFormatTransformations`): majuscule, ghilimele, etc. la compilare.
+- [x] **Transformations** (`SCRCompileFormatTransformations`): majuscule, ghilimele, etc. la compilare.
 - [ ] **Statistics** (`SCRCompileFormatStatistics`), **RTF compat** (`SCRCompileFormatRtfCompatibility`).
-- [ ] **Assign Section Layouts** (`SCRAssignSectionLayoutsDialog`): maparea tip secțiune → layout.
+- [x] **Assign Section Layouts** (`SCRAssignSectionLayoutsDialog`): maparea tip secțiune → layout.
 - [~] **UI**: editat in CompileDialog (asezari + stiluri + separatoare + comentarii); un CompileLayoutEditor.jsx separat ramane optional (nou), scos din `CompileDialog.jsx`; i18n ro+en; teste.
 
 ---
