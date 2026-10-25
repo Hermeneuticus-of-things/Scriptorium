@@ -2,6 +2,8 @@
 
 
 ## v0.9.9
+- Proiect nou: șabloanele pe categorii (stânga), fișe cu iconiță (mijloc), descriere dedesubt; Opțiuni▾ și Deschide recent▾ jos.
+- Setările proiectului cu listă verticală de file în stânga.
 - Compile pe trei coloane (formate · așezări de secțiuni · Conținut/Opțiuni/Metadate) și „Editează formatul…” separat.
 - Ținte într-un panou plutitor cu bare de progres; Statistici cu manuscrisul și selecția alăturate.
 - Modul compunere: bara de comenzi apare la marginea de jos (fundal, poziția paginii, mărimea textului, lățimea, estomparea, Inspector, Mergi la, Ieșire).

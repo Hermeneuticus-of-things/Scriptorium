@@ -72,14 +72,138 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
       onError(e);
     }
   };
+  const groups = groupTemplates(templates);
+  const [category, setCategory] = useState(null);
+  const activeCat = category && groups.some((g) => g.category === category) ? category : (groups.find((g) => g.templates.some((t) => t.id === templateId)) || groups[0])?.category;
+  const shown = groups.find((g) => g.category === activeCat)?.templates || [];
+  const pickCategory = (c) => {
+    setCategory(c);
+    const g = groups.find((x) => x.category === c);
+    if (g && !g.templates.some((t) => t.id === templateId) && g.templates[0]) setTemplateId(g.templates[0].id);
+  };
+  const [menu, setMenu] = useState(null);
+  useEffect(() => {
+    if (!menu) return undefined;
+    const close = (e) => { if (e.type === 'keydown' ? e.key === 'Escape' : !e.target.closest?.('.tpl-menu-wrap')) setMenu(null); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', close);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', close); };
+  }, [menu]);
+  const toggleMenu = (m) => setMenu((cur) => (cur === m ? null : m));
+  const cardKeys = (e) => {
+    const i = shown.findIndex((t) => t.id === templateId);
+    const cols = Math.max(1, Math.round(e.currentTarget.clientWidth / 120)) || 1;
+    const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols, Home: -Infinity, End: Infinity }[e.key];
+    if (e.key === 'Enter' && title.trim()) { e.preventDefault(); run(create)(); return; }
+    if (step == null || !shown.length) return;
+    e.preventDefault();
+    const n = Math.max(0, Math.min(shown.length - 1, (i < 0 ? 0 : i) + step));
+    setTemplateId(shown[n].id);
+    e.currentTarget.querySelectorAll('[role=option]')[n]?.focus();
+  };
+  const catKeys = (e) => {
+    const i = groups.findIndex((g) => g.category === activeCat);
+    const step = { ArrowDown: 1, ArrowUp: -1, Home: -Infinity, End: Infinity }[e.key];
+    if (step == null) return;
+    e.preventDefault();
+    const n = Math.max(0, Math.min(groups.length - 1, i + step));
+    pickCategory(groups[n].category);
+    e.currentTarget.querySelectorAll('[role=option]')[n]?.focus();
+  };
+  const CAT_ICON = { Generale: '📄', 'Ficțiune': '📖', 'Non-ficțiune': '📚', Scenariu: '🎬', Poezie: '🪶', 'Ale mele': '⭐' };
+  const iconOf = (t) => t.icon || CAT_ICON[t.category] || '📄';
+  const canSync = api.isWeb && typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
   return (
     <div className="home">
       <h1>Scribner</h1>
       <p className="muted">{tr('ui.home.scrie_carti_lungi_binder_corkboard')}</p>
       {api.isMock && <p className="warn">{tr('ui.home.mod_demonstrativ_in_browser_salvarea')}</p>}
-      <div className="home-grid">
-        <section>
-          <h2>{tr('ui.home.proiect_nou')}</h2>
+      <section className="tpl-chooser" aria-label={tr('ui.home.proiect_nou')}>
+        <h2>{tr('ui.home.proiect_nou')}</h2>
+        <div className="tpl-body">
+          <ul className="tpl-cats" role="listbox" aria-label={tr('ui.home.categorii_sabloane')} aria-orientation="vertical" onKeyDown={catKeys}>
+            {groups.map((g) => (
+              <li
+                key={g.category}
+                role="option"
+                aria-selected={g.category === activeCat}
+                tabIndex={g.category === activeCat ? 0 : -1}
+                className={g.category === activeCat ? 'on' : ''}
+                onClick={() => pickCategory(g.category)}
+              >
+                {categoryLabel(g.category)} <span className="muted small">{g.templates.length}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="tpl-main">
+            <ul className="tpl-grid" role="listbox" aria-label={tr('ui.home.sablon')} onKeyDown={cardKeys}>
+              {shown.map((t) => (
+                <li
+                  key={t.id}
+                  data-tpl={t.id}
+                  role="option"
+                  aria-selected={t.id === templateId}
+                  tabIndex={t.id === templateId ? 0 : -1}
+                  className={`tpl-card${t.id === templateId ? ' on' : ''}`}
+                  onClick={() => setTemplateId(t.id)}
+                  onDoubleClick={() => { setTemplateId(t.id); if (title.trim()) run(create)(); }}
+                >
+                  <span className="tpl-icon" aria-hidden="true">{iconOf(t)}</span>
+                  <span className="tpl-name">{t.name}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="tpl-desc" aria-live="polite">
+              {chosen ? (
+                <>
+                  <strong>{iconOf(chosen)} {chosen.name}</strong>
+                  <p className="muted small">{chosen.description || tr('ui.home.sablon_fara_descriere')}</p>
+                </>
+              ) : <p className="muted small">{tr('ui.home.alege_un_sablon')}</p>}
+            </div>
+          </div>
+        </div>
+        <div className="tpl-footer">
+          <div className="tpl-menu-wrap">
+            <button type="button" aria-haspopup="menu" aria-expanded={menu === 'opts'} onClick={() => toggleMenu('opts')}>{tr('ui.home.optiuni')} ▾</button>
+            {menu === 'opts' && (
+              <div className="tpl-menu" role="menu">
+                <button role="menuitem" onClick={() => { setMenu(null); run(() => api.importScriv())(); }}>{tr('ui.home.importa_proiect_scrivener_scriv')}</button>
+                {api.isWeb && api.importBundle && <button role="menuitem" onClick={() => { setMenu(null); run(() => api.importBundle())(); }}>{tr('ui.home.importa_pachet_json')}</button>}
+                {chosen && chosen.user && api.deleteTemplate && <button role="menuitem" onClick={() => { setMenu(null); removeTemplate(); }}>{tr('ui.home.sterge_sablonul')}</button>}
+                {canSync && <p className="muted small">{tr('ui.home.folder_sync_tip')}</p>}
+              </div>
+            )}
+          </div>
+          <div className="tpl-menu-wrap">
+            <button type="button" aria-haspopup="menu" aria-expanded={menu === 'recent'} onClick={() => toggleMenu('recent')}>{tr('ui.home.deschide_recent')} ▾</button>
+            {menu === 'recent' && (
+              <div className="tpl-menu tpl-recent" role="menu" aria-label={tr('ui.home.recente')}>
+                {recent.length === 0 && <p className="muted">{tr('ui.home.niciun_proiect_recent')}</p>}
+                <ul className="recent">
+                  {recent.map((r) => (
+                    <li key={r.dir} className={[pinned.includes(r.dir) ? 'pinned' : '', r.missing ? 'missing' : ''].filter(Boolean).join(' ')}>
+                      <button className="link" role="menuitem" onClick={run(() => api.openProject(r.dir))} title={r.missing ? tr('ui.home.lipseste_titlu', { dir: r.dir }) : r.dir}>
+                        {r.title}
+                        {r.missing && <span className="muted small"> ({tr('ui.home.lipseste')})</span>}
+                      </button>
+                      <button
+                        className={`pin ${pinned.includes(r.dir) ? 'on' : ''}`}
+                        onClick={() => togglePin(r.dir)}
+                        title={pinned.includes(r.dir) ? tr('ui.home.anuleaza_fixarea') : tr('ui.home.fixeaza_in_capul_listei')}
+                        aria-label={pinned.includes(r.dir) ? tr('ui.home.anuleaza_fixarea_x', { title: r.title }) : tr('ui.home.fixeaza_x', { title: r.title })}
+                      >
+                        {pinned.includes(r.dir) ? '★' : '☆'}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {recent.some((r) => !pinned.includes(r.dir)) && <button className="link" onClick={clearRecent}>{tr('ui.home.goleste_lista_pastreaza_fixatele')}</button>}
+              </div>
+            )}
+          </div>
+          <button type="button" onClick={run(() => api.openProject())} title={tr('ui.home.deschide_existent')}>{tr('ui.home.deschide_proiect_scribner')}</button>
+          <span className="tpl-spacer" />
           <input
             placeholder={tr('ui.home.titlul_cartii')}
             aria-label={tr('ui.home.titlul_cartii')}
@@ -87,55 +211,9 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && title.trim()) run(create)(); }}
           />
-          <label>
-            {tr('ui.home.sablon')}
-            <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
-              {groupTemplates(templates).map((g) => (
-                <optgroup key={g.category} label={categoryLabel(g.category)}>
-                  {g.templates.map((t) => (
-                    <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ''}{t.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
-          {chosen && chosen.description && <p className="muted small">{chosen.description}</p>}
-          {chosen && chosen.user && api.deleteTemplate && (
-            <button className="link" onClick={removeTemplate}>{tr('ui.home.sterge_sablonul')}</button>
-          )}
           <button className="primary" disabled={!title.trim()} onClick={run(create)}>{tr('ui.home.creeaza')}</button>
-        </section>
-        <section>
-          <h2>{tr('ui.app.deschide')}</h2>
-          <button onClick={run(() => api.openProject())}>{tr('ui.home.deschide_proiect_scribner')}</button>
-          {api.isWeb && api.importBundle && <button onClick={run(() => api.importBundle())}>{tr('ui.home.importa_pachet_json')}</button>}
-          <button onClick={run(() => api.importScriv())}>{tr('ui.home.importa_proiect_scrivener_scriv')}</button>
-          {api.isWeb && typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function' && <p className="muted small">{tr('ui.home.folder_sync_tip')}</p>}
-        </section>
-        <section>
-          <h2>{tr('ui.home.recente')}</h2>
-          {recent.length === 0 && <p className="muted">{tr('ui.home.niciun_proiect_recent')}</p>}
-          <ul className="recent">
-            {recent.map((r) => (
-              <li key={r.dir} className={[pinned.includes(r.dir) ? 'pinned' : '', r.missing ? 'missing' : ''].filter(Boolean).join(' ')}>
-                <button className="link" onClick={run(() => api.openProject(r.dir))} title={r.missing ? tr('ui.home.lipseste_titlu', { dir: r.dir }) : r.dir}>
-                  {r.title}
-                  {r.missing && <span className="muted small"> ({tr('ui.home.lipseste')})</span>}
-                </button>
-                <button
-                  className={`pin ${pinned.includes(r.dir) ? 'on' : ''}`}
-                  onClick={() => togglePin(r.dir)}
-                  title={pinned.includes(r.dir) ? tr('ui.home.anuleaza_fixarea') : tr('ui.home.fixeaza_in_capul_listei')}
-                  aria-label={pinned.includes(r.dir) ? tr('ui.home.anuleaza_fixarea_x', { title: r.title }) : tr('ui.home.fixeaza_x', { title: r.title })}
-                >
-                  {pinned.includes(r.dir) ? '★' : '☆'}
-                </button>
-              </li>
-            ))}
-          </ul>
-          {recent.some((r) => !pinned.includes(r.dir)) && <button className="link" onClick={clearRecent}>{tr('ui.home.goleste_lista_pastreaza_fixatele')}</button>}
-        </section>
-      </div>
+        </div>
+      </section>
       <nav className="home-links">
         <button className="link" onClick={onSettings}>{tr('set.title')}</button>
         {onHelp && <button className="link" onClick={onHelp}>{tr('cmd.help')} (F1)</button>}

@@ -289,7 +289,7 @@ Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
     - [x] Ținte în panou plutitor cu bare de progres; Statistici manuscris/selecție alăturate
     - [x] Mod compunere cu bara de comenzi la marginea de jos (fundal, poziția paginii, mărime text, lățime, estompare)
     - [x] Bara de formatare implicită mai scurtă
-    - [~] Proiect nou: șabloane pe categorii cu fișe; Setările proiectului cu listă verticală (în lucru)
+    - [x] Proiect nou: șabloane pe categorii cu fișe; Setările proiectului cu listă verticală
     - [ ] Căutare rapidă în bara de sus cu rezultatele în binder
     - [ ] Bara de sus implicită (Binder, Adaugă, Dosar, vederi, căutare, Referință rapidă, Compunere, Compile, Inspector)
     - [ ] Bara documentului comună pentru ambele panouri (meniul titlului, blocare pe loc)

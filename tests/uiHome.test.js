@@ -22,6 +22,11 @@ async function render(props) {
   await act(async () => { root.render(React.createElement(Home, { onOpen: () => {}, onError: (e) => { throw e; }, onSettings: () => {}, onHelp: () => {}, onTutorial: () => {}, ...props, api })); });
   return host;
 }
+async function openRecent(el) {
+  const b = [...el.querySelectorAll('button[aria-haspopup]')].find((x) => /recent/i.test(x.textContent));
+  await act(async () => { b.click(); });
+  return el;
+}
 
 describe('Home screen', () => {
   it('has no Romanian in English mode', async () => {
@@ -32,11 +37,11 @@ describe('Home screen', () => {
     expect(text).toMatch(/Recent/);
   });
   it('offers "clear list" when unpinned recents exist even if a pin points to a vanished entry', async () => {
-    const el = await render({ settings: { recent: [{ dir: '/a', title: 'A' }], recentPinned: ['/gone', '/other'] } });
+    const el = await openRecent(await render({ settings: { recent: [{ dir: '/a', title: 'A' }], recentPinned: ['/gone', '/other'] } }));
     expect([...el.querySelectorAll('button')].some((b) => /Golește lista/.test(b.textContent))).toBe(true);
   });
   it('marks recent projects whose folder is missing', async () => {
-    const el = await render({ settings: { recent: [{ dir: '/a', title: 'A', missing: true }, { dir: '/b', title: 'B' }] } });
+    const el = await openRecent(await render({ settings: { recent: [{ dir: '/a', title: 'A', missing: true }, { dir: '/b', title: 'B' }] } }));
     const items = el.querySelectorAll('ul.recent li');
     expect(items[0].classList.contains('missing')).toBe(true);
     expect(items[0].textContent).toMatch(/lipsește/i);
