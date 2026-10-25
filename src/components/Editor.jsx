@@ -29,6 +29,10 @@ import FindBar, { findAgain, lastFind } from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
 import FormatFind from './FormatFind.jsx';
 import Ruler from './Ruler.jsx';
+import LineNumbers from './LineNumbers.jsx';
+import StylesPanel from './StylesPanel.jsx';
+import EquationDialog from './EquationDialog.jsx';
+import { latexFromAlt } from '../lib/latexMath.js';
 
 const Editor = forwardRef(function Editor(
   {
@@ -59,6 +63,9 @@ const Editor = forwardRef(function Editor(
     commentColor = '',
     authorName = '',
     onSelectionWords = null,
+    showStylesPanel = false,
+    onStylesChange = null,
+    onCloseStylesPanel = null,
   },
   ref,
 ) {
@@ -74,6 +81,8 @@ const Editor = forwardRef(function Editor(
   const replaying = useRef(false);
   const [showFind, setShowFind] = useState(false);
   const [showFormatFind, setShowFormatFind] = useState(false);
+  // Equation dialog: {latex, pos} (pos = image to replace, null = insert at the cursor).
+  const [equation, setEquation] = useState(null);
   const scenesRef = useRef([]);
   const wordsRef = useRef(words);
   wordsRef.current = words;
@@ -208,6 +217,11 @@ const Editor = forwardRef(function Editor(
           return true;
         },
         handleDoubleClickOn: (_view, _pos, node, nodePos) => {
+          // An equation (image with $LaTeX$ as alt text) opens again in the equation editor.
+          if (node.type.name === 'image' && !readOnly && latexFromAlt(node.attrs.alt) !== null) {
+            setEquation({ latex: latexFromAlt(node.attrs.alt), pos: nodePos });
+            return true;
+          }
           if (node.type.name !== 'footnote' || readOnly) return false;
           const text = window.prompt(i18nT('ui.editor.footnotePrompt'), node.attrs.text);
           // Emptied: the note goes away instead of staying as an empty numbered note.
@@ -439,6 +453,14 @@ const Editor = forwardRef(function Editor(
         };
       },
       focus: () => editor?.commands.focus(),
+      // Insert › Equation…
+      insertEquation: () => {
+        if (!editor || editor.isDestroyed || !editor.isEditable) return false;
+        const { node, from } = editor.state.selection;
+        const latex = node && node.type.name === 'image' ? latexFromAlt(node.attrs.alt) : null;
+        setEquation(latex !== null ? { latex, pos: from } : { latex: '', pos: null });
+        return true;
+      },
     }),
     [editor],
   );
@@ -529,6 +551,22 @@ const Editor = forwardRef(function Editor(
     reader.readAsDataURL(file);
   };
 
+  const putEquation = ({ src, alt, width, display }) => {
+    const eq = equation;
+    setEquation(null);
+    const attrs = { src, alt, title: alt, width: String(width), ...(display ? { align: 'center' } : {}) };
+    if (eq && eq.pos !== null) {
+      const node = editor.state.doc.nodeAt(eq.pos);
+      if (node && node.type.name === 'image') {
+        editor.chain().focus().command(({ tr }) => { tr.setNodeMarkup(eq.pos, undefined, { ...node.attrs, ...attrs }); return true; }).run();
+        flushRef.current();
+        return;
+      }
+    }
+    chain().setImage(attrs).run();
+    flushRef.current();
+  };
+
   const acceptWikiOffer = async () => {
     const offer = wikiOffer;
     setWikiOffer(null);
@@ -543,7 +581,7 @@ const Editor = forwardRef(function Editor(
   };
 
   return (
-    <div className={`editor ${compact ? 'compact' : ''}`}>
+    <div className={`editor ${compact ? 'compact' : ''} ${showStylesPanel && !compact ? 'with-styles-panel' : ''}`}>
       {wikiOffer && (
         <div
           className="wiki-offer"
@@ -563,6 +601,8 @@ const Editor = forwardRef(function Editor(
         </div>
       )}
       <input ref={imageInput} type="file" accept="image/*" hidden onChange={onImageFile} />
+      {equation && <EquationDialog initial={equation.latex} onInsert={putEquation} onClose={() => { setEquation(null); editor.commands.focus(); }} />}
+      {showStylesPanel && !compact && <StylesPanel editor={editor} styles={styles} readOnly={readOnly} onStylesChange={onStylesChange} onManage={onManageStyles} onClose={onCloseStylesPanel} />}
       {!readOnly && !compact && (
         <FormatBar
           editor={editor}
@@ -625,8 +665,9 @@ const Editor = forwardRef(function Editor(
         {readOnly && <p className="hint">{i18nT('ui.editor.doar_citire')}</p>}
         {showFormatFind && <FormatFind editor={editor} styles={styles} onClose={() => { setShowFormatFind(false); editor.commands.focus(); }} />}
         {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={1} />}
+        {view.lineNumbers && !compact && <LineNumbers editor={editor} mode={view.lineNumbers === 'paragraphs' ? 'paragraphs' : 'lines'} />}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}
-        <EditorContent editor={editor} className={scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'} />
+        <EditorContent editor={editor} className={`${scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'}${view.lineNumbers && !compact ? ' with-line-numbers' : ''}`} />
       </div>
     </div>
   );

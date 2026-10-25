@@ -35,7 +35,7 @@ import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
 import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc, findGlossaryDoc, glossaryEntryHtml, glossaryHasTerm } from './lib/glossary.js';
-import { AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, NotesIcon, OutlineIcon, ScriveningsIcon, SearchIcon, SnapshotIcon, SplitIcon } from './components/Icons.jsx';
+import { AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, UnlockIcon, NotesIcon, OutlineIcon, ScriveningsIcon, SearchIcon, SnapshotIcon, SplitIcon } from './components/Icons.jsx';
 import { TOP_ITEMS, topItemAvailable, toolbarPrefs, setFormatLayout } from './lib/toolbars.js';
 import ToolbarCustomizeDialog from './components/ToolbarCustomizeDialog.jsx';
 import { measure, mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
@@ -63,6 +63,8 @@ import { LinguisticFocusPanel, KeywordsHud, SpecialCharsDialog, AutoCompleteDial
 import { pageViewVars, wordBefore, completeFromList, completionSuffix, toggleKeywordOn } from './lib/missingWindows.js';
 import MiniPlayer from './components/MiniPlayer.jsx';
 import EditorFooter from './components/EditorFooter.jsx';
+import PaneNav from './components/PaneNav.jsx';
+import { jumpHistory, paneZoom, pushHistory, routeSelection, stepHistory, withPaneZoom } from './lib/panes.js';
 import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
 
 const ZOOM_LEVELS = ['Maha', 'Macro', 'Mezzo', 'Micro', 'Nano'];
@@ -403,6 +405,12 @@ export default function App({ api: apiProp }) {
     }
   };
   const [splitId, setSplitId] = useState(null);
+  // Panes of the split editor: which one was used last, "lock in place" per pane, history per pane.
+  const [activePane, setActivePane] = useState('main');
+  const activePaneRef = useRef('main');
+  activePaneRef.current = activePane;
+  const [paneLocks, setPaneLocks] = useState({}); // {main, split}
+  const [splitNav, setSplitNav] = useState({ stack: [], index: -1 });
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
@@ -770,8 +778,8 @@ export default function App({ api: apiProp }) {
 
   // Remember UI state per project.
   useEffect(() => {
-    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder });
-  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder]);
+    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder, paneLocks });
+  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder, paneLocks]);
 
   const saveProject = useCallback(
     (next) => {
@@ -872,6 +880,8 @@ export default function App({ api: apiProp }) {
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
+      setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split) } : {});
+      setSplitNav({ stack: [], index: -1 });
       setCopyholder(ui.copyholder?.id && findNode(res.project.tree, ui.copyholder.id) ? { id: ui.copyholder.id, editable: Boolean(ui.copyholder.editable) } : null);
       const openCounts = Object.fromEntries(entries.map(([id, h]) => [id, wordCount(h)]));
       const draftAtOpen = sumWords(res.project.tree[0], openCounts);
@@ -905,6 +915,30 @@ export default function App({ api: apiProp }) {
   };
 
   const selected = project && selectedId ? findNode(project.tree, selectedId) : null;
+  useEffect(() => {
+    if (splitId) setSplitNav((h) => pushHistory(h, splitId));
+    else setActivePane('main');
+  }, [splitId]);
+  const splitStep = (dir) => {
+    const r = stepHistory(splitNav, dir, (id) => Boolean(findNode(project.tree, id)));
+    if (!r) return;
+    setSplitNav(r.h);
+    setSplitId(r.id);
+  };
+  const splitJump = (index) => {
+    const r = jumpHistory(splitNav, index);
+    if (!r || !findNode(project.tree, r.id)) return;
+    setSplitNav(r.h);
+    setSplitId(r.id);
+  };
+  const mainJump = (index) => {
+    const r = jumpHistory(nav, index);
+    if (!r || !findNode(project.tree, r.id)) return;
+    setNav(r.h);
+    go(r.id, { push: false });
+  };
+  const titleOfNode = (id) => { const n = project && findNode(project.tree, id); return n ? n.title : null; };
+  const toggleLockPane = (pane = activePaneRef.current) => setPaneLocks((l) => ({ ...l, [pane]: !l[pane] }));
 
   const go = async (id, { push = true } = {}) => {
     await flush();
@@ -957,6 +991,14 @@ export default function App({ api: apiProp }) {
       const order = flatten(project.tree).map((n) => n.id);
       const [a, b] = [order.indexOf(selectedId), order.indexOf(id)].sort((x, y) => x - y);
       setSelectedIds(new Set(order.slice(a, b + 1)));
+      return;
+    }
+    // Split editor: the click opens in the pane used last, unless it is locked in place.
+    const target = routeSelection({ active: activePaneRef.current, locks: paneLocks, hasSplit: Boolean(splitId) && view === 'editor' });
+    if (!target) return;
+    if (target === 'split') {
+      const node = findNode(project.tree, id);
+      if (node && !node.root) flush().then(() => setSplitId(id));
       return;
     }
     go(id);
@@ -1369,7 +1411,10 @@ export default function App({ api: apiProp }) {
     setSettings(await api.getSettings());
   };
   const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
-  const setZoom = (z) => setEditorView({ ...editorViewRef.current, zoom: Math.min(400, Math.max(50, Math.round(z))) });
+  // Zoom of the pane used last (the split pane keeps its own).
+  const zoomPane = () => (splitId ? activePaneRef.current : 'main');
+  const setZoom = (z, pane = zoomPane()) => setEditorView(withPaneZoom(editorViewRef.current, pane, z));
+  const curZoom = (pane = zoomPane()) => paneZoom(editorViewRef.current, pane);
   const editorViewRef = useRef(editorView);
   editorViewRef.current = editorView;
   // Ctrl + mouse wheel over the text: larger / smaller text (the page keeps its width).
@@ -1377,7 +1422,8 @@ export default function App({ api: apiProp }) {
     const onWheel = (e) => {
       if (!(e.ctrlKey || e.metaKey) || !e.target.closest?.('.page')) return;
       e.preventDefault();
-      setZoom((editorViewRef.current.zoom || 100) + (e.deltaY < 0 ? 10 : -10));
+      const pane = e.target.closest('.pane.second') ? 'split' : 'main';
+      setZoom(curZoom(pane) + (e.deltaY < 0 ? 10 : -10), pane);
     };
     window.addEventListener('wheel', onWheel, { passive: false });
     return () => window.removeEventListener('wheel', onWheel);
@@ -2224,8 +2270,12 @@ export default function App({ api: apiProp }) {
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
-    ['view', 'zoomIn', tr('cmd.zoomIn'), () => setZoom((editorView.zoom || 100) + 10)],
-    ['view', 'zoomOut', tr('cmd.zoomOut'), () => setZoom((editorView.zoom || 100) - 10)],
+    ['view', 'zoomIn', tr('cmd.zoomIn'), () => setZoom(curZoom() + 10)],
+    ['view', 'zoomOut', tr('cmd.zoomOut'), () => setZoom(curZoom() - 10)],
+    ['view', 'lineNumbers', tr('cmd.lineNumbers'), () => toggleView('lineNumbers')],
+    ['view', 'lockInPlace', tr('cmd.lockInPlace'), () => toggleLockPane()],
+    ['insert', 'equation', tr('cmd.equation'), () => editorHandle()?.insertEquation?.()],
+    ['format', 'stylesPanel', tr('cmd.stylesPanel'), () => toggleView('stylesPanel')],
     ['view', 'zoomReset', tr('cmd.zoomReset'), () => setZoom(100)],
     ['view', 'pageFull', tr('cmd.pageFull'), () => setEditorView({ ...editorView, fullWidth: !editorView.fullWidth })],
     ['view', 'composition', tr('cmd.composition'), () => { setView('editor'); setComposition((c) => !c); }],
@@ -2623,8 +2673,7 @@ export default function App({ api: apiProp }) {
           <div className={`pane ${editorAreaClass}`}>
             {view === 'editor' && selected && !composition && !editorView.hideHeaderBar && (
               <div className="sc-header-bar">
-                <button onClick={back} disabled={nav.index <= 0} title={tr('ui.app.inapoi_alt')} aria-label={tr('cmd.back')}><BackIcon /></button>
-                <button onClick={forward} disabled={nav.index >= nav.stack.length - 1} title={tr('ui.app.inainte_alt')} aria-label={tr('cmd.forward')}><ForwardIcon /></button>
+                <PaneNav pane="main" history={nav} titleOf={titleOfNode} onBack={back} onForward={forward} onJump={mainJump} />
                 <DocumentIcon />
                 <strong style={{ flex: 1 }}>{selected.title}</strong>
                 {selected.locked && <LockIcon title={tr('ui.app.blocat')} />}
@@ -2651,6 +2700,7 @@ export default function App({ api: apiProp }) {
                 )}
                 <button className="hdr-arrow" onClick={() => goSibling(-1)} title={tr('cmd.prevDoc')} aria-label={tr('cmd.prevDoc')}>▲</button>
                 <button className="hdr-arrow" onClick={() => goSibling(1)} title={tr('cmd.nextDoc')} aria-label={tr('cmd.nextDoc')}>▼</button>
+                <button className={`pane-lock ${paneLocks.main ? 'on' : ''}`} onClick={() => toggleLockPane('main')} aria-pressed={Boolean(paneLocks.main)} title={paneLocks.main ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLoc')}>{paneLocks.main ? <LockIcon /> : <UnlockIcon />}</button>
                 <button className="split-btn" onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
               </div>
             )}
@@ -2671,8 +2721,11 @@ export default function App({ api: apiProp }) {
                 readOnly={inTrash(selected.id) || Boolean(selected.locked) || Boolean(team.lockOf(selected.id))}
                 typewriter={settings.typewriter}
                 smartQuotes={smartQuotes}
-                onFocus={() => (activeId.current = selected.id)}
+                onFocus={() => { activeId.current = selected.id; setActivePane('main'); }}
                 onChange={(html) => writeSynced(selected.id, html, 'main')}
+                showStylesPanel={Boolean(editorView.stylesPanel)}
+                onCloseStylesPanel={() => setEditorView({ ...editorViewRef.current, stylesPanel: false })}
+                onStylesChange={(styles) => saveProject({ ...project, styles })}
                 linkTargets={linkTargets}
                 onCreateLinkedDoc={createLinkedDoc(selected.id)}
                 linkFolders={linkFolders}
@@ -2694,8 +2747,8 @@ export default function App({ api: apiProp }) {
                 words={counts[selected.id] || 0}
                 selectedWords={selWords}
                 chars={statusChars}
-                zoom={editorView.zoom || 100}
-                onZoom={(z) => setEditorView({ ...editorView, zoom: z })}
+                zoom={paneZoom(editorView, 'main')}
+                onZoom={(z) => setZoom(z, 'main')}
                 onPatch={selected.root || selected.locked ? null : (patch) => patchNode(selected.id, patch)}
               />
             )}
@@ -2783,7 +2836,9 @@ export default function App({ api: apiProp }) {
           {splitNode && view === 'editor' && (
             <div className={`pane second ${editorAreaClass}`}>
               <div className="pane-head">
-                <span title={tr('ui.app.panoul_2_blocat_pe_x', { title: splitNode.title })}>{tr('ui.app.panoul_2_blocat_pe')}{splitNode.title}”</span>
+                <PaneNav pane="split" history={splitNav} titleOf={titleOfNode} onBack={() => splitStep(-1)} onForward={() => splitStep(1)} onJump={splitJump} />
+                <span className="pane-title" title={splitNode.title}>{splitNode.title}</span>
+                <button className={`pane-lock ${paneLocks.split ? 'on' : ''}`} onClick={() => toggleLockPane('split')} aria-pressed={Boolean(paneLocks.split)} title={paneLocks.split ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLocPanou2')}>{paneLocks.split ? <LockIcon /> : <UnlockIcon />}</button>
                 <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? tr('ui.app.split_vertical') : tr('ui.app.split_orizontal')}</button>
                 <button className="link" onClick={swapPanes}>{tr('ui.app.inverseaza')}</button>
                 <button className="link" onClick={() => go(splitNode.id)}>{tr('ui.app.deschide_in_principal')}</button>
@@ -2805,15 +2860,25 @@ export default function App({ api: apiProp }) {
                   title={splitNode.title}
                   readOnly={inTrash(splitNode.id) || Boolean(splitNode.locked) || Boolean(team.lockOf(splitNode.id))}
                   smartQuotes={smartQuotes}
-                  onFocus={() => (activeId.current = splitNode.id)}
+                  onFocus={() => { activeId.current = splitNode.id; setActivePane('split'); }}
                   onChange={(html) => writeSynced(splitNode.id, html, 'split')}
                   linkTargets={linkTargets}
                   onOpenLink={openLink}
                   words={words}
                   styles={projectStyles}
-                  view={editorView}
-                  onViewChange={setEditorView}
+                  view={{ ...editorView, zoom: paneZoom(editorView, 'split') }}
+                  onViewChange={(v) => setEditorView({ ...v, zoom: editorViewRef.current.zoom, zoom2: v.zoom })}
                   onManageStyles={() => setDialog('styles')}
+                />
+              )}
+              {!splitNode.children && !editorView.hideFooterBar && (
+                <EditorFooter
+                  node={splitNode}
+                  words={counts[splitNode.id] || 0}
+                  chars={(docs[splitNode.id] || '').replace(/<[^>]+>/g, '').length}
+                  zoom={paneZoom(editorView, 'split')}
+                  onZoom={(z) => setZoom(z, 'split')}
+                  onPatch={splitNode.root || splitNode.locked ? null : (patch) => patchNode(splitNode.id, patch)}
                 />
               )}
             </div>

@@ -312,11 +312,11 @@ Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
 
 Grupuri de lucru (în paralel, câte un grup pe fișiere separate):
 - **G0 Snapshot-uri** [~]: + / −, sortare Dată/Titlu, redenumire, comparare cu ◀ ▶ și între două snapshot-uri, „Revino la acesta” cu confirmare, Snapshot cu titlu (Ctrl+Shift+5), Manager de snapshot-uri, snapshot la salvarea manuală, semn în binder.
-- **G1 Meniuri și scurtături** [~] (rămâne: Fixează pe loc, lista ferestrelor deschise): meniuri Inserare, Format, Fereastră separate; Editare completă (Anulează/Refă, Lipește potrivind stilul, Copiere specială, Transformări, submeniu Găsește); Găsește următorul/anteriorul; Mergi la ca submeniu cu tot binder-ul (favorite sus); Vizualizare: Mașină de scris, Caractere invizibile, Pagină, Fixează pe loc, Bara antet/subsol, Culoarea etichetei în…; Mod revizie în Format (punctele 1–4, 7–10, 31, 39).
+- **G1 Meniuri și scurtături** [~] (rămâne: lista ferestrelor deschise; Fixează pe loc făcut în G5): meniuri Inserare, Format, Fereastră separate; Editare completă (Anulează/Refă, Lipește potrivind stilul, Copiere specială, Transformări, submeniu Găsește); Găsește următorul/anteriorul; Mergi la ca submeniu cu tot binder-ul (favorite sus); Vizualizare: Mașină de scris, Caractere invizibile, Pagină, Fixează pe loc, Bara antet/subsol, Culoarea etichetei în…; Mod revizie în Format (punctele 1–4, 7–10, 31, 39).
 - **G2 Binder, colecții, etichete, cuvinte cheie** [ ]: meniul contextual complet (Adaugă la colecție, Convertește, Schimbă iconița, Tip secțiune, Sortează, Grupează, Copiază legătura, Snapshot, Arată în Explorer); „Culoarea etichetei în” binder/fișe/Outline/iconițe; colecții: redenumire pe tab, tab permanent Rezultatele căutării, tragere pe tab; cuvinte cheie ca arbore cu tragere pe documente și fișe; benzi de culoare pe fișe; hoist fără ieșire automată; Outline cu sinopsis sub titlu și culoarea etichetei (punctele 5, 11–22, F).
 - **G3 Inspector, editor, text** [x]: Comentarii și note de subsol într-o singură listă în ordinea textului, cu + Comentariu / + Notă și note editabile; comentariu pe cuvântul de sub cursor; culoarea implicită a comentariilor; semne de carte Document/Proiect în același panou; subsol „Cuvinte: 37 din 1.234”; culorile reviziilor în Setări; spațiere 1,0/1,2/1,5/2,0/2,5/3,0/Alta; Scrivenings fără titluri implicit (punctele 23–32, 35).
 - **G4 Import, export, backup, șabloane, generator de nume** [ ]: Importă și împarte (separator #, primul rând ca titlu); titlu și conversie la importul web; OPML cu note; backup la deschidere/la salvare/cu dată în nume/zip, păstrează 5; Salvează ca șablon în Fișier și Opțiuni în fereastra de șabloane; generator de nume cu mai multe origini, raritate, nume duble, inițiale (punctele 44–48, G).
-- **G5 Mai mari, runda următoare** [ ]: căutarea din bara de sus cu rezultatele în binder și opțiuni (6); panoul de stiluri lateral (33); Fixează pe loc pe fiecare panou (36); istoric înapoi/înainte pe panou cu listă (38); panou Focus lingvistic (40); riglă cu indentări și tab-uri trase (34); pagina la mărimea din Page Setup (43).
+- **G5 Mai mari, runda următoare** [~] (rămâne: căutarea din bara de sus cu rezultatele în binder și opțiuni (6)): [x] panoul de stiluri lateral (33): Format › Stiluri › Panou de stiluri, clic aplică, stilul curent marcat, + din selecție, redenumire, ștergere; [x] Fixează pe loc pe fiecare panou (36): lacăt în antetul fiecărui panou și Vizualizare › Fixează pe loc, binder-ul deschide în panoul liber; [x] istoric înapoi/înainte pe panou cu listă (38); [x] panou Focus lingvistic (40, în G6); [x] riglă cu indentări și tab-uri trase (34), aplicată paragrafelor selectate și la Compile DOCX/PDF; [x] pagina la mărimea din Page Setup (43, în G6).
 
 ## Ferestre și funcții lipsă (audit 2)
 
@@ -327,14 +327,14 @@ Inventar al ferestrelor, panourilor, dialogurilor și funcțiilor programului cl
 ### G6 Pagină și vizualizare
 - [x] Vedere pagină la mărimea din Configurare pagină (hârtie, orientare peisaj, margini), comanda „Vedere pagină la mărimea din Configurare pagină”; până acum vederea pagină avea doar A5/A4/Letter fixe
 - [x] Focus lingvistic ca fereastră plutitoare (substantive, verbe, adjective, adverbe, conjuncții, oprit, limba, estompare); până acum doar submeniu
-- [ ] Numerotarea rândurilor în editor
-- [ ] Zoom independent pe fiecare panou al editorului împărțit
+- [x] Numerotarea rândurilor în editor (Vizualizare › Numere de rând: fiecare rând vizual numerotat într-o margine, nu se tipărește și nu intră în Compile)
+- [x] Zoom independent pe fiecare panou al editorului împărțit (subsol cu zoom pe fiecare panou, Ctrl+rotiță și Zoom +/− pe panoul activ, păstrat separat)
 
 ### G7 Inserare și text
 - [x] Caractere speciale (Inserare): tabel pe categorii (punctuație, diacritice, matematică, monede, simboluri, săgeți, greacă, spații speciale), cod Unicode, inserare la cursor
 - [x] Listă de completare automată (Proiect) + Ctrl+Space în editor
-- [ ] Ecuații (editor de formule)
-- [ ] Copiază / lipește formatarea și rigla (pensula de format)
+- [x] Ecuații (Inserare › Ecuație…: LaTeX cu previzualizare MathML în timp real, convertor propriu fără dependențe; se inserează ca imagine cu LaTeX-ul păstrat, dublu-clic o redeschide)
+- [x] Copiază / lipește formatarea și rigla (pensula de format): paragraf + caractere; fără selecție se aplică pe cuvântul de sub cursor
 - [ ] Iconițe personalizate pentru documente (Schimbă iconița e în G2)
 
 ### G8 Metadate și organizare

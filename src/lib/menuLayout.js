@@ -25,7 +25,7 @@ export const SUBMENUS = {
     ['menu.find', ['findDoc', 'findNext', 'findPrev', 'findUseSel', 'findProject', 'findFormat', 'advSearch']],
   ],
   // Script modes: the ids are generated (script_<format>), matched by prefix.
-  format: [['menu.scriptMode', ['scriptOff'], (id) => id.startsWith('script_')]],
+  format: [['menu.scriptMode', ['scriptOff'], (id) => id.startsWith('script_')], ['menu.styles', ['styles', 'stylesPanel']]],
   view: [
     ['menu.bookViews', ['viewTimeline', 'viewRelations', 'viewPacing']],
     ['menu.posFocus', ['posNouns', 'posVerbs', 'posOff']],
