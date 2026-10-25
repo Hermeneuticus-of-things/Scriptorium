@@ -27,7 +27,7 @@ const CSS = `
 
 const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onSaveAsCollection, onClose, initialQuery = '' }) {
+export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onSaveAsCollection, onClose, initialQuery = '', onResults }) {
   const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
   const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, operator: 'any' });
@@ -64,6 +64,12 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
   const terms = useMemo(() => buildTerms(criteria), [criteria]);
   const invalid = Boolean(query) && (terms === null || terms.some((t) => !t));
   const results = useMemo(() => searchProject(project, docs, notesById, criteria), [project, docs, notesById, criteria]);
+
+  // The last results with a query feed the permanent "Search results" tab of the binder.
+  useEffect(() => {
+    if (onResults && query.trim() && !invalid) onResults(results.map((r) => r.node.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results]);
 
   const total = results.reduce((s, r) => s + Object.values(r.fields).reduce((a, b) => a + b, 0), 0);
   const replaceable = results.filter((r) => r.fields.title || r.fields.text || r.fields.notes || r.fields.synopsis);
