@@ -167,6 +167,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [coverId, setCoverId] = useState(pc.coverId || '');
   const [tab, setTab] = useState('continut');
   const [editing, setEditing] = useState(false); // "Edit format…" sub-dialog
+  const [editLayout, setEditLayout] = useState(null); // section type whose layout detail is open
   const [fmtTab, setFmtTab] = useState('separatoare');
   const [assigning, setAssigning] = useState(false); // "Assign layouts…" sub-dialog
   const [busy, setBusy] = useState(false);
@@ -630,23 +631,83 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                 const l = layoutOf(t);
                 return (
                   <li key={t} className="cd-layout-card">
-                    <div className={`cd-layout-thumb${l.pageBreakBefore ? ' pb' : ''}`} aria-hidden="true" style={{ textAlign: l.titleAlign || 'center' }}>
-                      {l.showTitle && (
-                        <span className={`cd-thumb-title ${l.titleCase}`}>
-                          {(l.titlePrefix || '').replace(/\n/g, ' ')}
-                          {t}
-                          {(l.titleSuffix || '').replace(/\n/g, ' ')}
-                        </span>
-                      )}
-                      {l.showText && <span className="cd-thumb-lines" />}
-                    </div>
-                    <div className="cd-layout-name">{t}</div>
-                    <div className="muted small">{layoutSummary(l)}</div>
+                    <button type="button" className="cd-layout-cardbtn" disabled={!editable} onClick={() => setEditLayout(t)} aria-label={`${tr('ui.compileDialog.p23.editeazaAsezarea')}: ${t}`}>
+                      <div className={`cd-layout-thumb${l.pageBreakBefore ? ' pb' : ''}`} aria-hidden="true" style={{ textAlign: l.titleAlign || 'center' }}>
+                        {l.showTitle && (
+                          <span className={`cd-thumb-title ${l.titleCase}`}>
+                            {(l.titlePrefix || '').replace(/\n/g, ' ')}
+                            {t}
+                            {(l.titleSuffix || '').replace(/\n/g, ' ')}
+                          </span>
+                        )}
+                        {l.showText && <span className="cd-thumb-lines" />}
+                      </div>
+                      <div className="cd-layout-name">{t}</div>
+                      <div className="muted small">{layoutSummary(l)}</div>
+                    </button>
                   </li>
                 );
               })}
             </ul>
             <button type="button" onClick={() => setAssigning(true)}>{tr('ui.compileDialog.atribuie_asezari')}</button>
+            {editLayout && (() => {
+              const t = editLayout; const l = layoutOf(t);
+              return (
+                <div className="cd-layout-detail" role="group" aria-label={`${tr('ui.compileDialog.p23.editeazaAsezarea')}: ${t}`}>
+                  <div className="row cd-layout-detail-head">
+                    <strong>{t}</strong>
+                    <button type="button" onClick={() => setEditLayout(null)}>{tr('btn.close')}</button>
+                  </div>
+                  <fieldset disabled={!editable}>
+                    <legend>{tr('ui.compileDialog.p23.titluTipografie')}</legend>
+                    <label>{tr('ui.formatBar.font')}<input value={l.titleFont || ''} placeholder={tr('ui.compileDialog.p23.implicit')} onChange={(e) => setLayout(t, 'titleFont', e.target.value)} /></label>
+                    <label>{tr('ui.compileDialog.marime_pt')}<input type="number" min="0" max="72" style={{ width: '4.5em' }} value={l.titleSizePt || 0} onChange={(e) => setLayout(t, 'titleSizePt', Math.max(0, Number(e.target.value) || 0))} /></label>
+                    <label>{tr('ui.formatBar.bold')}
+                      <select value={l.titleBold === true ? 'bold' : l.titleBold === false ? 'normal' : ''} onChange={(e) => setLayout(t, 'titleBold', e.target.value === '' ? null : e.target.value === 'bold')}>
+                        <option value="">{tr('ui.compileDialog.p23.implicit')}</option>
+                        <option value="bold">{tr('ui.formatBar.bold')}</option>
+                        <option value="normal">{tr('ui.compileDialog.p23.fiMostenit')}</option>
+                      </select>
+                    </label>
+                    <label className="check"><input type="checkbox" checked={Boolean(l.titleItalic)} onChange={(e) => setLayout(t, 'titleItalic', e.target.checked)} /> {tr('ui.formatBar.italic')}</label>
+                  </fieldset>
+                  <fieldset disabled={!editable}>
+                    <legend>{tr('ui.compileDialog.p23.prefixTipografie')}</legend>
+                    <label>{tr('ui.compileDialog.p23.caz')}
+                      <select value={l.prefixCase || 'normal'} onChange={(e) => setLayout(t, 'prefixCase', e.target.value)}>
+                        <option value="normal">{tr('ui.compileDialog.p23.fiMostenit')}</option>
+                        <option value="upper">{tr('ui.compileDialog.p23.majuscule')}</option>
+                        <option value="smallcaps">{tr('ui.compileDialog.majuscule_mici')}</option>
+                      </select>
+                    </label>
+                    <label>{tr('ui.compileDialog.p23.aliniere')}
+                      <select value={l.prefixAlign || ''} onChange={(e) => setLayout(t, 'prefixAlign', e.target.value)}>
+                        <option value="">{tr('ui.compileDialog.p23.caTitlul')}</option>
+                        <option value="left">{tr('ui.compileDialog.stanga_2')}</option>
+                        <option value="center">{tr('ui.compileDialog.centru')}</option>
+                        <option value="right">{tr('ui.compileDialog.dreapta')}</option>
+                      </select>
+                    </label>
+                  </fieldset>
+                  <fieldset disabled={!editable}>
+                    <legend>{tr('ui.compileDialog.pagina')}</legend>
+                    <label className="check"><input type="checkbox" checked={Boolean(l.startRecto)} onChange={(e) => setLayout(t, 'startRecto', e.target.checked)} /> {tr('ui.compileDialog.p23.startRecto')}</label>
+                    <label className="check"><input type="checkbox" checked={Boolean(l.pageBreakAfter)} onChange={(e) => setLayout(t, 'pageBreakAfter', e.target.checked)} /> {tr('ui.compileDialog.p23.pageBreakAfter')}</label>
+                  </fieldset>
+                  <fieldset disabled={!editable}>
+                    <legend>{tr('ui.compileDialog.p23.metaInclude')}</legend>
+                    {['label', 'status', 'keywords'].map((mk) => (
+                      <label key={mk} className="check">
+                        <input type="checkbox" checked={Array.isArray(l.meta) && l.meta.includes(mk)} onChange={(e) => {
+                          const cur = Array.isArray(l.meta) ? l.meta : [];
+                          setLayout(t, 'meta', e.target.checked ? [...cur, mk] : cur.filter((x) => x !== mk));
+                        }} /> {tr(`ui.compileDialog.p23.meta_${mk}`)}
+                      </label>
+                    ))}
+                  </fieldset>
+                </div>
+              );
+            })()}
           </section>
 
           <section className="cd-main">
