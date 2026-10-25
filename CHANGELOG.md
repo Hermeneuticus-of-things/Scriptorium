@@ -1,6 +1,10 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.2
+- Servicii și conturi: fiecare serviciu (DeepL, Google, LanguageTool, Speechify, Zotero) are acum și **Email cont + Parolă cont** (criptate ca restul), pe lângă cheie — pentru serviciile unde te loghezi cu un cont, nu (doar) cu o cheie. Un serviciu e „configurat" de când pui orice câmp.
+- D&TED: documentația descrie compatibilitatea pe **protocolul serviciului (protocol 1)**, nu pe un număr de versiune; modelul **eek** corectat la 5,4% WER.
+
 ## v0.10.1
 - Conectare MCP pentru mai mulți clienți: dialogul detectează, în funcție de calculator, ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie/îmbină configul fiecăruia dintr-un clic, cu copie de siguranță; fiecare cu schema și locul lui. (`lib/mcpConfig.cjs`, `src/components/McpConnectDialog.jsx`)
 - Token GitHub pentru actualizator în Setări → Servicii și conturi (criptat), cu variabila de mediu ca rezervă; necesar cât timp depozitul e privat.
