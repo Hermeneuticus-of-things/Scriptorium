@@ -39,6 +39,7 @@ import { AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, 
 import { TOP_ITEMS, topItemAvailable, toolbarPrefs, setFormatLayout } from './lib/toolbars.js';
 import ToolbarCustomizeDialog from './components/ToolbarCustomizeDialog.jsx';
 import { measure, mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
+import { timestampHtml, formatTimestamp, dragHasFiles } from './lib/researchMedia.js';
 import SaveTemplateDialog from './components/SaveTemplateDialog.jsx';
 import PageSetupDialog from './components/PageSetupDialog.jsx';
 import PrintPreviewDialog from './components/PrintPreviewDialog.jsx';
@@ -406,6 +407,8 @@ export default function App({ api: apiProp }) {
     }
   };
   const [splitId, setSplitId] = useState(null);
+  const [notesRev, setNotesRev] = useState(0); // bumped when notes change outside the Inspector (timestamps, PDF annotations)
+  const [fileDrop, setFileDrop] = useState(false); // files from the system dragged over the binder
   // Panes of the split editor: which one was used last, "lock in place" per pane, history per pane.
   const [activePane, setActivePane] = useState('main');
   const activePaneRef = useRef('main');
@@ -1114,6 +1117,81 @@ export default function App({ api: apiProp }) {
     else if (tries > 0) setTimeout(() => focusEditor(id, tries - 1), 50);
   };
   const patchNode = (id, patch) => setTree(updateNode(project.tree, id, patch));
+
+  // Research files in the editor pane: view state (page, zoom, position, annotations) on node.media.
+  const patchMedia = (id, p) => {
+    const pj = projectRef.current;
+    const n = pj && findNode(pj.tree, id);
+    if (!n || !n.media) return;
+    saveProject({ ...pj, tree: updateNode(pj.tree, id, { media: { ...n.media, ...p } }) });
+  };
+  // Appends HTML to an item's notes (and reloads the notes shown in the Inspector).
+  const appendNotes = async (id, html) => {
+    await flush();
+    const old = (await api.readDoc(dir, id, 'notes')) || '';
+    await api.writeDoc(dir, id, 'notes', `${old}${html}`);
+    setNotesRev((r) => r + 1);
+    if (id === selectedId && floatNotes !== null) setFloatNotes(`${old}${html}`);
+  };
+  // Timestamp from a player: into the text in the other pane when there is one, else into the media's notes.
+  const insertTimestamp = (mediaId, sec) => {
+    const otherId = selectedId === mediaId ? splitId : selectedId;
+    const other = otherId && otherId !== mediaId ? findNode(project.tree, otherId) : null;
+    const html = timestampHtml(sec);
+    if (other && other.type !== 'file' && !other.children) {
+      const h = editorRefs.current.get(`split:${otherId}`) || editorRefs.current.get(otherId);
+      if (h?.insertHtmlAfter && h.insertHtmlAfter(html) !== false) return setToast(tr('ui.rmedia.timp_inserat', { time: formatTimestamp(sec) }));
+    }
+    appendNotes(mediaId, html).then(() => setToast(tr('ui.rmedia.timp_inserat', { time: formatTimestamp(sec) })), report);
+  };
+  // Shows a research file next to the text: the file goes to the split pane, the text stays in the main one.
+  const openBeside = (mediaId) => {
+    if (splitId === mediaId) return;
+    setSplitId(mediaId);
+  };
+  // Files dropped from the system on the binder are copied into the project and added to Research.
+  const MAX_DROP_MB = 200;
+  const dropFilesToResearch = async (fileList) => {
+    const files = [...(fileList || [])];
+    if (!files.length || !api.addMediaData) return;
+    const items = [];
+    for (const f of files) {
+      if (f.size > MAX_DROP_MB * 1024 * 1024) {
+        setToast(tr('ui.rmedia.prea_mare', { name: f.name, mb: MAX_DROP_MB }));
+        continue;
+      }
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      items.push(await api.addMediaData(dir, f.name, bytes));
+    }
+    if (!items.length) return;
+    const pj = projectRef.current;
+    const research = pj.tree.find((n) => n.root === 'research');
+    let tree = pj.tree;
+    for (const it of items) {
+      const node = mediaNode(newNode, it);
+      if (/^image\//.test(it.media.mime)) node.synopsisImage = it.media.file;
+      tree = insertNear(tree, research.id, node);
+    }
+    saveProject({ ...pj, tree });
+    setToast(tr('ui.rmedia.adaugate', { count: items.length }));
+    go(items[0].id);
+    setView('editor');
+  };
+  // Research > Archive a web page: a local copy (HTML with its images inside) kept in the project.
+  const archiveWebPage = async () => {
+    const url = window.prompt(tr('ui.researchChat.pagina_web_adresa'), 'https://');
+    if (!url || url === 'https://') return;
+    try {
+      const it = await api.archiveWebPage(dir, url);
+      const pj = projectRef.current;
+      const research = pj.tree.find((n) => n.root === 'research');
+      saveProject({ ...pj, tree: insertNear(pj.tree, research.id, mediaNode(newNode, it)) });
+      go(it.id);
+      setView('editor');
+    } catch (e) {
+      report(e);
+    }
+  };
 
   const trashSelection = () => {
     let tree = project.tree;
@@ -2210,6 +2288,7 @@ export default function App({ api: apiProp }) {
       ? templateFolder.children.map((t) => ({ label: tr('ui.app.nou_din_sablon_x', { title: t.title }), action: () => newFromTemplate(t) }))
       : [{ label: tr('ui.app.nou_din_sablon_alege_dosarul'), action: () => {}, disabled: true }]),
     { label: tr('ui.app.adauga_fisiere_in_cercetare_imagini'), action: addMediaToResearch, disabled: !api.addMediaFiles },
+    { label: tr('ui.rmedia.arhiveaza_web'), action: archiveWebPage, disabled: !api.archiveWebPage },
   ];
 
   const navigateMenu = [
@@ -2594,7 +2673,25 @@ export default function App({ api: apiProp }) {
 
       <div className="main">
         {!hideBinder && !composition && (<>
-        <div className="binder-col" style={{ width: widths.binder }}>
+        <div
+          className={`binder-col ${fileDrop ? 'file-drop' : ''}`}
+          style={{ width: widths.binder }}
+          onDragOver={(e) => {
+            if (!dragHasFiles(e.dataTransfer) || !api.addMediaData) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            if (!fileDrop) setFileDrop(true);
+          }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setFileDrop(false); }}
+          onDrop={(e) => {
+            if (!dragHasFiles(e.dataTransfer) || !api.addMediaData) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setFileDrop(false);
+            dropFilesToResearch(e.dataTransfer.files).catch(report);
+          }}
+        >
+        {fileDrop && <div className="file-drop-hint" role="status">{tr('ui.rmedia.lasa_aici')}</div>}
         <CollectionsBar
           project={project}
           active={activeCollectionId}
@@ -2711,7 +2808,16 @@ export default function App({ api: apiProp }) {
               </div>
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type === 'file' && !selected.children && (
-              <MediaView api={api} dir={dir} node={selected} onError={report} />
+              <MediaView
+                api={api}
+                dir={dir}
+                node={selected}
+                onError={report}
+                onPatch={(p) => patchMedia(selected.id, p)}
+                onInsertTimestamp={(sec) => insertTimestamp(selected.id, sec)}
+                onAppendNotes={(html) => appendNotes(selected.id, html).catch(report)}
+                onOpenBeside={splitId === selected.id ? null : () => openBeside(selected.id)}
+              />
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type !== 'file' && !selected.children && (
               <Editor
@@ -2852,6 +2958,17 @@ export default function App({ api: apiProp }) {
               </div>
               {splitNode.children ? (
                 <p className="hint">{tr('ui.app.alege_un_document_cu_alt')}</p>
+              ) : splitNode.type === 'file' ? (
+                <MediaView
+                  key={`split-media-${splitNode.id}`}
+                  api={api}
+                  dir={dir}
+                  node={splitNode}
+                  onError={report}
+                  onPatch={(p) => patchMedia(splitNode.id, p)}
+                  onInsertTimestamp={(sec) => insertTimestamp(splitNode.id, sec)}
+                  onAppendNotes={(html) => appendNotes(splitNode.id, html).catch(report)}
+                />
               ) : (
                 <Editor
                   scriptFormat={scriptFormat}
@@ -2935,7 +3052,7 @@ export default function App({ api: apiProp }) {
             <div className="side" style={{ width: widths.side }}>
               {showInspector && (
                 <Inspector
-                  key={`insp-${selected.id}`}
+                  key={`insp-${selected.id}-${notesRev}`}
                   teamLockOf={team.lockOf}
                   api={api}
                   dir={dir}

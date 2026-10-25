@@ -739,6 +739,34 @@ handle('media:add', async (e, dir) => {
   });
 });
 
+// Files dropped on the binder from the system: the renderer sends the bytes (no paths cross IPC).
+const MAX_DROP_BYTES = 200 * 1024 * 1024;
+handle('media:addData', (_e, dir, name, bytes) => {
+  assertOpened(dir);
+  const data = Buffer.from(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []));
+  if (!data.length) throw new Error('Fișier gol.');
+  if (data.length > MAX_DROP_BYTES) throw new Error('Fișierul este prea mare.');
+  const base = path.basename(String(name || 'fisier'));
+  const id = store.newId();
+  const ext = path.extname(base).slice(1) || 'bin';
+  noteSelfWrite(path.join(dir, 'media', `${id}.${ext.toLowerCase()}`));
+  const file = store.writeMedia(dir, id, ext, data);
+  return { id, title: base.replace(/\.[^.]+$/, '') || base, media: { file, mime: store.mimeFor(file), name: base } };
+});
+
+// Research > Archive a web page: an offline copy (images embedded) saved as media/<id>.html.
+handle('research:archiveWeb', async (_e, dir, url) => {
+  assertOpened(dir);
+  const { importWebPage, buildWebArchive } = require('../lib/importers.cjs');
+  const page = await importWebPage(url, { saveMedia: ({ name }) => ({ id: '', file: '', mime: '', name }) });
+  const html = buildWebArchive({ title: page.title, url, html: page.html });
+  const id = store.newId();
+  noteSelfWrite(path.join(dir, 'media', `${id}.html`));
+  const file = store.writeMedia(dir, id, 'html', Buffer.from(html, 'utf8'));
+  const title = page.title || url;
+  return { id, title, media: { file, mime: 'text/html', name: `${title}.html`, source: url } };
+});
+
 // Error log for Help → Report a problem (logs/errors.jsonl in userData, rotated).
 const errorLog = require('../lib/errorLog.cjs');
 const errorLogFile = () => path.join(app.getPath('userData'), 'logs', 'errors.jsonl');
