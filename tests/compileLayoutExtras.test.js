@@ -29,6 +29,13 @@ describe('compile layout extras', () => {
     expect(L.commentsTo(html, 'inline')).toContain('cuvânt [o notă]');
     expect(L.commentsTo(html, 'strip')).toBe(html); // strip/export handled elsewhere, unchanged here
   });
+  it('style overrides emit CSS; remove drops the rule', () => {
+    const styles = [{ id: 's1', name: 'Citat', type: 'para' }];
+    const css = L.styleOverrideCss(styles, { s1: { sizePct: 120, bold: true, color: '#333333' } });
+    expect(css).toMatch(/\[data-style="s1"\]\{[^}]*font-size:120%/);
+    expect(css).toMatch(/font-weight:700/);
+    expect(L.styleOverrideCss(styles, { s1: { remove: true, sizePct: 120 } })).toBe('');
+  });
   it('decorative separator maps the chosen symbol to its glyph', () => {
     expect(L.normalizeSep({ kind: 'decorative', symbol: 'asterism' })).toMatchObject({ kind: 'decorative', text: '⁂' });
     expect(L.normalizeSep({ kind: 'decorative', symbol: 'stars' })).toMatchObject({ text: '* * *' });
