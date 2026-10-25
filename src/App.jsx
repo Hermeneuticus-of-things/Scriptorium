@@ -9,6 +9,7 @@ import Scrivenings from './components/Scrivenings.jsx';
 import Corkboard from './components/Corkboard.jsx';
 import Outliner from './components/Outliner.jsx';
 import Inspector from './components/Inspector.jsx';
+import SnapshotManagerDialog from './components/SnapshotManagerDialog.jsx';
 import AiPanel from './components/AiPanel.jsx';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
@@ -619,9 +620,12 @@ export default function App({ api: apiProp }) {
     };
   }, []);
 
+  // Documents edited since the last manual save (Settings: snapshot them on Ctrl+S).
+  const changedSinceSave = useRef(new Set());
   const queueWrite = useCallback(
     (id, kind, html) => {
       pending.current.set(`${id}|${kind}`, html);
+      if (kind === 'docs') changedSinceSave.current.add(id);
       setSaveState(tr('ui.app.se_salveaza'));
       clearTimeout(timer.current);
       timer.current = setTimeout(flush, Math.max(0.2, Number(settingsRef.current?.autosaveSec) || SAVE_DELAY / 1000) * 1000);
@@ -1246,6 +1250,45 @@ export default function App({ api: apiProp }) {
     const ids = selectionList().filter((id) => findNode(project.tree, id).type === 'text');
     for (const id of ids) await api.takeSnapshot(dir, id, stamp);
     setToast(tr('ui.app.snapshot_salvat_pentru_x_documente', { length: ids.length }));
+    refreshSnapCounts();
+  };
+  // Snapshot counts per document (Binder mark, Snapshots Manager), refreshed after snapshot changes.
+  const [snapCounts, setSnapCounts] = useState({});
+  const refreshSnapCounts = useCallback(async () => {
+    if (!dir || !project) return;
+    try {
+      if (api.snapshotCounts) return setSnapCounts((await api.snapshotCounts(dir)) || {});
+      const out = {};
+      for (const n of flatten(project.tree)) {
+        if (n.type !== 'text') continue;
+        const list = await api.listSnapshots(dir, n.id);
+        if (list.length) out[n.id] = { count: list.length, last: list.reduce((m, x) => (x.date > m ? x.date : m), '') };
+      }
+      setSnapCounts(out);
+    } catch {
+      /* the mark is a hint only */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, dir, project?.tree]);
+  // Automatic snapshots (split, merge, replace…) change the project too: refresh shortly after.
+  useEffect(() => {
+    const t = setTimeout(refreshSnapCounts, 600);
+    return () => clearTimeout(t);
+  }, [refreshSnapCounts]);
+  const takeSnapshotOf = async (id, name) => {
+    await flush();
+    await api.takeSnapshot(dir, id, name).catch(report);
+    setToast(tr('ui.snap.saved'));
+    refreshSnapCounts();
+  };
+  const saveCommand = async () => {
+    const ids = [...changedSinceSave.current];
+    changedSinceSave.current.clear();
+    await flush();
+    if (!settings?.snapshotOnSave || !ids.length) return;
+    const title = tr('ui.snap.manual_save');
+    for (const id of ids) if (findNode(project.tree, id)?.type === 'text') await api.takeSnapshot(dir, id, title).catch(report);
+    refreshSnapCounts();
   };
   const swapPanes = () => {
     if (!splitId || !selectedId) return;
@@ -2050,7 +2093,7 @@ export default function App({ api: apiProp }) {
   // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
   const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
   const commandList = [
-    ['file', 'save', tr('cmd.save'), () => flush()],
+    ['file', 'save', tr('cmd.save'), () => saveCommand()],
     ['file', 'compile', tr('cmd.compile'), () => flush().then(() => setDialog('compile'))],
     ['file', 'import', tr('cmd.import'), () => setDialog('import')],
     ['file', 'importFiles', tr('cmd.importFiles'), () => setDialog('importSplit'), !api.importFiles],
@@ -2100,10 +2143,15 @@ export default function App({ api: apiProp }) {
     ['document', 'duplicate', tr('cmd.duplicate'), () => duplicateSelection(true)],
     ['document', 'snapshot', tr('cmd.snapshot'), async () => {
       if (!selected || selected.root) return;
-      await flush();
-      await api.takeSnapshot(dir, selected.id, `Snapshot ${new Date().toLocaleString(uiLocale())}`).catch(report);
-      setToast('Snapshot salvat.');
+      await takeSnapshotOf(selected.id, `Snapshot ${new Date().toLocaleString(uiLocale())}`);
     }],
+    ['document', 'snapshotTitled', tr('cmd.snapshotTitled'), async () => {
+      if (!selected || selected.root) return;
+      const name = window.prompt(tr('ui.inspector.titlul_snapshot_ului'), 'Snapshot');
+      if (name === null) return;
+      await takeSnapshotOf(selected.id, name.trim() || 'Snapshot');
+    }],
+    ['document', 'snapshotManager', tr('cmd.snapshotManager'), () => flush().then(() => { refreshSnapCounts(); setDialog('snapshotManager'); })],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
@@ -2373,6 +2421,7 @@ export default function App({ api: apiProp }) {
         <Binder
           binderEnter={settings.binderEnter}
           binderDoubleClick={settings.binderDoubleClick}
+          snapCounts={snapCounts}
           onOpenItem={(id) => onBinderSelect(id, {})}
           onQuickRef={openQuickRef}
           project={binderProject}
@@ -2660,6 +2709,7 @@ export default function App({ api: apiProp }) {
                   }}
                   onError={report}
                   flush={flush}
+                  onSnapshotsChanged={refreshSnapCounts}
                   docs={docs}
                   counts={counts}
                   onPatchNode={patchNode}
@@ -2985,6 +3035,25 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'history' && <HistoryDialog api={api} dir={dir} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'snapshotManager' && (
+        <SnapshotManagerDialog
+          api={api}
+          dir={dir}
+          project={project}
+          counts={snapCounts}
+          docs={docs}
+          canRestore={(id) => !findNode(project.tree, id)?.locked && !team.lockOf(id)}
+          flush={flush}
+          onRestore={(id, html) => {
+            writeDocNow(id, html);
+            setEditorHtml(id, html);
+          }}
+          onChanged={refreshSnapCounts}
+          onOpen={(id) => go(id)}
+          onError={report}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'backup' && (
         <BackupDialog
           api={api}
