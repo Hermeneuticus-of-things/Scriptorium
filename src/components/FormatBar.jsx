@@ -477,6 +477,12 @@ export default function FormatBar({
 
   const p = s.para;
   const setPara = (attrs) => chain().setParagraphFormat(attrs).run();
+  // Space before/after a paragraph, nudged by the format-bar buttons: ±3 pt per click, 0–72 pt,
+  // and stepping back down to 0 clears the attribute (the paragraph returns to the default spacing).
+  const bumpSpace = (key, dir) => {
+    const v = Math.min(72, Math.max(0, Math.round(((Number(p[key]) || 0) + dir * 3) * 10) / 10));
+    setPara({ [key]: v === 0 ? null : v });
+  };
   const num = (label, key, cur) => {
     const v = ask(label, cur);
     if (v !== undefined) setPara({ [key]: v });
@@ -610,6 +616,12 @@ export default function FormatBar({
         {btn('☰', s.align === 'justify', () => chain().setTextAlign('justify').run(), tr('ui.formatBar.justify'))}
     </>),
     g(4, <span className="fb-spacing" data-label={tr('ui.formatBar.lineSpacingMenu')} style={{ display: 'contents' }}><Menu label={`↕ ${fmtSpacing(p.lineHeight || 1)}`} items={spacingItems} /></span>, false, tr('ui.formatBar.lineSpacingMenu')),
+    g(4, <span className="fb-space" data-label={tr('ui.formatBar.spaceButtons')} style={{ display: 'contents' }}>
+        {btn('↥−', null, () => bumpSpace('spaceBefore', -1), tr('ui.formatBar.spaceBeforeLess', { v: p.spaceBefore ?? '–' }), !(Number(p.spaceBefore) > 0))}
+        {btn('↥+', null, () => bumpSpace('spaceBefore', 1), tr('ui.formatBar.spaceBeforeMore', { v: p.spaceBefore ?? '–' }))}
+        {btn('↧−', null, () => bumpSpace('spaceAfter', -1), tr('ui.formatBar.spaceAfterLess', { v: p.spaceAfter ?? '–' }), !(Number(p.spaceAfter) > 0))}
+        {btn('↧+', null, () => bumpSpace('spaceAfter', 1), tr('ui.formatBar.spaceAfterMore', { v: p.spaceAfter ?? '–' }))}
+    </span>, false, tr('ui.formatBar.spaceButtons')),
     g(5, <>
         {btn('•', s.bullet, () => chain().toggleBulletList().run(), tr('ui.formatBar.bullets'))}
         {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), tr('ui.formatBar.ordered'))}

@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.8
+- Bara de format — butoane directe pentru spațiul dintre paragrafe: patru butoane (↥− ↥+ pentru spațiul înainte, ↧− ↧+ pentru cel după) schimbă spațierea dintr-un clic, câte 3 pt, fără să mai deschidă un dialog. Meniul „Paragraf" (cu valoare exactă în pt) rămâne. Coborârea la 0 readuce paragraful la spațierea implicită.
+
 ## v0.10.7
 - Editor — zoom coerent: zoom-ul e acum o lupă pe toată pagina (ca la editoarele obișnuite), nu o mărire separată a textului. Textul, titlul, spațierea și marginile cresc și scad împreună, la fel în ambele ferestre; mărimea reală a fontului documentului rămâne neatinsă (la 100% textul e exact cât e setat, ex. 10pt). Înainte titlul și textul se măreau prin mecanisme diferite și ieșeau necoerente.
 - Editor — spațiere mai strânsă implicit: când nu e setată o spațiere anume în formatare, rândurile sunt la 1,5 (nu 1,7), deci textul e mai apropiat.
