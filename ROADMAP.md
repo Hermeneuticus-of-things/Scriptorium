@@ -317,3 +317,31 @@ Grupuri de lucru (în paralel, câte un grup pe fișiere separate):
 - **G3 Inspector, editor, text** [ ]: Comentarii și note de subsol într-o singură listă în ordinea textului, cu + Comentariu / + Notă și note editabile; comentariu pe cuvântul de sub cursor; culoarea implicită a comentariilor; semne de carte Document/Proiect în același panou; subsol „Cuvinte: 37 din 1.234”; culorile reviziilor în Setări; spațiere 1,0/1,2/1,5/2,0/2,5/3,0/Alta; Scrivenings fără titluri implicit (punctele 23–32, 35).
 - **G4 Import, export, backup, șabloane, generator de nume** [ ]: Importă și împarte (separator #, primul rând ca titlu); titlu și conversie la importul web; OPML cu note; backup la deschidere/la salvare/cu dată în nume/zip, păstrează 5; Salvează ca șablon în Fișier și Opțiuni în fereastra de șabloane; generator de nume cu mai multe origini, raritate, nume duble, inițiale (punctele 44–48, G).
 - **G5 Mai mari, runda următoare** [ ]: căutarea din bara de sus cu rezultatele în binder și opțiuni (6); panoul de stiluri lateral (33); Fixează pe loc pe fiecare panou (36); istoric înapoi/înainte pe panou cu listă (38); panou Focus lingvistic (40); riglă cu indentări și tab-uri trase (34); pagina la mărimea din Page Setup (43).
+
+## Ferestre și funcții lipsă (audit 2)
+
+Inventar al ferestrelor, panourilor, dialogurilor și funcțiilor programului clasic de scris (ediția 3 pentru Windows), comparat cu `src/` și `lib/`. Stare: [x] există · [~] parțial · [ ] lipsește. Grupurile G1–G5 de mai sus (meniuri, binder, Inspector, import/export) nu se repetă aici.
+
+**Există deja** (verificat în cod): Configurare pagină (hârtie, orientare, margini, antet/subsol, aplicată la Tipărire, Previzualizare și PDF); Ciorne (Scratchpad) cu „Trimite în proiect”; Istoricul scrisului pe zile și luni (`history.json`, unealta MCP `writing_history`); Statistici proiect/selecție; Ținte proiect și sesiune; Referință rapidă (mai multe ferestre); Layout-uri: salvare, aplicare, gestionare; Mod scenariu (scenariu, piesă de teatru US/UK, bandă desenată, radio) cu Tab/Enter, completare de personaje și de antete de scenă; Corecție automată (listă în Setări, corecturi învățate); Șabloane de document (dosar de șabloane → Nou din șablon) și șabloane de proiect; Metadate personalizate, Tipuri de secțiune, Etichete, Stări; Semne de carte; Împarte / Unește documente; Tabele și liste; Note de subsol, comentarii, adnotări; Stiluri; Teme de aspect; Sincronizare cu dosar extern; Snapshot-uri cu manager; Colecții; Favorite; Căutare în proiect, căutare avansată, înlocuire în proiect; Dicționar/sinonime (căutare externă); Ecran complet / Compunere cu bara de opțiuni; Mașină de scris; Etichete de substituție (ajutor); Compile cu designer de format; Import/Export (DOCX, RTF, ODT, OPML, Fountain, FDX, LaTeX, EPUB, folder `.scriv`); Generator de nume; Backup.
+
+### G6 Pagină și vizualizare
+- [x] Vedere pagină la mărimea din Configurare pagină (hârtie, orientare peisaj, margini), comanda „Vedere pagină la mărimea din Configurare pagină”; până acum vederea pagină avea doar A5/A4/Letter fixe
+- [x] Focus lingvistic ca fereastră plutitoare (substantive, verbe, adjective, adverbe, conjuncții, oprit, limba, estompare); până acum doar submeniu
+- [ ] Numerotarea rândurilor în editor
+- [ ] Zoom independent pe fiecare panou al editorului împărțit
+
+### G7 Inserare și text
+- [x] Caractere speciale (Inserare): tabel pe categorii (punctuație, diacritice, matematică, monede, simboluri, săgeți, greacă, spații speciale), cod Unicode, inserare la cursor
+- [x] Listă de completare automată (Proiect) + Ctrl+Space în editor
+- [ ] Ecuații (editor de formule)
+- [ ] Copiază / lipește formatarea și rigla (pensula de format)
+- [ ] Iconițe personalizate pentru documente (Schimbă iconița e în G2)
+
+### G8 Metadate și organizare
+- [x] Panou plutitor de cuvinte cheie (HUD): filtrare, culoare, număr de documente, dublu-clic/Aplică pune sau scoate cuvântul pe documentele selectate
+- [~] Căutare rapidă în bara de sus (rămâne în G5)
+
+### G9 Sincronizare și altele
+- [ ] Sincronizare cu aplicația mobilă (prin dosar în cloud): există doar sincronizarea cu un dosar extern
+- [ ] Verificare de actualizări din Ajutor (există opțiunea în Setări, fără fereastră proprie)
+- [ ] Înregistrare/licență (nu se aplică: program liber)

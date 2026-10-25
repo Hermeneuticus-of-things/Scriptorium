@@ -57,6 +57,8 @@ import RelationMap from './components/RelationMap.jsx';
 import PacingView from './components/PacingView.jsx';
 import NameGeneratorDialog from './components/NameGeneratorDialog.jsx';
 import Scratchpad from './components/Scratchpad.jsx';
+import { LinguisticFocusPanel, KeywordsHud, SpecialCharsDialog, AutoCompleteDialog } from './components/MissingWindows.jsx';
+import { pageViewVars, wordBefore, completeFromList, completionSuffix, toggleKeywordOn } from './lib/missingWindows.js';
 import MiniPlayer from './components/MiniPlayer.jsx';
 import EditorFooter from './components/EditorFooter.jsx';
 import { SCRIPT_FORMAT_LIST } from './lib/scriptFormats.js';
@@ -384,6 +386,8 @@ export default function App({ api: apiProp }) {
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
+  const [floats, setFloats] = useState({ lf: false, kh: false, sc: false }); // audit 2 floating windows
+  const toggleFloat = (k) => setFloats((f) => ({ ...f, [k]: !f[k] }));
   const [printOpts, setPrintOpts] = useState(null); // File > Print Preview: { ids, pageSetup? }
   const [composition, setComposition] = useState(false);
   const [error, setError] = useState('');
@@ -1174,6 +1178,42 @@ export default function App({ api: apiProp }) {
     ed.chain().focus().insertContentAt(at, textToHtml(text)).run();
     return undefined;
   };
+  // Audit 2: Insert > Special Characters and Ctrl+Space completion from the project's list.
+  const activeTipTap = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.editor || null;
+  const insertSpecialChar = (ch) => {
+    const ed = activeTipTap();
+    if (!ed || ed.isDestroyed) return setToast(tr('ui.mw.sc_no_editor'));
+    ed.chain().focus().insertContent(ch).run();
+    return undefined;
+  };
+  const autoCompleteWord = () => {
+    const ed = activeTipTap();
+    if (!ed || ed.isDestroyed) return setToast(tr('ui.mw.sc_no_editor'));
+    const { from, empty, $from } = ed.state.selection;
+    if (!empty) return undefined;
+    const prefix = wordBefore($from.parent.textBetween(0, $from.parentOffset, undefined, '￼'));
+    const matches = completeFromList(projectRef.current?.autoComplete || [], prefix);
+    if (!prefix || !matches.length) return setToast(tr('ui.mw.ac_none', { w: prefix }));
+    ed.chain().focus().insertContentAt(from, completionSuffix(matches[0], prefix)).run();
+    return undefined;
+  };
+  const autoCompleteRef = useRef(autoCompleteWord);
+  autoCompleteRef.current = autoCompleteWord;
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey && !e.altKey && !e.metaKey && e.code === 'Space' && e.target.closest?.('.ProseMirror')) {
+        e.preventDefault();
+        autoCompleteRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
+  // Page View "setup" size follows File > Page Setup (paper, orientation, margins).
+  useEffect(() => {
+    const vars = pageViewVars(project?.pageSetup);
+    for (const [k, v] of Object.entries(vars)) document.documentElement.style.setProperty(k, v);
+  }, [project?.pageSetup]);
   const runService = async (kind, service) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
     const source = (handle?.getSelectionText() || '').trim();
@@ -2246,6 +2286,12 @@ export default function App({ api: apiProp }) {
     ['tools', 'shortcuts', tr('cmd.shortcuts'), () => setDialog('shortcuts')],
     ['window', 'saveLayout', tr('cmd.saveLayout'), saveLayout],
     ['window', 'manageLayouts', tr('cmd.manageLayouts'), () => setDialog('layouts')],
+    ['view', 'pageViewSetup', tr('cmd.pageViewSetup'), () => setEditorView({ ...editorView, pageView: !(editorView.pageView && editorView.pageSize === 'setup'), pageSize: 'setup' })],
+    ['view', 'linguisticFocus', tr('cmd.linguisticFocus'), () => toggleFloat('lf')],
+    ['project', 'keywordsHud', tr('cmd.keywordsHud'), () => toggleFloat('kh')],
+    ['format', 'specialChars', tr('cmd.specialChars'), () => toggleFloat('sc')],
+    ['project', 'autoCompleteList', tr('cmd.autoCompleteList'), () => setDialog('autoComplete')],
+    ['edit', 'autoComplete', tr('cmd.autoComplete'), () => autoCompleteWord()],
     ['window', 'fullScreen', 'Ecran complet', toggleFullScreen],
     ['document', 'moveTo', tr('cmd.moveTo'), () => setDialog('moveTo'), !selectionList().length],
     ['document', 'toggleSeparator', tr('cmd.toggleSeparator'), toggleSeparator, !selectionList().length],
@@ -3255,6 +3301,17 @@ export default function App({ api: apiProp }) {
         />
       )}
       {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep) => importFilesCmd(mode, sep).catch(report)} onClose={() => setDialog(null)} />}
+      {floats.lf && <LinguisticFocusPanel view={editorView} setView={(patch) => setEditorView({ ...editorView, ...patch })} onClose={() => setFloats((f) => ({ ...f, lf: false }))} />}
+      {floats.kh && project && (
+        <KeywordsHud
+          project={project}
+          selectedIds={selectionList()}
+          onToggle={(name) => setTree(toggleKeywordOn(project.tree, selectionList(), name))}
+          onClose={() => setFloats((f) => ({ ...f, kh: false }))}
+        />
+      )}
+      {floats.sc && <SpecialCharsDialog onInsert={insertSpecialChar} onClose={() => setFloats((f) => ({ ...f, sc: false }))} />}
+      {dialog === 'autoComplete' && project && <AutoCompleteDialog list={project.autoComplete || []} onSave={(list) => saveProject({ ...projectRef.current, autoComplete: list })} onClose={() => setDialog(null)} />}
       {dialog === 'layouts' && (
         <LayoutsDialog layouts={settings.layouts || []} onChange={(l) => saveLayouts(l).catch(report)} onApply={applyLayout} onClose={() => setDialog(null)} />
       )}
