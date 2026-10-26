@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.18
+- X de închidere pe toate ferestrele: fiecare dialog are acum un „×" sus-dreapta, pentru cine nu știe de tasta Esc. Închide la fel ca Esc (și clic pe fundal, și Esc rămân). Adăugat într-un singur loc, pentru toate dialogurile.
+
 ## v0.10.17
 - Vocea „Mihai" e acum **implicit** peste tot (nu Speechify) — e locală și de încredere. Speechify rămâne o opțiune din listă, dacă o alegi.
 - Mihai aude punctuația: pe lângă „.?!,", acum și „…" (pauză), liniile de dialog/paranteză „—/–" (pauză de virgulă) și ghilimelele („ " « ») care nu se mai citesc. Mai firesc, nu ca o mașină.

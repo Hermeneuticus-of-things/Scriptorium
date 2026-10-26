@@ -1,4 +1,13 @@
 import { useEffect } from 'react';
+import { t } from '../lib/i18n.js';
+
+// Closes a dialog the same way Esc does: every dialog wires its backdrop click to onClose.
+function closeDialog(modal) {
+  const backdrop = modal.parentElement;
+  if (!backdrop) return;
+  backdrop.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+  backdrop.click();
+}
 
 // Accessibility for every modal dialog in the app, in one place. All dialogs share the same
 // markup (`.modal-backdrop > .modal`), so instead of repeating the logic in ~25 components this
@@ -27,6 +36,21 @@ export function decorateDialog(modal) {
   }
 }
 
+// A close "×" at the top-right of every dialog, since not everyone knows Esc. It closes the dialog
+// the same way Esc does. Only real modals (not the help window), and only when the dialog doesn't
+// provide its own. Re-checked on every scan: if React re-renders and drops the button, it comes back.
+export function ensureCloseX(modal) {
+  if (!modal.classList.contains('modal') || modal.dataset.noCloseX || modal.querySelector(':scope > .modal-x')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'modal-x';
+  btn.textContent = '×';
+  btn.setAttribute('aria-label', t('btn.close'));
+  btn.title = t('btn.close');
+  btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeDialog(modal); });
+  modal.appendChild(btn);
+}
+
 export default function DialogA11y() {
   useEffect(() => {
     const open = new Map(); // modal element -> element focused before it opened
@@ -39,6 +63,8 @@ export default function DialogA11y() {
     const top = () => [...open.keys()].filter((m) => m.isConnected).pop();
 
     const scan = () => {
+      // Keep the close "×" present on every open modal (re-added if a re-render dropped it).
+      for (const modal of document.querySelectorAll('.modal-backdrop > .modal')) ensureCloseX(modal);
       for (const modal of document.querySelectorAll('.modal-backdrop > .modal, .help-backdrop > .help-window')) {
         if (open.has(modal)) continue;
         decorateDialog(modal);

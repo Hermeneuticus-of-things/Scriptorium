@@ -170,7 +170,10 @@ label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--t
 
 /* Dialogs */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: grid; place-items: center; z-index: 10; }
-.modal { background: var(--paper); border-radius: 10px; padding: 20px 24px; width: min(520px, 92vw); max-height: 90vh; overflow: auto; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.modal { position: relative; background: var(--paper); border-radius: 10px; padding: 20px 24px; width: min(520px, 92vw); max-height: 90vh; overflow: auto; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+/* A close "×" at the top-right of every dialog (added by DialogA11y), for people who don't know Esc. */
+.modal-x { position: absolute; top: 8px; right: 10px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--muted); font-size: 24px; line-height: 1; border-radius: 6px; cursor: pointer; z-index: 6; }
+.modal-x:hover, .modal-x:focus-visible { background: var(--panel); color: inherit; }
 .modal h2 { margin: 0; }
 .modal .row { display: flex; gap: 12px; }
 .modal .row > label { flex: 1; }
