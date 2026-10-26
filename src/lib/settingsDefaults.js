@@ -136,6 +136,11 @@ export const DEFAULT_SETTINGS = {
   // Where the label colour is shown (View > Use label colour in)
   labelColorIn: { binder: false, cards: true, outliner: false, icons: true },
   savedThemes: [],
+  // NotebookLM: the notebook to interrogate (id or title) and the notebooklm-mcp server name.
+  // Empty notebook => the follow-up-query feature is off (the app still works fully).
+  notebookLmUrl: '',
+  notebookLmNotebook: '',
+  notebookLmServer: '',
   ...LOOK_DEFAULTS,
 };
 

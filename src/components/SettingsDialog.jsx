@@ -79,7 +79,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   };
   const [ai, setAi] = useState(() => {
     const provider = AI_PRESETS[init.aiProvider] ? init.aiProvider : 'anthropic';
-    return { provider, model: init.aiModel || '', baseUrl: init.aiBaseUrl || '', notebookLmUrl: init.notebookLmUrl || '', translateFrom: init.translateFrom || 'auto', translateTo: init.translateTo || 'ro' };
+    return { provider, model: init.aiModel || '', baseUrl: init.aiBaseUrl || '', notebookLmUrl: init.notebookLmUrl || '', notebookLmNotebook: init.notebookLmNotebook || '', notebookLmServer: init.notebookLmServer || '', translateFrom: init.translateFrom || 'auto', translateTo: init.translateTo || 'ro' };
   });
   const [aiKeys, setAiKeys] = useState({}); // provider -> key typed in this session (never read back)
   const [hasKeys, setHasKeys] = useState(() => ({ ...(init.hasKeys || {}), ...(init.hasKeys ? {} : { anthropic: Boolean(init.hasApiKey) }) }));
@@ -126,6 +126,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       aiModel: ai.model.trim(),
       aiBaseUrl: EDITABLE_URL.has(ai.provider) ? ai.baseUrl.trim() : '',
       notebookLmUrl: ai.notebookLmUrl.trim(),
+      notebookLmNotebook: ai.notebookLmNotebook.trim(),
+      notebookLmServer: ai.notebookLmServer.trim(),
       translateFrom: ai.translateFrom,
       translateTo: ai.translateTo,
     };
@@ -482,6 +484,25 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             />
           </label>
           <p className="muted small">{t('ui.settingsDialog.notebooklm_nu_are_api_public')}</p>
+          <label>
+            {t('ui.settingsDialog.notebook_de_interogat')}
+            <input
+              type="text"
+              value={ai.notebookLmNotebook}
+              placeholder={t('ui.settingsDialog.notebook_id_sau_titlu')}
+              onChange={(e) => setAi((p) => ({ ...p, notebookLmNotebook: e.target.value }))}
+            />
+          </label>
+          <label>
+            {t('ui.settingsDialog.server_notebooklm_mcp')}
+            <input
+              type="text"
+              value={ai.notebookLmServer}
+              placeholder="notebooklm-mcp"
+              onChange={(e) => setAi((p) => ({ ...p, notebookLmServer: e.target.value }))}
+            />
+          </label>
+          <p className="muted small">{t('ui.settingsDialog.notebooklm_intrebari_continuare')}</p>
         </fieldset>
         <fieldset>
           <legend>{t('ui.services.servicii_conturi')}</legend>

@@ -703,6 +703,45 @@ tool(
   },
 );
 
+// NotebookLM follow-up interrogation (karma-nlm-doctrina style). Optional: works only when a
+// notebook is set in Settings (notebookLmNotebook) and the notebooklm-mcp server is discoverable
+// in the user's Claude config. We spawn that server as an MCP client and ask follow-ups until a
+// usable answer, then return a doctrinal verdict per term (DOCTRINĂ / ORNAMENT / INEXACT / INCERT).
+const nlmClient = require('../lib/notebookLmClient.cjs');
+const nlmConsult = require('../lib/notebookConsult.cjs');
+tool(
+  'consult_notebook',
+  'Întreabă notebook-ul NotebookLM configurat pe sursele lui, cu întrebări de continuare până la un răspuns. Cu `terms`: verdict doctrinar per expresie (DOCTRINĂ se păstrează / ORNAMENT se rărește / INEXACT se corectează / INCERT rămâne la judecată). Cu `question`: răspuns liber cu citate. Opțional: necesită un notebook în Setări și serverul notebooklm-mcp.',
+  {
+    project,
+    terms: z.array(z.object({ term: z.string(), context: z.string().optional() })).optional().describe('Expresii de verificat pe sursă'),
+    question: z.string().optional().describe('Întrebare liberă către notebook'),
+    type: z.enum(['doctrine', 'fact', 'consistency']).default('doctrine').describe('Tipul de consult pentru `terms`'),
+    max_rounds: z.number().int().min(1).max(8).default(4).describe('Câte întrebări de continuare cel mult'),
+  },
+  async (dir, { terms, question, type, max_rounds }) => {
+    const s = appSettings();
+    const notebook = String(s.notebookLmNotebook || '').trim();
+    if (!notebook) throw new Error('Niciun notebook NotebookLM configurat în Setări (notebookLmNotebook).');
+    const serverName = String(s.notebookLmServer || '').trim() || nlmClient.SERVER_NAME;
+    const entry = nlmClient.discoverServerEntry({ name: serverName });
+    if (!entry) throw new Error(`Serverul „${serverName}” nu este configurat în Claude (MCP).`);
+    const conn = await nlmClient.createClient({ entry });
+    try {
+      const ask = nlmConsult.makeAsk({ client: conn });
+      if (terms && terms.length) {
+        const { results, errors } = await nlmConsult.consult({ type, items: terms, ask, notebook, maxRounds: max_rounds });
+        return { notebook, type, results, errors };
+      }
+      if (!String(question || '').trim()) throw new Error('Dă `terms` sau `question`.');
+      const res = await nlmConsult.interrogate({ ask, notebook, question, maxRounds: max_rounds });
+      return { notebook, answer: res.answer, answered: res.answered, rounds: res.rounds, references: res.references };
+    } finally {
+      await conn.close();
+    }
+  },
+);
+
 tool('list_snapshots', 'Snapshot-urile unui document (nume, dată).', { project, id: z.string() }, (dir, { id }) =>
   store.listSnapshots(dir, id).map(({ file, name, date }) => ({ file, name, date })),
 );

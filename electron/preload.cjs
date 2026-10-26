@@ -166,6 +166,10 @@ contextBridge.exposeInMainWorld('api', {
   testAi: (override) => call('ai:test', override),
   nlmExport: (dir, options) => call('nlm:export', dir, options),
   nlmOpen: () => call('nlm:open'),
+  // NotebookLM follow-up-query capability (karma-nlm-doctrina style). All optional.
+  nlmStatus: () => call('nlm:status'),
+  nlmConsult: (dir, items, opts) => call('nlm:consult', dir, items, opts),
+  nlmAsk: (question, opts) => call('nlm:ask', question, opts),
   openLink: (url) => call('app:openLink', url),
   copyText: (text) => call('app:copyText', text),
   // Error log (Help → Report a problem): { entries, env }; new errors arrive through onAppError.

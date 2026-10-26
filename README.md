@@ -106,7 +106,7 @@ Clic dreapta pe un cuvânt și ai la îndemână:
 - **Sinonime:** sinonimele se aduc direct în program și apar într-o fereastră mică; alegi cuvântul potrivit dintr-un clic, fără să pleci din text.
 - **Dicționare:** dexonline, Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
 - **Redă audio:** citire cu voce tare cu vocea românească **Mihai**, din program, fără internet — selecția, de la cursor, fraza, paragraful, tot documentul sau toată cartea. Vocea ascultă punctuația (virgulă, întrebare, exclamare, pauze între paragrafe), nu citește monoton.
-- **Asistent AI, În proiect, NotebookLM:** explicație sau traducere, căutare în toată cartea, glosar, întrebări despre termen în sursele tale.
+- **Asistent AI, În proiect, NotebookLM:** explicație sau traducere, căutare în toată cartea, glosar, întrebări despre termen în sursele tale. Cu un notebook configurat (Setări → Chei și conturi) și serverul `notebooklm-mcp` pornit, apare și „Întreabă NotebookLM pe surse (întrebări de continuare)”: editorul interoghează notebook-ul cu întrebări de continuare până primește un răspuns pe surse, ca agentul `karma-nlm-doctrina`.
 
 ### Dictezi: D&TED – Dictare și transcriere
 
@@ -463,6 +463,8 @@ Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installe
 **Revizie.** I-REP găsește și repară problemele de tipografie și stil, apoi reverifică; I-EDIT rulează runde editoriale. Profilul „Generic” merge pe orice text; profilul „Română” aplică DOOM III și regulile P1–P13 / R0–R11. Repetiția apropiată (S70, runda R8b) e semnal, nu problemă; poarta `fraza_autor_atinsa` respinge orice propunere care atinge un paragraf al autorului. Definițiile sunt în [`docs/VKB2.md`](docs/VKB2.md).
 
 **NotebookLM.** „Exportă pentru NotebookLM” pregătește cartea ca surse: un fișier pe capitol, cercetarea și notele separat, cuprins cu rezumate.
+
+**Interogare NotebookLM (întrebări de continuare).** Opțional: dacă pui un notebook în Setări → Servicii și ai serverul `notebooklm-mcp` configurat în Claude (același folosit de agentul `karma-nlm-doctrina`), editorul poate deschide notebook-ul și întreba sursele cu întrebări de continuare până primește un răspuns, apoi îl folosește pentru o verificare (de pildă doctrină vs ornament, sau consistența cu sursele). Nu ține chei: autentificarea la NotebookLM e gestionată de serverul `notebooklm-mcp` prin sesiunea lui de browser (cookies), ca la Karma — Scribner doar pornește acel server și îi cere răspunsuri. Fără notebook configurat, funcția e oprită și restul programului merge neschimbat.
 
 **Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
 

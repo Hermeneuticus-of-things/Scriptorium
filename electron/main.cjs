@@ -295,6 +295,12 @@ function setupSpelling(win) {
         ],
       });
       items.push({ label: L.notebookLm, click: cmd('nlmAskSel') });
+      // Follow-up interrogation of the configured notebook (like the karma-nlm-doctrina agent).
+      // Shown only when a notebook is set and the notebooklm-mcp server is discoverable.
+      if (st.aiEnabled !== false && String(st.notebookLmNotebook || '').trim()
+        && require('../lib/notebookLmClient.cjs').isAvailable({ name: String(st.notebookLmServer || '').trim() || undefined })) {
+        items.push({ label: L.notebookLmConsult, click: cmd('nlmConsultSel') });
+      }
       items.push({ type: 'separator' });
     }
     if (params.isEditable) {
@@ -499,6 +505,8 @@ handle('settings:get', () => {
     aiBaseUrl: s.aiBaseUrl || '',
     aiLabel: aiProviders.providerLabel(aiProviderOf(s)),
     notebookLmUrl: s.notebookLmUrl || '',
+    notebookLmNotebook: s.notebookLmNotebook || '',
+    notebookLmServer: s.notebookLmServer || '',
     // Only flags reach the renderer, never keys.
     hasKeys: aiKeys.keyFlags(s, safeStorage),
     // Current provider is usable: it has a key, or (local / custom servers) needs none.
@@ -516,6 +524,8 @@ handle('settings:set', (_e, patch) => {
   // which would make it count as opened. The backup folder comes only from its folder dialog.
   if (rest.recent !== undefined) rest.recent = (Array.isArray(rest.recent) ? rest.recent : []).filter((r) => r && (cur.recent || []).some((c) => c.dir === r.dir));
   if (rest.backupDir !== undefined && rest.backupDir && rest.backupDir !== cur.backupDir && rest.backupDir !== chosenBackupDir) delete rest.backupDir;
+  if (rest.notebookLmNotebook !== undefined) rest.notebookLmNotebook = String(rest.notebookLmNotebook || '').trim();
+  if (rest.notebookLmServer !== undefined) rest.notebookLmServer = String(rest.notebookLmServer || '').trim();
   writeSettings({ ...readSettings(), ...rest });
   // A new spelling language takes effect now in every window, not at the next start.
   if (rest.spellLanguages !== undefined) for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) applySpellLanguages(w);
@@ -854,6 +864,7 @@ require('./dtedHandlers.cjs')({ handle, assertOpened, getSettings: readSettings,
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 require('./updateHandlers.cjs')({ handle, app, net, shell, BrowserWindow, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }), githubToken: () => services.getService(readSettings(), 'github', safeStorage).token || process.env.SCRIBNER_GITHUB_TOKEN || '' });
 require('./smallWindowHandlers.cjs')({ handle, app, BrowserWindow, globalShortcut: require('electron').globalShortcut, dialog, shell, claims, assertOpened, isAppUrl, preload: path.join(__dirname, 'preload.cjs'), appPage: { url: process.env.VITE_DEV_SERVER_URL || '', file: path.join(__dirname, '..', 'dist', 'index.html') }, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }) });
+require('./notebookHandlers.cjs')({ handle, getSettings: readSettings, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
