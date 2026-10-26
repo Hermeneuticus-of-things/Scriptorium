@@ -2904,6 +2904,21 @@ export default function App({ api: apiProp }) {
           </nav>
         )}
         {toolbars.top.map((id, i) => renderTopItem(id, i))}
+        {/* AI status on the bar: green when AI is on with a working key, red otherwise; the box turns it on/off. */}
+        <label
+          className={`ai-status ${aiEnabled && settings.hasApiKey ? 'on' : 'off'}`}
+          data-hint="aiToggle"
+          title={aiEnabled ? (settings.hasApiKey ? tr('ui.app.ai_activ') : tr('ui.app.ai_fara_cheie')) : tr('ui.app.ai_oprit')}
+        >
+          <input
+            type="checkbox"
+            checked={aiEnabled}
+            aria-label={tr('ui.app.ai_pornit_oprit')}
+            onChange={(e) => { const v = e.target.checked; setSettings((s) => ({ ...s, aiEnabled: v })); api.setSettings({ aiEnabled: v }).catch(report); }}
+          />
+          <span className="ai-dot" aria-hidden="true" />
+          <span className="ai-status-label">AI</span>
+        </label>
       </header>
 
       <div className="main">

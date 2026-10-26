@@ -77,10 +77,16 @@ export const ROMANIAN_PROFILE = {
     'câmp foarte larg', 'despărțiri de fond', 'ontologie materială', 'fluxul condițional al devenirii', 'convergență',
     'genealogia termenului', 'sincretism funcțional', 'paradigmă', 'paradigmatic', 'holistic', 'implementare',
     'optimizare', 'feedback', 'input', 'output', 'framework', 'logica internă', 'tiparul înnăscut',
+    // Buzzword-uri de tip AI/corporate (adăugate): se evită în proză.
+    'sinergie', 'sinergic', 'robust', 'scalabil', 'granular', 'disruptiv', 'ecosistem', 'de ultimă generație',
+    'valoare adăugată', 'soluție integrată', 'abordare multidimensională', 'perspectivă transversală',
   ],
   bannedTransitions: [
     'deci', 'așadar', 'prin urmare', 'în concluzie', 'de asemenea', 'totodată', 'astfel', 'în continuare',
     'după cum am văzut', 'vom vedea', 'iată de ce', 'cu alte cuvinte', 'pe de altă parte', 'în primul rând', 'în al doilea rând',
+    // Tranziții-șablon tipice textului generat (adăugate).
+    'mai mult decât atât', 'drept rezultat', 'având în vedere acest lucru', 'ținând cont de cele de mai sus',
+    'în lumina celor de mai sus', 'în mod similar', 'este important de reținut că',
   ],
   selfReference: [
     'în această secțiune', 'în acest capitol', 'în acest subcapitol', 'în subcapitolul următor', 'în capitolul următor',

@@ -102,8 +102,10 @@ Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. 
 
 Clic dreapta pe un cuvânt și ai la îndemână:
 
-- **Traduce:** DeepL sau Google Translate, pe cuvânt, frază sau paragraf. Cu o cheie DeepL, inclusiv cea **gratuită** (DeepL API Free, 500.000 de caractere pe lună, cheia se termină în `:fx`), traducerea apare direct în program și o pui în text cu un clic.
-- **Dicționare:** dexonline și sinonime, [sinonimul.ro](https://sinonimul.ro/), Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
+- **Traduce:** DeepL sau Google Translate, pe cuvânt, frază sau paragraf. Cu o cheie DeepL, inclusiv cea **gratuită** (DeepL API Free, 500.000 de caractere pe lună, cheia se termină în `:fx`), traducerea apare direct în program și înlocuiește selecția cu un clic.
+- **Sinonime:** sinonimele se aduc direct în program și apar într-o fereastră mică; alegi cuvântul potrivit dintr-un clic, fără să pleci din text.
+- **Dicționare:** dexonline, Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
+- **Redă audio:** citire cu voce tare cu vocea românească **Mihai**, din program, fără internet — selecția, de la cursor, fraza, paragraful, tot documentul sau toată cartea. Vocea ascultă punctuația (virgulă, întrebare, exclamare, pauze între paragrafe), nu citește monoton.
 - **Asistent AI, În proiect, NotebookLM:** explicație sau traducere, căutare în toată cartea, glosar, întrebări despre termen în sursele tale.
 
 ### Dictezi: D&TED – Dictare și transcriere
@@ -389,7 +391,7 @@ Cât timp depozitul programului e privat, actualizatorul are nevoie de un token 
 
 **Trebuie să folosesc AI?** Nu. Programul e complet fără el.
 
-**Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Da. În Setări → Servicii și conturi pui cheile: traduci în program cu DeepL sau Google, verifici gramatica cu LanguageTool, asculți textul cu vocile Speechify. La fiecare serviciu poți pune și **email + parolă** (pentru conturi fără cheie), iar butonul **Testează conexiunea** verifică pe loc dacă cheia e acceptată; orice alt serviciu îl ții la *Alte conturi*. Totul se păstrează criptat pe calculatorul tău. Pentru AI pui cheia în *AI → Setări AI*: Anthropic, OpenAI, Gemini, NVIDIA NIM, OpenRouter și alții; unele au și modele gratuite.
+**Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Da. Toate cheile și conturile stau într-un singur loc, în *Setări → Chei și conturi*: cheia AI (Anthropic, OpenAI, Gemini, NVIDIA NIM, OpenRouter, DeepSeek și alții; unele au și modele gratuite) și cheile serviciilor — traduci în program cu DeepL sau Google, verifici gramatica cu LanguageTool, asculți textul cu vocile Speechify, aduci bibliografia din Zotero. La fiecare se păstrează doar ce face integrarea să meargă (cheia API, uneori un ID), fără câmpuri de email și parolă care n-ajută la nimic; un link *Ce este?* îți arată ce face serviciul și *Unde găsesc cheia* te duce la pagina cheii, iar **Testează conexiunea** verifică pe loc. Orice alt cont îl ții la *Alte conturi*. Totul se păstrează criptat pe calculatorul tău.
 
 **Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
 
