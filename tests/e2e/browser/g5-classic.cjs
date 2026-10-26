@@ -29,7 +29,7 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   await page.waitForTimeout(150);
   const zv = await page.evaluate(() => [...document.querySelectorAll('.page')].slice(0, 2).map((p) => p.style.getPropertyValue('--zoom')));
   check('split pane zoom applies to that pane only', zv[0] === '' && zv[1] === '1.5', JSON.stringify(zv));
-  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('scribner-editor-view') || '{}'));
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('pneuma-editor-view') || '{}'));
   check('pane zoom persisted', stored.zoom2 === 150 && (stored.zoom || 100) === 100, JSON.stringify({ z: stored.zoom, z2: stored.zoom2 }));
   await page.locator('.pane:not(.second) .zoom-select').first().selectOption('125');
   await page.waitForTimeout(150);

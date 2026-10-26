@@ -87,7 +87,7 @@ describe('MODIFICARI_AUTOR.jsonl journal', () => {
   const row = { doc: 'abc123', title: 'Scena', line: 2, old: 'Vechi.', new: 'Nou.', time: '2026-10-24T10:00:00.000Z', hashOld: 'h1', hashNew: 'h2' };
 
   it('store appends one JSON row per chunk under editorial/', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-aj-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-aj-'));
     try {
       expect(store.appendAuthorJournal(dir, [row, { ...row, line: 5 }, { ...row, new: row.old }])).toBe(2);
       expect(store.appendAuthorJournal(dir, row)).toBe(1);

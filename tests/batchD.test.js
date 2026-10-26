@@ -19,7 +19,7 @@ const ps = require('../lib/printSetup.cjs');
 
 let tmp;
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-d-'));
+  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-d-'));
 });
 afterEach(() => {
   F.setGlobalFormats([]);

@@ -166,7 +166,7 @@ describe('storage', () => {
     for (const d of tmp.splice(0)) fs.rmSync(d, { recursive: true, force: true });
   });
   const tempDir = () => {
-    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-team-'));
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-team-'));
     tmp.push(d);
     return d;
   };
@@ -262,7 +262,7 @@ describe('MCP agent in a team project', () => {
     const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
     const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
     const store = require('../lib/store.cjs');
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-team-mcp-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-team-mcp-'));
     const dir = store.projectDirFor(tmp, 'Echipa');
     store.createProject(dir, 'Echipa', 'novel');
     const doc = store.loadProject(dir).tree[0].children.flatMap((n) => [n, ...(n.children || [])]).find((n) => n.type === 'text');
@@ -293,7 +293,7 @@ describe('MCP agent in a team project', () => {
     const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
     const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
     const store = require('../lib/store.cjs');
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-team-mcp-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-team-mcp-'));
     const dir = store.projectDirFor(tmp, 'Singur');
     store.createProject(dir, 'Singur', 'novel');
     const doc = store.loadProject(dir).tree[0].children.flatMap((n) => [n, ...(n.children || [])]).find((n) => n.type === 'text');

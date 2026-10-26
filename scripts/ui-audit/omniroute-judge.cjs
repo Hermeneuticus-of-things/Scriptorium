@@ -1,9 +1,9 @@
 // Per-scene UI-diff judge, run on the local OmniRoute server (OpenAI-compatible, no cloud credit).
 // Input: a deterministic diff (element-diff.cjs / menu-diff.cjs rows) for one window/dialog.
 // Output: each raw difference classified as
-//   gap      — a real feature/behavior Scribner is missing (goes into ROADMAP audit 5 as a checkbox)
+//   gap      — a real feature/behavior Pneuma Sofer is missing (goes into ROADMAP audit 5 as a checkbox)
 //   alias    — same thing worded differently (feeds aliases.json; not a real gap)
-//   skip     — intentional (Scribner's own AI/MCP extras, or N/A)
+//   skip     — intentional (Pneuma Sofer's own AI/MCP extras, or N/A)
 // Results are cached by SHA-256 of the input so nothing is judged twice (content-hash cache).
 // Env: OMNIROUTE_URL (default http://127.0.0.1:20128/v1), OMNIROUTE_API_KEY, OMNIROUTE_MODEL (auto/best-fast).
 const fs = require('fs');
@@ -16,14 +16,14 @@ const MODEL = process.env.OMNIROUTE_MODEL || process.env.HAVIS_OPENROUTER_MODEL 
 const CACHE = path.join(__dirname, 'cache');
 fs.mkdirSync(CACHE, { recursive: true });
 
-const SYS = `You compare a classic writing program (reference) with "Scribner", its independent re-implementation.
-You receive, for ONE window/dialog, a list of raw differences found by a deterministic diff (what the reference has that Scribner seems to lack, plus shortcut/state differences).
+const SYS = `You compare a classic writing program (reference) with "Pneuma Sofer", its independent re-implementation.
+You receive, for ONE window/dialog, a list of raw differences found by a deterministic diff (what the reference has that Pneuma Sofer seems to lack, plus shortcut/state differences).
 For each difference output a verdict:
-- "gap": a genuine feature, option, command, default, shortcut or state Scribner should add to match the reference 1:1.
-- "alias": the same thing exists in Scribner under a different wording (give scribnerLabel = the Scribner label it matches).
-- "skip": not a real gap — e.g. reference-only branding, or something irrelevant to Scribner.
-Rules: do NOT propose removing Scribner's own extra features (AI, MCP, dictation). Judge only what the diff lists.
-Reply ONLY with JSON: {"verdicts":[{"id":<index>,"verdict":"gap|alias|skip","scribnerLabel":"","note":"<=12 words"}]}`;
+- "gap": a genuine feature, option, command, default, shortcut or state Pneuma Sofer should add to match the reference 1:1.
+- "alias": the same thing exists in Pneuma Sofer under a different wording (give pneumaLabel = the Pneuma Sofer label it matches).
+- "skip": not a real gap — e.g. reference-only branding, or something irrelevant to Pneuma Sofer.
+Rules: do NOT propose removing Pneuma Sofer's own extra features (AI, MCP, dictation). Judge only what the diff lists.
+Reply ONLY with JSON: {"verdicts":[{"id":<index>,"verdict":"gap|alias|skip","pneumaLabel":"","note":"<=12 words"}]}`;
 
 // OmniRoute's auto/* models may answer as SSE even with stream:false; merge the deltas.
 function parseMaybeSse(raw) {
@@ -74,11 +74,11 @@ async function judge(scene, rows, context = '') {
   let txt = data.choices?.[0]?.message?.content ?? '{}';
   txt = txt.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
   const parsed = firstJsonObject(txt) || { verdicts: [] };
-  // normalize: models vary on key names (id/index/item, scribnerLabel/match, note/reason)
+  // normalize: models vary on key names (id/index/item, pneumaLabel/match, note/reason)
   const verdicts = (parsed.verdicts || parsed.results || []).map((v, i) => {
     let id = typeof v.id === 'number' ? v.id : typeof v.index === 'number' ? v.index : i;
     if (id < 0 || id >= payload.length) id = i;
-    return { id, el: payload[id]?.el, kind: payload[id]?.kind, verdict: (v.verdict || v.decision || '').toLowerCase(), scribnerLabel: v.scribnerLabel || v.match || '', note: (v.note || v.reason || '').slice(0, 120) };
+    return { id, el: payload[id]?.el, kind: payload[id]?.kind, verdict: (v.verdict || v.decision || '').toLowerCase(), pneumaLabel: v.scribnerLabel || v.match || '', note: (v.note || v.reason || '').slice(0, 120) };
   });
   const out = { scene, model: data.model || MODEL, verdicts, rows: payload };
   fs.writeFileSync(cf, JSON.stringify(out));

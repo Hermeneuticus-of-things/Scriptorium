@@ -4,10 +4,10 @@ import { clock } from '../lib/dictation.js';
 import { t as tr } from '../lib/i18n.js';
 
 // The voice mini-player: a small floating window for dictating into the text and for hearing it
-// read aloud, with the engines that come with Scribner (dictation: built-in engine or D&TED;
+// read aloud, with the engines that come with Pneuma Sofer (dictation: built-in engine or D&TED;
 // reading: the built-in Romanian voice, else the system voices). It can be dragged anywhere and
 // remembers its place. Props: api, dict (useDictation), getText(), onClose().
-const POS_KEY = 'scribner-miniplayer-pos';
+const POS_KEY = 'pneuma-miniplayer-pos';
 
 function loadPos() {
   try {
@@ -251,7 +251,7 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
         <button onClick={doStop} disabled={reading === 'idle'} title={tr('ui.speechBar.opreste')} aria-label={tr('ui.speechBar.opreste')}>■</button>
         <select value={voice} onChange={(e) => { doStop(); setVoice(e.target.value); }} title={tr('ui.speechBar.voce')} aria-label={tr('ui.speechBar.voce')}>
           {cloudReady && <option value="speechify">Speechify</option>}
-          {builtIn && <option value="">{tr('ui.mini.vocea_scribner')}</option>}
+          {builtIn && <option value="">{tr('ui.mini.vocea_pneuma')}</option>}
           {voices.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}
         </select>
         <input type="range" min={0.6} max={1.8} step={0.1} value={rate} onChange={(e) => setRate(+e.target.value)} title={`${tr('ui.speechBar.viteza')} ${rate.toFixed(1)}×`} aria-label={tr('ui.speechBar.viteza')} />

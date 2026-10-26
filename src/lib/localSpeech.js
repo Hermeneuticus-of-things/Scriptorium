@@ -306,7 +306,7 @@ export function createLocalSpeech(api, { terms = () => '', media = globalThis.na
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
-    dtedStatus: async () => ({ found: (await api.whisperStatus()).installed, source: 'motorul din Scribner' }),
+    dtedStatus: async () => ({ found: (await api.whisperStatus()).installed, source: 'motorul din Pneuma Sofer' }),
     dtedPickAudio: () => api.dtedPickAudio(),
     dtedDictateStart: dictateStart,
     dtedDictateStop: dictateStop,

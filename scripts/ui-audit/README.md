@@ -1,6 +1,6 @@
 # Audit vizual 5 — unelte
 
-Compară Scribner, fereastră cu fereastră, cu programul clasic de referință, până la nivel de element,
+Compară Pneuma Sofer, fereastră cu fereastră, cu programul clasic de referință, până la nivel de element,
 ordine, text, valoare implicită, stare activ/inactiv, bifă și scurtătură. Observă doar comportamentul
 prin stratul de accesibilitate; nu citește codul, imaginile sau resursele programului clasic.
 
@@ -11,7 +11,7 @@ Scara de decizie (conform regulii „calitate prin unelte, nu prin credit"):
 
 ## Fluxul
 1. `make-test-project.cjs <dir>` — scrie un proiect de test identic în `.scribner` și `.scriv`.
-2. Programul clasic: deschis pe proiectul de test. Scribner: `scribner-capture.cjs` (Playwright, profil
+2. Programul clasic: deschis pe proiectul de test. Pneuma Sofer: `pneuma-capture.cjs` (Playwright, profil
    separat, nu atinge setările reale).
 3. Captură:
    - clasic: `uia-dump.ps1` (arbore UIA + PNG; `-Menus` pentru bara de meniu la 3 niveluri;
@@ -19,13 +19,13 @@ Scara de decizie (conform regulii „calitate prin unelte, nu prin credit"):
      contextuale, prin tasta de meniu, fără mouse; `-InspectorTabs`; `-Context text`). Scurtăturile,
      neexpuse de Qt, se citesc cu `ocr.ps1` (OCR Windows, cu upscale 3×). `run-classic.ps1` rulează
      toate scenele din `scenes.json`.
-   - Scribner: `scribner-capture.cjs` scoate meniul nativ și o captură de accesibilitate per scenă.
+   - Pneuma Sofer: `pneuma-capture.cjs` scoate meniul nativ și o captură de accesibilitate per scenă.
 4. Aplatizare: `flatten.cjs` → o linie per element.
 5. Diff determinist: `menu-diff.cjs` (bara de meniu), `element-diff.cjs` (orice fereastră). Potrivire pe
    text normalizat + `aliases.json`. Scoate: lipsă, alt meniu, scurtătură, stare, bifă, valoare, ordine.
 6. Judecată: `omniroute-judge.cjs` (un lucrător) și `judge-run.cjs` (lead Opus 4.7 + lucrători).
-   Verdicte: `gap` (de adăugat în Scribner), `alias` (există sub alt nume → `aliases.json`),
-   `skip` (extra proprii Scribner — AI, MCP, dictare — sau irelevant). Extrasele Scribner nu se scot.
+   Verdicte: `gap` (de adăugat în Pneuma Sofer), `alias` (există sub alt nume → `aliases.json`),
+   `skip` (extra proprii Pneuma Sofer — AI, MCP, dictare — sau irelevant). Extrasele Pneuma Sofer nu se scot.
 
 ## Desktop 3 și captură de pe desktop inactiv
 Capturile se fac prin **PrintWindow** (fereastra se desenează singură în contextul grafic), nu prin
@@ -37,7 +37,7 @@ acoperită **sau pe un desktop virtual inactiv**; UI Automation la fel nu cere f
 De aceea ferestrele de captură se țin pe un **desktop dedicat (Desktop 3)**: `place-desktop3.ps1
 -Process Scrivener` le mută acolo (modulul `VirtualDesktop`). Meniurile și dialogurile deschise în timpul
 capturii apar pe Desktop 3, nu pe ecranul de lucru al utilizatorului, iar captura funcționează cu Desktop
-3 inactiv. Captura Scribner (Playwright) desenează pagina direct, deci e deja independentă de desktop.
+3 inactiv. Captura Pneuma Sofer (Playwright) desenează pagina direct, deci e deja independentă de desktop.
 
 ## OCR (scurtături + text UI)
 `ocr.ps1` folosește **Tesseract** (local) cu pachetele `ron+eng` (diacritice române + scurtături ASCII),
@@ -52,4 +52,4 @@ utilizatorului; modelele nu se urcă în depozit). Reglaj: `OCR_TESSDATA`, `OCR_
 
 ## Stare
 - Capturat: meniurile clasice (10, nivel 3, + context cu text) și dialogul Opțiuni (43 de pagini);
-  meniul Scribner. Restul ferestrelor: de recapturat (vezi `scenes.json`).
+  meniul Pneuma Sofer. Restul ferestrelor: de recapturat (vezi `scenes.json`).

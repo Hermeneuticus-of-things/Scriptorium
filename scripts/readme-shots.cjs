@@ -468,7 +468,7 @@ function heroHtml(src) {
   .pin{position:absolute;top:-8px;left:50%;width:16px;height:16px;border-radius:50%;margin-left:-8px}
   </style></head><body>
   <div class="kicker">Program de scris · gratuit</div>
-  <h1>Scribner</h1>
+  <h1>Pneuma Sofer</h1>
   <div class="tag">Cartea ta, pe bucăți.<br>Apoi întreagă.</div>
   <p class="sub">Scrii sau traduci scenă cu scenă, le muți ca pe fișe și la final primești cartea în Word, PDF sau EPUB.</p>
   <span class="btn dark">Windows · fără internet</span><span class="btn">AI doar dacă vrei</span>

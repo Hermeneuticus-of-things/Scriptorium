@@ -1,4 +1,4 @@
-# Editorul Scribner față de practicile moderne pentru scris de lungă respirație
+# Editorul Pneuma Sofer față de practicile moderne pentru scris de lungă respirație
 
 Notă de cercetare + inventar „ce avem / ce lipsește”, cu prioritizare. Scopul: să adăugăm doar
 ce lipsește cu adevărat și aduce valoare, fără să umflăm interfața și fără să atingem motorul
@@ -8,7 +8,7 @@ Data: 26 oct. 2026. Surse web consultate la final.
 
 ## Rezumat
 
-Editorul Scribner acoperă deja aproape toată lista de bune practici pentru editoare de carte
+Editorul Pneuma Sofer acoperă deja aproape toată lista de bune practici pentru editoare de carte
 (tipografie configurabilă, măsură/lățime de rând, mod typewriter, moduri focus, corecturi
 inteligente, ținte de sesiune/termen, outline, căutare/înlocuire avansată, accesibilitate pe
 bara de format). Golurile reale sunt puține. Am implementat **un singur** adaos curat și fără
@@ -17,7 +17,7 @@ candidate au fost amânate (valoare vs. risc/aglomerare).
 
 ## Ce există deja (nu rescriem)
 
-| Practică | Stare în Scribner |
+| Practică | Stare în Pneuma Sofer |
 |---|---|
 | Tipografie (font serif, corp, interlinie) | ✅ Setări → Aspect (`editorFont`, `fontSize`, `lineHeight`) |
 | Măsură / lățime de rând | ✅ `pageWidth` în `em` → `.page { max-width: var(--editor-page-width) }` |

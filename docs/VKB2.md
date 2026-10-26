@@ -1,6 +1,6 @@
 # VKB2: definițiile autorului pentru I-REP și I-EDIT
 
-Primite de la autor la 2026-10-24. Sursa de adevăr pentru implementarea din Scribner
+Primite de la autor la 2026-10-24. Sursa de adevăr pentru implementarea din Pneuma Sofer
 (`src/lib/nearRepetition.js`, `src/lib/authorText.js`, `src/lib/editorial.js`, panoul I-REP / I-EDIT).
 
 ## I-REP: repetiția apropiată (cerința O13, §H107; închis §H121)

@@ -1,5 +1,5 @@
 name: Raport de bug / Bug report
-description: Semnalează un comportament greșit în Scribner. / Report something that works wrong in Scribner.
+description: Semnalează un comportament greșit în Pneuma Sofer. / Report something that works wrong in Pneuma Sofer.
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -41,7 +41,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Versiunea Scribner / Scribner version
+      label: Versiunea Pneuma Sofer / Pneuma Sofer version
       description: O vezi în Ajutor → Despre, sau pe titlul ferestrei. / See it in Help → About, or the window title.
       placeholder: "0.10.12"
     validations:

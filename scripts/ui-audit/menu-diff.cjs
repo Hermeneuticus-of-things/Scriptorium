@@ -1,7 +1,7 @@
-// Compares two menus.json captures (reference program vs Scribner, both in English) item by item:
+// Compares two menus.json captures (reference program vs Pneuma Sofer, both in English) item by item:
 // missing items, items in another menu, shortcut differences, enabled/checked differences.
 // Matching is deterministic: normalized label, then aliases.json, then token overlap ≥ 0.75.
-// Usage: node scripts/ui-audit/menu-diff.cjs <ref/menus.json> <scribner/menus.json> [--md]
+// Usage: node scripts/ui-audit/menu-diff.cjs <ref/menus.json> <pneuma/menus.json> [--md]
 const fs = require('fs');
 const path = require('path');
 

@@ -48,7 +48,7 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
   const copyToDocument = () => {
     const h = pickedHtml();
     if (!h) return;
-    window.dispatchEvent(new CustomEvent('scribner:insert-html', { detail: { html: h, docId: node.id } }));
+    window.dispatchEvent(new CustomEvent('pneuma:insert-html', { detail: { html: h, docId: node.id } }));
   };
 
   const reload = async (notify = true) => {

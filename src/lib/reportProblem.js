@@ -149,5 +149,5 @@ export function buildIssueUrl(title, body, { limit = URL_LIMIT, base = REPO_ISSU
 
 export function buildMailto(email, title, body, limit = 1800) {
   const b = body.length > limit ? body.slice(0, limit) + '\n…' : body;
-  return `mailto:${email}?subject=${encodeURIComponent('[Scribner] ' + title)}&body=${encodeURIComponent(b)}`;
+  return `mailto:${email}?subject=${encodeURIComponent('[Pneuma Sofer] ' + title)}&body=${encodeURIComponent(b)}`;
 }

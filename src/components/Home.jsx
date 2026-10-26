@@ -134,7 +134,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
   const canSync = api.isWeb && typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
   return (
     <div className="home">
-      <h1>Scribner</h1>
+      <h1>Pneuma Sofer</h1>
       <p className="muted">{tr('ui.home.scrie_carti_lungi_binder_corkboard')}</p>
       {api.isMock && <p className="warn">{tr('ui.home.mod_demonstrativ_in_browser_salvarea')}</p>}
       <section className="tpl-chooser" aria-label={tr('ui.home.proiect_nou')}>
@@ -224,7 +224,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
               </div>
             )}
           </div>
-          <button type="button" onClick={run(() => api.openProject())} title={tr('ui.home.deschide_existent')}>{tr('ui.home.deschide_proiect_scribner')}</button>
+          <button type="button" onClick={run(() => api.openProject())} title={tr('ui.home.deschide_existent')}>{tr('ui.home.deschide_proiect_pneuma')}</button>
           <span className="tpl-spacer" />
           <input
             placeholder={tr('ui.home.titlul_cartii')}

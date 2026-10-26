@@ -1,4 +1,4 @@
-// Flattens a UI dump (uia-dump.ps1 JSON, or scribner-capture.cjs JSON) into one line per element:
+// Flattens a UI dump (uia-dump.ps1 JSON, or pneuma-capture.cjs JSON) into one line per element:
 // "<indent><role> | <name> | <shortcut> | off? | checked?" so two programs can be diffed line by line.
 // Usage: node scripts/ui-audit/flatten.cjs <file.json> [--menu]   (--menu keeps only menu items)
 const fs = require('fs');

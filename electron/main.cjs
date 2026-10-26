@@ -25,8 +25,12 @@ const bundle = require('../lib/bundle.cjs');
 const projectWatch = require('../lib/projectWatch.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
+// The data folder name stays "Scribner" after the rename to "Pneuma Sofer" so existing users keep
+// their settings and safeStorage-encrypted API keys (the userData path, not the brand, lives here).
 if (process.env.PORTABLE_EXECUTABLE_DIR) {
   app.setPath('userData', path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Scribner-data'));
+} else {
+  app.setPath('userData', path.join(app.getPath('appData'), 'Scribner'));
 }
 
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -370,7 +374,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     ...(offset ? { x: 80 + offset, y: 60 + offset } : {}),
-    title: 'Scribner',
+    title: 'Pneuma Sofer',
     icon: path.join(__dirname, '..', 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -625,7 +629,7 @@ handle('project:exportBundle', async (e, dir) => {
   const res = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender), {
     title: 'Exportă proiectul ca pachet (pentru web / mobil)',
     defaultPath: `${data.project.title || 'Proiect'}.scribner.json`,
-    filters: [{ name: 'Pachet Scribner', extensions: ['json'] }],
+    filters: [{ name: 'Pachet Pneuma Sofer', extensions: ['json'] }],
   });
   if (res.canceled) return null;
   fs.writeFileSync(res.filePath, JSON.stringify(data));
@@ -636,7 +640,7 @@ handle('project:importBundle', async (e) => {
   const src = await dialog.showOpenDialog(win, {
     title: 'Importă un pachet de proiect',
     properties: ['openFile'],
-    filters: [{ name: 'Pachet Scribner', extensions: ['json'] }],
+    filters: [{ name: 'Pachet Pneuma Sofer', extensions: ['json'] }],
   });
   if (src.canceled) return null;
   const data = JSON.parse(fs.readFileSync(src.filePaths[0], 'utf8'));
@@ -676,14 +680,14 @@ handle('doc:write', (e, dir, id, kind, html) => {
   return true;
 });
 
-// MCP: the command an AI agent client uses to start the Scribner MCP server for
+// MCP: the command an AI agent client uses to start the Pneuma Sofer MCP server for
 // the open project. Packaged builds run the server with Electron's own Node.
 handle('mcp:info', (_e, dir) => {
   assertOpened(dir);
   // The general form (no project, no user name): the same line for every book and computer.
   const mc = require('../lib/mcpConfig.cjs');
   const entry = app.isPackaged ? mcpEntry() : { command: 'node', args: [path.join(__dirname, '..', 'mcp', 'server.mjs')] };
-  return { claudeCode: mc.claudeCodeCommand(entry), desktopJson: JSON.stringify({ mcpServers: { scribner: entry } }, null, 2) };
+  return { claudeCode: mc.claudeCodeCommand(entry), desktopJson: JSON.stringify({ mcpServers: { pneuma: entry } }, null, 2) };
 });
 
 // Reload the open project when files change outside the app (an AI agent via MCP,
@@ -894,7 +898,7 @@ handle('menu:set', (e, spec) => {
   // The renderer sends its own Help menu; About and developer tools are appended to it.
   const extra = [
     { type: 'separator' },
-    { label: 'Despre Scribner', click: () => dialog.showMessageBox(win, { message: `Scribner ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi.' }) },
+    { label: 'Despre Pneuma Sofer', click: () => dialog.showMessageBox(win, { message: `Pneuma Sofer ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi.' }) },
     { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools', accelerator: 'F12' } // Ctrl+Shift+I is the Inspector,
   ];
   const helpMenu = template.find((m, i) => spec[i] && spec[i].items.some((it) => it !== '-' && it.id === 'help'));
@@ -1056,7 +1060,7 @@ handle('import:scriv', async (e) => {
   // its .scrivx). importScriv takes either the file or the folder.
   const src = await dialog.showOpenDialog(win, { title: 'Alege proiectul .scriv (fișierul .scrivx din el)', properties: ['openFile'], filters: [{ name: 'Proiect .scriv', extensions: ['scrivx'] }] });
   if (src.canceled) return null;
-  const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Scribner?', properties: ['openDirectory', 'createDirectory'] });
+  const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Pneuma Sofer?', properties: ['openDirectory', 'createDirectory'] });
   if (dest.canceled) return null;
   const result = importScriv(src.filePaths[0], dest.filePaths[0]);
   releaseWindow(e.sender.id);

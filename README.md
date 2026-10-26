@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/readme/hero.png" width="100%" alt="Scribner, program de scris gratuit: cartea ta pe bucăți, apoi întreagă. Captură cu panoul de fișe al unui roman.">
+  <img src="./assets/readme/hero.png" width="100%" alt="Pneuma Sofer, program de scris gratuit: cartea ta pe bucăți, apoi întreagă. Captură cu panoul de fișe al unui roman.">
 </p>
 
 <p align="center">
@@ -13,7 +13,7 @@
 
 ## 1. Ce este
 
-Scribner e un program gratuit de scris cărți lungi, în română și engleză. Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. Aici textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. La final apeși un buton și primești cartea întreagă.
+Pneuma Sofer e un program gratuit de scris cărți lungi, în română și engleză. Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. Aici textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. La final apeși un buton și primești cartea întreagă.
 
 ## 2. Pentru cine
 
@@ -94,7 +94,7 @@ Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înai
   <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
 </p>
 
-Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă; fereastra în care scrii are chenar verde, cealaltă e ușor estompată. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+Pui fișierul Word primit de la editură și Pneuma Sofer îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă; fereastra în care scrii are chenar verde, cealaltă e ușor estompată. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
 
 <p align="center">
   <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">
@@ -115,7 +115,7 @@ Clic dreapta pe un cuvânt și ai la îndemână:
 </p>
 
 <p align="center">
-  <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Scribner: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
+  <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Pneuma Sofer: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
 </p>
 
 Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spații și majusculă la început de frază.
@@ -126,7 +126,7 @@ Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spaț
 - **Fișier → Importă → Transcrie fișier audio…**: un MP3, WAV, M4A, OGG sau FLAC devine document în Cercetare, pe paragrafe, cu ora din înregistrare.
 - Numele din carte le scrii o dată în *Setări → Servicii și conturi*, ca să fie recunoscute corect; înlocuirile tale automate se aplică și textului dictat.
 
-Recunoașterea vorbirii e **în Scribner** și lucrează **pe calculatorul tău, fără internet**. Prima dată, din *Setări → Voce și traducere → Dictare și transcriere*, apeși *Descarcă motorul* (în jur de 590 MB, o singură dată; cu placă NVIDIA poți lua și varianta mai rapidă). Motorul e [whisper.cpp](https://github.com/ggml-org/whisper.cpp) cu modelul Whisper large-v3-turbo; amprenta fișierelor e verificată la descărcare. Pentru cea mai bună recunoaștere a românei, alege [D&TED](https://github.com/Hermeneuticus-of-things/dted) în locul lui: D&TED folosește modelul **eek**, antrenat pe română, cu aproape jumătate din greșeli (5,4% cuvinte greșite față de 10,9% la modelul standard). După *Verifică*, în aceeași fereastră alegi modelul și vezi care e folosit acum. Scribner se leagă de D&TED prin modul serviciu (protocol 1) și alege automat cel mai bun model; o versiune de D&TED care nu vorbește acest protocol îți spune să o actualizezi.
+Recunoașterea vorbirii e **în Pneuma Sofer** și lucrează **pe calculatorul tău, fără internet**. Prima dată, din *Setări → Voce și traducere → Dictare și transcriere*, apeși *Descarcă motorul* (în jur de 590 MB, o singură dată; cu placă NVIDIA poți lua și varianta mai rapidă). Motorul e [whisper.cpp](https://github.com/ggml-org/whisper.cpp) cu modelul Whisper large-v3-turbo; amprenta fișierelor e verificată la descărcare. Pentru cea mai bună recunoaștere a românei, alege [D&TED](https://github.com/Hermeneuticus-of-things/dted) în locul lui: D&TED folosește modelul **eek**, antrenat pe română, cu aproape jumătate din greșeli (5,4% cuvinte greșite față de 10,9% la modelul standard). După *Verifică*, în aceeași fereastră alegi modelul și vezi care e folosit acum. Pneuma Sofer se leagă de D&TED prin modul serviciu (protocol 1) și alege singur modelul potrivit. Mai important, D&TED nu rămâne doar la română: aduce recunoaștere și pe alte limbi, iar lista crește cu fiecare versiune. O versiune de D&TED care nu vorbește acest protocol îți spune să o actualizezi.
 
 <p align="center">
   <img src="./assets/readme/dtedmodel.png" width="100%" alt="Setări, Servicii și conturi, D&TED: lista modelelor de recunoaștere, cu eek optimizat pentru română ales și folosit acum">
@@ -173,13 +173,25 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 
 În **Cercetare → Întreabă** discuți cu sursele tale: primești răspunsul cu trimiteri [1], [2], iar un clic te duce la pasaj. Continui discuția, alegi ce surse folosește (manuscrisul, cercetarea, notele sau anumite dosare), aduci PDF, Word, text sau pagini web și salvezi răspunsul ca notă ori îl inserezi în text, cu trimiterile ca note de subsol. Fără AI, panoul doar caută în surse. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT** sau **Manus**, gata împărțită.
 
-### Agenți AI
+### AI — tot ce ține de AI, într-un singur loc (opțional)
+
+Tot ce folosește AI stă grupat și se pornește sau se oprește dintr-un singur loc (pastila **AI** din bară și *Setări → Chei și conturi*). Fără AI, programul merge întreg: verificarea **I-REP** și reparațiile sigure (deterministe) rămân.
+
+- **Asistentul AI** — corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce vrei.
+- **I-EDIT** — runde editoriale pe tot textul, cu regulile tale.
+- **Bucla de reparare (I-REP cu AI)** — repară problemele semnalate și reverifică.
+- **În surse / NotebookLM** — întrebi sursele tale; cu un notebook configurat, chiar cu întrebări de continuare până primește răspuns.
+- **Traducere și definiții** — DeepL/Google și explicații AI direct din meniul cuvântului.
+- **Agenți AI prin MCP** — Claude sau Codex lucrează direct în carte (mai jos).
 
 Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic — dialogul detectează ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie configurarea fiecăruia dintr-un clic, cu copie de siguranță. Agentul primește peste 80 de unelte (citire/scriere documente, binder, căutare, snapshot-uri, Compile, import/export, revizie). Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
 
-> **O vorbă despre AI.** Oricât de bun ar fi modelul și oricât te-ar ajuta, AI-ul lucrează pornind de la ceea ce există deja. Poate recombina idei, propune asocieri neașteptate și deschide perspective noi, dar asta nu înseamnă că originalitatea vine automat odată cu răspunsul. Ea ține și de omul care întreabă, alege, contestă și transformă ceea ce primește. Fără această contribuție, riști să obții un text fluent, dar previzibil, care reformulează mai degrabă decât să spună ceva cu adevărat al tău.
+> [!IMPORTANT]
+> **O vorbă despre AI.** Oricât de bun ar fi modelul și oricât te-ar ajuta, AI-ul nu garantează originalitatea. Poate combina idei, deschide perspective și stimula creativitatea, dar se bazează pe ceea ce a învățat deja. Noutatea autentică apare din experiența, intuiția și gândirea ta, nu din simpla reformulare a unor idei existente.
 >
-> Și mai există o problemă: dincolo de autocorectarea pe care o vezi, AI-ul poate introduce, subtil, limitele morale și de exprimare stabilite de companiile care dezvoltă aceste modele LLM, în acord cu propriile valori și politici. De aceea, Scribner funcționează complet și fără AI. Scrisul rămâne al tău, iar AI-ul îl poți activa sau dezactiva oricând, dintr-un singur loc.
+> Mai mult, răspunsurile AI-ului sunt influențate de valorile, regulile și interesele companiilor care îl dezvoltă, inclusiv de felul în care acestea stabilesc ce poate spune și cum. Astfel, fără să-ți dai seama, poți ajunge să reproduci viziunea lor asupra lumii, crezând că este propria ta gândire.
+>
+> Pneuma Sofer merge întreg și fără AI: scrisul rămâne al tău, iar AI-ul îl pornești sau îl oprești oricând, dintr-un singur loc. Folosește-l ca pe un instrument de scris mai inteligent, care elimină fricțiunile și birocrația editorială, nu ca pe un înlocuitor al gândirii sau al creativității tale. Tehnologia trebuie să-ți elibereze scrisul, nu să-l scrie în locul tău.
 
 ### Compilezi
 
@@ -325,7 +337,7 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 
 Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 
-- **Scris în același timp în același document**, printr-un server Scribner pe un calculator din rețea, pe NAS sau pe internet, cu cursorul și selecția celorlalți, colorate.
+- **Scris în același timp în același document**, printr-un server Pneuma Sofer pe un calculator din rețea, pe NAS sau pe internet, cu cursorul și selecția celorlalți, colorate.
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.
@@ -338,8 +350,8 @@ Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea
 
 Din pagina [Releases](../../releases/latest) descarci una dintre variante:
 
-- **`Scribner-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator; programul se pune în `AppData\Local\Programs\Scribner`. La dezinstalare, cărțile tale rămân.
-- **`Scribner-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
+- **`PneumaSofer-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator; programul se pune în `AppData\Local\Programs\Pneuma Sofer`. La dezinstalare, cărțile tale rămân.
+- **`PneumaSofer-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
 
 **Sau dintr-o singură comandă,** dacă folosești PowerShell:
 
@@ -353,7 +365,7 @@ irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/i
 Comanda ia ultima versiune din Releases, verifică amprenta SHA-256 publicată de GitHub și pornește installerul. Variante, puse înainte, pe același rând:
 
 ```powershell
-$env:SCRIBNER_PATH='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex      # și comanda scribner în terminal
+$env:SCRIBNER_PATH='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex      # și comanda pneuma în terminal
 $env:SCRIBNER_SILENT='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex    # fără ferestre
 $env:SCRIBNER_PORTABLE='1'; irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex  # varianta portabilă, pe Desktop
 ```
@@ -368,7 +380,7 @@ $env:GITHUB_TOKEN='token-ul-tău'; irm -Headers @{Authorization="Bearer $env:GIT
 
 </details>
 
-Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `scribner` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
+Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `pneuma` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
 
 Pentru dictare, motorul de recunoaștere a vorbirii se descarcă din program, la prima folosire (în jur de 590 MB, o singură dată); nu e inclus în installer, ca acesta să rămână mic.
 
@@ -389,7 +401,7 @@ Cât timp depozitul programului e privat, actualizatorul are nevoie de un token 
 
 ### Întrebări
 
-**Am nevoie de internet?** Nu. Scribner merge pe calculatorul tău și textele rămân la tine. Internetul îți trebuie doar pentru DeepL, dicționarele online și AI.
+**Am nevoie de internet?** Nu. Pneuma Sofer merge pe calculatorul tău și textele rămân la tine. Internetul îți trebuie doar pentru DeepL, dicționarele online și AI.
 
 **Pot aduce ce am scris deja?** Da: Word, RTF, ODT, Markdown, pagini web, scenarii Fountain sau Final Draft și proiecte `.scriv`.
 
@@ -431,17 +443,17 @@ Nu trebuie să știi nimic tehnic:
 **Agenți AI și linia de comandă.** Un agent AI poate lucra direct în proiect: citește capitolele, scrie sinopsisuri, caută, face revizia sau Compile. Din *AI → Conectează la Claude (MCP)* configurezi Claude Desktop cu un clic sau copiezi comanda pentru Claude Code; merge și cu Codex, Gemini CLI, Cursor și VS Code. Nu ai nevoie de Node.js. Înainte de fiecare modificare a agentului se face o copie, iar tot ce face se notează.
 
 ```powershell
-scribner info "D:\Carti\Drumul spre munte.scribner"
-scribner compile "D:\Carti\Drumul spre munte.scribner" --format docx -o "D:\Carti\Drumul spre munte.docx"
-scribner export-sources "D:\Carti\Drumul spre munte.scribner" -o "D:\Surse" --target notebooklm
-scribner ask "D:\Carti\Drumul spre munte.scribner" "Ce culoare au ochii lui Andrei?" --session drum
+pneuma info "D:\Carti\Drumul spre munte.scribner"
+pneuma compile "D:\Carti\Drumul spre munte.scribner" --format docx -o "D:\Carti\Drumul spre munte.docx"
+pneuma export-sources "D:\Carti\Drumul spre munte.scribner" -o "D:\Surse" --target notebooklm
+pneuma ask "D:\Carti\Drumul spre munte.scribner" "Ce culoare au ochii lui Andrei?" --session drum
 ```
 
 <p align="center">
-  <img src="./assets/readme/cli.png" width="100%" alt="Fereastră PowerShell cu scribner info, care arată titlul, autorul și numărul de cuvinte, apoi scribner export-sources pentru NotebookLM și fișierele create">
+  <img src="./assets/readme/cli.png" width="100%" alt="Fereastră PowerShell cu pneuma info, care arată titlul, autorul și numărul de cuvinte, apoi pneuma export-sources pentru NotebookLM și fișierele create">
 </p>
 
-Pentru scripturi și terminal, programul instalat are comanda `scribner` (o bifezi la instalare, fără Node.js). Toate comenzile sunt în *Ajutor → Ce faci tu → Linia de comandă*.
+Pentru scripturi și terminal, programul instalat are comanda `pneuma` (o bifezi la instalare, fără Node.js). Toate comenzile sunt în *Ajutor → Ce faci tu → Linia de comandă*.
 
 **Din cod sursă** (Node.js 22+ și git):
 
@@ -456,7 +468,7 @@ npm run dist:win:setup   # installerul cu wizard (Inno Setup 6, pe Windows)
 
 Pe Windows, în PowerShell, comenzile sunt aceleași (`git clone …`, `cd Scriptorium`, `npm ci`, `npm start`). Ai nevoie de Node.js 22 sau mai nou (`node -v`) și, doar pentru installer, de [Inno Setup 6](https://jrsoftware.org/isinfo.php). Dacă PowerShell refuză `npm` din cauza politicii de scripturi, folosește `npm.cmd` sau rulează o dată `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
-Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installer\build-windows.cmd` face tot: dependințele, aplicația, varianta portabilă și `Scribner-Setup-<versiune>.exe`, apoi deschide folderul `release`.
+Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installer\build-windows.cmd` face tot: dependințele, aplicația, varianta portabilă și `PneumaSofer-Setup-<versiune>.exe`, apoi deschide folderul `release`.
 
 `npm run dev` deschide interfața în browser; cu `?demo` la finalul adresei pornește proiectul demonstrativ din capturi.
 
@@ -466,20 +478,20 @@ Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installe
 
 **NotebookLM.** „Exportă pentru NotebookLM” pregătește cartea ca surse: un fișier pe capitol, cercetarea și notele separat, cuprins cu rezumate.
 
-**Interogare NotebookLM (întrebări de continuare).** Opțional: dacă pui un notebook în Setări → Chei și conturi și ai serverul `notebooklm-mcp` configurat în Claude, editorul poate deschide notebook-ul și întreba sursele cu întrebări de continuare până primește un răspuns, apoi îl folosește pentru o verificare (de pildă doctrină vs ornament, sau consistența cu sursele). Nu ține chei: autentificarea la NotebookLM e gestionată de serverul `notebooklm-mcp` prin sesiunea lui de browser (cookies) — Scribner doar pornește acel server și îi cere răspunsuri. Fără notebook configurat, funcția e oprită și restul programului merge neschimbat.
+**Interogare NotebookLM (întrebări de continuare).** Opțional: dacă pui un notebook în Setări → Chei și conturi și ai serverul `notebooklm-mcp` configurat în Claude, editorul poate deschide notebook-ul și întreba sursele cu întrebări de continuare până primește un răspuns, apoi îl folosește pentru o verificare (de pildă doctrină vs ornament, sau consistența cu sursele). Nu ține chei: autentificarea la NotebookLM e gestionată de serverul `notebooklm-mcp` prin sesiunea lui de browser (cookies) — Pneuma Sofer doar pornește acel server și îi cere răspunsuri. Fără notebook configurat, funcția e oprită și restul programului merge neschimbat.
 
 **Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
 
-Programul instalat pornește serverul fără Node.js. Comanda generală e aceeași pe orice calculator (Windows) și nu numește nicio carte: agentul vede proiectele din lista recentă din Scribner.
+Programul instalat pornește serverul fără Node.js. Comanda generală e aceeași pe orice calculator (Windows) și nu numește nicio carte: agentul vede proiectele din lista recentă din Pneuma Sofer.
 
 ```bat
-claude mcp add scribner --scope user -- cmd /c %LOCALAPPDATA%\Programs\Scribner\scribner-mcp.cmd
+claude mcp add pneuma --scope user -- cmd /c %LOCALAPPDATA%\Programs\Pneuma Sofer\pneuma-mcp.cmd
 ```
 
 Pentru orice alt client cu configurare JSON (Claude Desktop, Cursor, Windsurf, LM Studio, Gemini; la VS Code cheia e `servers`):
 
 ```json
-"scribner": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd"] }
+"pneuma": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\Programs\\Pneuma Sofer\\pneuma-mcp.cmd"] }
 ```
 
 `--read-only` la sfârșit permite doar citirea; `--project "<folder>.scribner"` limitează agentul la un singur proiect.
@@ -493,7 +505,7 @@ Pentru orice alt client cu configurare JSON (Claude Desktop, Cursor, Windsurf, L
 Din cod sursă, cu Node.js:
 
 ```bash
-claude mcp add scribner -- node "/cale/Scriptorium/mcp/server.mjs" --project "/cale/Cartea mea.scribner"
+claude mcp add pneuma -- node "/cale/Scriptorium/mcp/server.mjs" --project "/cale/Cartea mea.scribner"
 ```
 
 Configurările pentru Claude Desktop, Codex, Gemini CLI, Cursor, Windsurf, LM Studio și VS Code sunt în manual, la *Ajutor → „Ce faci tu”*. Imaginile din acest README se refac cu `node scripts/readme-shots.cjs` (instrucțiunile sunt în capul scriptului).

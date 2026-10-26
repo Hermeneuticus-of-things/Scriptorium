@@ -6,7 +6,7 @@ import './TargetsDialog.css';
 
 // Display order Monday..Sunday; values follow Date#getDay (0 = Sunday).
 const DAYS = () => ([[1, 'Lu'], [2, 'Ma'], [3, 'Mi'], [4, 'Jo'], [5, 'Vi'], [6, tr('ui.targetsDialog.sa')], [0, 'Du']]);
-const POS_KEY = 'scribner.targetsPanel.pos';
+const POS_KEY = 'pneuma.targetsPanel.pos';
 
 const fmt = (n) => Number(n || 0).toLocaleString(uiLocale());
 const unitName = (type) => (type === 'Characters' ? tr('ui.inspector.caractere') : type === 'Pages' ? tr('ui.targetsDialog.pagini') : tr('ui.inspector.cuvinte'));
@@ -82,8 +82,8 @@ export default function TargetsDialog({ project, draftWords, draftChars, draftVa
   const [allowNegative, setAllowNegative] = useState(Boolean(t.allowNegative));
   const [sessionFromDeadline, setSessionFromDeadline] = useState(Boolean(t.sessionFromDeadline));
   const [sessionAllProjects, setSessionAllProjects] = useState(Boolean(t.sessionAllProjects));
-  const [compact, setCompact] = useState(() => { try { return localStorage.getItem('scribner.targetsPanel.compact') === '1'; } catch { return false; } });
-  const toggleCompact = () => setCompact((c) => { try { localStorage.setItem('scribner.targetsPanel.compact', c ? '0' : '1'); } catch { /* ignore */ } return !c; });
+  const [compact, setCompact] = useState(() => { try { return localStorage.getItem('pneuma.targetsPanel.compact') === '1'; } catch { return false; } });
+  const toggleCompact = () => setCompact((c) => { try { localStorage.setItem('pneuma.targetsPanel.compact', c ? '0' : '1'); } catch { /* ignore */ } return !c; });
   const wpp = Number(wordsPerPage) || 250;
   const current = measure({ words: draftWords || 0, chars: draftChars ?? Math.round((draftWords || 0) * 6) }, draftType, wpp);
   const draftNow = draftValue != null && draftType === (t.draftType || 'Words') && wpp === (Number(t.wordsPerPage) || 250) ? draftValue : current;

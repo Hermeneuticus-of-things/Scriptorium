@@ -238,4 +238,4 @@ export function keywordTreeRows(keywords, collapsed = {}) {
   return out;
 }
 
-export const KEYWORD_MIME = 'text/x-scribner-keyword';
+export const KEYWORD_MIME = 'text/x-pneuma-keyword';

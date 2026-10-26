@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Scribner MCP server: lets AI agents (Claude Code, Claude Desktop, any MCP
-// client) read and edit Scribner projects.
+// Pneuma Sofer MCP server: lets AI agents (Claude Code, Claude Desktop, any MCP
+// client) read and edit Pneuma Sofer projects.
 //
 //   node mcp/server.mjs --project "D:\Carti\Drumul spre munte.scribner" [--project …] [--read-only]
 //
@@ -51,7 +51,7 @@ const AGENT_WHO = { name: AGENT, color: '#7a7a7a', machine: AGENT };
 const writeDocPlain = store.writeDoc;
 store.writeDoc = (dir, id, kind, html) => {
   const logged = kind === 'docs' && fs.existsSync(path.join(dir, 'team'));
-  // A document a person locked (Scribner, lock button) is not written by the agent either.
+  // A document a person locked (Pneuma Sofer, lock button) is not written by the agent either.
   if (logged) {
     const lock = readPeers(teamStore.teamFiles(dir)).locks[id];
     if (lock) throw new Error(`Documentul e blocat de ${lock.who} (lucru în echipă); nu l-am modificat. Cere-i să-l deblocheze sau lucrează la alt document.`);
@@ -102,7 +102,7 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] === '--token' && args[i + 1]) httpToken = args[++i];
 }
 for (const p of (process.env.SCRIBNER_PROJECTS || '').split(path.delimiter).filter(Boolean)) projects.push(path.resolve(p));
-// No --project: the projects in Scribner's recent list (on this computer), so one general command
+// No --project: the projects in Pneuma Sofer's recent list (on this computer), so one general command
 // works for everyone and names no book. Missing folders are skipped.
 if (!projects.length) {
   const recent = (() => {
@@ -118,12 +118,12 @@ if (!projects.length) {
   }
 }
 if (!projects.length) {
-  process.stderr.write('Niciun proiect: deschide unul în Scribner (intră în lista recentă) sau dă --project <cale către proiect.scribner> [--project …] [--read-only]\n');
+  process.stderr.write('Niciun proiect: deschide unul în Pneuma Sofer (intră în lista recentă) sau dă --project <cale către proiect.scribner> [--project …] [--read-only]\n');
   process.exit(2);
 }
 for (const p of projects) {
   if (!fs.existsSync(path.join(p, 'project.json'))) {
-    process.stderr.write(`Nu e un proiect Scribner: ${p}\n`);
+    process.stderr.write(`Nu e un proiect Pneuma Sofer: ${p}\n`);
     process.exit(2);
   }
 }
@@ -132,9 +132,9 @@ for (const p of projects) {
 // Read only; SCRIBNER_USER_DATA overrides it (portable installs, tests).
 function defaultUserData() {
   const home = process.env.HOME || process.env.USERPROFILE || '';
-  if (process.platform === 'win32') return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Scribner');
-  if (process.platform === 'darwin') return path.join(home, 'Library', 'Application Support', 'Scribner');
-  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'Scribner');
+  if (process.platform === 'win32') return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Pneuma Sofer');
+  if (process.platform === 'darwin') return path.join(home, 'Library', 'Application Support', 'Pneuma Sofer');
+  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'Pneuma Sofer');
 }
 const userData = process.env.SCRIBNER_USER_DATA ? path.resolve(process.env.SCRIBNER_USER_DATA) : defaultUserData();
 function readJson(file, def) {
@@ -358,10 +358,10 @@ function addProject(dir) {
 // What the client tells the model about this server: the book projects it can reach, and that a
 // `.scriv` project can also be read in place (scriv_outline / scriv_read) or imported (import_scriv).
 const server = new McpServer(
-  { name: 'scribner', version: '0.3.0' },
+  { name: 'pneuma', version: '0.3.0' },
   {
     instructions:
-      'Scribner: program de scris cărți lungi. Unelte pentru proiectele .scribner date la pornire sau din lista recentă (argumentul project = numele sau calea; project_info, list_binder, read_document, write_document, search, compile…). Un proiect Scrivener (.scriv) se citește pe loc cu scriv_outline și scriv_read sau se importă cu import_scriv. Fiecare scriere face întâi un snapshot.',
+      'Pneuma Sofer: program de scris cărți lungi. Unelte pentru proiectele .scribner date la pornire sau din lista recentă (argumentul project = numele sau calea; project_info, list_binder, read_document, write_document, search, compile…). Un proiect Scrivener (.scriv) se citește pe loc cu scriv_outline și scriv_read sau se importă cu import_scriv. Fiecare scriere face întâi un snapshot.',
   },
 );
 
@@ -852,19 +852,19 @@ server.registerResource(
 );
 
 // The projects this server can reach (names and folders), for clients that read resources first.
-server.registerResource('projects', 'scribner://projects', { title: 'Proiecte', description: 'Proiectele Scribner disponibile în această sesiune', mimeType: 'application/json' }, async (uri) => ({
+server.registerResource('projects', 'scribner://projects', { title: 'Proiecte', description: 'Proiectele Pneuma Sofer disponibile în această sesiune', mimeType: 'application/json' }, async (uri) => ({
   contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(projects.map((d) => ({ name: path.basename(d).replace(/\.scribner$/i, ''), dir: d, title: (() => { try { return load(d).title; } catch { return ''; } })() })), null, 2) }],
 }));
 
 // A short guide for the agent: how the work is organised and what is safe (read when unsure).
-server.registerResource('ghid', 'scribner://ghid', { title: 'Ghid pentru agent', description: 'Cum lucrezi cu proiectele Scribner prin acest server', mimeType: 'text/markdown' }, async (uri) => ({
+server.registerResource('ghid', 'scribner://ghid', { title: 'Ghid pentru agent', description: 'Cum lucrezi cu proiectele Pneuma Sofer prin acest server', mimeType: 'text/markdown' }, async (uri) => ({
   contents: [{ uri: uri.href, mimeType: 'text/markdown', text: [
-    '# Scribner: ghid pentru agent',
+    '# Pneuma Sofer: ghid pentru agent',
     '- Proiectele: resursa scribner://projects; argumentul `project` = numele sau calea (implicit primul).',
     '- Structura: `list_binder` (Manuscris, Cercetare, Coș). Textul: `read_document` (format manuscript, html sau text).',
     '- Caută: `search`; înlocuiește: `replace` (sare documentele blocate de colegi).',
     '- Scrie: `write_document`, `set_notes`, `set_metadata`, `add_comment`. Fiecare scriere face întâi un snapshot; `restore_snapshot` o anulează.',
-    '- Proiecte .scriv: `scriv_outline`, `scriv_read`, `scriv_search` pe loc; `import_scriv` le transformă în proiecte Scribner.',
+    '- Proiecte .scriv: `scriv_outline`, `scriv_read`, `scriv_search` pe loc; `import_scriv` le transformă în proiecte Pneuma Sofer.',
     '- Ce faci e notat în agent-log.jsonl din proiect. Cu --read-only uneltele de scriere sunt refuzate.',
     '- Nu scrie fără acordul autorului: propune întâi, aplică doar ce a aprobat.',
   ].join('\n') }],
@@ -876,7 +876,7 @@ const promptText = (text) => ({ messages: [{ role: 'user', content: { type: 'tex
 server.registerPrompt(
   'revizie_capitol',
   { title: 'Revizuiește un capitol', description: 'Citește un capitol, propune corecturi de stil și le aplică doar după confirmare.', argsSchema: { titlu: z.string().describe('Titlul capitolului din binder') } },
-  ({ titlu }) => promptText(`În proiectul Scribner, găsește cu list_binder documentul sau dosarul „${titlu}”, citește-l cu read_document și propune corecturi (gramatică, repetiții, ritm), fiecare cu fragmentul exact. Nu scrie nimic până nu confirm; după confirmare aplică doar ce am aprobat, cu replace sau write_document (fiecare scriere face snapshot).`),
+  ({ titlu }) => promptText(`În proiectul Pneuma Sofer, găsește cu list_binder documentul sau dosarul „${titlu}”, citește-l cu read_document și propune corecturi (gramatică, repetiții, ritm), fiecare cu fragmentul exact. Nu scrie nimic până nu confirm; după confirmare aplică doar ce am aprobat, cu replace sau write_document (fiecare scriere face snapshot).`),
 );
 server.registerPrompt(
   'rezumat_proiect',
@@ -948,6 +948,6 @@ async function serveHttp() {
     });
   });
   await new Promise((resolve) => srv.listen(httpPort, httpHost, resolve));
-  process.stderr.write(`Scribner MCP pe http://${httpHost}:${httpPort}/mcp\n`);
+  process.stderr.write(`Pneuma Sofer MCP pe http://${httpHost}:${httpPort}/mcp\n`);
 }
-process.stderr.write(`Scribner MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);
+process.stderr.write(`Pneuma Sofer MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);

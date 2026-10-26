@@ -1,11 +1,11 @@
-# Scribner: instalare dintr-o singură comandă (Windows PowerShell 5.1 sau PowerShell 7).
+# Pneuma Sofer: instalare dintr-o singură comandă (Windows PowerShell 5.1 sau PowerShell 7).
 #
 #   irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex
 #
 # Ia ultima versiune publicată (Releases), verifică amprenta SHA-256 a fișierului cu cea publicată
 # de GitHub și pornește installerul. Fără drepturi de administrator (instalare pentru utilizatorul curent).
 # Opțiuni prin variabile de mediu, puse înainte de comandă:
-#   $env:SCRIBNER_PATH = '1'       adaugă și comanda `scribner` în PATH
+#   $env:SCRIBNER_PATH = '1'       adaugă și comanda `pneuma` în PATH
 #   $env:SCRIBNER_SILENT = '1'     instalare fără ferestre
 #   $env:SCRIBNER_PORTABLE = '1'   descarcă varianta portabilă pe Desktop, fără instalare
 #   $env:SCRIBNER_VERSION = 'v0.8.7'  o anumită versiune în loc de ultima
@@ -18,14 +18,14 @@ $ProgressPreference = 'SilentlyContinue'   # Invoke-WebRequest e mult mai rapid 
 
 $Repo = 'Hermeneuticus-of-things/Scriptorium'
 
-function Say($text) { Write-Host "Scribner: $text" }
+function Say($text) { Write-Host "Pneuma Sofer: $text" }
 
 if ($env:OS -ne 'Windows_NT') { throw 'Scriptul de instalare e doar pentru Windows. Pe alte sisteme, vezi README (din cod sursă).' }
 
 $tag = $env:SCRIBNER_VERSION
 $api = if ($tag) { "https://api.github.com/repos/$Repo/releases/tags/$tag" } else { "https://api.github.com/repos/$Repo/releases/latest" }
 Say 'caut ultima versiune...'
-$headers = @{ 'User-Agent' = 'scribner-install'; 'Accept' = 'application/vnd.github+json' }
+$headers = @{ 'User-Agent' = 'pneuma-install'; 'Accept' = 'application/vnd.github+json' }
 if ($env:GITHUB_TOKEN) { $headers['Authorization'] = "Bearer $($env:GITHUB_TOKEN)" }
 try {
   $release = Invoke-RestMethod -Uri $api -Headers $headers
@@ -35,18 +35,18 @@ try {
 }
 
 $portable = $env:SCRIBNER_PORTABLE -eq '1'
-$pattern = if ($portable) { '^Scribner-.*-portabil\.exe$' } else { '^Scribner-Setup-.*\.exe$' }
+$pattern = if ($portable) { '^PneumaSofer-.*-portabil\.exe$' } else { '^PneumaSofer-Setup-.*\.exe$' }
 $asset = $release.assets | Where-Object { $_.name -match $pattern } | Select-Object -First 1
 if (-not $asset) { throw "Nu am găsit fișierul de instalare în versiunea $($release.tag_name)." }
 
-$dir = if ($portable) { [Environment]::GetFolderPath('Desktop') } else { Join-Path $env:TEMP 'scribner-install' }
+$dir = if ($portable) { [Environment]::GetFolderPath('Desktop') } else { Join-Path $env:TEMP 'pneuma-install' }
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
 $file = Join-Path $dir $asset.name
 
 Say "descarc $($asset.name) ($([math]::Round($asset.size / 1MB)) MB)..."
 if ($env:GITHUB_TOKEN) {
   # Private repository: the asset comes from the API with the token, as a binary stream.
-  $dl = @{ 'User-Agent' = 'scribner-install'; 'Accept' = 'application/octet-stream'; 'Authorization' = "Bearer $($env:GITHUB_TOKEN)" }
+  $dl = @{ 'User-Agent' = 'pneuma-install'; 'Accept' = 'application/octet-stream'; 'Authorization' = "Bearer $($env:GITHUB_TOKEN)" }
   Invoke-WebRequest -Uri $asset.url -Headers $dl -OutFile $file -UseBasicParsing
 } else {
   Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $file -UseBasicParsing
@@ -78,4 +78,4 @@ $p = Start-Process -FilePath $file -ArgumentList $setupArgs -Wait -PassThru
 Remove-Item $file -Force -ErrorAction SilentlyContinue
 if ($p.ExitCode -ne 0) { throw "Installerul s-a oprit (cod $($p.ExitCode))." }
 Say 'instalat. Îl găsești în meniul Start și pe Desktop.'
-if ($env:SCRIBNER_PATH -eq '1') { Say 'deschide un terminal nou și scrie: scribner help' }
+if ($env:SCRIBNER_PATH -eq '1') { Say 'deschide un terminal nou și scrie: pneuma help' }

@@ -3,13 +3,13 @@ import { t } from '../lib/i18n.js';
 
 // AI → Conectează la Claude (MCP): gives an AI client (Claude Desktop/Code, Cursor, Gemini CLI,
 // OpenCode, Windsurf, VS Code, Codex) access to the open project through the MCP server shipped with
-// the app. Scribner runs the server itself (no Node.js). Detected clients are offered first, each
+// the app. Pneuma Sofer runs the server itself (no Node.js). Detected clients are offered first, each
 // with a one-click "add" that writes/merges that client's own config file (with a backup).
 export default function McpConnectDialog({ api, dir, onClose }) {
   const [readOnly, setReadOnly] = useState(false);
   const [info, setInfo] = useState(null);
   const [msg, setMsg] = useState('');
-  // No project in the command/config: the agent sees the projects in Scribner's recent list, so the
+  // No project in the command/config: the agent sees the projects in Pneuma Sofer's recent list, so the
   // same line can be shared or pasted into any client without naming the book or the computer.
   const opts = { projects: [], readOnly };
 

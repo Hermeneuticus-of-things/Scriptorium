@@ -1,8 +1,8 @@
 # Audit 5 — plan de lucru durabil (paritate completă cu programul clasic)
 
-**Scop:** Scribner să aibă tot ce are programul clasic de referință, ca interfață și comportament.
+**Scop:** Pneuma Sofer să aibă tot ce are programul clasic de referință, ca interfață și comportament.
 **Metodă:** referințele se culeg din resursele binare (traduceri `.qm`, format de fișier, formate compile),
-ca text — observație, nu copiere. Implementarea e proprie (Electron/React/TipTap). Extrasele Scribner
+ca text — observație, nu copiere. Implementarea e proprie (Electron/React/TipTap). Extrasele Pneuma Sofer
 (AI, MCP, dictare, RAG) rămân. Fără capturi de ecran (costă tokeni) — se citesc fișierele.
 
 **Regim de lucru:** autonom. Nu se cere OK între pași. Se bifează aici și se face commit pe
@@ -10,14 +10,14 @@ ca text — observație, nu copiere. Implementarea e proprie (Electron/React/Tip
 „UNDE AM RĂMAS" și se continuă.
 
 **Unelte audit** (`scripts/ui-audit/`): `extract-qm.py` (inventar din .qm → tsv), `coverage.cjs`
-(cross-check clasic vs i18n Scribner), `drive-classic-d3.ps1` + PrintWindow + `ocr.ps1` (Tesseract) pentru
+(cross-check clasic vs i18n Pneuma Sofer), `drive-classic-d3.ps1` + PrintWindow + `ocr.ps1` (Tesseract) pentru
 captură pe Desktop 3 când chiar e nevoie de vizual. Inventarul extras: `%TEMP%\ua\scriv-strings.tsv`
 (6702 etichete, 357 componente SCR*).
 
 ---
 
 ## STARE: AUDIT COMPLET (2026-10-25)
-Toate punctele planului sunt rezolvate. Scribner e la paritate sau superset cu programul clasic pe toate
+Toate punctele planului sunt rezolvate. Pneuma Sofer e la paritate sau superset cu programul clasic pe toate
 componentele feature. 5 goluri reale găsite și reparate cu teste; pachetul P2/P3 (editor format Compile)
 implementat integral. 1330+ teste trec. Rămân doar lucruri native/irelevante (licențiere, update, tipărire
 nativă, randare) sau rafinamente niche notate ca atare.
@@ -27,7 +27,7 @@ nativă, randare) sau rafinamente niche notate ca atare.
 ## UNDE AM RĂMAS
 - [x] **P2/P3 — editorul de format Compile** — FĂCUT în esență (motor integrat + UI). Vezi defalcarea.
   Rămas opțional: opțiuni markdown/LaTeX/HTML per ieșire, script settings, RTF compat (rafinamente).
-- [x] **Toate dialogurile verificate** — vezi mai jos. Toate au echivalent în Scribner (paritate/superset).
+- [x] **Toate dialogurile verificate** — vezi mai jos. Toate au echivalent în Pneuma Sofer (paritate/superset).
   **AUDIT COMPLET.** Goluri reale găsite în tot auditul: 5, toate reparate (Curățare text, Deschide folder
   backup, filtre generator nume, Find-by-formatting linkuri/imagini/tabele, CSS personalizat HTML/EPUB).
 
@@ -37,7 +37,7 @@ nativă, randare) sau rafinamente niche notate ca atare.
 - [x] Meniuri → submeniul „Curățare text" (`editorMenus.js`, `tests/textTidy.test.js`).
 - [x] Opțiuni → butonul „Deschide folderul de backup" (`main.cjs`, `backup.cjs effectiveBackupDir`).
 
-## Paritate confirmată (verificat pe inventar/cod — Scribner are deja)
+## Paritate confirmată (verificat pe inventar/cod — Pneuma Sofer are deja)
 - [x] Inspector (toate tab-urile: Note, Metadate, Semne, Snapshots, Comentarii) — superset.
 - [x] Format (versale mici, versale, indentări granulare, tab stops, conversii note↔comentarii).
 - [x] Corecturi (smart quotes/dashes/ellipsis + fracții, capitalizare, auto-replace).
@@ -48,7 +48,7 @@ nativă, randare) sau rafinamente niche notate ca atare.
 ---
 
 ## P2/P3 — editorul de format Compile (defalcare pe referință)
-Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe măsură ce faci.
+Sub-componente clasice (din inventar) și ce trebuie în Pneuma Sofer. Bifează pe măsură ce faci.
 - [x] **Integrare motor** din `wip/p2-p3-compile` (compileLayouts.cjs, placeholders.cjs, compile.cjs), teste verzi.
 - [x] **Section Layouts** (`SCRCompileFormatSectionLayouts`, `SCRSectionLayoutEditor`): per tip de secțiune —
   arată titlu, prefix/sufix titlu, caz titlu, aliniere, pagină nouă înainte, arată text, separator înainte,
@@ -73,7 +73,7 @@ Sub-componente clasice (din inventar) și ce trebuie în Scribner. Bifează pe m
 - [x] **Markup / HTML / CSS / LaTeX** — CSS personalizat (HTML/EPUB) expus în UI (nou); LaTeX/Pandoc/
   MultiMarkdown ca ieșiri (`advancedExport.cjs`); markdownSettings/yamlFrontMatter în motor.
 - [x] **Transformations** (`SCRCompileFormatTransformations`): majuscule, ghilimele, etc. la compilare.
-- [x] **Statistics** — `compileLayouts.statistics()` în motor. **RTF compat** — N-A (Scribner nu compilează în RTF; are import RTF).
+- [x] **Statistics** — `compileLayouts.statistics()` în motor. **RTF compat** — N-A (Pneuma Sofer nu compilează în RTF; are import RTF).
 - [x] **Assign Section Layouts** (`SCRAssignSectionLayoutsDialog`): maparea tip secțiune → layout.
 - [x] **UI**: editat in CompileDialog (asezari + stiluri + separatoare + comentarii); un CompileLayoutEditor.jsx separat ramane optional (nou), scos din `CompileDialog.jsx`; i18n ro+en; teste.
 
@@ -85,7 +85,7 @@ Legendă: `[x]` paritate confirmată · `[~]` parțial/în lucru · `[ ]` de ver
 
 CONCLUZIE SWEEP: pe toate componentele mari verificate (meniuri, Format, Opțiuni+sub-tab-uri, Inspector,
 Compile+editor, Corecturi, Corkboard, Scratchpad, Ținte, Generator de nume, Import+Split, Setări proiect,
-Scenariu) Scribner e la PARITATE sau SUPERSET. Goluri reale în tot auditul: 4, toate reparate (Curățare text, Deschide folder backup, filtre
+Scenariu) Pneuma Sofer e la PARITATE sau SUPERSET. Goluri reale în tot auditul: 4, toate reparate (Curățare text, Deschide folder backup, filtre
 generator nume, Find-by-formatting: linkuri/imagini/tabele). Restul componentelor mici/native: irelevante.
 
 Notă: multe „de verificat" se vor dovedi paritate (pattern constant). Se verifică pe cod/inventar, nu cu

@@ -111,7 +111,7 @@ export default function AppearancePane({ s, setS, set, comp, setComp, pickBgImag
         const th = parseTheme(String(r.result));
         applyTheme({ values: th.values, name: th.name });
         setThemeName(th.name);
-        setS((p) => ({ ...p, savedThemes: [...(p.savedThemes || []).filter((x) => x.name !== th.name), { format: 'scribner-theme', version: 1, ...th }] }));
+        setS((p) => ({ ...p, savedThemes: [...(p.savedThemes || []).filter((x) => x.name !== th.name), { format: 'pneuma-theme', version: 1, ...th }] }));
         setThemeSel(th.name);
         setMsg(t('ui.look.tema_importata', { name: th.name }));
       } catch {

@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const store = require('../lib/store.cjs');
 const bundle = require('../lib/bundle.cjs');
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-bundle-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-bundle-'));
 
 describe('project bundle (desktop)', () => {
   it('round-trips docs, notes and snapshots', () => {

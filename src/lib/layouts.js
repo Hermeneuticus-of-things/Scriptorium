@@ -1,7 +1,7 @@
 // Window > Layouts: what a layout keeps, export/import as a file, and a schematic thumbnail.
 
-export const LAYOUT_FILE_KIND = 'scribner-layout';
-export const OUTLINER_COLUMNS_KEY = 'scribner-outline-columns';
+export const LAYOUT_FILE_KIND = 'pneuma-layout';
+export const OUTLINER_COLUMNS_KEY = 'pneuma-outline-columns';
 
 /**
  * Builds a layout from the window state. `state` holds: view, showInspector, showAi, showEditorial,

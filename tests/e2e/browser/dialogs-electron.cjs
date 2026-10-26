@@ -12,7 +12,7 @@ try {
 } catch {
   ({ _electron } = require(process.env.PLAYWRIGHT_PATH || '/opt/node22/lib/node_modules/playwright'));
 }
-const W = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-dlg-'));
+const W = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-dlg-'));
 const OUT = process.argv[2] || path.join(W, 'shots');
 fs.mkdirSync(OUT, { recursive: true });
 const ROOT = path.join(__dirname, '..', '..', '..');

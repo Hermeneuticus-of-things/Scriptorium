@@ -1,8 +1,8 @@
-// Generic deterministic diff of two captured scenes (any window/dialog/panel), classic vs Scribner.
+// Generic deterministic diff of two captured scenes (any window/dialog/panel), classic vs Pneuma Sofer.
 // Flattens both trees (flatten.cjs), matches elements by role + normalized name (+ aliases.json),
-// and reports: missing (in classic, absent in Scribner), extra (only in Scribner), shortcut/state/value
+// and reports: missing (in classic, absent in Pneuma Sofer), extra (only in Pneuma Sofer), shortcut/state/value
 // differences, and order of same-role siblings. Output feeds the per-scene judgment agents.
-// Usage: node element-diff.cjs <classicDir> <scribnerDir> [--json]
+// Usage: node element-diff.cjs <classicDir> <pneumaDir> [--json]
 //   dirs hold scene*.json / tab*.json / insp*.json / ctx-*.json from one scene; all are merged.
 const fs = require('fs');
 const path = require('path');
@@ -45,8 +45,8 @@ function match(r, items) {
   let score = 0; for (const i of items) { const s = overlap(want, i.n); if (s > score) { best = i; score = s; } }
   return score >= 0.78 ? best : null;
 }
-function diff(classicDir, scribnerDir) {
-  const R = elements(classicDir), N = elements(scribnerDir);
+function diff(classicDir, pneumaDir) {
+  const R = elements(classicDir), N = elements(pneumaDir);
   const rows = [];
   const used = new Set();
   for (const r of R) {
@@ -60,11 +60,11 @@ function diff(classicDir, scribnerDir) {
     if (r.checked !== m.checked) rows.push({ kind: 'bifă', el: `${r.role} "${r.name}"`, detail: `${r.checked ? 'bifat' : 'nebifat'} ≠ ${m.checked ? 'bifat' : 'nebifat'}` });
     if (r.value && m.value && norm(r.value) !== norm(m.value)) rows.push({ kind: 'valoare', el: `${r.role} "${r.name}"`, detail: `${r.value} ≠ ${m.value}` });
   }
-  return { rows, classicCount: R.length, scribnerCount: N.length, matched: used.size };
+  return { rows, classicCount: R.length, pneumaCount: N.length, matched: used.size };
 }
 module.exports = { diff, elements };
 if (require.main === module) {
   const r = diff(process.argv[2], process.argv[3]);
   if (process.argv.includes('--json')) console.log(JSON.stringify(r, null, 2));
-  else { for (const x of r.rows) console.log(`${x.kind}\t${x.el}\t${x.detail}`); console.error(`${r.rows.length} diferențe; clasic ${r.classicCount}, scribner ${r.scribnerCount}, potrivite ${r.matched}`); }
+  else { for (const x of r.rows) console.log(`${x.kind}\t${x.el}\t${x.detail}`); console.error(`${r.rows.length} diferențe; clasic ${r.classicCount}, pneuma ${r.scribnerCount}, potrivite ${r.matched}`); }
 }

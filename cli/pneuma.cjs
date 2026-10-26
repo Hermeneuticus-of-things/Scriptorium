@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
-// Scribner command line interface. Uses the same lib/ modules as the app; never duplicates them.
-//   node cli/scribner.cjs help
-// Installed app (no Node.js needed): ELECTRON_RUN_AS_NODE=1 Scribner.exe resources/app/cli/scribner.cjs …
+// Pneuma Sofer command line interface. Uses the same lib/ modules as the app; never duplicates them.
+//   node cli/pneuma.cjs help
+// Installed app (no Node.js needed): ELECTRON_RUN_AS_NODE=1 Pneuma Sofer.exe resources/app/cli/pneuma.cjs …
 // Exit codes: 0 ok, 1 error, 2 bad usage.
 // Read-only commands never take the project lock; commands that change the project run under
 // store.withProjectLock (the same lock the app window and the MCP server use).
@@ -24,9 +24,9 @@ const VERSION = (() => {
 const MSG = {
   ro: {
     usage: 'Folosire greșită',
-    unknownCommand: (c) => `Comandă necunoscută: ${c}. Vezi „scribner help”.`,
+    unknownCommand: (c) => `Comandă necunoscută: ${c}. Vezi „pneuma help”.`,
     needProject: 'Lipsește calea proiectului (.scribner).',
-    notProject: (p) => `Nu e un proiect Scribner: ${p}`,
+    notProject: (p) => `Nu e un proiect Pneuma Sofer: ${p}`,
     needArg: (a) => `Lipsește argumentul: ${a}`,
     needOut: 'Lipsește folderul/fișierul de ieșire (-o).',
     badValue: (o, v, ok) => `Valoare invalidă pentru ${o}: ${v} (permise: ${ok})`,
@@ -36,7 +36,7 @@ const MSG = {
     badRegex: 'Expresie regulată invalidă.',
     noPreset: (p) => `Format de compilare necunoscut: ${p}`,
     pdfNeedsApp:
-      'PDF-ul se produce doar din aplicația Scribner (Compile → PDF), fiindcă are nevoie de motorul de randare al ferestrei. Din linia de comandă folosește --format html (deschide-l în browser și tipărește ca PDF) sau --format docx.',
+      'PDF-ul se produce doar din aplicația Pneuma Sofer (Compile → PDF), fiindcă are nevoie de motorul de randare al ferestrei. Din linia de comandă folosește --format html (deschide-l în browser și tipărește ca PDF) sau --format docx.',
     written: (f) => `Scris: ${f}`,
     files: (n, d) => `${n} fișiere în ${d}`,
     words: 'cuvinte',
@@ -66,9 +66,9 @@ const MSG = {
   },
   en: {
     usage: 'Bad usage',
-    unknownCommand: (c) => `Unknown command: ${c}. See "scribner help".`,
+    unknownCommand: (c) => `Unknown command: ${c}. See "pneuma help".`,
     needProject: 'Missing project path (.scribner).',
-    notProject: (p) => `Not a Scribner project: ${p}`,
+    notProject: (p) => `Not a Pneuma Sofer project: ${p}`,
     needArg: (a) => `Missing argument: ${a}`,
     needOut: 'Missing output folder/file (-o).',
     badValue: (o, v, ok) => `Invalid value for ${o}: ${v} (allowed: ${ok})`,
@@ -78,7 +78,7 @@ const MSG = {
     badRegex: 'Invalid regular expression.',
     noPreset: (p) => `Unknown compile format: ${p}`,
     pdfNeedsApp:
-      'PDF is produced only from the Scribner app (Compile → PDF), since it needs the window rendering engine. From the command line use --format html (open it in a browser and print to PDF) or --format docx.',
+      'PDF is produced only from the Pneuma Sofer app (Compile → PDF), since it needs the window rendering engine. From the command line use --format html (open it in a browser and print to PDF) or --format docx.',
     written: (f) => `Written: ${f}`,
     files: (n, d) => `${n} files in ${d}`,
     words: 'words',
@@ -109,9 +109,9 @@ const MSG = {
 };
 
 function HELP_RO() {
-  return `Scribner ${VERSION} — linia de comandă
+  return `Pneuma Sofer ${VERSION} — linia de comandă
 
-Folosire: scribner <comandă> [argumente] [opțiuni]
+Folosire: pneuma <comandă> [argumente] [opțiuni]
 
 Citire (nu blochează proiectul):
   info <proiect> [--json]                    titlu, autor, numărători, cuvinte, ultima modificare
@@ -145,9 +145,9 @@ Coduri de ieșire: 0 reușit, 1 eroare, 2 folosire greșită.
 }
 
 function HELP_EN() {
-  return `Scribner ${VERSION} — command line
+  return `Pneuma Sofer ${VERSION} — command line
 
-Usage: scribner <command> [arguments] [options]
+Usage: pneuma <command> [arguments] [options]
 
 Reading (never locks the project):
   info <project> [--json]                    title, author, counts, words, last modified
@@ -762,7 +762,7 @@ const commands = {
     const dirs = pos.map(resolveProject);
     const args = [path.join(ROOT, 'mcp', 'server.mjs'), ...dirs.flatMap((d) => ['--project', d]), ...(opt['--read-only'] ? ['--read-only'] : [])];
     const { spawn } = require('child_process');
-    // process.execPath is node, or Scribner.exe with ELECTRON_RUN_AS_NODE=1 (kept in env).
+    // process.execPath is node, or Pneuma Sofer.exe with ELECTRON_RUN_AS_NODE=1 (kept in env).
     const child = spawn(process.execPath, args, { stdio: 'inherit', env: process.env });
     return new Promise((resolve) => {
       for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => child.kill(sig));

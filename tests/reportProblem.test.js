@@ -79,7 +79,7 @@ describe('report building', () => {
     expect(body.startsWith(got.split('\n\n…')[0])).toBe(true);
   });
   it('mailto', () => {
-    expect(buildMailto('a@b.ro', 'T', 'x')).toBe('mailto:a@b.ro?subject=%5BScribner%5D%20T&body=x');
+    expect(buildMailto('a@b.ro', 'T', 'x')).toBe('mailto:a@b.ro?subject=%5BPneuma%20Sofer%5D%20T&body=x');
   });
 });
 

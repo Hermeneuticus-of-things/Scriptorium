@@ -96,7 +96,7 @@ function Keywords({ value, all, onChange }) {
 }
 
 // One collapsible group of the Details tab: only what the writer opened stays open (remembered).
-const SECTIONS_KEY = 'scribner-inspector-sections';
+const SECTIONS_KEY = 'pneuma-inspector-sections';
 function Section({ id, title, open: openByDefault = false, children }) {
   const [open, setOpen] = useState(() => {
     try {
@@ -382,7 +382,7 @@ export default function Inspector({
 // Comments and footnotes of the document in ONE list, in text order (as in the classic
 // Inspector's "Comments & Footnotes" pane): + Comment / + Footnote add at the cursor, a click
 // on an item jumps to its place in the text, the note text is edited in place.
-const ANNOT_FILTER_KEY = 'scribner-annot-filter';
+const ANNOT_FILTER_KEY = 'pneuma-annot-filter';
 function AnnotationsPane({ items, editable, canAdd, authorName, onAdd, onJump, onEdit, onDelete }) {
   const [editingKey, setEditingKey] = useState(null);
   const [pending, setPending] = useState(null); // kind just added: its new (empty) item opens for editing
@@ -655,7 +655,7 @@ function CustomFields({ project, node, onPatch }) {
 export const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥', '🧭', '🗝️', '📌', '🕯️', '🌿', '🌊', '⛰️', '🏛️', '👤', '👥', '🗺️', '📅', '🔬', '📚', '✉️', '🎭'];
 
 // Icon, section type, lock, favorite and bookmarks (Scrivener: Inspector > Bookmarks).
-const BM_SCOPE_KEY = 'scribner-bookmarks-scope';
+const BM_SCOPE_KEY = 'pneuma-bookmarks-scope';
 function CustomIconImg({ api, dir, file }) {
   const [url, setUrl] = useState(null);
   useEffect(() => {

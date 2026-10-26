@@ -1,4 +1,4 @@
-# Windows build: Inno Setup installer wizard (Scribner-Setup-<version>.exe) and portable .exe.
+# Windows build: Inno Setup installer wizard (PneumaSofer-Setup-<version>.exe) and portable .exe.
 # Runs on every PR to main and on pushes to main (artifacts). Publishes a GitHub Release for v* tags and,
 # on main, for the version in package.json when no release v<version> exists yet (tag created by gh).
 name: Windows
@@ -57,19 +57,19 @@ jobs:
       - name: Installer wizard
         run: npm run dist:win:setup
 
-      # The single installer really installs everything: app, MCP server and the `scribner` command on PATH.
+      # The single installer really installs everything: app, MCP server and the `pneuma` command on PATH.
       - name: Silent install + CLI check
         shell: pwsh
         run: |
-          $setup = Get-ChildItem release\Scribner-Setup-*.exe | Select-Object -First 1
+          $setup = Get-ChildItem release\PneumaSofer-Setup-*.exe | Select-Object -First 1
           $p = Start-Process $setup.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/MERGETASKS=addtopath' -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "installer exit $($p.ExitCode)" }
-          $app = Join-Path $env:LOCALAPPDATA 'Programs\Scribner'
-          foreach ($f in 'Scribner.exe','scribner.cmd','scribner-mcp.cmd','resources\app\build\icon.ico','resources\app\cli\scribner.cjs','resources\app\mcp\server.mjs') { if (-not (Test-Path (Join-Path $app $f))) { throw "missing $f" } }
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\Pneuma Sofer'
+          foreach ($f in 'Pneuma Sofer.exe','pneuma.cmd','pneuma-mcp.cmd','resources\app\build\icon.ico','resources\app\cli\pneuma.cjs','resources\app\mcp\server.mjs') { if (-not (Test-Path (Join-Path $app $f))) { throw "missing $f" } }
           $userPath = [Environment]::GetEnvironmentVariable('Path','User')
           if ($userPath -notlike "*$app*") { throw 'install folder not added to PATH' }
-          & (Join-Path $app 'scribner.cmd') --version
-          if ($LASTEXITCODE -ne 0) { throw "scribner --version exit $LASTEXITCODE" }
+          & (Join-Path $app 'pneuma.cmd') --version
+          if ($LASTEXITCODE -ne 0) { throw "pneuma --version exit $LASTEXITCODE" }
 
       # One-line web install (irm … | iex): the script parses in Windows PowerShell 5.1 and, in dry-run mode,
       # finds the latest release and checks the published SHA-256.
@@ -87,7 +87,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Scribner-Windows
+          name: Pneuma Sofer-Windows
           path: |
             release/*.exe
           if-no-files-found: error
@@ -104,7 +104,7 @@ jobs:
           sparse-checkout: package.json
       - uses: actions/download-artifact@v4
         with:
-          name: Scribner-Windows
+          name: Pneuma Sofer-Windows
           path: release
       - name: Publish GitHub Release
         env:
@@ -121,4 +121,4 @@ jobs:
           fi
           # Checksums for the in-app updater and for anyone verifying a download by hand.
           (cd release && sha256sum *.exe > SHA256SUMS)
-          gh release create "$TAG" release/*.exe release/SHA256SUMS --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Scribner $TAG" --generate-notes
+          gh release create "$TAG" release/*.exe release/SHA256SUMS --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Pneuma Sofer $TAG" --generate-notes

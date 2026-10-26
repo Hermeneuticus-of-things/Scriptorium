@@ -79,7 +79,7 @@ export function createMockApi() {
   const state = { settings: { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true, hasApiKey: !noKey, aiLabel: 'Demo (simulat)', aiModel: 'demo-local' }, projects: {} };
   // Customized toolbars survive a page reload in the demo (the desktop app keeps them in settings.json).
   try {
-    const tb = JSON.parse(localStorage.getItem('scribner-demo-toolbars') || 'null');
+    const tb = JSON.parse(localStorage.getItem('pneuma-demo-toolbars') || 'null');
     if (tb) state.settings.toolbars = tb;
   } catch { /* storage unavailable */ }
   let pageSetupDefault = null; // File > Page Setup default (desktop: userData/page-setup.json)
@@ -93,14 +93,14 @@ export function createMockApi() {
   });
   const demoChats = (dir) => {
     try {
-      return JSON.parse(localStorage.getItem(`scribner-demo-chats:${dir}`) || '[]');
+      return JSON.parse(localStorage.getItem(`pneuma-demo-chats:${dir}`) || '[]');
     } catch {
       return [];
     }
   };
   const saveDemoChats = (dir, list) => {
     try {
-      localStorage.setItem(`scribner-demo-chats:${dir}`, JSON.stringify(list));
+      localStorage.setItem(`pneuma-demo-chats:${dir}`, JSON.stringify(list));
     } catch {
       /* storage unavailable */
     }
@@ -306,7 +306,7 @@ export function createMockApi() {
       if (apiKey !== undefined) state.settings.hasApiKey = Boolean(apiKey);
       Object.assign(state.settings, rest);
       if (rest.toolbars !== undefined) {
-        try { localStorage.setItem('scribner-demo-toolbars', JSON.stringify(rest.toolbars)); } catch { /* storage unavailable */ }
+        try { localStorage.setItem('pneuma-demo-toolbars', JSON.stringify(rest.toolbars)); } catch { /* storage unavailable */ }
       }
       return true;
     },

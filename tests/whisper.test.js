@@ -1,4 +1,4 @@
-// The speech recogniser built into Scribner (docs/DTED.md §7): download and checks, the local
+// The speech recogniser built into Pneuma Sofer (docs/DTED.md §7): download and checks, the local
 // server process, PCM requests; and the window side: resampling, cutting at pauses, filtering.
 import { describe, it, expect, afterEach } from 'vitest';
 import { createRequire } from 'module';
@@ -18,7 +18,7 @@ afterEach(async () => {
   for (const d of tmp.splice(0)) fs.rmSync(d, { recursive: true, force: true });
 });
 const tempDir = () => {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-whisper-'));
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-whisper-'));
   tmp.push(d);
   return d;
 };

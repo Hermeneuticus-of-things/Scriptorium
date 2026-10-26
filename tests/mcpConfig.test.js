@@ -1,4 +1,4 @@
-// Connecting Scribner to Claude (MCP) from the app: config paths, merge, command line, and a
+// Connecting Pneuma Sofer to Claude (MCP) from the app: config paths, merge, command line, and a
 // real run of the server through electron with ELECTRON_RUN_AS_NODE (no Node.js needed on Windows).
 import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
@@ -17,34 +17,34 @@ describe('mcpConfig', () => {
     expect(m.claudeDesktopConfigPath({ platform: 'linux', env: {}, home: '/home/i' })).toBe('/home/i/.config/Claude/claude_desktop_config.json');
   });
   it('păstrează celelalte servere și setări; refuză un fișier stricat', () => {
-    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Scribner\\Scribner.exe', serverPath: 'C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Drumul.scribner'] });
+    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Pneuma Sofer\\Pneuma Sofer.exe', serverPath: 'C:\\Program Files\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Drumul.scribner'] });
     const out = JSON.parse(m.mergeDesktopConfig('{"theme":"dark","mcpServers":{"altul":{"command":"x"}}}', entry));
     expect(out.theme).toBe('dark');
     expect(out.mcpServers.altul).toEqual({ command: 'x' });
-    expect(out.mcpServers.scribner.env).toEqual({ ELECTRON_RUN_AS_NODE: '1' });
-    expect(out.mcpServers.scribner.args).toEqual(['C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Cărți\\Drumul.scribner']);
-    expect(JSON.parse(m.mergeDesktopConfig('', entry)).mcpServers.scribner.command).toContain('Scribner.exe');
+    expect(out.mcpServers.pneuma.env).toEqual({ ELECTRON_RUN_AS_NODE: '1' });
+    expect(out.mcpServers.pneuma.args).toEqual(['C:\\Program Files\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Cărți\\Drumul.scribner']);
+    expect(JSON.parse(m.mergeDesktopConfig('', entry)).mcpServers.pneuma.command).toContain('Pneuma Sofer.exe');
     expect(() => m.mergeDesktopConfig('{nu e json', entry)).toThrow(/nu l-am modificat/);
   });
   it('comanda claude mcp add, cu spații și diacritice puse între ghilimele', () => {
-    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Scribner\\Scribner.exe', serverPath: 'C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Drumul.scribner'] });
-    expect(m.claudeCodeCommand(entry, { platform: 'win32' })).toBe('claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Program Files\\Scribner\\Scribner.exe" "C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Cărți\\Drumul.scribner"');
-    expect(m.claudeCodeCommand(entry, { platform: 'linux' })).toContain("'C:\\Program Files\\Scribner\\Scribner.exe'");
+    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Pneuma Sofer\\Pneuma Sofer.exe', serverPath: 'C:\\Program Files\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Drumul.scribner'] });
+    expect(m.claudeCodeCommand(entry, { platform: 'win32' })).toBe('claude mcp add pneuma --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Program Files\\Pneuma Sofer\\Pneuma Sofer.exe" "C:\\Program Files\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs" --project "D:\\Cărți\\Drumul.scribner"');
+    expect(m.claudeCodeCommand(entry, { platform: 'linux' })).toContain("'C:\\Program Files\\Pneuma Sofer\\Pneuma Sofer.exe'");
   });
   it('scrie config-ul cu copie de siguranță, atomic', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-cfg-'));
     const file = path.join(dir, 'Claude', 'claude_desktop_config.json');
-    const entry = m.serverEntry({ execPath: '/x/Scribner', serverPath: '/x/server.mjs', projects: ['/p'] });
+    const entry = m.serverEntry({ execPath: '/x/Pneuma Sofer', serverPath: '/x/server.mjs', projects: ['/p'] });
     expect(m.writeClaudeDesktopConfig(entry, { file }).backup).toBeNull();
     const r = m.writeClaudeDesktopConfig({ ...entry, args: ['/y'] }, { file });
     expect(fs.existsSync(r.backup)).toBe(true);
-    expect(JSON.parse(fs.readFileSync(file, 'utf8')).mcpServers.scribner.args).toEqual(['/y']);
+    expect(JSON.parse(fs.readFileSync(file, 'utf8')).mcpServers.pneuma.args).toEqual(['/y']);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });
 
 describe('mcpConfig — mai mulți clienți MCP', () => {
-  const entry = m.serverEntry({ execPath: '/x/Scribner', serverPath: '/x/server.mjs', projects: ['/p'] });
+  const entry = m.serverEntry({ execPath: '/x/Pneuma Sofer', serverPath: '/x/server.mjs', projects: ['/p'] });
   const winOpts = { platform: 'win32', env: { APPDATA: 'C:\\U\\A\\Roaming', LOCALAPPDATA: 'C:\\U\\A\\Local' }, home: 'C:\\U' };
   const nixOpts = { platform: 'linux', env: {}, home: '/home/i' };
 
@@ -60,24 +60,24 @@ describe('mcpConfig — mai mulți clienți MCP', () => {
     expect(m.clientConfigPath('claudeCode', nixOpts)).toBeNull();
   });
   it('Cursor/Gemini/Windsurf folosesc cheia mcpServers; VS Code cheia servers', () => {
-    expect(JSON.parse(m.mergeForClient('cursor', '', entry)).mcpServers.scribner.command).toBe('/x/Scribner');
+    expect(JSON.parse(m.mergeForClient('cursor', '', entry)).mcpServers.pneuma.command).toBe('/x/Pneuma Sofer');
     expect(JSON.parse(m.mergeForClient('gemini', '{"mcpServers":{"altul":{"command":"y"}}}', entry)).mcpServers.altul).toEqual({ command: 'y' });
     const vs = JSON.parse(m.mergeForClient('vscode', '', entry));
-    expect(vs.servers.scribner.command).toBe('/x/Scribner');
+    expect(vs.servers.pneuma.command).toBe('/x/Pneuma Sofer');
     expect(vs.mcpServers).toBeUndefined();
   });
   it('OpenCode: command ca listă, type local', () => {
     const o = JSON.parse(m.mergeForClient('opencode', '', entry));
-    expect(o.mcp.scribner).toMatchObject({ type: 'local', enabled: true });
-    expect(o.mcp.scribner.command).toEqual(['/x/Scribner', '/x/server.mjs', '--project', '/p']);
+    expect(o.mcp.pneuma).toMatchObject({ type: 'local', enabled: true });
+    expect(o.mcp.pneuma.command).toEqual(['/x/Pneuma Sofer', '/x/server.mjs', '--project', '/p']);
   });
-  it('Codex: tabel TOML [mcp_servers.scribner], înlocuiește-l pe cel vechi', () => {
-    const out = m.mergeForClient('codex', '[other]\nx = 1\n[mcp_servers.scribner]\ncommand = "vechi"\n', entry);
+  it('Codex: tabel TOML [mcp_servers.pneuma], înlocuiește-l pe cel vechi', () => {
+    const out = m.mergeForClient('codex', '[other]\nx = 1\n[mcp_servers.pneuma]\ncommand = "vechi"\n', entry);
     expect(out).toContain('[other]');
-    expect(out).toContain('[mcp_servers.scribner]');
-    expect(out).toContain('command = "/x/Scribner"');
+    expect(out).toContain('[mcp_servers.pneuma]');
+    expect(out).toContain('command = "/x/Pneuma Sofer"');
     expect(out).toContain('args = ["/x/server.mjs", "--project", "/p"]');
-    expect((out.match(/\[mcp_servers\.scribner\]/g) || []).length).toBe(1); // only one, the new one
+    expect((out.match(/\[mcp_servers\.pneuma\]/g) || []).length).toBe(1); // only one, the new one
     expect(out).not.toContain('vechi');
   });
   it('detectare: client instalat dacă folderul de config există', () => {
@@ -92,7 +92,7 @@ describe('mcpConfig — mai mulți clienți MCP', () => {
     expect(m.writeClientConfig('cursor', entry, { file }).backup).toBeNull();
     const r = m.writeClientConfig('cursor', { ...entry, args: ['/z'] }, { file });
     expect(fs.existsSync(r.backup)).toBe(true);
-    expect(JSON.parse(fs.readFileSync(file, 'utf8')).mcpServers.scribner.args).toEqual(['/z']);
+    expect(JSON.parse(fs.readFileSync(file, 'utf8')).mcpServers.pneuma.args).toEqual(['/z']);
     fs.rmSync(dir, { recursive: true, force: true });
   });
   it('registrul listează clienții principali', () => {

@@ -71,8 +71,8 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 - [~] Re-audit interfață engleză / accesibilitate (agent în lucru)
 
 ### Request: installer cu wizard (.exe), Inno Setup
-- [x] Inno Setup 6: installer/scribner.iss (română + engleză, licență, folder, Start, Desktop, pornire la final), build/icon.ico
-- [x] Workflow Windows: pachet + portabil + Scribner-Setup.exe ca artefact; Release automat la tag v*
+- [x] Inno Setup 6: installer/pneuma.iss (română + engleză, licență, folder, Start, Desktop, pornire la final), build/icon.ico
+- [x] Workflow Windows: pachet + portabil + Pneuma Sofer-Setup.exe ca artefact; Release automat la tag v*
 - [ ] Verificat installerul pe un Windows real
 
 ## Session 2026-10-24 (MCP integral)
@@ -137,10 +137,10 @@ Rezumat: greșelile corectate o dată se corectează singure.
 ### Request: ROADMAP §9 — lucru în echipă
 - [x] identitate, jurnal, prezență, blocare, îmbinare pe paragrafe, agent MCP, team_activity
 - [x] teste unitare + browser, README + imagine, ajutor RO/EN, ROADMAP, CHANGELOG
-- [ ] etapa 2: server Scribner în timp real (CRDT), cursori, roluri, mod sugestie, coadă offline, dialog variante alături
+- [ ] etapa 2: server Pneuma Sofer în timp real (CRDT), cursori, roluri, mod sugestie, coadă offline, dialog variante alături
 
 ## Următoarele (detalii în ROADMAP.md §10)
-- [ ] server Scribner în timp real (CRDT, WebSocket, HTTPS, conturi)
+- [ ] server Pneuma Sofer în timp real (CRDT, WebSocket, HTTPS, conturi)
 - [ ] cursorii celorlalți, colorați
 - [x] dialog de conflict cu variantele alături (v0.9.2, `src/components/ConflictDialog.jsx`, `resolveMerge`)
 - [ ] rămase din bug hunt v0.9.3: Outline la 1024 px (Inspector strâns automat); termeni: Binder/Corkboard/Outline/Compile/Layout/bookmark în română unitară; categoriile de șabloane ca id-uri traduse; fragmente de propoziție lipite în JSX → chei întregi
@@ -150,9 +150,9 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] răspuns și „rezolvat” la comentarii
 - [x] (v0.9.6) echipă: conflicte false la paragrafe vecine
 - [ ] engleză, rămase: bara de imagini, „Caută după formatare”, limbile din Servicii, tabelele din Ajutor → Sintaxă (mod scenariu), mesajele motorului de dictare, folderul `scrivener-original/` (nume nou + citire nume vechi)
-- [x] (v0.9.7) eek din D&TED în dictarea Scribner: listă modele, alegere, „Folosit acum”, mesaj pentru D&TED vechi, imagine README
+- [x] (v0.9.7) eek din D&TED în dictarea Pneuma Sofer: listă modele, alegere, „Folosit acum”, mesaj pentru D&TED vechi, imagine README
 - [ ] D&TED 0.4.2: construit și publicat pe Windows (PyInstaller + instalator + amprente) — la autor
-- [ ] probă reală pe Windows: dictare cu eek prin D&TED în Scribner — la autor
+- [ ] probă reală pe Windows: dictare cu eek prin D&TED în Pneuma Sofer — la autor
 - [ ] deschiderea unui proiect cu dublu clic / din linia de comandă (argv, second-instance, open-file, fileAssociations)
 - [ ] la ieșire: ferestrele salvează înainte de backup (before-quit → flush din renderer)
 - [ ] watcher: folder dispărut pe Linux (rename) tratat ca offline; un singur retry pe proiect
@@ -167,7 +167,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] adnotări pe PDF în Cercetare
 - [ ] sinonimul.ro cu adresă directă
 - [ ] la autor: instalare Windows, test MCP, import proiect real, chei, test AI complet, depozit public?
-### Request: plugin D&TED în Scribner (spec: docs/DTED.md)
+### Request: plugin D&TED în Pneuma Sofer (spec: docs/DTED.md)
 - [x] D&TED: modul --serviciu (JSON pe linii) + teste
 - [x] lib/dted.cjs + IPC + D&TED fals pentru teste
 - [x] dictare: text nou la cursor; peste selecție = modificare (înlocuire), un singur Ctrl+Z
@@ -177,7 +177,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] ajutor RO/EN, README + imagine, CHANGELOG, versiune
 - [ ] test real pe Windows (autorul)
 
-### Request: motorul D&TED în Scribner (v0.9.0)
+### Request: motorul D&TED în Pneuma Sofer (v0.9.0)
 - [x] motor încorporat (whisper.cpp), descărcare din Setări cu progres și amprente, dictare cu microfonul, fișiere audio decodate în fereastră
 - [x] teste unitare + browser cu microfon fals; docs, README, ajutor
 - [ ] proba pe Windows (autorul): Descarcă motorul, F9, un MP3
@@ -212,8 +212,8 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] Pagina lățită prin tragere / toată fereastra; zoom pe text (Ctrl+=/-/0, Ctrl+rotiță)
 - [x] Mini-player Voce (dictare + citire), F8 și buton în bară
 - [x] Voce românească inclusă (Piper) și motor de dictare descărcate automat o dată
-- [x] Iconiță cu numele Scribner
-- [x] Comandă MCP generală fără date personale (scribner-mcp.cmd)
+- [x] Iconiță cu numele Pneuma Sofer
+- [x] Comandă MCP generală fără date personale (pneuma-mcp.cmd)
 - [~] Interfața 1:1 cu programul de referință (vezi ROADMAP.md, „Cereri 25.10.2026”)
 - [ ] Import/export și MCP direct din `.scrivx`; `scriv_search`
 - [ ] Skill mcp-builder cu evaluări pentru serverul MCP

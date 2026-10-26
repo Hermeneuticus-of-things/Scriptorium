@@ -1,7 +1,7 @@
 // Bug hunt on the v0.8.7 features: research conversation (history budget, follow-up headings,
 // streamed text, persistence, titles), PDF import (WinAnsi quotes, huge hex strings, nested
-// dictionaries, encrypted files), the `scribner` CLI (numbers, Windows quoting, sessions,
-// export limits) and the Windows installer / scribner.cmd wrapper.
+// dictionaries, encrypted files), the `pneuma` CLI (numbers, Windows quoting, sessions,
+// export limits) and the Windows installer / pneuma.cmd wrapper.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createRequire } from 'module';
 import fs from 'fs';
@@ -16,7 +16,7 @@ const rc = require('../lib/researchChat.cjs');
 const { pdfToText, literal, hexString } = require('../lib/pdfText.cjs');
 const store = require('../lib/store.cjs');
 
-const tmpDir = (p = 'scribner-087-') => fs.mkdtempSync(path.join(os.tmpdir(), p));
+const tmpDir = (p = 'pneuma-087-') => fs.mkdtempSync(path.join(os.tmpdir(), p));
 const lone = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
 
 describe('research chat: history budget', () => {
@@ -119,7 +119,7 @@ describe('PDF text', () => {
 });
 
 // ---------------------------------------------------------------- CLI
-const CLI = path.join(__dirname, '..', 'cli', 'scribner.cjs');
+const CLI = path.join(__dirname, '..', 'cli', 'pneuma.cjs');
 const ENV = { ...process.env, LANG: 'ro_RO.UTF-8', LC_ALL: '', LC_MESSAGES: '', SCRIBNER_LANG: '' };
 let tmp;
 const run = (args, env = {}) => {
@@ -132,7 +132,7 @@ describe('cli', () => {
   let P;
   let B;
   beforeAll(() => {
-    tmp = tmpDir('scribner-087-cli-');
+    tmp = tmpDir('pneuma-087-cli-');
     P = path.join(tmp, 'Carte ș 😀.scribner');
     const p = store.createProject(P, 'Carte ș');
     const n = store.newNode('text', 'Scena „unu”');
@@ -221,13 +221,13 @@ describe('cli', () => {
 });
 
 // ---------------------------------------------------------------- installer (review checks)
-describe('installer and scribner.cmd', () => {
-  const iss = fs.readFileSync(path.join(__dirname, '..', 'installer', 'scribner.iss'), 'utf8');
-  const cmd = fs.readFileSync(path.join(__dirname, '..', 'installer', 'scribner.cmd'), 'utf8');
+describe('installer and pneuma.cmd', () => {
+  const iss = fs.readFileSync(path.join(__dirname, '..', 'installer', 'pneuma.iss'), 'utf8');
+  const cmd = fs.readFileSync(path.join(__dirname, '..', 'installer', 'pneuma.cmd'), 'utf8');
 
   it('the PATH task text is translated (ro and en custom messages)', () => {
-    expect(iss).toMatch(/^ro\.AddToPath=.*„scribner”/m);
-    expect(iss).toMatch(/^en\.AddToPath=.*"scribner"/m);
+    expect(iss).toMatch(/^ro\.AddToPath=.*„pneuma”/m);
+    expect(iss).toMatch(/^en\.AddToPath=.*"pneuma"/m);
     expect(iss).toMatch(/Description: "\{cm:AddToPath\}"/);
   });
 
@@ -238,7 +238,7 @@ describe('installer and scribner.cmd', () => {
     expect(iss).not.toMatch(/\{olddata\};\{app\}/);
   });
 
-  it('scribner.cmd: the exit code and parentheses in arguments survive (no %ERRORLEVEL% inside a block)', () => {
+  it('pneuma.cmd: the exit code and parentheses in arguments survive (no %ERRORLEVEL% inside a block)', () => {
     expect(cmd).not.toMatch(/\([^)]*%\*[^)]*\)/s);
     expect(cmd).not.toMatch(/\(\s*\r?\n[^)]*%ERRORLEVEL%/);
   });

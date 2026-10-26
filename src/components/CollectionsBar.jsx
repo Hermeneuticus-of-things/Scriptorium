@@ -54,13 +54,13 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
   const [dropOn, setDropOn] = useState(null);
   const draggedIds = (e) => {
     try {
-      const ids = JSON.parse(e.dataTransfer.getData('text/x-scribner-ids') || '[]');
+      const ids = JSON.parse(e.dataTransfer.getData('text/x-pneuma-ids') || '[]');
       return Array.isArray(ids) ? ids : [];
     } catch {
       return [];
     }
   };
-  const canDrop = (e, c) => c.type !== 'search' && [...(e.dataTransfer?.types || [])].includes('text/x-scribner-ids');
+  const canDrop = (e, c) => c.type !== 'search' && [...(e.dataTransfer?.types || [])].includes('text/x-pneuma-ids');
   const commitRename = (c, value) => {
     setRenaming(null);
     const title = String(value || '').trim();

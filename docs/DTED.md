@@ -1,6 +1,6 @@
-# D&TED în Scribner: dictare și transcriere în română
+# D&TED în Pneuma Sofer: dictare și transcriere în română
 
-D&TED (https://github.com/Hermeneuticus-of-things/dted) e un program Python separat. Recunoaște vorbirea local, cu Whisper `large-v3-turbo` prin faster-whisper, pe placa video NVIDIA dacă există. Nu folosește internetul. Scribner nu include modelul (circa 1,6 GB) și nici Python: pornește D&TED instalat pe calculator în **modul serviciu** și vorbește cu el prin intrarea și ieșirea standard.
+D&TED (https://github.com/Hermeneuticus-of-things/dted) e un program Python separat. Recunoaște vorbirea local, cu Whisper `large-v3-turbo` prin faster-whisper, pe placa video NVIDIA dacă există. Nu folosește internetul. Pneuma Sofer nu include modelul (circa 1,6 GB) și nici Python: pornește D&TED instalat pe calculator în **modul serviciu** și vorbește cu el prin intrarea și ieșirea standard.
 
 ## 1. Ce vede autorul
 
@@ -18,7 +18,7 @@ Fără D&TED instalat, comenzile rămân în meniu și explică unde se instalea
 
 Pornire: `DTED.exe --serviciu`, sau din codul sursă `python -m dictare_transcriere_romana --serviciu` (cwd = folderul depozitului). Comunicarea se face prin JSON pe linii, în UTF-8. La pornire, D&TED trimite `{"ev":"gata","protocol":1}`.
 
-Comenzi (Scribner → D&TED):
+Comenzi (Pneuma Sofer → D&TED):
 
 ```json
 {"cmd":"stare"}
@@ -29,7 +29,7 @@ Comenzi (Scribner → D&TED):
 {"cmd":"iesire"}
 ```
 
-Evenimente (D&TED → Scribner):
+Evenimente (D&TED → Pneuma Sofer):
 
 ```json
 {"ev":"stare","protocol":1,"versiune":"1.0.0","model_incarcat":false,"dispozitiv":"cuda"}
@@ -51,7 +51,7 @@ Reguli:
 - în `DTED.exe`, împachetat fără consolă, `sys.stdin` și `sys.stdout` sunt `None`, așa că serviciul deschide direct handle-urile Windows (`serviciu._flux_windows`);
 - închiderea intrării standard închide serviciul.
 
-## 3. Arhitectura în Scribner
+## 3. Arhitectura în Pneuma Sofer
 
 - `lib/dted.cjs` (procesul main):
   - găsește programul (§4);
@@ -95,28 +95,28 @@ Pe Linux sau macOS doar varianta din codul sursă, cu `python3`.
 - D&TED, `teste/test_serviciu.py`:
   - motor și microfon falși;
   - stare, transcriere, erori, anulare, dictare cu fragmente și oprire, dictare dublă, lipsa microfonului, bucla JSON.
-- Scribner, unitare:
+- Pneuma Sofer, unitare:
   - `lib/dted.cjs` cu un D&TED fals (`tests/fixtures/fake-dted.cjs`, care vorbește protocolul): găsirea căii, pornirea, evenimentele, anularea, oprirea la închidere, proces căzut;
   - `src/lib/dictation.js`: înlocuirea selecției, spațiere, majuscule, un singur pas de anulare, Pauză.
-- Scribner, browser: un D&TED simulat în `mockApi` (`?demo&dted`) trimite fragmente; scenariul dictează peste o selecție și verifică textul și Ctrl+Z.
+- Pneuma Sofer, browser: un D&TED simulat în `mockApi` (`?demo&dted`) trimite fragmente; scenariul dictează peste o selecție și verifică textul și Ctrl+Z.
 - Rămâne la autor, pe Windows:
   - instalează D&TED;
-  - dictează în Scribner 3–4 fraze, o dată ca text nou și o dată peste o selecție;
+  - dictează în Pneuma Sofer 3–4 fraze, o dată ca text nou și o dată peste o selecție;
   - transcrie un MP3.
 
 ## 6. Pași (stare)
 
 - [x] D&TED: modul `--serviciu` + teste (`dictare_transcriere_romana/serviciu.py`, `teste/test_serviciu.py`)
-- [x] Scribner: `lib/dted.cjs` + IPC + D&TED fals pentru teste
-- [x] Scribner: dictare la cursor / peste selecție, bara de dictare, F9
-- [x] Scribner: transcriere fișier audio → document; din binder
-- [x] Scribner: Setări → Servicii → D&TED (cale, Verifică, termeni)
+- [x] Pneuma Sofer: `lib/dted.cjs` + IPC + D&TED fals pentru teste
+- [x] Pneuma Sofer: dictare la cursor / peste selecție, bara de dictare, F9
+- [x] Pneuma Sofer: transcriere fișier audio → document; din binder
+- [x] Pneuma Sofer: Setări → Servicii → D&TED (cale, Verifică, termeni)
 - [x] ajutor RO/EN, README cu imagine, CHANGELOG, versiune nouă
 - [ ] test real pe Windows (autorul)
 
 ## 7. Motorul încorporat (v0.9.0)
 
-Dictarea și transcrierea merg acum și fără D&TED. Scribner are propriul motor, ales implicit: *Setări → Servicii și conturi → Dictare și transcriere → Încorporat în Scribner*. D&TED rămâne a doua opțiune.
+Dictarea și transcrierea merg acum și fără D&TED. Pneuma Sofer are propriul motor, ales implicit: *Setări → Servicii și conturi → Dictare și transcriere → Încorporat în Pneuma Sofer*. D&TED rămâne a doua opțiune.
 
 - **Ce se descarcă, o singură dată**, în `<userData>/whisper`:
   - whisper.cpp **v1.7.6**, arhiva oficială `whisper-blas-bin-x64.zip` (16 MB) sau `whisper-cublas-12.4.0-bin-x64.zip` (423 MB, pentru NVIDIA), verificată cu amprenta SHA-256 publicată de GitHub;
@@ -138,9 +138,9 @@ Dictarea și transcrierea merg acum și fără D&TED. Scribner are propriul moto
 ## 8. Modelul eek (v0.9.7)
 
 - D&TED folosește implicit modelul **eek** (`eek/whisper-turbo-ro-en`, Whisper turbo antrenat pe română): 5,4% cuvinte greșite față de 10,9% la `large-v3-turbo` standard (măsurători în `docs/MODELE_ROMANA.md` din D&TED).
-- Compatibilitatea Scribner ↔ D&TED e dată de **protocolul serviciului (protocol 1)**, nu de un anume număr de versiune: orice D&TED care pornește cu `--serviciu` și vorbește protocol 1 merge (vezi §2); modelul se alege cu `auto`, deci eek e folosit automat când e instalat.
+- Compatibilitatea Pneuma Sofer ↔ D&TED e dată de **protocolul serviciului (protocol 1)**, nu de un anume număr de versiune: orice D&TED care pornește cu `--serviciu` și vorbește protocol 1 merge (vezi §2); modelul se alege cu `auto`, deci eek e folosit automat când e instalat.
 - Protocolul serviciului are comanda `{"cmd":"model","nume":…}`, iar `stare` raportează `model`, `model_folosit` și `modele` `[{nume, descriere, instalat}]`.
-- În Scribner: `lib/dted.cjs` `state()` / `setModel()`; IPC `dted:setModel`; setarea `dtedModel` (implicit `auto`), aplicată la prima cerere după fiecare pornire a serviciului; în *Setări → Servicii și conturi → D&TED → Verifică* apare lista modelelor (cele neinstalate sunt dezactivate) și „Folosit acum”.
+- În Pneuma Sofer: `lib/dted.cjs` `state()` / `setModel()`; IPC `dted:setModel`; setarea `dtedModel` (implicit `auto`), aplicată la prima cerere după fiecare pornire a serviciului; în *Setări → Servicii și conturi → D&TED → Verifică* apare lista modelelor (cele neinstalate sunt dezactivate) și „Folosit acum”.
 - Un D&TED mai vechi (fără comanda `model`) merge mai departe, doar fără listă.
-- Motorul încorporat (whisper.cpp) rămâne pe `large-v3-turbo`: eek e publicat cu acces aprobat individual, deci nu se poate descărca automat din Scribner.
+- Motorul încorporat (whisper.cpp) rămâne pe `large-v3-turbo`: eek e publicat cu acces aprobat individual, deci nu se poate descărca automat din Pneuma Sofer.
 - Teste: `tests/dted.test.js` (stare, alegere, model necunoscut) și `tests/e2e/browser/dted-model.cjs`.

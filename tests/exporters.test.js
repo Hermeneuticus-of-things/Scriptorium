@@ -8,7 +8,7 @@ const JSZip = require('jszip');
 const ex = require('../lib/exporters.cjs');
 const store = require('../lib/store.cjs');
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-exp-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-exp-'));
 
 const project = () => ({
   title: 'Carte',

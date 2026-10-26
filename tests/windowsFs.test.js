@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { safeName } = require('../lib/fsNames.cjs');
 const store = require('../lib/store.cjs');
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-win-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-win-'));
 
 // Names Windows refuses or silently changes; the same rules apply on every OS so a project
 // made on Linux/macOS can be copied to Windows.

@@ -144,7 +144,7 @@ import ConflictDialog from './components/ConflictDialog.jsx';
 
 const SAVE_DELAY = 700;
 const RETRY_DELAY = 15000; // offline queue: retry unwritten edits every 15 s
-const queueKey = (dir) => `scribner-queue:${dir}`;
+const queueKey = (dir) => `pneuma-queue:${dir}`;
 function saveQueue(dir, items) {
   try {
     if (items && Object.keys(items).length) localStorage.setItem(queueKey(dir), JSON.stringify(items));
@@ -168,14 +168,14 @@ const HISTORY_DELAY = 5000;
 // Per-machine UI state (open document, view, panel widths) kept in localStorage.
 function loadUi(dir) {
   try {
-    return JSON.parse(localStorage.getItem(`scribner-ui:${dir}`)) || {};
+    return JSON.parse(localStorage.getItem(`pneuma-ui:${dir}`)) || {};
   } catch {
     return {};
   }
 }
 function saveUi(dir, ui) {
   try {
-    localStorage.setItem(`scribner-ui:${dir}`, JSON.stringify(ui));
+    localStorage.setItem(`pneuma-ui:${dir}`, JSON.stringify(ui));
   } catch {
     /* storage unavailable: not critical */
   }
@@ -402,7 +402,7 @@ export default function App({ api: apiProp }) {
   const [searchSeed, setSearchSeed] = useState('');
   const [editorView, setEditorViewState] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('scribner-editor-view')) || {};
+      return JSON.parse(localStorage.getItem('pneuma-editor-view')) || {};
     } catch {
       return {};
     }
@@ -410,7 +410,7 @@ export default function App({ api: apiProp }) {
   const setEditorView = (v) => {
     setEditorViewState(v);
     try {
-      localStorage.setItem('scribner-editor-view', JSON.stringify(v));
+      localStorage.setItem('pneuma-editor-view', JSON.stringify(v));
     } catch {
       /* not critical */
     }
@@ -571,7 +571,7 @@ export default function App({ api: apiProp }) {
 
   // Session start by the reset rule: at every open, at midnight (kept across opens the same day),
   // or by hand (kept until "Reset session" in Project Targets).
-  const sessionKey = dir ? `scribner-session:${dir}` : null;
+  const sessionKey = dir ? `pneuma-session:${dir}` : null;
   const resetSession = useCallback(() => {
     const base = { date: new Date().toDateString(), words: totals.tWords || 0, chars: totals.tChars || 0 };
     try {
@@ -620,7 +620,7 @@ export default function App({ api: apiProp }) {
   useEffect(() => {
     if (!dir) return undefined;
     const beat = setInterval(() => { publishSession(localStorage, dir, ownSessionValueRef.current); setOtherSessionTick((n) => n + 1); }, 30000);
-    const onStorage = (e) => e.key && e.key.startsWith('scribner-session-live:') && setOtherSessionTick((n) => n + 1);
+    const onStorage = (e) => e.key && e.key.startsWith('pneuma-session-live:') && setOtherSessionTick((n) => n + 1);
     window.addEventListener('storage', onStorage);
     return () => { clearInterval(beat); window.removeEventListener('storage', onStorage); unpublishSession(localStorage, dir); };
   }, [dir]);
@@ -1319,8 +1319,8 @@ export default function App({ api: apiProp }) {
       ed.chain().focus().insertContent(e.detail?.html || '').run();
       return undefined;
     };
-    window.addEventListener('scribner:insert-html', onInsert);
-    return () => window.removeEventListener('scribner:insert-html', onInsert);
+    window.addEventListener('pneuma:insert-html', onInsert);
+    return () => window.removeEventListener('pneuma:insert-html', onInsert);
   });
   // Scratchpad note → project: a new document in a folder, or appended to the selected document.
   const scratchToProject = ({ title, html, mode, folderId }) => {
@@ -2230,7 +2230,7 @@ export default function App({ api: apiProp }) {
           onError={report}
           onSettings={() => setDialog('settings')}
           onHelp={() => setHelp({ topic: null, tab: 'manual' })}
-          onTutorial={api.newProject ? () => api.newProject('Tutorial Scribner', 'tutorial').then(openResult).catch(report) : undefined}
+          onTutorial={api.newProject ? () => api.newProject('Tutorial Pneuma Sofer', 'tutorial').then(openResult).catch(report) : undefined}
         />
         {help && (
           <HelpWindow
@@ -2240,7 +2240,7 @@ export default function App({ api: apiProp }) {
             onClose={() => setHelp(null)}
             onStartTutorial={() => {
               setHelp(null);
-              api.newProject('Tutorial Scribner', 'tutorial').then(openResult).catch(report);
+              api.newProject('Tutorial Pneuma Sofer', 'tutorial').then(openResult).catch(report);
             }}
           />
         )}
@@ -2430,7 +2430,7 @@ export default function App({ api: apiProp }) {
   const startTutorial = () => {
     setHelp(null);
     flush()
-      .then(() => api.newProject('Tutorial Scribner', 'tutorial'))
+      .then(() => api.newProject('Tutorial Pneuma Sofer', 'tutorial'))
       .then(openResult)
       .catch(report);
   };
@@ -2668,7 +2668,7 @@ export default function App({ api: apiProp }) {
     ['file', 'saveTemplate', tr('cmd.saveTemplate'), () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
     ['file', 'pageSetup', tr('cmd.pageSetup'), () => setDialog('pageSetup'), !api.getPageSetup],
     ['file', 'printPreview', tr('cmd.printPreview'), () => openPrintPreview(), !api.printPreview],
-    ['help', 'help', 'Manualul Scribner', () => setHelp({ topic: null, tab: 'manual' })],
+    ['help', 'help', 'Manualul Pneuma Sofer', () => setHelp({ topic: null, tab: 'manual' })],
     ['help', 'helpContext', tr('cmd.helpContext'), () => setHelp({ topic: helpContext(), tab: 'manual' })],
     ['help', 'helpShortcuts', tr('cmd.helpShortcuts'), () => setHelp({ topic: null, tab: 'shortcuts' })],
     ['help', 'helpPlaceholders', tr('cmd.helpPlaceholders'), () => setHelp({ topic: null, tab: 'placeholders' })],
@@ -2676,7 +2676,7 @@ export default function App({ api: apiProp }) {
     ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
     ['help', 'reportIssue', tr('cmd.reportIssue'), () => setReportOpen(true)],
     ['help', 'checkUpdates', tr('cmd.checkUpdates'), () => setUpdateOpen({ initial: null }), !api.updateCheck],
-    ['help', 'about', 'Despre Scribner', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
+    ['help', 'about', 'Despre Pneuma Sofer', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
     ['tools', 'nameGen', tr('cmd.nameGen'), () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', tr('cmd.speech'), () => setShowSpeech((v) => !v)],

@@ -25,4 +25,4 @@ const chapters = ['Capitolul unu', 'Capitolul doi'].map((t, i) => {
 draft.children = [...(draft.children || []), ...chapters];
 store.saveProject(dir, p);
 const res = exportScriv(store.loadProject(dir), scrivExportIo(store, dir), out);
-console.log(JSON.stringify({ scribner: dir, scriv: res.dir }));
+console.log(JSON.stringify({ pneuma: dir, scriv: res.dir }));

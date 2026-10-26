@@ -1,6 +1,6 @@
-// assets/readme/cli.png: a PowerShell-style window with real `scribner` output.
+// assets/readme/cli.png: a PowerShell-style window with real `pneuma` output.
 // 1. node scripts/readme-cli/make-project.cjs <S>/cli/"Drumul spre munte.scribner"
-// 2. in <S>/cli: node cli/scribner.cjs info … --lang ro > o1.txt;
+// 2. in <S>/cli: node cli/pneuma.cjs info … --lang ro > o1.txt;
 //    export-sources … -o Surse --target notebooklm > o2.txt; list the export folder > o3.txt
 // 3. node scripts/readme-cli/render.cjs <S> assets/readme/cli.png
 const fs=require('fs'),path=require('path');const {chromium}=require('/opt/node22/lib/node_modules/playwright');
@@ -8,7 +8,7 @@ const S=process.argv[2], OUT=process.argv[3];
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const rd=f=>fs.readFileSync(path.join(S,f),'utf8').replace(new RegExp(S.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'/cli/','g'),'D:\\Carti\\').replace(/(D:\\Carti\\[^\n]*)/g,m=>m.replace(/\//g,'\\')).trimEnd();
 const P='<span class=ps>PS D:\\Carti&gt;</span> ';
-const cmd=s=>P+'<span class=c>scribner</span> '+s.replace(/(".*?")/g,'<span class=s>$1</span>').replace(/ (--?[a-z-]+)/g,' <span class=f>$1</span>');
+const cmd=s=>P+'<span class=c>pneuma</span> '+s.replace(/(".*?")/g,'<span class=s>$1</span>').replace(/ (--?[a-z-]+)/g,' <span class=f>$1</span>');
 const term=[cmd('info "Drumul spre munte.scribner"'),esc(rd('cli/o1.txt')),'',cmd('export-sources "Drumul spre munte.scribner" -o Surse --target notebooklm'),esc(rd('cli/o2.txt')),'',P+'<span class=c>ls</span> <span class=s>"Surse\\Surse - Drumul spre munte"</span> <span class=f>-Name</span>',esc(rd('cli/o3.txt')),'',P+'<span class=cur></span>'].join('\n');
 const SANS="Inter, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif",SERIF="'DejaVu Serif', Georgia, serif";
 const html=`<!doctype html><meta charset=utf-8><style>*{margin:0;padding:0;box-sizing:border-box}
@@ -24,6 +24,6 @@ p.sub{font-size:22px;line-height:1.5;color:#3d362d;max-width:830px}
 pre{font-family:'Cascadia Mono','DejaVu Sans Mono',Consolas,monospace;font-size:17px;line-height:1.5;color:#cccccc;padding:18px 22px 26px;white-space:pre-wrap}
 .ps{color:#cccccc}.c{color:#f9f1a5}.s{color:#3a96dd}.f{color:#9a9a9a}.cur{display:inline-block;width:10px;height:19px;background:#ccc;vertical-align:-3px}
 </style><div class=kicker>Linia de comandă</div><h1>Aceeași carte, din terminal</h1>
-<p class=sub>Comanda scribner vine cu programul: afli ce e în proiect, faci Compile sau pregătești sursele pentru NotebookLM, fără să deschizi fereastra.</p>
+<p class=sub>Comanda pneuma vine cu programul: afli ce e în proiect, faci Compile sau pregătești sursele pentru NotebookLM, fără să deschizi fereastra.</p>
 <div class=win><div class=tabs><div class=tab><b></b>Windows PowerShell</div><div class=ctl>— ▢ ✕</div></div><pre>${term}</pre></div>`;
 (async()=>{const b=await chromium.launch();const pg=await b.newPage({viewport:{width:1200,height:955},deviceScaleFactor:2});await pg.setContent(html);await pg.evaluate(()=>document.fonts.ready);await pg.screenshot({path:OUT});await b.close();})();

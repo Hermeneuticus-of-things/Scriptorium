@@ -8,7 +8,7 @@ const JSZip = require('jszip');
 const imp = require('../lib/importers.cjs');
 const { exportOpml } = require('../lib/exporters.cjs');
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-imp-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-imp-'));
 
 describe('importers', () => {
   it('imports ODT with headings, styles, lists, footnotes and tables', async () => {

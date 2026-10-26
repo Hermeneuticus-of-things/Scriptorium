@@ -1,12 +1,12 @@
 {
-  "name": "scribner",
-  "productName": "Scribner",
-  "version": "0.10.26",
+  "name": "pneuma-sofer",
+  "productName": "Pneuma Sofer",
+  "version": "0.11.0",
   "description": "Program de scris pentru cărți lungi: scrii pe bucăți, le aranjezi liber și primești cartea în Word, PDF sau EPUB.",
   "main": "electron/main.cjs",
   "private": true,
   "bin": {
-    "scribner-mcp": "mcp/server.mjs"
+    "pneuma-mcp": "mcp/server.mjs"
   },
   "scripts": {
     "dev": "vite",
@@ -23,7 +23,7 @@
     "dist:win:setup": "node installer/build-setup.cjs"
   },
   "build": {
-    "appId": "ro.scribner.app",
+    "appId": "ro.pneumasofer.app",
     "asar": false,
     "files": [
       "dist/**",
@@ -47,9 +47,9 @@
       "output": "release",
       "buildResources": "build"
     },
-    "productName": "Scribner",
+    "productName": "Pneuma Sofer",
     "portable": {
-      "artifactName": "Scribner-${version}-portabil.exe"
+      "artifactName": "PneumaSofer-${version}-portabil.exe"
     }
   },
   "dependencies": {

@@ -404,7 +404,7 @@ export function registerFullTools(ctx) {
     return abs;
   };
   // Scrivener projects (.scriv) read in place, without importing: an agent asked about a .scriv
-  // finds them here (read only; import_scriv turns one into a Scribner project).
+  // finds them here (read only; import_scriv turns one into a Pneuma Sofer project).
   tool(
     'scriv_outline',
     'Citește binder-ul unui proiect Scrivener (folderul .scriv sau fișierul .scrivx) fără să-l importe: titlu, tip, nivel și id pentru fiecare element. Doar citire.',
@@ -429,7 +429,7 @@ export function registerFullTools(ctx) {
 
   tool(
     'import_scriv',
-    'Importă un proiect Scrivener întreg (folderul .scriv sau fișierul .scrivx din el) ca proiect Scribner nou în dest_dir. Proiectul nou devine disponibil în această sesiune.',
+    'Importă un proiect Scrivener întreg (folderul .scriv sau fișierul .scrivx din el) ca proiect Pneuma Sofer nou în dest_dir. Proiectul nou devine disponibil în această sesiune.',
     { scriv_path: z.string(), dest_dir: z.string() },
     (_dir, { scriv_path, dest_dir }) => {
       const src = scrivSource(scriv_path);

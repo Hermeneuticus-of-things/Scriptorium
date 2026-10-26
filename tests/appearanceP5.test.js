@@ -64,7 +64,7 @@ describe('normalizeLook', () => {
 describe('colour themes', () => {
   it('round-trip through a theme file keeps only visual keys', () => {
     const th = themeFromSettings('Noapte', { ...DEFAULT_SETTINGS, edBg: '#000000', cardColor: '#333333', autosaveSec: 9, aiEnabled: false });
-    expect(th.format).toBe('scribner-theme');
+    expect(th.format).toBe('pneuma-theme');
     expect(th.values.edBg).toBe('#000000');
     expect('autosaveSec' in th.values).toBe(false);
     expect('compDisplay' in th.values).toBe(false);

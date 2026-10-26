@@ -2,7 +2,7 @@
 // projects or computers, and import it back as a new, editable format.
 
 export const FORMAT_FILE_EXT = 'scribcompile';
-const KIND = 'scribner-compile-format';
+const KIND = 'pneuma-compile-format';
 
 /** JSON text of a format file. Built-in flags and the global marker are dropped. */
 export function exportFormatFile(format) {

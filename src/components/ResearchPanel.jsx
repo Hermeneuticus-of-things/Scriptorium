@@ -67,7 +67,7 @@ function Answer({ text, passages, onCite }) {
 export default function ResearchPanel({ api, dir, project = null, aiEnabled, onOpen, onClose, aiLabel = '', request = null, onSaveNote, onInsert, onAddSources, onImportWeb }) {
   const tree = project?.tree || [];
   const [q, setQ] = useState('');
-  const [scope, setScopeState] = useState(() => lsGet(`scribner-research-scope:${dir}`, DEFAULT_SCOPE));
+  const [scope, setScopeState] = useState(() => lsGet(`pneuma-research-scope:${dir}`, DEFAULT_SCOPE));
   const [results, setResults] = useState([]);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState(null); // { message, retry }
@@ -77,7 +77,7 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
   const [live, setLive] = useState(null); // { q, text } while an answer streams
   const [showSources, setShowSources] = useState(false);
   const [paste, setPaste] = useState(null); // { title, text }
-  const [insertMode, setInsertMode] = useState(() => lsGet('scribner-research-insert', 'footnotes'));
+  const [insertMode, setInsertMode] = useState(() => lsGet('pneuma-research-insert', 'footnotes'));
   const [toast, setToast] = useState('');
   const runRef = useRef(null);
   const endRef = useRef(null);
@@ -89,7 +89,7 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
 
   const setScope = (s) => {
     setScopeState(s);
-    lsSet(`scribner-research-scope:${dir}`, s);
+    lsSet(`pneuma-research-scope:${dir}`, s);
   };
 
   useEffect(() => {
@@ -358,7 +358,7 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
                 value={insertMode}
                 onChange={(e) => {
                   setInsertMode(e.target.value);
-                  lsSet('scribner-research-insert', e.target.value);
+                  lsSet('pneuma-research-insert', e.target.value);
                 }}
               >
                 <option value="footnotes">{t('ui.researchChat.note_de_subsol')}</option>

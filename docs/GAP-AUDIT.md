@@ -1,4 +1,4 @@
-# Gap audit: Scribner, complete feature list
+# Gap audit: Pneuma Sofer, complete feature list
 
 Internal document. Audit date: 2026-10-24. Each row was checked in the code (not in
 `docs/FEATURES.md`); the evidence column points to the implementing file:line.

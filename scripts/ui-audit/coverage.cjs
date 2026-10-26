@@ -1,7 +1,7 @@
 // "Nothing missed" coverage check: every reference label from the classic program's binary catalogue
-// (scriv-strings.tsv: ctx, EN, RO) vs Scribner's own label set (its i18n files, RO+EN). Surfaces classic
-// labels with no Scribner match, grouped by component — the candidate missing features to implement
-// (in Scribner's OWN code). References are read 1:1; the implementation stays independent.
+// (scriv-strings.tsv: ctx, EN, RO) vs Pneuma Sofer's own label set (its i18n files, RO+EN). Surfaces classic
+// labels with no Pneuma Sofer match, grouped by component — the candidate missing features to implement
+// (in Pneuma Sofer's OWN code). References are read 1:1; the implementation stays independent.
 // Usage: node coverage.cjs <scriv-strings.tsv>
 const fs = require('fs');
 const path = require('path');
@@ -11,8 +11,8 @@ const norm = (s) => String(s || '')
   .replace(/%\d+|%L?\d+/g, '').toLowerCase()
   .replace(/[^a-z0-9ăâîșțäöü ]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-// Scribner's own labels: all quoted string values in its i18n files (ro + en blocks).
-function scribnerLabels() {
+// Pneuma Sofer's own labels: all quoted string values in its i18n files (ro + en blocks).
+function pneumaLabels() {
   const set = new Set();
   for (const f of ['src/lib/i18n-ui.js', 'src/lib/i18n.js']) {
     const txt = fs.readFileSync(f, 'utf8');
@@ -26,7 +26,7 @@ const tok = (s) => new Set(s.split(' ').filter((w) => w.length > 3));
 function covered(n, set, index) {
   if (!n) return true;
   if (set.has(n)) return true;
-  // token overlap ≥ 0.6 against any Scribner label that shares a rare token
+  // token overlap ≥ 0.6 against any Pneuma Sofer label that shares a rare token
   const T = tok(n); if (!T.size) return set.has(n);
   let best = 0;
   for (const w of T) { const cand = index.get(w); if (!cand) continue; for (const c of cand) { let k = 0; for (const x of T) if (c.has(x)) k++; best = Math.max(best, k / Math.max(T.size, c.size)); } }
@@ -34,7 +34,7 @@ function covered(n, set, index) {
 }
 
 const tsv = process.argv[2];
-const scrib = scribnerLabels();
+const scrib = pneumaLabels();
 const index = new Map();
 for (const lab of scrib) { for (const w of tok(lab)) { if (!index.has(w)) index.set(w, []); index.get(w).push(tok(lab)); } }
 
@@ -60,7 +60,7 @@ for (const line of fs.readFileSync(tsv, 'utf8').split(/\r?\n/)) {
   byCtx.get(ctx).push(ro && ro.length > 1 ? ro : en);
 }
 const rows = [...byCtx.entries()].sort((a, b) => b[1].length - a[1].length);
-console.error(`${miss}/${total} etichete fără corespondent evident în Scribner`);
+console.error(`${miss}/${total} etichete fără corespondent evident în Pneuma Sofer`);
 for (const [ctx, labs] of rows) {
   console.log(`\n## ${ctx} (${labs.length})`);
   for (const l of [...new Set(labs)].slice(0, 14)) console.log('  - ' + l);

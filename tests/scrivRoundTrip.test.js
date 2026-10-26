@@ -1,4 +1,4 @@
-// Full .scriv round trip: rich Scribner project -> exportScriv -> importScriv, field by field.
+// Full .scriv round trip: rich Pneuma Sofer project -> exportScriv -> importScriv, field by field.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
 import os from 'os';
@@ -285,7 +285,7 @@ describe('Scrivener export -> import round trip', () => {
     expect(html).toContain('<blockquote><p>Citat lung</p></blockquote>');
     expect(html).toContain('<p>Rând<br>nou</p>');
     expect(html).toMatch(/<hr data-page-break="true" class="page-break"><p>După pauză<\/p>/);
-    // named styles come back by name as Scribner styles, with their definitions
+    // named styles come back by name as Pneuma Sofer styles, with their definitions
     expect(html).toContain('<p data-style="motto" style="text-align: right">Un motto</p>');
     expect(html).toContain('<p>Un <span data-char-style="termen">termen</span>.</p>');
     expect(p.styles).toEqual([

@@ -4,7 +4,7 @@ const { open, ed, caretEnd, check, done } = require('./_helpers.cjs');
   // The notes group is not on the default format bar; add it the way a user would keep it (saved toolbars).
   const { browser, page, errors } = await open({
     beforeOpen: async (p) => {
-      await p.evaluate(() => localStorage.setItem('scribner-demo-toolbars', JSON.stringify({ format: ['block', 'font', 'bui', 'notes'] })));
+      await p.evaluate(() => localStorage.setItem('pneuma-demo-toolbars', JSON.stringify({ format: ['block', 'font', 'bui', 'notes'] })));
       await p.reload();
     },
   });

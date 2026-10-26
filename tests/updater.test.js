@@ -22,8 +22,8 @@ const release = (over = {}) => ({
   body: 'Noutăți',
   html_url: 'https://github.com/Hermeneuticus-of-things/Scriptorium/releases/tag/v1.2.0',
   assets: [
-    { name: 'Scribner-Setup-1.2.0.exe', size: 5, browser_download_url: 'https://github.com/x/setup.exe', url: 'https://api.github.com/a/1' },
-    { name: 'Scribner-1.2.0-portabil.exe', size: 5, browser_download_url: 'https://github.com/x/port.exe', url: 'https://api.github.com/a/2' },
+    { name: 'Pneuma Sofer-Setup-1.2.0.exe', size: 5, browser_download_url: 'https://github.com/x/setup.exe', url: 'https://api.github.com/a/1' },
+    { name: 'Pneuma Sofer-1.2.0-portabil.exe', size: 5, browser_download_url: 'https://github.com/x/port.exe', url: 'https://api.github.com/a/2' },
   ],
   ...over,
 });
@@ -42,8 +42,8 @@ describe('compareSemver', () => {
 
 describe('pickAsset / isPortable', () => {
   it('chooses Setup for installed builds and the portable exe otherwise', () => {
-    expect(u.pickAsset(release().assets).name).toBe('Scribner-Setup-1.2.0.exe');
-    expect(u.pickAsset(release().assets, { portable: true }).name).toBe('Scribner-1.2.0-portabil.exe');
+    expect(u.pickAsset(release().assets).name).toBe('Pneuma Sofer-Setup-1.2.0.exe');
+    expect(u.pickAsset(release().assets, { portable: true }).name).toBe('Pneuma Sofer-1.2.0-portabil.exe');
     expect(u.pickAsset([{ name: 'SHA256SUMS' }])).toBe(null);
     expect(u.pickAsset(undefined)).toBe(null);
   });
@@ -80,7 +80,7 @@ describe('isAllowedUrl', () => {
 describe('checksums', () => {
   const h = 'a'.repeat(64);
   it('parses SHA256SUMS lines', () => {
-    expect(u.parseSha256Sums(`${h}  Scribner-Setup-1.2.0.exe\n${'b'.repeat(64)} *other.exe`, 'Scribner-Setup-1.2.0.exe')).toBe(h);
+    expect(u.parseSha256Sums(`${h}  Pneuma Sofer-Setup-1.2.0.exe\n${'b'.repeat(64)} *other.exe`, 'Pneuma Sofer-Setup-1.2.0.exe')).toBe(h);
     expect(u.parseSha256Sums(`${'B'.repeat(64)} *other.exe`, 'other.exe')).toBe('b'.repeat(64));
     expect(u.parseSha256Sums('nimic', 'x.exe')).toBe('');
   });
@@ -99,12 +99,12 @@ describe('checkLatest + ETag', () => {
     const calls = [];
     const f = async (url, opts) => {
       calls.push([url, opts.headers['If-None-Match']]);
-      if (url.endsWith('SHA256SUMS')) return res(200, { text: `${sum}  Scribner-Setup-1.2.0.exe` });
+      if (url.endsWith('SHA256SUMS')) return res(200, { text: `${sum}  Pneuma Sofer-Setup-1.2.0.exe` });
       return opts.headers['If-None-Match'] === '"e1"' ? res(304) : res(200, { json: rel, headers: { etag: '"e1"' } });
     };
     const cache = {};
     const a = await u.checkLatest({ fetchImpl: f, currentVersion: '1.1.0', cache });
-    expect(a).toMatchObject({ latest: '1.2.0', newer: true, sha256: sum, asset: { name: 'Scribner-Setup-1.2.0.exe' } });
+    expect(a).toMatchObject({ latest: '1.2.0', newer: true, sha256: sum, asset: { name: 'Pneuma Sofer-Setup-1.2.0.exe' } });
     expect(cache.etag).toBe('"e1"');
     const b = await u.checkLatest({ fetchImpl: f, currentVersion: '1.2.0', cache });
     expect(b.newer).toBe(false);

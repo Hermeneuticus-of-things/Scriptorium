@@ -387,7 +387,7 @@ describe('sync-client files on the desktop side (bundle export, CLI)', () => {
       fs.writeFileSync(path.join(dir, f), 'x');
       fs.utimesSync(path.join(dir, f), future, future);
     }
-    const r = spawnSync(process.execPath, [path.join(__dirname, '..', 'cli', 'scribner.cjs'), 'info', dir, '--json'], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, [path.join(__dirname, '..', 'cli', 'pneuma.cjs'), 'info', dir, '--json'], { encoding: 'utf8' });
     expect(r.status, r.stderr).toBe(0);
     expect(JSON.parse(r.stdout).modified.startsWith('2030')).toBe(false);
   });

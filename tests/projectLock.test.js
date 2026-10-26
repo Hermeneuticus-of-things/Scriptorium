@@ -7,7 +7,7 @@ import { fork } from 'node:child_process';
 
 const require = createRequire(import.meta.url);
 const store = require('../lib/store.cjs');
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-lock-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-lock-'));
 
 describe('project.json lock', () => {
   it('releases only its own lock (a lock taken over by another process stays)', () => {

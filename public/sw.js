@@ -1,6 +1,6 @@
-// Scribner web/PWA service worker: caches the app shell so the editor opens offline.
+// Pneuma Sofer web/PWA service worker: caches the app shell so the editor opens offline.
 // Project data lives in IndexedDB and never passes through here.
-const CACHE = 'scribner-shell-v1';
+const CACHE = 'pneuma-shell-v1';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {

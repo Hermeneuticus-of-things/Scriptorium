@@ -38,7 +38,7 @@ Textele noi le-am verificat automat: în toate cele 7 ramuri cu texte, fiecare c
 ## 3. PR #22, CI și release
 - PR #22 e **deschis, draft**, cu titlul „v0.10.0: binder, colecții și cuvinte cheie în detaliu, funcțiile G5, audit 3 de paritate”. Capul lui e `bb35fd6`.
 - CI pe `bb35fd6`: workflow-ul `CI` (job `test`) e **success**. Workflow-ul `Windows` (job `build`) era **in_progress** în momentul verificării. Pe commit-ul anterior, `ed54e03`, ambele au fost anulate, pentru că a urmat imediat un push nou.
-- Release-ul **v0.9.9** e publicat (nici draft, nici prerelease) și are `Scribner-Setup-0.9.9.exe` (122.674.984 B), `Scribner-0.9.9-portabil.exe` (107.701.509 B) și `SHA256SUMS` (185 B).
+- Release-ul **v0.9.9** e publicat (nici draft, nici prerelease) și are `Pneuma Sofer-Setup-0.9.9.exe` (122.674.984 B), `Pneuma Sofer-0.9.9-portabil.exe` (107.701.509 B) și `SHA256SUMS` (185 B).
 - `gh` nu e autentificat pe acest calculator, așa că datele vin din API-ul public GitHub.
 
 ## 4. Teste locale pe `claude/wizardly-pascal-k9npg5`

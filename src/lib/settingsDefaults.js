@@ -42,7 +42,7 @@ export function themeFromSettings(name, settings) {
   const s = { ...DEFAULT_SETTINGS, ...(settings || {}) };
   const values = {};
   for (const k of THEME_KEYS) if (s[k] !== undefined) values[k] = s[k];
-  return { format: 'scribner-theme', version: 1, name: String(name || '').trim() || 'Temă', values };
+  return { format: 'pneuma-theme', version: 1, name: String(name || '').trim() || 'Temă', values };
 }
 
 /** Reads a theme object (from a file or the saved list); unknown keys are dropped. Throws on a bad file. */

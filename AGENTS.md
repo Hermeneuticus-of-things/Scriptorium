@@ -1,4 +1,4 @@
-# Scribner — proiect
+# Pneuma Sofer — proiect
 
 > Parent: [`../../AGENTS.md`](../../AGENTS.md)
 

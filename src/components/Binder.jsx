@@ -323,7 +323,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
             setDrag(ids);
             e.dataTransfer.effectAllowed = onCopy ? 'copyMove' : 'move';
             // lets other panes (collection tabs) receive the dragged documents
-            try { e.dataTransfer.setData('text/x-scribner-ids', JSON.stringify(ids)); } catch { /* not supported */ }
+            try { e.dataTransfer.setData('text/x-pneuma-ids', JSON.stringify(ids)); } catch { /* not supported */ }
           }}
           onDragEnd={() => {
             hoverExpand(node, null);

@@ -23,11 +23,11 @@ async function callLead(scene, merged, context) {
   const key = crypto.createHash('sha256').update(LEAD + scene + context + JSON.stringify(merged)).digest('hex').slice(0, 24);
   const cf = path.join(CACHE, `lead-${scene}-${key}.json`);
   if (fs.existsSync(cf)) return JSON.parse(fs.readFileSync(cf, 'utf8'));
-  const sys = `You are the project lead for making "Scribner" match a classic writing program 1:1.
+  const sys = `You are the project lead for making "Pneuma Sofer" match a classic writing program 1:1.
 Workers pre-classified each raw difference as gap/alias/skip. Review their verdicts for the window below.
-Correct mistakes. Keep Scribner's own extra features (AI, MCP, dictation) — never list those as gaps.
-Return ONLY JSON: {"gaps":[{"el":"","note":"<=14 words, what to add"}],"aliases":[{"el":"","scribnerLabel":""}]}`;
-  const user = `Window: ${scene}\n${context ? 'Scribner already has (context):\n' + context + '\n' : ''}Worker verdicts:\n${JSON.stringify(merged)}`;
+Correct mistakes. Keep Pneuma Sofer's own extra features (AI, MCP, dictation) — never list those as gaps.
+Return ONLY JSON: {"gaps":[{"el":"","note":"<=14 words, what to add"}],"aliases":[{"el":"","pneumaLabel":""}]}`;
+  const user = `Window: ${scene}\n${context ? 'Pneuma Sofer already has (context):\n' + context + '\n' : ''}Worker verdicts:\n${JSON.stringify(merged)}`;
   const res = await fetch(`${URL}/chat/completions`, { method: 'POST', headers: { Authorization: `Bearer ${KEY}`, 'content-type': 'application/json' }, body: JSON.stringify({ model: LEAD, temperature: 0, max_tokens: 3000, stream: false, messages: [{ role: 'system', content: sys }, { role: 'user', content: user }] }) });
   const raw = await res.text();
   const { parseMaybeSse } = require('./omniroute-judge.cjs');
@@ -46,7 +46,7 @@ async function run(scene, rows, context = '') {
   const merged = results.flatMap((r) => r.verdicts).filter((v) => v.verdict && v.verdict !== 'skip');
   // Only the worker-flagged gaps need the lead's review; aliases are recorded as-is.
   const workerGaps = merged.filter((v) => v.verdict === 'gap');
-  const aliases = merged.filter((v) => v.verdict === 'alias').map((v) => ({ el: v.el, scribnerLabel: v.scribnerLabel }));
+  const aliases = merged.filter((v) => v.verdict === 'alias').map((v) => ({ el: v.el, pneumaLabel: v.scribnerLabel }));
   const leadShards = chunk(workerGaps, 30);
   const leadOut = await Promise.all(leadShards.map((s, i) => callLead(`${scene}#L${i}`, s, context).catch((e) => { console.error(`lead ${i}: ${e.message}`); return { gaps: [], aliases: [] }; })));
   const gaps = leadOut.flatMap((o) => o.gaps || []);

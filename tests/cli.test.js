@@ -7,7 +7,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const store = require('../lib/store.cjs');
 
-const CLI = path.join(__dirname, '..', 'cli', 'scribner.cjs');
+const CLI = path.join(__dirname, '..', 'cli', 'pneuma.cjs');
 const ENV = { ...process.env, LANG: 'ro_RO.UTF-8', LC_ALL: '', LC_MESSAGES: '', SCRIBNER_LANG: '' };
 
 function run(args, opts = {}) {
@@ -25,7 +25,7 @@ let P;
 const ids = {};
 
 beforeAll(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-cli-'));
+  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-cli-'));
   P = path.join(tmp, 'Carte.scribner');
   const project = store.createProject(P, 'Țara mea — „Drumul”');
   project.author = 'Ion Pop';
@@ -76,7 +76,7 @@ describe('cli: usage and help', () => {
     expect(run(['export-docs', P]).code).toBe(2); // missing -o
     const missing = run(['info', path.join(tmp, 'nu-exista'), '--lang', 'en']);
     expect(missing.code).toBe(1);
-    expect(missing.err).toMatch(/Not a Scribner project/);
+    expect(missing.err).toMatch(/Not a Pneuma Sofer project/);
     expect(run(['cat', P, 'Nu există']).code).toBe(1);
     expect(run(['search', P, '(', '--regex']).code).toBe(2);
     expect(run(['mcp']).code).toBe(2);
@@ -164,7 +164,7 @@ describe('cli: compile and exports', () => {
     expect(r.code, r.err).toBe(0);
     expect(path.basename(JSON.parse(r.out).file)).toMatch(/^Țara mea.*\.txt$/);
     expect(run(['compile', P, '--format', 'txt', '--preset', 'nu-exista']).code).toBe(2);
-  });
+  }, 30000); // spawns the CLI for 10 output formats; slow under full-suite load
 
   it('compile pdf prints a clear message instead of failing obscurely', () => {
     const r = run(['compile', P, '--format', 'pdf', '--lang', 'en']);

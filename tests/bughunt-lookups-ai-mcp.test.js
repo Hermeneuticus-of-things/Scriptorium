@@ -30,7 +30,7 @@ describe('mcpConfig merge with odd files', () => {
   it('accepts a UTF-8 BOM and keeps other servers', () => {
     const out = JSON.parse(mergeDesktopConfig('﻿{"mcpServers":{"a":{"command":"a"}},"x":1}', entry));
     expect(out.mcpServers.a.command).toBe('a');
-    expect(out.mcpServers.scribner).toEqual(entry);
+    expect(out.mcpServers.pneuma).toEqual(entry);
     expect(out.x).toBe(1);
   });
   it('refuses comments and trailing commas', () => {

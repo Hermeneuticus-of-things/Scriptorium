@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// D&TED in Scribner (docs/DTED.md): dictated text at the cursor or over a selection, one undo step,
+// D&TED in Pneuma Sofer (docs/DTED.md): dictated text at the cursor or over a selection, one undo step,
 // transcripts, finding the program, and the service protocol against a fake D&TED process.
 import { describe, it, expect, afterEach } from 'vitest';
 import { createRequire } from 'module';
@@ -23,7 +23,7 @@ afterEach(() => {
 });
 const make = (content) => (ed = new Editor({ extensions: buildExtensions({ corrections: {} }), content }));
 const tempDir = () => {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-dted-'));
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-dted-'));
   tmp.push(d);
   return d;
 };

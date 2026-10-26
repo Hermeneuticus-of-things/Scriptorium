@@ -49,7 +49,7 @@ module.exports = function updateHandlers({ handle, app, net, shell, BrowserWindo
   handle('update:download', async (event) => {
     const info = lastInfo && lastInfo.newer ? lastInfo : await check();
     if (!info.newer) throw new Error('Programul este deja la zi.');
-    const dir = path.join(os.tmpdir(), 'scribner-update', info.latest);
+    const dir = path.join(os.tmpdir(), 'pneuma-update', info.latest);
     let lastSent = 0;
     downloaded = await updater.downloadAsset({
       fetchImpl,

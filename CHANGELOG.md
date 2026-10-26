@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.11.0
+- Redenumire: aplicația se numește acum **Pneuma Sofer** (suflarea care scrie). Numele vizibil s-a schimbat peste tot (interfață, ajutor, README, titlul ferestrei, „Despre").
+- Compatibilitate păstrată: proiectele `.scribner` se deschid la fel, cheile și setările din `%APPDATA%\Scribner` rămân pe loc (criptate cu safeStorage), legăturile interne `scribner://` și pachetele existente merg mai departe. Identificatorul tehnic (CLI, server MCP, protocol, wrapper) este `pneuma`.
+- Actualizator: o instalare veche „Scribner" **nu** vede automat acest Release (fișierele se numesc acum `PneumaSofer-*`); trecerea se face printr-o singură reinstalare manuală.
+
 ## v0.10.22
 - Mihai aude și parantezele: un text între paranteze (sau paranteze drepte) e citit acum cu o pauză de virgulă de o parte și de alta, ca o paranteză vorbită. Plus curățare: fără virgule duble și fără spațiu înainte de semnele de punctuație. (Deja avea: punct, virgulă, „?", „!", „;", „:", „…", linia de dialog, ghilimelele și pauzele între paragrafe.)
 
@@ -88,7 +93,7 @@
 
 ## v0.9.9
 - Actualizare din aplicație de pe GitHub: verificare automată o dată pe zi (10 s după pornire dacă ultima verificare e mai veche de 24 h; cerere condiționată cu ETag, așteptare la limita de cereri), anunț „Versiune nouă” o singură dată pe versiune, Ajutor → Caută actualizări… cu note, descărcare cu progres, verificare dimensiune + SHA-256, instalare silențioasă și repornire (portabil: arată fișierul nou). Setare „Verifică automat actualizările” (pornită implicit); buton opțional „Actualizare” în bara de sus. Versiunile publică și `SHA256SUMS`; instalatorul are `RestartApplications=yes`. (`lib/updater.cjs`, `electron/updateHandlers.cjs`, `src/components/UpdateDialog.jsx`)
-- MCP `--anonymize` (oprit implicit): numele din private-names.txt (și, la cerere, emailurile și telefoanele) trimise modelului ca jetoane și rehidratate local la scriere; `docs/MCP_ARHITECTURA.md` descrie toată legătura agent ↔ Scribner.
+- MCP `--anonymize` (oprit implicit): numele din private-names.txt (și, la cerere, emailurile și telefoanele) trimise modelului ca jetoane și rehidratate local la scriere; `docs/MCP_ARHITECTURA.md` descrie toată legătura agent ↔ Pneuma Sofer.
 - MCP prin rețea: `--http <port>` (Streamable HTTP, cu token obligatoriu, pe 127.0.0.1 implicit, `--host` pentru alt calculator); resursa `scribner://ghid` cu regulile de lucru pentru agent.
 - Proiect nou: șabloanele pe categorii (stânga), fișe cu iconiță (mijloc), descriere dedesubt; Opțiuni▾ și Deschide recent▾ jos.
 - Setările proiectului cu listă verticală de file în stânga.
@@ -111,7 +116,7 @@
 - Mini-player „Voce” (F8 sau butonul 🎙 din bară): dictare (●/❚❚/■) și citire cu voce tare, fereastră mică mutabilă.
 - Vocea de citire românească inclusă (Piper, „Mihai”), descărcată singură o dată la prima pornire; vocile sistemului rămân ca alternativă.
 - Dictarea e gata fără vizită în Setări: motorul se descarcă singur o dată, în fundal; dacă D&TED e instalat, e folosit el.
-- MCP: comandă generală, aceeași pe orice calculator și pentru orice client AI, fără nume de utilizator și fără carte (`cmd /c %LOCALAPPDATA%\Programs\Scribner\scribner-mcp.cmd`); fără `--project` serverul oferă proiectele din lista recentă.
+- MCP: comandă generală, aceeași pe orice calculator și pentru orice client AI, fără nume de utilizator și fără carte (`cmd /c %LOCALAPPDATA%\Programs\Pneuma Sofer\pneuma-mcp.cmd`); fără `--project` serverul oferă proiectele din lista recentă.
 
 ## 2026-10-25 — v0.9.8 — Bug hunting pe mai multe niveluri (dictare, proces principal, D&TED)
 
@@ -191,13 +196,13 @@
 - **Ferestre:** ferestrele ascunse pentru PDF nu mai sunt luate drept ferestre de lucru; meniul nativ se golește la reîncărcarea paginii.
 - **Dictare (motorul încorporat):** o pornire eșuată nu mai blochează dictarea până la repornirea ferestrei; oprirea în timpul pornirii nu mai dă eroare; mesaj în română când motorul cade în mijlocul transcrierii; fișierele lungi se decodează la 16 kHz (de ~3 ori mai puțină memorie); la schimbarea motorului, cel vechi se oprește (D&TED nu mai ține microfonul).
 - **Dictare (text):** ş/ţ cu sedilă devin ș/ț; majuscula după „ sau « la început de frază; înlocuirile tale se aplică și pe varianta cu sedilă.
-- **D&TED în Scribner:** cererile de stare/model se potrivesc după id; modelul se reîncearcă dacă D&TED era ocupat; transcrierea fișierelor din binder folosește și ea modelul ales.
+- **D&TED în Pneuma Sofer:** cererile de stare/model se potrivesc după id; modelul se reîncearcă dacă D&TED era ocupat; transcrierea fișierelor din binder folosește și ea modelul ales.
 - **D&TED (repo separat):** serviciul nu mai moare la un caracter care nu se poate scrie sau la o comandă greșită; „Stop” al unei ferestre nu mai oprește dictarea alteia; id dublu refuzat; schimbarea modelului refuzată cât timp așteaptă transcrieri; anularea merge și cât se încarcă modelul.
 
-## 2026-10-24 — v0.9.7 — Modelul eek de la D&TED în Scribner
+## 2026-10-24 — v0.9.7 — Modelul eek de la D&TED în Pneuma Sofer
 
 ### Cerința user
-> "pune motor eek de la D&TED – Dictare și transcriere și integrează motor eek și să fie deep în Scribner UI dictarea"
+> "pune motor eek de la D&TED – Dictare și transcriere și integrează motor eek și să fie deep în Pneuma Sofer UI dictarea"
 
 - **Dictarea cu D&TED folosește modelul eek** (antrenat pe română, 5,8% cuvinte greșite față de 10,9%): *Setări → Servicii și conturi → D&TED → Verifică* arată modelele instalate, „Folosit acum” și permite alegerea; alegerea se păstrează și se aplică la fiecare pornire a serviciului.
 - D&TED (repo separat, ramura cu modul serviciu): comanda `model` și lista modelelor în `stare`.
@@ -311,14 +316,14 @@
 - **Microfon:** filtru la reeșantionare (fără distorsiuni de aliasing); erorile după anulare nu mai apar.
 - Teste: 1092; scenariile `whisper`, `dictation`, `settings-roundtrip`, `team`; E2E Electron.
 
-## 2026-10-24 — v0.9.0 — Recunoașterea vorbirii încorporată în Scribner
+## 2026-10-24 — v0.9.0 — Recunoașterea vorbirii încorporată în Pneuma Sofer
 
 ### Cerința user
-> "implementează motoarele D&TED … în UI Scribner" (motorul în Scribner, fără program separat)
+> "implementează motoarele D&TED … în UI Pneuma Sofer" (motorul în Pneuma Sofer, fără program separat)
 
 ### Rezultat
 - Motor încorporat (whisper.cpp v1.7.6 + Whisper large-v3-turbo), ales implicit: Setări → Servicii și conturi → Dictare și transcriere → Descarcă motorul (~590 MB o dată; varianta NVIDIA opțională), cu progres, verificare SHA-256 și Șterge.
-- F9 dictează cu microfonul direct în Scribner (bucăți tăiate la pauze, fără liniște și texte inventate), „Transcrie fișier audio” decodează MP3/WAV/M4A/OGG/FLAC în fereastră; D&TED rămâne opțiune.
+- F9 dictează cu microfonul direct în Pneuma Sofer (bucăți tăiate la pauze, fără liniște și texte inventate), „Transcrie fișier audio” decodează MP3/WAV/M4A/OGG/FLAC în fereastră; D&TED rămâne opțiune.
 - Bug UI reparat: mesajele de jos nu mai acoperă butoanele dialogurilor (Salvează).
 - `lib/whisperEngine.cjs`, `electron/whisperHandlers.cjs`, `src/lib/localSpeech.js`, Setări; docs/DTED.md §7; README, ajutor RO/EN. Teste: 1087 + scenariul de browser `whisper`.
 
@@ -346,11 +351,11 @@
 ## 2026-10-24 — v0.8.8 (continuare) — Dictare și transcriere cu D&TED; README refăcut
 
 ### Cerința user
-> "plugin https://github.com/Hermeneuticus-of-things/dted integrat la nivel de UI în Scribner"; "să poți dicta direct, modificare și text nou"; "README cu beautify-github-readme"
+> "plugin https://github.com/Hermeneuticus-of-things/dted integrat la nivel de UI în Pneuma Sofer"; "să poți dicta direct, modificare și text nou"; "README cu beautify-github-readme"
 
 ### Rezultat
 - **D&TED** (depozitul dted, PR #3): modul `--serviciu`, JSON pe linii (stare, transcrie, dictare_start/stop, anuleaza, iesire), merge și lângă fereastra D&TED deschisă; teste.
-- **Scribner:** `lib/dted.cjs` (găsește DTED.exe sau codul sursă, un singur proces, oprit la ieșire), `electron/dtedHandlers.cjs` (IPC), `src/lib/dictation.js` + `useDictation.js` + `DictationBar.jsx`.
+- **Pneuma Sofer:** `lib/dted.cjs` (găsește DTED.exe sau codul sursă, un singur proces, oprit la ieșire), `electron/dtedHandlers.cjs` (IPC), `src/lib/dictation.js` + `useDictation.js` + `DictationBar.jsx`.
 - **Dictare (F9):** text nou la cursor; peste o selecție o înlocuiește; tot textul dictat = un singur Ctrl+Z; Pauză / Stop / Anulează; majuscule și spații corecte; înlocuirile automate aplicate; documentele blocate nu primesc text.
 - **Transcriere:** Fișier → Importă → Transcrie fișier audio…; Documente → Transcrie cu D&TED pe audio din binder; document nou în Cercetare, paragrafe după pauze, marcaje [mm:ss].
 - **Setări → Servicii și conturi → Dictare și transcriere:** cale, termeni, marcaje de timp, Verifică.
@@ -400,22 +405,22 @@
 
 ## 2026-10-24 — v0.8.7 (continuare) — Instalare dintr-o comandă, 17 bug-uri în discuția cu sursele, CLI și installer
 
-- **Instalare dintr-o comandă:** `irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex` (ultima versiune, verificare SHA-256 publicată de GitHub, opțiuni pentru PATH, fără ferestre și portabil). CI pe Windows instalează silențios installerul construit, verifică programul, serverul MCP, comanda `scribner` din PATH și rulează scriptul în mod de probă.
+- **Instalare dintr-o comandă:** `irm https://raw.githubusercontent.com/Hermeneuticus-of-things/Scriptorium/main/install.ps1 | iex` (ultima versiune, verificare SHA-256 publicată de GitHub, opțiuni pentru PATH, fără ferestre și portabil). CI pe Windows instalează silențios installerul construit, verifică programul, serverul MCP, comanda `pneuma` din PATH și rulează scriptul în mod de probă.
 - **Discuția cu sursele:** întrebări foarte lungi încap în buget; mai multe titluri de „întrebări de continuare” recunoscute; răspunsul nu mai e tăiat în timp ce curge; un fișier de discuții stricat e păstrat ca `.bad-<oră>`, nu suprascris; titluri pe un rând; Enter în timpul răspunsului nu mai trimite a doua întrebare; „Inserează în document” refuză documentele doar-citire.
 - **Import PDF:** ghilimelele românești, liniuțele și „…” apar corect; șiruri mari nu mai opresc importul; dicționare imbricate; PDF-urile criptate apar ca „Fără text”.
-- **Linia de comandă:** NotebookLM rămâne sub 50 de surse și cu `--per document`; valorile numerice greșite opresc comanda cu mesaj; căile Windows cu ghilimele la final și folderele noi `-o dir\` merg; o sesiune `ask` stricată se pune deoparte; `scribner.cmd` păstrează codul de ieșire și argumentele cu paranteze.
+- **Linia de comandă:** NotebookLM rămâne sub 50 de surse și cu `--per document`; valorile numerice greșite opresc comanda cu mesaj; căile Windows cu ghilimele la final și folderele noi `-o dir\` merg; o sesiune `ask` stricată se pune deoparte; `pneuma.cmd` păstrează codul de ieșire și argumentele cu paranteze.
 - **Installer:** PATH fără dubluri și fără `;` goale, scos la dezinstalare, terminalele deschise anunțate; textul opțiunii în română și engleză.
 - „Doar citire.” tradus; importul arată și ODT/RTF.
 - Teste: 1014 + 2 sărite; E2E Electron trece.
 
-## 2026-10-24 — v0.8.7 — Discuție cu sursele (ca într-un caiet de cercetare), linia de comandă „scribner”, 13 bug-uri
+## 2026-10-24 — v0.8.7 — Discuție cu sursele (ca într-un caiet de cercetare), linia de comandă „pneuma”, 13 bug-uri
 
 ### Cerința user
 > "import, consultă AI cu sursele, cu întrebare follow-up, alături de NotebookLM" · "CLI pentru NotebookLM și altele asemănătoare, ChatGPT, Manus" · "bug hunter la dicționare, traducere online, AI, MCP, ecranul de început, română" · "să meargă și cu DeepL gratuit"
 
 ### Rezultat
 - **Cercetare → Întreabă devine o discuție:** întrebări de continuare (ultimele 6 replici, cu buget de lungime), trimiteri [n] care deschid pasajul, alegerea surselor (manuscris, cercetare, note, dosare), import de surse (PDF, DOCX, TXT, MD, HTML, RTF, ODT, pagini web, text lipit), „Salvează ca notă”, „Inserează în document” (note de subsol sau legături), „Copiază”, 2–3 întrebări sugerate; discuțiile se păstrează în proiect (`research-chats.json`); răspunsul curge pe ecran și se poate opri.
-- **Linia de comandă `scribner`** (`cli/scribner.cjs`, `scribner.cmd` instalat lângă program, opțiune în installer pentru PATH): info, list, cat, search, stats, compile, export-sources cu `--target notebooklm|gemini|chatgpt|manus|generic`, export-notebooklm, export-docs, backup, snapshot, import, ask cu `--session`, mcp.
+- **Linia de comandă `pneuma`** (`cli/pneuma.cjs`, `pneuma.cmd` instalat lângă program, opțiune în installer pentru PATH): info, list, cat, search, stats, compile, export-sources cu `--target notebooklm|gemini|chatgpt|manus|generic`, export-notebooklm, export-docs, backup, snapshot, import, ask cu `--session`, mcp.
 - **DeepL gratuit:** cheile API Free (`:fx`) merg automat; fără cont se deschide pagina DeepL.
 - **Bug-uri:** meniul de dicționare cădea la un emoji pe limita de 5000 de caractere; dicționare și erori AI în engleză; timpul depășit scris corect („10 secunde”); acțiune AI pe text gol nu mai costă; cheia API ascunsă din mesajele de eroare; config Claude Desktop cu BOM sau `mcpServers` neobișnuit; ecranul de început: proiecte dispărute marcate „(lipsește)”, „Golește lista” nu mai dispare, Enter creează proiectul, titluri lungi; clic dreapta pe „cuvânt--altul”; „Înlocuiește” după traducere păstrează aldinul și cursivul, corecturile de gramatică schimbă doar cuvintele corectate.
 - **MCP verificat în rulare:** doar-citire refuză scrierile, snapshot înainte de scriere, jurnalul agentului, lock fără pierderi, diacritice și emoji.
@@ -574,7 +579,7 @@
 - **Zotero:** „Fișier → Importă bibliografia din Zotero” aduce toată biblioteca din contul tău (ID și cheie din Setări → Servicii și conturi), cu chei de citare lizibile; titlurile cu aceeași cheie se actualizează, celelalte rămân.
 - Manualul și dialogul Compile descriu `<$t>` și `<$subtitle>`.
 - `installer\\build-windows.cmd`: pe un Windows cu Node.js și Inno Setup, dublu clic construiește aplicația, varianta portabilă și installerul cu wizard, apoi deschide folderul `release`.
-- Release `v0.8.2` pe GitHub cu `Scribner-Setup-0.8.2.exe` (wizard) și varianta portabilă.
+- Release `v0.8.2` pe GitHub cu `Pneuma Sofer-Setup-0.8.2.exe` (wizard) și varianta portabilă.
 
 ## 2026-10-24 — v0.8.1 — Vânătoare de bug-uri: încrucișat, divergent și convergent
 
@@ -621,8 +626,8 @@ Patru vânători de bug-uri în paralel, pe zone separate (editor, integritatea 
 > "programul să aibă wizard de instalare, adică .exe" · "Inno Setup cu wizard"
 
 ### Rezultat
-- `installer/scribner.iss`: wizard Inno Setup 6 în română și engleză (licență, folder, grup în Start, scurtătură pe Desktop, pornire la final); instalare per utilizator fără drepturi de admin sau pentru toți utilizatorii; dezinstalarea păstrează proiectele și setările.
-- `npm run dist:win` împachetează aplicația și varianta portabilă; `npm run dist:win:setup` face `Scribner-Setup-<versiune>.exe`.
+- `installer/pneuma.iss`: wizard Inno Setup 6 în română și engleză (licență, folder, grup în Start, scurtătură pe Desktop, pornire la final); instalare per utilizator fără drepturi de admin sau pentru toți utilizatorii; dezinstalarea păstrează proiectele și setările.
+- `npm run dist:win` împachetează aplicația și varianta portabilă; `npm run dist:win:setup` face `Pneuma Sofer-Setup-<versiune>.exe`.
 - Workflow `Windows` pe GitHub (windows-latest): teste, pachet, installer; artefactele se descarcă din Actions, iar un tag `v*` publică automat un Release cu ambele `.exe`.
 
 ## 2026-10-24 — v0.7.1 — Clic dreapta: „În proiect” (căutare, cercetare, glosar)
@@ -668,11 +673,11 @@ Patru vânători de bug-uri în paralel, pe zone separate (editor, integritatea 
 > "repare bug cu best practice root cause"
 
 ### Cauza
-Fluxul „NodeJS with Webpack” rula `npx webpack`, dar Scribner se construiește cu Vite și nu are webpack: CI pica la fiecare push pe `main`. Fluxul SLSA semna două fișiere de exemplu („artifact1/2”), nu aplicația.
+Fluxul „NodeJS with Webpack” rula `npx webpack`, dar Pneuma Sofer se construiește cu Vite și nu are webpack: CI pica la fiecare push pe `main`. Fluxul SLSA semna două fișiere de exemplu („artifact1/2”), nu aplicația.
 
 ### Rezultat
 - `.github/workflows/ci.yml` (în locul șablonului webpack): Node 22, `npm ci`, `npm test`, build Vite, build web, test cap-coadă în Electron cu `xvfb-run`.
-- SLSA: construiește artefactele reale (Scribner pentru Windows, zip, și versiunea web), le semnează și le atașează la release; generator `v2.1.0`.
+- SLSA: construiește artefactele reale (Pneuma Sofer pentru Windows, zip, și versiunea web), le semnează și le atașează la release; generator `v2.1.0`.
 - Verificat: toți pașii CI rulați într-o clonă curată trec (312 teste, build, E2E OK).
 
 ## 2026-10-23 — v0.5.0 — Aspect nou, profil generic, ferestre, web, profil românesc
@@ -779,20 +784,20 @@ Roadmap extins cu toate funcțiile (12 secțiuni, P1/P2/P3) și ordinea v0.2 / v
 - Ctrl+F în document (`src/components/FindBar.jsx`, `src/editor/docSearch.js`), Paste and Match Style, Split cu selecția ca titlu (Ctrl+Shift+K), duplicare (Ctrl+D, `duplicateNode` în `src/lib/tree.js`), spelling ro/en-US cu meniu contextual (`electron/main.cjs`).
 - Teste: 48/48; funcțiile verificate în Chromium.
 
-## 2026-10-23 — v0.2.2 — Redenumire în „Scribner”
+## 2026-10-23 — v0.2.2 — Redenumire în „Pneuma Sofer”
 
 ### Cerința user
-> "programul să se numească Scribner"
+> "programul să se numească Pneuma Sofer"
 
 ### Rezultat
-- Numele vizibil, pachetul (`scribner`, appId `ro.scribner.app`), serverul MCP (`scribner`, `bin: scribner-mcp`), formatul proiectului (`<Nume>.scribner`), linkurile interne (`scribner://doc/…`), datele portabile (`Scribner-data`).
+- Numele vizibil, pachetul (`pneuma`, appId `ro.scribner.app`), serverul MCP (`pneuma`, `bin: pneuma-mcp`), formatul proiectului (`<Nume>.scribner`), linkurile interne (`scribner://doc/…`), datele portabile (`Scribner-data`).
 - Compatibilitate: proiectele `.scriptorium` se deschid, se salvează în backup și se restaurează la fel; linkurile `scriptorium://` vechi rămân valide.
 - Repo-ul GitHub rămâne `Scriptorium` până la redenumirea lui din setările GitHub.
 
 ## 2026-10-23 — v0.3.0 (în lucru) — Roadmap v0.3, secțiunile 2.1–2.3
 
 ### Cerința user
-> "da cu tot roadmap-ul până la final, nu mă mai întreba"; "Scribner să poată fi folosit și cu AI și fără AI, să nu fie dependent de AI"
+> "da cu tot roadmap-ul până la final, nu mă mai întreba"; "Pneuma Sofer să poată fi folosit și cu AI și fără AI, să nu fie dependent de AI"
 
 ### Rezultat
 - 2.1: bara de format completă, stiluri cu dialog, Revision Mode, focus, Page View, zoom, auto-complete, Copy Special, transformări, setări de compunere.

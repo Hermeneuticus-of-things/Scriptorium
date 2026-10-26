@@ -10,7 +10,7 @@ try {
   ({ _electron } = require(process.env.PLAYWRIGHT_PATH || '/opt/node22/lib/node_modules/playwright'));
 }
 const os = require('os');
-const W = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-e2e-'));
+const W = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-e2e-'));
 const ROOT = path.join(__dirname, '..', '..');
 const log = (...a) => console.log(...a);
 // Fail fast with the last step reached instead of hanging until the CI job timeout.

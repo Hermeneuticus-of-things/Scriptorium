@@ -15,7 +15,7 @@ try {
 } catch {
   ({ _electron } = require(process.env.PLAYWRIGHT_PATH || '/opt/node22/lib/node_modules/playwright'));
 }
-const W = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-flows-'));
+const W = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-flows-'));
 const ROOT = path.join(__dirname, '..', '..');
 let step = 'start';
 const watchdog = setTimeout(() => {

@@ -133,7 +133,7 @@ describe('help search', () => {
 describe('tutorial project', () => {
   it('has the template shape', () => {
     const t = tutorialTemplate();
-    expect(t.name).toBe('Tutorial Scribner');
+    expect(t.name).toBe('Tutorial Pneuma Sofer');
     expect(Array.isArray(t.draft) && Array.isArray(t.research)).toBe(true);
     const check = (n) => {
       expect(['text', 'folder']).toContain(n.type);
@@ -145,14 +145,14 @@ describe('tutorial project', () => {
   });
 
   it('creates a valid project with store.createProject', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-tutorial-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-tutorial-'));
     const had = Object.prototype.hasOwnProperty.call(templates.TEMPLATES, 'tutorial');
     if (!had) templates.TEMPLATES.tutorial = tutorialTemplate();
     try {
       const projDir = path.join(dir, 'Tutorial.scribner');
-      const project = store.createProject(projDir, 'Tutorial Scribner', 'tutorial');
+      const project = store.createProject(projDir, 'Tutorial Pneuma Sofer', 'tutorial');
       const loaded = store.loadProject(projDir);
-      expect(loaded.title).toBe('Tutorial Scribner');
+      expect(loaded.title).toBe('Tutorial Pneuma Sofer');
       const lessons = loaded.tree[0].children[0];
       expect(lessons.title).toBe('Tutorial');
       expect(lessons.children.length).toBeGreaterThanOrEqual(15);

@@ -1,8 +1,8 @@
-// Captures Scribner's UI for the visual audit: the native menu (labels, order, shortcuts, enabled,
+// Captures Pneuma Sofer's UI for the visual audit: the native menu (labels, order, shortcuts, enabled,
 // checked, submenus) as menus.json in the same shape as uia-dump.ps1, and for each scene an
 // accessibility snapshot (scene.json) plus a screenshot. The app runs on a private profile with the
 // test project reopened, so it never touches the user's settings.
-// Usage: node scripts/ui-audit/scribner-capture.cjs <projectDir.scribner> <outDir> [--lang en|ro] [--scenes]
+// Usage: node scripts/ui-audit/pneuma-capture.cjs <projectDir.scribner> <outDir> [--lang en|ro] [--scenes]
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -41,7 +41,7 @@ function axNode(a) {
 
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
-  const ud = fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-audit-'));
+  const ud = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-audit-'));
   fs.writeFileSync(path.join(ud, 'settings.json'), JSON.stringify({ language: lang, recent: [{ dir: path.resolve(projectDir), title: 'Audit vizual' }], reopenLastProject: true, onboardingDone: true }));
   const app = await _electron.launch({ executablePath: require(path.join(ROOT, 'node_modules', 'electron')), args: ['.', `--user-data-dir=${ud}`], cwd: ROOT, env: { ...process.env, ELECTRON_DISABLE_SECURITY_WARNINGS: '1' } });
   await app.evaluate(({ dialog, Menu }) => {
@@ -59,9 +59,9 @@ function axNode(a) {
     const ser = (it) => ({ type: it.type, label: it.label, accelerator: it.accelerator, enabled: it.enabled, checked: it.checked, visible: it.visible, submenu: it.submenu && { items: it.submenu.items.map(ser) } });
     return m.items.map(ser);
   });
-  fs.writeFileSync(path.join(outDir, 'menus.json'), JSON.stringify({ role: 'MenuBar', name: 'Scribner', children: menus.filter((m) => m.visible !== false).map(menuNode) }, null, 1));
+  fs.writeFileSync(path.join(outDir, 'menus.json'), JSON.stringify({ role: 'MenuBar', name: 'Pneuma Sofer', children: menus.filter((m) => m.visible !== false).map(menuNode) }, null, 1));
 
-  // Playwright dropped page.accessibility; Scribner is a web UI, so read the DOM directly — more
+  // Playwright dropped page.accessibility; Pneuma Sofer is a web UI, so read the DOM directly — more
   // accurate than an a11y snapshot. Emits the same node shape element-diff.cjs expects.
   const domSnapshot = () => win.evaluate(() => {
     const roleOf = (el) => {
@@ -104,7 +104,7 @@ function axNode(a) {
       if (el.value !== undefined && el.value !== '' && role !== 'Button') n.value = String(el.value).slice(0, 60);
       out.push(n);
     }
-    return { role: 'Window', name: document.title || 'Scribner', children: out };
+    return { role: 'Window', name: document.title || 'Pneuma Sofer', children: out };
   });
   const snap = async (name) => {
     const tree = await domSnapshot();
@@ -123,7 +123,7 @@ function axNode(a) {
       return true;
     }, labelPath);
     // Dispatch an in-app command straight to the renderer (menu:command) — the reliable way to open
-    // Scribner's own dialogs, which a native-menu click does not always surface in the capture.
+    // Pneuma Sofer's own dialogs, which a native-menu click does not always surface in the capture.
     const command = (id) => app.evaluate(({ BrowserWindow }, id) => BrowserWindow.getAllWindows()[0].webContents.send('menu:command', id), id);
     const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
     for (const s of SCENES.filter((x) => x.scribner && (!only || x.id === only))) {

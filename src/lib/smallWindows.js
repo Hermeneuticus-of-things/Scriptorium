@@ -100,7 +100,7 @@ export function noteToFileHtml(note) {
 
 // ---------------------------------------------------------------- session across open projects
 
-const SESSION_PREFIX = 'scribner-session-live:';
+const SESSION_PREFIX = 'pneuma-session-live:';
 export const SESSION_FRESH_MS = 90_000;
 
 /** This window's session count, shared with the other windows through localStorage. */

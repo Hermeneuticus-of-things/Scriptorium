@@ -1,4 +1,4 @@
-// Scribner user manual (English, condensed). Same chapter and section ids as manual.ro.js
+// Pneuma Sofer user manual (English, condensed). Same chapter and section ids as manual.ro.js
 // so context help works in both languages.
 
 const k = (s) => s.split('+').map((p) => `<kbd>${p}</kbd>`).join('+');
@@ -8,7 +8,7 @@ export const MANUAL_EN = [
     id: 'start',
     title: 'Getting started',
     sections: [
-      { id: 'start-intro', title: 'What Scribner is', html: `<p>Scribner is a writing program for long texts. You write in <strong>small documents</strong> (scenes, chapters, sections) arranged in a tree called the <strong>binder</strong>, move them freely, and <strong>Compile</strong> them into one manuscript (DOCX, PDF, EPUB and more). It is written from scratch; <code>.scriv</code> projects can be imported and exported. AI is <strong>optional</strong> and can be switched off entirely in <em>Settings → AI</em>.</p>` },
+      { id: 'start-intro', title: 'What Pneuma Sofer is', html: `<p>Pneuma Sofer is a writing program for long texts. You write in <strong>small documents</strong> (scenes, chapters, sections) arranged in a tree called the <strong>binder</strong>, move them freely, and <strong>Compile</strong> them into one manuscript (DOCX, PDF, EPUB and more). It is written from scratch; <code>.scriv</code> projects can be imported and exported. AI is <strong>optional</strong> and can be switched off entirely in <em>Settings → AI</em>.</p>` },
       { id: 'start-window', title: 'The main window', html: `<p><strong>Binder</strong> on the left (Draft, Research, Trash; toggle ${k('Ctrl+Shift+B')}), the <strong>work area</strong> in the middle (Editor ${k('Ctrl+1')}, Corkboard ${k('Ctrl+2')}, Outline ${k('Ctrl+3')}), the <strong>Inspector</strong> on the right (${k('Ctrl+Shift+I')}). The top bar is kept uncluttered: ⌂ (close project), Back/Forward, the project title, the <em>Editor / Corkboard / Outline</em> switch, <em>Compile</em> and <em>Inspector</em>. Everything else is in the menus: <em>File, Edit, View, Project, Documents, Navigate, Tools, AI, Help</em> (in the desktop app, in the window's native menu), with related commands grouped in submenus (▸) such as <em>File → Import ▸ / Export ▸</em>; <em>Format</em> is a submenu of <em>Edit</em> and <em>Window</em> one of <em>View</em>. Split editor is <em>View → Split editor</em>, Composition is in <em>View</em> (F11). Panel widths are remembered per project. With two panes open, the one you type in has a green border and the other is slightly faded.</p>
 <p>The <strong>AI menu</strong> holds everything AI: <em>AI assistant</em>, <em>I-REP / I-EDIT</em>, <em>AI on selection ▸</em>, <em>AI on the whole book ▸</em>, <em>NotebookLM ▸</em>, <em>AI settings…</em> and, in the desktop app, <em>Connect to Claude (MCP)…</em>. With AI turned off only <em>I-REP</em> (works without AI) and <em>AI settings…</em> remain.</p>
 <p><strong>Customize the toolbars</strong> with <em>View → Customize toolbar…</em>: for the top bar and the format bar, add, remove and reorder items (drag, or ↑/↓; Alt+↑/↓ in the list), add separators and flexible spaces, choose the display (icon and text / icon only / text only), or <em>Restore defaults</em>. Anything removed stays in the menus. The format bar moves what does not fit on one row into <em>»</em>.</p>` },
@@ -269,26 +269,26 @@ node scripts\ai-smoke.cjs openrouter</pre>
       {
         id: 'yours-spelling',
         title: 'Romanian spell checking on Windows',
-        html: `<p>Windows uses the system spell checker: <em>Windows Settings → Time &amp; language → Language &amp; region → Add a language → Romanian</em>, with spell checking. Restart Scribner.</p>`,
+        html: `<p>Windows uses the system spell checker: <em>Windows Settings → Time &amp; language → Language &amp; region → Add a language → Romanian</em>, with spell checking. Restart Pneuma Sofer.</p>`,
       },
       {
         id: 'yours-mcp',
         title: 'Connecting Claude, Codex and other AI agents (MCP)',
-        html: `<p>Scribner ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>AI → Connect to Claude (MCP)…</em>. Installer paths on Windows (current user):</p>
-<pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
-Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs</pre>
-<p><strong>General command (the same on any computer, for any AI client; names no book and no user; the agent sees the projects in Scribner's recent list):</strong></p>
-<pre>claude mcp add scribner --scope user -- cmd /c %LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd</pre>
-<pre>"scribner": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\\\Programs\\\\Scribner\\\\scribner-mcp.cmd"] }</pre>
+        html: `<p>Pneuma Sofer ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>AI → Connect to Claude (MCP)…</em>. Installer paths on Windows (current user):</p>
+<pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe
+Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs</pre>
+<p><strong>General command (the same on any computer, for any AI client; names no book and no user; the agent sees the projects in Pneuma Sofer's recent list):</strong></p>
+<pre>claude mcp add pneuma --scope user -- cmd /c %LOCALAPPDATA%\\Programs\\Pneuma Sofer\\pneuma-mcp.cmd</pre>
+<pre>"pneuma": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\\\Programs\\\\Pneuma Sofer\\\\pneuma-mcp.cmd"] }</pre>
 <p>Add <code>--read-only</code> at the end for reading only. The forms below, with a named project, still work.</p>
 <p><strong>Claude Code:</strong></p>
-<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
+<pre>claude mcp add pneuma --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
 <p><strong>OpenAI Codex:</strong></p>
-<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
+<pre>codex mcp add pneuma --env ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
 <p><strong>Gemini CLI:</strong></p>
-<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
+<pre>gemini mcp add pneuma -e ELECTRON_RUN_AS_NODE=1 "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\\\Carti\\\\My book.scribner"</pre>
 <p><strong>Claude Desktop, Cursor, Windsurf, LM Studio</strong> (<code>mcpServers</code> JSON; double every backslash), and <strong>VS Code</strong> (<code>.vscode\\mcp.json</code>, key <code>servers</code>, <code>"type": "stdio"</code>):</p>
-<pre>"scribner": {
+<pre>"pneuma": {
   "command": "&lt;Program&gt;",
   "args": ["&lt;Server&gt;", "--project", "D:\\\\\\Carti\\\\\\My book.scribner"],
   "env": { "ELECTRON_RUN_AS_NODE": "1" }
@@ -298,33 +298,33 @@ Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp
       {
         id: 'yours-cli',
         title: 'Command line (CLI)',
-        html: `<p>Scribner also has a command line: read, search, compile and export a project from a terminal or a script, without opening the window. Read-only commands never lock the project; writing commands (<code>snapshot</code>, <code>import</code>) wait until the app has finished saving.</p>
+        html: `<p>Pneuma Sofer also has a command line: read, search, compile and export a project from a terminal or a script, without opening the window. Read-only commands never lock the project; writing commands (<code>snapshot</code>, <code>import</code>) wait until the app has finished saving.</p>
 <h4>Running it</h4>
-<p>The installed Windows app needs no Node.js. Copy <code>scribner.cmd</code> (from the source <code>installer</code> folder) next to <code>Scribner.exe</code> in <code>%LOCALAPPDATA%\\Programs\\Scribner</code> and add that folder to PATH; then type <code>scribner …</code>. Without the wrapper, in PowerShell:</p>
-<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Scribner\\Scribner.exe" "$env:LOCALAPPDATA\\Programs\\Scribner\\resources\\app\\cli\\scribner.cjs" info "D:\\\\Carti\\\\Drumul spre munte.scribner"</pre>
-<p>From source, with Node.js: <code>node cli/scribner.cjs help</code>.</p>
+<p>The installed Windows app needs no Node.js. Copy <code>pneuma.cmd</code> (from the source <code>installer</code> folder) next to <code>Pneuma Sofer.exe</code> in <code>%LOCALAPPDATA%\\Programs\\Pneuma Sofer</code> and add that folder to PATH; then type <code>pneuma …</code>. Without the wrapper, in PowerShell:</p>
+<pre>$env:ELECTRON_RUN_AS_NODE=1; &amp; "$env:LOCALAPPDATA\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe" "$env:LOCALAPPDATA\\Programs\\Pneuma Sofer\\resources\\app\\cli\\pneuma.cjs" info "D:\\\\Carti\\\\Drumul spre munte.scribner"</pre>
+<p>From source, with Node.js: <code>node cli/pneuma.cjs help</code>.</p>
 <h4>Commands</h4>
-<pre>scribner info "D:\\\\Carti\\\\Drumul spre munte.scribner"              title, author, words, last modified
-scribner list "D:\\\\Carti\\\\Drumul spre munte.scribner" --tree       the binder, with ids
-scribner cat "D:\\\\Carti\\\\Drumul spre munte.scribner" "Chapter 1" --md
-scribner search "D:\\\\Carti\\\\Drumul spre munte.scribner" "pădure" --whole
-scribner stats "D:\\\\Carti\\\\Drumul spre munte.scribner"             words per document, targets, history
-scribner compile "D:\\\\Carti\\\\Drumul spre munte.scribner" --format docx --preset paperback -o "D:\\Export"
-scribner export-docs "D:\\\\Carti\\\\Drumul spre munte.scribner" -o "D:\\Export\\Docs" --format md
-scribner backup "D:\\\\Carti\\\\Drumul spre munte.scribner"
-scribner snapshot "D:\\\\Carti\\\\Drumul spre munte.scribner" "Chapter 1" --name "Before revision"
-scribner import "D:\\Texts\\Novel.docx" -o "D:\\\\Carti\\\\Novel.scribner" --split h1
-scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP server for AI agents</pre>
+<pre>pneuma info "D:\\\\Carti\\\\Drumul spre munte.scribner"              title, author, words, last modified
+pneuma list "D:\\\\Carti\\\\Drumul spre munte.scribner" --tree       the binder, with ids
+pneuma cat "D:\\\\Carti\\\\Drumul spre munte.scribner" "Chapter 1" --md
+pneuma search "D:\\\\Carti\\\\Drumul spre munte.scribner" "pădure" --whole
+pneuma stats "D:\\\\Carti\\\\Drumul spre munte.scribner"             words per document, targets, history
+pneuma compile "D:\\\\Carti\\\\Drumul spre munte.scribner" --format docx --preset paperback -o "D:\\Export"
+pneuma export-docs "D:\\\\Carti\\\\Drumul spre munte.scribner" -o "D:\\Export\\Docs" --format md
+pneuma backup "D:\\\\Carti\\\\Drumul spre munte.scribner"
+pneuma snapshot "D:\\\\Carti\\\\Drumul spre munte.scribner" "Chapter 1" --name "Before revision"
+pneuma import "D:\\Texts\\Novel.docx" -o "D:\\\\Carti\\\\Novel.scribner" --split h1
+pneuma mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP server for AI agents</pre>
 <p>Add <code>--json</code> for script-friendly output and <code>--lang en</code> for English messages. Exit codes: 0 ok, 1 error, 2 bad usage. PDF is made only in the app (<em>Compile → PDF</em>); from the terminal use <code>--format docx</code> or <code>html</code>.</p>
 <h4>Your book as sources for NotebookLM, Gemini, ChatGPT or Manus</h4>
-<pre>scribner export-sources "D:\\\\Carti\\\\Drumul spre munte.scribner" -o "D:\\NotebookLM"</pre>
+<pre>pneuma export-sources "D:\\\\Carti\\\\Drumul spre munte.scribner" -o "D:\\NotebookLM"</pre>
 <p>This writes the folder <code>Surse - Drumul spre munte</code>: <code>00 - Cuprins</code> (outline with synopses), one file per chapter, research and notes, plus <code>sources.json</code> (the source list). Options: <code>--per document</code> (one file per document instead of per chapter), <code>--format txt</code> or <code>docx</code>, <code>--max-sources 50</code>, <code>--target notebooklm</code> (at most 50 sources; chapters are merged) or <code>gemini</code>, <code>chatgpt</code>, <code>manus</code>.</p>
 <ol>
 <li>Run the command above.</li>
 <li>Open <a href="https://notebooklm.google.com">notebooklm.google.com</a> → <em>New notebook</em> → <em>Add sources</em> → <em>Upload</em> and select every file in the folder (not <code>sources.json</code>).</li>
 <li>Ask the notebook about the book: characters, timeline, contradictions between chapters.</li>
 </ol>
-<p>For the NotebookLM limit there is also <code>scribner export-notebooklm … -o folder</code>, which merges chapters to stay within 50 sources. The same folder can be uploaded to a Gemini Gem, a ChatGPT project or Manus (manus.im). After writing more, run the command again and replace the sources.</p>`,
+<p>For the NotebookLM limit there is also <code>pneuma export-notebooklm … -o folder</code>, which merges chapters to stay within 50 sources. The same folder can be uploaded to a Gemini Gem, a ChatGPT project or Manus (manus.im). After writing more, run the command again and replace the sources.</p>`,
       },
       {
         id: 'yours-sync',
@@ -347,7 +347,7 @@ scribner mcp "D:\\\\Carti\\\\Drumul spre munte.scribner"               the MCP s
       {
         id: 'yours-dictation',
         title: 'Dictation and transcription (D&TED)',
-        html: `<p>Romanian speech recognition is built into Scribner and works on your computer, without internet. The first time: <em>Settings → Services and accounts → Dictation and transcription → Download the engine</em> (about 590 MB, once; tick <em>I have an NVIDIA graphics card</em> for the faster version). The engine (whisper.cpp, model large-v3-turbo) runs only on your computer; the downloaded files are checked against their fingerprints. If you have the <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a> program you can choose it instead, in the same place.</p>
+        html: `<p>Romanian speech recognition is built into Pneuma Sofer and works on your computer, without internet. The first time: <em>Settings → Services and accounts → Dictation and transcription → Download the engine</em> (about 590 MB, once; tick <em>I have an NVIDIA graphics card</em> for the faster version). The engine (whisper.cpp, model large-v3-turbo) runs only on your computer; the downloaded files are checked against their fingerprints. If you have the <a href="https://github.com/Hermeneuticus-of-things/dted">D&amp;TED</a> program you can choose it instead, in the same place.</p>
 <ul>
 <li><strong>F9</strong> (or <em>Tools → Dictation</em>) starts and stops dictation. Text appears every ~4 seconds of speech, with spaces and a capital at sentence starts.</li>
 <li><strong>New text:</strong> with nothing selected it goes in at the cursor. <strong>Edit:</strong> over a selection it replaces it; one Ctrl+Z brings the old text back.</li>

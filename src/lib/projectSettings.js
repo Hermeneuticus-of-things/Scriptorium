@@ -424,7 +424,7 @@ export function parseNumberField(text) {
 
 // ---- export / import of labels, statuses, metadata, section types ---------------------------
 
-export const META_EXPORT_KIND = 'scribner-project-meta';
+export const META_EXPORT_KIND = 'pneuma-project-meta';
 /** The part of the settings another project can import (no values from the binder). */
 export function exportMetaSettings(project) {
   return {

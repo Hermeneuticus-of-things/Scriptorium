@@ -10,10 +10,10 @@ const { createTtsEngine } = require('../lib/ttsEngine.cjs');
 describe('MCP command names no person and no book', () => {
   it('installed on Windows: cmd /c with %LOCALAPPDATA%, no project', () => {
     const env = { LOCALAPPDATA: 'C:\\Users\\Ana\\AppData\\Local' };
-    const e = mc.serverEntry({ execPath: 'C:\\Users\\Ana\\AppData\\Local\\Programs\\Scribner\\Scribner.exe', serverPath: 'x', platform: 'win32', env, exists: () => true });
-    expect(e).toEqual({ command: 'cmd', args: ['/c', '%LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd'] });
+    const e = mc.serverEntry({ execPath: 'C:\\Users\\Ana\\AppData\\Local\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe', serverPath: 'x', platform: 'win32', env, exists: () => true });
+    expect(e).toEqual({ command: 'cmd', args: ['/c', '%LOCALAPPDATA%\\Programs\\Pneuma Sofer\\pneuma-mcp.cmd'] });
     const cmd = mc.claudeCodeCommand(e, { platform: 'win32' });
-    expect(cmd).toBe('claude mcp add scribner --scope user -- cmd /c %LOCALAPPDATA%\\Programs\\Scribner\\scribner-mcp.cmd');
+    expect(cmd).toBe('claude mcp add pneuma --scope user -- cmd /c "%LOCALAPPDATA%\\Programs\\Pneuma Sofer\\pneuma-mcp.cmd"');
     expect(cmd).not.toMatch(/Ana|\.scribner/);
   });
 });

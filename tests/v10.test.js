@@ -80,7 +80,7 @@ describe('pacing', () => {
 });
 
 describe('aiBatch', () => {
-  const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'scribner-ai-'));
+  const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-ai-'));
   it('parseJson tolerates fences and chatter', () => {
     expect(batch.parseJson('```json\n{"a":1}\n```')).toEqual({ a: 1 });
     expect(batch.parseJson('Iată: {"a":"}"} gata')).toEqual({ a: '}' });

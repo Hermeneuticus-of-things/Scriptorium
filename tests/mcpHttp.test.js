@@ -22,7 +22,7 @@ describe('MCP over HTTP', () => {
     expect((await post({ jsonrpc: '2.0', id: 1, method: 'tools/list' })).status).toBe(401);
     expect((await post({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, 'gresit')).status).toBe(401);
     const init = await (await post({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '1' } } }, 'tok-test')).json();
-    expect(init.result.serverInfo.name).toBe('scribner');
+    expect(init.result.serverInfo.name).toBe('pneuma');
     const list = await (await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, 'tok-test')).json();
     expect(list.result.tools.find((t) => t.name === 'read_document').annotations.readOnlyHint).toBe(true);
     const call = await (await post({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'project_info', arguments: {} } }, 'tok-test')).json();

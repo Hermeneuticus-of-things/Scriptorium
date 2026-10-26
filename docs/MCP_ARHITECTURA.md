@@ -1,10 +1,10 @@
-# Scribner ca extensie a agentului AI (MCP)
+# Pneuma Sofer ca extensie a agentului AI (MCP)
 
-Un model de limbaj singur generează text. Legat prin MCP de Scribner, devine agent: citește cartea, caută în ea, propune și, cu acordul autorului, scrie în proiect. Modelul rămâne planul de raționament (înțelege cererea, împarte munca în pași, alege unealta). Scribner e planul de execuție: primește apeluri structurate, le verifică, lucrează pe disc și întoarce rezultatul.
+Un model de limbaj singur generează text. Legat prin MCP de Pneuma Sofer, devine agent: citește cartea, caută în ea, propune și, cu acordul autorului, scrie în proiect. Modelul rămâne planul de raționament (înțelege cererea, împarte munca în pași, alege unealta). Pneuma Sofer e planul de execuție: primește apeluri structurate, le verifică, lucrează pe disc și întoarce rezultatul.
 
 ## 1. Canalele protocolului (JSON-RPC 2.0)
 
-| Canal | Ce oferă Scribner | Unde |
+| Canal | Ce oferă Pneuma Sofer | Unde |
 |---|---|---|
 | `initialize` | nume, versiune, capabilități (tools, resources, prompts) și instrucțiuni pentru model | `mcp/server.mjs` |
 | `tools/list`, `tools/call` | peste 80 de unelte cu schemă JSON (zod); fiecare marcată `readOnlyHint` / `destructiveHint` | `mcp/server.mjs`, `mcp/fullTools.mjs` |
@@ -16,14 +16,14 @@ Exemplu de unealtă de scriere: `write_document(id, content)` pune textul direct
 ## 2. Bucla agentului (gândește → decide → acționează → observă)
 
 1. Modelul citește lista de unelte și ghidul (`scribner://ghid`), apoi trimite un apel JSON.
-2. Scribner validează argumentele după schemă (un argument greșit e respins înainte de orice scriere), verifică blocările și modul doar citire, execută.
+2. Pneuma Sofer validează argumentele după schemă (un argument greșit e respins înainte de orice scriere), verifică blocările și modul doar citire, execută.
 3. Rezultatul se întoarce ca text sau JSON; lucrurile mari se cer pe bucăți (un document, o căutare cu limită), nu tot proiectul deodată.
 4. Pentru sarcini cu mai mulți pași (citește capitolul 1, compară cu 2, corectează 3) bucla se repetă; scrierile sunt una câte una, sub lacătul `project.json` comun cu aplicația.
 
 ## 3. Transport: același calculator sau rețea
 
 - **stdio** (implicit): clientul AI pornește serverul. Comanda generală, fără date personale:
-  `cmd /c %LOCALAPPDATA%\Programs\Scribner\scribner-mcp.cmd`
+  `cmd /c %LOCALAPPDATA%\Programs\Pneuma Sofer\pneuma-mcp.cmd`
 - **Streamable HTTP**: `--http 9123` → `http://127.0.0.1:9123/mcp`, cu `Authorization: Bearer <token>` obligatoriu (`--token` sau `SCRIBNER_MCP_TOKEN`); `--host` pentru o adresă din rețea, de exemplu Tailscale. Un singur răspuns pe rând.
 
 ## 4. Date private: împachetare și rehidratare (`--anonymize`)

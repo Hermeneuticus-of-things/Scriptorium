@@ -4,9 +4,9 @@ Reguli scurte, de aplicat de fiecare dată, ca interfața să fie coerentă și 
 îndrumări autoritare (web.dev „Building a dialog component", regulile implicite din specificația
 HTML pentru `<dialog>` modal) plus convenții de bun-simț.
 
-## Principii (limbajul de design Scribner)
+## Principii (limbajul de design Pneuma Sofer)
 
-Scribner e o unealtă pentru texte lungi. UI-ul **servește scrisul**, nu se arată pe sine.
+Pneuma Sofer e o unealtă pentru texte lungi. UI-ul **servește scrisul**, nu se arată pe sine.
 
 1. **Textul e eroul.** Interfața e sobră; cromatica tare și decorul stau deoparte. Modul compunere și focusul duc totul la minim când omul scrie.
 2. **Arată puțin, dezvăluie la nevoie (progressive disclosure).** Lucrurile de zi cu zi sunt la vedere; restul în meniuri, popover-uri, panouri — apar când le ceri.

@@ -317,7 +317,7 @@ describe('compile format as a file', () => {
     const src = fmt('paperback');
     const text = exportFormatFile(src);
     const parsed = JSON.parse(text);
-    expect(parsed.kind).toBe('scribner-compile-format');
+    expect(parsed.kind).toBe('pneuma-compile-format');
     expect(parsed.format.builtin).toBeUndefined();
     const f = importFormatFile(text, ['Carte tipărită (paperback)'], () => 'custom-x');
     expect(f.id).toBe('custom-x');

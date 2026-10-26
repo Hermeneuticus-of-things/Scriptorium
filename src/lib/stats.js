@@ -1,4 +1,4 @@
-// Pure statistics helpers for Scribner (no DOM, no Node APIs).
+// Pure statistics helpers for Pneuma Sofer (no DOM, no Node APIs).
 
 const WORD_RE = /[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu;
 

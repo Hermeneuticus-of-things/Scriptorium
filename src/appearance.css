@@ -25,7 +25,7 @@
 :root[style*='--ed-caret'] .ProseMirror { caret-color: var(--ed-caret); }
 :root[style*='--pv-paper'] .page.page-view { background-color: var(--pv-paper); }
 :root[style*='--pv-surround'] .workspace:has(.page.page-view), :root[style*='--pv-surround'] .pane:has(.page.page-view) { background: var(--pv-surround); }
-:root[style*='--link-internal'] .prose a.internal-link, :root[style*='--link-internal'] .prose a[href^='scribner:'], :root[style*='--link-internal'] .prose .wiki-link { color: var(--link-internal); }
+:root[style*='--link-internal'] .prose a.internal-link, :root[style*='--link-internal'] .prose a[href^='pneuma:'], :root[style*='--link-internal'] .prose .wiki-link { color: var(--link-internal); }
 :root[style*='--link-external'] .prose a[href^='http'], :root[style*='--link-external'] .prose a[href^='mailto:'] { color: var(--link-external); }
 :root[style*='--keep-format-color'] .prose .preserve-format { background: var(--keep-format-color); }
 :root[style*='--search-hit-color'] .pane:has(.find-bar) .ProseMirror ::selection, :root[style*='--search-hit-color'] .search-hit { background: var(--search-hit-color); }

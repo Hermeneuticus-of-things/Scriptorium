@@ -1,4 +1,4 @@
-# Roadmap Scribner
+# Roadmap Pneuma Sofer
 
 Starea reală la 2026-10-23. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
 Versiuni: **v0.2** în lucru · **v0.3** revizie și publicare · **v0.4** paritate avansată · **v1.0** paritate completă + extra.
@@ -92,7 +92,7 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 - [x] VKB2: I-REP repetiția apropiată (SEMNAL, R8b/S70) și I-EDIT textul autorului (poartă HARD, COADA_AUTOR, jurnal), după `docs/VKB2.md`
 
 ### 1.3 Conexiune MCP pentru agenți AI
-- [x] Server MCP `scribner-mcp` (stdio), pornit de Claude Code / Claude Desktop / alți agenți, mod `--read-only`
+- [x] Server MCP `pneuma-mcp` (stdio), pornit de Claude Code / Claude Desktop / alți agenți, mod `--read-only`
 - [x] 20 de unelte: `project_info`, `list_binder`, `read_document`, `write_document`, `create_document`, `move_item`, `set_metadata`, `trash_item`, `search`, `replace`, `get_notes`, `set_notes`, `add_comment`, `add_footnote`, `lint`, `list_snapshots`, `take_snapshot`, `restore_snapshot`, `compile`, `writing_history`
 - [x] Resurse: binderul și fiecare document (`scribner://doc/{id}`)
 - [x] Aplicația se reîncarcă automat când un agent modifică fișierele
@@ -220,7 +220,7 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 
 - [x] Meniu Ajutor: manual (F1), ajutor pentru vederea curentă, scurtături, placeholders, sintaxă Markdown / Fountain / Script Mode, raportează o problemă, despre
 - [x] Manual complet în română (22 de capitole, căutare cu evidențiere), variantă scurtă în engleză
-- [x] Tutorial interactiv: proiect „Tutorial Scribner” cu 15 lecții și exerciții
+- [x] Tutorial interactiv: proiect „Tutorial Pneuma Sofer” cu 15 lecții și exerciții
 
 ## 7. Verificare în Electron real
 
@@ -235,7 +235,7 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 - [ ] Cheile reale DeepL / Google / LanguageTool Premium / Speechify / Zotero pentru o probă cap-coadă (codul e testat cu răspunsuri simulate)
 - [~] Test cu model real: rulat de autor pe Windows prin OpenRouter (model gratuit `nvidia/nemotron-3.5-super-vl:free`): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit („Provider returned error”); scriptul reîncearcă acum și trece la alt model. Rămâne o rulare completă verde.
 - [x] Definițiile VKB2 primite și implementate
-- [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add scribner …`)
+- [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add pneuma …`)
 - [ ] Pachetul de limbă română pentru corectorul ortografic al Windows (setare de sistem)
 
 ## 9. Lucru în echipă (mai mulți oameni, mai multe calculatoare): folder comun gata (v0.8.8), server în plan
@@ -245,7 +245,7 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 - [x] **Identitate** (v0.8.8: Setări → Partajare → Echipă; nume, culoare, id de calculator; fiecare modificare de mână poartă autorul, ora și calculatorul): fiecare instalare are un nume de utilizator și o culoare (Setări → Echipă); fiecare scriere în proiect poartă autorul, ora și calculatorul.
 - [x] **Jurnal de modificări pe document** (v0.8.8: `team/log-<calculator>.jsonl`, fereastra Proiect → Echipă… cu filtre pe document, persoană și perioadă; revenirea la o versiune: Inspector → Snapshot-uri; rămâne de făcut: comparare direct din jurnal): `history/<id>.jsonl` cu rânduri `{autor, oră, calculator, bucăți schimbate vechi → nou, hash}` (extinde jurnalul I-EDIT `MODIFICARI_AUTOR.jsonl`); panou „Istoric” în Inspector cu filtrare pe persoană și pe perioadă, comparare și revenire la orice versiune.
 - [x] **Transport 1, folder comun (NAS / OneDrive / Dropbox / Google Drive)** (v0.8.8: fiecare calculator scrie doar `team/*-<calculator>`; documentele se îmbină pe paragrafe, `src/lib/team.js` mergeDoc): formatul `.scribner` rămâne fișiere text; fiecare calculator scrie doar fișierele lui plus un jurnal propriu (`sync/<calculator>.jsonl`), ca sincronizarea clientului de cloud să nu producă conflicte; un watcher îmbină schimbările celorlalți (îmbinarea în trei căi există deja pentru `project.json`).
-- [ ] **Transport 2, server Scribner:** un server mic (Node, în același repo, pornit din aplicație sau ca serviciu pe NAS / VPS), cu WebSocket; schimbările circulă în timp real ca operații CRDT pe documente (de ex. Yjs pentru TipTap), cu salvare pe disc în formatul `.scribner`; autentificare cu cont și parolă sau cheie de invitație; HTTPS.
+- [ ] **Transport 2, server Pneuma Sofer:** un server mic (Node, în același repo, pornit din aplicație sau ca serviciu pe NAS / VPS), cu WebSocket; schimbările circulă în timp real ca operații CRDT pe documente (de ex. Yjs pentru TipTap), cu salvare pe disc în formatul `.scribner`; autentificare cu cont și parolă sau cheie de invitație; HTTPS.
 - [~] **Prezență** (v0.8.8, prin folder: cine are deschis ce document, la 20 s; blocare cu lacăt, doar citire la ceilalți, expiră după 30 min fără semne; cursorii celorlalți rămân pentru server): cine are deschis ce document; cursorul și selecția celorlalți, colorate; blocare opțională a unui document (Inspector → Blocat de …).
 - [~] **Conflicte** (v0.8.8: paragrafe diferite se îmbină automat; același paragraf: rămâne textul local, al celuilalt în snapshot; rămâne dialogul cu variantele alături): documente diferite se îmbină automat; același paragraf modificat offline de doi oameni → dialog cu cele două variante, alături, și alegere sau combinare; nimic nu se pierde (ambele variante rămân în snapshot-uri).
 - [x] **Offline:** (v0.9.3) coadă locală a schimbărilor, trimisă la reconectare; indicator de stare în bara de jos (sincronizat / în așteptare / conflict).
@@ -257,7 +257,7 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 
 ## 10. De făcut în continuare (ordinea propusă)
 
-1. **Server Scribner în timp real** (§9, transport 2): server mic Node pe NAS / VPS, WebSocket + HTTPS, schimbări CRDT (Yjs) pe documente, salvare în formatul `.scribner`, cont și parolă sau cheie de invitație.
+1. **Server Pneuma Sofer în timp real** (§9, transport 2): server mic Node pe NAS / VPS, WebSocket + HTTPS, schimbări CRDT (Yjs) pe documente, salvare în formatul `.scribner`, cont și parolă sau cheie de invitație.
 2. **Cursorii și selecția celorlalți**, colorați, prin server (§9, prezență).
 3. ✅ (v0.9.2) **Dialogul de conflict cu variantele alături**: același paragraf schimbat de doi oameni, alegi sau combini (§9, conflicte).
 4. ✅ (v0.9.3) **Coadă offline** a schimbărilor + indicator sincronizat / în așteptare / conflict în bara de jos (§9).
@@ -269,13 +269,13 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 10. **Rămân la autor** (§8): instalare pe Windows, test MCP cu Claude Desktop / Claude Code, importul unui proiect real mare, cheile de servicii, testul AI complet cu un model real, decizia depozit public / privat.
 11. **[x] v0.8.8 — Plugin D&TED (dictare și transcriere în română) integrat în interfață; rămâne testul real pe Windows** — specificația tehnică completă (protocol, arhitectură, teste, pași): [`docs/DTED.md`](docs/DTED.md). Dictare de text nou la cursor și **dictare peste o selecție, care o înlocuiește (modificare)**. D&TED (https://github.com/Hermeneuticus-of-things/dted) e un program Python separat (Whisper `large-v3-turbo`, local, fără internet). Pași:
     - în D&TED: un mod fără fereastră pentru alte programe: `python -m dictare_transcriere_romana --transcrie <fișier> --json` (text + segmente cu timp) și `--dictare --stdio` (text parțial pe măsură ce vorbești, JSON pe linii);
-    - în Scribner: Setări → Servicii → D&TED (calea programului, detectată automat din instalarea Windows; test „Verifică”);
+    - în Pneuma Sofer: Setări → Servicii → D&TED (calea programului, detectată automat din instalarea Windows; test „Verifică”);
     - Unelte → Dictare (D&TED): bară de dictare peste editor, textul intră la cursor, cu ghilimele, diacritice și corecturile învățate aplicate; pauză / reluare / stop;
     - Fișier → Importă → Transcrie fișier audio…: MP3, WAV, M4A, OGG, FLAC → document nou în Cercetare (opțional cu marcaje de timp), fișierul audio atașat ca media;
     - în binder, pe un fișier audio: „Transcrie cu D&TED” → nota sau un document legat;
     - fără D&TED instalat, comenzile apar cu un link de instalare; nimic nu pleacă pe internet; procesul rulează din main, renderer-ul nu pornește programe;
     - teste: protocolul JSON simulat, anularea, erori (lipsă model, fără microfon), scenariu de browser cu un D&TED fals.
-12. **[x] v0.9.0 — Motorul de recunoaștere a vorbirii încorporat în Scribner** (whisper.cpp + large-v3-turbo, descărcat din Setări; detalii în docs/DTED.md §7). Rămâne: proba reală pe Windows (descărcare, microfon, NVIDIA).
+12. **[x] v0.9.0 — Motorul de recunoaștere a vorbirii încorporat în Pneuma Sofer** (whisper.cpp + large-v3-turbo, descărcat din Setări; detalii în docs/DTED.md §7). Rămâne: proba reală pe Windows (descărcare, microfon, NVIDIA).
 13. **[ ] Mai multe limbi** (traducere, dictare, interfață). Extinderea suportului de limbi pe trei planuri:
     - **Interfață:** dincolo de română și engleză — fișiere de traducere noi pentru `src/lib/i18n.js` / `src/lib/i18n-ui.js` și alegerea limbii în Setări → Limbă; de verificat textele care încă au șiruri fixe (ex. etichetele serviciilor din `lib/services.cjs`, care acum sunt doar în română).
     - **Traducere:** mai multe limbi-țintă în meniul de traducere și la DeepL/Google (lista `LANG_NAMES` și perechile din `src/lib/lookups.js`: dexonline/Wiktionary/Linguee/IATE).
@@ -284,7 +284,7 @@ Cerința autorului: mai multe copii ale aplicației, pe calculatoare diferite, l
 ## Dictare: modelul eek (v0.9.7)
 
 - [x] D&TED modul serviciu: comanda `model`, lista modelelor în `stare` (D&TED 0.4.2)
-- [x] Scribner: alegerea modelului în Setări, „Folosit acum”, mesaj pentru D&TED vechi
+- [x] Pneuma Sofer: alegerea modelului în Setări, „Folosit acum”, mesaj pentru D&TED vechi
 - [ ] D&TED 0.4.2 publicat (Windows)
 - [ ] Motorul încorporat cu un model românesc descărcabil liber (eek cere acces aprobat individual)
 
@@ -298,7 +298,7 @@ Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
 4. [x] Mini-player nativ de dictare (F8, 🎙): dictare + citire, fereastră mică mutabilă.
 5. [x] Voce de citire (TTS) inclusă, nativă: voce românească „Mihai” (Piper), descărcată singură o dată.
 6. [x] Iconiță proprie pentru program, installer, desktop și Start, cu scris „SCRIBNER” sub ea.
-7. [x] Comanda MCP generală, fără date personale (fără nume de utilizator, fără carte), aceeași pentru orice client AI (`scribner-mcp.cmd`).
+7. [x] Comanda MCP generală, fără date personale (fără nume de utilizator, fără carte), aceeași pentru orice client AI (`pneuma-mcp.cmd`).
 8. [x] Date personale scoase din repo-urile publice (dted: test cu nume; rapoartele ascund orice cale).
 9. [ ] Date personale (adrese de email) în scripturile din CCDEW `.claude/helpers` — așteaptă decizia autorului.
 10. [~] Interfața 1:1 cu programul clasic de scris, pe toate nivelurile (ferestre, setări, dialoguri intermediare):
@@ -314,7 +314,7 @@ Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
     - [ ] Bara de sus implicită (Binder, Adaugă, Dosar, vederi, căutare, Referință rapidă, Compunere, Compile, Inspector)
     - [ ] Bara documentului comună pentru ambele panouri (meniul titlului, blocare pe loc)
     - [ ] Comparare și restul ferestrelor: Cuvinte cheie, Colecții, Import/Export, Generator de nume, Referință rapidă, meniuri
-11. [x] Mesajul „niciun server MCP Scrivener”: serverul Scribner citește și proiecte .scriv pe loc (`scriv_outline`, `scriv_read`), are prompts și resurse.
+11. [x] Mesajul „niciun server MCP Scrivener”: serverul Pneuma Sofer citește și proiecte .scriv pe loc (`scriv_outline`, `scriv_read`), are prompts și resurse.
 12. [x] Import pornind și de la fișierul `.scrivx` (nu doar de la folderul `.scriv`), în aplicație și în MCP; `scriv_search` în proiectul .scriv. Exportul scrie un folder `.scriv` complet (cu `.scrivx` în el).
 13. [x] Evaluare MCP după ghidul mcp-builder: `mcp/eval/` (carte de test + 10 întrebări) verificată de `tests/mcpEval.test.js`; adnotări readOnly/destructive pe fiecare unealtă; `read_document` arată și ținta.
 14. [ ] Bug-uri rămase din vânătoarea pe niveluri (lista din TODO.md, secțiunea 25.10).
@@ -323,10 +323,10 @@ Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
     - [ ] diff vizual roșu/verde la propunerile AI (acum: text propus + Accept/Respinge)
     - [ ] Ctrl+K inline: casetă de comandă AI în editor (Ctrl+K e acum „împarte”; altă tastă)
     - [ ] căutare hibridă lexicală + semantică (embeddings locale) în cercetarea din proiect
-    - [ ] Scribner ca client MCP (servere externe: bibliografie, dicționare) pentru asistentul intern
+    - [ ] Pneuma Sofer ca client MCP (servere externe: bibliografie, dicționare) pentru asistentul intern
     - [ ] unealtă MCP de adnotare pe interval exact de caractere (acum: comentariu după citat)
 16. [x] MCP pe cele cinci categorii: unelte (cu adnotări), resurse (proiecte, binder, documente, ghid), șabloane de lucru, transport prin rețea (`--http` cu token), securitate (doar citire, snapshot înainte de scriere, blocări, căi ascunse refuzate, adrese locale blocate la import web).
-17. [x] Agentul AI ca orchestrator, Scribner ca execuție: documentat în `docs/MCP_ARHITECTURA.md`; date private împachetate/rehidratate local (`--anonymize`).
+17. [x] Agentul AI ca orchestrator, Pneuma Sofer ca execuție: documentat în `docs/MCP_ARHITECTURA.md`; date private împachetate/rehidratate local (`--anonymize`).
 
 ## Clonare în detaliu, funcție cu funcție (audit 25.10.2026, 48 de puncte)
 
@@ -368,7 +368,7 @@ Inventar al ferestrelor, panourilor, dialogurilor și funcțiilor programului cl
 
 ## Paritate în adâncime, fereastră cu fereastră (audit 3)
 
-Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensions/` și `lib/`, față de manualul programului clasic (ediția 3 pentru Windows). Auditurile 1 și 2 au marcat ferestrele ca „prezente” după nume; aici fiecare control al ferestrei clasice e căutat în componenta Scribner. Legendă: rândul **Identic** adună controalele care există cu același comportament (un control = un element între virgule); fiecare casetă e un element **parțial** (cu diferența spusă) sau **lipsă**. Totalurile sunt în tabelul de la final, apoi prioritățile și pachetele de lucru.
+Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensions/` și `lib/`, față de manualul programului clasic (ediția 3 pentru Windows). Auditurile 1 și 2 au marcat ferestrele ca „prezente” după nume; aici fiecare control al ferestrei clasice e căutat în componenta Pneuma Sofer. Legendă: rândul **Identic** adună controalele care există cu același comportament (un control = un element între virgule); fiecare casetă e un element **parțial** (cu diferența spusă) sau **lipsă**. Totalurile sunt în tabelul de la final, apoi prioritățile și pachetele de lucru.
 
 ### A1. Opțiuni: General (`SettingsDialog.jsx`, panoul `general`)
 **Identic:** redeschide ultimul proiect la pornire, salvare automată după N secunde de inactivitate, caută actualizări, verificare automată a actualizărilor.
@@ -552,7 +552,7 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### D2. Compile / designer: Separatoare
 **Identic:** separator între secțiuni de același tip, între tipuri diferite, separator înainte (rând gol, pagină nouă, text propriu, nimic).
-- [ ] **parțial** Clasicul are patru reguli (text-text, dosar-dosar, dosar-text, text-dosar) și reguli pe tip de secțiune; Scribner are două (același tip / tip diferit).
+- [ ] **parțial** Clasicul are patru reguli (text-text, dosar-dosar, dosar-text, text-dosar) și reguli pe tip de secțiune; Pneuma Sofer are două (același tip / tip diferit).
 - [ ] **lipsă** Ruptură de secțiune Word (secțiune nouă, începe pe pagină impară).
 - [ ] **lipsă** Separator decorativ ales din listă (#, *, ⁂, linie) cu aliniere.
 
@@ -950,31 +950,31 @@ Ordinea recomandată: P1 → P2 → P3 secvențial (toate ating Compile); P4–P
 
 ## Omisiuni pe cinci niveluri: macro, mega, mezzo, micro, nano (audit 4)
 
-Comparație cu programul clasic (versiunea 3 pentru Windows), verificată în cod (`src/`, `lib/`, `electron/`). Nu repetă punctele din G0–G5, audit 2 și audit 3. Format: ce face programul clasic → ce face Scribner acum.
+Comparație cu programul clasic (versiunea 3 pentru Windows), verificată în cod (`src/`, `lib/`, `electron/`). Nu repetă punctele din G0–G5, audit 2 și audit 3. Format: ce face programul clasic → ce face Pneuma Sofer acum.
 
 ### MACRO: fluxuri întregi, cap-coadă
 
-- [ ] **Flux șablon → compile fără ruptură**: programul clasic leagă șablonul de proiect de un format de compile implicit, de tipurile de secțiune și de stilurile proprii, astfel încât un proiect nou compilează corect din prima → Scribner aplică șablonul doar structurii din binder (`lib/templates.cjs`); formatul de compile se alege separat.
-- [x] **PDF în panoul editorului cu căutare și pagina ținută minte**: programul clasic afișează PDF-ul cu pagini, căutare și copiere de text → Scribner îl afișează în `MediaView.jsx` prin vizualizatorul încorporat, fără căutare legată de proiect. *(Q12: `PdfViewer.jsx` — bară proprie cu pagină / mărire / căutare peste vizualizatorul încorporat, adnotări evidențiere/notă per pagină ținute în `node.media.annotations`, copiate în notele documentului la cerere.)*
-- [x] **Pagina PDF-ului și poziția din audio/video ținute minte per document**: clasicul redeschide la aceeași pagină / secundă → Scribner pornește mereu de la început. *(Q12: `node.media.page`/`zoom`/`time`/`rate`.)*
-- [x] **Pagină web importată ca arhivă locală, vizualizabilă offline**: clasicul o salvează ca fișier în proiect → Scribner o salvează ca text sau legătură. *(Q12: Documente → „Arhivează o pagină web în Cercetare…”, `buildWebArchive` în `lib/importers.cjs`, IPC `research:archiveWeb`, afișată în cadru izolat fără scripturi.)*
+- [ ] **Flux șablon → compile fără ruptură**: programul clasic leagă șablonul de proiect de un format de compile implicit, de tipurile de secțiune și de stilurile proprii, astfel încât un proiect nou compilează corect din prima → Pneuma Sofer aplică șablonul doar structurii din binder (`lib/templates.cjs`); formatul de compile se alege separat.
+- [x] **PDF în panoul editorului cu căutare și pagina ținută minte**: programul clasic afișează PDF-ul cu pagini, căutare și copiere de text → Pneuma Sofer îl afișează în `MediaView.jsx` prin vizualizatorul încorporat, fără căutare legată de proiect. *(Q12: `PdfViewer.jsx` — bară proprie cu pagină / mărire / căutare peste vizualizatorul încorporat, adnotări evidențiere/notă per pagină ținute în `node.media.annotations`, copiate în notele documentului la cerere.)*
+- [x] **Pagina PDF-ului și poziția din audio/video ținute minte per document**: clasicul redeschide la aceeași pagină / secundă → Pneuma Sofer pornește mereu de la început. *(Q12: `node.media.page`/`zoom`/`time`/`rate`.)*
+- [x] **Pagină web importată ca arhivă locală, vizualizabilă offline**: clasicul o salvează ca fișier în proiect → Pneuma Sofer o salvează ca text sau legătură. *(Q12: Documente → „Arhivează o pagină web în Cercetare…”, `buildWebArchive` în `lib/importers.cjs`, IPC `research:archiveWeb`, afișată în cadru izolat fără scripturi.)*
 - [x] **Transcriere cu media alături**: clasicul are taste pentru pauză și „înapoi câteva secunde” cât timp cursorul e în text → `MiniPlayer.jsx` nu are scurtături globale active din editor. *(Q12: `MediaPlayerView.jsx` — Ctrl+Alt+P / ← / → / T active și din textul din panoul de alături; momentul se inserează în text sau în notele fișierului.)*
-- [ ] **Referințe ale documentului și ale proiectului** (listă de URL-uri, fișiere, documente din proiect în Inspector) → Scribner are doar legăturile din text și semnele de carte.
+- [ ] **Referințe ale documentului și ale proiectului** (listă de URL-uri, fișiere, documente din proiect în Inspector) → Pneuma Sofer are doar legăturile din text și semnele de carte.
 - [ ] **Înlocuire în tot proiectul cu domeniu** (text, titluri, sinopsis, note) și cu listă de documente afectate → `AdvancedSearchDialog.jsx` înlocuiește fără bife de domeniu pe câmpuri.
-- [ ] **Sincronizare cu varianta mobilă prin dosar cloud**, cu conflicte rezolvate pe document → Scribner are doar sincronizare cu dosar extern (`lib/folderSync.cjs`) și dosar de echipă.
+- [ ] **Sincronizare cu varianta mobilă prin dosar cloud**, cu conflicte rezolvate pe document → Pneuma Sofer are doar sincronizare cu dosar extern (`lib/folderSync.cjs`) și dosar de echipă.
 - [ ] **Mai multe proiecte deschise, fiecare în fereastra lui, cu meniul Fereastră care le listează** → există `window:new` (`electron/preload.cjs`), dar fără listă de ferestre și cu setări „ultimul proiect” globale.
 - [ ] **Copiere/mutare de documente între două proiecte deschise prin tragere** → lipsește.
 - [ ] **Backup la închidere cu „păstrează ultimele N” vizibil și restaurare dintr-o listă la deschidere** → `lib/backup.cjs` face copia, restaurarea se face manual.
-- [ ] **Flux de revizie**: clasicul face snapshot automat înainte de a porni revizia și compară snapshot-uri pe cuvânt în panou → Scribner nu leagă pornirea reviziei de un snapshot automat.
+- [ ] **Flux de revizie**: clasicul face snapshot automat înainte de a porni revizia și compară snapshot-uri pe cuvânt în panou → Pneuma Sofer nu leagă pornirea reviziei de un snapshot automat.
 
 ### MEGA: arhitectură și comportament
 
-- [ ] **Rotund `.scriv` → Scribner → `.scriv` fără pierderi**: în `lib/scrivExport.cjs` lipsesc culorile și ordinea etichetelor, definițiile câmpurilor proprii (listă/dată/bifă), setările și formatele de compile, stilurile proiectului, colecțiile de căutare (salvate ca interogare), imaginile de sinopsis, semnele de carte ale proiectului, notele de proiect multiple. Nu există test de rotund pe un proiect de referință.
+- [ ] **Rotund `.scriv` → Pneuma Sofer → `.scriv` fără pierderi**: în `lib/scrivExport.cjs` lipsesc culorile și ordinea etichetelor, definițiile câmpurilor proprii (listă/dată/bifă), setările și formatele de compile, stilurile proiectului, colecțiile de căutare (salvate ca interogare), imaginile de sinopsis, semnele de carte ale proiectului, notele de proiect multiple. Nu există test de rotund pe un proiect de referință.
 - [ ] **Raport de fidelitate la export `.scriv`** (simetric cu `ImportReport.jsx`): ce nu a putut fi scris.
-- [ ] **Recuperare după cădere**: clasicul oferă la repornire „recuperează modificările nesalvate” → Scribner salvează la inactivitate și la `beforeunload`, fără jurnal de recuperare pentru textul tastat între salvări.
+- [ ] **Recuperare după cădere**: clasicul oferă la repornire „recuperează modificările nesalvate” → Pneuma Sofer salvează la inactivitate și la `beforeunload`, fără jurnal de recuperare pentru textul tastat între salvări.
 - [ ] **Lacăt de sesiune la deschiderea aceluiași proiect de două ori** (avertizare, deschidere doar în citire) → `project.json.lock` din `lib/store.cjs` protejează doar scrierile scurte.
 - [ ] **Performanță la 1.000 de documente / 500k cuvinte**: binder-ul, outliner-ul și corkboard-ul randează toate rândurile (nicio virtualizare în `src/`); Scrivenings creează câte un editor pe secțiune.
-- [ ] **Încărcare leneșă a textelor**: clasicul citește doar documentele deschise → Scribner ține tot proiectul în memorie.
+- [ ] **Încărcare leneșă a textelor**: clasicul citește doar documentele deschise → Pneuma Sofer ține tot proiectul în memorie.
 - [ ] **Istoricul de anulare păstrat per document** după ce schimbi documentul din panou → se pierde (editorul e recreat).
 - [ ] **Anulare pentru operațiile din binder** (mutare, redenumire, tragere, ștergere) → doar coșul permite revenirea.
 - [ ] **Regulile sincronizării cu dosar extern documentate și testate** (subdosare, formate, documente noi create din fișiere noi, conflict când ambele părți s-au schimbat) → `lib/folderSync.cjs` fără test de conflict.
@@ -985,7 +985,7 @@ Comparație cu programul clasic (versiunea 3 pentru Windows), verificată în co
 - [ ] **Tragere din binder în editor** inserează legătură internă sau imagine → `Editor.jsx` nu are `onDrop`.
 - [ ] **Tragere pe un dosar din corkboard / outliner** mută documentul înăuntru → doar binder-ul acceptă plasare „în”.
 - [ ] **Plasare direct pe tab-ul unei colecții** → `CollectionsBar.jsx` are o singură țintă.
-- [ ] **Ctrl + tragere = copiere** în binder, corkboard, outliner → Scribner mută mereu.
+- [ ] **Ctrl + tragere = copiere** în binder, corkboard, outliner → Pneuma Sofer mută mereu.
 - [ ] **Indicatorul „în / deasupra / dedesubt”** la fel în toate vizualizările → complet doar în binder.
 - [ ] **Scrivenings: selecție, căutare și înlocuire continue peste secțiuni** → `Scrivenings.jsx` are un editor separat pe secțiune, deci se opresc la margine.
 - [ ] **Scrivenings: săgeată sus/jos trece în secțiunea vecină** fără clic → nu există gestionare explicită.
@@ -1018,7 +1018,7 @@ Comparație cu programul clasic (versiunea 3 pentru Windows), verificată în co
 - [ ] **Variante cu modificatori la clic**: Shift+clic în binder deschide în celălalt panou, Alt+clic în fereastră rapidă → doar Ctrl+clic e consecvent.
 - [ ] **Triplu clic selectează paragraful fără marcajul paragrafului următor** la copiere → comportamentul implicit al browserului.
 - [ ] **Meniul contextual pe text**: sugestiile de ortografie există (`electron/main.cjs`); lipsesc Caută în dicționar / pe web, Ignoră peste tot, Adaugă comentariu, Adaugă selecția la colecție, Legătură către document.
-- [ ] **Anulare pe cuvânt**: clasicul anulează pe cuvânt → Scribner grupează după timp (implicit ProseMirror), deci o frază tastată repede se anulează integral.
+- [ ] **Anulare pe cuvânt**: clasicul anulează pe cuvânt → Pneuma Sofer grupează după timp (implicit ProseMirror), deci o frază tastată repede se anulează integral.
 - [ ] **O corectură automată se anulează cu un singur Ctrl+Z** (ghilimele, linie, majusculă), revenind la ce ai tastat → de verificat pe fiecare regulă din `src/extensions/`.
 - [ ] **Completare automată cu întârziere și Esc** pentru cuvinte-cheie și câmpuri proprii → temporizare neuniformă.
 - [ ] **Cursorul la tragere** (+ la copiere, interdicție peste ținte invalide) → `dropEffect` nesetat pe cazuri.
@@ -1053,11 +1053,11 @@ Comparație fereastră-cu-fereastră cu programul clasic de referință, pe un p
 până la nivel de element, ordine, text, valoare implicită, stare, bifă și scurtătură. Unelte în
 `scripts/ui-audit/` (captură deterministă prin accesibilitate + OCR; diff determinist; judecată doar pe
 rezidul ambiguu, pe serverul local OmniRoute, lead Opus 4.7 + lucrători). Doar comportamentul e observat;
-nimic nu se copiază din programul clasic. Extrasele proprii Scribner (AI, MCP, dictare) se păstrează.
+nimic nu se copiază din programul clasic. Extrasele proprii Pneuma Sofer (AI, MCP, dictare) se păstrează.
 
 ### Meniuri
 Capturate complet ambele bare de meniu (10 meniuri clasice la 3 niveluri + context cu text; meniul
-Scribner). Diff determinist: 468 intrări prezente în clasic și nepotrivite în Scribner, 53 diferențe de
+Pneuma Sofer). Diff determinist: 468 intrări prezente în clasic și nepotrivite în Pneuma Sofer, 53 diferențe de
 scurtătură (multe sunt zgomot OCR — tratate ca semnal slab, neimplementate orb), 49 de stare.
 
 - [x] **Curățare text** (clasic: Edit › Text Tidying) — submeniu nou în Transformări cu: spații multiple →
@@ -1071,10 +1071,10 @@ scurtătură (multe sunt zgomot OCR — tratate ca semnal slab, neimplementate o
   de confirmat una câte una înainte de implementare.
 
 ### Opțiuni / Setări
-Capturate: dialogul Opțiuni clasic (43 de pagini) și Setările Scribner (11 tab-uri, prin DOM).
-Scribner acoperă toate categoriile clasice (General, Editare, Comportamente, Aspect, Corecturi,
+Capturate: dialogul Opțiuni clasic (43 de pagini) și Setările Pneuma Sofer (11 tab-uri, prin DOM).
+Pneuma Sofer acoperă toate categoriile clasice (General, Editare, Comportamente, Aspect, Corecturi,
 Tastatură, Partajare, Backup) plus extrasele proprii (AI, Servicii și conturi, Limbă). Comparație
-deterministă: 252 setări clasice, 264 Scribner; majoritatea „diferențelor" sunt aceeași setare sub alt
+deterministă: 252 setări clasice, 264 Pneuma Sofer; majoritatea „diferențelor" sunt aceeași setare sub alt
 nume (alias). Golurile reale, confirmate manual pe datele deterministe (OmniRoute fiind nesigur la
 sarcini structurate), sunt puține.
 
@@ -1083,18 +1083,18 @@ sarcini structurate), sunt puține.
   (IPC `settings:openBackupFolder`), `electron/preload.cjs`, `lib/backup.cjs` (`effectiveBackupDir`, pur +
   testat), `src/components/SettingsDialog.jsx`, `src/lib/i18n.js`, teste `tests/g4ImportExportBackup.test.js`
   + intrare în `tests/mcpFull.test.js`.
-- [ ] Comutator unic „Backup automat pornit/oprit" (clasic: master toggle) — Scribner are comutatoare
+- [ ] Comutator unic „Backup automat pornit/oprit" (clasic: master toggle) — Pneuma Sofer are comutatoare
   separate (la închidere/deschidere/salvare); de evaluat dacă merită un singur comutator-umbrelă.
 
 ### Inspector
 Capturat **exhaustiv pe Desktop 3** prin input real + PrintWindow (overlay-ul "Routines" nu mai e blocaj:
 PrintWindow desenează fereastra direct). Ambele au aceleași 5 tab-uri. Comparație nano, tab cu tab:
-- **Note**: Synopsis (titlu + rezumat + imagine sinopsis) + Note. Scribner identic.
+- **Note**: Synopsis (titlu + rezumat + imagine sinopsis) + Note. Pneuma Sofer identic.
 - **Metadate**: Creat/Modificat, Include în compile, Tip de secțiune, Metadate personalizate, Cuvinte cheie.
-  Scribner le are pe toate **plus** Etichetă, Status, Țintă (+unitate+notificare), Compilează-așa-cum-e.
+  Pneuma Sofer le are pe toate **plus** Etichetă, Status, Țintă (+unitate+notificare), Compilează-așa-cum-e.
 - **Semne de carte, Snapshot-uri, Comentarii & note**: prezente în ambele.
-Verdict: **paritate+ (Scribner superset)**. Singurul detaliu: clasicul arată mereu selectorul "Tip de
-secțiune"; Scribner îl ascunde dacă proiectul n-are tipuri definite.
+Verdict: **paritate+ (Pneuma Sofer superset)**. Singurul detaliu: clasicul arată mereu selectorul "Tip de
+secțiune"; Pneuma Sofer îl ascunde dacă proiectul n-are tipuri definite.
 - [ ] Minor: arată selectorul de tip de secțiune și când lista e goală (opțional, aliniere cu clasicul).
 
 ### Ținte, Statistici, Scratchpad, Compunere, Corkboard, Outliner, Căutare — stadiu
@@ -1104,20 +1104,20 @@ dialoguri Qt ale programului clasic **nu-și expun conținutul prin accesibilita
 OCR), iar unele sunt **modale** (deschiderea prin UIA blochează firul) — se deschid printr-un proces
 separat și se capturează prin PrintWindow.
 
-Constatări (verificate pe partea Scribner, care e inspectabilă complet):
-- **Ținte** — Scribner e superset: țintă draft + sesiune, deadline, zile de scris, reset sesiune, numără
+Constatări (verificate pe partea Pneuma Sofer, care e inspectabilă complet):
+- **Ținte** — Pneuma Sofer e superset: țintă draft + sesiune, deadline, zile de scris, reset sesiune, numără
   doar grupul compilat, notificări, cuvinte/pagină, permite negativ, sesiune din deadline, pe toate
   proiectele (`TargetsDialog.jsx`, `lib/stats.js`). Paritate+.
-- **Statistici** — clasicul: numărători + „Word Frequency". Scribner are `Statistics…` și istoric de
+- **Statistici** — clasicul: numărători + „Word Frequency". Pneuma Sofer are `Statistics…` și istoric de
   scriere; comparația nano a numărătorilor e limitată de OCR pe dialogul modal.
-- **Scratchpad, Compunere, Corkboard, Outliner, Căutare** — prezente în Scribner la nivel de meniu și
+- **Scratchpad, Compunere, Corkboard, Outliner, Căutare** — prezente în Pneuma Sofer la nivel de meniu și
   componente dedicate; comparația de conținut e limitată de accesibilitatea Qt a programului clasic.
 - [ ] De reluat comparația nano pe aceste dialoguri cu panoul always-on-top ascuns (pentru zona din
   dreapta) sau pe un ecran liber; infrastructura (Desktop 3 + PrintWindow + OCR) e gata.
 
 ### Compile (capturat pe Desktop 3, 13 secțiuni)
 Clasicul (stil Scrivener 3): „Compile For" (ieșire), 11 formate predefinite, Section Layouts cu
-previzualizare, atribuire tip de secțiune per document, front/back matter. Scribner (`CompileDialog.jsx`,
+previzualizare, atribuire tip de secțiune per document, front/back matter. Pneuma Sofer (`CompileDialog.jsx`,
 `lib/compileFormats.cjs`): ieșiri docx/pdf/epub/print + altele, formate predefinite, front/back matter
 **per ieșire** (peste clasic). Partea avansată de **Section Layouts per tip de secțiune** (editor de
 așezări cu prefixe/formatare) e urmărită separat ca pachetul **P2/P3** (ramura `wip/p2-p3-compile`,
@@ -1127,7 +1127,7 @@ neintegrată). Verdict pe nucleu: **paritate**; așezările avansate: în lucru 
 Captura clasicului se face pe **Desktop 3** (modulul VirtualDesktop), cu **PrintWindow** (merge acoperit
 / pe desktop inactiv) și **input real** pentru parcurgerea exhaustivă (Qt nu expune structura prin
 accesibilitate și ignoră input-ul sintetic din fundal). Pattern consistent pe ferestrele parcurse adânc
-(meniuri, Opțiuni, Inspector pe tab-uri, Ținte, Compile): **Scribner e la paritate sau superset**, cu
+(meniuri, Opțiuni, Inspector pe tab-uri, Ținte, Compile): **Pneuma Sofer e la paritate sau superset**, cu
 extrasele proprii păstrate (AI, MCP, dictare). Goluri reale găsite și reparate: „Curățare text" (meniuri)
 și „Deschide folderul de backup" (Opțiuni).
 
@@ -1136,11 +1136,11 @@ extrasele proprii păstrate (AI, MCP, dictare). Goluri reale găsite și reparat
 și scoate, ca text, **toate** etichetele de interfață grupate pe componentă (context Qt): 6702 intrări,
 ~70 de componente (meniuri, Opțiuni pe sub-pagini, Compile + sub-editoare, Inspector, Corkboard, Ținte,
 Statistici, Scratchpad, Generator de nume, Teme etc.). E doar **observație** a inventarului (ce elemente
-există), nu copiere de cod/resurse — pe baza lui se construiește paritatea în codul propriu Scribner.
+există), nu copiere de cod/resurse — pe baza lui se construiește paritatea în codul propriu Pneuma Sofer.
 Costă mult mai puțin decât capturile de ecran. Stringurile programului clasic NU se urcă în depozit.
 
-Comparație pe componente (text), rezultat consistent — **Scribner la paritate sau superset**:
-- **Corecturi**: Scribner are smart quotes/dashes/ellipsis, fracții (½ — pe care clasicul NU le are),
+Comparație pe componente (text), rezultat consistent — **Pneuma Sofer la paritate sau superset**:
+- **Corecturi**: Pneuma Sofer are smart quotes/dashes/ellipsis, fracții (½ — pe care clasicul NU le are),
   capitalizare propoziții, auto-replace. Diferă doar specificul englez (Capitalize 'i', ordinale 1st/2nd).
 - **Corkboard**: grid / linii / freeform în ambele. Clasicul are în plus „Commit freeform order".
 - **Scratchpad**: „Send to project" + append în ambele.
@@ -1149,14 +1149,14 @@ Comparație pe componente (text), rezultat consistent — **Scribner la paritate
 
 ### Format (verificat pe inventarul .qm): paritate+
 Meniul Format al clasicului are versale mici, versale, indentări granulare (prima linie, agățată, dreapta),
-păstrează-cu-următorul, liste numerotate/alfabetice, titluri 1–6, conversii note/comentarii. Scribner le
+păstrează-cu-următorul, liste numerotate/alfabetice, titluri 1–6, conversii note/comentarii. Pneuma Sofer le
 are deja: `SmallCaps`/`AllCaps` (`src/editor/formatting.js`), indentări `firstIndent/indentLeft/indentRight`
 + tab stops, spațiere per paragraf, stiluri, conversii note↔comentarii. Singurele diferențe sunt
 specific-engleze (Capitalize 'i', ordinale) sau native (font hinting). **Verdict: paritate/superset.**
 
 ### Verdict final audit 5 (metoda pe text, din resursele binare)
 Comparație pe ~70 de componente ale interfeței (toate etichetele din `ScrivenerApp_ro.qm`). La fiecare,
-Scribner are deja funcția — **paritate sau superset**, cu extrasele proprii peste (AI, MCP, dictare, RAG,
+Pneuma Sofer are deja funcția — **paritate sau superset**, cu extrasele proprii peste (AI, MCP, dictare, RAG,
 fracții, per-output front/back matter). Goluri reale găsite în tot auditul și reparate: 2 — „Curățare text"
 (meniuri) și „Deschide folderul de backup" (Opțiuni). Rest: aliniere opțională minoră (ex. Corkboard
 „Commit freeform order") sau specific nativ/englez, nerelevant pentru un editor româno-centric.

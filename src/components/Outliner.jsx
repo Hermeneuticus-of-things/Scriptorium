@@ -27,7 +27,7 @@ export const DEFAULT_COLUMNS = ['label', 'status'];
 
 function loadShowSynopsis() {
   try {
-    return localStorage.getItem('scribner-outline-synopsis') !== 'off';
+    return localStorage.getItem('pneuma-outline-synopsis') !== 'off';
   } catch {
     return true;
   }
@@ -35,7 +35,7 @@ function loadShowSynopsis() {
 
 function loadColumns() {
   try {
-    return JSON.parse(localStorage.getItem('scribner-outline-columns')) || DEFAULT_COLUMNS;
+    return JSON.parse(localStorage.getItem('pneuma-outline-columns')) || DEFAULT_COLUMNS;
   } catch {
     return DEFAULT_COLUMNS;
   }
@@ -47,7 +47,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   const toggleSynopsis = (on) => {
     setShowSynopsis(on);
     try {
-      localStorage.setItem('scribner-outline-synopsis', on ? 'on' : 'off');
+      localStorage.setItem('pneuma-outline-synopsis', on ? 'on' : 'off');
     } catch {
       /* not critical */
     }
@@ -69,7 +69,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   const saveColumns = (next) => {
     setColumns(next);
     try {
-      localStorage.setItem('scribner-outline-columns', JSON.stringify(next));
+      localStorage.setItem('pneuma-outline-columns', JSON.stringify(next));
     } catch {
       /* not critical */
     }
