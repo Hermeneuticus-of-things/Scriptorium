@@ -373,6 +373,10 @@ legend { color: var(--muted); padding: 0 4px; }
    `zoom` causes inside a contenteditable editor. Each pane has its own --zoom. */
 .page .ProseMirror { font-size: calc(var(--editor-font-size) * var(--zoom, 1)); }
 .page .doc-title { font-size: calc(15px * var(--zoom, 1)); }
+/* In-app synonyms (sinonimul.ro): clickable chips; clicking one replaces the selected word. */
+.synonyms-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.syn-chip { padding: 4px 11px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: inherit; cursor: pointer; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; }
+.syn-chip:hover, .syn-chip:focus-visible { background: var(--accent-soft); border-color: var(--accent); }
 .page-resize { position: absolute; top: 0; bottom: 0; width: 10px; cursor: ew-resize; z-index: 2; }
 .page-resize.left { left: -6px; }
 .page-resize.right { right: -6px; }

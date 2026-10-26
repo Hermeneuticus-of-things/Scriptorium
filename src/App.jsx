@@ -1491,11 +1491,38 @@ export default function App({ api: apiProp }) {
       const result = kind === 'grammar'
         ? { kind, ...(await api.checkGrammar({ text: source, language: settings.grammarLanguage || 'auto' })) }
         : { kind, ...(await api.translateText({ service, text: source })) };
-      setServiceResult({ source, result, handle, range });
+      // Translation replaces the selection in place (like the DeepL plugins in VS Code / Obsidian);
+      // Ctrl+Z undoes it. Grammar still opens the review popover so each correction can be checked.
+      if (kind === 'translate' && result.text != null) {
+        applyServiceText({ source, handle, range }, result.text);
+        const msg = tr('ui.services.tradus', { service: label });
+        setToast(msg);
+        setTimeout(() => setToast((t) => (t === msg ? '' : t)), 2500);
+      } else {
+        setServiceResult({ source, result, handle, range });
+        setToast('');
+      }
     } catch (e) {
-      report(e);
-    } finally {
       setToast('');
+      report(e);
+    }
+    return undefined;
+  };
+  // In-app synonyms (sinonimul.ro): fetch the word's synonyms and show them as chips; clicking one
+  // replaces the selected word in place (same mechanism as the in-app translation).
+  const synonymsInApp = async () => {
+    const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+    const source = (handle?.getSelectionText() || '').trim();
+    if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    const range = serviceRange(handle.editor, source);
+    setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
+    try {
+      const res = await api.fetchSynonyms(source);
+      setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms }, handle, range });
+      setToast('');
+    } catch (e) {
+      setToast('');
+      report(e);
     }
     return undefined;
   };
@@ -2652,6 +2679,7 @@ export default function App({ api: apiProp }) {
     ['tools', 'glossaryAdd', tr('cmd.glossaryAdd'), addToGlossary],
     ['tools', 'deeplInApp', tr('cmd.deeplInApp'), () => runService('translate', 'deepl'), !api.translateText],
     ['tools', 'googleInApp', tr('cmd.googleInApp'), () => runService('translate', 'google'), !api.translateText],
+    ['tools', 'synonymsInApp', tr('cmd.synonymsInApp'), () => synonymsInApp(), !api.fetchSynonyms],
     ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
     [aiEnabled ? 'ai' : 'tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
@@ -2766,7 +2794,10 @@ export default function App({ api: apiProp }) {
       sep();
       if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: [...inApp, ...links(g.translate)] });
       if (api.checkGrammar) items.push({ label: tr('cmd.grammarSel'), action: run('grammarSel') });
-      if (g.dict.length) items.push({ label: tr('ui.ctx.dictionare'), submenu: links(g.dict) });
+      if (g.dict.length || api.fetchSynonyms) {
+        const synInApp = api.fetchSynonyms ? [{ label: tr('cmd.synonymsInApp'), action: run('synonymsInApp') }, '-'] : [];
+        items.push({ label: tr('ui.ctx.dictionare'), submenu: [...synInApp, ...links(g.dict)] });
+      }
       items.push({ label: tr('ui.ctx.cercetare_web'), submenu: links(g.research) });
 
       // AI și proiect.

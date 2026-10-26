@@ -6,6 +6,7 @@ import { applyCorrections, correctionEdits } from '../lib/textRange.js';
 // result: { kind: 'translate', text, service, detected } | { kind: 'grammar', matches, language }
 export default function ServiceResultDialog({ source, result, onReplace, onInsertAfter, onClose }) {
   const isGrammar = result.kind === 'grammar';
+  const isSynonyms = result.kind === 'synonyms';
   const [chosen, setChosen] = useState(() => (isGrammar ? result.matches.map((m) => (m.replacements[0] !== undefined ? 0 : -1)) : []));
   // Corrected text: apply the chosen replacement of each match, from the end so offsets stay valid.
   const corrected = () => applyCorrections(source, result.matches, chosen);
@@ -13,9 +14,18 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label={isGrammar ? t('ui.services.verificare_gramatica') : t('ui.services.traducere')} onClick={(e) => e.stopPropagation()}>
-        <h2>{isGrammar ? t('ui.services.verificare_gramatica') : t('ui.services.traducere_cu', { service: result.service })}</h2>
-        {isGrammar ? (
+      <div className="modal wide" role="dialog" aria-label={isGrammar ? t('ui.services.verificare_gramatica') : isSynonyms ? t('ui.services.sinonime') : t('ui.services.traducere')} onClick={(e) => e.stopPropagation()}>
+        <h2>{isGrammar ? t('ui.services.verificare_gramatica') : isSynonyms ? t('ui.services.sinonime_pentru', { word: result.word }) : t('ui.services.traducere_cu', { service: result.service })}</h2>
+        {isSynonyms ? (
+          <>
+            <p className="muted small">{t('ui.services.alege_sinonim')}</p>
+            <div className="synonyms-list">
+              {result.synonyms.map((s, i) => (
+                <button key={`${s}-${i}`} type="button" className="syn-chip" onClick={() => onReplace(s)}>{s}</button>
+              ))}
+            </div>
+          </>
+        ) : isGrammar ? (
           <>
             <p className="muted small">{result.matches.length ? t('ui.services.n_probleme', { n: result.matches.length, language: result.language || '' }) : t('ui.services.nicio_problema')}</p>
             <ol className="grammar-list">
@@ -45,7 +55,7 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
           </div>
         )}
         <div className="actions">
-          {isGrammar ? (
+          {isSynonyms ? null : isGrammar ? (
             <button className="primary" disabled={!result.matches.length} onClick={() => onReplace(corrected(), correctionEdits(source, result.matches, chosen))}>{t('ui.services.aplica_corecturile')}</button>
           ) : (
             <>

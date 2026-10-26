@@ -199,6 +199,7 @@ contextBridge.exposeInMainWorld('api', {
   deleteAccount: (id) => call('accounts:delete', id),
   copyAccountPassword: (id) => call('accounts:copyPassword', id),
   translateText: (req) => call('translate:run', req),
+  fetchSynonyms: (word) => call('synonyms:fetch', word),
   checkGrammar: (req) => call('grammar:check', req),
   speakCloud: (req) => call('tts:speak', req),
   importZotero: (req) => call('zotero:import', req),

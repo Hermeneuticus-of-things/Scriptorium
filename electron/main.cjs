@@ -15,6 +15,7 @@ const aiProviders = require('../lib/aiProviders.cjs');
 const aiKeys = require('../lib/aiKeys.cjs');
 const services = require('../lib/services.cjs');
 const translate = require('../lib/translate.cjs');
+const synonyms = require('../lib/synonyms.cjs');
 const notebookLm = require('../lib/notebookLm.cjs');
 const backup = require('../lib/backup.cjs');
 const history = require('../lib/history.cjs');
@@ -1242,6 +1243,8 @@ handle('translate:run', async (_e, { service = 'deepl', text, from, to } = {}) =
   if (service === 'google') return translate.googleTranslate({ ...opts, apiKey: services.getService(st, 'googleTranslate', safeStorage).apiKey });
   return translate.deeplTranslate({ ...opts, apiKey: services.getService(st, 'deepl', safeStorage).apiKey });
 });
+// Synonyms read in-app from sinonimul.ro (no key needed); only the one HTTP request leaves the app.
+handle('synonyms:fetch', (_e, word) => synonyms.fetchSynonyms({ word }));
 handle('zotero:import', async (_e, { collection } = {}) => {
   const zt = services.getService(readSettings(), 'zotero', safeStorage);
   return { entries: await require('../lib/zotero.cjs').fetchZoteroLibrary({ userId: zt.userId, apiKey: zt.apiKey, collection }) };

@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.14
+- Traducere în program — înlocuire automată: DeepL și Google traduc acum selecția și o înlocuiesc pe loc (ca plugin-urile din alte editoare), cu Ctrl+Z pentru revenire. Nu mai e nevoie de pasul de confirmare. Verificarea gramaticală (LanguageTool) rămâne cu fereastra de revizuire.
+- Sinonime în program (sinonimul.ro): click dreapta → Dicționare → „Sinonime în program" aduce sinonimele direct în aplicație și le arată ca butoane; apeși unul și înlocuiește cuvântul. Cuvintele cu diacritice merg; formele flexionate (ex. „frumoasă") primesc un mesaj clar să folosești forma de bază, nu o eroare „404".
+- Sistem de bug-uri (vânat + semnalat + prins): `BUGS.md` descrie procesul; `tests/regressions.test.js` ține câte un test pe fiecare bug reparat, cu cauza de fond (root cause) în comentariu, ca să nu mai revină; șablon de PR care cere root cause + test de regresie. (CI pe orice branch + nocturn și șablonul de raport de bug sunt deja active din 0.10.13.)
+
 ## v0.10.13
 - Binder — reparație: dacă panoul editorului e fixat pe loc (🔒), click pe alt document din binder nu-l schimba și nu spunea nimic, așa că părea că aplicația e stricată. Acum apare un mesaj clar care te trimite la lacăt. (Fixarea pe loc e o funcție intenționată — un singur click pe lacăt o oprește, și rămâne oprită.)
 - Sistem de raportare bug-uri: șablon de „Raport de bug" pe GitHub (Issues → New issue), cu pași de reproducere, versiune, zonă și raportul de eroare din aplicație.
