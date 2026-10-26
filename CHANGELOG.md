@@ -1,6 +1,10 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.19
+- Zoom reparat cu adevărat: în tema „classic" titlul documentului nu scala la zoom (rămânea 12px cât timp textul creștea), fiindcă tema îl fixa. Acum titlul și textul cresc împreună, coerent, în orice temă (titlul = mărimea de bază a temei × zoom). Asta era „zoom-ul defectuos".
+- Glow-ul de ghidare (ex. lacătul) e acum auriu, ca să se vadă clar.
+
 ## v0.10.18
 - X de închidere pe toate ferestrele: fiecare dialog are acum un „×" sus-dreapta, pentru cine nu știe de tasta Esc. Închide la fel ca Esc (și clic pe fundal, și Esc rămân). Adăugat într-un singur loc, pentru toate dialogurile.
 

@@ -375,7 +375,10 @@ legend { color: var(--muted); padding: 0 4px; }
    and reflows. Using font-size avoids the caret, selection and scroll repaint artifacts that CSS
    `zoom` causes inside a contenteditable editor. Each pane has its own --zoom. */
 .page .ProseMirror { font-size: calc(var(--editor-font-size) * var(--zoom, 1)); }
-.page .doc-title { font-size: calc(15px * var(--zoom, 1)); }
+/* Title scales with zoom like the body. Its base size comes from --doc-title-px so a theme can set
+   its own (e.g. classic = 12px) without breaking the zoom — the multiply by --zoom stays here, in
+   one place, and themes only set the base. */
+.page .doc-title { font-size: calc(var(--doc-title-px, 15px) * var(--zoom, 1)); }
 /* In-app synonyms (sinonimul.ro): clickable chips; clicking one replaces the selected word. */
 .synonyms-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
 .syn-chip { padding: 4px 11px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: inherit; cursor: pointer; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; }
@@ -384,12 +387,13 @@ legend { color: var(--muted); padding: 0 4px; }
 .modal.syn-modal .synonyms-list { max-height: 50vh; overflow: auto; }
 /* Guided hint: a short glow that points the eye at the control the user needs (e.g. the pane lock
    when a binder click is blocked). Respects users who ask for less motion. */
-.hint-glow { animation: hint-glow 0.7s ease-in-out 5; border-radius: 4px; position: relative; z-index: 5; }
+/* Guided-hint glow is gold/amber so it stands out against the blue accent used elsewhere. */
+.hint-glow { --hint-gold: #e0a419; animation: hint-glow 0.7s ease-in-out 5; border-radius: 4px; position: relative; z-index: 5; }
 @keyframes hint-glow {
   0%, 100% { box-shadow: 0 0 0 0 transparent; }
-  50% { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); background: var(--accent-soft); }
+  50% { box-shadow: 0 0 0 4px var(--hint-gold), 0 0 16px 4px var(--hint-gold); background: color-mix(in srgb, var(--hint-gold) 28%, transparent); }
 }
-@media (prefers-reduced-motion: reduce) { .hint-glow { animation: none; box-shadow: 0 0 0 4px var(--accent); } }
+@media (prefers-reduced-motion: reduce) { .hint-glow { animation: none; box-shadow: 0 0 0 4px var(--hint-gold), 0 0 14px 3px var(--hint-gold); } }
 /* Drag either edge to set the writing width (both edges move, page stays centred); double-click an
    edge to fill the whole pane. A faint grip pill is always shown so it's clear the page can be
    resized — stronger on hover. */

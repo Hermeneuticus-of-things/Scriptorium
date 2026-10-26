@@ -187,7 +187,7 @@
   background: var(--sc-paper); border: 1px solid var(--sc-page-line, #c8c8c8); border-radius: 0; margin-top: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,.12);
 }
-[data-ui='classic'] .doc-title { font: 600 12px var(--sc-font); color: var(--sc-muted); text-transform: none; }
+[data-ui='classic'] .doc-title { --doc-title-px: 12px; font-weight: 600; font-family: var(--sc-font); color: var(--sc-muted); text-transform: none; }
 [data-ui='classic'] .scriv-head { background: var(--sc-chrome-2); border-bottom: 1px solid var(--sc-line); padding: 3px 10px; font-size: 12px; }
 [data-ui='classic'] .scriv-section .page.flow { border-bottom: 1px dashed #b8b8b8; }
 [data-ui='classic'] .find-bar { border-radius: 0; background: var(--sc-chrome); }
