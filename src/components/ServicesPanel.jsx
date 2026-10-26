@@ -71,7 +71,7 @@ export default function ServicesPanel({ api }) {
             <strong>{s.label}</strong>
             <span className={s.configured ? 'ok small' : 'muted small'}>{s.configured ? t('ui.services.configurat') : t('ui.services.neconfigurat')}</span>
           </div>
-          {s.help && <p className="muted small">{s.help}{s.url && <> <a href={s.url} target="_blank" rel="noreferrer" onClick={(e) => { if (api.openLink) { e.preventDefault(); api.openLink(s.url); } }}>{t('ui.services.unde_gasesc_cheia')}</a></>}</p>}
+          {s.help && <p className="muted small">{s.help}{s.about && <> <a href={s.about} target="_blank" rel="noreferrer" onClick={(e) => { if (api.openLink) { e.preventDefault(); api.openLink(s.about); } }}>{t('ui.services.ce_este')}</a></>}{s.url && <> · <a href={s.url} target="_blank" rel="noreferrer" onClick={(e) => { if (api.openLink) { e.preventDefault(); api.openLink(s.url); } }}>{t('ui.services.unde_gasesc_cheia')}</a></>}</p>}
           <div className="row">
             {s.fields.map((f) => (
               <label key={f.id}>

@@ -11,7 +11,7 @@ import AI_PRESETS from '../../lib/aiPresets.json';
 // Base URL is editable only for local / custom servers; cloud presets use their fixed URL.
 const EDITABLE_URL = new Set(['ollama', 'lmstudio', 'custom']);
 
-const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'language'];
+const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'editorial', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'language'];
 const TAB_FALLBACK = { sharing: 'Partajare' };
 const tabLabel = (k) => {
   const v = t(`set.tab.${k}`);
@@ -187,6 +187,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [edBase, setEdBase] = useState(profileId(project?.editorialProfile?.base || 'generic'));
   const [edRules, setEdRules] = useState(project?.editorialProfile?.rules || {});
   const [edLimit, setEdLimit] = useState(project?.editorialProfile?.canvasWordLimit ?? 3000);
+  // Free-text rules the author wants the AI (I-REP repair + I-EDIT rounds) to always follow.
+  const [edAiRules, setEdAiRules] = useState(project?.editorialProfile?.aiRules || '');
   const [mcp, setMcp] = useState(null);
   // Editorial word lists, per profile (settings.editorialLists[profileId]).
   const [edLists, setEdLists] = useState(() => {
@@ -199,6 +201,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         preferred: (l.preferred || []).map((e) => `${e.word}${e.replacement ? ` <= ${e.replacement}` : ''}${e.note ? ` # ${e.note}` : ''}`).join('\n'),
         disabledWords: (l.disabledWords || []).join(', '),
         builtins: { ...(l.builtins || {}) },
+        // Author's own rule lists: one per line, "Nume: cuvânt1, cuvânt2".
+        custom: (l.custom || []).map((c) => `${c.name ? `${c.name}: ` : ''}${(c.words || []).join(', ')}`).join('\n'),
       };
     }
     return out;
@@ -248,11 +252,19 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           const [word, replacement] = main.split(sep).map((x) => (x || '').trim());
           return { word, ...(replacement ? { replacement } : {}), ...(note.length ? { note: note.join('#').trim() } : {}) };
         }).filter((e) => e.word);
+      const parseCustom = (txt) =>
+        String(txt || '').split('\n').map((ln) => ln.trim()).filter(Boolean).map((ln) => {
+          const i = ln.indexOf(':');
+          const name = i >= 0 ? ln.slice(0, i).trim() : '';
+          const words = (i >= 0 ? ln.slice(i + 1) : ln).split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+          return { name, words };
+        }).filter((c) => c.words.length);
       patch.editorialLists = Object.fromEntries(Object.entries(edLists).map(([id, l]) => [id, {
         forbidden: parseList(l.forbidden, '=>'),
         preferred: parseList(l.preferred, '<='),
         disabledWords: l.disabledWords.split(',').map((x) => x.trim()).filter(Boolean),
         builtins: l.builtins,
+        custom: parseCustom(l.custom),
       }]));
       Object.assign(patch, aiPatch());
       await api.setSettings(patch);
@@ -261,7 +273,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         onProjectChange({
           ...project,
           targets: { ...(project.targets || {}), draft: Number(draft) || 0, session: Number(session) || 0 },
-          editorialProfile: { ...(project.editorialProfile || {}), base: edBase, rules: edRules, canvasWordLimit: Number(edLimit) || 0 },
+          editorialProfile: { ...(project.editorialProfile || {}), base: edBase, rules: edRules, canvasWordLimit: Number(edLimit) || 0, aiRules: edAiRules },
         });
       }
       onClose();
@@ -474,6 +486,42 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <legend>{t('ui.services.servicii_conturi')}</legend>
           <ServicesPanel api={api} />
         </fieldset>
+        <fieldset>
+          <legend>{t('set.aiFunctions')}</legend>
+          <p className="muted small">{t('set.aiFunctionsInfo')}</p>
+          {project ? (
+            <label>
+              {t('set.aiRules')}
+              <textarea rows={4} value={edAiRules} onChange={(e) => setEdAiRules(e.target.value)} placeholder={t('set.aiRulesPlaceholder')} />
+            </label>
+          ) : (
+            <p className="muted small">{t('set.aiRulesNoProject')}</p>
+          )}
+        </fieldset>
+        {api.mcpInfo && dir && (
+          <fieldset>
+            <legend>{t('set.mcp')}</legend>
+            <p className="muted small">{t('set.mcpInfo')}</p>
+            <button onClick={async () => setMcp(await api.mcpInfo(dir))}>{t('set.mcpShow')}</button>
+            {mcp && (
+              <>
+                <label>
+                  Claude Code
+                  <textarea readOnly rows={2} value={mcp.claudeCode} onFocus={(e) => e.target.select()} />
+                </label>
+                <label>
+                  Claude Desktop (claude_desktop_config.json)
+                  <textarea readOnly rows={7} value={mcp.desktopJson} onFocus={(e) => e.target.select()} />
+                </label>
+              </>
+            )}
+          </fieldset>
+        )}
+      </>
+    ),
+    editorial: (
+      <>
+        <p className="muted small">{t('set.editorialPaneInfo')}</p>
         {project && (
           <fieldset>
             <legend>{t('set.editorial')}</legend>
@@ -523,26 +571,11 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             {t('ui.settingsDialog.cuvinte_incorporate_dezactivate_separate_prin')}
             <input value={edL.disabledWords} onChange={(e) => setEdL('disabledWords', e.target.value)} placeholder="astfel, mai sus" />
           </label>
+          <label>
+            {t('set.edCustom')} <code>{t('set.edCustomHint')}</code>
+            <textarea rows={4} value={edL.custom} onChange={(e) => setEdL('custom', e.target.value)} placeholder={t('set.edCustomPlaceholder')} />
+          </label>
         </fieldset>
-        {api.mcpInfo && dir && (
-          <fieldset>
-            <legend>{t('set.mcp')}</legend>
-            <p className="muted small">{t('set.mcpInfo')}</p>
-            <button onClick={async () => setMcp(await api.mcpInfo(dir))}>{t('set.mcpShow')}</button>
-            {mcp && (
-              <>
-                <label>
-                  Claude Code
-                  <textarea readOnly rows={2} value={mcp.claudeCode} onFocus={(e) => e.target.select()} />
-                </label>
-                <label>
-                  Claude Desktop (claude_desktop_config.json)
-                  <textarea readOnly rows={7} value={mcp.desktopJson} onFocus={(e) => e.target.select()} />
-                </label>
-              </>
-            )}
-          </fieldset>
-        )}
       </>
     ),
     sharing: (
