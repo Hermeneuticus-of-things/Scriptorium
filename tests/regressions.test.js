@@ -10,6 +10,8 @@ import { LOOKUPS } from '../src/lib/lookups.js';
 const require = createRequire(import.meta.url);
 const translate = require('../lib/translate.cjs');
 const { fetchSynonyms, parseSynonyms } = require('../lib/synonyms.cjs');
+const { plainTextToHtml } = require('../lib/docxImport.cjs');
+const { normalizeForPiper } = require('../lib/ttsEngine.cjs');
 
 describe('regressions', () => {
   // 2026-10-25 — v0.10.8 crash "Cannot read properties of undefined (reading 'id')": the format bar
@@ -60,5 +62,19 @@ describe('regressions', () => {
   it('synonyms: parser reads the direct rows and drops the word itself', () => {
     const html = "<ol><li style='font-size:22px'>plăcut, frumos, splendid</li></ol><li><a href='x'><b>alt</b></a> - y</li>";
     expect(parseSynonyms(html, 'frumos')).toEqual(['plăcut', 'splendid']);
+  });
+
+  // 2026-10-26 — plain-text import flattened text: every line became a <p> and blank-line paragraph
+  // breaks + leading indents were dropped. Now a blank-line block is one paragraph (wrapped lines
+  // joined) and a leading tab/spaces becomes a first-line indent, so "aliniatele de la capăt" survive.
+  it('import: plain text keeps paragraph breaks and first-line indents', () => {
+    expect(plainTextToHtml('Rand unu,\ncontinuare.\n\n\tAliniat nou.'))
+      .toBe('<p>Rand unu, continuare.</p><p style="text-indent:1.25cm">Aliniat nou.</p>');
+  });
+
+  // 2026-10-26 — the built-in voice (Mihai) read punctuation flat. normalizeForPiper maps the marks
+  // espeak doesn't pause on (…, — –, (), quotes) so the intonation is natural; see ttsPunctuation.test.js.
+  it('tts: parentheses become a comma pause (Mihai hears the aside)', () => {
+    expect(normalizeForPiper('Era bine (foarte bine) atunci.')).toBe('Era bine, foarte bine, atunci.');
   });
 });
