@@ -11,6 +11,7 @@ import BookmarksPanel from './BookmarksPanel.jsx';
 import { t as tr, uiLocale } from '../lib/i18n.js';
 import { moveTo, labelTitleOf, noneLabel, noneStatus, statusTitleOf, synopsisFromText, parseNumberField, customIconOf, CUSTOM_ICON_PREFIX } from '../lib/projectSettings.js';
 import ProjectNotesTabs from './ProjectNotesTabs.jsx';
+import { uiPrompt } from '../lib/uiPrompt.jsx';
 
 // Survives the remount App does on every selection change (key = selected id),
 // so "Lock Inspector" keeps showing the pinned document while navigating.
@@ -796,8 +797,8 @@ function DocumentExtras({ api, dir, project, node, onPatch, linkTargets, onOpen,
             ))}
           </select>
           <button
-            onClick={() => {
-              const url = window.prompt(tr('ui.inspector.adresa_web'), 'https://');
+            onClick={async () => {
+              const url = await uiPrompt(tr('ui.inspector.adresa_web'), 'https://');
               if (url && /^https?:\/\//.test(url)) setBookmarks([...bookmarks, { url }]);
             }}
           >

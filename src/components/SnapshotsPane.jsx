@@ -6,6 +6,7 @@ import { htmlToText } from '../lib/text.js';
 import { sanitizeHtml } from '../lib/sanitize.js';
 import { diffText, DIFF_LEVELS } from '../lib/snapshotDiff.js';
 import { sortSnapshots, toggleSort, selectSnapshot, changeStarts, stepChange } from '../lib/snapshotList.js';
+import { uiPrompt } from '../lib/uiPrompt.jsx';
 
 const LEVELS_COARSE_FIRST = [...DIFF_LEVELS].reverse(); // paragraf, frază, sintagmă, cuvânt
 
@@ -96,7 +97,7 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
   };
 
   const take = async () => {
-    const name = window.prompt(tr('ui.inspector.nume_snapshot'), tr('ui.inspector.inainte_de_revizie_x', { v0: new Date().toLocaleDateString(uiLocale()) }));
+    const name = await uiPrompt(tr('ui.inspector.nume_snapshot'), tr('ui.inspector.inainte_de_revizie_x', { v0: new Date().toLocaleDateString(uiLocale()) }));
     if (name === null) return;
     await flush?.();
     await api.takeSnapshot(dir, node.id, name || 'Snapshot').catch(onError);

@@ -7,6 +7,7 @@
 
 import { canonContext, nodeIdFromTitle } from './canonIndex.js';
 import { detectNearRepetitions, formatRepLines } from './nearRepetition.js';
+import { stripAiWatermarks, hasHiddenChars } from './sanitize.js';
 
 // SEMNAL is soft: shown to the author, never blocking, never autofixed, never sent to the
 // repair prompt (I-REP near repetition, S70).
@@ -68,6 +69,8 @@ export const ROMANIAN_PROFILE = {
     attentionDecay: true,
     teleology: true,
     repetitionNear: true,
+    // Strip the invisible LLM "fingerprint" characters (zero-width, U+202F, variation selectors…).
+    hiddenChars: true,
   },
   bannedAcademic: [
     'taxonomie', 'epistemică', 'epistemic', 'epistemologică', 'epistemologic', 'sensul ontologic', 'perspectiva teleologică',
@@ -88,6 +91,13 @@ export const ROMANIAN_PROFILE = {
     'joacă un rol crucial', 'joacă un rol esențial', 'în esență', 'fascinant', 'hai să', 'să explorăm', 'să aprofundăm',
     'în lumea de astăzi', 'nu în ultimul rând', 'în cele din urmă', 'un aspect important', 'complex și nuanțat',
     'o călătorie', 'tapiseria', 'pe scurt', 'în rezumat',
+    // Semne de scriere AI (adăugate: „Signs of AI writing"): formule de laudă și de încheiere,
+    // clișee de „peisaj/eră", superlative goale, verbe de marketing.
+    'este demn de remarcat', 'merită remarcat', 'un adevărat testament', 'o mărturie a', 'stă mărturie',
+    'subliniază importanța', 'evidențiind', 'într-o lume în care', 'în peisajul', 'în era digitală',
+    'de netăgăduit', 'schimbă fundamental', 'deblochează potențialul', 'o abordare holistică',
+    'soluție de ultimă generație', 'joacă un rol vital', 'nu se poate exagera', 'nu poate fi subestimat',
+    'bogata tapiserie', 'în marea schemă', 'de la X la Y', 'mai mult ca niciodată', 'în concluzie finală',
   ],
   passive: ['se observă', 'se produce', 'se constată', 'se poate observa', 'se poate constata', 'este observat', 'este considerat'],
   teleology: ['pentru a ajunge la', 'cu scopul de', 'în vederea', 'menit să', 'are drept scop', 'scopul karmei'],
@@ -99,7 +109,7 @@ export const GENERIC_PROFILE = {
   name: 'Generic: orice text (tipografie și reziduuri LLM)',
   names: { foreign: 'Glosar de termeni', reading: 'Glosar de lectură', toc: 'Cuprins de tipar', packageFolder: 'Pachet pentru editor {date}' },
   canvasWordLimit: 0,
-  rules: Object.fromEntries(Object.keys(ROMANIAN_PROFILE.rules).map((k) => [k, ['asciiQuotes', 'capitalStart', 'llmResidue', 'repetitionMezzo', 'repetitionNear', 'metronome', 'attentionDecay'].includes(k)])),
+  rules: Object.fromEntries(Object.keys(ROMANIAN_PROFILE.rules).map((k) => [k, ['asciiQuotes', 'capitalStart', 'llmResidue', 'repetitionMezzo', 'repetitionNear', 'metronome', 'attentionDecay', 'hiddenChars'].includes(k)])),
 };
 
 export const PROFILES = [ROMANIAN_PROFILE, GENERIC_PROFILE];
@@ -135,7 +145,7 @@ export function listsFor(editorialLists, profileId) {
   const legacy = Object.keys(LEGACY_IDS).find((k) => LEGACY_IDS[k] === profileId);
   const per = editorialLists[profileId] || (legacy && editorialLists[legacy]);
   if (per && typeof per === 'object' && !Array.isArray(per)) return per;
-  return editorialLists.forbidden || editorialLists.preferred || editorialLists.builtins || editorialLists.disabledWords ? editorialLists : null;
+  return editorialLists.forbidden || editorialLists.preferred || editorialLists.builtins || editorialLists.disabledWords || editorialLists.custom ? editorialLists : null;
 }
 
 const cleanEntries = (arr) =>
@@ -155,7 +165,23 @@ export function applyLists(profile, editorialLists) {
   }
   out.forbidden = cleanEntries(l.forbidden);
   out.preferred = cleanEntries(l.preferred);
+  out.custom = cleanCustom(l.custom);
   return out;
+}
+
+// User "own rule lists" for I-REP: named sets of words/phrases to flag, on top of the built-ins.
+// Stored as [{ name, words: ['x', 'y'] }] (a plain string list is wrapped as one unnamed set).
+function cleanCustom(custom) {
+  const toList = (c) => (typeof c === 'string' ? { name: '', words: c } : c || {});
+  return (Array.isArray(custom) ? custom : custom ? [custom] : [])
+    .map(toList)
+    .map((c) => ({
+      name: String(c.name || '').trim(),
+      words: (Array.isArray(c.words) ? c.words : String(c.words || '').split(/[\n,;]/))
+        .map((w) => String(w).trim())
+        .filter(Boolean),
+    }))
+    .filter((c) => c.words.length);
 }
 
 // ---------------------------------------------------------------------------
@@ -293,6 +319,12 @@ export function lint(html, ctx = {}) {
   const reUser = phraseRegex(userHits.map((h) => h.phrase));
   const userMap = new Map(userHits.map((h) => [h.phrase.toLocaleLowerCase('ro').replace(/\s+/g, ' '), h]));
 
+  // User "own rule lists": each listed word/phrase is flagged, labelled with its set name.
+  const customHits = [];
+  for (const set of profile.custom || []) for (const w of set.words) customHits.push({ phrase: w, name: set.name });
+  const reCustom = phraseRegex(customHits.map((h) => h.phrase));
+  const customMap = new Map(customHits.map((h) => [h.phrase.toLocaleLowerCase('ro').replace(/\s+/g, ' '), h]));
+
   let noiCount = 0;
   for (const p of bodyParas) {
     const t = p.plain;
@@ -332,6 +364,19 @@ export function lint(html, ctx = {}) {
         if (!h) continue;
         add('R1c', h.rule, h.rule === 'forbidden' ? 'MEDIU' : 'MINOR', `${h.msg}: „${m[1]}”${h.suggestion ? ` → „${h.suggestion}”` : ''}`, p.idx, context(t, m.index, m[0].length), { match: m[0], ...(h.suggestion ? { suggestion: h.suggestion } : {}) });
       }
+    }
+    if (reCustom) {
+      reCustom.lastIndex = 0;
+      let m;
+      while ((m = reCustom.exec(t))) {
+        const h = customMap.get(m[1].toLocaleLowerCase('ro').replace(/\s+/g, ' '));
+        if (!h) continue;
+        add('R1c', 'custom', 'MEDIU', `Regulă proprie${h.name ? ` (${h.name})` : ''}: „${m[1]}”`, p.idx, context(t, m.index, m[0].length), { match: m[0] });
+      }
+    }
+    // Invisible LLM fingerprint characters in this paragraph (deterministic, safe to strip).
+    if (r.hiddenChars && hasHiddenChars(p.html)) {
+      add('R11', 'hiddenChars', 'MINOR', 'Caractere invizibile de tip amprentă AI (zero-width, spațiu îngust U+202F, selectori de variație)', p.idx, t.slice(0, 40), { autofix: 'hidden' });
     }
     if (r.explicitNoi) {
       for (const m of t.matchAll(/(?<![\p{L}])noi(?![\p{L}])/giu)) {
@@ -488,6 +533,7 @@ export function autofix(html, opts = {}) {
     const fixed = inner.replace(/(<[^>]+>)|([^<]+)/g, (m, t, text) => {
       if (t) return t;
       let s = text;
+      s = stripAiWatermarks(s); // remove invisible LLM fingerprint characters
       s = s.replace(/ {2,}/g, ' ');
       // straight double quotes -> „…” (opening after start/space/(, closing otherwise)
       s = s.replace(/(^|[\s(\[ ])"/g, '$1„').replace(/"/g, '”');
@@ -512,8 +558,11 @@ export function systemPrompt(profile) {
     'Formatul textului: paragrafe separate prin rând gol; ***italic+bold*** exclusiv pentru sensul românesc ALOGEN; *italic* + „…” pentru ilustrații; [^text] pentru note de subsol. Păstrezi exact aceste marcaje și notele de subsol existente.',
     'Reguli permanente: fără em-dash, paranteze, două puncte structurale, bold stilistic, liste sau numerotare în corpul textului; fiecare paragraf începe cu majusculă; ghilimele „…”; fără construcții binare (negație urmată de „ci”/„dar”), rescrise afirmativ; fără pasive de tip „se observă”; maxim un „noi” explicit; tranziții de fond, nu de formă; fără autoreferințe la structură; mecanismul karmic este cauzal, nu finalist.',
     'Attention decay activ: ultimele paragrafe au aceeași calitate ca primele. P3 (sterilizator stil LLM) se aplică la final ca ultimă vamă.',
+    'Nu introduci caractere invizibile de tip amprentă de model (spații zero-width, spațiul îngust U+202F, selectori de variație, caractere de tip tag). Scrii numai text și semne de punctuație obișnuite.',
     (profile.forbidden || []).length ? `Cuvinte interzise de autor: ${profile.forbidden.map((e) => (e.replacement ? `„${e.word}” → „${e.replacement}”` : `„${e.word}”`)).join('; ')}.` : '',
     (profile.preferred || []).length ? `Forme preferate de autor: ${profile.preferred.map((e) => (e.replacement ? `„${e.word}” în loc de „${e.replacement}”` : `„${e.word}”`)).join('; ')}.` : '',
+    (profile.custom || []).length ? `Liste proprii de evitat: ${profile.custom.map((c) => `${c.name ? `${c.name}: ` : ''}${c.words.join(', ')}`).join('; ')}.` : '',
+    String(profile.aiRules || '').trim() ? `Reguli proprii ale autorului (respectă-le întocmai):\n${String(profile.aiRules).trim()}` : '',
   ].filter(Boolean).join('\n');
 }
 
@@ -600,7 +649,8 @@ export function cleanModelText(s) {
   t = t.trim().replace(/^<text>/, '');
   t = t.trim();
   if (t.endsWith('</text>')) t = t.slice(0, -7);
-  return t.trim();
+  // Strip any invisible fingerprint characters the model may have emitted.
+  return stripAiWatermarks(t.trim());
 }
 
 // After an AI pass the text comes back as manuscript markdown, which cannot carry

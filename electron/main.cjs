@@ -249,7 +249,7 @@ function setupSpelling(win) {
         win.webContents.send('spell:replaced', { from: params.misspelledWord, to: s });
       } });
       if (!params.dictionarySuggestions.length) items.push({ label: L.noSuggestions, enabled: false });
-      items.push({ label: L.addToDict(params.misspelledWord), click: () => ses.addWordToSpellCheckerDictionary(params.misspelledWord) });
+      items.push({ label: L.addToDict(params.misspelledWord), click: () => win.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord) });
       items.push({ label: L.ignore(params.misspelledWord), click: () => ignored.add(params.misspelledWord.toLowerCase()) });
       items.push({ type: 'separator' });
     }

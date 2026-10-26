@@ -188,12 +188,12 @@ export default function Scratchpad({ api, load, save, onClose, onSendToProject, 
 
   const box = standalone
     ? { position: 'fixed', inset: 0 }
-    : { position: 'fixed', left: pos.x, top: pos.y, width: 620, height: 400, zIndex: 900, borderRadius: 6, boxShadow: '0 6px 24px rgba(0,0,0,.25)', border: '1px solid var(--border, #ccc)' };
+    : { position: 'fixed', left: pos.x, top: pos.y, width: 620, height: 400, zIndex: 900, borderRadius: 6, boxShadow: '0 6px 24px rgba(0,0,0,.25)', border: '1px solid var(--line, #ccc)' };
   const canSend = standalone ? projects.length > 0 : Boolean(onSendToProject);
 
   return (
     <div className={`scratchpad ${standalone ? 'standalone' : ''}`} role="dialog" aria-label={t('ui.p11.sp_title')} style={{ ...box, display: 'flex', flexDirection: 'column', background: 'var(--panel, #fff)', color: 'var(--text, #222)' }}>
-      <div onMouseDown={onDown} style={{ cursor: standalone ? 'default' : 'move', padding: '4px 8px', display: 'flex', gap: 6, alignItems: 'center', borderBottom: '1px solid var(--border, #ccc)', flexWrap: 'wrap' }}>
+      <div onMouseDown={onDown} style={{ cursor: standalone ? 'default' : 'move', padding: '4px 8px', display: 'flex', gap: 6, alignItems: 'center', borderBottom: '1px solid var(--line, #ccc)', flexWrap: 'wrap' }}>
         <strong style={{ flex: 1 }}>{t('ui.p11.sp_title')}</strong>
         <button className="sp-add" onClick={() => add()} title={t('ui.scratchpad.nota_noua')}>+</button>
         <button className="sp-import" onClick={() => fileRef.current?.click()} title={t('ui.p11.sp_import')}>{t('ui.p11.sp_import')}</button>
@@ -217,7 +217,7 @@ export default function Scratchpad({ api, load, save, onClose, onSendToProject, 
         {!standalone && <button onClick={onClose} title={t('btn.close')} aria-label={t('btn.close')}>×</button>}
       </div>
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <ul style={{ width: 170, margin: 0, padding: 0, listStyle: 'none', overflow: 'auto', borderRight: '1px solid var(--border, #ccc)' }}>
+        <ul style={{ width: 170, margin: 0, padding: 0, listStyle: 'none', overflow: 'auto', borderRight: '1px solid var(--line, #ccc)' }}>
           {notes.map((n) => (
             <li key={n.id} className="sp-note" onClick={() => setSel(n.id)} style={{ padding: '4px 6px', cursor: 'pointer', background: n.id === sel ? 'var(--selection, #dde8ff)' : undefined, display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title || t('ui.app.fara_titlu')}</span>
@@ -248,7 +248,7 @@ export default function Scratchpad({ api, load, save, onClose, onSendToProject, 
               style={{ flex: 1, padding: 6, overflow: 'auto', outline: 'none' }}
             />
             {canSend && (
-              <div className="sp-send" style={{ display: 'flex', gap: 6, padding: 6, borderTop: '1px solid var(--border, #ccc)', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="sp-send" style={{ display: 'flex', gap: 6, padding: 6, borderTop: '1px solid var(--line, #ccc)', alignItems: 'center', flexWrap: 'wrap' }}>
                 {standalone && (
                   <select aria-label={t('ui.p11.sp_project')} value={target} onChange={(e) => setTarget(e.target.value)}>
                     {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}

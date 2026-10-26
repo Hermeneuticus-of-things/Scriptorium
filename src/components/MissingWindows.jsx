@@ -25,9 +25,9 @@ function FloatingPanel({ title, className, onClose, children, width = 280, x = 1
       role="dialog"
       aria-label={title}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
-      style={{ position: 'fixed', left: pos.x, top: pos.y, width, zIndex: 900, background: 'var(--panel, #fff)', color: 'var(--text, #222)', border: '1px solid var(--border, #ccc)', borderRadius: 6, boxShadow: '0 6px 24px rgba(0,0,0,.25)', display: 'flex', flexDirection: 'column', maxHeight: '70vh' }}
+      style={{ position: 'fixed', left: pos.x, top: pos.y, width, zIndex: 900, background: 'var(--panel, #fff)', color: 'var(--text, #222)', border: '1px solid var(--line, #ccc)', borderRadius: 6, boxShadow: '0 6px 24px rgba(0,0,0,.25)', display: 'flex', flexDirection: 'column', maxHeight: '70vh' }}
     >
-      <div onMouseDown={down} style={{ display: 'flex', alignItems: 'center', padding: '4px 8px', cursor: 'move', borderBottom: '1px solid var(--border, #ccc)', fontWeight: 600, fontSize: 13 }}>
+      <div onMouseDown={down} style={{ display: 'flex', alignItems: 'center', padding: '4px 8px', cursor: 'move', borderBottom: '1px solid var(--line, #ccc)', fontWeight: 600, fontSize: 13 }}>
         <span style={{ flex: 1 }}>{title}</span>
         <button className="fp-close" aria-label={t('btn.close')} onClick={onClose}>×</button>
       </div>
@@ -109,7 +109,7 @@ export function KeywordsHud({ project, selectedIds, onToggle, onClose }) {
             onDoubleClick={() => apply(k.name)}
             style={{ padding: '2px 4px', cursor: 'default', background: sel === k.name ? 'var(--sel, #cde)' : undefined, display: 'flex', gap: 6, alignItems: 'center' }}
           >
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: k.color || 'transparent', border: '1px solid var(--border, #ccc)' }} />
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: k.color || 'transparent', border: '1px solid var(--line, #ccc)' }} />
             <span style={{ flex: 1 }}>{k.name}</span>
             <span className="muted">{k.count}</span>
           </li>

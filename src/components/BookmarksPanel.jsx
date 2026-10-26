@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { sanitizeHtml } from '../lib/sanitize.js';
 import { t } from '../lib/i18n.js';
 import { moveTo } from '../lib/projectSettings.js';
+import { uiPrompt } from '../lib/uiPrompt.jsx';
 
 // Project bookmarks with preview (Scrivener: Project Bookmarks).
 // Props:
@@ -49,8 +50,8 @@ export default function BookmarksPanel({ bookmarks = [], nodeTitle = () => undef
       onError?.(e);
     }
   };
-  const addUrl = () => {
-    const url = window.prompt(t('ui.inspector.adresa_web'), 'https://');
+  const addUrl = async () => {
+    const url = await uiPrompt(t('ui.inspector.adresa_web'), 'https://');
     if (url && /^https?:\/\//.test(url) && !bookmarks.some((b) => b.url === url)) onChange([...bookmarks, { url }]);
   };
   const remove = (b) => {

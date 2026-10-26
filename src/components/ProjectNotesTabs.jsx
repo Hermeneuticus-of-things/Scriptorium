@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Notes } from './Inspector.jsx';
 import { LEGACY_NOTES_ID, addNoteTab, projectNoteTabs, removeNoteTab, renameNoteTab } from '../lib/projectNotes.js';
 import { t as tr } from '../lib/i18n.js';
+import { uiPrompt } from '../lib/uiPrompt.jsx';
 
 // Project notes with tabs. Props:
 //   tabs           project.projectNotes (may be undefined for old projects)
@@ -32,15 +33,15 @@ export default function ProjectNotesTabs({ tabs: rawTabs, readNote, onNoteChange
     };
   }, [cur.id, readNote, onError]);
 
-  const add = () => {
-    const title = window.prompt(tr('ui.projectNotesTabs.titlul_filei_de_note'), tr('ui.projectNotesTabs.note_x', { v0: tabs.length + 1 }));
+  const add = async () => {
+    const title = await uiPrompt(tr('ui.projectNotesTabs.titlul_filei_de_note'), tr('ui.projectNotesTabs.note_x', { v0: tabs.length + 1 }));
     if (title === null) return;
     const res = addNoteTab(tabs, title);
     onTabsChange(res.tabs);
     setActive(res.tab.id);
   };
-  const rename = () => {
-    const title = window.prompt(tr('ui.projectNotesTabs.titlul_filei'), cur.title);
+  const rename = async () => {
+    const title = await uiPrompt(tr('ui.projectNotesTabs.titlul_filei'), cur.title);
     if (title) onTabsChange(renameNoteTab(tabs, cur.id, title));
   };
   const remove = () => {

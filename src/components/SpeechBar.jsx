@@ -124,7 +124,7 @@ export default function SpeechBar({ getText, onInsertText, onClose, api = {} }) 
   };
 
   return (
-    <div className="speech-bar" style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '4px 8px', borderTop: '1px solid var(--border, #ccc)', flexWrap: 'wrap' }}>
+    <div className="speech-bar" style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '4px 8px', borderTop: '1px solid var(--line, #ccc)', flexWrap: 'wrap' }}>
       {ttsSupported() || cloudReady ? (
         <>
           {cloudReady && (

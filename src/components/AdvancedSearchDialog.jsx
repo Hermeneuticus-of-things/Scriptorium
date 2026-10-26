@@ -3,6 +3,7 @@ import { searchProject, buildTerms } from '../lib/projectSearch.js';
 import { listKeywords } from '../lib/collections.js';
 import { flatten } from '../lib/tree.js';
 import { t as tr } from '../lib/i18n.js';
+import { uiPrompt } from '../lib/uiPrompt.jsx';
 
 const FIELD_LABELS = () => ({
   title: tr('ui.advancedSearchDialog.titlu'),
@@ -94,8 +95,8 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
     }
   };
 
-  const saveAsCollection = () => {
-    const title = window.prompt(tr('ui.advancedSearchDialog.numele_colectiei'), query || tr('ui.advancedSearchDialog.cautare_salvata'));
+  const saveAsCollection = async () => {
+    const title = await uiPrompt(tr('ui.advancedSearchDialog.numele_colectiei'), query || tr('ui.advancedSearchDialog.cautare_salvata'));
     if (title && title.trim()) onSaveAsCollection?.(title.trim(), criteria);
   };
 

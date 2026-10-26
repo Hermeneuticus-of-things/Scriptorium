@@ -175,6 +175,11 @@ label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--t
 .modal-x { position: absolute; top: 8px; right: 10px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--muted); font-size: 24px; line-height: 1; border-radius: 6px; cursor: pointer; z-index: 6; }
 .modal-x:hover, .modal-x:focus-visible { background: var(--panel); color: inherit; }
 .modal h2 { margin: 0; }
+/* uiPrompt: the single-field replacement for Electron's disabled window.prompt(). */
+.prompt-modal { width: min(440px, 92vw); }
+.prompt-modal > label { display: block; }
+.prompt-modal input { width: 100%; box-sizing: border-box; margin-top: 8px; }
+.prompt-modal .actions-inline { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .modal .row { display: flex; gap: 12px; }
 .modal .row > label { flex: 1; }
 .actions { display: flex; justify-content: flex-end; gap: 8px; }
@@ -462,14 +467,14 @@ legend { color: var(--muted); padding: 0 4px; }
 
 /* --- roadmap 2.1/2.2: linked footnotes, floating inspector, bookmarks, note tabs, pinned recents --- */
 .prose .linked-footnote { text-decoration: underline dotted; text-decoration-color: var(--accent, #1565c0); background: color-mix(in srgb, var(--accent, #1565c0) 10%, transparent); }
-.floating-inspector { position: fixed; z-index: 9; width: 300px; max-height: 80vh; overflow: auto; background: var(--panel, var(--bg, #fff)); color: inherit; border: 1px solid var(--border, #ccc); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.25); padding: 0 10px 10px; }
-.floating-inspector .fi-head { display: flex; align-items: center; gap: 6px; cursor: move; padding: 8px 0; user-select: none; border-bottom: 1px solid var(--border, #ccc); margin-bottom: 8px; }
-.floating-inspector .fi-notes .notes { min-height: 80px; border: 1px solid var(--border, #ccc); border-radius: 4px; padding: 4px; }
+.floating-inspector { position: fixed; z-index: 9; width: 300px; max-height: 80vh; overflow: auto; background: var(--panel, var(--bg, #fff)); color: inherit; border: 1px solid var(--line, #ccc); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.25); padding: 0 10px 10px; }
+.floating-inspector .fi-head { display: flex; align-items: center; gap: 6px; cursor: move; padding: 8px 0; user-select: none; border-bottom: 1px solid var(--line, #ccc); margin-bottom: 8px; }
+.floating-inspector .fi-notes .notes { min-height: 80px; border: 1px solid var(--line, #ccc); border-radius: 4px; padding: 4px; }
 .bookmarks-panel .bookmark-list { list-style: none; padding: 0; margin: 4px 0; }
 .bookmarks-panel .bookmark-list li { display: flex; align-items: center; gap: 4px; }
 .bookmarks-panel .bookmark-list li > .link { flex: 1; text-align: left; }
 .bookmarks-panel .bookmark-list li.on > .link { font-weight: 600; }
-.bookmarks-panel .bookmark-preview { max-height: 40vh; overflow: auto; border-top: 1px solid var(--border, #ccc); padding-top: 6px; font-size: 90%; }
+.bookmarks-panel .bookmark-preview { max-height: 40vh; overflow: auto; border-top: 1px solid var(--line, #ccc); padding-top: 6px; font-size: 90%; }
 .project-notes-tabs .tabs { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 6px; }
 .project-notes-tabs .tabs button.on { font-weight: 600; border-bottom: 2px solid var(--accent, #1565c0); }
 .home .recent li { display: flex; align-items: center; gap: 6px; }
@@ -577,14 +582,14 @@ legend { color: var(--muted); padding: 0 4px; }
 .team-chip.locked svg { width: 12px; height: 12px; }
 .statusbar .team-status { background: none; border: none; padding: 0 4px; font: inherit; color: inherit; cursor: pointer; }
 .team-live, .team-log { list-style: none; padding: 0; margin: 4px 0 10px; max-height: 260px; overflow: auto; }
-.team-live li, .team-log li { padding: 3px 0; border-bottom: 1px solid var(--border, #ddd3); }
+.team-live li, .team-log li { padding: 3px 0; border-bottom: 1px solid var(--line, #ddd3); }
 .team-when { font-variant-numeric: tabular-nums; color: var(--muted, #777); margin: 0 4px; }
 .team-delta .add { color: #2e9d57; }
 .team-delta .del { color: #c94040; }
 .team-sample { margin-left: 15px; font-style: italic; }
 
 /* D&TED dictation bar (docs/DTED.md). */
-.dictation-bar { position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 40; min-width: 460px; max-width: 92vw; background: var(--panel, #fff); border: 1px solid var(--border, #ccc); border-radius: 10px; box-shadow: 0 6px 24px #0003; padding: 6px 10px; }
+.dictation-bar { position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 40; min-width: 460px; max-width: 92vw; background: var(--panel, #fff); border: 1px solid var(--line, #ccc); border-radius: 10px; box-shadow: 0 6px 24px #0003; padding: 6px 10px; }
 .dictation-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
 .dictation-mic { width: 12px; height: 12px; border-radius: 50%; background: #c94040; animation: dictation-pulse 1.2s ease-in-out infinite; }
 .dictation-mic.paused { background: #999; animation: none; }
@@ -595,7 +600,7 @@ legend { color: var(--muted); padding: 0 4px; }
 /* Conflict dialog: the two versions of a paragraph side by side. */
 .conflict-clash { margin-bottom: 10px; }
 .conflict-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.conflict-side { display: flex; flex-direction: column; gap: 6px; border: 2px solid var(--border, #ccc); border-radius: 8px; padding: 8px; cursor: pointer; }
+.conflict-side { display: flex; flex-direction: column; gap: 6px; border: 2px solid var(--line, #ccc); border-radius: 8px; padding: 8px; cursor: pointer; }
 .conflict-side.chosen { border-color: var(--pane-active, #2e9d57); }
 .conflict-head { font-weight: 600; }
 .conflict-text { white-space: pre-wrap; font-family: var(--editor-font, Georgia, serif); max-height: 220px; overflow: auto; }
@@ -692,10 +697,10 @@ legend { color: var(--muted); padding: 0 4px; }
 .compile-dialog .cd-compile-for select { font-weight: 400; }
 .compile-dialog .cd-body { display: grid; grid-template-columns: 200px 220px minmax(0, 1fr); gap: .8em; }
 .compile-dialog .cd-formats { min-width: 0; }
-.compile-dialog .cd-layouts { display: flex; flex-direction: column; gap: .5em; min-width: 0; border-right: 1px solid var(--border, #ddd); padding-right: .8em; }
+.compile-dialog .cd-layouts { display: flex; flex-direction: column; gap: .5em; min-width: 0; border-right: 1px solid var(--line, #ddd); padding-right: .8em; }
 .compile-dialog .cd-layouts h3, .compile-dialog .cd-formats h3 { margin: 0 0 .3em; font-size: .95em; }
 .compile-dialog .cd-layout-cards { list-style: none; margin: 0; padding: 0; overflow: auto; max-height: 52vh; display: flex; flex-direction: column; gap: .4em; }
-.compile-dialog .cd-layout-card { border: 1px solid var(--border, #ddd); border-radius: 4px; padding: .4em; }
+.compile-dialog .cd-layout-card { border: 1px solid var(--line, #ddd); border-radius: 4px; padding: .4em; }
 .compile-dialog .cd-layout-thumb { height: 46px; background: #fff; color: #333; border: 1px solid #ccc; padding: 4px 6px; overflow: hidden; display: flex; flex-direction: column; gap: 3px; font: 9px/1.2 Georgia, serif; }
 .compile-dialog .cd-layout-thumb.pb { border-top: 3px double #999; }
 .compile-dialog .cd-thumb-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -705,7 +710,7 @@ legend { color: var(--muted); padding: 0 4px; }
 .compile-dialog .cd-layout-name { font-weight: 600; margin-top: .25em; overflow-wrap: anywhere; }
 .compile-dialog .cd-icon-tabs button { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 5.5em; }
 .compile-dialog .cd-tab-icon { font-size: 1.25em; line-height: 1; }
-.compile-dialog .cd-items { list-style: none; margin: .4em 0 0; padding: .3em; border: 1px solid var(--border, #ddd); max-height: 34vh; overflow: auto; }
+.compile-dialog .cd-items { list-style: none; margin: .4em 0 0; padding: .3em; border: 1px solid var(--line, #ddd); max-height: 34vh; overflow: auto; }
 .compile-dialog .cd-items li { margin: 1px 0; }
 .compile-dialog .cd-sub-backdrop { z-index: 20; }
 .compile-dialog .cd-sub { width: min(900px, 94vw); max-height: 86vh; }

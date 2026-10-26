@@ -1,4 +1,5 @@
 import { addBacklinks, addedLinks, insertLinkedDoc } from './lib/backlinks.js';
+import { uiPrompt } from './lib/uiPrompt.jsx';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { keyFromEvent, shortcutFor } from './lib/commands.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -1261,7 +1262,7 @@ export default function App({ api: apiProp }) {
   };
   // Research > Archive a web page: a local copy (HTML with its images inside) kept in the project.
   const archiveWebPage = async () => {
-    const url = window.prompt(tr('ui.researchChat.pagina_web_adresa'), 'https://');
+    const url = await uiPrompt(tr('ui.researchChat.pagina_web_adresa'), 'https://');
     if (!url || url === 'https://') return;
     try {
       const it = await api.archiveWebPage(dir, url);
@@ -1697,7 +1698,7 @@ export default function App({ api: apiProp }) {
   // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
   // Layouts (Window > Layouts): named combinations of views and panels.
   const saveLayout = async () => {
-    const name = window.prompt(tr('ui.p11.ly_name'), `Layout ${(settings.layouts || []).length + 1}`);
+    const name = await uiPrompt(tr('ui.p11.ly_name'), `Layout ${(settings.layouts || []).length + 1}`);
     if (!name) return;
     const layout = captureLayout(name, currentLayoutState());
     const layouts = upsertLayout(settings.layouts, layout);
@@ -2030,7 +2031,7 @@ export default function App({ api: apiProp }) {
     return created.map(([id]) => id);
   };
   const importWebSource = async () => {
-    const url = window.prompt(tr('ui.researchChat.pagina_web_adresa'), 'https://');
+    const url = await uiPrompt(tr('ui.researchChat.pagina_web_adresa'), 'https://');
     if (!url || url === 'https://') return false;
     await flush();
     const page = await api.importWebPage(url, dir);
@@ -2052,7 +2053,7 @@ export default function App({ api: apiProp }) {
     else if (res.media.length) saveProject({ ...pj, tree });
   };
   const saveAs = async () => {
-    const title = window.prompt(tr('ui.app.titlul_copiei'), tr('ui.app.x_copie', { title: project.title }));
+    const title = await uiPrompt(tr('ui.app.titlul_copiei'), tr('ui.app.x_copie', { title: project.title }));
     if (!title) return;
     await flush();
     const copy = await api.saveProjectAs(dir, title);
@@ -2591,7 +2592,7 @@ export default function App({ api: apiProp }) {
     }],
     ['document', 'snapshotTitled', tr('cmd.snapshotTitled'), async () => {
       if (!selected || selected.root) return;
-      const name = window.prompt(tr('ui.inspector.titlul_snapshot_ului'), 'Snapshot');
+      const name = await uiPrompt(tr('ui.inspector.titlul_snapshot_ului'), 'Snapshot');
       if (name === null) return;
       await takeSnapshotOf(selected.id, name.trim() || 'Snapshot');
     }],
@@ -2957,8 +2958,8 @@ export default function App({ api: apiProp }) {
           collections={project.collections || []}
           activeCollectionId={activeCollectionId}
           onAddToCollection={(cid, ids) => saveProject(addToCollection(project, cid, ids))}
-          onNewCollection={(ids) => {
-            const title = window.prompt(tr('ui.advancedSearchDialog.numele_colectiei'), tr('ui.collectionsBar.colectie_noua'));
+          onNewCollection={async (ids) => {
+            const title = await uiPrompt(tr('ui.advancedSearchDialog.numele_colectiei'), tr('ui.collectionsBar.colectie_noua'));
             if (!title || !title.trim()) return;
             const r = createCollection(project, { title: title.trim(), type: 'manual', ids });
             saveProject(r.project);

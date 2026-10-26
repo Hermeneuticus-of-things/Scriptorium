@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { STYLE_KINDS, duplicateShortcuts, isParaStyle, normalizeShortcut, stylesOf } from '../lib/styles.js';
 import { t, builtinName } from '../lib/i18n.js';
+import { uiPrompt } from '../lib/uiPrompt.jsx';
 
 const EMPTY = () => ({ name: t('ui.stylesDialog.stil_nou'), type: 'para', bold: false, italic: false, smallCaps: false, underline: false, align: '', indent: 0, size: 100, color: '' });
 
@@ -43,7 +44,7 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
     try {
       const incoming = await api.readStylesFromProject();
       if (!incoming) return;
-      const mode = window.prompt(t('ui.stylesDialog.stilurile_cu_acelasi_nume_pastreaza'), t('ui.stylesDialog.pastreaza'));
+      const mode = await uiPrompt(t('ui.stylesDialog.stilurile_cu_acelasi_nume_pastreaza'), t('ui.stylesDialog.pastreaza'));
       if (mode === null) return;
       setStyles((all) => {
         const out = [...all];

@@ -8,6 +8,7 @@ import { t as tr, builtinName } from '../lib/i18n.js';
 import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 import { collectionNodes, listKeywords } from '../lib/collections.js';
 import { exportFormatFile, formatFileName, importFormatFile, FORMAT_FILE_EXT } from '../lib/compileFormatFile.js';
+import { uiPrompt } from '../lib/uiPrompt.jsx';
 
 function readPresets() {
   try {
@@ -207,7 +208,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
       copy.basedOn = format.basedOn || format.id;
       copy.id = newCustomId();
       copy.global = true;
-      copy.name = window.prompt('Numele formatului global', format.name) || format.name;
+      copy.name = await uiPrompt('Numele formatului global', format.name) || format.name;
       await saveGlobals([...globals, copy]);
       setFormatId(copy.id);
     } catch (e) {
@@ -235,9 +236,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     setFormats((l) => [...l, copy]);
     setFormatId(copy.id);
   };
-  const rename = () => {
+  const rename = async () => {
     if (!editable) return;
-    const name = window.prompt('Numele formatului', format.name);
+    const name = await uiPrompt('Numele formatului', format.name);
     if (name && name.trim()) setIn(['name'], name.trim());
   };
   // Format as a file (.scribcompile): export the selected one, import as a new project format.
@@ -1443,13 +1444,13 @@ const CSS = `
 .compile-dialog .cd-contents td,.compile-dialog .cd-contents th{padding:.15em .4em;text-align:left}
 .compile-dialog .cd-contents select{font-size:.9em}
 .compile-dialog .cd-contents tr.cd-excluded td:nth-child(2){opacity:.55;text-decoration:line-through}
-.compile-dialog .cd-file-btn{position:relative;display:inline-block;cursor:pointer;border:1px solid var(--border,#ccc);border-radius:4px;padding:.15em .6em}
+.compile-dialog .cd-file-btn{position:relative;display:inline-block;cursor:pointer;border:1px solid var(--line,#ccc);border-radius:4px;padding:.15em .6em}
 .compile-dialog .cd-file-btn input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
 .compile-dialog .cd-font-list{list-style:none;padding:0;margin:.3em 0}
 .compile-dialog .cd-font-list li{display:flex;gap:.4em;align-items:center;margin:.2em 0}
 .compile-dialog{max-width:1100px;width:95vw}
 .compile-dialog .cd-body{min-height:420px}
-.compile-dialog .cd-formats{border-right:1px solid var(--border,#ddd);padding-right:.8em}
+.compile-dialog .cd-formats{border-right:1px solid var(--line,#ddd);padding-right:.8em}
 .compile-dialog .cd-formats ul{list-style:none;margin:0;padding:0}
 .compile-dialog .cd-formats li button{width:100%;text-align:left;margin:1px 0}
 .compile-dialog .cd-formats li button.active,.compile-dialog .cd-tabs button.active{font-weight:700;outline:2px solid var(--accent,#4a7)}
@@ -1464,6 +1465,6 @@ const CSS = `
 .compile-dialog .cd-table input:not([type=checkbox]){width:100%;min-width:5em}
 .compile-dialog .cd-chips{display:flex;flex-wrap:wrap;gap:.6em;align-items:center;margin:.3em 0}
 .compile-dialog .cd-hf-label{min-width:4em}
-.compile-dialog .cd-preview iframe{width:100%;height:50vh;border:1px solid var(--border,#ccc);background:#fff}
+.compile-dialog .cd-preview iframe{width:100%;height:50vh;border:1px solid var(--line,#ccc);background:#fff}
 .compile-dialog .small{font-size:.85em}
 `;
