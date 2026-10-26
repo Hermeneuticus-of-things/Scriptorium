@@ -144,3 +144,23 @@ Dictarea și transcrierea merg acum și fără D&TED. Pneuma Sofer are propriul 
 - Un D&TED mai vechi (fără comanda `model`) merge mai departe, doar fără listă.
 - Motorul încorporat (whisper.cpp) rămâne pe `large-v3-turbo`: eek e publicat cu acces aprobat individual, deci nu se poate descărca automat din Pneuma Sofer.
 - Teste: `tests/dted.test.js` (stare, alegere, model necunoscut) și `tests/e2e/browser/dted-model.cjs`.
+
+
+---
+
+## 8. Updating D&TED from Pneuma Sofer (cross-project requirement)
+
+D&TED lives in a **separate** repo: [Hermeneuticus-of-things/dted](https://github.com/Hermeneuticus-of-things/dted). Pneuma Sofer does **not** vendor the model; it launches an installed D&TED in `--serviciu` mode (see §2–§4). Built-in whisper.cpp (since v0.9.0) remains the other option.
+
+**Owner requirement (planning / docs):** Pneuma must be able to **update D&TED at any time**, including when the currently referenced D&TED is older or not yet adapted:
+
+1. **Periodic check** — at **app startup** and optionally every few days in the background.
+2. **Manual check** — user can trigger “check for D&TED updates” from settings anytime.
+3. **Manifest** — query a version source of truth (GitHub Releases for `dted` and/or a shared version JSON URL that both products consult).
+4. **Install** — download the newer Windows user-folder bundle (or equivalent) into a **user path** (no admin); point `settings.dtedPath` (or equivalent) at it.
+5. **Fallback** — if the new build fails to start or fails protocol-1 handshake, keep / revert to the **last working** D&TED.
+6. **Compatibility** — refuse or prompt when `protocol` ≠ expected; do not silently break on D&TED upgrades.
+
+Code integration points today: `lib/dted.cjs`, `electron/dtedHandlers.cjs`, `src/lib/useDictation.js` / `dictation.js`, UI `DictationBar.jsx`. See also `docs/DEPENDENCY_UPDATES.md`.
+
+*Documentation only — no application code change in this note (2026-10-26).*
