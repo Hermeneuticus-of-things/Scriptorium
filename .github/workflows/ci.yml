@@ -3,9 +3,13 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   pull_request:
     branches: [main]
+  schedule:
+    # Nightly run (03:17 UTC) to catch flaky or environment-dependent failures.
+    - cron: "17 3 * * *"
+  workflow_dispatch: {}
 
 permissions:
   contents: read

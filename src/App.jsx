@@ -1037,7 +1037,9 @@ export default function App({ api: apiProp }) {
     }
     // Split editor: the click opens in the pane used last, unless it is locked in place.
     const target = routeSelection({ active: activePaneRef.current, locks: paneLocks, hasSplit: Boolean(splitId) && view === 'editor' });
-    if (!target) return;
+    // Every usable pane is locked (🔒). A plain click can't change a locked pane, so say why
+    // instead of doing nothing silently — otherwise the binder looks broken (the document doesn't change).
+    if (!target) return void setToast(tr('ui.app.panou_blocat'));
     if (target === 'split') {
       const node = findNode(project.tree, id);
       if (node && !node.root) flush().then(() => setSplitId(id));

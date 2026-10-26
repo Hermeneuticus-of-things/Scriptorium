@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.13
+- Binder — reparație: dacă panoul editorului e fixat pe loc (🔒), click pe alt document din binder nu-l schimba și nu spunea nimic, așa că părea că aplicația e stricată. Acum apare un mesaj clar care te trimite la lacăt. (Fixarea pe loc e o funcție intenționată — un singur click pe lacăt o oprește, și rămâne oprită.)
+- Sistem de raportare bug-uri: șablon de „Raport de bug" pe GitHub (Issues → New issue), cu pași de reproducere, versiune, zonă și raportul de eroare din aplicație.
+- CI: rulează acum pe orice branch (nu doar main), plus o rulare nocturnă și una la cerere, ca regresiile să fie prinse mai devreme.
+
 ## v0.10.12
 - Editor — fără artefacte la zoom: zoom-ul scalează textul prin `font-size` (titlu și text, împreună), nu prin proprietatea CSS `zoom`, care lăsa artefacte (caret, selecție, urme la derulare) în zona de scris. Rămâne coerent titlu+text.
 - Editor — pagină mai lată: lățimea implicită a zonei de scris crește de la 42em (~504px) la 56em (~672px), o lungime de rând mai confortabilă. Instalările existente cu vechea valoare (42) sunt urcate automat o dată la 56; dacă setezi tu altă lățime, rămâne a ta.

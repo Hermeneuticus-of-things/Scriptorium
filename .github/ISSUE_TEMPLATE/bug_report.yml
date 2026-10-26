@@ -1,0 +1,74 @@
+name: Raport de bug / Bug report
+description: Semnalează un comportament greșit în Scribner. / Report something that works wrong in Scribner.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mulțumesc că semnalezi problema. Completează cât poți — pașii de reproducere și versiunea ajută cel mai mult.
+        _Thanks for reporting. Steps to reproduce and the version help the most._
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Ce se întâmplă / What happens
+      description: Descrie problema. Ce ai făcut și ce a ieșit greșit. / Describe the problem — what you did and what went wrong.
+      placeholder: "Când dau click pe un alt document în binder, editorul rămâne pe cel vechi."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pași de reproducere / Steps to reproduce
+      description: Pas cu pas, ca să poată fi reprodus. / Step by step, so it can be reproduced.
+      placeholder: |
+        1. Deschide un proiect cu mai multe documente
+        2. Dă click pe documentul 2 în binder
+        3. Editorul nu se schimbă
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ce te așteptai / What you expected
+      placeholder: "Editorul să arate documentul 2."
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Versiunea Scribner / Scribner version
+      description: O vezi în Ajutor → Despre, sau pe titlul ferestrei. / See it in Help → About, or the window title.
+      placeholder: "0.10.12"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Zona / Area
+      options:
+        - Editor (scriere, zoom, formatare)
+        - Binder / organizare
+        - Compile / export
+        - Servicii externe (DeepL, Google, dicționare, import web)
+        - Voce / citire
+        - Setări / teme
+        - Altceva / Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: error-report
+    attributes:
+      label: Raportul de eroare din aplicație / In-app error report
+      description: |
+        Dacă a apărut „A apărut o problemă", mesajul e salvat. Lipește-l aici dacă îl ai.
+        _If you saw "Something went wrong", the message is logged — paste it here if you have it._
+      render: text
+    validations:
+      required: false
