@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.22
+- Mihai aude și parantezele: un text între paranteze (sau paranteze drepte) e citit acum cu o pauză de virgulă de o parte și de alta, ca o paranteză vorbită. Plus curățare: fără virgule duble și fără spațiu înainte de semnele de punctuație. (Deja avea: punct, virgulă, „?", „!", „;", „:", „…", linia de dialog, ghilimelele și pauzele între paragrafe.)
+
 ## v0.10.21
 - „Redă audio" apare acum în meniul din click-dreapta DIN APLICAȚIE (până acum era doar în varianta web, de-aia nu-l vedeai). Cu variante: redă selecția, de aici (până la final), fraza, paragraful, tot documentul și toată cartea — plus „Oprește redarea". Dacă ai o selecție, redă doar selecția; altfel, de la cursor.
 

@@ -19,6 +19,10 @@ describe('normalizeForPiper — Romanian punctuation for the built-in voice', ()
     expect(normalizeForPiper('Mihai — vocea – citește.')).toBe('Mihai, vocea, citește.');
   });
 
+  it('turns parentheses/brackets into a comma pause around the aside', () => {
+    expect(normalizeForPiper('Era bine (chiar foarte bine) atunci.')).toBe('Era bine, chiar foarte bine, atunci.');
+  });
+
   it('drops a leading dialogue dash but keeps the paragraph break', () => {
     expect(normalizeForPiper('— Salut, zise el.\n— Bună.')).toBe('Salut, zise el.\nBună.');
   });
