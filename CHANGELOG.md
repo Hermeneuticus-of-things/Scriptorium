@@ -1,5 +1,18 @@
 # CHANGELOG — Scriptorium
 
+## 2026-10-26 — Interogare NotebookLM cu întrebări de continuare (ca la Karma)
+
+### Cerința user
+> „NotebookLM cu întrebări de continuare (ca la Karma): apare în meniul contextual dacă e configurat un notebook; verifică cum e legat la Karma (comunicare + login) — nu are chei, folosește cookies din browser pentru login, ca până acum la Claude.”
+
+### Rezultat
+- **Interogare pe surse (model `karma-nlm-doctrina`).** Când editorul are nevoie de un fapt din surse, deschide notebook-ul NotebookLM configurat al proiectului și pune **întrebări de continuare până primește un răspuns**, apoi îl folosește pentru o verificare. Bucla (`lib/notebookConsult.cjs`): `chat_start` → se așteaptă prin `chat_status` → reformulare / întrebare de continuare în aceeași conversație, până la un răspuns util sau până se epuizează rundele. Nu inventează: o buclă epuizată întoarce ultimul răspuns cu `answered:false`.
+- **Toate tipurile de consult, contextual.** `consult({ type })`: `doctrine` (verdict DOCTRINĂ/ORNAMENT/INEXACT/INCERT — se păstrează / se rărește / se corectează / rămâne la judecată), `fact` (răspuns pe surse la o întrebare), `consistency` (CONSISTENT/CONTRAZICE/INCERT față de surse). Fiecare item duce contextul din manuscris în întrebare. Rezultatele se cache-uiesc pe hash-ul conținutului (`<proiect>/.cache/nlm-cache.json`): nimic nu se plătește de două ori.
+- **Login ca la Karma, fără chei.** Autentificarea la NotebookLM rămâne la serverul comunitar `notebooklm-mcp` (sesiunea lui de browser / cookies). Scribner descoperă comanda serverului din configurarea MCP a utilizatorului (`~/.claude.json` / `claude_desktop_config.json`), îl pornește ca proces-copil și vorbește MCP cu el ca **client** (`lib/notebookLmClient.cjs`, prin `@modelcontextprotocol/sdk`). Nicio cheie și nicio parolă nu trece prin Scribner.
+- **În meniul contextual și prin MCP.** Clic dreapta pe text → „Întreabă NotebookLM pe surse (întrebări de continuare)”, arătat doar când e configurat un notebook și serverul e găsit. Serverul MCP al Scribner expune și unealta `consult_notebook` pentru agenți.
+- **Opțional și izolat.** Setări → Servicii: notebook de interogat (id sau titlu) și, opțional, numele serverului. Fără notebook configurat, funcția e oprită și restul programului (inclusiv celelalte funcții AI) merge neschimbat.
+- Teste noi: `tests/notebookConsult.test.js`, `tests/notebookLmClient.test.js` (bucla, tipurile de consult, cache, descoperirea serverului, clientul MCP cu SDK injectat — fără proces real).
+
 ## 2026-10-24 — v0.8.3 (continuare) — VKB2: I-REP repetiția apropiată și I-EDIT textul autorului; tab-uri C/R/D; 13 bug-uri de date; MCP pentru orice client
 
 ### Cerința user

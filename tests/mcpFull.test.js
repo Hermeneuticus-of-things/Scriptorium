@@ -14,7 +14,7 @@ const path = require('path');
 const JSZip = require('jszip');
 const store = require('../lib/store.cjs');
 
-const OLD_TOOLS = ['project_info', 'list_binder', 'read_document', 'write_document', 'create_document', 'move_item', 'set_metadata', 'trash_item', 'search', 'replace', 'get_notes', 'set_notes', 'add_comment', 'add_footnote', 'lint', 'list_snapshots', 'take_snapshot', 'restore_snapshot', 'compile', 'writing_history'];
+const OLD_TOOLS = ['project_info', 'list_binder', 'read_document', 'write_document', 'create_document', 'move_item', 'set_metadata', 'trash_item', 'search', 'replace', 'get_notes', 'set_notes', 'add_comment', 'add_footnote', 'lint', 'consult_notebook', 'list_snapshots', 'take_snapshot', 'restore_snapshot', 'compile', 'writing_history'];
 // Write tools added for "MCP integral", with arguments that would succeed on a writable server.
 const NEW_WRITE_TOOLS = (ctx) => ({
   create_project: { parent_dir: ctx.tmp, title: 'Nou' },
@@ -158,6 +158,9 @@ const PRELOAD_COVERAGE = {
   testAi: 'gui: AI',
   nlmExport: 'export_notebooklm',
   nlmOpen: 'gui: deschide browserul',
+  nlmStatus: 'gui: arată dacă interogarea NotebookLM e disponibilă (meniul contextual)',
+  nlmConsult: 'consult_notebook',
+  nlmAsk: 'consult_notebook',
   openLink: 'lookup_url',
   servicesStatus: 'gui: conturile de servicii au secretele criptate cu safeStorage din Electron',
   setService: 'gui: conturile de servicii nu se schimbă din agent',

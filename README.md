@@ -37,7 +37,7 @@ Clic dreapta pe un cuvânt și ai la îndemână:
 - **Dicționare:** dexonline și sinonime, Wiktionary, Cambridge, Merriam-Webster, Linguee cu exemple traduse, IATE pentru terminologia UE.
 - **Asistent AI:** cercetare despre termen, explicație, corectură sau traducere, cu înainte și după.
 - **În proiect:** caută termenul în toată cartea și în notele tale sau pune-l în glosar.
-- **NotebookLM:** întrebi despre termen în sursele tale.
+- **NotebookLM:** întrebi despre termen în sursele tale. Cu un notebook configurat (Setări → Servicii) și serverul `notebooklm-mcp` pornit, apare și „Întreabă NotebookLM pe surse (întrebări de continuare)”: editorul interoghează notebook-ul cu întrebări de continuare până primește un răspuns pe surse, ca agentul `karma-nlm-doctrina`.
 
 Nu trebuie să selectezi nimic înainte: clic dreapta pe un cuvânt îl selectează singur, iar meniul extinde selecția la frază sau la paragraf.
 
@@ -129,6 +129,8 @@ Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installe
 **Revizie.** I-REP găsește și repară problemele de tipografie și stil, apoi reverifică; I-EDIT rulează runde editoriale. Profilul „Generic” merge pe orice text; profilul „Română” aplică DOOM III și regulile P1–P13 / R0–R11.
 
 **NotebookLM.** „Exportă pentru NotebookLM” pregătește cartea ca surse: un fișier pe capitol, cercetarea și notele separat, cuprins cu rezumate.
+
+**Interogare NotebookLM (întrebări de continuare).** Opțional: dacă pui un notebook în Setări → Servicii și ai serverul `notebooklm-mcp` configurat în Claude (același folosit de agentul `karma-nlm-doctrina`), editorul poate deschide notebook-ul și întreba sursele cu întrebări de continuare până primește un răspuns, apoi îl folosește pentru o verificare (de pildă doctrină vs ornament, sau consistența cu sursele). Nu ține chei: autentificarea la NotebookLM e gestionată de serverul `notebooklm-mcp` prin sesiunea lui de browser (cookies), ca la Karma — Scribner doar pornește acel server și îi cere răspunsuri. Fără notebook configurat, funcția e oprită și restul programului merge neschimbat.
 
 **Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
 

@@ -800,6 +800,29 @@ export default function App({ api }) {
     }
     return undefined;
   };
+  // NotebookLM follow-up interrogation (karma-nlm-doctrina style): ask the configured notebook
+  // about the selected expression, letting it ask follow-ups until it has a usable answer, then
+  // show that answer (with its citations) and copy it to the clipboard. Optional: only wired when
+  // a notebook is configured and the notebooklm-mcp server is available.
+  const consultNotebookLm = async () => {
+    if (!aiEnabled) return setToast(tr('ui.app.ai_oprit'));
+    if (!api.nlmConsult) return undefined;
+    const text = selectedText().trim();
+    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    setToast(tr('ui.app.nlm_intreb'));
+    try {
+      const question = tr('ui.app.nlm_intrebare_doctrina', { term: text });
+      const res = await api.nlmAsk(question);
+      const answer = String(res?.answer || '').trim();
+      if (!answer) return setToast(tr('ui.app.nlm_fara_raspuns'));
+      try { await navigator.clipboard.writeText(answer); } catch { /* clipboard blocked */ }
+      const n = (res.references || []).length;
+      setToast(tr('ui.app.nlm_raspuns', { answer: answer.slice(0, 200), n }));
+    } catch (e) {
+      report(e);
+    }
+    return undefined;
+  };
   // In-app translation (DeepL / Google) and grammar check (LanguageTool) of the selection; the
   // keys stay in the main process. The editor that held the selection receives the result.
   // The document range holding exactly `source` (the trimmed selection), so the result replaces
@@ -1760,6 +1783,7 @@ export default function App({ api }) {
     ['tools', 'googleInApp', tr('cmd.googleInApp'), () => runService('translate', 'google'), !api.translateText],
     ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
     ['tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
+    ['tools', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];

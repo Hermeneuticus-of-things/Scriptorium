@@ -113,6 +113,10 @@ contextBridge.exposeInMainWorld('api', {
   testAi: (override) => call('ai:test', override),
   nlmExport: (dir, options) => call('nlm:export', dir, options),
   nlmOpen: () => call('nlm:open'),
+  // NotebookLM follow-up-query capability (karma-nlm-doctrina style). All optional.
+  nlmStatus: () => call('nlm:status'),
+  nlmConsult: (dir, items, opts) => call('nlm:consult', dir, items, opts),
+  nlmAsk: (question, opts) => call('nlm:ask', question, opts),
   openLink: (url) => call('app:openLink', url),
   servicesStatus: () => call('services:status'),
   setService: (id, values) => call('services:set', id, values),

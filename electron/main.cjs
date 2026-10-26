@@ -236,6 +236,12 @@ function setupSpelling(win) {
         ],
       });
       items.push({ label: L.notebookLm, click: cmd('nlmAskSel') });
+      // Follow-up interrogation of the configured notebook (like the karma-nlm-doctrina agent).
+      // Shown only when a notebook is set and the notebooklm-mcp server is discoverable.
+      if (st.aiEnabled !== false && String(st.notebookLmNotebook || '').trim()
+        && require('../lib/notebookLmClient.cjs').isAvailable({ name: String(st.notebookLmServer || '').trim() || undefined })) {
+        items.push({ label: L.notebookLmConsult, click: cmd('nlmConsultSel') });
+      }
       items.push({ type: 'separator' });
     }
     if (params.isEditable) {
@@ -377,6 +383,8 @@ handle('settings:get', () => {
     aiBaseUrl: s.aiBaseUrl || '',
     aiLabel: aiProviders.providerLabel(aiProviderOf(s)),
     notebookLmUrl: s.notebookLmUrl || '',
+    notebookLmNotebook: s.notebookLmNotebook || '',
+    notebookLmServer: s.notebookLmServer || '',
     // Only flags reach the renderer, never keys.
     hasKeys: aiKeys.keyFlags(s, safeStorage),
     // Current provider is usable: it has a key, or (local / custom servers) needs none.
@@ -389,6 +397,8 @@ handle('settings:set', (_e, patch) => {
   const { apiKey, apiKeys, apiKeyEnc, apiKeyPlain, hasKeys, hasApiKey, ...rest } = patch || {};
   if (rest.aiProvider !== undefined && !aiProviders.PRESETS[rest.aiProvider]) delete rest.aiProvider;
   if (rest.notebookLmUrl !== undefined) rest.notebookLmUrl = String(rest.notebookLmUrl || '').trim();
+  if (rest.notebookLmNotebook !== undefined) rest.notebookLmNotebook = String(rest.notebookLmNotebook || '').trim();
+  if (rest.notebookLmServer !== undefined) rest.notebookLmServer = String(rest.notebookLmServer || '').trim();
   writeSettings({ ...readSettings(), ...rest });
   if (apiKeys && typeof apiKeys === 'object') {
     for (const [p, k] of Object.entries(apiKeys)) if (aiProviders.PRESETS[p] && typeof k === 'string') setApiKey(k, p);
@@ -612,6 +622,7 @@ require('./ioHandlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened
 require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpened, noteSelfWrite });
 require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai });
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
+require('./notebookHandlers.cjs')({ handle, getSettings: readSettings, assertOpened, app });
 
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.

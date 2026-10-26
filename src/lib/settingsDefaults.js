@@ -42,6 +42,11 @@ export const DEFAULT_SETTINGS = {
   backupDir: '',
   // AI
   aiEnabled: true,
+  // NotebookLM: the notebook to interrogate (id or title) and the notebooklm-mcp server name.
+  // Empty notebook => the follow-up-query feature is off (the app still works fully).
+  notebookLmUrl: '',
+  notebookLmNotebook: '',
+  notebookLmServer: '',
 };
 
 export const withDefaults = (settings) => ({ ...DEFAULT_SETTINGS, ...(settings || {}) });
