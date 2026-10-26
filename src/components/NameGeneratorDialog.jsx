@@ -60,7 +60,7 @@ export default function NameGeneratorDialog({ onClose, onInsert, customLists = [
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" role="dialog" aria-label={tr('ui.nameGeneratorDialog.generator_de_nume')} style={{ width: 560 }}>
+      <div className="modal" role="dialog" aria-label={tr('ui.nameGeneratorDialog.generator_de_nume')} style={{ width: 'min(560px, 92vw)' }}>
         <h3>{tr('ui.nameGeneratorDialog.generator_de_nume')}</h3>
         {origins('first', tr('ui.g4.ngOriginiPrenume'), firstOrigins, setFirstOrigins)}
         {origins('last', tr('ui.g4.ngOriginiNume'), lastOrigins, setLastOrigins)}

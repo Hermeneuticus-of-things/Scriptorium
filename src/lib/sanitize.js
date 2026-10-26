@@ -1,16 +1,38 @@
-// Strip the invisible "fingerprint" characters that large language models (ChatGPT, Claude,
-// Gemini) leave in their output. OpenAI calls them a side effect of training rather than a
-// deliberate watermark, but they are real, they travel with copied text, and a text detector or
-// a reader can see them. None of them has a legitimate use in Romanian prose, so removing them
-// changes nothing a reader sees while erasing the machine signature. This is deterministic and
-// safe (no AI), so it runs on import and as part of the safe autofix.
-//
-// Research basis (2025): the narrow no-break space U+202F is the most-reported tell; zero-width
-// characters, bidi controls, Unicode variation selectors and the Unicode "tag" block (U+E0000..)
-// are the known steganography carriers. ZWJ (U+200D) is deliberately NOT removed: it holds emoji
-// sequences together. Combining diacritics (a-macron, r-dot … the ALOGEN transliterations) are NOT
-// touched; only the combining grapheme joiner U+034F is.
-//
+// HTML from documents shown outside the editor (previews, notes, snapshots) may come from another
+// computer, an import or a bundle: only text formatting survives, never scripts, forms or
+// navigation to other pages.
+const DROP = 'script,style,iframe,object,embed,form,input,button,textarea,select,meta,link,base,frame,frameset,svg,math,template';
+const SAFE_URL = /^(https?:|mailto:|scribner:|#)/i;
+const SAFE_SRC = /^(data:image\/|blob:|scribner:|media:)/i;
+
+export function sanitizeHtml(html) {
+  const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+  doc.querySelectorAll(DROP).forEach((n) => n.remove());
+  doc.querySelectorAll('*').forEach((el) => {
+    for (const a of [...el.attributes]) {
+      const name = a.name.toLowerCase();
+      const v = a.value.trim();
+      if (name.startsWith('on') || name === 'srcdoc' || name === 'formaction' || name === 'action' || name === 'style' && /url\s*\(|expression/i.test(v)) el.removeAttribute(a.name);
+      else if ((name === 'href' || name === 'xlink:href') && !SAFE_URL.test(v)) el.removeAttribute(a.name);
+      else if ((name === 'src' || name === 'srcset') && !SAFE_SRC.test(v)) el.removeAttribute(a.name);
+    }
+    if (el.tagName === 'A') {
+      el.setAttribute('target', '_blank'); // opened by the window-open handler (browser), never in the app window
+      el.setAttribute('rel', 'noopener noreferrer');
+    }
+  });
+  return doc.body.innerHTML;
+}
+
+// --------------------------------------------------------------------------------------------------
+// Strip the invisible "fingerprint" characters that large language models (ChatGPT, Claude, Gemini)
+// leave in their output. OpenAI calls them a side effect of training rather than a deliberate
+// watermark, but they are real, they travel with copied text, and a text detector or a reader can
+// see them. None of them has a legitimate use in Romanian prose, so removing them changes nothing a
+// reader sees while erasing the machine signature. Deterministic and safe (no AI): it runs on import
+// and as part of the safe autofix. The CommonJS twin is lib/sanitizeText.cjs (parity test in
+// tests/sanitize.test.js). ZWJ (U+200D) is kept on purpose (emoji sequences); combining diacritics
+// (the ALOGEN transliterations) are untouched, only the combining grapheme joiner U+034F is.
 // Patterns are built with new RegExp from escaped strings so the source stays pure ASCII
 // (a literal U+2028/U+2029 would itself break a regex literal).
 

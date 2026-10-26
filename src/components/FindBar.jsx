@@ -84,15 +84,15 @@ export default function FindBar({ editor, onClose }) {
         }}
       />
       <span className="count">{query ? (ranges.length ? `${Math.min(index + 1, ranges.length)}/${ranges.length}` : '0') : ''}</span>
-      <button onClick={() => select(index - 1)} disabled={!ranges.length} title={t('ui.findBar.prev')}>↑</button>
-      <button onClick={() => select(index + 1)} disabled={!ranges.length} title={t('ui.findBar.next')}>↓</button>
-      <button className={opts.caseSensitive ? 'on' : ''} onClick={toggle('caseSensitive')} title={t('ui.findBar.case')}>Aa</button>
-      <button className={opts.wholeWord ? 'on' : ''} onClick={toggle('wholeWord')} title={t('ui.advancedSearchDialog.cuvinte_intregi')}>„ab”</button>
-      <button className={opts.regex ? 'on' : ''} onClick={toggle('regex')} title={t('ui.advancedSearchDialog.expresie_regulata')}>.*</button>
+      <button onClick={() => select(index - 1)} disabled={!ranges.length} title={t('ui.findBar.prev')} aria-label={t('ui.findBar.prev')}>↑</button>
+      <button onClick={() => select(index + 1)} disabled={!ranges.length} title={t('ui.findBar.next')} aria-label={t('ui.findBar.next')}>↓</button>
+      <button className={opts.caseSensitive ? 'on' : ''} onClick={toggle('caseSensitive')} title={t('ui.findBar.case')} aria-label={t('ui.findBar.case')} aria-pressed={opts.caseSensitive}>Aa</button>
+      <button className={opts.wholeWord ? 'on' : ''} onClick={toggle('wholeWord')} title={t('ui.advancedSearchDialog.cuvinte_intregi')} aria-label={t('ui.advancedSearchDialog.cuvinte_intregi')} aria-pressed={opts.wholeWord}>„ab”</button>
+      <button className={opts.regex ? 'on' : ''} onClick={toggle('regex')} title={t('ui.advancedSearchDialog.expresie_regulata')} aria-label={t('ui.advancedSearchDialog.expresie_regulata')} aria-pressed={opts.regex}>.*</button>
       <input placeholder={t('ui.advancedSearchDialog.inlocuieste_cu')} value={replacement} onChange={(e) => setReplacement(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && onClose()} />
       <button onClick={replaceOne} disabled={!ranges.length}>{t('ui.findBar.replace')}</button>
       <button onClick={() => replaceRanges(editor, ranges, replacement, opts)} disabled={!ranges.length}>{t('ui.findBar.all')}</button>
-      <button onClick={onClose} title={t('ui.findBar.close')}>×</button>
+      <button onClick={onClose} title={t('ui.findBar.close')} aria-label={t('ui.findBar.close')}>×</button>
     </div>
   );
 }

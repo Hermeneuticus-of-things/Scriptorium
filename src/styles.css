@@ -642,6 +642,7 @@ legend { color: var(--muted); padding: 0 4px; }
 .mini-player .mini-mic { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: #c62828; font-size: 16px; cursor: pointer; }
 .mini-player .mini-mic.on { background: #c62828; color: #fff; animation: mini-pulse 1.4s infinite; }
 @keyframes mini-pulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, #c62828 25%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .mini-player .mini-mic.on { animation: none; } }
 .mini-meter-wrap { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
 .mini-level { flex: 1; height: 16px; min-width: 40px; border-radius: 4px; }
 /* The mic level turns green → yellow → red as it nears the top, so you see distortion coming. */
@@ -687,6 +688,7 @@ legend { color: var(--muted); padding: 0 4px; }
 /* Composition control strip: hidden below the bottom edge, slides up near it */
 .comp-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 16px; background: rgba(24, 23, 21, 0.92); color: #f3efe6; font-size: 12px; box-shadow: 0 -2px 12px rgba(0,0,0,.3); transform: translateY(100%); opacity: 0; transition: transform .2s ease, opacity .2s ease; }
 .comp-bar.shown { transform: none; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .comp-bar { transition: none; } }
 .comp-bar .comp-bar-group { flex-direction: row; margin: 0; color: inherit; font-size: 12px; display: flex; align-items: center; gap: 6px; }
 .comp-bar-label { opacity: .75; }
 .comp-bar-val { min-width: 3.2em; font-variant-numeric: tabular-nums; }

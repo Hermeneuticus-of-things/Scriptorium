@@ -10,7 +10,7 @@ import { LOOKUPS } from '../src/lib/lookups.js';
 const require = createRequire(import.meta.url);
 const translate = require('../lib/translate.cjs');
 const { fetchSynonyms, parseSynonyms } = require('../lib/synonyms.cjs');
-const { plainTextToHtml } = require('../lib/docxImport.cjs');
+const { plainTextToHtml, uniformFirstLineCm, applyFirstLineIndent } = require('../lib/docxImport.cjs');
 const { normalizeForPiper } = require('../lib/ttsEngine.cjs');
 
 describe('regressions', () => {
@@ -70,6 +70,20 @@ describe('regressions', () => {
   it('import: plain text keeps paragraph breaks and first-line indents', () => {
     expect(plainTextToHtml('Rand unu,\ncontinuare.\n\n\tAliniat nou.'))
       .toBe('<p>Rand unu, continuare.</p><p style="text-indent:1.25cm">Aliniat nou.</p>');
+  });
+
+  // 2026-10-26 — DOCX import dropped the first-line indent (mammoth has no style for direct \firstLine).
+  // When a clear majority of text paragraphs carry the same \firstLine we recover it as a uniform
+  // text-indent on the body <p>; a document without a consistent indent is left untouched.
+  it('import: DOCX uniform first-line indent is recovered, mixed/none is left alone', () => {
+    const ind = (fl) => `<w:p><w:pPr><w:ind w:firstLine="${fl}"/></w:pPr><w:r><w:t>x</w:t></w:r></w:p>`;
+    const flat = '<w:p><w:r><w:t>x</w:t></w:r></w:p>';
+    expect(uniformFirstLineCm(ind(709) + ind(709) + ind(709))).toBeCloseTo(1.25, 2);
+    expect(uniformFirstLineCm(flat + flat + flat)).toBe(0); // no indent anywhere
+    expect(uniformFirstLineCm(ind(709) + flat + flat)).toBe(0); // not a majority
+    expect(applyFirstLineIndent('<h1>T</h1><p>unu</p><p>doi</p>', 1.25))
+      .toBe('<h1>T</h1><p style="text-indent:1.25cm">unu</p><p style="text-indent:1.25cm">doi</p>');
+    expect(applyFirstLineIndent('<p>x</p>', 0)).toBe('<p>x</p>'); // nothing to add
   });
 
   // 2026-10-26 — the built-in voice (Mihai) read punctuation flat. normalizeForPiper maps the marks

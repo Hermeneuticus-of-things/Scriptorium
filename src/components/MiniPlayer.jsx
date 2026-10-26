@@ -236,7 +236,7 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
               {clipping && <span className="mini-clip" title={tr('ui.mini.prea_tare_tip')}>⚠ {tr('ui.mini.prea_tare')}</span>}
             </div>
             <span className="mini-time">{clock((Date.now() - d.since) / 1000)}</span>
-            <button onClick={dict.togglePause} disabled={!d.id} title={d.paused ? tr('ui.dted.continua') : tr('ui.dted.pauza')}>{d.paused ? '▶' : '❚❚'}</button>
+            <button onClick={dict.togglePause} disabled={!d.id} title={d.paused ? tr('ui.dted.continua') : tr('ui.dted.pauza')} aria-label={d.paused ? tr('ui.dted.continua') : tr('ui.dted.pauza')}>{d.paused ? '▶' : '❚❚'}</button>
             <button onClick={dict.cancel} title={tr('ui.dted.anuleaza_tip')} aria-label={tr('ui.dted.anuleaza')}>✕</button>
           </>
         ) : (
