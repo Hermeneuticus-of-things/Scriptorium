@@ -30,3 +30,10 @@ There is **no** `package.json` dependency on D&TED and **no** MCP client to D&TE
 D&TED tracks the same dependency in [dted issue #15](https://github.com/Hermeneuticus-of-things/dted/issues/15) and `docs/CROSS_PROJECT_PNEUMA.md`.
 
 *Documentation / planning only — 2026-10-26.*
+
+
+## Status — D&TED update-check build (ON HOLD)
+
+**2026-10-26:** Implementation and rebuild of the in-app D&TED update check (startup/periodic check, non-blocking notification, user-folder install, fallback, Settings button) are **ON HOLD**, not cancelled. The owner will handle the build later.
+
+This file and [`docs/DTED.md`](DTED.md) §8 remain the **reference** for when that work resumes. No application code for the update flow has been added in this note.
