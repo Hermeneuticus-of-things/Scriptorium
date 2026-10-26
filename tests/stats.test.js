@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { htmlToPlain, countText, projectStats, wordFrequency, ROMANIAN_STOPWORDS, sentenceLengths, deadlinePlan } from '../src/lib/stats.js';
+import { htmlToPlain, countText, projectStats, wordFrequency, ROMANIAN_STOPWORDS, sentenceLengths, deadlinePlan, readability } from '../src/lib/stats.js';
 
 describe('htmlToPlain', () => {
   it('decodes entities, splits blocks, skips footnotes, keeps annotations-free text', () => {
@@ -84,6 +84,38 @@ describe('sentenceLengths', () => {
     expect(s.histogram[1]).toEqual({ range: '6-10', count: 1 });
   });
   it('empty', () => expect(sentenceLengths('').average).toBe(0));
+});
+
+describe('readability', () => {
+  it('empty text -> na band, zeros', () => {
+    const r = readability('');
+    expect(r.band).toBe('na');
+    expect(r).toMatchObject({ words: 0, sentences: 0, wordsPerSentence: 0, grade: 0 });
+  });
+  it('short plain sentences read as easy', () => {
+    const r = readability('Plouă azi. Copiii stau în casă. Mama face ceai.');
+    expect(r.words).toBe(9);
+    expect(r.sentences).toBe(3);
+    expect(r.wordsPerSentence).toBe(3);
+    expect(r.longSentences).toBe(0);
+    expect(r.longSentencePct).toBe(0);
+    expect(r.band).toBe('easy');
+  });
+  it('flags over-long sentences and counts long words', () => {
+    const long = Array.from({ length: 30 }, (_, i) => `cuvant${i}`).join(' ') + '.';
+    const r = readability(`${long} Scurt.`);
+    expect(r.sentences).toBe(2);
+    expect(r.longSentences).toBe(1);
+    expect(r.longSentencePct).toBe(50);
+    // "cuvant10".."cuvant29" are 8 chars; raise the word threshold to catch a genuinely long word.
+    const r2 = readability('neconstituționalitatea aici.', { longWord: 14 });
+    expect(r2.longWords).toBe(1);
+    expect(r2.longWordPct).toBe(50);
+  });
+  it('bands climb with sentence and word length', () => {
+    const dense = 'Interdependența fenomenologică a structurilor epistemologice fundamentează problematizarea ontologică a conceptualizărilor metafizice contemporane subsecvente.';
+    expect(['hard', 'veryHard']).toContain(readability(dense).band);
+  });
 });
 
 describe('deadlinePlan', () => {

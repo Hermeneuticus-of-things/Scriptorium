@@ -194,6 +194,52 @@ export function sentenceLengths(text) {
   };
 }
 
+// Readability signals for self-editing. The two actionable ones for long-form prose are
+// words-per-sentence and the share of over-long sentences; plain-language guidance puts a
+// sentence "long" past ~25 words. The grade is an Automated Readability Index value — it uses
+// only characters and words (no syllables), so it degrades gracefully to languages other than
+// English, but its constants are English-tuned, so treat it as a heuristic, not a verdict.
+const LONG_SENTENCE_WORDS = 25;
+const LONG_WORD_CHARS = 14;
+
+/**
+ * Heuristic readability signals (language-neutral; no DOM).
+ * @param {string} text
+ * @param {{longSentence?:number, longWord?:number}} [opts]
+ * @returns {{words:number, sentences:number, charsPerWord:number, wordsPerSentence:number,
+ *   longSentences:number, longSentencePct:number, longWords:number, longWordPct:number,
+ *   grade:number, band:'na'|'easy'|'medium'|'hard'|'veryHard'}}
+ */
+export function readability(text, { longSentence = LONG_SENTENCE_WORDS, longWord = LONG_WORD_CHARS } = {}) {
+  const words = (text || '').match(WORD_RE) || [];
+  const sentences = splitSentences(text);
+  const nW = words.length;
+  const nS = sentences.length;
+  const empty = { words: nW, sentences: nS, charsPerWord: 0, wordsPerSentence: 0, longSentences: 0, longSentencePct: 0, longWords: 0, longWordPct: 0, grade: 0, band: 'na' };
+  if (!nW || !nS) return empty;
+  const letters = words.reduce((s, w) => s + [...w].length, 0);
+  const charsPerWord = letters / nW;
+  const wordsPerSentence = nW / nS;
+  const longSentences = sentences.filter((s) => (s.match(WORD_RE) || []).length > longSentence).length;
+  const longWords = words.filter((w) => [...w].length >= longWord).length;
+  const grade = 4.71 * charsPerWord + 0.5 * wordsPerSentence - 21.43;
+  const g = Math.max(1, grade);
+  const band = g < 9 ? 'easy' : g < 12 ? 'medium' : g < 15 ? 'hard' : 'veryHard';
+  const r1 = (n) => Math.round(n * 10) / 10;
+  return {
+    words: nW,
+    sentences: nS,
+    charsPerWord: r1(charsPerWord),
+    wordsPerSentence: r1(wordsPerSentence),
+    longSentences,
+    longSentencePct: r1((longSentences / nS) * 100),
+    longWords,
+    longWordPct: r1((longWords / nW) * 100),
+    grade: r1(grade),
+    band,
+  };
+}
+
 function parseLocalDate(iso) {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
   return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;

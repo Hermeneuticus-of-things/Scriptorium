@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { sortFrequency, frequencyCsv, quickTextStats } from '../lib/smallWindows.js';
 import { posDistribution } from '../lib/panelsExtra.js';
 import { guessLang } from '../lib/pos.js';
-import { projectStats, projectText, wordFrequency, sentenceLengths } from '../lib/stats.js';
+import { projectStats, projectText, wordFrequency, sentenceLengths, readability } from '../lib/stats.js';
 import { t, uiLocale } from '../lib/i18n.js';
 import './StatisticsDialog.css';
 
@@ -54,6 +54,8 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
   const top = freq.slice(0, 25);
   const maxFreq = Math.max(1, ...top.map((f) => f.count));
   const sent = useMemo(() => (tab === 'sentences' ? sentenceLengths(text) : null), [tab, text]);
+  const read = useMemo(() => (tab === 'sentences' ? readability(text) : null), [tab, text]);
+  const READ_BANDS = { easy: 'ușor de citit', medium: 'mediu', hard: 'dificil', veryHard: 'foarte dificil', na: '—' };
   const pos = useMemo(() => (tab === 'pos' ? posDistribution(text, project.language === 'en' || (!project.language && guessLang(text) === 'en') ? 'en' : 'ro') : []), [tab, text, project.language]);
   const maxBucket = sent ? Math.max(1, ...sent.histogram.map((h) => h.count)) : 1;
 
@@ -191,6 +193,17 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
                 </div>
               ))}
             </div>
+            {read && read.band !== 'na' && (
+              <>
+                <div className="stats">
+                  <div><strong>{read.wordsPerSentence.toLocaleString(uiLocale())}</strong><span>cuvinte pe frază</span></div>
+                  <div><strong>{read.longSentencePct.toLocaleString(uiLocale())}%</strong><span>fraze lungi (peste 25 de cuvinte)</span></div>
+                  <div><strong>{read.charsPerWord.toLocaleString(uiLocale())}</strong><span>litere pe cuvânt</span></div>
+                  <div><strong>{READ_BANDS[read.band]}</strong><span>lizibilitate estimată</span></div>
+                </div>
+                <p className="muted small">Estimare euristică (indice ARI pe caractere și cuvinte); pentru orientare, nu un verdict.</p>
+              </>
+            )}
           </>
         )}
 
