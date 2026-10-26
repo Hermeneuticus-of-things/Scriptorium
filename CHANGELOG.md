@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.21
+- „Redă audio" apare acum în meniul din click-dreapta DIN APLICAȚIE (până acum era doar în varianta web, de-aia nu-l vedeai). Cu variante: redă selecția, de aici (până la final), fraza, paragraful, tot documentul și toată cartea — plus „Oprește redarea". Dacă ai o selecție, redă doar selecția; altfel, de la cursor.
+
 ## v0.10.20
 - Chei și conturi într-un singur loc: toate cheile (AI — Anthropic/Claude, OpenRouter, DeepSeek, OpenAI, Gemini, Mistral, Groq, xAI, NVIDIA, Ollama/LM Studio local — plus DeepL, Google, Speechify, Zotero, LanguageTool, GitHub) sunt acum în același tab Setări → „Chei și conturi". Vechiul tab „Servicii" devine „Voce și traducere" (dictare + limbă).
 - Fiecare cheie are un link „Unde găsesc cheia" către pagina furnizorului, ca să nu mai cauți adresa.

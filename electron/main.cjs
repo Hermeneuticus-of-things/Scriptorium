@@ -299,6 +299,20 @@ function setupSpelling(win) {
     }
     if (params.isEditable) {
       const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
+      // Read aloud with the built-in voice (Mihai): selection / from the cursor / the whole document.
+      items.push({
+        label: L.readAloud,
+        submenu: [
+          ...(text ? [{ label: L.readSel, click: cmd('readSel') }] : []),
+          { label: L.readHere, click: cmd('readHere') },
+          { label: L.readSentence, click: cmd('readSentence') },
+          { label: L.readParagraph, click: cmd('readParagraph') },
+          { label: L.readAll, click: cmd('readAll') },
+          { label: L.readBook, click: cmd('readBook') },
+          { type: 'separator' },
+          { label: L.stopRead, click: cmd('stopRead') },
+        ],
+      });
       items.push({
         label: L.extend,
         submenu: [

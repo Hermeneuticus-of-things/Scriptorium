@@ -1407,6 +1407,22 @@ export default function App({ api: apiProp }) {
     const seg = ed.state.doc.textBetween(ed.state.selection.to, ed.state.doc.content.size, '\n\n').trim();
     return seg || wholeDocText();
   };
+  // Read-aloud scopes at the cursor: the current paragraph, and the sentence around the cursor.
+  const paragraphAtCursor = () => {
+    const ed = (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.editor;
+    return ed ? String(ed.state.selection.$from.parent.textContent || '').trim() : '';
+  };
+  const sentenceAtCursor = () => {
+    const ed = (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.editor;
+    if (!ed) return '';
+    const { $from } = ed.state.selection;
+    const text = $from.parent.textBetween(0, $from.parent.content.size, '\n', '￼');
+    const off = $from.parentOffset;
+    for (const m of text.matchAll(/[^.!?…]+[.!?…]*/g)) if (off >= m.index && off <= m.index + m[0].length) return m[0].trim();
+    return text.trim();
+  };
+  // The whole manuscript (every document set to Include in Compile), in order.
+  const bookText = async () => (await manuscriptDocs()).map((d) => d.text || '').filter(Boolean).join('\n\n');
   const openWeb = (url) => (api.openLink ? api.openLink(url).catch(report) : window.open(url, '_blank', 'noopener'));
   // Word or phrase lookups; translation takes the whole selection, dictionaries a short phrase.
   const lookupWord = (kind) => {
@@ -2697,6 +2713,14 @@ export default function App({ api: apiProp }) {
     ['tools', 'deeplInApp', tr('cmd.deeplInApp'), () => runService('translate', 'deepl'), !api.translateText],
     ['tools', 'googleInApp', tr('cmd.googleInApp'), () => runService('translate', 'google'), !api.translateText],
     ['tools', 'synonymsInApp', tr('cmd.synonymsInApp'), () => synonymsInApp(), !api.fetchSynonyms],
+    // Read aloud (built-in voice) — also reachable from the native right-click menu via menu:command.
+    ['tools', 'readSel', tr('cmd.readSel'), () => reader.read(selectedText()), !reader.canRead],
+    ['tools', 'readHere', tr('cmd.readHere'), () => reader.read(textFromCursor()), !reader.canRead],
+    ['tools', 'readSentence', tr('cmd.readSentence'), () => reader.read(sentenceAtCursor()), !reader.canRead],
+    ['tools', 'readParagraph', tr('cmd.readParagraph'), () => reader.read(paragraphAtCursor()), !reader.canRead],
+    ['tools', 'readAll', tr('cmd.readAll'), () => reader.read(wholeDocText()), !reader.canRead],
+    ['tools', 'readBook', tr('cmd.readBook'), () => bookText().then((t) => reader.read(t)).catch(report), !reader.canRead],
+    ['tools', 'stopRead', tr('cmd.stopRead'), () => reader.stop()],
     ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
     [aiEnabled ? 'ai' : 'tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
@@ -2793,7 +2817,10 @@ export default function App({ api: apiProp }) {
       const r = [];
       if (text) r.push({ label: tr('ui.ctx.citeste_selectia'), action: () => reader.read(text) });
       r.push({ label: tr('ui.ctx.citeste_aici'), action: () => reader.read(textFromCursor()) });
+      r.push({ label: tr('ui.ctx.citeste_fraza'), action: () => reader.read(sentenceAtCursor()) });
+      r.push({ label: tr('ui.ctx.citeste_paragraful'), action: () => reader.read(paragraphAtCursor()) });
       r.push({ label: tr('ui.ctx.citeste_tot'), action: () => reader.read(wholeDocText()) });
+      r.push({ label: tr('ui.ctx.citeste_cartea'), action: () => bookText().then((t) => reader.read(t)).catch(report) });
       if (reader.reading) r.push('-', { label: tr('ui.ctx.opreste_citirea'), action: reader.stop });
       items.push({ label: tr('ui.ctx.citeste'), submenu: r });
     }
