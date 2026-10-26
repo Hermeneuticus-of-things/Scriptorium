@@ -456,7 +456,7 @@ function heroHtml(src) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>${BASE_CSS}
   body{width:1200px;height:600px;padding:50px 47px;position:relative}
   .kicker{color:#c2413a}
-  h1{font-family:${FONT_SERIF};font-weight:400;font-size:84px;margin:12px 0 18px;letter-spacing:-.02em}
+  h1{font-family:${FONT_SERIF};font-weight:400;font-size:62px;margin:12px 0 18px;letter-spacing:-.02em;max-width:440px}
   .tag{font-family:${FONT_SERIF};font-style:italic;font-size:30px;line-height:1.3;color:#2a241d}
   p.sub{font-size:19px;line-height:1.55;color:#4a4238;width:420px;margin:22px 0 26px}
   .btn{display:inline-block;font-size:17px;font-weight:600;border-radius:30px;padding:11px 18px;margin-right:8px;border:2px solid #1f1b16}
