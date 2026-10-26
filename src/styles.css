@@ -387,10 +387,14 @@ legend { color: var(--muted); padding: 0 4px; }
   50% { box-shadow: 0 0 0 3px var(--accent); background: var(--accent-soft); }
 }
 @media (prefers-reduced-motion: reduce) { .hint-glow { animation: none; box-shadow: 0 0 0 3px var(--accent); } }
-.page-resize { position: absolute; top: 0; bottom: 0; width: 10px; cursor: ew-resize; z-index: 2; }
-.page-resize.left { left: -6px; }
-.page-resize.right { right: -6px; }
-.page-resize:hover { background: color-mix(in srgb, var(--accent) 25%, transparent); }
+/* Drag either edge to set the writing width (both edges move, page stays centred); double-click an
+   edge to fill the whole pane. A faint grip pill is always shown so it's clear the page can be
+   resized — stronger on hover. */
+.page-resize { position: absolute; top: 0; bottom: 0; width: 16px; cursor: ew-resize; z-index: 2; display: flex; align-items: center; justify-content: center; }
+.page-resize.left { left: -18px; }
+.page-resize.right { right: -18px; }
+.page-resize::before { content: ''; width: 4px; height: 48px; border-radius: 4px; background: var(--muted); opacity: .55; transition: opacity .15s ease, height .15s ease, background .15s ease; }
+.page-resize:hover::before { opacity: 1; height: 96px; background: var(--accent); }
 .page.page-view { max-width: 148mm; min-height: 210mm; padding: 20mm 18mm; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
 .page.invisibles .ProseMirror p::after, .page.invisibles .ProseMirror h1::after, .page.invisibles .ProseMirror h2::after, .page.invisibles .ProseMirror h3::after { content: '¶'; color: var(--muted); opacity: .5; margin-left: 2px; }
 .page.invisibles .ProseMirror br::after { content: '↵'; }

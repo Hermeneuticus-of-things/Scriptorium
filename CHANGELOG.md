@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.16
+- Lățimea paginii de scris — se vede că se trage: pe marginile paginii apare acum un „mâner" discret (mai puternic când treci cu mouse-ul). Tragi de margine ca să lățești/îngustezi pagina (rămâne centrată), iar dublu-clic pe margine o face pe toată fereastra, ca să nu mai rămână spațiu negru nefolosit. Funcția exista, dar nu se vedea.
+
 ## v0.10.15
 - Tips ghidate: când o acțiune nu merge fiindcă ceva e blocat, aplicația îți arată unde e controlul. Prima aplicație: dacă dai click în binder iar panoul e fixat pe loc, lacătul din bara editorului pulsează scurt, ca să știi unde să-l deblochezi. (Respectă „reduce motion".) Mecanism reutilizabil pentru alte situații — vezi ROADMAP.
 - Sinonime — fereastră compactă: dialogul de sinonime e acum mic (nu mai ocupă tot ecranul), cu lista de sinonime derulabilă. Traducerea DeepL/Google nu mai deschide nicio fereastră (înlocuiește pe loc).
