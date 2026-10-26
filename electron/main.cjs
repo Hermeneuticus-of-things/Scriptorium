@@ -30,7 +30,13 @@ const projectWatch = require('../lib/projectWatch.cjs');
 if (process.env.PORTABLE_EXECUTABLE_DIR) {
   app.setPath('userData', path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Scribner-data'));
 } else {
-  app.setPath('userData', path.join(app.getPath('appData'), 'Scribner'));
+  // The default userData is %APPDATA%/<app name> ("Pneuma Sofer"). Redirect it to the old "Scribner"
+  // folder so existing settings + keys survive the rename — but ONLY when nothing overrode the path
+  // (e.g. Electron's --user-data-dir in the E2E tests), i.e. the default is still the app name.
+  const ud = app.getPath('userData');
+  if (path.basename(ud) === app.getName()) {
+    app.setPath('userData', path.join(path.dirname(ud), 'Scribner'));
+  }
 }
 
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
