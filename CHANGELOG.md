@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.20
+- Chei și conturi într-un singur loc: toate cheile (AI — Anthropic/Claude, OpenRouter, DeepSeek, OpenAI, Gemini, Mistral, Groq, xAI, NVIDIA, Ollama/LM Studio local — plus DeepL, Google, Speechify, Zotero, LanguageTool, GitHub) sunt acum în același tab Setări → „Chei și conturi". Vechiul tab „Servicii" devine „Voce și traducere" (dictare + limbă).
+- Fiecare cheie are un link „Unde găsesc cheia" către pagina furnizorului, ca să nu mai cauți adresa.
+- Curățenie: s-au scos câmpurile de email/parolă de la servicii care merg doar cu cheie API (DeepL, Google, Speechify, Zotero) — induceau în eroare (puneai parola și nu mergea). Rămâne doar ce chiar funcționează (cheie, plus user/voce unde e nevoie). Cheile rămân criptate cu safeStorage.
+
 ## v0.10.19
 - Zoom reparat cu adevărat: în tema „classic" titlul documentului nu scala la zoom (rămânea 12px cât timp textul creștea), fiindcă tema îl fixa. Acum titlul și textul cresc împreună, coerent, în orice temă (titlul = mărimea de bază a temei × zoom). Asta era „zoom-ul defectuos".
 - Glow-ul de ghidare (ex. lacătul) e acum auriu, ca să se vadă clar.

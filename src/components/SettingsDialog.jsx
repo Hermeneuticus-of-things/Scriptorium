@@ -445,7 +445,10 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
               onChange={(e) => setAiKeys((k) => ({ ...k, [ai.provider]: e.target.value }))}
             />
           </label>
-          <p className="muted small">{t('ui.settingsDialog.cheia_e_criptata_de_sistemul')}</p>
+          <p className="muted small">
+            {t('ui.settingsDialog.cheia_e_criptata_de_sistemul')}
+            {aiPreset.keyUrl && <> <a href={aiPreset.keyUrl} target="_blank" rel="noreferrer" onClick={(e) => { if (api.openLink) { e.preventDefault(); api.openLink(aiPreset.keyUrl); } }}>{t('ui.services.unde_gasesc_cheia')}</a></>}
+          </p>
           <div className="row">
             <button onClick={testAi} disabled={aiTest?.busy}>{aiTest?.busy ? t('ui.settingsDialog.se_testeaza') : t('ui.settingsDialog.testeaza_conexiunea')}</button>
             {hasKeys[ai.provider] && (
@@ -466,6 +469,10 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             />
           </label>
           <p className="muted small">{t('ui.settingsDialog.notebooklm_nu_are_api_public')}</p>
+        </fieldset>
+        <fieldset>
+          <legend>{t('ui.services.servicii_conturi')}</legend>
+          <ServicesPanel api={api} />
         </fieldset>
         {project && (
           <fieldset>
@@ -672,10 +679,6 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </select>
         </label>
         <p className="muted small">{t('ui.settingsDialog.traducere_tip')}</p>
-      </fieldset>
-      <fieldset>
-        <legend>{t('ui.services.servicii_conturi')}</legend>
-        <ServicesPanel api={api} />
       </fieldset>
       </>
     ),

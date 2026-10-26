@@ -24,24 +24,20 @@ describe('service accounts', () => {
     expect(st.deepl.configured).toBe(true);
     expect(st.googleTranslate.configured).toBe(false);
     expect(st.languagetool.fields).toEqual([
-      { id: 'username', label: 'E-mail cont', secret: false, set: true, value: 'ana@ex.ro' },
-      { id: 'apiKey', label: 'Cheie API', secret: true, set: true, value: '' },
-      { id: 'password', label: 'Parolă cont', secret: true, set: false, value: '' },
+      { id: 'username', label: 'E-mail cont (Premium)', secret: false, set: true, value: 'ana@ex.ro' },
+      { id: 'apiKey', label: 'Cheie API (Premium)', secret: true, set: true, value: '' },
     ]);
     expect(JSON.stringify(st)).not.toContain('lt-secret');
   });
-  it('services also take an email + password login (encrypted); configured when any field is set', () => {
-    let s = svc.setService({}, 'speechify', { email: 'ion@ex.ro', password: 'pw123' }, safe);
-    expect(JSON.stringify(s)).not.toContain('pw123'); // password encrypted
-    expect(svc.getService(s, 'speechify', safe)).toMatchObject({ email: 'ion@ex.ro', password: 'pw123' });
-    const st = svc.serviceStatus(s, safe);
-    expect(st.speechify.configured).toBe(true); // just the login counts as set up
-    const pw = st.speechify.fields.find((f) => f.id === 'password');
-    const em = st.speechify.fields.find((f) => f.id === 'email');
-    expect(pw).toMatchObject({ secret: true, set: true, value: '' }); // secret value never sent to the UI
-    expect(em).toMatchObject({ secret: false, set: true, value: 'ion@ex.ro' });
-    // DeepL and others also expose the login fields.
-    expect(svc.serviceStatus({}, safe).deepl.fields.map((f) => f.id)).toEqual(['apiKey', 'email', 'password']);
+  it('services keep only the credentials that drive them — no email/password fields', () => {
+    // Only the key (and a user/voice id where needed); nothing that doesn't make the feature work.
+    expect(svc.serviceStatus({}, safe).deepl.fields.map((f) => f.id)).toEqual(['apiKey']);
+    expect(svc.serviceStatus({}, safe).googleTranslate.fields.map((f) => f.id)).toEqual(['apiKey']);
+    expect(svc.serviceStatus({}, safe).speechify.fields.map((f) => f.id)).toEqual(['apiKey', 'voiceId']);
+    expect(svc.serviceStatus({}, safe).zotero.fields.map((f) => f.id)).toEqual(['userId', 'apiKey']);
+    for (const id of ['deepl', 'googleTranslate', 'speechify', 'zotero', 'languagetool', 'github']) {
+      expect(svc.serviceStatus({}, safe)[id].fields.map((f) => f.id)).not.toContain('password');
+    }
   });
   it('an empty value deletes one field; deleting all fields removes the service', () => {
     let s = svc.setService({}, 'zotero', { userId: '123', apiKey: 'z' }, safe);

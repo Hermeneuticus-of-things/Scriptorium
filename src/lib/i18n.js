@@ -103,7 +103,7 @@ const ro = {
   // settings
   'set.title': 'Setări',
   'set.tab.general': 'General', 'set.tab.appearance': 'Aspect', 'set.tab.behaviors': 'Comportament', 'set.tab.corrections': 'Corecturi',
-  'set.tab.editing': 'Editare', 'set.tab.sharing': 'Partajare', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Tastatură', 'set.tab.ai': 'AI', 'set.tab.services': 'Servicii și conturi', 'set.tab.language': 'Limbă',
+  'set.tab.editing': 'Editare', 'set.tab.sharing': 'Partajare', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Tastatură', 'set.tab.ai': 'Chei și conturi', 'set.tab.services': 'Voce și traducere', 'set.tab.language': 'Limbă',
   'set.reopenLast': 'La pornire, redeschide ultimul proiect', 'set.autosave': 'Salvare automată după (secunde de inactivitate)',
   'set.checkUpdates': 'Caută actualizări (dezactivat: aplicația nu contactează rețeaua)',
   'set.targetDraft': 'Țintă carte (cuvinte)', 'set.targetSession': 'Țintă sesiune (cuvinte)',
@@ -289,7 +289,7 @@ const en = {
   'btn.default': 'Default', 'btn.add': 'Add', 'btn.remove': 'Remove', 'btn.delete': 'Delete', 'btn.apply': 'Apply',
   'set.title': 'Settings',
   'set.tab.general': 'General', 'set.tab.appearance': 'Appearance', 'set.tab.behaviors': 'Behaviors', 'set.tab.corrections': 'Corrections',
-  'set.tab.editing': 'Editing', 'set.tab.sharing': 'Sharing', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Keyboard', 'set.tab.ai': 'AI', 'set.tab.services': 'Services and accounts', 'set.tab.language': 'Language',
+  'set.tab.editing': 'Editing', 'set.tab.sharing': 'Sharing', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Keyboard', 'set.tab.ai': 'Keys and accounts', 'set.tab.services': 'Voice and translation', 'set.tab.language': 'Language',
   'set.reopenLast': 'On startup, reopen last project', 'set.autosave': 'Autosave after (seconds of inactivity)',
   'set.checkUpdates': 'Check for updates (off: the app never contacts the network)',
   'set.targetDraft': 'Book target (words)', 'set.targetSession': 'Session target (words)',
