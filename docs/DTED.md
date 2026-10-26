@@ -164,3 +164,5 @@ D&TED lives in a **separate** repo: [Hermeneuticus-of-things/dted](https://githu
 Code integration points today: `lib/dted.cjs`, `electron/dtedHandlers.cjs`, `src/lib/useDictation.js` / `dictation.js`, UI `DictationBar.jsx`. See also `docs/DEPENDENCY_UPDATES.md`.
 
 *Documentation only — no application code change in this note (2026-10-26).*
+
+> **Status (2026-10-26):** The in-app D&TED update-check **build** is **ON HOLD** (not cancelled); the owner will do it later. This section and `docs/DEPENDENCY_UPDATES.md` stay the planning reference until then.
