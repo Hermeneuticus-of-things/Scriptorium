@@ -2225,6 +2225,7 @@ export default function App({ api: apiProp }) {
           <SettingsDialog
             initialTab={settingsTab}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
+            onCheckUpdates={api.updateCheck ? () => { setDialog(null); setUpdateOpen({ initial: null }); } : undefined}
             api={api}
             settings={settings}
             project={null}
@@ -3665,6 +3666,7 @@ export default function App({ api: apiProp }) {
         <SettingsDialog
             initialTab={settingsTab}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
+            onCheckUpdates={api.updateCheck ? () => { setDialog(null); setUpdateOpen({ initial: null }); } : undefined}
           api={api}
           settings={settings}
           project={project}

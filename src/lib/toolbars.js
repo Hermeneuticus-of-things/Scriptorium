@@ -35,9 +35,10 @@ export const TOP_ITEMS = [
   { id: 'help', label: 'cmd.help', glyph: '?', command: 'help' },
   { id: 'update', label: 'cmd.checkUpdates', glyph: '⟳', command: 'checkUpdates', needs: 'desktop' },
 ];
-// Decluttered default: navigation, title, view switch, Compile, Inspector (+ the AI menu and the
-// one-click update button on desktop).
-export const TOP_DEFAULT = ['home', 'back', 'forward', 'title', SPACE, 'views', 'voice', 'compile', 'inspector', 'aiMenu', 'update'];
+// Decluttered default: navigation, title, view switch, Compile, Inspector (+ the AI menu on desktop).
+// The update button is NOT here on purpose: a new version shows itself through the discreet banner,
+// and a manual check lives in Settings → General. The button stays available to add via customization.
+export const TOP_DEFAULT = ['home', 'back', 'forward', 'title', SPACE, 'views', 'voice', 'compile', 'inspector', 'aiMenu'];
 
 // Format bar groups (ids used by components/FormatBar.jsx).
 export const FORMAT_ITEMS = [

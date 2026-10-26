@@ -18,7 +18,7 @@ const tabLabel = (k) => {
   return !v || v === `set.tab.${k}` ? TAB_FALLBACK[k] || k : v;
 };
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, initialTab }) {
+export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, onCheckUpdates, initialTab }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
   const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
   const [tab, setTab] = useState(() => (TABS.includes(initialTab) ? initialTab : 'general'));
@@ -293,6 +293,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       <>
         {check('reopenLastProject', t('set.reopenLast'))}
         {api.onUpdateAvailable && check('autoUpdateCheck', t('set.autoUpdateCheck'))}
+        {onCheckUpdates && <button type="button" onClick={onCheckUpdates}>{t('set.checkNow')}</button>}
         <label>
           {t('set.autosave')}
           <input type="number" min="1" max="120" value={s.autosaveSec} onChange={set('autosaveSec')} />
