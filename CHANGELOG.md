@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.10
+- Meniul din click-dreapta: citirea cu voce se numește acum „Redă audio" (înainte „Citește"), cu „Redă selecția / Redă de aici / Redă tot documentul / Oprește redarea" — mai ușor de găsit.
+
 ## v0.10.9
 - Reparație: butoanele de spațiu între paragrafe (0.10.8) stricau afișarea editorului („Fereastra nu se mai poate afișa" — `Cannot read properties of undefined (reading 'id')`). Grupul nou din bara de format nu avea intrarea corespunzătoare în lista de grupuri, așa că indexarea ieșea din sincron. Acum lista e completă, iar bara e protejată: un grup fără pereche nu mai e afișat în loc să pice toată fereastra.
 
