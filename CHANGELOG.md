@@ -1,6 +1,9 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.11
+- Dicționare — sinonimul.ro cu adresă directă: căutarea de sinonime deschide acum direct pagina cuvântului (`https://sinonimul.ro/cuvânt`), nu prin ocolul Google. Verificat pe cuvinte simple și cu diacritice. Eticheta din meniu e acum doar „Sinonime".
+
 ## v0.10.10
 - Meniul din click-dreapta: citirea cu voce se numește acum „Redă audio" (înainte „Citește"), cu „Redă selecția / Redă de aici / Redă tot documentul / Oprește redarea" — mai ușor de găsit.
 

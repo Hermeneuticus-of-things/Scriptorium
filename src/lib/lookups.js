@@ -15,9 +15,9 @@ function lingueePair(o) {
 export const LOOKUPS = {
   dictionary: { group: 'dict', label: 'Dicționar (dexonline)', labelEn: 'Dictionary (dexonline)', word: true, url: (q) => `https://dexonline.ro/definitie/${encodeURIComponent(q)}` },
   synonyms: { group: 'dict', label: 'Sinonime (dexonline)', labelEn: 'Synonyms (dexonline)', word: true, url: (q) => `https://dexonline.ro/definitie/${encodeURIComponent(q)}/sinonime` },
-  // sinonimul.ro: its own address scheme could not be checked, so a search limited to the site
-  // ("I'm feeling lucky") opens the site's page for the word.
-  sinonimul: { group: 'dict', label: 'Sinonime (sinonimul.ro)', labelEn: 'Synonyms (sinonimul.ro)', word: true, url: (q) => `https://www.google.com/search?btnI=1&q=${encodeURIComponent(`site:sinonimul.ro ${q}`)}` },
+  // sinonimul.ro: direct word page, e.g. https://sinonimul.ro/frumos (diacritics kept via
+  // percent-encoding; the site is case-insensitive). Verified on plain and diacritic words.
+  sinonimul: { group: 'dict', label: 'Sinonime', labelEn: 'Synonyms', word: true, url: (q) => `https://sinonimul.ro/${encodeURIComponent(q)}` },
   wiktionary: { group: 'dict', label: 'Wiktionary', word: true, url: (q) => `https://en.wiktionary.org/wiki/${encodeURIComponent(q.replace(/ /g, '_'))}` },
   cambridge: { group: 'dict', label: 'Cambridge Dictionary (EN)', word: true, url: (q) => `https://dictionary.cambridge.org/search/direct/?datasetsearch=english&q=${encodeURIComponent(q)}` },
   merriam: { group: 'dict', label: 'Merriam-Webster (EN)', word: true, url: (q) => `https://www.merriam-webster.com/dictionary/${encodeURIComponent(q)}` },
