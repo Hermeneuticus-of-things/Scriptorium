@@ -1,6 +1,10 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.12
+- Editor — fără artefacte la zoom: zoom-ul scalează textul prin `font-size` (titlu și text, împreună), nu prin proprietatea CSS `zoom`, care lăsa artefacte (caret, selecție, urme la derulare) în zona de scris. Rămâne coerent titlu+text.
+- Editor — pagină mai lată: lățimea implicită a zonei de scris crește de la 42em (~504px) la 56em (~672px), o lungime de rând mai confortabilă. Instalările existente cu vechea valoare (42) sunt urcate automat o dată la 56; dacă setezi tu altă lățime, rămâne a ta.
+
 ## v0.10.11
 - Dicționare — sinonimul.ro cu adresă directă: căutarea de sinonime deschide acum direct pagina cuvântului (`https://sinonimul.ro/cuvânt`), nu prin ocolul Google. Verificat pe cuvinte simple și cu diacritice. Eticheta din meniu e acum doar „Sinonime".
 

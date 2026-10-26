@@ -94,7 +94,7 @@ textarea { resize: vertical; width: 100%; }
 .format-bar .fb-overflow-pop .menu-pop { max-height: min(60vh, 420px); }
 .format-bar .sep { width: 1px; background: var(--line); margin: 0 4px; }
 .format-bar button { min-width: 32px; }
-.page { max-width: var(--editor-page-width, 46em); width: 100%; margin: 24px auto 40vh; padding: 40px 56px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+.page { max-width: var(--editor-page-width, 62em); width: 100%; margin: 24px auto 40vh; padding: 40px 56px; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
 .doc-title { margin: 0 0 1em; font-weight: 500; color: var(--muted); font-size: 15px; }
 .prose .ProseMirror { outline: none; min-height: 50vh; font-family: var(--editor-font, Georgia, 'Times New Roman', serif); font-size: var(--editor-font-size); line-height: var(--editor-line-height, 1.5); }
 .prose .ProseMirror p { text-indent: var(--para-indent, 0); margin-bottom: var(--para-spacing, .6em); }
@@ -367,13 +367,12 @@ legend { color: var(--muted); padding: 0 4px; }
 .ghost-completion { color: var(--muted); opacity: .6; pointer-events: none; }
 .ghost-completion::after { content: ' ⇥'; font-size: .7em; }
 .page { position: relative; }
-/* Zoom is a view magnifier (like Word / Scrivener): the whole page scales as one unit, so the body
-   text, the title, the line spacing and the margins all grow and shrink together, coherently. The
-   document's real font size is untouched — at 100% the text stays exactly its set size (e.g. 10pt);
-   zoom only magnifies the view. Each pane has its own --zoom, so the two panes scale independently. */
-.page { zoom: var(--zoom, 1); }
-.page .ProseMirror { font-size: var(--editor-font-size); }
-.page .doc-title { font-size: 15px; }
+/* Zoom scales the text through font-size, not the CSS `zoom` property: the title and the body both
+   multiply by --zoom, so they grow and shrink together (coherently), while the page keeps its width
+   and reflows. Using font-size avoids the caret, selection and scroll repaint artifacts that CSS
+   `zoom` causes inside a contenteditable editor. Each pane has its own --zoom. */
+.page .ProseMirror { font-size: calc(var(--editor-font-size) * var(--zoom, 1)); }
+.page .doc-title { font-size: calc(15px * var(--zoom, 1)); }
 .page-resize { position: absolute; top: 0; bottom: 0; width: 10px; cursor: ew-resize; z-index: 2; }
 .page-resize.left { left: -6px; }
 .page-resize.right { right: -6px; }

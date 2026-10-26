@@ -91,7 +91,7 @@ export const DEFAULT_SETTINGS = {
   editorFont: 'Georgia, serif',
   fontSize: 18,
   lineHeight: 1.6,
-  pageWidth: 42,
+  pageWidth: 56,
   binderFontSize: 14,
   accentColor: '',
   // Colour of new comments ('' = the theme's comment colour) and of the five revision rounds.

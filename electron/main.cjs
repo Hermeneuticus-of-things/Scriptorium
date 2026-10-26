@@ -85,6 +85,12 @@ function readSettings() {
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
     if (!Array.isArray(parsed.recent)) parsed.recent = [];
     parsed.recent = parsed.recent.filter((r) => r && typeof r.dir === 'string');
+    // One-time: the old default page width (42em) was cramped; widen it to the new default once.
+    // The marker makes it idempotent and respects a page width the user later sets on purpose.
+    if (parsed.pageWidth === 42 && !parsed.pageWidthBumped) {
+      parsed.pageWidth = 56;
+      parsed.pageWidthBumped = true;
+    }
     return parsed;
   } catch {
     // Unreadable: kept aside (never overwritten by defaults) and the last good copy is used.
