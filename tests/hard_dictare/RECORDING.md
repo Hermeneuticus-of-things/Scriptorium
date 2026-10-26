@@ -10,3 +10,8 @@
 4. Dacă abateți de la text, corectați `gold/<id>.txt` să corespundă EXACT cu ce s-a rostit
    (verbatim, cu reveniri). Actualizați `duration_sec` și `"source": "real: …"` în `manifest.json`.
 5. Păstrați fișierele sintetice ca `audio/<id>_sintetic.wav` pentru comparație.
+
+## Accente regionale (categorie lipsă, doar real)
+Nu există voce Piper RO regională. Pentru o categorie `regional_accents`: aceiași vorbitori din
+Moldova, Ardeal, Oltenia, Banat, Maramureș citesc `tts_text/01_idei_lungi.txt` și
+`tts_text/16_numere_date.txt`; id-uri `18_accent_<regiune>`, gold = textul citit, `"source": "real: …"`.

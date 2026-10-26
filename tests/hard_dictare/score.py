@@ -33,8 +33,17 @@ or ori oricare orice pe pentru peste poate pot prea prin printr s sa să sau se 
 suntem sunteți sub și îs t ta tale te ți tot toată toate toți tu tău un una unde unei unor unui unul
 v va vă voi vom vor vreo vreun fiindcă totuși astfel foarte atunci când decât până""".split())
 
-PUNCT_CLASS = {".": "period", "…": "period", "!": "exclam", "?": "question",
+# clasa „principală” (o singură clasă per cuvânt; folosită pt. segmentare + semn final).
+# „…” = pauză suspendată, NU sfârșit de propoziție (din 2026-10-26).
+PUNCT_CLASS = {".": "period", "…": "comma", "!": "exclam", "?": "question",
                ",": "comma", ";": "comma", ":": "comma"}
+
+# setul complet de semne evaluate individual (2026-10-26): . , ; : ! ? " — …
+MARKS = ["period", "comma", "semicolon", "colon", "exclam", "question", "quote", "dash", "ellipsis"]
+MARK_SYMBOL = {"period": ".", "comma": ",", "semicolon": ";", "colon": ":", "exclam": "!",
+               "question": "?", "quote": '"', "dash": "—", "ellipsis": "…"}
+_QUOTES = set('"„”“«»\u201f')
+_DASHES = set("—–-\u2015")
 SENT_END = {"period", "exclam", "question"}
 
 WORD_RE = re.compile(
@@ -125,34 +134,73 @@ _CANON = {"două": "doi", "una": "unu", "douăsprezece": "doisprezece", "unul": 
 
 
 def tokenize(text, normalize_numbers=False):
-    """Returnează listă de (word_norm, punct_class|None). Punctuația se atașează cuvântului dinainte."""
+    """Returnează listă de (word_norm, punct_class|None, marks:frozenset).
+
+    Punctuația se atașează cuvântului dinainte. `marks` = toate semnele din MARKS găsite în
+    spațiul de după cuvânt (ex. „, „” → {comma, quote}); semnele dinaintea primului cuvânt
+    (linie de dialog, ghilimele deschise la început) se atașează primului cuvânt."""
     text = unicodedata.normalize("NFC", text)
     toks = []
     pos = 0
+    lead = set()
     for m in WORD_RE.finditer(text):
         # punctuația dintre cuvântul anterior și acesta aparține cuvântului anterior
+        gap = text[pos:m.start()]
         if toks:
-            gap = text[pos:m.start()]
             toks[-1][1] = _punct_of(gap) or toks[-1][1]
+            toks[-1][2] |= _marks_of(gap)
+        else:
+            lead = _marks_of(gap)
         w = norm_word(m.group(0))
         if normalize_numbers and w[0].isdigit():
             ws = expand_number(w)
             for x in ws:
-                toks.append([_CANON.get(x, x), None])
+                toks.append([_CANON.get(x, x), None, set()])
         else:
-            toks.append([_CANON.get(w, w) if normalize_numbers else w, None])
+            toks.append([_CANON.get(w, w) if normalize_numbers else w, None, set()])
         pos = m.end()
     if toks:
         toks[-1][1] = _punct_of(text[pos:]) or toks[-1][1]
-    return [tuple(t) for t in toks]
+        toks[-1][2] |= _marks_of(text[pos:])
+        toks[0][2] |= lead
+    return [(t[0], t[1], frozenset(t[2])) for t in toks]
+
+
+def _marks_of(gap):
+    """Toate semnele din MARKS prezente în gap. „...” ≡ „…”; „–”/„-” izolat ≡ „—”;
+    \" „ ” “ « » ≡ ghilimele."""
+    out = set()
+    if "…" in gap or "..." in gap:
+        out.add("ellipsis")
+        gap = gap.replace("...", "").replace("…", "")
+    for c in gap:
+        if c == ".":
+            out.add("period")
+        elif c == ",":
+            out.add("comma")
+        elif c == ";":
+            out.add("semicolon")
+        elif c == ":":
+            out.add("colon")
+        elif c == "!":
+            out.add("exclam")
+        elif c == "?":
+            out.add("question")
+        elif c in _QUOTES:
+            out.add("quote")
+        elif c in _DASHES:
+            out.add("dash")
+    return out
 
 
 def _punct_of(gap):
-    """Clasa celui mai „puternic” semn din gap: question > exclam > period > comma."""
+    """Clasa celui mai „puternic” semn din gap: question > exclam > period > comma.
+    „...” ≡ „…” = pauză (comma), nu sfârșit de propoziție."""
+    gap = gap.replace("...", "…")
     found = [PUNCT_CLASS[c] for c in gap if c in PUNCT_CLASS]
     if not found:
         if "..." in gap:
-            return "period"
+            return "comma"
         return None
     for cls in ("question", "exclam", "period", "comma"):
         if cls in found:
@@ -226,7 +274,7 @@ def score_asr(ref_text, hyp_text, normalize_numbers=False, sent_lenient_wer=0.15
     # propoziții de referință
     sent_of = []
     sid = 0
-    for w, p in R:
+    for w, p, _m in R:
         sent_of.append(sid)
         if p in SENT_END:
             sid += 1
@@ -236,10 +284,11 @@ def score_asr(ref_text, hyp_text, normalize_numbers=False, sent_lenient_wer=0.15
     per_sent = defaultdict(lambda: {"S": 0, "D": 0, "I": 0, "invented": 0, "n": 0,
                                     "end_ref": None, "end_hyp": None, "missing": [], "wrong": [],
                                     "extra": []})
-    for i, (w, p) in enumerate(R):
+    for i, (w, p, _m) in enumerate(R):
         per_sent[sent_of[i]]["n"] += 1
     last_ref = 0
     punct_pairs = []
+    mark_pairs = []          # (marks_ref, marks_hyp) pe aceleași poziții aliniate
     halluc_tokens = []
     halluc_spans = []
     cur_span = []
@@ -250,6 +299,7 @@ def score_asr(ref_text, hyp_text, normalize_numbers=False, sent_lenient_wer=0.15
             s = per_sent[sent_of[i]]
             last_ref = i
             punct_pairs.append((R[i][1], H[j][1]))
+            mark_pairs.append((R[i][2], H[j][2]))
             if op == "S":
                 s["S"] += 1; s["wrong"].append(f"{R[i][0]}→{H[j][0]}")
             if i == len(R) - 1 or sent_of[i + 1] != sent_of[i]:
@@ -259,6 +309,7 @@ def score_asr(ref_text, hyp_text, normalize_numbers=False, sent_lenient_wer=0.15
             last_ref = i
             s["D"] += 1; s["missing"].append(R[i][0])
             punct_pairs.append((R[i][1], None))
+            mark_pairs.append((R[i][2], frozenset()))
             if i == len(R) - 1 or sent_of[i + 1] != sent_of[i]:
                 s["end_ref"], s["end_hyp"] = R[i][1], "<deleted>"
         else:  # I
@@ -272,6 +323,8 @@ def score_asr(ref_text, hyp_text, normalize_numbers=False, sent_lenient_wer=0.15
                 halluc_spans.append(" ".join(cur_span)); cur_span = []
             if H[j][1] is not None:
                 punct_pairs.append((None, H[j][1]))
+            if H[j][2]:
+                mark_pairs.append((frozenset(), H[j][2]))
     if cur_span:
         halluc_spans.append(" ".join(cur_span))
 
@@ -329,6 +382,25 @@ def score_asr(ref_text, hyp_text, normalize_numbers=False, sent_lenient_wer=0.15
     micro_r = T / (T + N_) if T + N_ else 0.0
     micro_f = 2 * micro_p * micro_r / (micro_p + micro_r) if micro_p + micro_r else 0.0
 
+    # per semn (setul complet . , ; : ! ? " — …)
+    per_mark = {}
+    mtp = Counter(); mfp = Counter(); mfn = Counter()
+    for a, b in mark_pairs:
+        for c in a & b:
+            mtp[c] += 1
+        for c in a - b:
+            mfn[c] += 1
+        for c in b - a:
+            mfp[c] += 1
+    for c in MARKS:
+        p = mtp[c] / (mtp[c] + mfp[c]) if mtp[c] + mfp[c] else None
+        r = mtp[c] / (mtp[c] + mfn[c]) if mtp[c] + mfn[c] else None
+        f = 2 * p * r / (p + r) if p and r else (0.0 if (p is not None and r is not None) else None)
+        per_mark[c] = {"symbol": MARK_SYMBOL[c], "ref": mtp[c] + mfn[c], "hyp": mtp[c] + mfp[c],
+                       "tp": mtp[c], "fp": mfp[c], "fn": mfn[c], "precision": _r(p),
+                       "recall": _r(r), "f1": _r(f),
+                       "accuracy": _r(mtp[c] / (mtp[c] + mfp[c] + mfn[c])) if mtp[c] + mfp[c] + mfn[c] else None}
+
     out = {
         "ref_words": len(rw), "hyp_words": len(hw),
         "wer": round(wer, 4), "substitutions": S, "deletions": D, "insertions": I,
@@ -342,7 +414,9 @@ def score_asr(ref_text, hyp_text, normalize_numbers=False, sent_lenient_wer=0.15
             "accuracy_all_positions": _r(exact / len(punct_pairs) if punct_pairs else None),
             "micro_precision": _r(micro_p), "micro_recall": _r(micro_r), "micro_f1": _r(micro_f),
             "per_class": per_cls,
+            "per_mark": per_mark,
         },
+        "sentence_alignment": sentence_alignment(R, H, sent_lenient_wer),
         "hallucination": {
             "invented_tokens": len(halluc_tokens),
             "rate_vs_hyp_words": _r(len(halluc_tokens) / max(1, len(hw))),
@@ -364,9 +438,95 @@ def score_asr(ref_text, hyp_text, normalize_numbers=False, sent_lenient_wer=0.15
 
 def _split_ref_sentences(R, sent_of):
     res = defaultdict(list)
-    for (w, p), s in zip(R, sent_of):
+    for (w, p, _m), s in zip(R, sent_of):
         res[s].append(w)
     return {k: " ".join(v) for k, v in res.items()}
+
+
+def _sentences(T):
+    """Împarte (w, p, marks) în propoziții după clasa principală . ! ?"""
+    out, cur = [], []
+    for w, p, m in T:
+        cur.append((w, p))
+        if p in SENT_END:
+            out.append(cur); cur = []
+    if cur:
+        out.append(cur)
+    return out
+
+
+def sentence_alignment(R, H, lenient_wer=0.15, min_sim_for_wrong=0.5):
+    """Eroare la nivel de propoziție: propozițiile ipotezei (segmentate după . ! ? din hyp)
+    se aliniază cu cele din gold (DP Levenshtein pe secvența de propoziții).
+
+    correct = pereche cu similaritate cuvinte ≥ 1-lenient_wer ȘI același semn final;
+    wrong   = pereche aliniată dar sub prag sau semn final diferit;
+    missing = propoziție gold fără corespondent (sau contopită în alta);
+    extra   = propoziție hyp fără corespondent (sau fragment rupt).
+    SER = (wrong+missing+extra)/n_ref; success = correct/n_ref."""
+    rs, hs = _sentences(R), _sentences(H)
+    rw = [[w for w, _ in s] for s in rs]; hw = [[w for w, _ in s] for s in hs]
+    re_ = [s[-1][1] for s in rs]; he = [s[-1][1] for s in hs]
+    n, m = len(rs), len(hs)
+
+    def sim(i, j):
+        a, b = rw[i], hw[j]
+        if not a and not b:
+            return 1.0
+        ops = align(a, b)
+        e = sum(1 for o, _, _ in ops if o != "C")
+        return max(0.0, 1.0 - e / max(len(a), len(b)))
+    S = {}
+    INF = float("inf")
+    d = [[INF] * (m + 1) for _ in range(n + 1)]
+    bt = [[None] * (m + 1) for _ in range(n + 1)]
+    d[0][0] = 0
+    for i in range(n + 1):
+        for j in range(m + 1):
+            if i == 0 and j == 0:
+                continue
+            best, how = INF, None
+            if i and d[i - 1][j] + 1 < best:
+                best, how = d[i - 1][j] + 1, "D"
+            if j and d[i][j - 1] + 1 < best:
+                best, how = d[i][j - 1] + 1, "I"
+            if i and j:
+                # fereastră de bandă pt. viteză: doar perechi apropiate ca poziție relativă
+                if abs(i / max(1, n) - j / max(1, m)) <= 0.35 or min(n, m) < 6:
+                    sv = S.setdefault((i - 1, j - 1), sim(i - 1, j - 1))
+                    if sv >= min_sim_for_wrong:
+                        ok = sv >= 1 - lenient_wer and re_[i - 1] == he[j - 1]
+                        c = d[i - 1][j - 1] + (0 if ok else 1)
+                        if c < best:
+                            best, how = c, ("C" if ok else "S")
+            d[i][j], bt[i][j] = best, how
+    i, j = n, m
+    pairs = []
+    while i or j:
+        how = bt[i][j]
+        if how in ("C", "S"):
+            pairs.append((how, i - 1, j - 1)); i -= 1; j -= 1
+        elif how == "D":
+            pairs.append(("D", i - 1, None)); i -= 1
+        else:
+            pairs.append(("I", None, j - 1)); j -= 1
+    pairs.reverse()
+    c = Counter(p[0] for p in pairs)
+    detail = []
+    for how, i, j in pairs:
+        if how == "C":
+            continue
+        detail.append({"type": {"S": "wrong", "D": "missing", "I": "extra"}[how],
+                       "ref": " ".join(rw[i]) if i is not None else None,
+                       "hyp": " ".join(hw[j]) if j is not None else None,
+                       "similarity": _r(S.get((i, j))) if i is not None and j is not None else None,
+                       "end_ref": re_[i] if i is not None else None,
+                       "end_hyp": he[j] if j is not None else None})
+    return {"ref_sentences": n, "hyp_sentences": m, "correct": c["C"], "wrong": c["S"],
+            "missing": c["D"], "extra": c["I"],
+            "sentence_error_rate": _r((c["S"] + c["D"] + c["I"]) / n) if n else None,
+            "sentence_success_rate": _r(c["C"] / n) if n else None,
+            "errors": detail}
 
 
 def _r(x, n=4):
@@ -398,9 +558,43 @@ def score_facts(facts, text, normalize_numbers):
 
 
 # ----------------------------------------------------------------- rezumat (oglindă verify C++)
+def score_data(data, hyp_text, normalize_numbers):
+    """Acuratețe numere/date pe tip (percent, currency, time, date, large_number, phone, address).
+    value_ok  = valoarea apare la nivel de token (cu --normalize-numbers: și scrisă în litere);
+    format_ok = apare EXACT cu formatul din gold (spațiere normalizată; ex. 4,5% / 06:45 / 1.250.000)."""
+    words = [t[0] for t in tokenize(hyp_text, normalize_numbers)]
+    flat = re.sub(r"\s+", " ", unicodedata.normalize("NFC", hyp_text).translate(_CEDILLA)).lower()
+    per_type, tot, vok, fok = {}, 0, 0, 0
+    for typ, vals in data.items():
+        rows = []
+        for v in vals:
+            fv = re.sub(r"\s+", " ", unicodedata.normalize("NFC", v).translate(_CEDILLA)).lower()
+            f_ok = fv in flat
+            v_ok = f_ok or _contains(words, v, normalize_numbers, exact=True)
+            rows.append({"value": v, "value_ok": v_ok, "format_ok": f_ok})
+        n = len(rows); a = sum(r["value_ok"] for r in rows); b = sum(r["format_ok"] for r in rows)
+        tot += n; vok += a; fok += b
+        per_type[typ] = {"n": n, "value_accuracy": _r(a / n) if n else None,
+                         "format_accuracy": _r(b / n) if n else None,
+                         "missed": [r["value"] for r in rows if not r["value_ok"]],
+                         "bad_format": [r["value"] for r in rows if r["value_ok"] and not r["format_ok"]]}
+    return {"items": tot, "value_accuracy": _r(vok / tot) if tot else None,
+            "format_accuracy": _r(fok / tot) if tot else None, "per_type": per_type}
+
+
+def numeric_tokens(ref_text, hyp_text):
+    """P/R pe multiset de tokeni numerici (fără normalizare): cât din cifrele gold apar ca cifre."""
+    r = Counter(t[0] for t in tokenize(ref_text) if t[0][0].isdigit())
+    h = Counter(t[0] for t in tokenize(hyp_text) if t[0][0].isdigit())
+    tp = sum((r & h).values()); nr = sum(r.values()); nh = sum(h.values())
+    return {"ref": nr, "hyp": nh, "tp": tp, "precision": _r(tp / nh) if nh else None,
+            "recall": _r(tp / nr) if nr else None,
+            "missing": sorted((r - h).elements()), "extra": sorted((h - r).elements())}
+
+
 def _content_tokens(text):
     out = []
-    for w, p in tokenize(text, False):
+    for w, p, _m in tokenize(text, False):
         numeric = w[0].isdigit()
         if numeric or w not in STOPWORDS:
             out.append((w, numeric, p))
@@ -492,6 +686,10 @@ DEFAULT_THRESHOLDS = {
     "summary": {"max_hallucination_rate": 0.0, "gate_is_failure": True,
                 "superseded_is_failure": True},
 }
+# chei noi (2026-10-26), moștenite din default dacă lipsesc din thresholds.json
+DEFAULT_THRESHOLDS["default"].update({"min_focus_mark_f1": 0.70, "min_sentence_success_aligned": None,
+                                      "min_data_value_accuracy": None, "min_data_format_accuracy": None})
+DEFAULT_THRESHOLDS["numbers_data"] = {"min_data_value_accuracy": 1.0, "min_data_format_accuracy": 0.80}
 
 
 def thresholds_for(cat, T):
@@ -520,6 +718,24 @@ def verdict(res, cat, T):
             reasons.append("question_marks_missed")
         if a["hallucination"]["rate_vs_hyp_words"] > t["max_asr_hallucination_rate"]:
             reasons.append("invented_content")
+        fm = t.get("min_focus_mark_f1")
+        for mk in res.get("focus_marks") or []:
+            pmk = a["punctuation"]["per_mark"].get(mk, {})
+            if not pmk.get("ref") and not pmk.get("hyp"):
+                continue        # semnul nu apare nici în gold, nici în hyp
+            f1 = pmk.get("f1")
+            if fm is not None and (f1 is None or f1 < fm):
+                reasons.append(f"mark_{mk}_low")
+        ms = t.get("min_sentence_success_aligned")
+        sr = a["sentence_alignment"]["sentence_success_rate"]
+        if ms is not None and (sr is None or sr < ms):
+            reasons.append("sentence_alignment_low")
+    d = res.get("data_asr")
+    if d:
+        if t.get("min_data_value_accuracy") is not None and (d["value_accuracy"] or 0) < t["min_data_value_accuracy"]:
+            reasons.append("data_value_wrong")
+        if t.get("min_data_format_accuracy") is not None and (d["format_accuracy"] or 0) < t["min_data_format_accuracy"]:
+            reasons.append("data_format_wrong")
     f = res.get("facts_asr")
     if f and f["entity_recall"] is not None and f["entity_recall"] < t["min_entity_recall"]:
         reasons.append("entity_lost")
@@ -546,15 +762,18 @@ def maybe(p):
     return read(p) if p and os.path.isfile(p) else None
 
 
-def score_one(sid, cat, ref, hyp, summary, source, log, facts, interferer, args, T):
-    res = {"id": sid, "category": cat}
+def score_one(sid, cat, ref, hyp, summary, source, log, facts, interferer, args, T, focus_marks=None):
+    res = {"id": sid, "category": cat, "focus_marks": focus_marks or []}
     if hyp is None and summary is None:
         res["status"] = "missing_hyp"
         return res
     if hyp is not None:
         res["asr"] = score_asr(ref, hyp, args.normalize_numbers, args.sent_lenient_wer, interferer)
+        res["numeric_tokens"] = numeric_tokens(ref, hyp)
         if facts:
             res["facts_asr"] = score_facts(facts, hyp, args.normalize_numbers)
+            if facts.get("data"):
+                res["data_asr"] = score_data(facts["data"], hyp, args.normalize_numbers)
     if summary is not None:
         src = source if source is not None else (hyp if hyp is not None else ref)
         res["summary_source"] = "explicit" if source is not None else ("asr_hyp" if hyp is not None else "gold")
@@ -567,7 +786,7 @@ def score_one(sid, cat, ref, hyp, summary, source, log, facts, interferer, args,
 
 
 def print_table(results):
-    hdr = f"{'id':26s} {'WER':>6s} {'S/D/I':>11s} {'sentOK':>7s} {'punF1':>6s} {'?rec':>5s} " \
+    hdr = f"{'id':26s} {'WER':>6s} {'S/D/I':>11s} {'sentOK':>7s} {'SER':>6s} {'punF1':>6s} {'?rec':>5s} " \
           f"{'hall':>6s} {'ent':>5s} {'sumOv':>6s} {'gate':>5s}  verdict"
     print(hdr); print("-" * len(hdr))
     for r in results:
@@ -581,11 +800,96 @@ def print_table(results):
         v = r["verdict"]
         fmt = lambda x, w=6: (f"{x:{w}.3f}" if isinstance(x, (int, float)) else f"{'-':>{w}s}")
         sdi = f"{a.get('substitutions','-')}/{a.get('deletions','-')}/{a.get('insertions','-')}" if a else "-"
-        print(f"{r['id']:26s} {fmt(a.get('wer'))} {sdi:>11s} {fmt(a.get('sentence_success_lenient'),7)} "
+        sa = a.get("sentence_alignment") or {}
+        print(f"{r['id']:26s} {fmt(a.get('wer'))} {sdi:>11s} {fmt(sa.get('sentence_success_rate'),7)} "
+              f"{fmt(sa.get('sentence_error_rate'))} "
               f"{fmt(p.get('micro_f1'))} {fmt(q,5)} {fmt((a.get('hallucination') or {}).get('rate_vs_hyp_words'))} "
               f"{fmt(f.get('entity_recall'),5)} {fmt(s.get('overlap_score'))} "
               f"{('DA' if s.get('gate_triggered') else 'nu') if s else '-':>5s}  "
               f"{'PASS' if v['pass'] else 'FAIL: ' + ','.join(v['fail_reasons'])}")
+
+
+def _pool_sent(L):
+    n = sum(x["ref_sentences"] for x in L)
+    c = {k: sum(x[k] for x in L) for k in ("correct", "wrong", "missing", "extra")}
+    c["ref_sentences"] = n
+    c["sentence_error_rate"] = _r((c["wrong"] + c["missing"] + c["extra"]) / n) if n else None
+    c["sentence_success_rate"] = _r(c["correct"] / n) if n else None
+    return c
+
+
+def _pool_marks(asr):
+    out = {}
+    for mk in MARKS:
+        tp = sum(a["punctuation"]["per_mark"][mk]["tp"] for a in asr)
+        fp = sum(a["punctuation"]["per_mark"][mk]["fp"] for a in asr)
+        fn = sum(a["punctuation"]["per_mark"][mk]["fn"] for a in asr)
+        p = tp / (tp + fp) if tp + fp else None
+        r = tp / (tp + fn) if tp + fn else None
+        f = 2 * p * r / (p + r) if p and r else (0.0 if (p is not None and r is not None) else None)
+        out[mk] = {"symbol": MARK_SYMBOL[mk], "ref": tp + fn, "hyp": tp + fp, "precision": _r(p),
+                   "recall": _r(r), "f1": _r(f), "accuracy": _r(tp / (tp + fp + fn)) if tp + fp + fn else None}
+    return out
+
+
+def _pool_data(L):
+    per = defaultdict(lambda: [0, 0, 0])
+    for d in L:
+        for t, v in d["per_type"].items():
+            per[t][0] += v["n"]
+            per[t][1] += round((v["value_accuracy"] or 0) * v["n"])
+            per[t][2] += round((v["format_accuracy"] or 0) * v["n"])
+    tot = sum(v[0] for v in per.values())
+    return {"items": tot,
+            "value_accuracy": _r(sum(v[1] for v in per.values()) / tot) if tot else None,
+            "format_accuracy": _r(sum(v[2] for v in per.values()) / tot) if tot else None,
+            "per_type": {t: {"n": v[0], "value_accuracy": _r(v[1] / v[0]) if v[0] else None,
+                             "format_accuracy": _r(v[2] / v[0]) if v[0] else None} for t, v in per.items()}}
+
+
+def per_category(scored):
+    """Defalcare pe categorie (din manifest: long_ideas, self_corrections, questions_rising, ...)."""
+    by = defaultdict(list)
+    for r in scored:
+        by[r["category"]].append(r)
+    out = {}
+    for cat, rs in sorted(by.items()):
+        asr = [r["asr"] for r in rs if r.get("asr")]
+        e = {"samples": [r["id"] for r in rs], "pass": sum(1 for r in rs if r["verdict"]["pass"])}
+        if asr:
+            tw = sum(a["ref_words"] for a in asr)
+            e["wer"] = _r(sum(a["substitutions"] + a["deletions"] + a["insertions"] for a in asr) / max(1, tw))
+            ns = sum(a["sentences"] for a in asr)
+            e["sentence_success_lenient"] = _r(sum(a["sentence_success_lenient"] * a["sentences"] for a in asr) / ns) if ns else None
+            e["sentence_alignment"] = _pool_sent([a["sentence_alignment"] for a in asr])
+            pm = _pool_marks(asr)
+            e["punct_micro_f1_mean"] = _r(sum(a["punctuation"]["micro_f1"] for a in asr) / len(asr))
+            e["per_mark_f1"] = {MARK_SYMBOL[k]: v["f1"] for k, v in pm.items() if v["ref"] or v["hyp"]}
+            fm = sorted({m for r in rs for m in r.get("focus_marks") or []})
+            if fm:
+                e["focus_marks_f1"] = {MARK_SYMBOL[m]: pm[m]["f1"] for m in fm}
+        dat = [r["data_asr"] for r in rs if r.get("data_asr")]
+        if dat:
+            e["data"] = _pool_data(dat)
+        out[cat] = e
+    return out
+
+
+def print_categories(pc):
+    if not pc:
+        return
+    print("\nPe categorii:")
+    hdr = f"{'categorie':24s} {'n':>2s} {'pass':>4s} {'WER':>6s} {'sentOK':>7s} {'SER':>6s} {'punF1':>6s}  semne țintă F1 / date"
+    print(hdr); print("-" * len(hdr))
+    fmt = lambda x, w=6: (f"{x:{w}.3f}" if isinstance(x, (int, float)) else f"{'-':>{w}s}")
+    for cat, e in pc.items():
+        sa = e.get("sentence_alignment") or {}
+        extra = " ".join(f"{k}={fmt(v,5).strip()}" for k, v in (e.get("focus_marks_f1") or {}).items())
+        if e.get("data"):
+            extra += f" date:val={fmt(e['data']['value_accuracy']).strip()} fmt={fmt(e['data']['format_accuracy']).strip()}"
+        print(f"{cat:24s} {len(e['samples']):2d} {e['pass']:4d} {fmt(e.get('wer'))} "
+              f"{fmt(sa.get('sentence_success_rate'),7)} {fmt(sa.get('sentence_error_rate'))} "
+              f"{fmt(e.get('punct_micro_f1_mean'))}  {extra}")
 
 
 def main():
@@ -597,6 +901,7 @@ def main():
     ap.add_argument("--source", help="textul sursă pt. verificarea rezumatului (implicit: hyp ASR)")
     ap.add_argument("--dted-log", help="log JSONL/text D&TED cu branch=... / ramura=...")
     ap.add_argument("--facts"); ap.add_argument("--category", default="default")
+    ap.add_argument("--focus-marks", nargs="*", default=None, help=f"semne țintă (din {MARKS})")
     ap.add_argument("--normalize-numbers", action="store_true",
                     help="cifre -> cuvinte RO pe ambele părți (13:15 == treisprezece și cincisprezece)")
     ap.add_argument("--sent-lenient-wer", type=float, default=0.15)
@@ -629,13 +934,14 @@ def main():
             facts = json.loads(read(J(s["facts"]))) if s.get("facts") and os.path.isfile(J(s["facts"])) else None
             interf = maybe(J(f"tts_text/{s['id']}_interferent.txt"))
             results.append(score_one(s["id"], s["category"], read(J(s["gold"])), maybe(hyp_p),
-                                     maybe(sum_p), None, maybe(log_p), facts, interf, args, T))
+                                     maybe(sum_p), None, maybe(log_p), facts, interf, args, T,
+                                     s.get("focus_marks")))
     elif args.ref and (args.hyp or args.summary):
         facts = json.loads(read(args.facts)) if args.facts else None
         sid = os.path.splitext(os.path.basename(args.hyp or args.summary))[0]
         results.append(score_one(sid, args.category, read(args.ref), maybe(args.hyp),
                                  maybe(args.summary), maybe(args.source), maybe(args.dted_log),
-                                 facts, None, args, T))
+                                 facts, None, args, T, args.focus_marks))
     else:
         ap.error("dați --manifest sau --ref împreună cu --hyp/--summary")
 
@@ -654,6 +960,13 @@ def main():
         agg["summaries"] = len(sm)
         agg["gate_triggered"] = sum(1 for s in sm if s["gate_triggered"])
         agg["summary_hallucination_rate_mean"] = _r(sum(s["hallucination_rate"] or 0 for s in sm) / len(sm))
+    if asr:
+        agg["sentence_alignment_pooled"] = _pool_sent([a["sentence_alignment"] for a in asr])
+        agg["punctuation_per_mark_pooled"] = _pool_marks(asr)
+    dat = [r["data_asr"] for r in scored if r.get("data_asr")]
+    if dat:
+        agg["data_pooled"] = _pool_data(dat)
+    agg["per_category"] = per_category(scored)
     agg["samples_total"] = len(results); agg["samples_scored"] = len(scored)
     agg["samples_pass"] = sum(1 for r in scored if r["verdict"]["pass"])
     out = {"tool": "dted-hard-test/score.py", "normalize_numbers": args.normalize_numbers,
@@ -663,6 +976,7 @@ def main():
         json.dump(out, f, ensure_ascii=False, indent=2)
     if not args.quiet:
         print_table(results)
+        print_categories(agg.get("per_category", {}))
         print("\nAgregat:", json.dumps(agg, ensure_ascii=False))
         print("Detalii:", os.path.abspath(args.out))
     return 0

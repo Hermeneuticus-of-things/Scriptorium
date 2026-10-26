@@ -1,0 +1,13 @@
+— Bună ziua, cu ce vă pot ajuta?
+— Bună ziua. Aș vrea să fac o programare la medicul de familie.
+— Sigur. Pentru ce zi?
+— Dacă se poate, joi dimineața.
+— Joi dimineața e totul ocupat. Vineri la zece vă convine?
+— Vineri la zece e perfect!
+— Pe ce nume fac programarea?
+— Pe numele Elena Stoica.
+— Aveți și un număr de telefon?
+— Da, vă dau imediat. Sau, stați, mai bine vă trimit pe mesaj.
+— Bine. Vă rog să veniți cu zece minute mai devreme.
+— Mulțumesc mult! O zi bună.
+— La fel. La revedere!

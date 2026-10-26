@@ -1,12 +1,16 @@
 {
-  "_comment": "Praguri PASS/FAIL per categorie; cheile lipsă moștenesc din 'default'. Editabil.",
+  "_comment": "Praguri PASS/FAIL per categorie; cheile lipsă moștenesc din 'default'. Editabil. focus marks: min_focus_mark_f1 aplicat pe manifest.focus_marks; numbers_data: acuratețe valori/format.",
   "default": {
     "max_wer": 0.1,
     "min_sentence_success_lenient": 0.8,
     "min_punct_f1": 0.75,
     "max_asr_hallucination_rate": 0.0,
     "min_entity_recall": 1.0,
-    "min_question_recall": null
+    "min_question_recall": null,
+    "min_focus_mark_f1": 0.7,
+    "min_sentence_success_aligned": null,
+    "min_data_value_accuracy": null,
+    "min_data_format_accuracy": null
   },
   "questions_rising": {
     "min_question_recall": 0.8
@@ -25,5 +29,12 @@
     "max_hallucination_rate": 0.0,
     "gate_is_failure": true,
     "superseded_is_failure": true
+  },
+  "numbers_data": {
+    "min_data_value_accuracy": 1.0,
+    "min_data_format_accuracy": 0.8
+  },
+  "multi_speaker_dialogue": {
+    "min_sentence_success_aligned": 0.7
   }
 }

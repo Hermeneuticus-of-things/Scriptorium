@@ -14,6 +14,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 from samples_ro import SAMPLES  # noqa: E402
+from samples_ro_extra import EXTRA_SAMPLES  # noqa: E402
+ALL_SAMPLES = SAMPLES + EXTRA_SAMPLES
 
 SR = 16000
 
@@ -90,19 +92,44 @@ def make_noisy(piper, voice, sample, clean_wav, out_wav, rng):
     write_wav(out_wav, mix.astype(np.float32))
 
 
+def make_dialogue(piper, voice, turns, out_wav, gap=0.5):
+    """Vorbitor A = vocea de bază; B = aceeași voce, pitch +3 semitonuri (SINTETIC)."""
+    parts = []
+    with tempfile.TemporaryDirectory() as td:
+        for i, (spk, text) in enumerate(turns):
+            a = os.path.join(td, f"t{i}.wav")
+            tts(piper, voice, text, a)
+            if spk != "A":
+                b = os.path.join(td, f"t{i}p.wav")
+                run(["ffmpeg", "-y", "-loglevel", "error", "-i", a, "-af",
+                     f"asetrate={SR}*1.189,aresample={SR},atempo={1/1.189:.4f}", "-ac", "1", b])
+                a = b
+            parts.append(read_wav(a)); parts.append(np.zeros(int(gap * SR), np.float32))
+    write_wav(out_wav, np.concatenate(parts))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--piper", default="piper")
     ap.add_argument("--voice", required=True)
+    ap.add_argument("--only", nargs="*", help="regenerează doar aceste id-uri; restul manifestului se păstrează")
     args = ap.parse_args()
     rng = np.random.default_rng(20261026)
     manifest = []
-    for s in SAMPLES:
+    old = {}
+    mp = os.path.join(ROOT, "manifest.json")
+    if args.only and os.path.isfile(mp):
+        old = {e["id"]: e for e in json.load(open(mp, encoding="utf-8"))["samples"]}
+    for s in ALL_SAMPLES:
         sid = s["id"]
+        if args.only and sid not in args.only:
+            if sid in old:
+                manifest.append(old[sid])
+            continue
         gold_p = os.path.join(ROOT, "gold", sid + ".txt")
         with open(gold_p, "w", encoding="utf-8") as f:
             f.write(s["gold"].strip() + "\n")
-        tts_text = s["tts"] or s["gold"]
+        tts_text = ("\n".join(f"[{a}] {t}" for a, t in s["turns"]) if s.get("turns") else None) or s["tts"] or s["gold"]
         with open(os.path.join(ROOT, "tts_text", sid + ".txt"), "w", encoding="utf-8") as f:
             f.write(tts_text.strip() + "\n")
         with open(os.path.join(ROOT, "facts", sid + ".json"), "w", encoding="utf-8") as f:
@@ -115,6 +142,8 @@ def main():
             make_noisy(args.piper, args.voice, s, clean, os.path.join(ROOT, audio_rel), rng)
             with open(os.path.join(ROOT, "tts_text", sid + "_interferent.txt"), "w", encoding="utf-8") as f:
                 f.write(s["interferer"].strip() + "\n")
+        elif s.get("turns"):
+            make_dialogue(args.piper, args.voice, s["turns"], clean)
         else:
             tts(args.piper, args.voice, tts_text, clean)
         dur = len(read_wav(os.path.join(ROOT, audio_rel))) / SR
@@ -123,7 +152,11 @@ def main():
                  "tts_text": f"tts_text/{sid}.txt", "facts": f"facts/{sid}.json",
                  "hyp": f"hyp/{sid}.txt", "summary": f"hyp/{sid}.summary.txt",
                  "dted_log": f"hyp/{sid}.dted.jsonl",
-                 "source": "synthetic: Piper ro_RO-mihai-medium", "notes": s["notes"]}
+                 "source": "synthetic: Piper ro_RO-mihai-medium" +
+                           (" (speaker B = same voice, pitch +3 st)" if s.get("turns") else ""),
+                 "notes": s["notes"]}
+        if s.get("focus_marks"):
+            entry["focus_marks"] = s["focus_marks"]
         if s["category"] == "noisy_overlap":
             entry["control_clean_audio"] = f"audio/{sid}_curat_control.wav"
             entry["control_clean_duration_sec"] = round(len(read_wav(clean)) / SR, 2)
