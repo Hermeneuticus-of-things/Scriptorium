@@ -177,6 +177,8 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 
 Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic — dialogul detectează ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie configurarea fiecăruia dintr-un clic, cu copie de siguranță. Agentul primește peste 80 de unelte (citire/scriere documente, binder, căutare, snapshot-uri, Compile, import/export, revizie). Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
 
+> **O vorbă despre AI.** Oricât de bun ar fi modelul și oricât te-ar ajuta, cu un AI nu creezi ceva nou: repeți, în alte cuvinte, ce au spus deja alții — așa că original nu poți fi. Și, dincolo de autocorectura pe care ți-o face la vedere, mai e o problemă: ajungi, fără să vrei, portavocea politicilor morale și de exprimare ale companiilor care dețin aceste modele LLM și le modulează după propriile credințe. De aceea Scribner merge întreg și fără AI: scrisul rămâne al tău, iar AI-ul îl pornești sau îl oprești oricând, dintr-un singur loc.
+
 ### Compilezi
 
 <p align="center">
