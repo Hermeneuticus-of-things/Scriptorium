@@ -428,12 +428,14 @@ export default function App({ api: apiProp }) {
   // control with data-hint and call showHint('<name>') where the action is blocked. See ROADMAP.
   const showHint = (name) => {
     requestAnimationFrame(() => {
-      const els = document.querySelectorAll(`[data-hint="${name}"]`);
-      els.forEach((el) => {
+      // Only visible controls (a hidden split-pane lock shouldn't glow); bring the first into view.
+      const els = [...document.querySelectorAll(`[data-hint="${name}"]`)].filter((el) => el.offsetParent !== null);
+      els.forEach((el, i) => {
+        if (i === 0) try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch { /* older engines */ }
         el.classList.remove('hint-glow');
         void el.offsetWidth; // restart the animation if it is still glowing
         el.classList.add('hint-glow');
-        setTimeout(() => el.classList.remove('hint-glow'), 2600);
+        setTimeout(() => el.classList.remove('hint-glow'), 3600);
       });
     });
   };

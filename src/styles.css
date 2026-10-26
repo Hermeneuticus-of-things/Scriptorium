@@ -381,12 +381,12 @@ legend { color: var(--muted); padding: 0 4px; }
 .modal.syn-modal .synonyms-list { max-height: 50vh; overflow: auto; }
 /* Guided hint: a short glow that points the eye at the control the user needs (e.g. the pane lock
    when a binder click is blocked). Respects users who ask for less motion. */
-.hint-glow { animation: hint-glow 0.7s ease-in-out 3; border-radius: 4px; position: relative; z-index: 3; }
+.hint-glow { animation: hint-glow 0.7s ease-in-out 5; border-radius: 4px; position: relative; z-index: 5; }
 @keyframes hint-glow {
   0%, 100% { box-shadow: 0 0 0 0 transparent; }
-  50% { box-shadow: 0 0 0 3px var(--accent); background: var(--accent-soft); }
+  50% { box-shadow: 0 0 0 4px var(--accent), 0 0 14px 3px var(--accent); background: var(--accent-soft); }
 }
-@media (prefers-reduced-motion: reduce) { .hint-glow { animation: none; box-shadow: 0 0 0 3px var(--accent); } }
+@media (prefers-reduced-motion: reduce) { .hint-glow { animation: none; box-shadow: 0 0 0 4px var(--accent); } }
 /* Drag either edge to set the writing width (both edges move, page stays centred); double-click an
    edge to fill the whole pane. A faint grip pill is always shown so it's clear the page can be
    resized — stronger on hover. */

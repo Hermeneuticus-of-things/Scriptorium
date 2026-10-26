@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.17
+- Vocea „Mihai" e acum **implicit** peste tot (nu Speechify) — e locală și de încredere. Speechify rămâne o opțiune din listă, dacă o alegi.
+- Mihai aude punctuația: pe lângă „.?!,", acum și „…" (pauză), liniile de dialog/paranteză „—/–" (pauză de virgulă) și ghilimelele („ " « ») care nu se mai citesc. Mai firesc, nu ca o mașină.
+- Tip ghidat mai clar: când dai click în binder iar panoul e fixat, lacătul **se aduce la vedere și pulsează mai tare**, iar mesajul spune exact unde e (sus, în bara editorului, lângă săgeți).
+
 ## v0.10.16
 - Lățimea paginii de scris — se vede că se trage: pe marginile paginii apare acum un „mâner" discret (mai puternic când treci cu mouse-ul). Tragi de margine ca să lățești/îngustezi pagina (rămâne centrată), iar dublu-clic pe margine o face pe toată fereastra, ca să nu mai rămână spațiu negru nefolosit. Funcția exista, dar nu se vedea.
 

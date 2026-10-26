@@ -41,7 +41,8 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
     api.servicesStatus().then((st) => {
       const ok = Boolean(st.services.speechify && st.services.speechify.configured);
       setCloudReady(ok);
-      if (ok) setVoice('speechify');
+      // The default stays the built-in voice "Mihai" (voice = ''); Speechify is only used if the
+      // user picks it from the list. Mihai is local and reliable, so it is the sensible default.
     }, () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
