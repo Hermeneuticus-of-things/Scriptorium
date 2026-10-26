@@ -35,8 +35,10 @@ try {
 }
 
 $portable = $env:SCRIBNER_PORTABLE -eq '1'
-$pattern = if ($portable) { '^PneumaSofer-.*-portabil\.exe$' } else { '^PneumaSofer-Setup-.*\.exe$' }
-$asset = $release.assets | Where-Object { $_.name -match $pattern } | Select-Object -First 1
+# Accept both the current 'PneumaSofer-*' assets and the legacy 'Scribner-*' ones, so the CI dry run
+# passes against the last published release during the rename transition and older releases still install.
+$pattern = if ($portable) { '^(PneumaSofer|Scribner)-.*-portabil\.exe$' } else { '^(PneumaSofer|Scribner)-Setup-.*\.exe$' }
+$asset = $release.assets | Where-Object { $_.name -match $pattern } | Sort-Object { $_.name -notmatch '^PneumaSofer' } | Select-Object -First 1
 if (-not $asset) { throw "Nu am găsit fișierul de instalare în versiunea $($release.tag_name)." }
 
 $dir = if ($portable) { [Environment]::GetFolderPath('Desktop') } else { Join-Path $env:TEMP 'pneuma-install' }
