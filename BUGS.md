@@ -9,6 +9,7 @@ Un sistem coerent, în trei straturi: **vânăm** bug-urile automat, le **semnal
   - `npm run build` + `npm run build:web` — că renderer-ul chiar se construiește,
   - `npm run test:e2e` — aplicația Electron reală (deschide proiect, navighează, salvează) sub `xvfb`.
   Rularea nocturnă prinde eșecurile care depind de mediu/timing (flakes).
+- **Verificare funcțională prin serverul MCP**: `npm run test:mcp` (`tests/mcpFull.test.js`) pornește **serverul MCP real** și apelează fiecare unealtă (cele peste 80 — `create_document`, `write_document`, `compile`, `search`, `lint`, `statistics`…) pe un proiect de unică folosință, verificând că funcția chiar merge, nu doar că se construiește. Rulează în CI. În plus, te **obligă**: o funcție nouă a aplicației pică aici până e expusă prin MCP **sau** marcată „doar GUI, cu motiv" — așa, nimic nou nu rămâne neverificat.
 - **Revizie pe mai multe axe** înainte de fiecare schimbare mai mare: `/code-review` (8 unghiuri — corectitudine, guard-uri scoase, apelanți, reuse, simplificare, eficiență, altitudine, convenții). Pentru o revizie **profundă** înainte de release: `/code-review ultra` (revizie multi-agent în cloud pe branch-ul curent sau pe un PR).
 - **Suita de regresie** (`tests/regressions.test.js`) — vezi stratul 3.
 

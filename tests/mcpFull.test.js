@@ -56,6 +56,7 @@ const NEW_WRITE_TOOLS = (ctx) => ({
 });
 const NEW_READ_TOOLS = (ctx) => ({
   list_templates: {},
+  read_errors: { limit: 10 },
   scriv_outline: { scriv_path: path.join(ctx.tmp, 'mini.scriv') },
   scriv_read: { scriv_path: path.join(ctx.tmp, 'mini.scriv'), id: 'X' },
   scriv_search: { scriv_path: path.join(ctx.tmp, 'mini.scriv'), query: 'T' },

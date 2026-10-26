@@ -59,6 +59,7 @@ import { mediaNode, opmlToNodes, parseComments, parseFootnotes, updateComment } 
 
 const require = createRequire(import.meta.url);
 const templates = require('../lib/templates.cjs');
+const errorLog = require('../lib/errorLog.cjs');
 const importers = require('../lib/importers.cjs');
 const { splitHtml } = require('../lib/docxImport.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
@@ -241,6 +242,17 @@ export function registerFullTools(ctx) {
 
   // ------------------------------------------------------------------ projects and templates
   tool('list_templates', 'Șabloanele de proiect: cele incluse și cele salvate de utilizator (id, nume, categorie).', {}, () => templates.listTemplates(templatesDir()), { global: true });
+
+  tool(
+    'read_errors',
+    'Erorile recente ale aplicației — același jurnal ca Ajutor → Raportează o problemă (mesaj, stack, versiune, proces, timp). Util ca să vezi ce a crăpat în program fără interfață; întoarce cele mai noi `limit` intrări.',
+    { limit: z.number().int().min(1).max(200).default(50) },
+    (_dir, { limit }) => {
+      const entries = errorLog.readEntries(path.join(userData, 'logs', 'errors.jsonl'));
+      return { total: entries.length, errors: entries.slice(-limit) };
+    },
+    { global: true },
+  );
 
   tool(
     'create_project',

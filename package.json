@@ -1,7 +1,7 @@
 {
   "name": "scribner",
   "productName": "Scribner",
-  "version": "0.10.14",
+  "version": "0.10.15",
   "description": "Program de scris pentru cărți lungi: scrii pe bucăți, le aranjezi liber și primești cartea în Word, PDF sau EPUB.",
   "main": "electron/main.cjs",
   "private": true,
@@ -14,6 +14,8 @@
     "build:web": "vite build --outDir dist-web",
     "start": "vite build && electron .",
     "test": "vitest run",
+    "test:mcp": "vitest run tests/mcpFull.test.js",
+    "test:regressions": "vitest run tests/regressions.test.js",
     "mcp": "node mcp/server.mjs",
     "dist:win": "vite build && electron-builder --win dir portable --publish never",
     "test:e2e": "vite build && node tests/e2e/electron.e2e.cjs && node tests/e2e/flows.e2e.cjs",

@@ -422,6 +422,21 @@ export default function App({ api: apiProp }) {
   const activePaneRef = useRef('main');
   activePaneRef.current = activePane;
   const [paneLocks, setPaneLocks] = useState({}); // {main, split}
+  // "Guided hint": briefly glow the control(s) a user needs when an action is blocked or something
+  // isn't set up, so they see WHERE to act instead of just reading a toast. Any element marked
+  // `data-hint="<name>"` glows for a couple of seconds. Adding a new tip is then trivial: mark the
+  // control with data-hint and call showHint('<name>') where the action is blocked. See ROADMAP.
+  const showHint = (name) => {
+    requestAnimationFrame(() => {
+      const els = document.querySelectorAll(`[data-hint="${name}"]`);
+      els.forEach((el) => {
+        el.classList.remove('hint-glow');
+        void el.offsetWidth; // restart the animation if it is still glowing
+        el.classList.add('hint-glow');
+        setTimeout(() => el.classList.remove('hint-glow'), 2600);
+      });
+    });
+  };
   const [splitNav, setSplitNav] = useState({ stack: [], index: -1 });
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
@@ -1037,9 +1052,9 @@ export default function App({ api: apiProp }) {
     }
     // Split editor: the click opens in the pane used last, unless it is locked in place.
     const target = routeSelection({ active: activePaneRef.current, locks: paneLocks, hasSplit: Boolean(splitId) && view === 'editor' });
-    // Every usable pane is locked (🔒). A plain click can't change a locked pane, so say why
-    // instead of doing nothing silently — otherwise the binder looks broken (the document doesn't change).
-    if (!target) return void setToast(tr('ui.app.panou_blocat'));
+    // Every usable pane is locked (🔒). A plain click can't change a locked pane, so say why and
+    // glow the lock, instead of doing nothing silently — otherwise the binder looks broken.
+    if (!target) { setToast(tr('ui.app.panou_blocat')); showHint('paneLock'); return; }
     if (target === 'split') {
       const node = findNode(project.tree, id);
       if (node && !node.root) flush().then(() => setSplitId(id));
@@ -2993,7 +3008,7 @@ export default function App({ api: apiProp }) {
                 )}
                 <button className="hdr-arrow" onClick={() => goSibling(-1)} title={tr('cmd.prevDoc')} aria-label={tr('cmd.prevDoc')}>▲</button>
                 <button className="hdr-arrow" onClick={() => goSibling(1)} title={tr('cmd.nextDoc')} aria-label={tr('cmd.nextDoc')}>▼</button>
-                <button className={`pane-lock ${paneLocks.main ? 'on' : ''}`} onClick={() => toggleLockPane('main')} aria-pressed={Boolean(paneLocks.main)} title={paneLocks.main ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLoc')}>{paneLocks.main ? <LockIcon /> : <UnlockIcon />}</button>
+                <button data-hint="paneLock" className={`pane-lock ${paneLocks.main ? 'on' : ''}`} onClick={() => toggleLockPane('main')} aria-pressed={Boolean(paneLocks.main)} title={paneLocks.main ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLoc')}>{paneLocks.main ? <LockIcon /> : <UnlockIcon />}</button>
                 <button className="split-btn" onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
               </div>
             )}
@@ -3141,7 +3156,7 @@ export default function App({ api: apiProp }) {
               <div className="pane-head">
                 <PaneNav pane="split" history={splitNav} titleOf={titleOfNode} onBack={() => splitStep(-1)} onForward={() => splitStep(1)} onJump={splitJump} />
                 <span className="pane-title" title={splitNode.title}>{splitNode.title}</span>
-                <button className={`pane-lock ${paneLocks.split ? 'on' : ''}`} onClick={() => toggleLockPane('split')} aria-pressed={Boolean(paneLocks.split)} title={paneLocks.split ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLocPanou2')}>{paneLocks.split ? <LockIcon /> : <UnlockIcon />}</button>
+                <button data-hint="paneLock" className={`pane-lock ${paneLocks.split ? 'on' : ''}`} onClick={() => toggleLockPane('split')} aria-pressed={Boolean(paneLocks.split)} title={paneLocks.split ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLocPanou2')}>{paneLocks.split ? <LockIcon /> : <UnlockIcon />}</button>
                 <button className="link" onClick={() => toggleView('splitHorizontal')}>{editorView.splitHorizontal ? tr('ui.app.split_vertical') : tr('ui.app.split_orizontal')}</button>
                 <button className="link" onClick={swapPanes}>{tr('ui.app.inverseaza')}</button>
                 <button className="link" onClick={() => go(splitNode.id)}>{tr('ui.app.deschide_in_principal')}</button>

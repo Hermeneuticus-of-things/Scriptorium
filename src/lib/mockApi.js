@@ -635,6 +635,13 @@ export function createMockApi() {
       if (!(state.services && state.services.deepl && state.services.deepl.apiKey)) throw new Error('Pune cheia DeepL în Setări → Servicii și conturi.');
       return { text: `[${to || 'ro'}] ${text}`, detected: 'en', service: 'DeepL (demo)' };
     },
+    async fetchSynonyms(word) {
+      const w = String(word || '').trim();
+      if (!w) throw new Error('Niciun cuvânt pentru sinonime.');
+      if (/\s/.test(w)) throw new Error('Sinonimele se caută pentru un singur cuvânt.');
+      const map = { frumos: ['arătos', 'plăcut', 'splendid', 'minunat', 'admirabil', 'încântător'], mare: ['imens', 'vast', 'enorm', 'considerabil'], bun: ['valoros', 'potrivit', 'blând', 'util'] };
+      return { word: w, synonyms: map[w.toLowerCase()] || ['frumos', 'plăcut', 'splendid'] };
+    },
     async importZotero() {
       const z = state.services && state.services.zotero;
       if (!(z && z.userId && z.apiKey)) throw new Error('Pune ID-ul de utilizator Zotero și cheia în Setări → Servicii și conturi.');

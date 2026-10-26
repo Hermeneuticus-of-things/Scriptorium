@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.10.15
+- Tips ghidate: când o acțiune nu merge fiindcă ceva e blocat, aplicația îți arată unde e controlul. Prima aplicație: dacă dai click în binder iar panoul e fixat pe loc, lacătul din bara editorului pulsează scurt, ca să știi unde să-l deblochezi. (Respectă „reduce motion".) Mecanism reutilizabil pentru alte situații — vezi ROADMAP.
+- Sinonime — fereastră compactă: dialogul de sinonime e acum mic (nu mai ocupă tot ecranul), cu lista de sinonime derulabilă. Traducerea DeepL/Google nu mai deschide nicio fereastră (înlocuiește pe loc).
+- MCP mai legat de program: unealtă nouă `read_errors` — citește jurnalul de erori al aplicației (ce a crăpat, cu versiune și stack) direct prin serverul MCP, ca erorile să poată fi văzute și reparate fără interfață. Comenzi noi `npm run test:mcp` și `npm run test:regressions`.
+
 ## v0.10.14
 - Traducere în program — înlocuire automată: DeepL și Google traduc acum selecția și o înlocuiesc pe loc (ca plugin-urile din alte editoare), cu Ctrl+Z pentru revenire. Nu mai e nevoie de pasul de confirmare. Verificarea gramaticală (LanguageTool) rămâne cu fereastra de revizuire.
 - Sinonime în program (sinonimul.ro): click dreapta → Dicționare → „Sinonime în program" aduce sinonimele direct în aplicație și le arată ca butoane; apeși unul și înlocuiește cuvântul. Cuvintele cu diacritice merg; formele flexionate (ex. „frumoasă") primesc un mesaj clar să folosești forma de bază, nu o eroare „404".

@@ -14,7 +14,7 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label={isGrammar ? t('ui.services.verificare_gramatica') : isSynonyms ? t('ui.services.sinonime') : t('ui.services.traducere')} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal ${isSynonyms ? 'syn-modal' : 'wide'}`} role="dialog" aria-label={isGrammar ? t('ui.services.verificare_gramatica') : isSynonyms ? t('ui.services.sinonime') : t('ui.services.traducere')} onClick={(e) => e.stopPropagation()}>
         <h2>{isGrammar ? t('ui.services.verificare_gramatica') : isSynonyms ? t('ui.services.sinonime_pentru', { word: result.word }) : t('ui.services.traducere_cu', { service: result.service })}</h2>
         {isSynonyms ? (
           <>

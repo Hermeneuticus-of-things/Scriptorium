@@ -377,6 +377,16 @@ legend { color: var(--muted); padding: 0 4px; }
 .synonyms-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
 .syn-chip { padding: 4px 11px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: inherit; cursor: pointer; font-family: Georgia, 'Times New Roman', serif; font-size: 15px; }
 .syn-chip:hover, .syn-chip:focus-visible { background: var(--accent-soft); border-color: var(--accent); }
+.modal.syn-modal { width: min(460px, 92vw); max-height: 80vh; }
+.modal.syn-modal .synonyms-list { max-height: 50vh; overflow: auto; }
+/* Guided hint: a short glow that points the eye at the control the user needs (e.g. the pane lock
+   when a binder click is blocked). Respects users who ask for less motion. */
+.hint-glow { animation: hint-glow 0.7s ease-in-out 3; border-radius: 4px; position: relative; z-index: 3; }
+@keyframes hint-glow {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 3px var(--accent); background: var(--accent-soft); }
+}
+@media (prefers-reduced-motion: reduce) { .hint-glow { animation: none; box-shadow: 0 0 0 3px var(--accent); } }
 .page-resize { position: absolute; top: 0; bottom: 0; width: 10px; cursor: ew-resize; z-index: 2; }
 .page-resize.left { left: -6px; }
 .page-resize.right { right: -6px; }
