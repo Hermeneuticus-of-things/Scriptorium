@@ -1,0 +1,29 @@
+{
+  "_comment": "Praguri PASS/FAIL per categorie; cheile lipsă moștenesc din 'default'. Editabil.",
+  "default": {
+    "max_wer": 0.1,
+    "min_sentence_success_lenient": 0.8,
+    "min_punct_f1": 0.75,
+    "max_asr_hallucination_rate": 0.0,
+    "min_entity_recall": 1.0,
+    "min_question_recall": null
+  },
+  "questions_rising": {
+    "min_question_recall": 0.8
+  },
+  "numbers_names": {
+    "min_entity_recall": 1.0
+  },
+  "noisy_overlap": {
+    "max_wer": 0.25,
+    "min_sentence_success_lenient": 0.5,
+    "min_punct_f1": 0.6,
+    "max_asr_hallucination_rate": 0.02,
+    "min_entity_recall": 1.0
+  },
+  "summary": {
+    "max_hallucination_rate": 0.0,
+    "gate_is_failure": true,
+    "superseded_is_failure": true
+  }
+}
