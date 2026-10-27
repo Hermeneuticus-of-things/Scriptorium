@@ -50,6 +50,7 @@ const Editor = forwardRef(function Editor(
     styles = [],
     view = {},
     onViewChange,
+    onToggleInvisibles,
     onManageStyles,
     onOpenLink,
     onChange,
@@ -488,8 +489,8 @@ const Editor = forwardRef(function Editor(
   // Invisibles: Options setting or the per-view toggle (Format → paragraph marks).
   useEffect(() => {
     if (!editor || editor.isDestroyed) return;
-    editor.commands.setInvisibles(Boolean(showInvisibles || view.invisibles));
-  }, [editor, showInvisibles, view.invisibles]);
+    editor.commands.setInvisibles(Boolean(showInvisibles));
+  }, [editor, showInvisibles]);
 
   // Focus modes and revision level live in the editor's storage.
   useEffect(() => {
@@ -625,10 +626,12 @@ const Editor = forwardRef(function Editor(
           styles={styles}
           view={view}
           onViewChange={onViewChange}
+          showInvisibles={showInvisibles}
+          onToggleInvisibles={onToggleInvisibles}
         />
       )}
       <div
-        className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? `page-view page-${view.pageSize || 'a5'}` : ''} ${view.pageView && view.facing ? 'facing' : ''} ${view.invisibles ? 'invisibles' : ''}`}
+        className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? `page-view page-${view.pageSize || 'a5'}` : ''} ${view.pageView && view.facing ? 'facing' : ''} ${showInvisibles ? 'invisibles' : ''}`}
         style={{
           ...(view.zoom && view.zoom !== 100 ? { '--zoom': view.zoom / 100 } : {}),
           // Width chosen by dragging the page edges (or the whole window, double-click on an edge).

@@ -2,3 +2,7 @@ node_modules
 dist/
 release/
 dist-web/
+
+# Local package builds (do not commit binaries)
+dist-packages/
+

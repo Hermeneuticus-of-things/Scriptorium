@@ -16,6 +16,7 @@ export const LOOK_DEFAULTS = {
   outAltRows: false, outAltColor: '', outGridColor: '', outFolderColor: '', outTitleFont: '', outSynopsisFont: '',
   // Script elements (element id -> colour)
   scriptColors: {},
+  nameLists: [], // Tools > Name generator custom lists (door: Unelte > Generator de nume)
   // Inspector, scrivenings, annotations margin
   inspNotesFont: '', inspNotesBg: '', inspSynopsisFont: '',
   scrivTitleFont: '', scrivSepColor: '', scrivSepStyle: 'dashed',
@@ -107,12 +108,16 @@ export const DEFAULT_SETTINGS = {
   compPaper: true,
   compFade: 100,
   compAlign: 'center',
+  compBgImage: '',
+  compBgImageFit: 'cover',
+  compShowTargets: false,
   // Corrections
   smartQuotes: true,
   smartDashes: true,
   smartEllipsis: true,
+  smartFractions: false,
   autoCapitalize: false,
-  spellLanguages: ['ro'],
+  spellLanguages: ['ro', 'en-US'],
   autoReplacements: [],
   learnCorrections: true,
   // Editing
@@ -131,6 +136,7 @@ export const DEFAULT_SETTINGS = {
   backupDateName: true, // date and time in the backup's file name
   backupKeep: 5, // new installs; settings saved before keep their value (lib/backup.cjs migrateBackupKeep)
   backupDir: '',
+  backupToDir: '',
   // AI
   aiEnabled: true,
   // Where the label colour is shown (View > Use label colour in)

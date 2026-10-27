@@ -88,6 +88,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     backupEveryMin: init.backupEveryMin || 0,
     backupKeep: init.backupKeep || 5,
     backupDir: init.backupDir || '',
+    backupToDir: init.backupToDir || '',
     teamName: init.team?.name || '',
     dtedPath: init.dtedPath || '',
     dtedModel: init.dtedModel || 'auto',
@@ -101,6 +102,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     aiTimeoutSec: Number(init.aiTimeoutSec) || 300,
     speechAutoInstall: init.speechAutoInstall !== false,
     scratchShortcut: init.scratchShortcut !== false,
+    // B7: also set in the Scratchpad window (dual on purpose, like B6).
+    scratchOnTop: init.scratchOnTop !== false,
+    scratchFolder: init.scratchFolder || '',
     dtedLanguage: init.dtedLanguage || 'ro',
   });
   const set = (k) => (e) => {
@@ -258,7 +262,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         autosaveSec: Math.max(1, num(s.autosaveSec, 2)),
         fontSize: num(s.fontSize, 18) || 18,
         lineHeight: num(s.lineHeight, 1.6),
-        pageWidth: num(s.pageWidth, 42),
+        pageWidth: num(s.pageWidth, 56),
         binderFontSize: num(s.binderFontSize, 14),
         spellLanguages: s.spellLanguages.split(',').map((x) => x.trim()).filter(Boolean),
         autoReplacements: s.autoReplacements.filter((r) => r.from && r.from.trim()),
@@ -348,6 +352,24 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <input value={s.authorName} onChange={set('authorName')} maxLength={120} placeholder={project?.author || ''} />
         </label>
         {api.scratchOpenWindow && check('scratchShortcut', t('set.scratchShortcut'))}
+        {api.scratchOpenWindow && check('scratchOnTop', t('ui.p11.sp_on_top'))}
+        {api.scratchChooseFolder && (
+          <label>
+            {t('ui.p11.sp_folder_hint')}
+            <span style={{ display: 'flex', gap: 6 }}>
+              <input readOnly value={s.scratchFolder} placeholder="—" style={{ flex: 1 }} />
+              <button type="button" onClick={async () => {
+                try { const p = await api.scratchChooseFolder(); if (p) setS((x) => ({ ...x, scratchFolder: p })); } catch (e) { onError(e); }
+              }}>{t('ui.p11.sp_folder')}</button>
+              {s.scratchFolder && api.scratchClearFolder && (
+                <button type="button" title={t('ui.p11.sp_folder_clear')} onClick={async () => {
+                  try { await api.scratchClearFolder(); setS((x) => ({ ...x, scratchFolder: '' })); } catch (e) { onError(e); }
+                }}>✕</button>
+              )}
+            </span>
+          </label>
+        )}
+        {api.scratchOpenWindow && <p className="muted">{t('set.scratchDual')}</p>}
         {project && onProjectSettings && <ProjectDoor onOpen={() => onProjectSettings('tinte')} />}
       </>
     ),
@@ -366,7 +388,6 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             {['rename', 'openQuickRef'].map((x) => <option key={x} value={x}>{t(`set.binderDbl.${x}`)}</option>)}
           </select>
         </label>
-        {check('snapshotOnSave', t('set.snapshotOnSave'))}
         {check('typewriter', t('set.typewriter'))}
       </>
     ),
@@ -423,6 +444,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </select>
         </label>
         {check('showInvisibles', t('set.showInvisibles'))}
+        <p className="muted small">{t('ui.set.invisibles_dual_hint')}</p>
         {check('autoBacklinks', t('set.autoBacklinks'))}
       </>
     ),
@@ -431,6 +453,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         {check('backupOnClose', t('set.backupOnClose'))}
         {check('backupOnOpen', t('ui.settingsDialog.backup_si_la_deschiderea_proiectului'))}
         {check('backupOnSave', t('ui.g4.backupOnSave'))}
+        {check('snapshotOnSave', t('set.snapshotOnSave'))}
         {check('backupZip', t('ui.settingsDialog.backup_comprimat_zip_debifat_copie'))}
         {check('backupDateName', t('ui.g4.backupDateName'))}
         <div className="row">
@@ -452,6 +475,11 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <button disabled={!s.backupDir && !dir} onClick={() => api.openBackupFolder?.(dir)}>{t('set.openBackupFolder')}</button>
           </div>
         </label>
+        <label>
+          {t('set.backupToDir')}
+          <input value={s.backupToDir} readOnly disabled placeholder="—" />
+        </label>
+        <p className="muted small">{t('set.backupToDirHint')}</p>
       </>
     ) : null,
     keyboard: (
@@ -463,6 +491,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     ai: (
       <>
         {check('aiEnabled', t('set.aiEnabled'))}
+        <p className="muted small">{t('ui.ai.ai_dual_hint')}</p>
         <fieldset>
           <legend>Furnizor AI</legend>
           <label>
@@ -663,6 +692,11 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
               <input type="color" value={s.teamColor || (s.teamName.trim() ? colorFor(s.teamName.trim()) : '#2e7dd7')} onChange={set('teamColor')} />
             </label>
           </div>
+          <label>
+            {t('ui.team.id_calculator')}
+            <input value={init.team?.machine || ''} readOnly disabled placeholder={t('ui.team.id_calculator_lipsa')} />
+          </label>
+          <p className="muted small">{t('ui.team.id_calculator_explicatie')}</p>
         </fieldset>
         <fieldset>
           <legend>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</legend>
@@ -914,6 +948,7 @@ function PersonalDictionary({ api, onError }) {
     <fieldset>
       <legend>{t('ui.settingsDialog.dictionar_personal')}{words.length})</legend>
       {words.length > 8 && <input placeholder={t('ui.settingsDialog.cauta_cuvant')} value={filter} onChange={(e) => setFilter(e.target.value)} />}
+      <p className="muted small">{t('ui.settingsDialog.dictionar_personal_hint')}</p>
       {!words.length && <p className="muted">{t('ui.settingsDialog.gol_cuvintele_intra_aici_din')}</p>}
       <div style={{ maxHeight: 160, overflow: 'auto' }}>
         {shown.map((w) => (

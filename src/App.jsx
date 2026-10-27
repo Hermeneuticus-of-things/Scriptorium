@@ -2565,7 +2565,7 @@ export default function App({ api: apiProp }) {
     { label: tr('cmd.history'), action: () => setDialog('history'), disabled: !api.getHistory },
     { label: tr('cmd.backups'), action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
-    { label: tr('ui.app.setarile_proiectului_etichete_statusuri_metadate'), action: () => setDialog('projectSettings') },
+    // D1 2026-10-27 — duplicate removed; door remains cmd.projectSettings via commandList.
     { label: tr('cmd.targets'), action: () => setFloats((f) => ({ ...f, targets: !f.targets })) },
     { label: tr('cmd.stats'), action: () => setDialog('stats') },
     { label: tr('cmd.styles'), action: () => setDialog('styles') },
@@ -3121,6 +3121,11 @@ export default function App({ api: apiProp }) {
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
                 showInvisibles={settings.showInvisibles}
+                onToggleInvisibles={() => {
+                  const v = !settings.showInvisibles;
+                  setSettings((s) => ({ ...s, showInvisibles: v }));
+                  api.setSettings({ showInvisibles: v }).catch(report);
+                }}
                 ref={(r) => registerRef(selected.id, r)}
                 html={docs[selected.id] || ''}
                 title={selected.title}
@@ -3271,6 +3276,11 @@ export default function App({ api: apiProp }) {
                   corrections={corrections}
                   defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
+                  onToggleInvisibles={() => {
+                    const v = !settings.showInvisibles;
+                    setSettings((s) => ({ ...s, showInvisibles: v }));
+                    api.setSettings({ showInvisibles: v }).catch(report);
+                  }}
                   commentColor={settings.commentColor || ''}
                   authorName={settings.authorName || project.author || ''}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}

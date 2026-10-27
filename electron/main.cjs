@@ -236,6 +236,7 @@ function assertOpened(dir) {
 // language pack must be installed in the OS; on Linux the dictionaries download on demand.
 const { lookupGroups } = require('../src/lib/lookups.js');
 
+// Fallback ['ro', 'en-US'] (here and in settings:get) must match DEFAULT_SETTINGS.spellLanguages in src/lib/settingsDefaults.js.
 function applySpellLanguages(win) {
   const ses = win.webContents.session;
   const langs = (readSettings().spellLanguages || ['ro', 'en-US']).filter((l) => ses.availableSpellCheckerLanguages.length === 0 || ses.availableSpellCheckerLanguages.includes(l));
@@ -495,6 +496,7 @@ handle('settings:get', () => {
     backupEveryMin: b.backupEveryMin,
     backupKeep: b.backupKeep,
     backupDir: b.backupDir,
+    backupToDir: s.backupToDir || '',
     aiProvider: aiProviderOf(s),
     aiModel: s.aiModel || '',
     aiBaseUrl: s.aiBaseUrl || '',

@@ -35,3 +35,6 @@ export function downloadText(name, text, type = 'application/json') {
 
 /** File name for an exported theme. */
 export const themeFileName = (name) => `${String(name || 'tema').trim().replace(/[\\/:*?"<>|]+/g, '_') || 'tema'}.scribnertheme`;
+
+// B17: global UI chrome keys stay in localStorage (intentional).
+export { UI_LOCAL_STORAGE_KEYS } from './uiLocalStorage.js';

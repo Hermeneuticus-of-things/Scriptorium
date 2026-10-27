@@ -261,6 +261,7 @@ export default function AppearancePane({ s, setS, set, comp, setComp, pickBgImag
             {['dot', 'row', 'none'].map((x) => <option key={x} value={x}>{t(`ui.look.eticheta_${x}`)}</option>)}
           </select>
         </label>
+        <p className="muted small">{t('ui.look.binder_label_hint')}</p>
         <label>
           {t('ui.look.dosare_stil')}
           <select value={s.binderContainerStyle || 'normal'} onChange={(e) => up('binderContainerStyle')(e.target.value)}>
@@ -323,6 +324,7 @@ export default function AppearancePane({ s, setS, set, comp, setComp, pickBgImag
       <>
         <fieldset>
           <legend>{t('set.composition')}</legend>
+          <p className="muted small">{t('ui.look.comp_dual_hint')}</p>
           <div className="row">
             <label>
               {t('set.compBg')}
@@ -382,6 +384,14 @@ export default function AppearancePane({ s, setS, set, comp, setComp, pickBgImag
                 <option value="0">{t('ui.look.ca_editorul')}</option>
                 {[75, 100, 125, 150, 175, 200, 250, 300].map((z) => <option key={z} value={String(z)}>{z}%</option>)}
                 {Number(s.compZoom) && ![75, 100, 125, 150, 175, 200, 250, 300].includes(Number(s.compZoom)) ? <option value={String(s.compZoom)}>{s.compZoom}%</option> : null}
+              </select>
+            </label>
+            <label>
+              {t('ui.comp.position')}
+              <select value={['left', 'center', 'right'].includes(s.compAlign) ? s.compAlign : 'center'} onChange={(e) => up('compAlign')(e.target.value)}>
+                <option value="left">{t('ui.comp.align_left')}</option>
+                <option value="center">{t('ui.comp.align_center')}</option>
+                <option value="right">{t('ui.comp.align_right')}</option>
               </select>
             </label>
             <label>
@@ -488,6 +498,7 @@ export default function AppearancePane({ s, setS, set, comp, setComp, pickBgImag
         <input ref={importRef} type="file" accept=".scribnertheme,.json,application/json" hidden onChange={importTheme} />
         <button className="link" onClick={resetAll}>{t('ui.look.toate_implicit')}</button>
       </div>
+      <p className="muted small">{t('ui.look.ui_chrome_hint')}</p>
       {msg && <p className="muted small" role="status">{msg}</p>}
       <div className="look-body">
         <ul className="look-sections" aria-label={t('ui.look.sectiuni')}>
