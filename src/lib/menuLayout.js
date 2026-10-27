@@ -8,7 +8,7 @@ export const MENU_GROUPS = ['file', 'edit', 'insert', 'view', 'nav', 'project', 
 // I-REP, NotebookLM and "AI settings" (to turn AI back on) stay.
 export const AI_ONLY_COMMANDS = new Set([
   'ai', 'mcpConnect', 'aiBulkSynopsis', 'aiConsistency', 'aiZoomReview',
-  'aiResearchSel', 'aiDefineSel', 'aiTranslateSel', 'aiProofreadSel', 'researchAskSel',
+  'aiResearchSel', 'aiDefineSel', 'aiTranslateSel', 'aiProofreadSel', 'researchAskSel', 'iedit',
 ]);
 
 // Submenus per menu: [label key, command ids]. A submenu takes the place of its first command.
@@ -36,17 +36,18 @@ export const SUBMENUS = {
     ['menu.lookup', ['lookupDict', 'lookupSyn', 'lookupWiki', 'lookupGoogle', 'selWiktionary', 'selScholar']],
     ['menu.translate', ['deeplInApp', 'googleInApp', 'selDeepl', 'selGoogleTranslate', 'selLinguee', 'selIate']],
     ['menu.inProject', ['findSel', 'researchSel', 'glossaryAdd']],
-    ['menu.notebookLm', ['nlmExport', 'nlmOpen', 'nlmAskSel']],
+    // NotebookLM moved to the AI menu (AI isolation 2026-10-27).
   ],
   ai: [
     ['menu.aiSelection', ['aiResearchSel', 'aiDefineSel', 'aiProofreadSel', 'aiTranslateSel', 'researchAskSel']],
     ['menu.aiBook', ['aiBulkSynopsis', 'aiConsistency', 'aiZoomReview']],
-    ['menu.notebookLm', ['nlmExport', 'nlmOpen', 'nlmAskSel']],
+    ['menu.notebookLm', ['nlmExport', 'nlmOpen', 'nlmAskSel', 'nlmConsultSel']],
   ],
 };
 
 // Fixed order of the AI menu ('-' = separator; a submenu is named by its first command).
-const AI_ORDER = ['ai', 'irep', '-', 'aiResearchSel', 'aiBulkSynopsis', 'nlmExport', '-', 'aiSettings', 'mcpConnect'];
+// AI isolation (2026-10-27): the ONLY door to AI commands and AI settings.
+const AI_ORDER = ['ai', 'irep', 'iedit', '-', 'aiResearchSel', 'aiBulkSynopsis', 'aiCancelJob', 'nlmExport', '-', 'aiSettings', 'aiProjectSettings', 'mcpConnect'];
 
 // Navigate › Go To: the binder as one submenu (favorites first, then each top folder), indented by depth.
 const GOTO_MAX_DEPTH = 4;

@@ -7,21 +7,44 @@ import { colorFor, newMachineId } from '../lib/team.js';
 import { listsFor, profileId } from '../lib/editorial.js';
 import { t, LANGUAGES } from '../lib/i18n.js';
 import AI_PRESETS from '../../lib/aiPresets.json';
+import { DEFAULT_SCOPE, toggleScope } from '../lib/researchChat.js';
+
+// Research sources the AI may use (moved here from the Research panel, AI isolation 2026-10-27).
+// Same per-project storage key the panel reads; the panel is told through a window event.
+const SCOPE_KEY = (dir) => `pneuma-research-scope:${dir}`;
+const readScope = (dir) => {
+  try {
+    const v = dir && localStorage.getItem(SCOPE_KEY(dir));
+    return v ? JSON.parse(v) : DEFAULT_SCOPE;
+  } catch {
+    return DEFAULT_SCOPE;
+  }
+};
 
 // Base URL is editable only for local / custom servers; cloud presets use their fixed URL.
 const EDITABLE_URL = new Set(['ollama', 'lmstudio', 'custom']);
 
-const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'editorial', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'language'];
+const TABS = ['general', 'appearance', 'behaviors', 'corrections', 'editing', 'editorial', 'sharing', 'backup', 'keyboard', 'ai', 'services', 'accounts', 'language'];
 const TAB_FALLBACK = { sharing: 'Partajare' };
 const tabLabel = (k) => {
   const v = t(`set.tab.${k}`);
   return !v || v === `set.tab.${k}` ? TAB_FALLBACK[k] || k : v;
 };
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, onCheckUpdates, initialTab }) {
+// aiOnly: the AI settings dialog (AI › Setări AI…), the single door to AI settings. The general
+// Settings dialog never shows the AI tab.
+// PROGRAM settings reorg 2026-10-27: this dialog holds only PROGRAM settings (+ the AI dialog's own per-project AI
+// items). Book targets and the I-REP editorial profile moved to Proiect › Setările proiectului… (onProjectSettings).
+// Owner decision 2026-10-27: this dialog (aiOnly) is now ONLY "Setari AI program". The book's AI settings
+// (own AI rules, what the AI may use, MCP for the project) moved to AI > Setari AI proiect...
+// (ProjectAiSettingsDialog). Their old code below is kept, hidden behind this flag (not deleted).
+const PROJECT_AI_IN_PROGRAM_DIALOG = false;
+
+export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, onCheckUpdates, onProjectSettings, onProjectAi, initialTab, aiOnly = false }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
   const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
-  const [tab, setTab] = useState(() => (TABS.includes(initialTab) ? initialTab : 'general'));
+  const [tab, setTab] = useState(() => (aiOnly ? 'ai' : TABS.includes(initialTab) && initialTab !== 'ai' ? initialTab : 'general'));
+  const [aiScope, setAiScope] = useState(() => readScope(dir));
   const [s, setS] = useState({
     ...Object.fromEntries(Object.keys(LOOK_DEFAULTS).map((k) => [k, init[k] ?? LOOK_DEFAULTS[k]])),
     savedThemes: init.savedThemes || [],
@@ -72,6 +95,13 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     dtedTimestamps: init.dtedTimestamps !== false,
     speechEngine: init.speechEngine || 'local',
     teamColor: init.team?.color || '',
+    // Keys that had no UI before 2026-10-27 (inventory #143-148); same keys, same defaults as the code that reads them.
+    authorName: init.authorName || '',
+    grammarLanguage: init.grammarLanguage || 'auto',
+    aiTimeoutSec: Number(init.aiTimeoutSec) || 300,
+    speechAutoInstall: init.speechAutoInstall !== false,
+    scratchShortcut: init.scratchShortcut !== false,
+    dtedLanguage: init.dtedLanguage || 'ro',
   });
   const set = (k) => (e) => {
     const v = e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e;
@@ -184,11 +214,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     r.onload = () => setComp((c) => ({ ...c, bgImage: String(r.result) }));
     r.readAsDataURL(file);
   };
-  const [draft, setDraft] = useState(project?.targets?.draft || 0);
-  const [session, setSession] = useState(project?.targets?.session || 0);
+  // Which global word list (settings.editorialLists[id]) is shown; starts at the open book's profile. Not saved:
+  // the book's profile itself is edited in Proiect › Setările proiectului… › Editorial (I-REP).
   const [edBase, setEdBase] = useState(profileId(project?.editorialProfile?.base || 'generic'));
-  const [edRules, setEdRules] = useState(project?.editorialProfile?.rules || {});
-  const [edLimit, setEdLimit] = useState(project?.editorialProfile?.canvasWordLimit ?? 3000);
   // Free-text rules the author wants the AI (I-REP repair + I-EDIT rounds) to always follow.
   const [edAiRules, setEdAiRules] = useState(project?.editorialProfile?.aiRules || '');
   const [mcp, setMcp] = useState(null);
@@ -217,6 +245,14 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
 
   const save = async () => {
     try {
+      if (dir && PROJECT_AI_IN_PROGRAM_DIALOG) {
+        try {
+          localStorage.setItem(SCOPE_KEY(dir), JSON.stringify(aiScope));
+        } catch {
+          /* storage unavailable */
+        }
+        window.dispatchEvent(new CustomEvent('pneuma:research-scope', { detail: { dir, scope: aiScope } }));
+      }
       const patch = normalizeLook({
         ...s,
         autosaveSec: Math.max(1, num(s.autosaveSec, 2)),
@@ -246,6 +282,10 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         },
       });
       patch.dtedPath = s.dtedPath.trim();
+      patch.authorName = String(s.authorName || '').trim().slice(0, 120);
+      patch.grammarLanguage = String(s.grammarLanguage || '').trim() || 'auto';
+      patch.aiTimeoutSec = Math.max(10, Math.min(3600, num(s.aiTimeoutSec, 300) || 300));
+      patch.dtedLanguage = String(s.dtedLanguage || '').trim() || 'ro';
       delete patch.teamName;
       delete patch.teamColor;
       const parseList = (txt, sep) =>
@@ -271,11 +311,12 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       Object.assign(patch, aiPatch());
       await api.setSettings(patch);
       api.updateConfigure?.().catch(() => {});
-      if (project) {
+      // Only the AI dialog writes to the project (its own AI rules); targets and the editorial profile
+      // are saved by Proiect › Setările proiectului… (PROGRAM settings reorg 2026-10-27).
+      if (PROJECT_AI_IN_PROGRAM_DIALOG && project && aiOnly && edAiRules !== (project.editorialProfile?.aiRules || '')) {
         onProjectChange({
           ...project,
-          targets: { ...(project.targets || {}), draft: Number(draft) || 0, session: Number(session) || 0 },
-          editorialProfile: { ...(project.editorialProfile || {}), base: edBase, rules: edRules, canvasWordLimit: Number(edLimit) || 0, aiRules: edAiRules },
+          editorialProfile: { ...(project.editorialProfile || {}), aiRules: edAiRules },
         });
       }
       onClose();
@@ -300,19 +341,14 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           {t('set.autosave')}
           <input type="number" min="1" max="120" value={s.autosaveSec} onChange={set('autosaveSec')} />
         </label>
-        {check('checkUpdates', t('set.checkUpdates'))}
-        {project && (
-          <div className="row">
-            <label>
-              {t('set.targetDraft')}
-              <input type="number" min="0" step="1000" value={draft} onChange={(e) => setDraft(e.target.value)} />
-            </label>
-            <label>
-              {t('set.targetSession')}
-              <input type="number" min="0" step="100" value={session} onChange={(e) => setSession(e.target.value)} />
-            </label>
-          </div>
-        )}
+        {/* checkUpdates (inventory #3): dead setting, read nowhere; its checkbox is hidden (2026-10-27). The key stays
+            in settings.json; the live switch is autoUpdateCheck above. */}
+        <label>
+          {t('set.authorName')}
+          <input value={s.authorName} onChange={set('authorName')} maxLength={120} placeholder={project?.author || ''} />
+        </label>
+        {api.scratchOpenWindow && check('scratchShortcut', t('set.scratchShortcut'))}
+        {project && onProjectSettings && <ProjectDoor onOpen={() => onProjectSettings('tinte')} />}
       </>
     ),
     appearance: <AppearancePane s={s} setS={setS} set={set} comp={comp} setComp={setComp} pickBgImage={pickBgImage} api={api} onError={onError} />,
@@ -344,6 +380,11 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <label>
           {t('set.spellLangs')}
           <input value={s.spellLanguages} onChange={set('spellLanguages')} placeholder="ro, en-US" />
+        </label>
+        <label>
+          {t('set.grammarLanguage')}
+          <input list="set-grammar-langs" value={s.grammarLanguage} onChange={set('grammarLanguage')} placeholder="auto" />
+          <datalist id="set-grammar-langs">{['auto', 'ro-RO', 'en-US', 'en-GB', 'fr', 'de-DE', 'es', 'it', 'pt-PT', 'hu-HU'].map((l) => <option key={l} value={l} />)}</datalist>
         </label>
         {api.listDictionaryWords && <PersonalDictionary api={api} onError={onError} />}
         <fieldset>
@@ -504,14 +545,33 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </label>
           <p className="muted small">{t('ui.settingsDialog.notebooklm_intrebari_continuare')}</p>
         </fieldset>
-        <fieldset>
-          <legend>{t('ui.services.servicii_conturi')}</legend>
-          <ServicesPanel api={api} />
-        </fieldset>
+        <label>
+          {t('set.aiTimeoutSec')}
+          <input type="number" min="10" max="3600" step="10" value={s.aiTimeoutSec} onChange={set('aiTimeoutSec')} />
+        </label>
+        {/* Servicii și conturi (non-AI) moved to the program Settings, tab "Servicii și conturi" (2026-10-27). */}
+        <p className="muted small">{t('set.accountsMoved')}</p>
+        {/* Door to the book's own AI settings (separate dialog; program and project never mix). */}
+        {project && onProjectAi && (
+          <p className="muted small project-door">
+            {t('set.projectAiDoor')}{' '}
+            <button type="button" className="link" onClick={onProjectAi}>{t('cmd.aiProjectSettings')}</button>
+          </p>
+        )}
+        {PROJECT_AI_IN_PROGRAM_DIALOG && dir && (
+          <fieldset>
+            <legend>{t('ui.researchChat.ce_poate_folosi_ai_ul')}</legend>
+            {[['docs', t('ui.researchChat.manuscris')], ['research', t('ui.advancedSearchDialog.cercetare')], ['notes', t('ui.advancedSearchDialog.note')]].map(([k, label]) => (
+              <label key={k} className="check research-kind">
+                <input type="checkbox" checked={(aiScope.kinds || []).includes(k)} onChange={() => setAiScope((sc) => toggleScope(sc, 'kind', k))} /> {label}
+              </label>
+            ))}
+          </fieldset>
+        )}
         <fieldset>
           <legend>{t('set.aiFunctions')}</legend>
           <p className="muted small">{t('set.aiFunctionsInfo')}</p>
-          {project ? (
+          {!PROJECT_AI_IN_PROGRAM_DIALOG ? null : project ? (
             <label>
               {t('set.aiRules')}
               <textarea rows={4} value={edAiRules} onChange={(e) => setEdAiRules(e.target.value)} placeholder={t('set.aiRulesPlaceholder')} />
@@ -520,7 +580,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <p className="muted small">{t('set.aiRulesNoProject')}</p>
           )}
         </fieldset>
-        {api.mcpInfo && dir && (
+        {PROJECT_AI_IN_PROGRAM_DIALOG && api.mcpInfo && dir && (
           <fieldset>
             <legend>{t('set.mcp')}</legend>
             <p className="muted small">{t('set.mcpInfo')}</p>
@@ -544,28 +604,16 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     editorial: (
       <>
         <p className="muted small">{t('set.editorialPaneInfo')}</p>
-        {project && (
-          <fieldset>
-            <legend>{t('set.editorial')}</legend>
-            <label>
-              {t('set.edBase')}
-              <select value={edBase} onChange={(e) => setEdBase(e.target.value)}>
-                <option value="ro">{t('set.edBase.ro')}</option>
-                <option value="generic">{t('set.edBase.generic')}</option>
-              </select>
-            </label>
-            <label>
-              {t('set.edLimit')}
-              <input type="number" min="0" step="100" value={edLimit} onChange={(e) => setEdLimit(e.target.value)} />
-            </label>
-            <label className="check">
-              <input type="checkbox" checked={Boolean(edRules.canvasHeader)} onChange={(e) => setEdRules((r) => ({ ...r, canvasHeader: e.target.checked }))} /> {t('set.edHeader')}
-            </label>
-            <label className="check">
-              <input type="checkbox" checked={Boolean(edRules.canvasFooter)} onChange={(e) => setEdRules((r) => ({ ...r, canvasFooter: e.target.checked }))} /> {t('set.edFooter')}
-            </label>
-          </fieldset>
-        )}
+        {/* The book's editorial profile (base rules, canvas limit, header/footer) moved to
+            Proiect › Setările proiectului… › Editorial (I-REP) (2026-10-27). Only the global word lists stay here. */}
+        {project && onProjectSettings && <ProjectDoor onOpen={() => onProjectSettings('editorial')} />}
+        <label>
+          {t('set.edListProfile')}
+          <select value={edBase} onChange={(e) => setEdBase(e.target.value)}>
+            <option value="ro">{t('set.edBase.ro')}</option>
+            <option value="generic">{t('set.edBase.generic')}</option>
+          </select>
+        </label>
         <fieldset>
           <legend>{t('ui.settingsDialog.editorial_liste_de_cuvinte_profil')} {edBase === 'generic' ? 'Generic' : t('ui.settingsDialog.romana')})</legend>
           <label>
@@ -672,6 +720,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             </div>
           )}
           {api.whisperStatus && s.speechEngine !== 'dted' && <LocalEngine api={api} onError={onError} />}
+          {api.whisperStatus && s.speechEngine !== 'dted' && check('speechAutoInstall', t('set.speechAutoInstall'))}
           {(s.speechEngine === 'dted' || !api.whisperStatus) && (
             <>
               <label>
@@ -712,6 +761,11 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             </>
           )}
           <label>
+            {t('set.dtedLanguage')}
+            <input list="set-dted-langs" value={s.dtedLanguage} onChange={set('dtedLanguage')} placeholder="ro" />
+            <datalist id="set-dted-langs">{['ro', 'en', 'fr', 'de', 'es', 'it', 'hu'].map((l) => <option key={l} value={l} />)}</datalist>
+          </label>
+          <label>
             {t('ui.dted.termeni')}
             <input value={s.dtedTerms} onChange={set('dtedTerms')} placeholder="Ilinca, Apuseni, Matei" />
           </label>
@@ -737,6 +791,13 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       </fieldset>
       </>
     ),
+    // Non-AI services and accounts (moved from AI › Setări AI…, 2026-10-27).
+    accounts: (
+      <>
+        <p className="muted small">{t('set.accountsInfo')}</p>
+        <ServicesPanel api={api} />
+      </>
+    ),
     language: (
       <>
         <label>
@@ -749,13 +810,13 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
       </>
     ),
   };
-  const visibleTabs = TABS.filter((k) => panes[k]);
+  const visibleTabs = aiOnly ? ['ai'] : TABS.filter((k) => k !== 'ai' && panes[k]);
 
   return (
     <div className="modal-backdrop" onClick={() => (!dirty || window.confirm(t('ui.settingsDialog.renunti'))) && cancel()}>
-      <div className="modal settings-dialog" role="dialog" aria-label={t('set.title')} onClick={(e) => e.stopPropagation()} onChangeCapture={() => setDirty(true)}>
-        <h2>{t('set.title')}</h2>
-        <div className="tabs" role="tablist">
+      <div className="modal settings-dialog" role="dialog" aria-label={aiOnly ? t('cmd.aiSettings') : t('set.title')} onClick={(e) => e.stopPropagation()} onChangeCapture={() => setDirty(true)}>
+        <h2>{aiOnly ? t('cmd.aiSettings').replace(/…$/, '') : t('set.title')}</h2>
+        <div className="tabs" role="tablist" hidden={aiOnly}>
           {visibleTabs.map((k) => (
             <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} onClick={() => setTab(k)}>
               {tabLabel(k)}
@@ -769,6 +830,16 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         </div>
       </div>
     </div>
+  );
+}
+
+// Pointer from the program Settings to the project's own door (program and project never share a dialog).
+function ProjectDoor({ onOpen }) {
+  return (
+    <p className="muted small project-door">
+      {t('set.projectDoor')}{' '}
+      <button type="button" className="link" onClick={onOpen}>{t('set.projectDoorBtn')}</button>
+    </p>
   );
 }
 

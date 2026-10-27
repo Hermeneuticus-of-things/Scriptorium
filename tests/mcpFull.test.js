@@ -137,6 +137,7 @@ const PRELOAD_COVERAGE = {
   printDocument: 'gui: tipărire la imprimantă',
   setAppMenu: 'gui: meniul ferestrei',
   onMenuCommand: 'gui: meniul ferestrei',
+  onNativeMenuOpen: 'gui: meniul ferestrei (inchide meniurile din aplicatie)',
   watchProject: 'gui: reîncărcarea ferestrei la schimbări externe',
   reloadProject: 'gui: reîncărcarea ferestrei la schimbări externe',
   syncConflicts: 'gui: anunță copiile în conflict lăsate de serviciul de sincronizare',

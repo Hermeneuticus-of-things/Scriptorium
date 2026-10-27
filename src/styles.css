@@ -756,3 +756,9 @@ legend { color: var(--muted); padding: 0 4px; }
 .tpl-menu > button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .tpl-menu .recent { list-style: none; margin: 0; padding: 0; }
 @media (max-width: 640px) { .tpl-body { flex-direction: column; } .tpl-cats { flex-basis: auto; } }
+
+/* About dialog — licence table */
+.about-licenses { width: 100%; border-collapse: collapse; font-size: 12px; }
+.about-licenses th, .about-licenses td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.about-licenses .about-group th { padding-top: 12px; color: var(--muted); font-weight: 600; }
+.about-licenses .about-flag { color: var(--danger); white-space: nowrap; }

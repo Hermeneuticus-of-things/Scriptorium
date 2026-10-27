@@ -21,7 +21,7 @@ export function groupTemplates(list = []) {
   return [...map.entries()].sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0], 'ro')).map(([category, templates]) => ({ category, templates }));
 }
 
-export default function Home({ api, settings: initialSettings, onOpen, onError, onSettings, onHelp, onTutorial }) {
+export default function Home({ api, settings: initialSettings, onOpen, onError, onSettings, onHelp, onAbout, onTutorial }) {
   const [settings, setLocal] = useState(initialSettings);
   useEffect(() => setLocal(initialSettings), [initialSettings]);
   const pinned = settings.recentPinned || [];
@@ -239,6 +239,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
       <nav className="home-links">
         <button className="link" onClick={onSettings}>{tr('set.title')}</button>
         {onHelp && <button className="link" onClick={onHelp}>{tr('cmd.help')} (F1)</button>}
+        {onAbout && <button className="link" onClick={onAbout}>{tr('cmd.about')}</button>}
         {onTutorial && <button className="link" onClick={onTutorial}>{tr('cmd.tutorial')}</button>}
       </nav>
     </div>

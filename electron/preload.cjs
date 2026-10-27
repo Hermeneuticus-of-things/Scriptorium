@@ -71,6 +71,12 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('menu:command', listener);
     return () => ipcRenderer.removeListener('menu:command', listener);
   },
+  // A popup of the native menu bar is opening: in-app popups (format bar menus) close.
+  onNativeMenuOpen: (fn) => {
+    const listener = () => fn();
+    ipcRenderer.on('menu:nativeOpen', listener);
+    return () => ipcRenderer.removeListener('menu:nativeOpen', listener);
+  },
   // Learned corrections: is a word misspelled for the active spell checker; a suggestion picked
   // from the native context menu ({ from, to }).
   isMisspelled: (word) => {
