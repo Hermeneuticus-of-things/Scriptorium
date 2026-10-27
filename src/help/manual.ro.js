@@ -14,7 +14,7 @@ export const MANUAL_RO = [
         title: 'Ce este Pneuma Sofer',
         html: `<p>Pneuma Sofer este un program pentru texte lungi: romane, non-ficțiune, teze, scenarii, volume de poezie. În loc de un singur fișier uriaș, lucrezi cu <strong>documente mici</strong> (scene, capitole, secțiuni) așezate într-un arbore numit <strong>binder</strong>. Le muți, le împarți și le unești liber, iar la final <strong>Compile</strong> le adună într-un singur manuscris (DOCX, PDF, EPUB și altele).</p>
 <p>Programul e scris de la zero. Proiectele <code>.scriv</code> se pot importa fără pierderi și se pot exporta înapoi.</p>
-<p>AI-ul este <strong>opțional</strong>: totul merge fără el, iar comutatorul din <em>Setări → AI</em> îl oprește complet.</p>`,
+<p>AI-ul este <strong>opțional</strong>: totul merge fără el, iar comutatorul din <em>AI → Setări AI</em> îl oprește complet.</p>`,
       },
       {
         id: 'start-window',
@@ -607,7 +607,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'irep-profiles',
         title: 'Profiluri: Generic și Română',
-        html: `<p>Profilul se alege în <em>Setări → AI → Profil editorial</em>:</p>
+        html: `<p>Profilul se alege în <em>Setări → Editorial → Profil editorial</em>:</p>
 <ul>
 <li><strong>Generic</strong> (implicit): orice text; verifică tipografia (spații, ghilimele, liniuțe, puncte de suspensie) și reziduurile tipice textelor generate de modele de limbaj.</li>
 <li><strong>Română</strong>: aplică DOOM III, protocoalele P1–P13 și rundele R0–R11, plus regulile pentru termeni străini.</li>
@@ -638,7 +638,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'ai-setup',
         title: 'Pornirea asistentului',
-        html: `<p>În <em>Setări → AI</em> bifează funcțiile AI și introdu cheia API Anthropic. Cheia este criptată de sistemul de operare și rămâne în procesul principal; interfața nu o vede. Butonul <em>Șterge cheia API</em> o elimină.</p>
+        html: `<p>În <em>AI → Setări AI</em> bifează funcțiile AI și introdu cheia API Anthropic. Cheia este criptată de sistemul de operare și rămâne în procesul principal; interfața nu o vede. Butonul <em>Șterge cheia API</em> o elimină.</p>
 <p>Debifat, nimic nu contactează serviciul AI, iar comenzile AI dispar sau sunt dezactivate.</p>`,
       },
       {
@@ -661,7 +661,7 @@ media/                 imagini, PDF, audio, video</pre>
         title: 'Agenți AI prin MCP',
         html: `<p>Serverul MCP Pneuma Sofer (<code>mcp/server.mjs</code>) permite unui agent (Claude Code, Claude Desktop sau alt client MCP) să lucreze cu un proiect ca din program: binder, text, căutare, metadate, note pe taburi, cuvinte cheie, etichete și statusuri, ținte, colecții, comentarii și note de subsol, împărțire și unire, coș, snapshot-uri și comparare, I-REP și I-EDIT fără AI, statistici, cronologie, cercetare, glosar, Compile în toate formatele, import și export (inclusiv <code>.scriv</code>, NotebookLM, pachetul PENTRU EDITOR), interogarea unui notebook NotebookLM pe surse cu întrebări de continuare (<code>consult_notebook</code>, opțional, dacă e configurat un notebook și serverul <code>notebooklm-mcp</code>), proiecte noi din șabloane și backup. Fiecare scriere face snapshot înainte și se notează în <code>agent-log.jsonl</code>.</p>
 <pre>claude mcp add pneuma -- node "/cale/Pneuma Sofer/mcp/server.mjs" --project "/cale/Cartea mea.scribner"</pre>
-<p><code>--read-only</code> permite doar citirea. Comanda exactă pentru instalarea ta apare în <em>Setări → AI → Conexiune MCP → Arată comanda de conectare</em>.</p>`,
+<p><code>--read-only</code> permite doar citirea. Comanda exactă pentru instalarea ta apare în <em>AI → Setări AI → Conexiune MCP → Arată comanda de conectare</em>.</p>`,
       },
     ],
   },
@@ -753,7 +753,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'faq-ai',
         title: 'Comenzile AI sunt gri',
-        html: `<p>Pornește funcțiile AI și introdu cheia în <em>Setări → AI</em>. Restul programului nu depinde de AI.</p>`,
+        html: `<p>Pornește funcțiile AI și introdu cheia în <em>AI → Setări AI</em>. Restul programului nu depinde de AI.</p>`,
       },
       {
         id: 'faq-scriv',
@@ -807,7 +807,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'yours-ai',
         title: 'Cheia AI și testul cu un model real',
-        html: `<p>În <em>Setări → AI</em> alegi furnizorul (Anthropic, OpenAI, OpenRouter, NVIDIA NIM, Mistral, Groq, DeepSeek, xAI, Gemini, Ollama local, LM Studio local sau un server compatibil OpenAI), lipești cheia și scrii id-ul modelului. Modelele se retrag des: dacă primești <em>modelul a fost retras</em>, alege altul din lista furnizorului.</p>
+        html: `<p>În <em>AI → Setări AI</em> alegi furnizorul (Anthropic, OpenAI, OpenRouter, NVIDIA NIM, Mistral, Groq, DeepSeek, xAI, Gemini, Ollama local, LM Studio local sau un server compatibil OpenAI), lipești cheia și scrii id-ul modelului. Modelele se retrag des: dacă primești <em>modelul a fost retras</em>, alege altul din lista furnizorului.</p>
 <p>Fără bani: pe OpenRouter, modelele terminate în <code>:free</code>; pe <em>build.nvidia.com</em>, cheia <code>nvapi-…</code> vine cu credite gratuite; local, Ollama sau LM Studio nu cer cheie.</p>
 <p>Test rapid din folderul programului, în PowerShell:</p>
 <pre>$env:OPENROUTER_API_KEY = "sk-or-…"

@@ -16,10 +16,11 @@ describe('toolbar registry', () => {
   it('every item label exists in RO and EN', () => {
     for (const it of [...TOP_ITEMS, ...FORMAT_ITEMS]) for (const l of ['ro', 'en']) expect(dictionaries[l][it.label], `${l} ${it.label}`).toBeTruthy();
   });
-  it('AI and desktop-only items', () => {
-    const ai = TOP_ITEMS.find((i) => i.id === 'ai');
-    expect(topItemAvailable(ai, { aiEnabled: false, desktop: true })).toBe(false);
-    expect(topItemAvailable(TOP_ITEMS.find((i) => i.id === 'aiMenu'), { aiEnabled: true, desktop: false })).toBe(false);
+  it('AI isolation: no AI door on the toolbar (AI lives only in the top-level AI menu)', () => {
+    for (const id of ['ai', 'aiMenu', 'irep']) expect(TOP_ITEMS.find((i) => i.id === id)).toBeUndefined();
+    expect(TOP_ITEMS.some((i) => i.kind === 'aiMenu' || i.needs === 'ai')).toBe(false);
+    expect(TOP_DEFAULT).not.toContain('aiMenu');
+    expect(typeof topItemAvailable).toBe('function');
   });
 });
 

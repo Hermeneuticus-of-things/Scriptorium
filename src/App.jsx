@@ -19,6 +19,7 @@ import QuickRef from './components/QuickRef.jsx';
 import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
 import UpdateDialog, { UpdateBanner } from './components/UpdateDialog.jsx';
+import AboutDialog from './components/AboutDialog.jsx';
 import GoToDialog from './components/GoToDialog.jsx';
 import ProjectSettingsDialog from './components/ProjectSettingsDialog.jsx';
 import StatisticsDialog from './components/StatisticsDialog.jsx';
@@ -55,6 +56,7 @@ import { errorKey, noteAction, onMemoryError } from './lib/reportProblem.js';
 import ResearchPanel from './components/ResearchPanel.jsx';
 import AiJobBar from './components/AiJobBar.jsx';
 import McpConnectDialog from './components/McpConnectDialog.jsx';
+import ProjectAiSettingsDialog from './components/ProjectAiSettingsDialog.jsx';
 import { buildMenuLayout, nativeMenuSpec, AI_ONLY_COMMANDS } from './lib/menuLayout.js';
 import { editorMenus } from './lib/editorMenus.js';
 import FloatingInspector from './components/FloatingInspector.jsx';
@@ -120,6 +122,7 @@ import {
   historyUndo,
   historyRedo,
 } from './lib/tree.js';
+import { importDestination } from './lib/importFolder.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
 import { applyTextEdits, replaceRangeText } from './lib/serviceApply.js';
@@ -179,6 +182,23 @@ function saveUi(dir, ui) {
   } catch {
     /* storage unavailable: not critical */
   }
+}
+
+// Native application menu. Rendered only while a project is open. The spec is sent only when it
+// actually changes (real dependency: its JSON), not after every render; the main process defers
+// applying it while a native popup is open and updates enabled flags in place when the structure
+// is unchanged. Unmounting (project closed) clears the window menu.
+function NativeMenuSync({ api, layout, actionsRef }) {
+  const { spec, actions } = nativeMenuSpec(layout || []);
+  actionsRef.current = actions; // fresh closures every render; ids are stable
+  const json = JSON.stringify(spec);
+  useEffect(() => {
+    api.setAppMenu(JSON.parse(json)).catch(() => {});
+  }, [api, json]);
+  useEffect(() => () => {
+    api.setAppMenu([]).catch(() => {});
+  }, [api]);
+  return null;
 }
 
 export default function App({ api: apiProp }) {
@@ -277,7 +297,7 @@ export default function App({ api: apiProp }) {
     onMessage: (m) => setToast(m),
     onTranscript: (r, job) => {
       const html = transcriptHtml(r, { timestamps: settings?.dtedTimestamps !== false });
-      addResearchDocs([{ title: tr('ui.dted.titlu_transcriere', { title: job.title }), html }])
+      addResearchDocs([{ title: tr('ui.dted.titlu_transcriere', { title: job.title }), html }], '', { toImportFolder: true })
         .then((ids) => {
           if (ids[0]) go(ids[0]);
           setToast(tr('ui.dted.transcriere_gata', { title: job.title }));
@@ -294,6 +314,7 @@ export default function App({ api: apiProp }) {
   const [findSeed, setFindSeed] = useState('');
   const [serviceResult, setServiceResult] = useState(null); // { source, result, handle } from DeepL / Google / LanguageTool // { action, n } run by AiPanel
   const [showEditorial, setShowEditorial] = useState(false);
+  const [editorialTabReq, setEditorialTabReq] = useState(null); // {tab, n}: AI › I-EDIT opens the panel on that tab
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
   // Split / reference panes: the pane last clicked or typed in is marked active (green border, see
@@ -316,6 +337,7 @@ export default function App({ api: apiProp }) {
   const [reportOpen, setReportOpen] = useState(false);
   // Help → Check for updates, and the "new version" banner (once per new version; remembered in settings).
   const [updateOpen, setUpdateOpen] = useState(null); // null | { initial }
+  const [aboutOpen, setAboutOpen] = useState(false); // Help → About Pneuma Sofer
   const [updateBanner, setUpdateBanner] = useState(null);
   const bannerShown = useRef('');
   useEffect(() => {
@@ -370,6 +392,7 @@ export default function App({ api: apiProp }) {
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [settingsTab, setSettingsTab] = useState('');
+  const [psTab, setPsTab] = useState(''); // Proiect › Setările proiectului… opened on a given tab (from the program Settings)
   const openSettings = (tab = '') => { setSettingsTab(typeof tab === 'string' ? tab : ''); setDialog('settings'); };
   const [revealId, setRevealId] = useState(null);
   const [showFloatInspector, setShowFloatInspector] = useState(false);
@@ -1248,12 +1271,13 @@ export default function App({ api: apiProp }) {
     }
     if (!items.length) return;
     const pj = projectRef.current;
-    const research = pj.tree.find((n) => n.root === 'research');
+    // P2: Project Settings > Folders > import folder when valid, else Research.
+    const dest = importDestination(pj);
     let tree = pj.tree;
     for (const it of items) {
       const node = mediaNode(newNode, it);
       if (/^image\//.test(it.media.mime)) node.synopsisImage = it.media.file;
-      tree = insertNear(tree, research.id, node);
+      tree = insertNear(tree, dest, node);
     }
     saveProject({ ...pj, tree });
     setToast(tr('ui.rmedia.adaugate', { count: items.length }));
@@ -1267,8 +1291,7 @@ export default function App({ api: apiProp }) {
     try {
       const it = await api.archiveWebPage(dir, url);
       const pj = projectRef.current;
-      const research = pj.tree.find((n) => n.root === 'research');
-      saveProject({ ...pj, tree: insertNear(pj.tree, research.id, mediaNode(newNode, it)) });
+      saveProject({ ...pj, tree: insertNear(pj.tree, importDestination(pj), mediaNode(newNode, it)) });
       go(it.id);
       setView('editor');
     } catch (e) {
@@ -1795,12 +1818,13 @@ export default function App({ api: apiProp }) {
     try {
       const items = await api.addMediaFiles(dir);
       if (!items || !items.length) return;
-      const research = project.tree.find((n) => n.root === 'research');
-      let tree = project.tree;
+      const pj = projectRef.current;
+      const dest = importDestination(pj);
+      let tree = pj.tree;
       for (const it of items) {
         const node = mediaNode(newNode, it);
         if (/^image\//.test(it.media.mime)) node.synopsisImage = it.media.file;
-        tree = insertNear(tree, research.id, node);
+        tree = insertNear(tree, dest, node);
       }
       setTree(tree);
       go(items[0].id);
@@ -1979,9 +2003,10 @@ export default function App({ api: apiProp }) {
   };
 
   // baseTree: lets a caller that also adds other nodes save everything in one project write.
-  const importParts = (parts, baseTree = projectRef.current.tree) => {
+  // start: the project's import folder when valid (P2), else next to the binder selection.
+  const importParts = (parts, baseTree = projectRef.current.tree, start = importDestination(projectRef.current, baseTree, selectedId)) => {
     let tree = baseTree;
-    let anchor = selectedId;
+    let anchor = start;
     const created = [];
     for (const p of parts) {
       const node = newNode('text', p.title);
@@ -2000,7 +2025,7 @@ export default function App({ api: apiProp }) {
     const items = await api.importOpml();
     if (!items || !items.length) return;
     let tree = project.tree;
-    let anchor = selectedId;
+    let anchor = importDestination(project, tree, selectedId);
     for (const node of opmlToNodes(items, project, newNode, tr('ui.app.fara_titlu'))) {
       tree = insertNear(tree, anchor, node);
       anchor = node.id;
@@ -2015,7 +2040,7 @@ export default function App({ api: apiProp }) {
     const node = newNode('text', title || page.title || url);
     // The download can take seconds; the binder may have changed meanwhile.
     const pj = projectRef.current;
-    let tree = insertNear(pj.tree, selectedId, node);
+    let tree = insertNear(pj.tree, importDestination(pj, pj.tree, selectedId), node);
     for (const m of page.media || []) tree = insertNear(tree, node.id, mediaNode(newNode, m));
     saveProject({ ...pj, tree });
     setDocs((d) => ({ ...d, [node.id]: page.html }));
@@ -2023,12 +2048,12 @@ export default function App({ api: apiProp }) {
     go(node.id);
   };
   // Research chat: new documents appended to the Research folder (or a named subfolder of it).
-  const addResearchDocs = async (items, folderTitle = '') => {
+  const addResearchDocs = async (items, folderTitle = '', opts = {}) => {
     const pj = projectRef.current;
     let tree = pj.tree;
     const research = tree.find((n) => n.root === 'research');
     if (!research) return [];
-    let parentId = research.id;
+    let parentId = (opts.toImportFolder && !folderTitle && importDestination(pj, tree, research.id)) || research.id;
     if (folderTitle) {
       const existing = (research.children || []).find((n) => n.type === 'folder' && n.title === folderTitle);
       if (existing) parentId = existing.id;
@@ -2068,9 +2093,10 @@ export default function App({ api: apiProp }) {
     // `project` snapshot made the second one drop the first one's items.
     const pj = projectRef.current;
     let tree = pj.tree;
+    const dest = importDestination(pj, tree, selectedId);
     for (const m of res.media) {
       const node = mediaNode(newNode, m);
-      tree = insertNear(tree, selectedId, node);
+      tree = insertNear(tree, dest, node);
     }
     if (res.texts.length) importParts(res.texts, tree);
     else if (res.media.length) saveProject({ ...pj, tree });
@@ -2181,22 +2207,18 @@ export default function App({ api: apiProp }) {
     if (settings) setFormatLayout(toolbarPrefs(settings.toolbars).format);
   }, [settings]);
   // Native application menu: send the menu built from the registry whenever it changes.
-  const lastMenu = useRef('');
+  // (sent by <NativeMenuSync>, rendered only while a project is open)
   const menuLayoutRef = useRef(null);
   const menuActionsRef = useRef({});
-  useEffect(() => {
-    if (!api.setAppMenu || !project) return;
-    const { spec, actions } = nativeMenuSpec(menuLayoutRef.current || []);
-    menuActionsRef.current = actions;
-    const json = JSON.stringify(spec);
-    if (json === lastMenu.current) return;
-    lastMenu.current = json;
-    api.setAppMenu(spec).catch(() => {});
-  });
   // Native application menu: commands come back by id.
   useEffect(() => {
     if (!api.onMenuCommand) return undefined;
-    return api.onMenuCommand((id) => (commandsRef.current[id] ? commandsRef.current[id].run() : menuActionsRef.current[id]?.()));
+    const offOpen = api.onNativeMenuOpen?.(() => window.dispatchEvent(new Event('pneuma:closeMenus')));
+    const offCmd = api.onMenuCommand((id) => (commandsRef.current[id] ? commandsRef.current[id].run() : menuActionsRef.current[id]?.()));
+    return () => {
+      offCmd?.();
+      offOpen?.();
+    };
   }, [api]);
 
   // --- resizable panels ---
@@ -2230,6 +2252,7 @@ export default function App({ api: apiProp }) {
           onError={report}
           onSettings={() => setDialog('settings')}
           onHelp={() => setHelp({ topic: null, tab: 'manual' })}
+          onAbout={() => setAboutOpen(true)}
           onTutorial={api.newProject ? () => api.newProject('Tutorial Pneuma Sofer', 'tutorial').then(openResult).catch(report) : undefined}
         />
         {help && (
@@ -2247,6 +2270,7 @@ export default function App({ api: apiProp }) {
         {dialog === 'settings' && (
           <SettingsDialog
             initialTab={settingsTab}
+            aiOnly={settingsTab === 'ai'}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
             onCheckUpdates={api.updateCheck ? () => { setDialog(null); setUpdateOpen({ initial: null }); } : undefined}
             api={api}
@@ -2261,8 +2285,9 @@ export default function App({ api: apiProp }) {
           />
         )}
         <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
-      <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
+        {/* UpdateUi was rendered twice on Home (double update dialog/banner); one copy kept (2026-10-27). */}
         <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
+        {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
         <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
       </>
     );
@@ -2434,8 +2459,17 @@ export default function App({ api: apiProp }) {
       .then(openResult)
       .catch(report);
   };
-  const scriptFormat = settings?.scriptFormat || null;
+  // Format > Mod scenariu belongs to the BOOK, not the program (owner decision 2026-10-27):
+  // stored as project.scriptFormat (null = off). Projects saved before the move have no key yet and
+  // keep showing the old global settings.scriptFormat until a mode is picked for them (migration on
+  // first choice). The global key stays in settings (not deleted) and is only written with no project open.
+  const scriptFormat = project && project.scriptFormat !== undefined ? project.scriptFormat || null : settings?.scriptFormat || null;
   const setScriptFormat = async (f) => {
+    const cur = projectRef.current || project;
+    if (cur) {
+      saveProject({ ...cur, scriptFormat: f || null });
+      return;
+    }
     await api.setSettings({ scriptFormat: f });
     setSettings(await api.getSettings());
   };
@@ -2535,12 +2569,14 @@ export default function App({ api: apiProp }) {
     { label: tr('cmd.history'), action: () => setDialog('history'), disabled: !api.getHistory },
     { label: tr('cmd.backups'), action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
-    { label: tr('ui.app.setarile_proiectului_etichete_statusuri_metadate'), action: () => setDialog('projectSettings') },
+    // D1 2026-10-27 — duplicate removed; door remains cmd.projectSettings via commandList.
     { label: tr('cmd.targets'), action: () => setFloats((f) => ({ ...f, targets: !f.targets })) },
     { label: tr('cmd.stats'), action: () => setDialog('stats') },
     { label: tr('cmd.styles'), action: () => setDialog('styles') },
     { label: tr('cmd.compile'), action: () => flush().then(() => setDialog('compile')) },
-    { label: tr('cmd.settings'), action: () => setDialog('settings') },
+    // Program "Setări…" removed from the Proiect menu (duplicate door; PROGRAM settings reorg 2026-10-27).
+    // The program settings door is Unelte › Setări… (tools/settings); project and program never share a menu.
+    // { label: tr('cmd.settings'), action: () => setDialog('settings') },
   ];
 
   // Command registry: every command has an id, a label, a menu group and a
@@ -2625,8 +2661,12 @@ export default function App({ api: apiProp }) {
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
+    ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
+    ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
     ['ai', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    // Two separate AI doors (owner decision 2026-10-27): program AI (global) and project AI (open book).
     ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
+    ['ai', 'aiProjectSettings', tr('cmd.aiProjectSettings'), () => setDialog('projectAi'), !project],
     ['ai', 'mcpConnect', tr('cmd.mcpConnect'), () => setDialog('mcp'), !api.mcpConnectInfo],
     ['view', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
     ['view', 'copyholder', tr('cmd.copyholder'), () => openCopyholder(selected?.id), !selected || Boolean(selected.root) || Boolean(selected.children)],
@@ -2657,8 +2697,8 @@ export default function App({ api: apiProp }) {
     ['ai', 'aiBulkSynopsis', tr('cmd.aiBulkSynopsis'), () => runBulkSynopsis().catch(report), !aiEnabled || !api.aiBulkSynopsis],
     ['ai', 'aiConsistency', tr('cmd.aiConsistency'), () => runConsistency().catch(report), !aiEnabled || !api.aiConsistency],
     ['ai', 'aiZoomReview', tr('cmd.aiZoomReview'), () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
-    [aiEnabled ? 'ai' : 'tools', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
-    [aiEnabled ? 'ai' : 'tools', 'nlmOpen', tr('cmd.nlmOpen'), () => api.nlmOpen().catch(report), !api.nlmOpen],
+    ['ai', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
+    ['ai', 'nlmOpen', tr('cmd.nlmOpen'), () => api.nlmOpen().catch(report), !api.nlmOpen],
     ['file', 'newWindow', tr('cmd.newWindow'), () => api.newWindow().catch(report), !api.newWindow],
     ['file', 'exportBundle', tr('cmd.exportBundle'), () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', tr('cmd.importBundle'), () => api.importBundle().then(openResult).catch(report), !api.importBundle],
@@ -2676,7 +2716,7 @@ export default function App({ api: apiProp }) {
     ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
     ['help', 'reportIssue', tr('cmd.reportIssue'), () => setReportOpen(true)],
     ['help', 'checkUpdates', tr('cmd.checkUpdates'), () => setUpdateOpen({ initial: null }), !api.updateCheck],
-    ['help', 'about', 'Despre Pneuma Sofer', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
+    ['help', 'about', tr('cmd.about'), () => setAboutOpen(true)],
     ['tools', 'nameGen', tr('cmd.nameGen'), () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', tr('cmd.speech'), () => setShowSpeech((v) => !v)],
@@ -2747,8 +2787,8 @@ export default function App({ api: apiProp }) {
     ['tools', 'readBook', tr('cmd.readBook'), () => bookText().then((t) => reader.read(t)).catch(report), !reader.canRead],
     ['tools', 'stopRead', tr('cmd.stopRead'), () => reader.stop()],
     ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
-    [aiEnabled ? 'ai' : 'tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
-    [aiEnabled ? 'ai' : 'tools', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
+    ['ai', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
+    ['ai', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];
@@ -2787,7 +2827,7 @@ export default function App({ api: apiProp }) {
 
   // Top toolbar from the customizable registry (src/lib/toolbars.js).
   const TB_ICONS = { back: BackIcon, forward: ForwardIcon, compile: CompileIcon, compose: ComposeIcon, inspector: InspectorIcon, split: SplitIcon, binder: BinderIcon, search: SearchIcon, add: AddIcon, snapshot: SnapshotIcon, bookmark: BookmarkIcon, notes: NotesIcon };
-  const tbOn = { inspector: showInspector, binder: !hideBinder, splitEditor: Boolean(splitId), irep: showEditorial, ai: showAi, composition };
+  const tbOn = { inspector: showInspector, binder: !hideBinder, splitEditor: Boolean(splitId), composition };
   const tbDisabled = { back: nav.index <= 0, forward: nav.index >= nav.stack.length - 1 };
   const renderTopItem = (id, i) => {
     if (id === 'sep') return <span key={`sep${i}`} className="tb-sep" role="separator" />;
@@ -2795,10 +2835,6 @@ export default function App({ api: apiProp }) {
     const it = TOP_ITEMS.find((x) => x.id === id);
     if (!it || !topItemAvailable(it, { aiEnabled, desktop: Boolean(api.setAppMenu) })) return null;
     if (it.kind === 'title') return <strong key={id} className="project-title" title={project.title}>{project.title}</strong>;
-    if (it.kind === 'aiMenu') {
-      const m = menuLayout.find((x) => x.group === 'ai');
-      return m ? <Menu key={id} label={m.label} items={m.items} className="menu-ai" /> : null;
-    }
     if (it.kind === 'views') {
       return (
         <div key={id} className="seg" role="group" aria-label={tr('ui.tb.views')}>
@@ -2870,29 +2906,16 @@ export default function App({ api: apiProp }) {
       }
       items.push({ label: tr('ui.ctx.cercetare_web'), submenu: links(g.research) });
 
-      // AI și proiect.
+      // Proiect. AI isolation (2026-10-27): AI, NotebookLM and „Întreabă AI-ul” live only in the AI menu.
       sep();
-      if (aiEnabled) {
-        items.push({
-          label: tr('ui.ctx.asistent_ai'),
-          submenu: [
-            { label: tr('ui.aiPanel.cercetare'), action: run('aiResearchSel') },
-            { label: tr('ui.aiPanel.explica'), action: run('aiDefineSel') },
-            { label: tr('ui.aiPanel.corectura'), action: run('aiProofreadSel') },
-            { label: tr('ui.aiPanel.traduce'), action: run('aiTranslateSel') },
-          ],
-        });
-      }
       items.push({
         label: tr('ui.ctx.in_proiect'),
         submenu: [
           { label: tr('cmd.findSel'), action: run('findSel') },
           ...(api.ragQuery ? [{ label: tr('cmd.researchSel'), action: run('researchSel') }] : []),
-          ...(api.ragAsk && aiEnabled ? [{ label: tr('cmd.researchAskSel'), action: run('researchAskSel') }] : []),
           { label: tr('cmd.glossaryAdd'), action: run('glossaryAdd') },
         ],
       });
-      if (api.nlmOpen) items.push({ label: tr('cmd.nlmAskSel'), action: askNotebookLm });
     }
 
     // Selecție.
@@ -3102,6 +3125,11 @@ export default function App({ api: apiProp }) {
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
                 showInvisibles={settings.showInvisibles}
+                onToggleInvisibles={() => {
+                  const v = !settings.showInvisibles;
+                  setSettings((s) => ({ ...s, showInvisibles: v }));
+                  api.setSettings({ showInvisibles: v }).catch(report);
+                }}
                 ref={(r) => registerRef(selected.id, r)}
                 html={docs[selected.id] || ''}
                 title={selected.title}
@@ -3252,6 +3280,11 @@ export default function App({ api: apiProp }) {
                   corrections={corrections}
                   defaultFormatting={project.defaultFormatting}
                   showInvisibles={settings.showInvisibles}
+                  onToggleInvisibles={() => {
+                    const v = !settings.showInvisibles;
+                    setSettings((s) => ({ ...s, showInvisibles: v }));
+                    api.setSettings({ showInvisibles: v }).catch(report);
+                  }}
                   commentColor={settings.commentColor || ''}
                   authorName={settings.authorName || project.author || ''}
                   ref={(r) => registerRef(mainIds.has(splitNode.id) ? `split:${splitNode.id}` : splitNode.id, r)}
@@ -3488,6 +3521,7 @@ export default function App({ api: apiProp }) {
                     if (p.authorEdit) commitAuthor(p.id, { [p.id]: { base: p.before, after: p.after, authorFrom: p.proposed } });
                   }}
                   onOpenSettings={openSettings}
+                  tabRequest={editorialTabReq}
                 />
               )}
             </div>
@@ -3689,6 +3723,7 @@ export default function App({ api: apiProp }) {
       {dialog === 'settings' && (
         <SettingsDialog
             initialTab={settingsTab}
+            aiOnly={settingsTab === 'ai'}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
             onCheckUpdates={api.updateCheck ? () => { setDialog(null); setUpdateOpen({ initial: null }); } : undefined}
           api={api}
@@ -3696,6 +3731,8 @@ export default function App({ api: apiProp }) {
           project={project}
           dir={dir}
           onProjectChange={saveProject}
+          onProjectSettings={(tab) => { setSettingsTab(''); setPsTab(tab || ''); setDialog('projectSettings'); api.getSettings().then(setSettings).catch(() => {}); }}
+          onProjectAi={() => { setSettingsTab(''); setDialog('projectAi'); api.getSettings().then(setSettings).catch(() => {}); }}
           onClose={async () => {
             setDialog(null);
             setSettingsTab('');
@@ -3810,19 +3847,31 @@ export default function App({ api: apiProp }) {
           onClose={() => setDialog(null)}
         />
       )}
+      {dialog === 'projectAi' && project && (
+        <ProjectAiSettingsDialog
+          api={api}
+          dir={dir}
+          project={project}
+          onSave={(next) => { saveProject(next); setDialog(null); }}
+          onClose={() => setDialog(null)}
+          onError={report}
+        />
+      )}
       {dialog === 'projectSettings' && (
         <ProjectSettingsDialog
           api={api}
           dir={dir}
           project={project}
+          initialTab={psTab || undefined}
           folders={flatten(project.tree)
             .filter((n) => n.children && n.type !== 'file')
             .map((n) => ({ id: n.id, title: n.title, path: n.title }))}
           onSave={(next) => {
             saveProject(next);
             setDialog(null);
+            setPsTab('');
           }}
-          onClose={() => setDialog(null)}
+          onClose={() => { setDialog(null); setPsTab(''); }}
         />
       )}
       {dialog === 'stats' && <StatisticsDialog project={project} docs={docs} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} />}
@@ -3853,7 +3902,7 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
       {dialog === 'importWeb' && <WebImportDialog onImport={(o) => importWeb(o).catch(report)} onClose={() => setDialog(null)} />}
-      {dialog === 'import' && <ImportDialog api={api} target={selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'import' && <ImportDialog api={api} target={findNode(project.tree, importDestination(project, project.tree, null) || '')?.title || selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
       {quickRefs.map((q) => {
         const n = findNode(project.tree, q.id);
         if (!n) return null;
@@ -3929,9 +3978,11 @@ export default function App({ api: apiProp }) {
           onClose={() => setDialog(null)}
         />
       )}
+      {api.setAppMenu && <NativeMenuSync api={api} layout={menuLayout} actionsRef={menuActionsRef} />}
       <DialogA11y />
       <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
       <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
+      {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
       <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
     </div>
   );

@@ -40,8 +40,12 @@ function blocking(issues, strict) {
 const KIND = { changed: 'ui.editorialPanel.gate_changed', moved: 'ui.editorialPanel.gate_moved', deleted: 'ui.editorialPanel.gate_deleted' };
 const short = (s, n = 80) => (String(s || '').length > n ? `${String(s).slice(0, n)}…` : String(s || ''));
 
-export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile: baseProfile, project, dir, editorialLists, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings, aiLabel = '', aiModel = '', authorEvent }) {
-  const [tab, setTab] = useState('rep');
+export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile: baseProfile, project, dir, editorialLists, node, html, chapter, onJump, onApply, onSelectionText, onOpenSettings, aiLabel = '', aiModel = '', authorEvent, tabRequest = null }) {
+  const [tab, setTab] = useState(() => (tabRequest && tabRequest.tab === 'edit' && aiEnabled ? 'edit' : 'rep'));
+  useEffect(() => {
+    if (tabRequest && tabRequest.tab) setTab(tabRequest.tab === 'edit' && aiEnabled ? 'edit' : 'rep');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabRequest && tabRequest.n]);
   const [level, setLevel] = useState('mezzo');
   const [maxLoops, setMaxLoops] = useState(3);
   const [strict, setStrict] = useState(false);
@@ -435,7 +439,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
 
       {aiEnabled && !hasKey && (
         <p className="warn">
-          Bucla AI cere cheia API{aiLabel ? t('ui.editorialPanel.pentru_x', { aiLabel: aiLabel }) : ' a furnizorului AI'}. <button className="link" onClick={onOpenSettings}>{t('set.title')}</button>
+          Bucla AI cere cheia API{aiLabel ? t('ui.editorialPanel.pentru_x', { aiLabel: aiLabel }) : ' a furnizorului AI'}. <button className="link" onClick={() => onOpenSettings?.('ai')}>{t('cmd.aiSettings')}</button>
         </p>
       )}
       {error && (

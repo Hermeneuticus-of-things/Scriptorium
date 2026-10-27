@@ -5,6 +5,7 @@ import {
 } from '../lib/projectSettings.js';
 import { t as tr } from '../lib/i18n.js';
 import DefaultFormatPane from './DefaultFormatPane.jsx';
+import { profileId } from '../lib/editorial.js';
 
 // Languages offered for the project (spelling and Compile); any BCP-47 tag can be typed too.
 const LANGS = ['ro', 'en', 'en-GB', 'fr', 'de', 'es', 'it', 'pt', 'hu', 'pl', 'ru', 'uk'];
@@ -64,6 +65,8 @@ const TABS = () => ([
   ['autocomplete', tr('ui.projectSettingsDialog.auto_completare')],
   ['foldere', tr('ui.projectSettingsDialog.foldere_speciale')],
   ['icoane', tr('ui.ps.icoane')],
+  ['tinte', tr('set.tab.projectTargets')],
+  ['editorial', tr('set.tab.projectEditorial')],
   ['backup', tr('ui.projectSettingsDialog.backup')],
   ['proiect', tr('group.project')],
 ]);
@@ -77,6 +80,13 @@ function makeExtras(project) {
     backup: { override: Boolean(b.override), onClose: b.onClose !== false, everyMin: b.everyMin || 0, keep: b.keep || 10, exclude: Boolean(b.exclude) },
     importFolder: project.importFolder || null,
     inboxFolder: project.inboxFolder || null,
+    // Moved here from the program Settings (General / Editorial), PROGRAM settings reorg 2026-10-27.
+    targets: { draft: project.targets?.draft || 0, session: project.targets?.session || 0 },
+    editorial: {
+      base: profileId(project.editorialProfile?.base || 'generic'),
+      rules: { ...(project.editorialProfile?.rules || {}) },
+      limit: project.editorialProfile?.canvasWordLimit ?? 3000,
+    },
   };
 }
 const TYPE_NAMES = () => ({ text: 'Text', number: tr('ui.ps.numar'), checkbox: tr('ui.projectSettingsDialog.bifa'), list: tr('ui.projectSettingsDialog.lista'), date: tr('ui.projectSettingsDialog.data') });
@@ -128,6 +138,8 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
   const [x, setX] = useState(() => makeExtras(project));
   const [iconErr, setIconErr] = useState('');
   const setBk = (p) => setX((o) => ({ ...o, backup: { ...o.backup, ...p } }));
+  const setTg = (p) => setX((o) => ({ ...o, targets: { ...o.targets, ...p } }));
+  const setEd = (p) => setX((o) => ({ ...o, editorial: { ...o.editorial, ...p } }));
 
   const tabKeys = (e) => {
     const ids = TABS().map(([id]) => id);
@@ -150,8 +162,11 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
     const errs = validateDraft(d);
     setErrors(errs);
     if (errs.length) return;
+    const base = applyProjectSettings(project, d);
     onSave({
-      ...applyProjectSettings(project, d),
+      ...base,
+      targets: { ...(base.targets || project.targets || {}), draft: Number(x.targets.draft) || 0, session: Number(x.targets.session) || 0 },
+      editorialProfile: { ...(base.editorialProfile || project.editorialProfile || {}), base: x.editorial.base, rules: x.editorial.rules, canvasWordLimit: Number(x.editorial.limit) || 0 },
       defaultFormatting: cleanDefaultFormatting(x.defaultFormatting.f, x.defaultFormatting.useGlobal),
       autoComplete: [...new Set(x.autoComplete.split('\n').map((l) => l.trim()).filter(Boolean))],
       backup: { ...x.backup, everyMin: Number(x.backup.everyMin) || 0, keep: Math.max(1, Number(x.backup.keep) || 10) },
@@ -565,6 +580,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               </select>
             </label>
             <p className="muted">{tr('ui.projectSettingsDialog.documentele_din_acest_dosar_apar')}</p>
+            <p className="muted small">{tr('ui.ps.template_folder_dual_hint')}</p>
             <label>
               {tr('ui.projectSettingsDialog.dosar_pentru_importuri')}
               <select value={x.importFolder || ''} onChange={(e) => setX((o) => ({ ...o, importFolder: e.target.value || null }))}>
@@ -593,6 +609,46 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               <textarea rows={10} value={x.autoComplete} onChange={(e) => setX((o) => ({ ...o, autoComplete: e.target.value }))} placeholder={tr('ui.projectSettingsDialog.nume_de_personaje_locuri_termeni')} />
             </label>
             <p className="muted">{tr('ui.projectSettingsDialog.termenii_sunt_propusi_in_timpul')}</p>
+            <p className="muted small">{tr('ui.ps.autocomplete_dual_hint')}</p>
+          </div>
+        )}
+
+        {tab === 'tinte' && (
+          <div className="fields">
+            <div className="row">
+              <label>
+                {tr('set.targetDraft')}
+                <input type="number" min="0" step="1000" value={x.targets.draft} onChange={(e) => setTg({ draft: e.target.value })} />
+              </label>
+              <label>
+                {tr('set.targetSession')}
+                <input type="number" min="0" step="100" value={x.targets.session} onChange={(e) => setTg({ session: e.target.value })} />
+              </label>
+            </div>
+            <p className="muted small">{tr('ui.ps.tinte_dual_hint')}</p>
+          </div>
+        )}
+
+        {tab === 'editorial' && (
+          <div className="fields">
+            <h3>{tr('set.editorial')}</h3>
+            <label>
+              {tr('set.edBase')}
+              <select value={x.editorial.base} onChange={(e) => setEd({ base: e.target.value })}>
+                <option value="ro">{tr('set.edBase.ro')}</option>
+                <option value="generic">{tr('set.edBase.generic')}</option>
+              </select>
+            </label>
+            <label>
+              {tr('set.edLimit')}
+              <input type="number" min="0" step="100" value={x.editorial.limit} onChange={(e) => setEd({ limit: e.target.value })} />
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={Boolean(x.editorial.rules.canvasHeader)} onChange={(e) => setEd({ rules: { ...x.editorial.rules, canvasHeader: e.target.checked } })} /> {tr('set.edHeader')}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={Boolean(x.editorial.rules.canvasFooter)} onChange={(e) => setEd({ rules: { ...x.editorial.rules, canvasFooter: e.target.checked } })} /> {tr('set.edFooter')}
+            </label>
           </div>
         )}
 

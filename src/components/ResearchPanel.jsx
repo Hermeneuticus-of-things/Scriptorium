@@ -91,6 +91,12 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
     setScopeState(s);
     lsSet(`pneuma-research-scope:${dir}`, s);
   };
+  // AI › Setări AI… saved new sources for this project.
+  useEffect(() => {
+    const on = (e) => { if (e.detail && e.detail.dir === dir && e.detail.scope) setScopeState(e.detail.scope); };
+    window.addEventListener('pneuma:research-scope', on);
+    return () => window.removeEventListener('pneuma:research-scope', on);
+  }, [dir]);
 
   useEffect(() => {
     if (!api.onRagProgress) return undefined;
@@ -313,14 +319,7 @@ export default function ResearchPanel({ api, dir, project = null, aiEnabled, onO
 
       {showSources && (
         <div className="research-sources">
-          <fieldset>
-            <legend>{t('ui.researchChat.ce_poate_folosi_ai_ul')}</legend>
-            {['docs', 'research', 'notes'].map((k) => (
-              <label key={k} className="research-kind">
-                <input type="checkbox" checked={scope.kinds.includes(k)} onChange={() => setScope(toggleScope(scope, 'kind', k))} /> {kindLabels()[k]}
-              </label>
-            ))}
-          </fieldset>
+          {/* „Ce poate folosi AI-ul” moved to AI › Setări AI… (AI isolation 2026-10-27). */}
           {rows.length > 0 && (
             <details>
               <summary>{t('ui.researchChat.doar_anumite_documente')}</summary>

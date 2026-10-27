@@ -303,6 +303,8 @@ export default function FormatBar({
   onManageStyles,
   onFindFormatting,
   defaultFormatting = null,
+  showInvisibles = false,
+  onToggleInvisibles = null,
 }) {
   const [layout, setLayout] = useState(getFormatLayout);
   useEffect(() => onFormatLayout(setLayout), []);
@@ -471,7 +473,7 @@ export default function FormatBar({
     ...[['a5', 'A5'], ['a4', 'A4'], ['letter', 'Letter']].map(([id, n]) => ({ label: `${view.pageView && (view.pageSize || 'a5') === id ? '✓ ' : ''}${tr('ui.formatBar.pageView', { n })}`, action: () => setView({ pageView: !(view.pageView && (view.pageSize || 'a5') === id), pageSize: id }) })),
     { label: `${view.facing ? '✓ ' : ''}${tr('ui.formatBar.facing')}`, action: () => setView({ facing: !view.facing, pageView: true }) },
     { label: `${view.ruler ? '✓ ' : ''}${tr('ui.formatBar.ruler')}`, action: () => setView({ ruler: !view.ruler }) },
-    { label: `${view.invisibles ? '✓ ' : ''}${tr('ui.formatBar.invisibles')}`, action: () => setView({ invisibles: !view.invisibles }) },
+    { label: `${(onToggleInvisibles ? showInvisibles : view.invisibles) ? '✓ ' : ''}${tr('ui.formatBar.invisibles')}`, action: onToggleInvisibles || (() => setView({ invisibles: !view.invisibles })) },
     '-',
     ...[75, 100, 125, 150, 200].map((z) => ({ label: `${(view.zoom || 100) === z ? '✓ ' : ''}Zoom ${z}%`, action: () => setView({ zoom: z }) })),
   ];

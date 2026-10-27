@@ -53,18 +53,28 @@ const saveBackupDue = backup.makeSaveThrottle(60 * 1000);
 function backupSettings() {
   return { ...BACKUP_DEFAULTS, ...readSettings() };
 }
+// Program backup settings resolved for one project (Project Settings > Backup: exclude / override).
+function projectBackupSettings(dir, s = backupSettings()) {
+  return backup.resolveBackupSettings(backup.readProjectBackup(dir), s);
+}
 
 let backupRunning = null;
-async function backupAll() {
+// Backs up the touched projects `want(dir, resolvedSettings)` accepts (default: all not excluded).
+async function backupAll(want = (_dir, ps) => !ps.backupExcluded) {
   const s = backupSettings();
   if (backupRunning) return backupRunning;
   // Taken first: a project edited during the backup stays marked for the next one.
-  const list = [...dirtyDirs];
-  dirtyDirs.clear();
+  // Projects not taken now (excluded, not due yet) stay marked.
+  const list = [];
+  for (const dir of dirtyDirs) {
+    const ps = projectBackupSettings(dir, s);
+    if (want(dir, ps)) list.push([dir, ps]);
+  }
+  for (const [dir] of list) dirtyDirs.delete(dir);
   backupRunning = (async () => {
-    for (const dir of list) {
+    for (const [dir, ps] of list) {
       try {
-        await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
+        await backup.backupProject(dir, ps.backupDir || undefined, ps.backupKeep, backup.backupOptions(ps));
       } catch (err) {
         console.error('Backup eșuat pentru', dir, err);
         dirtyDirs.add(path.resolve(dir));
@@ -76,10 +86,25 @@ async function backupAll() {
   return backupRunning;
 }
 
+// Interval backups: a one-minute tick; each touched project is backed up once its own interval
+// (program backupEveryMin, or the project's everyMin when it overrides) has passed since its last
+// interval backup (or since the schedule started / settings were saved).
+const lastIntervalBackup = new Map();
+let intervalStart = Date.now();
+function backupTick(now = Date.now()) {
+  return backupAll((dir, ps) => {
+    if (ps.backupExcluded) return false;
+    const key = path.resolve(dir);
+    if (!backup.intervalDue(ps.backupEveryMin, lastIntervalBackup.get(key) ?? intervalStart, now)) return false;
+    lastIntervalBackup.set(key, now);
+    return true;
+  });
+}
 function scheduleBackups() {
   clearInterval(backupTimer);
-  const min = Number(backupSettings().backupEveryMin) || 0;
-  if (min > 0) backupTimer = setInterval(backupAll, min * 60 * 1000);
+  intervalStart = Date.now();
+  lastIntervalBackup.clear();
+  backupTimer = setInterval(() => backupTick().catch((err) => console.error('Backup periodic eșuat', err)), 60 * 1000);
 }
 
 const SETTINGS_DEFAULTS = { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true };
@@ -236,6 +261,7 @@ function assertOpened(dir) {
 // language pack must be installed in the OS; on Linux the dictionaries download on demand.
 const { lookupGroups } = require('../src/lib/lookups.js');
 
+// Fallback ['ro', 'en-US'] (here and in settings:get) must match DEFAULT_SETTINGS.spellLanguages in src/lib/settingsDefaults.js.
 function applySpellLanguages(win) {
   const ses = win.webContents.session;
   const langs = (readSettings().spellLanguages || ['ro', 'en-US']).filter((l) => ses.availableSpellCheckerLanguages.length === 0 || ses.availableSpellCheckerLanguages.includes(l));
@@ -284,33 +310,16 @@ function setupSpelling(win) {
       items.push({ label: L.grammar, click: cmd('grammarSel') });
       if (g.dict.length) items.push({ label: L.dictionaries, submenu: links(g.dict) });
       items.push({ label: L.research, submenu: links(g.research) });
-      if (st.aiEnabled !== false) {
-        items.push({
-          label: L.ai,
-          submenu: [
-            { label: L.aiResearch, click: cmd('aiResearchSel') },
-            { label: L.aiDefine, click: cmd('aiDefineSel') },
-            { label: L.aiProofread, click: cmd('aiProofreadSel') },
-            { label: L.aiTranslate, click: cmd('aiTranslateSel') },
-          ],
-        });
-      }
+      // AI isolation (2026-10-27): AI on selection, „Întreabă AI-ul”, NotebookLM (ask/consult) are
+      // reachable only from the top-level AI menu; the right-click menu carries no AI entries.
       items.push({
         label: L.inProject,
         submenu: [
           { label: L.findSel, click: cmd('findSel') },
           { label: L.researchSel, click: cmd('researchSel') },
-          ...(st.aiEnabled !== false ? [{ label: L.researchAsk, click: cmd('researchAskSel') }] : []),
           { label: L.glossaryAdd, click: cmd('glossaryAdd') },
         ],
       });
-      items.push({ label: L.notebookLm, click: cmd('nlmAskSel') });
-      // Follow-up interrogation of the configured notebook (like the karma-nlm-doctrina agent).
-      // Shown only when a notebook is set and the notebooklm-mcp server is discoverable.
-      if (st.aiEnabled !== false && String(st.notebookLmNotebook || '').trim()
-        && require('../lib/notebookLmClient.cjs').isAvailable({ name: String(st.notebookLmServer || '').trim() || undefined })) {
-        items.push({ label: L.notebookLmConsult, click: cmd('nlmConsultSel') });
-      }
       items.push({ type: 'separator' });
     }
     if (params.isEditable) {
@@ -400,6 +409,8 @@ function createWindow() {
   win.webContents.on('did-navigate', () => {
     releaseWindow(wcId);
     win.setMenu(null); // the reloaded page sends its own menu; the old one pointed at the old project
+    const st = appMenus.get(wcId);
+    if (st) { clearTimeout(st.timer); st.pending = null; st.open = 0; st.menu = null; st.sig = ''; }
   });
   // The window only ever shows the app: a link or a dropped file must not load another page,
   // which would get window.api. Web links open in the browser instead.
@@ -510,6 +521,7 @@ handle('settings:get', () => {
     backupEveryMin: b.backupEveryMin,
     backupKeep: b.backupKeep,
     backupDir: b.backupDir,
+    backupToDir: s.backupToDir || '',
     aiProvider: aiProviderOf(s),
     aiModel: s.aiModel || '',
     aiBaseUrl: s.aiBaseUrl || '',
@@ -611,7 +623,7 @@ handle('project:open', async (e, dirArg) => {
   if (!reopening) releaseWindow(e.sender.id);
   if (!claimDir(e.sender, dir)) return null;
   rememberRecent(dir, project.title);
-  if (!reopening) backup.backupOnOpen(dir, backupSettings());
+  if (!reopening) backup.backupOnOpen(dir, projectBackupSettings(dir));
   return { dir, project };
 });
 
@@ -880,8 +892,7 @@ require('./notebookHandlers.cjs')({ handle, getSettings: readSettings, assertOpe
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
 // Menu items the window does itself (clipboard, window size); anything else goes to the renderer.
 const NATIVE_ROLES = new Set(['cut', 'copy', 'paste', 'pasteAndMatchStyle', 'minimize', 'togglefullscreen']);
-handle('menu:set', (e, spec) => {
-  const win = BrowserWindow.fromWebContents(e.sender);
+function buildAppMenu(win, spec) {
   const items = (list) =>
     list.map((it) =>
       it === '-'
@@ -901,21 +912,109 @@ handle('menu:set', (e, spec) => {
           },
     );
   const template = spec.map((menu) => ({ label: menu.label, submenu: items(menu.items) }));
-  // The renderer sends its own Help menu; About and developer tools are appended to it.
+  // The renderer sends its own Help menu (it includes „Despre Pneuma Sofer", the `about` command,
+  // which opens the About dialog with credits and licences); developer tools are appended to it.
   const extra = [
     { type: 'separator' },
-    { label: 'Despre Pneuma Sofer', click: () => dialog.showMessageBox(win, { message: `Pneuma Sofer ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi.' }) },
     { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools', accelerator: 'F12' } // Ctrl+Shift+I is the Inspector,
   ];
   const helpMenu = template.find((m, i) => spec[i] && spec[i].items.some((it) => it !== '-' && it.id === 'help'));
   if (helpMenu) helpMenu.submenu.push(...extra);
   else template.push({ label: 'Ajutor', submenu: extra.slice(1) });
-  const menu = Menu.buildFromTemplate(template);
-  if (win) {
-    win.setMenu(menu);
-    win.setMenuBarVisibility(true);
-    win.autoHideMenuBar = false;
+  return Menu.buildFromTemplate(template);
+}
+
+// Replacing the menu bar (win.setMenu) while one of its popups is open destroys the menu that the
+// menu loop is tracking: the popup stops responding, hovering no longer moves to the next menu
+// (Vizualizare -> Navigare "freeze"). The renderer resends the spec whenever a checkmark, a
+// disabled flag or the binder list changes, which can happen while a menu is open (autosave,
+// selection/focus change, background jobs). So: a new spec is only applied when no popup of this
+// window's menu is open; while one is open the latest spec waits and is applied after it closes.
+// Bursts of specs are coalesced (only the last one is built).
+const MENU_APPLY_DELAY = 120; // ms; also covers the close->show gap when hovering to the next menu
+const MENU_OPEN_STALE = 60000; // ms; a lost menu-will-close must not block menu updates forever
+const appMenus = new Map(); // webContents id -> { open, openedAt, pending, timer }
+function appMenuState(win) {
+  const id = win.webContents.id;
+  let st = appMenus.get(id);
+  if (!st) {
+    st = { open: 0, openedAt: 0, pending: null, timer: null, menu: null, sig: '' };
+    appMenus.set(id, st);
+    win.once('closed', () => {
+      clearTimeout(st.timer);
+      appMenus.delete(id);
+    });
   }
+  return st;
+}
+function watchMenuOpen(win, st, menu) {
+  for (const item of menu.items) {
+    const sub = item.submenu;
+    if (!sub) continue;
+    sub.on('menu-will-show', () => {
+      st.open += 1;
+      st.openedAt = Date.now();
+      // An in-app popup (format bar Vizualizare, etc.) must not stay open over the editor
+      // while the native menu is used.
+      if (!win.isDestroyed()) win.webContents.send('menu:nativeOpen');
+    });
+    sub.on('menu-will-close', () => {
+      st.open = Math.max(0, st.open - 1);
+      if (st.pending) scheduleAppMenu(win, st);
+    });
+    watchMenuOpen(win, st, sub);
+  }
+}
+// spec and the built menu share order (the Help extras are appended after the spec's items).
+function setMenuEnabled(menuItems, specItems) {
+  specItems.forEach((it, i) => {
+    const mi = menuItems[i];
+    if (!mi || it === '-') return;
+    if (Array.isArray(it.items)) {
+      if (mi.submenu) setMenuEnabled(mi.submenu.items, it.items);
+    } else mi.enabled = !it.disabled;
+  });
+}
+function scheduleAppMenu(win, st) {
+  clearTimeout(st.timer);
+  st.timer = setTimeout(() => applyAppMenu(win, st), MENU_APPLY_DELAY);
+}
+function applyAppMenu(win, st) {
+  st.timer = null;
+  if (win.isDestroyed() || !st.pending) return;
+  if (st.open > 0 && Date.now() - st.openedAt < MENU_OPEN_STALE) return; // applied on menu-will-close
+  st.open = 0;
+  const spec = st.pending;
+  st.pending = null;
+  if (!spec.length) {
+    // Project closed: no menu on Home (the old one pointed at the closed project's handlers).
+    st.menu = null;
+    st.sig = '';
+    win.setMenu(null);
+    win.setMenuBarVisibility(false);
+    return;
+  }
+  // Same structure, only enabled/disabled flags changed (selection, focus): update in place,
+  // no new menu bar.
+  const sig = JSON.stringify(spec, (k, v) => (k === 'disabled' ? undefined : v));
+  if (st.menu && sig === st.sig) {
+    setMenuEnabled(st.menu.items, spec);
+    return;
+  }
+  const menu = buildAppMenu(win, spec);
+  watchMenuOpen(win, st, menu);
+  st.menu = menu;
+  st.sig = sig;
+  win.setMenu(menu);
+  win.setMenuBarVisibility(true);
+  win.autoHideMenuBar = false;
+}
+handle('menu:set', (e, spec) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (!win || win.isDestroyed() || !Array.isArray(spec)) return true;
+  const st = appMenuState(win);
+  st.pending = spec;
+  scheduleAppMenu(win, st);
   return true;
 });
 
@@ -971,13 +1070,13 @@ handle('bookmark:openFile', async (_e, dir, file) => {
 
 handle('backup:now', async (_e, dir) => {
   assertOpened(dir);
-  const s = backupSettings();
+  const s = projectBackupSettings(dir); // manual: works even when excluded; keep from the project override
   return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 // File > Back Up To…: one backup in a folder chosen in a dialog (remembered as the next default).
 handle('backup:to', async (e, dir) => {
   assertOpened(dir);
-  const s = backupSettings();
+  const s = projectBackupSettings(dir);
   const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
     title: 'Backup în…',
     defaultPath: s.backupToDir || s.backupDir || undefined,
@@ -990,8 +1089,8 @@ handle('backup:to', async (e, dir) => {
 // Manual save: a backup when "back up on each manual save" is on, throttled to once a minute.
 handle('backup:onSave', async (_e, dir) => {
   assertOpened(dir);
-  const s = backupSettings();
-  if (!s.backupOnSave || !saveBackupDue(dir)) return null;
+  const s = projectBackupSettings(dir);
+  if (!s.backupOnSave || s.backupExcluded || !saveBackupDue(dir)) return null;
   return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 handle('backup:list', (_e, dir) => {
@@ -1319,10 +1418,14 @@ handle('nlm:open', async () => {
 
 let quitting = false;
 app.on('before-quit', (event) => {
-  if (quitting || !backupSettings().backupOnClose || dirtyDirs.size === 0) return;
+  if (quitting || dirtyDirs.size === 0) return;
+  // Per project: program backupOnClose, or the project's own onClose when it overrides; excluded never.
+  const onClose = (_dir, ps) => !ps.backupExcluded && ps.backupOnClose !== false;
+  const s = backupSettings();
+  if (![...dirtyDirs].some((dir) => onClose(dir, projectBackupSettings(dir, s)))) return;
   event.preventDefault();
   quitting = true;
-  backupAll().finally(() => app.quit());
+  backupAll(onClose).finally(() => app.quit());
 });
 
 // Single instance: a second launch focuses the existing app instead of starting

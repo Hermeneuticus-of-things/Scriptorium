@@ -91,8 +91,13 @@ export default function Menu({ label, items, caret = true, className = '', title
         close(ref.current?.contains(document.activeElement) ? 'button' : null);
       }
     };
+    // A click on the native menu bar is not a DOM mousedown: close on the main process's
+    // 'native menu opening' signal and when the page loses focus.
+    const onAway = () => close(null);
     window.addEventListener('mousedown', onDown);
     window.addEventListener('keydown', onKey, true);
+    window.addEventListener('pneuma:closeMenus', onAway);
+    window.addEventListener('blur', onAway);
     if (focusItem.current) {
       const list = itemEls();
       (focusItem.current === 'last' ? list[list.length - 1] : list[0])?.focus();
@@ -101,6 +106,8 @@ export default function Menu({ label, items, caret = true, className = '', title
     return () => {
       window.removeEventListener('mousedown', onDown);
       window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('pneuma:closeMenus', onAway);
+      window.removeEventListener('blur', onAway);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

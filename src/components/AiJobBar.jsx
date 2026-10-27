@@ -4,7 +4,7 @@ import { t } from '../lib/i18n.js';
 
 const JOBS = () => ({ bulkSynopsis: t('cmd.aiBulkSynopsis'), consistency: t('ui.aiJobBar.consistenta_pe_toata_cartea'), zoomReview: t('cmd.aiZoomReview') });
 
-// Progress + cancel for bulk AI jobs (ai:progress events). Cancelling keeps the results
+// Progress indicator for bulk AI jobs (ai:progress events); cancel lives in the AI menu. Cancelling keeps the results
 // already finished: the job returns them with `cancelled: true`.
 export default function AiJobBar({ api }) {
   const [job, setJob] = useState(null);
@@ -28,11 +28,8 @@ export default function AiJobBar({ api }) {
       <progress max={job.total || 1} value={job.done || 0} />
       <span>{job.done}/{job.total}{job.title ? ` · ${job.title}` : ''}</span>
       {job.error && <span className="warn" title={job.error}>{t('ui.aiJobBar.eroare_la_acest_document')}</span>}
-      {!finished && api.cancelAi && (
-        <button disabled={stopping} onClick={() => { setStopping(true); api.cancelAi().catch(() => {}); }}>
-          {stopping ? t('ui.aiJobBar.se_opreste') : t('btn.cancel')}
-        </button>
-      )}
+      {/* Indicator only (AI isolation 2026-10-27): stop the job from AI › Oprește job-ul AI în curs. */}
+      {!finished && stopping && <span className="muted">{t('ui.aiJobBar.se_opreste')}</span>}
     </div>
   );
 }

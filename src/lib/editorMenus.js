@@ -252,7 +252,7 @@ export function editorMenus(ctx) {
   const toggleSetting = (patch) => () => setSettings(patch);
   const viewMenu = [
     { label: check(settings.typewriter, L('typewriter')), action: toggleSetting({ typewriter: !settings.typewriter }) },
-    { label: check(view.invisibles, L('invisibles')), action: () => setView({ ...view, invisibles: !view.invisibles }) },
+    { label: check(settings.showInvisibles, L('invisibles')), action: toggleSetting({ showInvisibles: !settings.showInvisibles }) },
     { label: check(view.pageView, L('pageView')), action: () => setView({ ...view, pageView: !view.pageView }) },
     { label: check(!view.hideHeaderBar, L('headerBar')), action: () => setView({ ...view, hideHeaderBar: !view.hideHeaderBar }) },
     { label: check(!view.hideFooterBar, L('footerBar')), action: () => setView({ ...view, hideFooterBar: !view.hideFooterBar }) },
