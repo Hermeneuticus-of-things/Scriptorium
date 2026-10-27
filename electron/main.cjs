@@ -53,18 +53,28 @@ const saveBackupDue = backup.makeSaveThrottle(60 * 1000);
 function backupSettings() {
   return { ...BACKUP_DEFAULTS, ...readSettings() };
 }
+// Program backup settings resolved for one project (Project Settings > Backup: exclude / override).
+function projectBackupSettings(dir, s = backupSettings()) {
+  return backup.resolveBackupSettings(backup.readProjectBackup(dir), s);
+}
 
 let backupRunning = null;
-async function backupAll() {
+// Backs up the touched projects `want(dir, resolvedSettings)` accepts (default: all not excluded).
+async function backupAll(want = (_dir, ps) => !ps.backupExcluded) {
   const s = backupSettings();
   if (backupRunning) return backupRunning;
   // Taken first: a project edited during the backup stays marked for the next one.
-  const list = [...dirtyDirs];
-  dirtyDirs.clear();
+  // Projects not taken now (excluded, not due yet) stay marked.
+  const list = [];
+  for (const dir of dirtyDirs) {
+    const ps = projectBackupSettings(dir, s);
+    if (want(dir, ps)) list.push([dir, ps]);
+  }
+  for (const [dir] of list) dirtyDirs.delete(dir);
   backupRunning = (async () => {
-    for (const dir of list) {
+    for (const [dir, ps] of list) {
       try {
-        await backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
+        await backup.backupProject(dir, ps.backupDir || undefined, ps.backupKeep, backup.backupOptions(ps));
       } catch (err) {
         console.error('Backup eșuat pentru', dir, err);
         dirtyDirs.add(path.resolve(dir));
@@ -76,10 +86,25 @@ async function backupAll() {
   return backupRunning;
 }
 
+// Interval backups: a one-minute tick; each touched project is backed up once its own interval
+// (program backupEveryMin, or the project's everyMin when it overrides) has passed since its last
+// interval backup (or since the schedule started / settings were saved).
+const lastIntervalBackup = new Map();
+let intervalStart = Date.now();
+function backupTick(now = Date.now()) {
+  return backupAll((dir, ps) => {
+    if (ps.backupExcluded) return false;
+    const key = path.resolve(dir);
+    if (!backup.intervalDue(ps.backupEveryMin, lastIntervalBackup.get(key) ?? intervalStart, now)) return false;
+    lastIntervalBackup.set(key, now);
+    return true;
+  });
+}
 function scheduleBackups() {
   clearInterval(backupTimer);
-  const min = Number(backupSettings().backupEveryMin) || 0;
-  if (min > 0) backupTimer = setInterval(backupAll, min * 60 * 1000);
+  intervalStart = Date.now();
+  lastIntervalBackup.clear();
+  backupTimer = setInterval(() => backupTick().catch((err) => console.error('Backup periodic eșuat', err)), 60 * 1000);
 }
 
 const SETTINGS_DEFAULTS = { recent: [], theme: 'system', fontSize: 18, typewriter: false, smartQuotes: true };
@@ -598,7 +623,7 @@ handle('project:open', async (e, dirArg) => {
   if (!reopening) releaseWindow(e.sender.id);
   if (!claimDir(e.sender, dir)) return null;
   rememberRecent(dir, project.title);
-  if (!reopening) backup.backupOnOpen(dir, backupSettings());
+  if (!reopening) backup.backupOnOpen(dir, projectBackupSettings(dir));
   return { dir, project };
 });
 
@@ -1045,13 +1070,13 @@ handle('bookmark:openFile', async (_e, dir, file) => {
 
 handle('backup:now', async (_e, dir) => {
   assertOpened(dir);
-  const s = backupSettings();
+  const s = projectBackupSettings(dir); // manual: works even when excluded; keep from the project override
   return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 // File > Back Up To…: one backup in a folder chosen in a dialog (remembered as the next default).
 handle('backup:to', async (e, dir) => {
   assertOpened(dir);
-  const s = backupSettings();
+  const s = projectBackupSettings(dir);
   const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
     title: 'Backup în…',
     defaultPath: s.backupToDir || s.backupDir || undefined,
@@ -1064,8 +1089,8 @@ handle('backup:to', async (e, dir) => {
 // Manual save: a backup when "back up on each manual save" is on, throttled to once a minute.
 handle('backup:onSave', async (_e, dir) => {
   assertOpened(dir);
-  const s = backupSettings();
-  if (!s.backupOnSave || !saveBackupDue(dir)) return null;
+  const s = projectBackupSettings(dir);
+  if (!s.backupOnSave || s.backupExcluded || !saveBackupDue(dir)) return null;
   return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 handle('backup:list', (_e, dir) => {
@@ -1393,10 +1418,14 @@ handle('nlm:open', async () => {
 
 let quitting = false;
 app.on('before-quit', (event) => {
-  if (quitting || !backupSettings().backupOnClose || dirtyDirs.size === 0) return;
+  if (quitting || dirtyDirs.size === 0) return;
+  // Per project: program backupOnClose, or the project's own onClose when it overrides; excluded never.
+  const onClose = (_dir, ps) => !ps.backupExcluded && ps.backupOnClose !== false;
+  const s = backupSettings();
+  if (![...dirtyDirs].some((dir) => onClose(dir, projectBackupSettings(dir, s)))) return;
   event.preventDefault();
   quitting = true;
-  backupAll().finally(() => app.quit());
+  backupAll(onClose).finally(() => app.quit());
 });
 
 // Single instance: a second launch focuses the existing app instead of starting

@@ -580,6 +580,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               </select>
             </label>
             <p className="muted">{tr('ui.projectSettingsDialog.documentele_din_acest_dosar_apar')}</p>
+            <p className="muted small">{tr('ui.ps.template_folder_dual_hint')}</p>
             <label>
               {tr('ui.projectSettingsDialog.dosar_pentru_importuri')}
               <select value={x.importFolder || ''} onChange={(e) => setX((o) => ({ ...o, importFolder: e.target.value || null }))}>
@@ -608,6 +609,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               <textarea rows={10} value={x.autoComplete} onChange={(e) => setX((o) => ({ ...o, autoComplete: e.target.value }))} placeholder={tr('ui.projectSettingsDialog.nume_de_personaje_locuri_termeni')} />
             </label>
             <p className="muted">{tr('ui.projectSettingsDialog.termenii_sunt_propusi_in_timpul')}</p>
+            <p className="muted small">{tr('ui.ps.autocomplete_dual_hint')}</p>
           </div>
         )}
 
@@ -623,6 +625,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                 <input type="number" min="0" step="100" value={x.targets.session} onChange={(e) => setTg({ session: e.target.value })} />
               </label>
             </div>
+            <p className="muted small">{tr('ui.ps.tinte_dual_hint')}</p>
           </div>
         )}
 

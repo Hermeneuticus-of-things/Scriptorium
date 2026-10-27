@@ -122,6 +122,7 @@ import {
   historyUndo,
   historyRedo,
 } from './lib/tree.js';
+import { importDestination } from './lib/importFolder.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
 import { applyTextEdits, replaceRangeText } from './lib/serviceApply.js';
@@ -296,7 +297,7 @@ export default function App({ api: apiProp }) {
     onMessage: (m) => setToast(m),
     onTranscript: (r, job) => {
       const html = transcriptHtml(r, { timestamps: settings?.dtedTimestamps !== false });
-      addResearchDocs([{ title: tr('ui.dted.titlu_transcriere', { title: job.title }), html }])
+      addResearchDocs([{ title: tr('ui.dted.titlu_transcriere', { title: job.title }), html }], '', { toImportFolder: true })
         .then((ids) => {
           if (ids[0]) go(ids[0]);
           setToast(tr('ui.dted.transcriere_gata', { title: job.title }));
@@ -1270,12 +1271,13 @@ export default function App({ api: apiProp }) {
     }
     if (!items.length) return;
     const pj = projectRef.current;
-    const research = pj.tree.find((n) => n.root === 'research');
+    // P2: Project Settings > Folders > import folder when valid, else Research.
+    const dest = importDestination(pj);
     let tree = pj.tree;
     for (const it of items) {
       const node = mediaNode(newNode, it);
       if (/^image\//.test(it.media.mime)) node.synopsisImage = it.media.file;
-      tree = insertNear(tree, research.id, node);
+      tree = insertNear(tree, dest, node);
     }
     saveProject({ ...pj, tree });
     setToast(tr('ui.rmedia.adaugate', { count: items.length }));
@@ -1289,8 +1291,7 @@ export default function App({ api: apiProp }) {
     try {
       const it = await api.archiveWebPage(dir, url);
       const pj = projectRef.current;
-      const research = pj.tree.find((n) => n.root === 'research');
-      saveProject({ ...pj, tree: insertNear(pj.tree, research.id, mediaNode(newNode, it)) });
+      saveProject({ ...pj, tree: insertNear(pj.tree, importDestination(pj), mediaNode(newNode, it)) });
       go(it.id);
       setView('editor');
     } catch (e) {
@@ -1817,12 +1818,13 @@ export default function App({ api: apiProp }) {
     try {
       const items = await api.addMediaFiles(dir);
       if (!items || !items.length) return;
-      const research = project.tree.find((n) => n.root === 'research');
-      let tree = project.tree;
+      const pj = projectRef.current;
+      const dest = importDestination(pj);
+      let tree = pj.tree;
       for (const it of items) {
         const node = mediaNode(newNode, it);
         if (/^image\//.test(it.media.mime)) node.synopsisImage = it.media.file;
-        tree = insertNear(tree, research.id, node);
+        tree = insertNear(tree, dest, node);
       }
       setTree(tree);
       go(items[0].id);
@@ -2001,9 +2003,10 @@ export default function App({ api: apiProp }) {
   };
 
   // baseTree: lets a caller that also adds other nodes save everything in one project write.
-  const importParts = (parts, baseTree = projectRef.current.tree) => {
+  // start: the project's import folder when valid (P2), else next to the binder selection.
+  const importParts = (parts, baseTree = projectRef.current.tree, start = importDestination(projectRef.current, baseTree, selectedId)) => {
     let tree = baseTree;
-    let anchor = selectedId;
+    let anchor = start;
     const created = [];
     for (const p of parts) {
       const node = newNode('text', p.title);
@@ -2022,7 +2025,7 @@ export default function App({ api: apiProp }) {
     const items = await api.importOpml();
     if (!items || !items.length) return;
     let tree = project.tree;
-    let anchor = selectedId;
+    let anchor = importDestination(project, tree, selectedId);
     for (const node of opmlToNodes(items, project, newNode, tr('ui.app.fara_titlu'))) {
       tree = insertNear(tree, anchor, node);
       anchor = node.id;
@@ -2037,7 +2040,7 @@ export default function App({ api: apiProp }) {
     const node = newNode('text', title || page.title || url);
     // The download can take seconds; the binder may have changed meanwhile.
     const pj = projectRef.current;
-    let tree = insertNear(pj.tree, selectedId, node);
+    let tree = insertNear(pj.tree, importDestination(pj, pj.tree, selectedId), node);
     for (const m of page.media || []) tree = insertNear(tree, node.id, mediaNode(newNode, m));
     saveProject({ ...pj, tree });
     setDocs((d) => ({ ...d, [node.id]: page.html }));
@@ -2045,12 +2048,12 @@ export default function App({ api: apiProp }) {
     go(node.id);
   };
   // Research chat: new documents appended to the Research folder (or a named subfolder of it).
-  const addResearchDocs = async (items, folderTitle = '') => {
+  const addResearchDocs = async (items, folderTitle = '', opts = {}) => {
     const pj = projectRef.current;
     let tree = pj.tree;
     const research = tree.find((n) => n.root === 'research');
     if (!research) return [];
-    let parentId = research.id;
+    let parentId = (opts.toImportFolder && !folderTitle && importDestination(pj, tree, research.id)) || research.id;
     if (folderTitle) {
       const existing = (research.children || []).find((n) => n.type === 'folder' && n.title === folderTitle);
       if (existing) parentId = existing.id;
@@ -2090,9 +2093,10 @@ export default function App({ api: apiProp }) {
     // `project` snapshot made the second one drop the first one's items.
     const pj = projectRef.current;
     let tree = pj.tree;
+    const dest = importDestination(pj, tree, selectedId);
     for (const m of res.media) {
       const node = mediaNode(newNode, m);
-      tree = insertNear(tree, selectedId, node);
+      tree = insertNear(tree, dest, node);
     }
     if (res.texts.length) importParts(res.texts, tree);
     else if (res.media.length) saveProject({ ...pj, tree });
@@ -3898,7 +3902,7 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
       {dialog === 'importWeb' && <WebImportDialog onImport={(o) => importWeb(o).catch(report)} onClose={() => setDialog(null)} />}
-      {dialog === 'import' && <ImportDialog api={api} target={selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'import' && <ImportDialog api={api} target={findNode(project.tree, importDestination(project, project.tree, null) || '')?.title || selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
       {quickRefs.map((q) => {
         const n = findNode(project.tree, q.id);
         if (!n) return null;
