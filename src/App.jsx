@@ -24,7 +24,7 @@ import KeywordsDialog from './components/KeywordsDialog.jsx';
 import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
 import QuickSearch from './components/QuickSearch.jsx';
 import { collectionNodes, createCollection, ensureSearchResults, setLastSearch, SEARCH_RESULTS_ID } from './lib/collections.js';
-import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
+import { replaceInFields, replaceSnapshotHtml, searchProject, buildTerms } from './lib/projectSearch.js';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
 import { diffParagraphs, journalRows, updateAuthorHashes } from './lib/authorText.js';
@@ -1113,14 +1113,18 @@ export default function App({ api }) {
     go(first.id);
   };
 
-  // Advanced search replace: text, notes, titles and synopses, with a snapshot of every changed document.
+  // Advanced search replace: text, notes, titles, synopses and custom metadata, with a snapshot of every changed document.
   const replaceAdvanced = async (criteria, replacement) => {
     await flush();
-    const fields = (criteria.fields && criteria.fields.length ? criteria.fields : ['title', 'text', 'notes', 'synopsis']).filter((f) => ['title', 'text', 'notes', 'synopsis'].includes(f));
+    const fields = (criteria.fields && criteria.fields.length ? criteria.fields : ['title', 'text', 'notes', 'synopsis']).filter((f) => ['title', 'text', 'notes', 'synopsis', 'custom'].includes(f));
     const notesById = {};
     if (fields.includes('notes')) for (const n of flatten(project.tree)) if (!n.root) notesById[n.id] = await api.readDoc(dir, n.id, 'notes');
     const terms = buildTerms(criteria);
     if (!terms || !terms.length) return 0;
+    // Scrivener §11.3: archived snapshot text is replaced too — only when the text field is
+    // ticked (a snapshot IS the document's text) and only if the api can both list and rewrite
+    // snapshot html; no backend exposes a snapshot write yet, so the pass stays inert until one does.
+    const rewriteSnapshots = Boolean(criteria.affectSnapshots) && fields.includes('text') && typeof api.updateSnapshotHtml === 'function';
     const docs = docsNow();
     const results = searchProject(project, docs, notesById, criteria);
     const nodeUpdates = [];
@@ -1139,13 +1143,32 @@ export default function App({ api }) {
         count += r.count;
       }
       if (!count) continue;
+      // Existing snapshots are listed before the safety snapshot, so the fresh
+      // „before replace" snapshot keeps the original text.
+      const oldSnaps = rewriteSnapshots ? await api.listSnapshots(dir, node.id) : [];
       await api.takeSnapshot(dir, node.id, tr('ui.app.automat_inainte_de_inlocuire')).catch(report);
       if (docHtml !== (docs[node.id] || '')) {
         await api.writeDoc(dir, node.id, 'docs', docHtml);
         nextDocs[node.id] = docHtml;
       }
       if (fields.includes('notes') && notesHtml !== (notesById[node.id] || '')) await api.writeDoc(dir, node.id, 'notes', notesHtml);
-      nodeUpdates.push([node.id, { title: current.title, synopsis: current.synopsis }]);
+      for (const s of oldSnaps) {
+        if (typeof s?.html !== 'string' || !s.html) continue;
+        let snapHtml = s.html;
+        let snapCount = 0;
+        for (const re of terms) {
+          const r = replaceSnapshotHtml(snapHtml, re, replacement);
+          snapHtml = r.html;
+          snapCount += r.count;
+        }
+        if (snapCount) {
+          await api.updateSnapshotHtml(dir, node.id, s.file, snapHtml);
+          total += snapCount;
+        }
+      }
+      const patch = { title: current.title, synopsis: current.synopsis };
+      if (fields.includes('custom') && current.custom !== undefined) patch.custom = current.custom;
+      nodeUpdates.push([node.id, patch]);
       total += count;
     }
     // Snapshots and writes above are awaited: build on the project as it is now, not as it was at the start.
@@ -2419,6 +2442,7 @@ export default function App({ api }) {
         <AdvancedSearchDialog
           project={project}
           docs={docs}
+          api={api}
           initialQuery={searchSeed}
           readNotes={(id) => api.readDoc(dir, id, 'notes')}
           onOpen={(id) => {
