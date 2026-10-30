@@ -172,3 +172,59 @@ describe('sorting results (Scrivener §11.1.1)', () => {
     expect(ids(searchProject(titled, emptyDocs, {}, { query: 'comun', sort: 'created', sortDesc: true }))).toEqual(['z', 'a', 'ă']);
   });
 });
+
+describe('special search terms (Scrivener §11.1.3)', () => {
+  it('mixes quoted phrases with All Words', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'Ana "în pădure"', operator: 'all' }))).toEqual(['a']);
+    expect(ids(searchProject(project, docs, notes, { query: 'Ana "în pădure"', operator: 'any' }))).toEqual(['a', 'b', 'r']);
+  });
+  it('excludes words with a hyphen, in both operators', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'Ana -Dovahkiin', operator: 'any' }))).toEqual(['a', 'b', 'r']);
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure -Ana', operator: 'all' }))).toEqual(['c']);
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure -"în pădure"', operator: 'all' }))).toEqual(['c', 'r']);
+  });
+  it('universal wildcard returns everything (combinable with filters)', () => {
+    expect(ids(searchProject(project, docs, notes, { query: '*' }))).toEqual(['a', 'b', 'f', 'c', 'r']);
+    expect(ids(searchProject(project, docs, notes, { query: '*', labels: ['Scenă'] }))).toEqual(['a']);
+  });
+  it('literal asterisk inside a word stays a literal', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'pă*re' }))).toEqual([]);
+  });
+});
+
+describe('date search syntax mdate:/cdate: (Scrivener §11.1.3, Table 11.1)', () => {
+  const dated = {
+    tree: [
+      { id: 'draft', root: 'draft', title: 'Manuscris', children: [
+        { id: 'd1', type: 'text', title: 'Vechi', created: '2017-03-05T10:00:00Z', modified: '2017-04-01T10:00:00Z' },
+        { id: 'd2', type: 'text', title: 'Recent', created: '2026-01-15T10:00:00Z', modified: '2026-10-29T10:00:00Z' },
+        { id: 'd3', type: 'text', title: 'Fără date' },
+      ] },
+    ],
+  };
+  const noDocs = { d1: '', d2: '', d3: '' };
+  it('bare values: year, month and exact day', () => {
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:2017' }))).toEqual(['d1']);
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:2017-03' }))).toEqual(['d1']);
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:2017-03-05' }))).toEqual(['d1']);
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:2017-03-06' }))).toEqual([]);
+  });
+  it('before and after', () => {
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:<2018' }))).toEqual(['d1']);
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:>2020' }))).toEqual(['d2']);
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'mdate:>2026-10-01' }))).toEqual(['d2']);
+  });
+  it('relative values: 7d, <1y', () => {
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'mdate:7d' }))).toEqual(['d2']);
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'mdate:<1y' }))).toEqual(['d1']);
+  });
+  it('date conditions AND with each other and with the text terms', () => {
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:>2020 cdate:<2027' }))).toEqual(['d2']);
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'Recent mdate:>2026-10-01' }))).toEqual(['d2']);
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'Recent mdate:<2020' }))).toEqual([]);
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure cdate:>2020' }))).toEqual([]);
+  });
+  it('nodes without dates never satisfy a date condition', () => {
+    expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:>2000' }))).toEqual(['d1', 'd2']);
+  });
+});

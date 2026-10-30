@@ -117,8 +117,8 @@ Verificat în cod (`src/components/AdvancedSearchDialog.jsx`, `src/lib/projectSe
 | ~~P1~~ ✅ 2026-10-30 | ~~Operatori **Starts with / Ends with**~~ — implementați în `buildTerms` (ancorare la marginea de cuvânt, Unicode) | §11.2.1, p. 227 | făcut |
 | ~~P1~~ ✅ 2026-10-30 | ~~**Invert Results**~~ — criteriul `invert` în `searchProject` (complementul potrivirii; filtrele rămân; fără Coș) | §11.1.2, p. 223 | făcut |
 | ~~P1~~ ✅ 2026-10-30 | ~~Sortare rezultate~~ — `sort: 'binder'/'title'/'created'` + `sortDesc`, collation ro; în dialog | §11.1.1, p. 219 | făcut |
-| P2 | Termeni speciali: ghilimele în All Words, excludere cu `-`, wildcard `*` | §11.1.3, p. 223 | mediu |
-| P2 | Sintaxa de date `mdate:` / `cdate:` (YYYY-MM-DD, #d/#m/#y, >, <) | §11.1.3 + Tabel 11.1, p. 224–225 | mediu |
+| ~~P2~~ ✅ 2026-10-30 | ~~Termeni speciali~~ — `parseQuery`: ghilimele în any/all, excludere cu `-` (și pe fraze), wildcard `*` | §11.1.3, p. 223 | făcut |
+| ~~P2~~ ✅ 2026-10-30 | ~~Sintaxa de date `mdate:` / `cdate:`~~ — YYYY/YYYY-MM/zi, relative d/m/y, `>`, `<`; AND cu restul criteriilor | §11.1.3 + Tabel 11.1, p. 224–225 | făcut |
 | P2 | Colecția persistentă „Search Results" (ultima căutare, supraviețuiește redeschiderii) | §11.1.1, p. 219 | mediu |
 | P3 | Search Draft Only · Search Binder Selection Only · Search Included/Excluded separate | §11.1.2, p. 222 | mediu |
 | P3 | Project Replace: afectare **Snapshots** + Custom Metadata text + Swap | §11.3, p. 229 | mediu |
@@ -136,6 +136,18 @@ Verificat în cod (`src/components/AdvancedSearchDialog.jsx`, `src/lib/projectSe
   (binder/titlu/dată) + „Descrescător", caseta „Inversează rezultatele".
 - i18n ro/en; 7 teste noi în `tests/projectSearch.test.js` (20 total în fișier); suita completă
   verde (851 trecute), build OK.
+### Etapa P2 — implementată (2026-10-30)
+
+- `src/lib/projectSearch.js`: `parseQuery` — tokenizare cu ghilimele (`/-?"[^"]*"|\S+/`);
+  `-cuvânt` / `-"fraza"` excluse (orice operator any/all); `*` = wildcard universal (ca
+  interogarea goală, dar explicită, combinabilă cu filtre); `mdate:`/`cdate:` → condiții de
+  dată AND: an / an-lună / zi (și `/`), relative `Nd`/`Nm`/`Ny`, `>` (de la) / `<` (înainte);
+  `modified` cade pe `created` când lipsește; nodul fără date nu satisface niciodată o
+  condiție de dată; datele se combină cu termenii de text (ex. `ToDo mdate:<6m`).
+- `buildTerms` rămâne nemodificat pentru apelanții vechi; dialogul validează prin `parseQuery`.
+- 9 teste noi (29 total în fișier); suita completă 860 trecute; build OK.
+- Defect prins de teste și reparat: `<1y` (relativ cu `<`) era tratat ca `1y`.
+
 - Semantica fixată în timpul testării: „începe cu" = cuvântul **începe** cu textul („pădur"
   se potrivește cu „Pădurea"); la invert, dosarele sunt item-uri la fel ca documentele.
 
