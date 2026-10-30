@@ -484,7 +484,9 @@ const flat = (nodes, out = []) => {
     }
     // AI menu: native and in-app; "Conectează la Claude (MCP)…" opens its dialog.
     check('native menu has AI', menuLabels.includes('AI'), menuLabels.join(' | '));
-    check('in-app AI menu in the toolbar', (await win.locator('header.toolbar .menu > button', { hasText: /^AI/ }).count()) === 1);
+    // AI isolation (2026-10-27): the desktop toolbar has no AI menu copy (the native menu has it;
+    // the toolbar keeps only the AI on/off status). The browser build keeps the menubar.
+    check('no AI menu duplicate on the desktop toolbar', (await win.locator('header.toolbar .menu > button', { hasText: /^AI/ }).count()) === 0);
     check('native AI menu has the "AI pe selecție" submenu', await app.evaluate(({ Menu }) => {
       const m = global.__lastMenu || Menu.getApplicationMenu();
       const ai = m && m.items.find((i) => i.label === 'AI');

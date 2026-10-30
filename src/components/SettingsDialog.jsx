@@ -94,6 +94,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
     dtedModel: init.dtedModel || 'auto',
     dtedTerms: init.dtedTerms || '',
     dtedTimestamps: init.dtedTimestamps !== false,
+    dtedAutoUpdate: init.dtedAutoUpdate !== false,
     speechEngine: init.speechEngine || 'local',
     teamColor: init.team?.color || '',
     // Keys that had no UI before 2026-10-27 (inventory #143-148); same keys, same defaults as the code that reads them.
@@ -120,6 +121,34 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
   const [aiTest, setAiTest] = useState(null);
   const [dtedCheck, setDtedCheck] = useState('');
   const [dtedState, setDtedState] = useState(null); // {model, model_folosit, modele} after Verifică
+  const [dtedUpd, setDtedUpd] = useState(null); // update D&TED: {phase, msg, info, pct}
+  // Update D&TED (docs/DTED.md §8): manual check + install with progress (the events come on dted:event).
+  const checkDtedUpdate = async () => {
+    setDtedUpd({ phase: 'check', msg: t('ui.dted.update_caut') });
+    try {
+      const info = await api.dtedCheckUpdate();
+      if (info.newer && info.asset) setDtedUpd({ phase: 'found', info, msg: t('ui.dted.update_noua', { v: info.latest, c: info.current || '—' }) });
+      else setDtedUpd({ phase: 'ok', msg: t('ui.dted.update_zi', { v: info.latest || info.current || '—' }) });
+    } catch (err) {
+      setDtedUpd({ phase: 'error', msg: String(err.message || err) });
+    }
+  };
+  const installDtedUpdate = async (info) => {
+    setDtedUpd((p) => ({ ...p, phase: 'download', pct: 0, msg: t('ui.dted.update_descarc') }));
+    try {
+      const r = await api.dtedInstallUpdate(info);
+      setDtedUpd({ phase: 'done', msg: t('ui.dted.update_gata', { v: r.version }) });
+    } catch (err) {
+      setDtedUpd({ phase: 'error', msg: t('ui.dted.update_esec', { err: String(err.message || err) }) });
+    }
+  };
+  useEffect(() => {
+    if (!api.onDtedEvent) return undefined;
+    const off = api.onDtedEvent((ev) => {
+      if (ev?.ev === 'update_progres') setDtedUpd((p) => (p && p.phase === 'download' ? { ...p, pct: ev.total ? Math.round((ev.primit / ev.total) * 100) : 0 } : p));
+    });
+    return off;
+  }, [api]);
   // Saves the D&TED path first, so the check uses what was typed.
   // Verifică and the model list act on the engine at once; Cancel puts back what was saved.
   const dtedTouched = useRef(false);
@@ -804,6 +833,19 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <input value={s.dtedTerms} onChange={set('dtedTerms')} placeholder="Ilinca, Apuseni, Matei" />
           </label>
           <label className="check"><input type="checkbox" checked={s.dtedTimestamps} onChange={set('dtedTimestamps')} /> {t('ui.dted.marcaje_timp')}</label>
+          {api.dtedCheckUpdate && (
+            <div className="row">
+              <button onClick={checkDtedUpdate}>{t('ui.dted.update_btn')}</button>
+              <label className="check"><input type="checkbox" checked={s.dtedAutoUpdate !== false} onChange={set('dtedAutoUpdate')} /> {t('ui.dted.update_auto')}</label>
+            </div>
+          )}
+          {dtedUpd && (
+            <p className="muted small" role="status">
+              {dtedUpd.msg}
+              {dtedUpd.phase === 'download' && dtedUpd.pct ? ` ${dtedUpd.pct}%` : ''}
+              {dtedUpd.phase === 'found' && <button onClick={() => installDtedUpdate(dtedUpd.info)}>{t('ui.dted.update_instaleaza')}</button>}
+            </p>
+          )}
         </fieldset>
       )}
       <fieldset>

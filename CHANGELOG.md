@@ -1,6 +1,12 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.12.0
+- **Dictarea, direct din click dreapta:** în editor, lângă „Redă audio", meniul **Dictare** are acum „Dictează de la cursor" (fără selecție, textul intră unde ai cursorul), „Dictează (înlocuiește selecția)" (ce spui înlocuiește textul selectat) și „Oprește dictarea" (apare doar cât timp dictezi). Merge la fel și în varianta web, din același meniu. Un defect prins la teste: bucata de text dictată introdusă în mijlocul unei fraze primește acum spațiu și înaintea textului care urmează.
+- **D&TED se actualizează din program** (docs/DTED.md §8, ieșit din „ON HOLD"): butonul *Caută actualizări D&TED…* din Setări → Voce și traducere arată versiunea ta și pe cea nouă de pe pagina D&TED și o instalează la cerere, în folderul de utilizator (fără admin). Instalarea rulează mai întâi programul nou o dată, pe protocolul 1; dacă nu răspunde, instalația veche rămâne activă (fallback). Verificare discretă la pornire și la fiecare 3 zile (bifa „Caută actualizări D&TED automat"), cu anunț când există versiune nouă. Descărcarea e verificată după dimensiune și amprentă SHA-256, iar arhiva nu poate scrie în afara folderului ei.
+- **Auditul de paritate cu Scrivener 3, complet (capitolele 1–26):** toate capitolele manualului oficial au fost comparate cu programul; dovezile pe capitole sunt în `docs/PARITY-AUDIT-*.md`, iar diferențele prioritizate (5 P1, 12 P2, 15 P3) în `docs/PARITY-AUDIT-NEXT-CHAPTERS.md`.
+- Suite: 1459 de teste trecute / 0 eșuate.
+
 ## v0.11.0
 - Redenumire: aplicația se numește acum **Pneuma Sofer** (suflarea care scrie). Numele vizibil s-a schimbat peste tot (interfață, ajutor, README, titlul ferestrei, „Despre").
 - Compatibilitate păstrată: proiectele `.scribner` se deschid la fel, cheile și setările din `%APPDATA%\Scribner` rămân pe loc (criptate cu safeStorage), legăturile interne `scribner://` și pachetele existente merg mai departe. Identificatorul tehnic (CLI, server MCP, protocol, wrapper) este `pneuma`.

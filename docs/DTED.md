@@ -152,17 +152,15 @@ Dictarea și transcrierea merg acum și fără D&TED. Pneuma Sofer are propriul 
 
 D&TED lives in a **separate** repo: [Hermeneuticus-of-things/dted](https://github.com/Hermeneuticus-of-things/dted). Pneuma Sofer does **not** vendor the model; it launches an installed D&TED in `--serviciu` mode (see §2–§4). Built-in whisper.cpp (since v0.9.0) remains the other option.
 
-**Owner requirement (planning / docs):** Pneuma must be able to **update D&TED at any time**, including when the currently referenced D&TED is older or not yet adapted:
+**Built (2026-10-30, feat/dictare-meniu-contextual):** the update check is no longer ON HOLD.
 
-1. **Periodic check** — at **app startup** and optionally every few days in the background.
-2. **Manual check** — user can trigger “check for D&TED updates” from settings anytime.
-3. **Manifest** — query a version source of truth (GitHub Releases for `dted` and/or a shared version JSON URL that both products consult).
-4. **Install** — download the newer Windows user-folder bundle (or equivalent) into a **user path** (no admin); point `settings.dtedPath` (or equivalent) at it.
-5. **Fallback** — if the new build fails to start or fails protocol-1 handshake, keep / revert to the **last working** D&TED.
-6. **Compatibility** — refuse or prompt when `protocol` ≠ expected; do not silently break on D&TED upgrades.
+1. **Periodic check** — at app startup (15 s after launch) and every 3 days, via `createScheduler` (lib/updater.cjs); non-blocking, with rate-limit backoff. A newer release is announced to every window as a discreet toast; the install happens only on the writer's action. Bifa „Caută actualizări D&TED automat" (setarea `dtedAutoUpdate`, implicit activă).
+2. **Manual check** — Settings → Dictare și transcriere (D&TED) → „Caută actualizări D&TED…", cu starea versiunilor și progresul de descărcare (%).
+3. **Manifest** — GitHub Releases for `dted` (api.github.com, latest): tag-ul dă versiunea, asset-ul zip „win/portabil" e pachetul, SHA-256 vine din `digest`, din `SHA256SUMS.txt` sau din corpul release-ului (`lib/dtedUpdate.cjs`).
+4. **Install** — download with size + SHA-256 verification (downloadAsset), zip extracted with the same no-escape guard as the built-in engine, into `%LOCALAPPDATA%\Programs\D&TED – Dictare și transcriere în limba română (<versiune>)` (user path, no admin). The protocol-1 handshake runs **before** the switch: `verifyService` starts the staged DTED.exe once; only after it answers `{"ev":"gata","protocol":1}` does `settings.dtedPath` move to the new exe (plus `dtedVersion`), and the running service is stopped so the next request spawns the new build.
+5. **Fallback** — if the download, the archive, the handshake or the install fails, settings are never touched: the previous installation stays active, with the reason shown in Settings.
+6. **Compatibility** — the handshake rejects a protocol ≠ 1 (dted.cjs), exactly like any service start.
 
-Code integration points today: `lib/dted.cjs`, `electron/dtedHandlers.cjs`, `src/lib/useDictation.js` / `dictation.js`, UI `DictationBar.jsx`. See also `docs/DEPENDENCY_UPDATES.md`.
+Version source: `dtedVersion` in settings, recorded when Verifică asks the service state (`stare.versiune`). IPC: `dted:checkUpdate`, `dted:installUpdate`; events on `dted:event`: `update_disponibila`, `update_progres`, `update_gata`. Tests: `tests/dtedUpdate.test.js` (asset choice, version compare, SHA-256 sources, zip-slip, handshake ok/rejected, fallback, bad digest). Integration points: `lib/dtedUpdate.cjs`, `electron/dtedHandlers.cjs`, Settings UI; see also `docs/DEPENDENCY_UPDATES.md`.
 
-*Documentation only — no application code change in this note (2026-10-26).*
-
-> **Status (2026-10-26):** The in-app D&TED update-check **build** is **ON HOLD** (not cancelled); the owner will do it later. This section and `docs/DEPENDENCY_UPDATES.md` stay the planning reference until then.
+*The earlier status note (2026-10-26, „ON HOLD") is superseded by the build above.*

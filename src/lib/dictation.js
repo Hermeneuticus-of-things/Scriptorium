@@ -92,8 +92,12 @@ export function insertFragment(editor, fragment, session = {}, { replacements } 
   const { state } = editor;
   const { from, to } = state.selection;
   const before = state.doc.textBetween(Math.max(0, from - 200), from, '\n', ' ');
-  const text = joinFragment(before, applyReplacements(fragment, replacements));
+  let text = joinFragment(before, applyReplacements(fragment, replacements));
   if (!text) return '';
+  // Cursorul e în mijlocul textului („dictează de la cursor” peste o selecție colapseată): la stânga
+  // spațierea vine din joinFragment; la dreapta fragmentul se desparte de ce urmează, ca între bucăți.
+  const after = state.doc.textBetween(to, Math.min(state.doc.content.size, to + 80), '\n', ' ');
+  if (to < state.doc.content.size && /^[^\s.,;:!?…)\]»”]/.test(after)) text += ' ';
   const tr = state.tr.insertText(text, from, to);
   if (session.lastDoc && session.lastDoc === state.doc && session.lastTr) tr.setMeta('appendedTransaction', session.lastTr);
   editor.view.dispatch(tr);

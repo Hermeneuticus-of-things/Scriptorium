@@ -338,6 +338,16 @@ function setupSpelling(win) {
           { label: L.stopRead, click: cmd('stopRead') },
         ],
       });
+      // Dictarea (D&TED / motorul încorporat): de la cursor sau peste selecție, ca redarea audio.
+      // The renderer exposes a probe so „Oprește dictarea" shows only while dictating.
+      const dictating = await win.webContents.executeJavaScript('typeof window.__dictationActive === "function" ? window.__dictationActive() : false').catch(() => false);
+      if (win.isDestroyed()) return;
+      const dictSub = [
+        { label: L.dictHere, click: cmd('dictateHere') },
+        ...(text ? [{ label: L.dictSel, click: cmd('dictateSel') }] : []),
+      ];
+      if (dictating) dictSub.push({ type: 'separator' }, { label: L.dictStop, click: cmd('dictateStop') });
+      items.push({ label: L.dictation, submenu: dictSub });
       items.push({
         label: L.extend,
         submenu: [
@@ -882,7 +892,17 @@ require('./v04Handlers.cjs')({ handle, dialog, BrowserWindow, store, assertOpene
 require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai, noteSelfWrite, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
 const pickedAudio = new Set();
 const whisper = require('./whisperHandlers.cjs')({ handle, app, net, assertOpened, store, pickedAudio, getSettings: readSettings, dtedFound: () => Boolean(require('../lib/dted.cjs').locate({ custom: readSettings().dtedPath || '' })) });
-require('./dtedHandlers.cjs')({ handle, assertOpened, getSettings: readSettings, app, pickedAudio, showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o) });
+require('./dtedHandlers.cjs')({
+  handle,
+  assertOpened,
+  getSettings: readSettings,
+  setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }),
+  fetchImpl: net.fetch,
+  notifyAll: (ev) => BrowserWindow.getAllWindows().forEach((w) => { try { if (!w.isDestroyed()) w.webContents.send('dted:event', ev); } catch { /* window closed */ } }),
+  app,
+  pickedAudio,
+  showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o),
+});
 require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
 require('./updateHandlers.cjs')({ handle, app, net, shell, BrowserWindow, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }), githubToken: () => services.getService(readSettings(), 'github', safeStorage).token || process.env.SCRIBNER_GITHUB_TOKEN || '' });
 require('./smallWindowHandlers.cjs')({ handle, app, BrowserWindow, globalShortcut: require('electron').globalShortcut, dialog, shell, claims, assertOpened, isAppUrl, preload: path.join(__dirname, 'preload.cjs'), appPage: { url: process.env.VITE_DEV_SERVER_URL || '', file: path.join(__dirname, '..', 'dist', 'index.html') }, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }) });
