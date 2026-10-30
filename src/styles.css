@@ -425,3 +425,16 @@ legend { color: var(--muted); padding: 0 4px; }
 .format-bar :is(button, select, input):focus-visible,
 .format-bar .menu-pop :is(button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; position: relative; z-index: 1; }
 .format-bar .menu-pop [role='menuitem']:focus-visible { outline-offset: -2px; background: var(--accent-soft); }
+
+/* Quick Search (Scrivener 3 §11.5): omnibox popup, top-aligned like a URL bar. */
+.modal.quick-search { position: fixed; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, 94vw); padding: 10px 12px; gap: 8px; }
+.quick-search input { width: 100%; font-size: 15px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: inherit; }
+.qs-results { max-height: 50vh; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.qs-section { display: flex; flex-direction: column; gap: 2px; }
+.qs-result { display: flex; flex-direction: column; gap: 2px; text-align: left; border: none; background: none; color: inherit; padding: 5px 8px; border-radius: 6px; cursor: pointer; }
+.qs-result.selected { background: var(--accent-soft); }
+.qs-result .qs-title { font-weight: 600; }
+.qs-result .qs-snippet { font-size: 12.5px; }
+.qs-result mark { background: var(--accent-soft); color: inherit; padding: 0 1px; }
+.qs-empty { margin: 4px 2px; }
+.qs-footer { display: flex; justify-content: space-between; align-items: center; }

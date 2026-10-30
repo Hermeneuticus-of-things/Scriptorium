@@ -22,6 +22,7 @@ import TargetsDialog from './components/TargetsDialog.jsx';
 import CollectionsBar from './components/CollectionsBar.jsx';
 import KeywordsDialog from './components/KeywordsDialog.jsx';
 import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
+import QuickSearch from './components/QuickSearch.jsx';
 import { collectionNodes, createCollection } from './lib/collections.js';
 import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
 import { profileFor } from './lib/editorial.js';
@@ -1650,6 +1651,7 @@ export default function App({ api }) {
     ['edit', 'findDoc', tr('cmd.findDoc'), () => editorHandle()?.openFind()],
     ['edit', 'findProject', tr('cmd.findProject'), () => { setFindSeed(''); setDialog('find'); }],
     ['edit', 'advSearch', tr('cmd.advSearch'), () => { setSearchSeed(''); setDialog('advsearch'); }],
+    ['edit', 'quickSearch', tr('cmd.quickSearch'), () => setDialog('quicksearch')],
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
@@ -2419,6 +2421,23 @@ export default function App({ api }) {
             const r = createCollection(project, { title, type: 'search', search: { query, options } });
             saveProject(r.project);
             setActiveCollectionId(r.id);
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'quicksearch' && (
+        <QuickSearch
+          project={project}
+          docs={docs}
+          currentTitle={findNode(project.tree, selectedId)?.title || ''}
+          onOpen={(id, q) => {
+            if (q) setFindSeed(q);
+            go(id);
+            setView('editor');
+          }}
+          onFullSearch={(criteria) => {
+            setSearchSeed(criteria.query || '');
+            setDialog('advsearch');
           }}
           onClose={() => setDialog(null)}
         />

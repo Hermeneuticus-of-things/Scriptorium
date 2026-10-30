@@ -44,6 +44,10 @@ export const DEFAULT_KEYS = {
   newText: 'Ctrl+N',
   newFolder: 'Ctrl+Shift+N',
   findProject: 'Ctrl+Shift+F',
+  // Quick Search (Scrivener 3 §11.5) omnibox: Ctrl+O keeps the browser
+  // address-bar metaphor; Ctrl+G is Go To, Ctrl+K is split. Ctrl+Alt is
+  // avoided (AltGr on Romanian layouts).
+  quickSearch: 'Ctrl+O',
   composition: 'F11',
   split: 'Ctrl+K',
   splitTitle: 'Ctrl+Shift+K',
