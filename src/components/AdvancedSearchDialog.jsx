@@ -23,13 +23,15 @@ const CSS = `
 .as-field { font-size: 11px; color: var(--muted); margin-right: 4px; }
 .as-ops { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .as-ops select { padding: 2px 6px; }
+.as-swap { align-self: end; white-space: nowrap; }
 `;
 
 const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onLastSearch, onSaveAsCollection, onClose, initialQuery = '', selectionIds = [] }) {
+export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onLastSearch, onSaveAsCollection, onClose, initialQuery = '', selectionIds = [], api }) {
   const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
+  const [affectSnapshots, setAffectSnapshots] = useState(false);
   const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, operator: 'any', invert: false });
   const [sortCfg, setSortCfg] = useState({ by: 'binder', desc: false });
   const [fields, setFields] = useState(['title', 'text', 'synopsis', 'keywords', 'custom']);
@@ -65,15 +67,16 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
     () => ({
       query, ...opts, fields, ...filters, sort: sortCfg.by, sortDesc: sortCfg.desc,
       selectionIds: filters.selectionScope && selectionIds.length ? selectionIds : [],
+      affectSnapshots,
     }),
-    [query, opts, fields, filters, sortCfg, selectionIds]
+    [query, opts, fields, filters, sortCfg, selectionIds, affectSnapshots]
   );
   const parsed = useMemo(() => parseQuery(criteria), [criteria]);
   const invalid = Boolean(query) && parsed === null;
   const results = useMemo(() => searchProject(project, docs, notesById, criteria), [project, docs, notesById, criteria]);
 
   const total = results.reduce((s, r) => s + Object.values(r.fields).reduce((a, b) => a + b, 0), 0);
-  const replaceable = results.filter((r) => r.fields.title || r.fields.text || r.fields.notes || r.fields.synopsis);
+  const replaceable = results.filter((r) => r.fields.title || r.fields.text || r.fields.notes || r.fields.synopsis || r.fields.custom);
 
   const keywordNames = useMemo(() => listKeywords(project).map((k) => k.name), [project]);
   const labels = project.labels || [];
@@ -81,6 +84,12 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
 
   const toggleOpt = (k) => () => setOpts((o) => ({ ...o, [k]: !o[k] }));
   const toggleFilter = (k, v) => setFilters((f) => ({ ...f, [k]: toggleIn(f[k], v) }));
+
+  // Scrivener §11.3: Swap exchanges the contents of the Replace and With fields.
+  const swap = () => {
+    setQuery(replacement);
+    setReplacement(query);
+  };
 
   const replaceAll = async () => {
     if (!query || !replaceable.length || !onReplace) return;
@@ -141,6 +150,9 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
             {tr('ui.advancedSearchDialog.inlocuieste_cu')}
             <input value={replacement} onChange={(e) => setReplacement(e.target.value)} placeholder={opts.regex ? tr('ui.advancedSearchDialog.1_pentru_grupuri') : ''} />
           </label>
+          <button type="button" className="as-swap" onClick={swap}>
+            {tr('ui.advancedSearchDialog.swap')}
+          </button>
         </div>
         <div className="as-ops">
           <label className="check"><input type="checkbox" checked={opts.caseSensitive} onChange={toggleOpt('caseSensitive')} /> Majuscule exacte</label>
@@ -176,6 +188,15 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
               <input type="checkbox" checked={fields.includes(f)} onChange={() => setFields((fs) => toggleIn(fs, f))} /> {FIELD_LABELS()[f]}
             </label>
           ))}
+          {/* Snapshots are archived document text: replaceable only if the api can rewrite them. */}
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={affectSnapshots}
+              disabled={!api?.updateSnapshotHtml}
+              onChange={() => setAffectSnapshots((v) => !v)}
+            /> {tr('ui.advancedSearchDialog.include_snapshots')}
+          </label>
           {loadingNotes && <small className="muted">{tr('ui.advancedSearchDialog.se_incarca_notele')}</small>}
         </div>
         <div className="as-grid">

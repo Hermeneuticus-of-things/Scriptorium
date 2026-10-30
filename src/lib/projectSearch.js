@@ -371,7 +371,8 @@ function replacePlain(text, re, replacement) {
 
 /**
  * Replaces re in the selected fields of one document.
- * fields default: ['title', 'synopsis', 'text', 'notes'].
+ * fields default: ['title', 'synopsis', 'text', 'notes']; 'custom' covers the plain-string
+ * values of node.custom (single or inside arrays), other types are left alone (Scrivener §11.3).
  * @returns {{node, docHtml, notesHtml, count}} node is a shallow copy (never mutated).
  */
 export function replaceInFields(node, docHtml, notesHtml, re, replacement, fields = ['title', 'synopsis', 'text', 'notes']) {
@@ -396,6 +397,40 @@ export function replaceInFields(node, docHtml, notesHtml, re, replacement, field
     notes = r.html;
     count += r.count;
   }
+  // Custom metadata (Scrivener §11.3): only plain strings are replaced, in single values
+  // and inside arrays; numbers/booleans are data, not prose. The copy always carries the
+  // (possibly unchanged) custom object when the field is selected.
+  if (fields.includes('custom') && node.custom && typeof node.custom === 'object') {
+    const custom = { ...node.custom };
+    for (const [k, v] of Object.entries(node.custom)) {
+      if (typeof v === 'string') {
+        const r = replacePlain(v, re, replacement);
+        if (r.count) {
+          custom[k] = r.text;
+          count += r.count;
+        }
+      } else if (Array.isArray(v)) {
+        let changed = false;
+        const arr = v.map((item) => {
+          if (typeof item !== 'string') return item;
+          const r = replacePlain(item, re, replacement);
+          if (r.count) {
+            changed = true;
+            count += r.count;
+          }
+          return r.text;
+        });
+        if (changed) custom[k] = arr;
+      }
+    }
+    next.custom = custom;
+  }
   re.lastIndex = 0;
   return { node: next, docHtml: doc, notesHtml: notes, count };
+}
+
+// Scrivener §11.3: the archived text of snapshots is replaced too. Pure over one
+// snapshot's html ({file, name, date, html} payload); the caller lists and persists them.
+export function replaceSnapshotHtml(html, re, replacement) {
+  return replaceInHtml(html, re, replacement);
 }
