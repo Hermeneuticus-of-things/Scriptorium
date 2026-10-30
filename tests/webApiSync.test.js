@@ -121,6 +121,24 @@ describe('webApi: snapshots and names', () => {
     expect((await api.listSnapshots(dir, id)).map((s) => s.name)).toEqual(['nou']);
   });
 
+  it('updateSnapshotHtml replaces only the chosen snapshot html; unknown ids are errors', async () => {
+    const api = createWebApi({ kv: createMemoryKv(), channel: null });
+    const { dir, project } = await api.newProject('S');
+    const id = project.tree[0].children[0].id;
+    await api.writeDoc(dir, id, 'docs', '<p>vechi</p>');
+    const a = await api.takeSnapshot(dir, id, 'unu');
+    const b = await api.takeSnapshot(dir, id, 'doi');
+
+    await api.updateSnapshotHtml(dir, id, a.file, '<p>nou</p>');
+    const list = await api.listSnapshots(dir, id);
+    expect(list.find((s) => s.file === a.file)).toMatchObject({ name: 'unu', date: a.date, html: '<p>nou</p>' });
+    expect(list.find((s) => s.file === b.file).html).toBe('<p>vechi</p>');
+    // Bundle ids carry no ".json", folder projects list "<ts>.json": both address the same snapshot.
+    await api.updateSnapshotHtml(dir, id, `${String(b.file).replace(/\.json$/, '')}.json`, '<p>și aici</p>');
+    expect((await api.listSnapshots(dir, id)).find((s) => s.file === b.file).html).toBe('<p>și aici</p>');
+    await expect(api.updateSnapshotHtml(dir, id, 'lipsa', '<p>x</p>')).rejects.toThrow(/inexistent/i);
+  });
+
   it('bundle file names survive special characters', () => {
     expect(bundleFileName('Carte: „Ăla”/vol. 2?')).toBe('Carte_ „Ăla”_vol. 2_.scribner.json');
     expect(bundleFileName('')).toBe('Proiect.scribner.json');

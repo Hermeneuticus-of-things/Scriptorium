@@ -244,6 +244,14 @@ export function createMockApi() {
     async listSnapshots(_dir, id) {
       return snaps[id] || [];
     },
+    // Mirrors the desktop: replaces only the html of an existing snapshot, never creates one.
+    async updateSnapshotHtml(_dir, id, file, html) {
+      const list = snaps[id] || [];
+      const hit = list.find((x) => String(x.file) === String(file));
+      if (!hit) throw new Error(`Snapshot inexistent: ${file}`);
+      hit.html = String(html ?? '');
+      return true;
+    },
     // I-EDIT journal of the author's changes (MODIFICARI_AUTOR.jsonl on the desktop).
     async appendAuthorJournal(dir, rows) {
       const list = (Array.isArray(rows) ? rows : [rows]).filter((r) => r && r.doc && r.old !== r.new);
