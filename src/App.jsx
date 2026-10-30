@@ -27,9 +27,12 @@ import TargetsDialog from './components/TargetsDialog.jsx';
 import CollectionsBar, { SEARCH_RESULTS_TAB } from './components/CollectionsBar.jsx';
 import KeywordsDialog from './components/KeywordsDialog.jsx';
 import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
-import { addKeywordToDocs, addToCollection, collectionNodes, createCollection, removeFromCollection } from './lib/collections.js';
 import QuickSearch from './components/QuickSearch.jsx';
-import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
+import DialogueFocusDialog from './components/DialogueFocusDialog.jsx';
+import FilterBar from './components/FilterBar.jsx';
+import { addKeywordToDocs, addToCollection, collectionNodes, createCollection, removeFromCollection, ensureSearchResults, setLastSearch, SEARCH_RESULTS_ID } from './lib/collections.js';
+import { replaceInFields, replaceSnapshotHtml, searchProject, buildTerms } from './lib/projectSearch.js';
+import { filterContainer } from './lib/viewFilter.js';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
 import { diffParagraphs, journalRows, updateAuthorHashes } from './lib/authorText.js';
@@ -124,6 +127,7 @@ import {
   historyRedo,
 } from './lib/tree.js';
 import { importDestination } from './lib/importFolder.js';
+import { listTemplates, cloneFromTemplate, templateTargetParent } from './lib/documentTemplates.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
 import { applyTextEdits, replaceRangeText } from './lib/serviceApply.js';
@@ -132,6 +136,8 @@ import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
 import { PickNodeDialog, ImportSplitDialog } from './components/BatchADialogs.jsx';
 import LayoutsDialog from './components/LayoutsDialog.jsx';
+import { replaceInHtml } from './lib/search.js';
+import { stripNotation, convertNotation } from './lib/notationOps.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 import useReader from './lib/useReader.js';
@@ -449,6 +455,10 @@ export default function App({ api: apiProp }) {
   const [copyholder, setCopyholder] = useState(null); // {id, editable} | null
   const copyScroll = useRef(new Map()); // doc id -> scrollTop of the copyholder pane
   const [searchSeed, setSearchSeed] = useState('');
+  // View > Filter (Scrivener 3 §11.4) over the corkboard / outliner; filterNotes
+  // caches notes read for the text/notes option (notes are not kept in App state).
+  const [viewFilter, setViewFilter] = useState({ open: false, query: '', regex: false, includeTextNotes: false, draftScope: 'any', compileScope: 'all', meta: { mode: 'any', field: 'label', value: '' } });
+  const [filterNotes, setFilterNotes] = useState({});
   const [editorView, setEditorViewState] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('pneuma-editor-view')) || {};
@@ -1049,6 +1059,50 @@ export default function App({ api: apiProp }) {
   const titleOfNode = (id) => { const n = project && findNode(project.tree, id); return n ? n.title : null; };
   const toggleLockPane = (pane = activePaneRef.current) => setPaneLocks((l) => ({ ...l, [pane]: !l[pane] }));
 
+  // --- View > Filter (Scrivener 3 §11.4): narrows the corkboard / outliner to a flat list ---
+  // The container being filtered: the selected folder, or the parent of the selected item.
+  const viewFilterContainer =
+    project && (view === 'corkboard' || view === 'outline')
+      ? selected && selected.children
+        ? selected
+        : view === 'corkboard'
+          ? findParent(project.tree, selectedId) || project.tree[0]
+          : project.tree[0]
+      : null;
+  const filterNodes = useMemo(() => {
+    if (!viewFilterContainer || !viewFilter.open) return null;
+    // Draft scope needs the root kind of nodes without their own `.root`.
+    const rootKind = viewFilterContainer.root || (project.tree.find((r) => findNode([r], viewFilterContainer.id)) || {}).root || null;
+    return filterContainer(viewFilterContainer.children || [], {
+      query: viewFilter.query,
+      regex: viewFilter.regex,
+      includeTextNotes: viewFilter.includeTextNotes,
+      docs,
+      notesById: filterNotes,
+      draftScope: viewFilter.draftScope,
+      compileScope: viewFilter.compileScope,
+      meta: viewFilter.meta,
+      rootKind,
+    });
+  }, [viewFilterContainer, viewFilter, docs, filterNotes, project.tree]);
+  // Text/notes search needs the documents and notes in memory; the filter searches
+  // whatever is loaded until then.
+  const patchViewFilter = (patch) => {
+    setViewFilter((f) => ({ ...f, ...patch }));
+    if (patch.includeTextNotes) loadAllDocs().catch(report);
+  };
+  useEffect(() => {
+    if (!viewFilter.open || !viewFilter.includeTextNotes || !viewFilterContainer || !dir) return undefined;
+    const ids = flatten(viewFilterContainer.children || []).map((n) => n.id).filter((id) => !(id in filterNotes));
+    if (!ids.length) return undefined;
+    let alive = true;
+    Promise.all(ids.map((id) => Promise.resolve(api.readDoc(dir, id, 'notes')).then((h) => [id, h || ''], () => [id, ''])))
+      .then((pairs) => alive && setFilterNotes((m) => ({ ...m, ...Object.fromEntries(pairs) })));
+    return () => {
+      alive = false;
+    };
+  }, [viewFilter.open, viewFilter.includeTextNotes, viewFilterContainer, dir, filterNotes]);
+
   const go = async (id, { push = true } = {}) => {
     await flush();
     setScrivList(null);
@@ -1247,6 +1301,14 @@ export default function App({ api: apiProp }) {
     const h = id && editorRefs.current.get(id);
     if (h?.focus) h.focus();
     else if (tries > 0) setTimeout(() => focusEditor(id, tries - 1), 50);
+  };
+  // Scrolls to and selects the first occurrence of `phrase` in the editor of `id`
+  // once it is mounted (after go()); same retry pattern as focusEditor. Used by
+  // Quick Search for text hits (manual §11.5); the handle's findText does the work.
+  const revealText = (id, phrase, tries = 10) => {
+    const h = id && editorRefs.current.get(id);
+    if (h?.findText) h.findText(phrase);
+    else if (tries > 0) setTimeout(() => revealText(id, phrase, tries - 1), 50);
   };
   const patchNode = (id, patch) => setTree(updateNode(project.tree, id, patch));
 
@@ -1744,8 +1806,13 @@ export default function App({ api: apiProp }) {
     go(splitId);
     setSplitId(a);
   };
+  // Layouts (Window > Saved layouts…, Scrivener 3 §12.3): named window arrangements kept at
+  // application level (settings.layouts), so they are offered in every project. The payload
+  // captures only arrangement — never selectedId (project content, not layout); persistence of
+  // the applied values continues through the existing saveUi effect.
+  const savedLayouts = normalizeLayouts(settings && settings.layouts);
   const saveLayouts = async (layouts) => {
-    await api.setSettings({ layouts });
+    await api.setSettings({ layouts: normalizeLayouts(layouts) });
     setSettings(await api.getSettings());
   };
   const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
@@ -1810,6 +1877,7 @@ export default function App({ api: apiProp }) {
     const node = id && findNode(project.tree, id);
     if (node && !node.root && !node.children) setCopyholder((c) => ({ id, editable: c?.id === id ? c.editable : false }));
   };
+  const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
 
   // Quick Reference: floating panels with another document (Scrivener: Open in Quick Reference).
   const openQuickRef = (id) =>
@@ -1820,21 +1888,22 @@ export default function App({ api: apiProp }) {
     if (id) go(id);
   };
 
-  // New document from a Template Sheet: copies its text, notes, synopsis, label, status,
-  // keywords and custom metadata; placeholders such as <$date> and <$n> are filled in.
-  const newFromTemplate = async (tpl) => {
+  // New from Template (Scrivener 3 §7.5): deep-clones the template (children included,
+  // fresh ids, same title) into the target container, then copies the document contents
+  // (docs/notes live outside the tree) for every cloned node.
+  const newFromTemplate = async (tpl, targetParentId = null) => {
     await flush();
-    const node = newNode(tpl.type === 'folder' ? 'folder' : 'text', tpl.title);
-    const { fields, resolve } = fromTemplate(tpl, parentForNew(selectedId));
-    Object.assign(node, fields);
-    setTree(insertNear(project.tree, selectedId, node));
-    const rawHtml = docsNow()[tpl.id] ?? (await api.readDoc(dir, tpl.id, 'docs'));
-    const html = rawHtml ? resolve(rawHtml) : rawHtml;
-    const rawNotes = await api.readDoc(dir, tpl.id, 'notes');
-    const notes = rawNotes ? resolve(rawNotes) : rawNotes;
-    if (html) await api.writeDoc(dir, node.id, 'docs', html);
-    if (notes) await api.writeDoc(dir, node.id, 'notes', notes);
-    setDocs((d) => ({ ...d, [node.id]: html || '' }));
+    const target = targetParentId || templateTargetParent(project.tree, selectedId);
+    const { tree, newNode: node, pairs } = cloneFromTemplate(project.tree, tpl.id, target);
+    if (!node) return;
+    setTree(tree);
+    for (const [oldId, newId] of pairs) {
+      const html = docsNow()[oldId] ?? (await api.readDoc(dir, oldId, 'docs'));
+      const notes = await api.readDoc(dir, oldId, 'notes');
+      if (html) await api.writeDoc(dir, newId, 'docs', html);
+      if (notes) await api.writeDoc(dir, newId, 'notes', notes);
+      if (html) setDocs((d) => ({ ...d, [newId]: html }));
+    }
     go(node.id);
     setView('editor');
   };
@@ -1958,14 +2027,18 @@ export default function App({ api: apiProp }) {
     go(first.id);
   };
 
-  // Advanced search replace: text, notes, titles and synopses, with a snapshot of every changed document.
+  // Advanced search replace: text, notes, titles, synopses and custom metadata, with a snapshot of every changed document.
   const replaceAdvanced = async (criteria, replacement) => {
     await flush();
-    const fields = (criteria.fields && criteria.fields.length ? criteria.fields : ['title', 'text', 'notes', 'synopsis']).filter((f) => ['title', 'text', 'notes', 'synopsis'].includes(f));
+    const fields = (criteria.fields && criteria.fields.length ? criteria.fields : ['title', 'text', 'notes', 'synopsis']).filter((f) => ['title', 'text', 'notes', 'synopsis', 'custom'].includes(f));
     const notesById = {};
     if (fields.includes('notes')) for (const n of flatten(project.tree)) if (!n.root) notesById[n.id] = await api.readDoc(dir, n.id, 'notes');
     const terms = buildTerms(criteria);
     if (!terms || !terms.length) return 0;
+    // Scrivener §11.3: archived snapshot text is replaced too — only when the text field is
+    // ticked (a snapshot IS the document's text) and only if the api can both list and rewrite
+    // snapshot html; no backend exposes a snapshot write yet, so the pass stays inert until one does.
+    const rewriteSnapshots = Boolean(criteria.affectSnapshots) && fields.includes('text') && typeof api.updateSnapshotHtml === 'function';
     const docs = docsNow();
     const results = searchProject(project, docs, notesById, criteria);
     const nodeUpdates = [];
@@ -1984,13 +2057,32 @@ export default function App({ api: apiProp }) {
         count += r.count;
       }
       if (!count) continue;
+      // Existing snapshots are listed before the safety snapshot, so the fresh
+      // „before replace" snapshot keeps the original text.
+      const oldSnaps = rewriteSnapshots ? await api.listSnapshots(dir, node.id) : [];
       await api.takeSnapshot(dir, node.id, tr('ui.app.automat_inainte_de_inlocuire')).catch(report);
       if (docHtml !== (docs[node.id] || '')) {
         await api.writeDoc(dir, node.id, 'docs', docHtml);
         nextDocs[node.id] = docHtml;
       }
       if (fields.includes('notes') && notesHtml !== (notesById[node.id] || '')) await api.writeDoc(dir, node.id, 'notes', notesHtml);
-      nodeUpdates.push([node.id, { title: current.title, synopsis: current.synopsis }]);
+      for (const s of oldSnaps) {
+        if (typeof s?.html !== 'string' || !s.html) continue;
+        let snapHtml = s.html;
+        let snapCount = 0;
+        for (const re of terms) {
+          const r = replaceSnapshotHtml(snapHtml, re, replacement);
+          snapHtml = r.html;
+          snapCount += r.count;
+        }
+        if (snapCount) {
+          await api.updateSnapshotHtml(dir, node.id, s.file, snapHtml);
+          total += snapCount;
+        }
+      }
+      const patch = { title: current.title, synopsis: current.synopsis };
+      if (fields.includes('custom') && current.custom !== undefined) patch.custom = current.custom;
+      nodeUpdates.push([node.id, patch]);
       total += count;
     }
     // Snapshots and writes above are awaited: build on the project as it is now, not as it was at the start.
@@ -2026,6 +2118,76 @@ export default function App({ api: apiProp }) {
     for (const [id, html] of Object.entries(next)) setEditorHtml(id, html);
     recordHistory();
     return total;
+  };
+
+  // --- notation strip / convert (Scrivener 3 §18.4.1, §18.4.5) ----------------------------
+  // Same flow as Replace All: flush, snapshot every changed document, write, mirror into
+  // state and any open editor. The confirm shows exactly what will be removed.
+  const NOTATION_KINDS = {
+    annotations: 'x_adnotari_inline',
+    comments: 'x_comentarii',
+    footnotes: 'x_note_de_subsol_inline',
+    linkedFootnotes: 'x_note_de_subsol_legate',
+    revisions: 'x_marcaje_de_revizie',
+  };
+  const notationParts = (counts) =>
+    Object.entries(NOTATION_KINDS).filter(([k]) => counts[k]).map(([k, key]) => tr(`ui.app.${key}`, { n: counts[k] })).join(' · ');
+  const sumNotation = (c) => Object.keys(NOTATION_KINDS).reduce((s, k) => s + c[k], 0);
+
+  const stripNotationInDoc = async () => {
+    if (!selected || selected.root) return;
+    await flush();
+    const { html, counts } = stripNotation(docsNow()[selected.id] || '');
+    const parts = notationParts(counts);
+    if (!parts) return setToast(tr('ui.app.fara_notatii'));
+    if (!window.confirm(tr('ui.app.elimini_notatiile_din_document_x', { title: selected.title, parts: parts }))) return;
+    await api.takeSnapshot(dir, selected.id, tr('ui.app.automat_inainte_de_eliminarea_notatiilor')).catch(report);
+    await api.writeDoc(dir, selected.id, 'docs', html);
+    setDocs((d) => ({ ...d, [selected.id]: html }));
+    editorRefs.current.get(selected.id)?.setHtml(html);
+    recordHistory();
+    setToast(tr('ui.app.eliminate_x', { parts: parts }));
+  };
+
+  const stripNotationInProject = async () => {
+    await flush();
+    const docs = docsNow();
+    const trash = project.tree.find((n) => n.root === 'trash');
+    const trashIds = new Set(flatten(trash ? trash.children : []).map((n) => n.id));
+    const changed = [];
+    const totals = { annotations: 0, comments: 0, footnotes: 0, linkedFootnotes: 0, revisions: 0 };
+    for (const n of flatten(project.tree)) {
+      if (n.root || trashIds.has(n.id)) continue;
+      const { html, counts } = stripNotation(docs[n.id] || '');
+      if (!sumNotation(counts)) continue;
+      changed.push([n.id, html]);
+      for (const k of Object.keys(NOTATION_KINDS)) totals[k] += counts[k];
+    }
+    const parts = notationParts(totals);
+    if (!parts) return setToast(tr('ui.app.fara_notatii'));
+    if (!window.confirm(tr('ui.app.elimini_notatiile_din_tot_proiectul', { length: changed.length, parts: parts }))) return;
+    for (const [id, html] of changed) {
+      await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_eliminarea_notatiilor')).catch(report);
+      await api.writeDoc(dir, id, 'docs', html);
+    }
+    setDocs((d) => ({ ...d, ...Object.fromEntries(changed) }));
+    for (const [id, html] of changed) editorRefs.current.get(id)?.setHtml(html);
+    recordHistory();
+    setToast(tr('ui.app.eliminate_x', { parts: parts }));
+  };
+
+  // Conversions apply to the current document only; unsupported pairs never reach here.
+  const convertNotationInDoc = async (from, to) => {
+    if (!selected || selected.root) return;
+    await flush();
+    const { html, count } = convertNotation(docsNow()[selected.id] || '', from, to);
+    if (!count) return setToast(tr('ui.app.nimic_de_convers'));
+    await api.takeSnapshot(dir, selected.id, tr('ui.app.automat_inainte_de_eliminarea_notatiilor')).catch(report);
+    await api.writeDoc(dir, selected.id, 'docs', html);
+    setDocs((d) => ({ ...d, [selected.id]: html }));
+    editorRefs.current.get(selected.id)?.setHtml(html);
+    recordHistory();
+    setToast(tr('ui.app.convertite_x', { n: count }));
   };
 
   // baseTree: lets a caller that also adds other nodes save everything in one project write.
@@ -2207,6 +2369,12 @@ export default function App({ api: apiProp }) {
           cmd.run();
           return;
         }
+      }
+      // Filter bar (Scrivener 3 §11.4): Ctrl+F has no default command key, so it is
+      // handled here, only while a corkboard or outliner is the active view.
+      if (combo === 'Ctrl+F' && (view === 'corkboard' || view === 'outline')) {
+        e.preventDefault();
+        setViewFilter((f) => ({ ...f, open: true }));
       }
     };
     // Ctrl+Shift app shortcuts typed in the editor run before the editor sees the key, so it does
@@ -2548,6 +2716,7 @@ export default function App({ api: apiProp }) {
     .map((n) => ({ id: n.id, title: n.title, html: docs[n.id] || '' }));
 
   const templateFolder = project.templateFolder ? findNode(project.tree, project.templateFolder) : null;
+  const docTemplates = listTemplates(project);
   const favorites = flatten(project.tree).filter((n) => n.favorite && !inTrash(n.id));
   const canContain = selected && !selected.root && selected.type !== 'file';
 
@@ -2558,6 +2727,13 @@ export default function App({ api: apiProp }) {
     { label: tr('cmd.merge'), shortcut: 'Ctrl+Shift+M', action: mergeSelection },
     { label: tr('ui.app.duplica_cu_sub_documente'), shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
     { label: tr('ui.app.duplica_doar_elementul'), action: () => duplicateSelection(false) },
+    '-',
+    { label: tr('cmd.stripNotationDoc'), action: () => stripNotationInDoc().catch(report), disabled: !selected || selected.root },
+    { label: tr('cmd.stripNotationProject'), action: () => stripNotationInProject().catch(report) },
+    { label: tr('cmd.convertAnnotToComment'), action: () => convertNotationInDoc('inline-annotation', 'comment').catch(report), disabled: !selected || selected.root },
+    { label: tr('cmd.convertCommentToAnnot'), action: () => convertNotationInDoc('comment', 'inline-annotation').catch(report), disabled: !selected || selected.root },
+    { label: tr('cmd.convertFootnoteToLinked'), action: () => convertNotationInDoc('inline-footnote', 'linked-footnote').catch(report), disabled: !selected || selected.root },
+    { label: tr('cmd.convertLinkedToFootnote'), action: () => convertNotationInDoc('linked-footnote', 'inline-footnote').catch(report), disabled: !selected || selected.root },
     '-',
     { label: tr('ui.app.converteste_in_dosar'), action: () => setTree(convertNode(project.tree, selectedId, 'folder')), disabled: !canContain || selected.type === 'folder' },
     { label: tr('ui.app.converteste_in_document_text'), action: () => setTree(convertNode(project.tree, selectedId, 'text')), disabled: !canContain || selected.type === 'text' },
@@ -2605,6 +2781,12 @@ export default function App({ api: apiProp }) {
     // { label: tr('cmd.settings'), action: () => setDialog('settings') },
   ];
 
+  // View > Filter (Scrivener 3 §11.4): opens only over a corkboard or outliner.
+  const openViewFilter = () => {
+    if (view !== 'corkboard' && view !== 'outline') return;
+    setViewFilter((f) => ({ ...f, open: true }));
+  };
+
   // Command registry: every command has an id, a label, a menu group and a
   // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
   const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
@@ -2636,6 +2818,7 @@ export default function App({ api: apiProp }) {
     ['edit', 'findFormat', tr('cmd.findFormat'), () => editorHandle()?.openFormatFind()],
     ['edit', 'advSearch', tr('cmd.advSearch'), () => { setSearchSeed(''); setDialog('advsearch'); }],
     ['edit', 'quickSearch', tr('cmd.quickSearch'), () => setDialog('quicksearch')],
+    ['edit', 'viewFilter', tr('cmd.viewFilter'), openViewFilter, !(view === 'corkboard' || view === 'outline')],
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
@@ -2653,6 +2836,10 @@ export default function App({ api: apiProp }) {
     ['view', 'split', tr('cmd.split'), () => splitDocument(false)],
     ['view', 'quickRef', tr('cmd.quickRef'), () => selected && !selected.root && openQuickRef(selected.id)],
     ['nav', 'goto', tr('cmd.goto'), () => setDialog('goto')],
+    ['nav', 'searchResults', tr('cmd.searchResults'), () => {
+      if (!(project.collections || []).some((c) => c.id === SEARCH_RESULTS_ID)) saveProject(ensureSearchResults(project));
+      setActiveCollectionId(SEARCH_RESULTS_ID);
+    }],
     ['nav', 'prevDoc', tr('cmd.prevDoc'), () => goSibling(-1)],
     ['nav', 'nextDoc', tr('cmd.nextDoc'), () => goSibling(1)],
     ['nav', 'back', tr('cmd.back'), back],
@@ -2687,6 +2874,7 @@ export default function App({ api: apiProp }) {
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
+    ['tools', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
@@ -2769,6 +2957,12 @@ export default function App({ api: apiProp }) {
     ['document', 'openExternal', tr('cmd.openExternal'), openMediaExternal, !selected?.media?.file || !api.openMediaExternal],
     ['document', 'autoSynopsis', tr('cmd.autoSynopsis'), () => autoSynopsisSelection().catch(report), !selectionList().length],
     ['document', 'snapshotSelection', tr('cmd.snapshotSelection'), () => snapshotSelection().catch(report), !selectionList().length],
+    ['document', 'stripNotationDoc', tr('cmd.stripNotationDoc'), () => stripNotationInDoc().catch(report), !selected || selected.root],
+    ['document', 'stripNotationProject', tr('cmd.stripNotationProject'), () => stripNotationInProject().catch(report)],
+    ['document', 'convertAnnotToComment', tr('cmd.convertAnnotToComment'), () => convertNotationInDoc('inline-annotation', 'comment').catch(report), !selected || selected.root],
+    ['document', 'convertCommentToAnnot', tr('cmd.convertCommentToAnnot'), () => convertNotationInDoc('comment', 'inline-annotation').catch(report), !selected || selected.root],
+    ['document', 'convertFootnoteToLinked', tr('cmd.convertFootnoteToLinked'), () => convertNotationInDoc('inline-footnote', 'linked-footnote').catch(report), !selected || selected.root],
+    ['document', 'convertLinkedToFootnote', tr('cmd.convertLinkedToFootnote'), () => convertNotationInDoc('linked-footnote', 'inline-footnote').catch(report), !selected || selected.root],
     ['nav', 'revealBinder', tr('cmd.revealBinder'), revealInBinder, !selectedId],
     ['nav', 'hoist', tr('cmd.hoist'), hoistSelection, !selected],
     ['nav', 'unhoist', tr('cmd.unhoist'), () => setHoistId(null), !hoistId],
@@ -2821,7 +3015,7 @@ export default function App({ api: apiProp }) {
     ['ai', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['ai', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
-    ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
+    ...savedLayouts.map((l, i) => ['window', `layout:${i}`, tr('cmd.layout', { name: l.name }), () => applyLayout(l.payload)]),
   ];
   // AI off: every command that needs Claude is left out (menus, shortcuts, native menu); I-REP stays.
   // MCP needs the desktop app (browser mode has no api.mcpConnectInfo).
@@ -3032,7 +3226,13 @@ export default function App({ api: apiProp }) {
         <CollectionsBar
           project={project}
           active={activeCollectionId}
-          onSelect={setActiveCollectionId}
+          onSelect={(id) => {
+            // The system tab creates the collection on first use.
+            if (id === SEARCH_RESULTS_ID && !(project.collections || []).some((c) => c.id === SEARCH_RESULTS_ID)) {
+              saveProject(ensureSearchResults(project));
+            }
+            setActiveCollectionId(id);
+          }}
           onChange={saveProject}
           selectedIds={[...selectedIds]}
           searchResultIds={searchResultIds}
@@ -3054,6 +3254,11 @@ export default function App({ api: apiProp }) {
           onCopy={(ids, targetId, pos) => copyItems(ids, targetId, pos).catch(report)}
           onPatchItems={(ids, patch) => setTree(ids.reduce((t, id) => updateNode(t, id, patch), project.tree))}
           onSetTemplateFolder={(id) => saveProject({ ...project, templateFolder: id || null })}
+          templates={docTemplates}
+          onNewFromTemplate={(templateId, targetParentId) => {
+            const tpl = findNode(project.tree, templateId);
+            if (tpl) newFromTemplate(tpl, targetParentId).catch(report);
+          }}
           filterIds={collectionIds}
           filterTitle={activeCollection?.title}
           labelColorIn={colorIn}
@@ -3231,9 +3436,19 @@ export default function App({ api: apiProp }) {
             {view === 'timeline' && <TimelineView project={project} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
             {view === 'relations' && <RelationMap project={project} docs={docs} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
             {view === 'pacing' && <PacingView project={project} docs={docs} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
+            {(view === 'corkboard' || view === 'outline') && viewFilter.open && (
+              <FilterBar
+                project={project}
+                filter={viewFilter}
+                matches={filterNodes ? filterNodes.length : null}
+                onChange={patchViewFilter}
+                onDone={() => setViewFilter((f) => ({ ...f, open: false }))}
+              />
+            )}
             {view === 'corkboard' && (
               <Corkboard
                 project={project}
+                filterNodes={selectedIds.size > 1 ? null : filterNodes}
                 folders={selectedIds.size > 1 ? [...selectedIds].map((id) => findNode(project.tree, id)).filter((n) => n && n.children) : undefined}
                 onAddTo={(folderId) => {
                   const f = findNode(project.tree, folderId);
@@ -3277,6 +3492,7 @@ export default function App({ api: apiProp }) {
                 docs={docs}
                 root={selected && selected.children ? selected : project.tree[0]}
                 counts={counts}
+                filterNodes={filterNodes}
                 onOpen={(id) => {
                   go(id);
                   setView('editor');
@@ -3850,6 +4066,7 @@ export default function App({ api: apiProp }) {
           project={project}
           docs={docs}
           selectionIds={[...selectedIds]}
+          api={api}
           initialQuery={searchSeed}
           readNotes={(id) => api.readDoc(dir, id, 'notes')}
           onOpen={(id) => {
@@ -3858,6 +4075,7 @@ export default function App({ api: apiProp }) {
           }}
           onReplace={replaceAdvanced}
           onResults={setSearchResultIds}
+          onLastSearch={(criteria) => saveProject(setLastSearch(project, criteria))}
           onSaveAsCollection={(title, criteria) => {
             const { query, ...options } = criteria;
             const r = createCollection(project, { title, type: 'search', search: { query, options } });
@@ -3872,14 +4090,40 @@ export default function App({ api: apiProp }) {
           project={project}
           docs={docs}
           currentTitle={findNode(project.tree, selectedId)?.title || ''}
-          onOpen={(id, q) => {
+          onOpen={(id, q, { mode = 'normal', reveal = null } = {}) => {
+            // Modifier opens (manual §11.5, p. 235): Shift = Quick Reference panel
+            // (same floating panels as the quickRef command), Alt = the other editor
+            // split (same setSplitId as Alt+click in the binder).
+            if (mode === 'quickRef') {
+              openQuickRef(id);
+              return;
+            }
+            if (mode === 'split') {
+              setSplitId(id);
+              setView('editor');
+              return;
+            }
             if (q) setFindSeed(q);
             go(id);
             setView('editor');
+            // A text hit jumps to and selects the first occurrence once the editor mounts.
+            if (reveal) revealText(id, reveal);
           }}
           onFullSearch={(criteria) => {
             setSearchSeed(criteria.query || '');
             setDialog('advsearch');
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'dialoguefocus' && (
+        <DialogueFocusDialog
+          project={project}
+          docs={docs}
+          onOpen={(id) => {
+            go(id);
+            setView('editor');
+            setDialog(null);
           }}
           onClose={() => setDialog(null)}
         />
