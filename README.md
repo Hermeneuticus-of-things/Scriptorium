@@ -122,11 +122,14 @@ Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spaț
 
 - **Text nou:** fără selecție, textul intră la cursor.
 - **Modificare:** selectezi un cuvânt, o frază sau un paragraf și dictezi; ce spui înlocuiește selecția, iar un singur Ctrl+Z te întoarce la textul vechi.
+- **Din click dreapta:** în editor, lângă „Redă audio", meniul **Dictare** are „Dictează de la cursor", „Dictează (înlocuiește selecția)" și „Oprește dictarea" (apare doar cât timp dictezi). Același lucru ca la F9, dar fără să iei mâna de pe text.
 - **Pauză**, **Stop** și **Anulează**, care scoate tot ce ai dictat de la pornire.
 - **Fișier → Importă → Transcrie fișier audio…**: un MP3, WAV, M4A, OGG sau FLAC devine document în Cercetare, pe paragrafe, cu ora din înregistrare.
 - Numele din carte le scrii o dată în *Setări → Servicii și conturi*, ca să fie recunoscute corect; înlocuirile tale automate se aplică și textului dictat.
 
 Recunoașterea vorbirii e **în Pneuma Sofer** și lucrează **pe calculatorul tău, fără internet**. Prima dată, din *Setări → Voce și traducere → Dictare și transcriere*, apeși *Descarcă motorul* (în jur de 590 MB, o singură dată; cu placă NVIDIA poți lua și varianta mai rapidă). Motorul e [whisper.cpp](https://github.com/ggml-org/whisper.cpp) cu modelul Whisper large-v3-turbo; amprenta fișierelor e verificată la descărcare. Pentru cea mai bună recunoaștere a românei, alege [D&TED](https://github.com/Hermeneuticus-of-things/dted) în locul lui: D&TED folosește modelul **eek**, antrenat pe română, cu aproape jumătate din greșeli (5,4% cuvinte greșite față de 10,9% la modelul standard). După *Verifică*, în aceeași fereastră alegi modelul și vezi care e folosit acum. Pneuma Sofer se leagă de D&TED prin modul serviciu (protocol 1) și alege singur modelul potrivit. Mai important, D&TED nu rămâne doar la română: aduce recunoaștere și pe alte limbi, iar lista crește cu fiecare versiune. O versiune de D&TED care nu vorbește acest protocol îți spune să o actualizezi.
+
+**D&TED se actualizează din Pneuma Sofer.** Butonul *Caută actualizări D&TED…* (aceeași fereastră din Setări) arată versiunea ta și pe cea nouă de pe pagina D&TED și, la cerere, **descarcă, verifică și instalează** versiunea nouă în folderul tău de utilizator (fără drepturi de administrator). Instalarea nu se face orbește: mai întâi programul nou trebuie să răspundă la deschidere pe același protocol; dacă ceva nu merge, instalația veche rămâne pe loc, activă. Programul verifică singur, discret, la pornire și la trei zile (bifa „Caută actualizări D&TED automat") și te anunță când există versiune nouă.
 
 <p align="center">
   <img src="./assets/readme/dtedmodel.png" width="100%" alt="Setări, Servicii și conturi, D&TED: lista modelelor de recunoaștere, cu eek optimizat pentru română ales și folosit acum">
@@ -341,6 +344,7 @@ Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.
+- **Golurile din auditul de paritate cu Scrivener 3**: manualul oficial (capitolele 1–26) a fost comparat capitol cu capitol cu Pneuma Sofer; diferențele sunt prioritize în [`docs/PARITY-AUDIT-NEXT-CHAPTERS.md`](docs/PARITY-AUDIT-NEXT-CHAPTERS.md) (5 goluri P1: Snapshots Manager, selectarea textului după stil, cuprinsul cu numere de pagină, lista de conținut din Compile, printarea fișelor și a outline-ului).
 
 Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea e descrisă în [`docs/DTED.md`](docs/DTED.md).
 
