@@ -103,6 +103,7 @@ import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
 import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
 import { replaceInHtml } from './lib/search.js';
+import { stripNotation, convertNotation } from './lib/notationOps.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 
@@ -1249,6 +1250,76 @@ export default function App({ api }) {
     return total;
   };
 
+  // --- notation strip / convert (Scrivener 3 §18.4.1, §18.4.5) ----------------------------
+  // Same flow as Replace All: flush, snapshot every changed document, write, mirror into
+  // state and any open editor. The confirm shows exactly what will be removed.
+  const NOTATION_KINDS = {
+    annotations: 'x_adnotari_inline',
+    comments: 'x_comentarii',
+    footnotes: 'x_note_de_subsol_inline',
+    linkedFootnotes: 'x_note_de_subsol_legate',
+    revisions: 'x_marcaje_de_revizie',
+  };
+  const notationParts = (counts) =>
+    Object.entries(NOTATION_KINDS).filter(([k]) => counts[k]).map(([k, key]) => tr(`ui.app.${key}`, { n: counts[k] })).join(' · ');
+  const sumNotation = (c) => Object.keys(NOTATION_KINDS).reduce((s, k) => s + c[k], 0);
+
+  const stripNotationInDoc = async () => {
+    if (!selected || selected.root) return;
+    await flush();
+    const { html, counts } = stripNotation(docsNow()[selected.id] || '');
+    const parts = notationParts(counts);
+    if (!parts) return setToast(tr('ui.app.fara_notatii'));
+    if (!window.confirm(tr('ui.app.elimini_notatiile_din_document_x', { title: selected.title, parts: parts }))) return;
+    await api.takeSnapshot(dir, selected.id, tr('ui.app.automat_inainte_de_eliminarea_notatiilor')).catch(report);
+    await api.writeDoc(dir, selected.id, 'docs', html);
+    setDocs((d) => ({ ...d, [selected.id]: html }));
+    editorRefs.current.get(selected.id)?.setHtml(html);
+    recordHistory();
+    setToast(tr('ui.app.eliminate_x', { parts: parts }));
+  };
+
+  const stripNotationInProject = async () => {
+    await flush();
+    const docs = docsNow();
+    const trash = project.tree.find((n) => n.root === 'trash');
+    const trashIds = new Set(flatten(trash ? trash.children : []).map((n) => n.id));
+    const changed = [];
+    const totals = { annotations: 0, comments: 0, footnotes: 0, linkedFootnotes: 0, revisions: 0 };
+    for (const n of flatten(project.tree)) {
+      if (n.root || trashIds.has(n.id)) continue;
+      const { html, counts } = stripNotation(docs[n.id] || '');
+      if (!sumNotation(counts)) continue;
+      changed.push([n.id, html]);
+      for (const k of Object.keys(NOTATION_KINDS)) totals[k] += counts[k];
+    }
+    const parts = notationParts(totals);
+    if (!parts) return setToast(tr('ui.app.fara_notatii'));
+    if (!window.confirm(tr('ui.app.elimini_notatiile_din_tot_proiectul', { length: changed.length, parts: parts }))) return;
+    for (const [id, html] of changed) {
+      await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_eliminarea_notatiilor')).catch(report);
+      await api.writeDoc(dir, id, 'docs', html);
+    }
+    setDocs((d) => ({ ...d, ...Object.fromEntries(changed) }));
+    for (const [id, html] of changed) editorRefs.current.get(id)?.setHtml(html);
+    recordHistory();
+    setToast(tr('ui.app.eliminate_x', { parts: parts }));
+  };
+
+  // Conversions apply to the current document only; unsupported pairs never reach here.
+  const convertNotationInDoc = async (from, to) => {
+    if (!selected || selected.root) return;
+    await flush();
+    const { html, count } = convertNotation(docsNow()[selected.id] || '', from, to);
+    if (!count) return setToast(tr('ui.app.nimic_de_convers'));
+    await api.takeSnapshot(dir, selected.id, tr('ui.app.automat_inainte_de_eliminarea_notatiilor')).catch(report);
+    await api.writeDoc(dir, selected.id, 'docs', html);
+    setDocs((d) => ({ ...d, [selected.id]: html }));
+    editorRefs.current.get(selected.id)?.setHtml(html);
+    recordHistory();
+    setToast(tr('ui.app.convertite_x', { n: count }));
+  };
+
   // baseTree: lets a caller that also adds other nodes save everything in one project write.
   const importParts = (parts, baseTree = projectRef.current.tree) => {
     let tree = baseTree;
@@ -1670,6 +1741,13 @@ export default function App({ api }) {
     { label: tr('ui.app.duplica_cu_sub_documente'), shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
     { label: tr('ui.app.duplica_doar_elementul'), action: () => duplicateSelection(false) },
     '-',
+    { label: tr('cmd.stripNotationDoc'), action: () => stripNotationInDoc().catch(report), disabled: !selected || selected.root },
+    { label: tr('cmd.stripNotationProject'), action: () => stripNotationInProject().catch(report) },
+    { label: tr('cmd.convertAnnotToComment'), action: () => convertNotationInDoc('inline-annotation', 'comment').catch(report), disabled: !selected || selected.root },
+    { label: tr('cmd.convertCommentToAnnot'), action: () => convertNotationInDoc('comment', 'inline-annotation').catch(report), disabled: !selected || selected.root },
+    { label: tr('cmd.convertFootnoteToLinked'), action: () => convertNotationInDoc('inline-footnote', 'linked-footnote').catch(report), disabled: !selected || selected.root },
+    { label: tr('cmd.convertLinkedToFootnote'), action: () => convertNotationInDoc('linked-footnote', 'inline-footnote').catch(report), disabled: !selected || selected.root },
+    '-',
     { label: tr('ui.app.converteste_in_dosar'), action: () => setTree(convertNode(project.tree, selectedId, 'folder')), disabled: !canContain || selected.type === 'folder' },
     { label: tr('ui.app.converteste_in_document_text'), action: () => setTree(convertNode(project.tree, selectedId, 'text')), disabled: !canContain || selected.type === 'text' },
     { label: tr('ui.app.sorteaza_continutul_a_z'), action: () => setTree(sortChildren(project.tree, selectedId, 'title')), disabled: !selected?.children },
@@ -1840,6 +1918,12 @@ export default function App({ api }) {
     ['document', 'openExternal', tr('cmd.openExternal'), openMediaExternal, !selected?.media?.file || !api.openMediaExternal],
     ['document', 'autoSynopsis', tr('cmd.autoSynopsis'), () => autoSynopsisSelection().catch(report), !selectionList().length],
     ['document', 'snapshotSelection', tr('cmd.snapshotSelection'), () => snapshotSelection().catch(report), !selectionList().length],
+    ['document', 'stripNotationDoc', tr('cmd.stripNotationDoc'), () => stripNotationInDoc().catch(report), !selected || selected.root],
+    ['document', 'stripNotationProject', tr('cmd.stripNotationProject'), () => stripNotationInProject().catch(report)],
+    ['document', 'convertAnnotToComment', tr('cmd.convertAnnotToComment'), () => convertNotationInDoc('inline-annotation', 'comment').catch(report), !selected || selected.root],
+    ['document', 'convertCommentToAnnot', tr('cmd.convertCommentToAnnot'), () => convertNotationInDoc('comment', 'inline-annotation').catch(report), !selected || selected.root],
+    ['document', 'convertFootnoteToLinked', tr('cmd.convertFootnoteToLinked'), () => convertNotationInDoc('inline-footnote', 'linked-footnote').catch(report), !selected || selected.root],
+    ['document', 'convertLinkedToFootnote', tr('cmd.convertLinkedToFootnote'), () => convertNotationInDoc('linked-footnote', 'inline-footnote').catch(report), !selected || selected.root],
     ['nav', 'revealBinder', tr('cmd.revealBinder'), revealInBinder, !selectedId],
     ['nav', 'hoist', tr('cmd.hoist'), hoistSelection, !selected],
     ['nav', 'unhoist', tr('cmd.unhoist'), () => setHoistId(null), !hoistId],
