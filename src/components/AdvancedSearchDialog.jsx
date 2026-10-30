@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { searchProject, buildTerms } from '../lib/projectSearch.js';
+import { searchProject, parseQuery } from '../lib/projectSearch.js';
 import { listKeywords } from '../lib/collections.js';
 import { flatten } from '../lib/tree.js';
 import { t as tr } from '../lib/i18n.js';
@@ -63,8 +63,8 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
   }, [notesOn, project.tree, readNotes]);
 
   const criteria = useMemo(() => ({ query, ...opts, fields, ...filters, sort: sortCfg.by, sortDesc: sortCfg.desc }), [query, opts, fields, filters, sortCfg]);
-  const terms = useMemo(() => buildTerms(criteria), [criteria]);
-  const invalid = Boolean(query) && (terms === null || terms.some((t) => !t));
+  const parsed = useMemo(() => parseQuery(criteria), [criteria]);
+  const invalid = Boolean(query) && parsed === null;
   const results = useMemo(() => searchProject(project, docs, notesById, criteria), [project, docs, notesById, criteria]);
 
   // The last results with a query feed the permanent "Search results" tab of the binder.
