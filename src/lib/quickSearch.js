@@ -75,6 +75,23 @@ export function quickSearchRows(results) {
   ];
 }
 
+// Opening mode for a result (manual §11.5, p. 235): Shift-click / Shift-Enter
+// opens the document in a Quick Reference panel, Alt-click / Alt-Enter opens it
+// in the other editor split; no modifier opens it normally. Shift wins when
+// both are held. Pure: reads only the event's modifier flags.
+export function quickOpenMode(e) {
+  if (e?.shiftKey) return 'quickRef';
+  if (e?.altKey) return 'split';
+  return 'normal';
+}
+
+// Phrase revealed in the editor after a normal open: only text hits carry one,
+// and it is the exact matched text (not the folded query) so the editor's
+// case-sensitive find selects what the snippet shows.
+export function quickRevealPhrase(row, mode) {
+  return mode === 'normal' && row?.section === 'texts' ? row.match || null : null;
+}
+
 // Keyboard navigation over the flat row list: wraps at both ends; Enter uses the
 // current selection, or the first row when nothing is selected yet.
 export function quickNav(rows, selectedKey, key) {

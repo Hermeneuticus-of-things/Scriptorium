@@ -742,6 +742,14 @@ export default function App({ api }) {
     if (h?.focus) h.focus();
     else if (tries > 0) setTimeout(() => focusEditor(id, tries - 1), 50);
   };
+  // Scrolls to and selects the first occurrence of `phrase` in the editor of `id`
+  // once it is mounted (after go()); same retry pattern as focusEditor. Used by
+  // Quick Search for text hits (manual §11.5); the handle's findText does the work.
+  const revealText = (id, phrase, tries = 10) => {
+    const h = id && editorRefs.current.get(id);
+    if (h?.findText) h.findText(phrase);
+    else if (tries > 0) setTimeout(() => revealText(id, phrase, tries - 1), 50);
+  };
   const patchNode = (id, patch) => setTree(updateNode(project.tree, id, patch));
 
   const trashSelection = () => {
@@ -2540,10 +2548,24 @@ export default function App({ api }) {
           project={project}
           docs={docs}
           currentTitle={findNode(project.tree, selectedId)?.title || ''}
-          onOpen={(id, q) => {
+          onOpen={(id, q, { mode = 'normal', reveal = null } = {}) => {
+            // Modifier opens (manual §11.5, p. 235): Shift = Quick Reference panel
+            // (same floating panels as the quickRef command), Alt = the other editor
+            // split (same setSplitId as Alt+click in the binder).
+            if (mode === 'quickRef') {
+              openQuickRef(id);
+              return;
+            }
+            if (mode === 'split') {
+              setSplitId(id);
+              setView('editor');
+              return;
+            }
             if (q) setFindSeed(q);
             go(id);
             setView('editor');
+            // A text hit jumps to and selects the first occurrence once the editor mounts.
+            if (reveal) revealText(id, reveal);
           }}
           onFullSearch={(criteria) => {
             setSearchSeed(criteria.query || '');
