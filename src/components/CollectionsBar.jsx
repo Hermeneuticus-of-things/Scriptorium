@@ -2,7 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { t } from '../lib/i18n.js';
 import {
   createCollection, renameCollection, recolorCollection, deleteCollection, addToCollection, removeFromCollection,
+  SEARCH_RESULTS_ID,
 } from '../lib/collections.js';
+
+// The system tab shows even before the collection exists in project.json; it is
+// created on first use (Scrivener §11.1.1: the tab is always there, "cannot be removed").
+const specialTitle = () => t('ui.collectionsBar.rezultate_cautare');
 
 const CSS = `
 .cb-bar { display: flex; flex-direction: column; gap: 4px; }
@@ -46,7 +51,15 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
   const [menuFor, setMenuFor] = useState(null); // collection id | '+' | null
   const colorRef = useRef(null);
   const [colorTarget, setColorTarget] = useState(null);
-  const current = collections.find((c) => c.id === active) || null;
+  const collectionsAll = [
+    ...collections,
+    ...(!collections.some((c) => c.id === SEARCH_RESULTS_ID)
+      ? [{ id: SEARCH_RESULTS_ID, title: specialTitle(), type: 'search', search: { query: '', options: {} }, virtual: true }]
+      : []),
+  ];
+  const special = (c) => c.id === SEARCH_RESULTS_ID;
+  const titleOf = (c) => (special(c) ? specialTitle() : c.title);
+  const current = collectionsAll.find((c) => c.id === active) || null;
 
   const close = () => setMenuFor(null);
 
@@ -97,34 +110,36 @@ export default function CollectionsBar({ project, active = null, onSelect, onCha
         <button role="tab" aria-selected={active === null} className={`cb-tab ${active === null ? 'on' : ''}`} onClick={() => onSelect(null)}>
           <span className="cb-name">Binder</span>
         </button>
-        {collections.map((c) => (
+        {collectionsAll.map((c) => (
           <div key={c.id} className="cb-wrap">
             <button
               role="tab"
               aria-selected={active === c.id}
               className={`cb-tab ${active === c.id ? 'on' : ''}`}
-              title={c.type === 'search' ? t('ui.collectionsBar.x_cautare_salvata', { title: c.title }) : c.title}
+              title={c.type === 'search' && !special(c) ? t('ui.collectionsBar.x_cautare_salvata', { title: titleOf(c) }) : titleOf(c)}
               onClick={() => onSelect(c.id)}
-              onContextMenu={(e) => {
+              onContextMenu={special(c) ? undefined : (e) => {
                 e.preventDefault();
                 setMenuFor(c.id);
               }}
             >
-              <span className="cb-dot" style={{ background: c.color || 'transparent' }} />
-              <span className="cb-name">{c.type === 'search' ? '🔍 ' : ''}{c.title}</span>
-              <span
-                className="cb-more"
-                role="button"
-                aria-label={t('ui.collectionsBar.optiuni_pentru_x', { title: c.title })}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuFor(menuFor === c.id ? null : c.id);
-                }}
-              >
-                ⋯
-              </span>
+              <span className="cb-dot" style={{ background: special(c) ? 'var(--accent)' : c.color || 'transparent' }} />
+              <span className="cb-name">{c.type === 'search' ? '🔍 ' : ''}{titleOf(c)}</span>
+              {!special(c) && (
+                <span
+                  className="cb-more"
+                  role="button"
+                  aria-label={t('ui.collectionsBar.optiuni_pentru_x', { title: titleOf(c) })}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuFor(menuFor === c.id ? null : c.id);
+                  }}
+                >
+                  ⋯
+                </span>
+              )}
             </button>
-            {menuFor === c.id && (
+            {menuFor === c.id && !special(c) && (
               <Popup onClose={close}>
                 <button role="menuitem" onClick={() => rename(c)}>{t('set.binderDbl.rename')}</button>
                 <button role="menuitem" onClick={() => pickColor(c)}>{t('ui.collectionsBar.culoare')}</button>

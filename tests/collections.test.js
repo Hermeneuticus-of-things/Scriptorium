@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   createCollection, renameCollection, recolorCollection, deleteCollection, addToCollection, removeFromCollection,
   moveInCollection, collectionNodes, listKeywords, addKeyword, renameKeyword, deleteKeyword, setKeywordColor, setKeywordParent,
+  ensureSearchResults, setLastSearch, SEARCH_RESULTS_ID,
 } from '../src/lib/collections.js';
 
 const base = () => ({
@@ -81,5 +82,43 @@ describe('keywords', () => {
     expect(p.keywordDefs.some((d) => d.name === 'soare')).toBe(true);
     expect(setKeywordParent(p, 'noapte', 'lună').keywordDefs.find((d) => d.name === 'noapte').parent).toBeNull();
     expect(setKeywordParent(p, 'zi', 'soare').keywordDefs.find((d) => d.name === 'zi').parent).toBe('soare');
+  });
+});
+
+describe('system "Search Results" collection (Scrivener §11.1.1)', () => {
+  it('is created once with a fixed id and never duplicated', () => {
+    const p1 = ensureSearchResults({});
+    expect(p1.collections).toHaveLength(1);
+    expect(p1.collections[0]).toMatchObject({ id: SEARCH_RESULTS_ID, type: 'search' });
+    expect(ensureSearchResults(p1)).toBe(p1);
+  });
+  it('setLastSearch stores query + options and survives as data', () => {
+    const p = setLastSearch({}, { query: 'aur', operator: 'all', fields: ['text'] });
+    const c = p.collections.find((x) => x.id === SEARCH_RESULTS_ID);
+    expect(c.search).toEqual({ query: 'aur', options: { operator: 'all', fields: ['text'] } });
+  });
+  it('an empty query never wipes the stored search', () => {
+    const p1 = setLastSearch({}, { query: 'aur' });
+    const p2 = setLastSearch(p1, { query: '   ' });
+    expect(p2.collections.find((x) => x.id === SEARCH_RESULTS_ID).search.query).toBe('aur');
+  });
+  it('cannot be deleted or renamed; other collections still can', () => {
+    const p1 = setLastSearch({}, { query: 'aur' });
+    expect(deleteCollection(p1, SEARCH_RESULTS_ID)).toBe(p1);
+    expect(renameCollection(p1, SEARCH_RESULTS_ID, 'altceva')).toBe(p1);
+    const { project: p2 } = createCollection(p1, { id: 'k1', title: 'Personaje', type: 'manual', ids: ['a'] });
+    const p3 = deleteCollection(p2, 'k1');
+    expect(p3.collections.map((c) => c.id)).toEqual([SEARCH_RESULTS_ID]);
+  });
+  it('collectionNodes runs the stored search', () => {
+    const project = {
+      tree: [{ id: 'draft', root: 'draft', title: 'M', children: [
+        { id: 'a', type: 'text', title: 'Aur în vale' },
+        { id: 'b', type: 'text', title: 'Fier' },
+      ] }],
+    };
+    const p = setLastSearch(project, { query: 'aur' });
+    const c = p.collections.find((x) => x.id === SEARCH_RESULTS_ID);
+    expect(collectionNodes(p, c, {}, {}).map((n) => n.id)).toEqual(['a']);
   });
 });

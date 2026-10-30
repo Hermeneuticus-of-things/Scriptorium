@@ -23,7 +23,7 @@ import CollectionsBar from './components/CollectionsBar.jsx';
 import KeywordsDialog from './components/KeywordsDialog.jsx';
 import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
 import QuickSearch from './components/QuickSearch.jsx';
-import { collectionNodes, createCollection } from './lib/collections.js';
+import { collectionNodes, createCollection, ensureSearchResults, setLastSearch, SEARCH_RESULTS_ID } from './lib/collections.js';
 import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
@@ -1661,6 +1661,10 @@ export default function App({ api }) {
     ['view', 'split', tr('cmd.split'), () => splitDocument(false)],
     ['view', 'quickRef', tr('cmd.quickRef'), () => selected && !selected.root && openQuickRef(selected.id)],
     ['nav', 'goto', tr('cmd.goto'), () => setDialog('goto')],
+    ['nav', 'searchResults', tr('cmd.searchResults'), () => {
+      if (!(project.collections || []).some((c) => c.id === SEARCH_RESULTS_ID)) saveProject(ensureSearchResults(project));
+      setActiveCollectionId(SEARCH_RESULTS_ID);
+    }],
     ['nav', 'prevDoc', tr('cmd.prevDoc'), () => goSibling(-1)],
     ['nav', 'nextDoc', tr('cmd.nextDoc'), () => goSibling(1)],
     ['nav', 'back', tr('cmd.back'), back],
@@ -1899,7 +1903,13 @@ export default function App({ api }) {
         <CollectionsBar
           project={project}
           active={activeCollectionId}
-          onSelect={setActiveCollectionId}
+          onSelect={(id) => {
+            // The system tab creates the collection on first use.
+            if (id === SEARCH_RESULTS_ID && !(project.collections || []).some((c) => c.id === SEARCH_RESULTS_ID)) {
+              saveProject(ensureSearchResults(project));
+            }
+            setActiveCollectionId(id);
+          }}
           onChange={saveProject}
           selectedIds={[...selectedIds]}
         />
@@ -2416,6 +2426,7 @@ export default function App({ api }) {
             setView('editor');
           }}
           onReplace={replaceAdvanced}
+          onLastSearch={(criteria) => saveProject(setLastSearch(project, criteria))}
           onSaveAsCollection={(title, criteria) => {
             const { query, ...options } = criteria;
             const r = createCollection(project, { title, type: 'search', search: { query, options } });

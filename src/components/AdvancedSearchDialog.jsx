@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { searchProject, parseQuery } from '../lib/projectSearch.js';
 import { listKeywords } from '../lib/collections.js';
 import { flatten } from '../lib/tree.js';
@@ -27,7 +27,7 @@ const CSS = `
 
 const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onSaveAsCollection, onClose, initialQuery = '' }) {
+export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onLastSearch, onSaveAsCollection, onClose, initialQuery = '' }) {
   const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
   const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, operator: 'any', invert: false });
@@ -109,6 +109,17 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
 
   const hasQuery = Boolean(query) && !invalid;
   const hasFilter = filters.labels.length || filters.statuses.length || filters.keywords.length;
+
+  // Scrivener §11.1.1: the last search used lands in the system "Search Results"
+  // collection and survives reopening. Recorded when a result is opened and once
+  // more at close, so the stored criteria match what the user actually used.
+  const latestRef = useRef({ criteria, hasQuery });
+  latestRef.current = { criteria, hasQuery };
+  useEffect(() => () => {
+    const { criteria: c, hasQuery: ok } = latestRef.current;
+    if (ok) onLastSearch?.(c);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -199,7 +210,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
         <div className="results">
           {results.map(({ node, fields: counts, snippets }) => (
             <div key={node.id} className="result">
-              <button className="link" onClick={() => onOpen(node.id)}>
+              <button className="link" onClick={() => { onLastSearch?.(criteria); onOpen(node.id); }}>
                 <strong>{node.title || tr('ui.advancedSearchDialog.fara_titlu')}</strong>
               </button>
               {FIELDS.filter((f) => counts[f]).map((f) => (
