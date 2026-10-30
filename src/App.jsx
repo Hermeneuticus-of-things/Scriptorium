@@ -2419,6 +2419,7 @@ export default function App({ api }) {
         <AdvancedSearchDialog
           project={project}
           docs={docs}
+          selectionIds={[...selectedIds]}
           initialQuery={searchSeed}
           readNotes={(id) => api.readDoc(dir, id, 'notes')}
           onOpen={(id) => {

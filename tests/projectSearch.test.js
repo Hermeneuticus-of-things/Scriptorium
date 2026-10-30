@@ -228,3 +228,25 @@ describe('date search syntax mdate:/cdate: (Scrivener §11.1.3, Table 11.1)', ()
     expect(ids(searchProject(dated, noDocs, {}, { query: 'cdate:>2000' }))).toEqual(['d1', 'd2']);
   });
 });
+
+describe('search scope options (Scrivener 3 §11.1.2 Options)', () => {
+  it('draftOnly restricts results to the draft root', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure', draftOnly: true }))).toEqual(['a', 'c']);
+  });
+  it('selectionIds spans the whole subtree of the selected items', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure', selectionIds: ['f'] }))).toEqual(['c']);
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure', selectionIds: ['a'] }))).toEqual(['a']);
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure', selectionIds: [] }))).toEqual(['a', 'c', 'r']);
+  });
+  it('a selected item inside the trash is found only with includeTrash', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure', selectionIds: ['t'] }))).toEqual([]);
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure', selectionIds: ['t'], includeTrash: true }))).toEqual(['t']);
+  });
+  it('excludeCompile keeps only the compile-excluded documents', () => {
+    // c is excluded through its folder f; a is compile-included, so it drops out
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure', excludeCompile: true }))).toEqual(['c']);
+  });
+  it('onlyCompile and excludeCompile together cancel out', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'pădure', onlyCompile: true, excludeCompile: true }))).toEqual(['a', 'c', 'r']);
+  });
+});
