@@ -142,15 +142,11 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   }, [globalsLoaded, all, formatId]);
   const [collectionId, setCollectionId] = useState(pc.collectionId || '');
   const [trackChanges, setTrackChanges] = useState(Boolean(pc.trackChanges));
-<<<<<<< ours
   // Manual collections and saved searches (their documents are found when compiling).
   const collections = (project.collections || []).filter((c) => Array.isArray(c.ids) || c.type === 'search');
-=======
   // Project-level replacements (Scrivener 3 §23.4.4): one list per project, shared by
   // every format; the engine applies it before the format's own replacements.
   const [projReps, setProjReps] = useState(() => (Array.isArray(project.replacements) ? clone(project.replacements) : []));
-  const collections = (project.collections || []).filter((c) => Array.isArray(c.ids));
->>>>>>> theirs
 
   const [output, setOutput] = useState(pc.output || 'docx');
   const [scope, setScope] = useState(pc.scope || 'draft');
@@ -1194,18 +1190,10 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   {sepEditor('sameType', tr('ui.compileDialog.intre_sectiuni_de_acelasi_tip'))}
                   {sepEditor('differentType', tr('ui.compileDialog.intre_sectiuni_de_tipuri_diferite'))}
                   <p className="muted small">{tr('ui.compileDialog.o_sectiune_care_incepe_pe')}</p>
-<<<<<<< ours
-                                  </fieldset>
-                  </fieldset>
-                )}
-                {fmtTab === 'inlocuiri' && (
-                  <fieldset disabled={!editable}>
-                                  <fieldset disabled={!editable}>
-=======
                 </fieldset>
               )}
 
-              {tab === 'inlocuiri' && (
+              {fmtTab === 'inlocuiri' && (
                 <>
                 {/* Project replacements are per-project (not per-format), so they stay
                     editable even for built-in formats: outside the disabled fieldset. */}
@@ -1250,7 +1238,6 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   </button>
                 </fieldset>
                 <fieldset disabled={!editable}>
->>>>>>> theirs
                   <legend>{tr('ui.compileDialog.transformari')}</legend>
                   {[
                     ['smartQuotes', 'Ghilimele drepte → „…”'],
@@ -1294,21 +1281,12 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   <button type="button" onClick={() => setIn(['replacements'], [...reps, { find: '', replace: '', regex: false, wholeWord: false, caseSensitive: false }])}>
                     {tr('ui.compileDialog.adauga_inlocuire')}
                   </button>
-<<<<<<< ours
-                                  </fieldset>
-                  </fieldset>
-                )}
-                {fmtTab === 'note' && (
-                  <fieldset disabled={!editable}>
-                                  <fieldset disabled={!editable}>
-=======
                 </fieldset>
                 </>
               )}
 
-              {tab === 'note' && (
+              {fmtTab === 'note' && (
                 <fieldset disabled={!editable}>
->>>>>>> theirs
                   <label>
                     Notele de subsol
                     <select value={xf.notes || 'footnotes'} onChange={(e) => setIn(['transforms', 'notes'], e.target.value)}>
