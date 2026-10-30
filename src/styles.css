@@ -523,7 +523,6 @@ legend { color: var(--muted); padding: 0 4px; }
 .format-bar .menu-pop :is(button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; position: relative; z-index: 1; }
 .format-bar .menu-pop [role='menuitem']:focus-visible { outline-offset: -2px; background: var(--accent-soft); }
 
-<<<<<<< ours
 /* Top bar: menu bar + customizable toolbar (src/lib/toolbars.js) — one row, never wraps */
 .toolbar { flex-wrap: nowrap; min-width: 0; gap: 6px; }
 .toolbar > * { flex-shrink: 0; }
@@ -763,7 +762,7 @@ legend { color: var(--muted); padding: 0 4px; }
 .about-licenses th, .about-licenses td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .about-licenses .about-group th { padding-top: 12px; color: var(--muted); font-weight: 600; }
 .about-licenses .about-flag { color: var(--danger); white-space: nowrap; }
-=======
+
 /* Quick Search (Scrivener 3 §11.5): omnibox popup, top-aligned like a URL bar. */
 .modal.quick-search { position: fixed; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, 94vw); padding: 10px 12px; gap: 8px; }
 .quick-search input { width: 100%; font-size: 15px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: inherit; }
@@ -776,4 +775,3 @@ legend { color: var(--muted); padding: 0 4px; }
 .qs-result mark { background: var(--accent-soft); color: inherit; padding: 0 1px; }
 .qs-empty { margin: 4px 2px; }
 .qs-footer { display: flex; justify-content: space-between; align-items: center; }
->>>>>>> theirs
