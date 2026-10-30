@@ -1292,6 +1292,12 @@ handle('snap:rename', (e, dir, id, file, name) => {
   fs.writeFileSync(p, JSON.stringify(data));
   return true;
 });
+// Project Replace → „Include snapshots": rewrites the html of existing snapshots (store validates
+// the file name and refuses missing/damaged snapshots — never creates one).
+handle('snap:updateHtml', (_e, dir, id, file, html) => {
+  assertOpened(dir);
+  return store.updateSnapshotHtml(dir, id, file, html);
+});
 
 // Personal spelling dictionary (Options → Corrections).
 handle('spell:listWords', (e) => e.sender.session.listWordsInSpellCheckerDictionary());

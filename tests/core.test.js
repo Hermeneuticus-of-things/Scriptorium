@@ -45,6 +45,37 @@ describe('store', () => {
     expect(store.loadProject(dir).title).toBe('Cartea mea');
     expect(() => store.readDoc(dir, '../x')).toThrow();
   });
+
+  it('updateSnapshotHtml rewrites only the html of an existing snapshot, keeping name and date', () => {
+    const dir = store.projectDirFor(tmp, 'Înlocuire snapshot');
+    const project = store.createProject(dir, 'Înlocuire snapshot');
+    const id = project.tree[0].children[0].id;
+    store.writeDoc(dir, id, 'docs', '<p>vechi</p>');
+    const snap = store.takeSnapshot(dir, id, 'Înainte de înlocuire');
+    const other = store.takeSnapshot(dir, id, 'Altul');
+
+    store.updateSnapshotHtml(dir, id, snap.file, '<p>nou</p>');
+    const snaps = store.listSnapshots(dir, id);
+    expect(snaps).toHaveLength(2);
+    const updated = snaps.find((s) => s.file === snap.file);
+    expect(updated.html).toBe('<p>nou</p>');
+    expect(updated.name).toBe('Înainte de înlocuire');
+    expect(updated.date).toBe(snap.date);
+    // Other snapshots are never touched.
+    expect(snaps.find((s) => s.file === other.file).html).toContain('vechi');
+
+    // Unsafe or unknown file names are rejected and create nothing.
+    expect(() => store.updateSnapshotHtml(dir, id, '../project.json', '<p>x</p>')).toThrow();
+    expect(() => store.updateSnapshotHtml(dir, id, 'sub\\dir.json', '<p>x</p>')).toThrow();
+    expect(() => store.updateSnapshotHtml(dir, id, 'lipsă.json', '<p>x</p>')).toThrow(/invalid/i);
+    expect(() => store.updateSnapshotHtml(dir, id, 'lipsa.json', '<p>x</p>')).toThrow(/inexistent/i);
+    expect(store.listSnapshots(dir, id)).toHaveLength(2);
+
+    // A damaged snapshot on disk is a clear error, not a silent skip (and nothing new appears).
+    fs.writeFileSync(path.join(dir, 'snapshots', id, 'deteriorat.json'), '{nu e json');
+    expect(() => store.updateSnapshotHtml(dir, id, 'deteriorat.json', '<p>x</p>')).toThrow(/deteriorat/);
+    expect(store.listSnapshots(dir, id)).toHaveLength(2);
+  });
 });
 
 function makeScriv(parent) {

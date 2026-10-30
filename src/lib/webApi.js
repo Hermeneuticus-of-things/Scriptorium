@@ -575,6 +575,14 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       await kv.put(K.snaps(dir, id), list.map((x) => (sameSnap(x.file, file) ? { ...x, name: String(name || 'Snapshot') } : x)));
       return true;
     },
+    // Project Replace → „Include snapshots": like the desktop, an unknown snapshot is an error,
+    // never a new entry; name and date stay untouched.
+    async updateSnapshotHtml(dir, id, file, html) {
+      const list = (await kv.get(K.snaps(dir, id))) || [];
+      if (!list.some((x) => sameSnap(x.file, file))) throw new Error(`Snapshot inexistent: ${file}`);
+      await kv.put(K.snaps(dir, id), list.map((x) => (sameSnap(x.file, file) ? { ...x, html: String(html ?? '') } : x)));
+      return true;
+    },
     async recordHistory(dir, counts) {
       await kv.put(K.history(dir), recordDay(await kv.get(K.history(dir)), counts));
       return true;
