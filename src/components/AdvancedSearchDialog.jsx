@@ -27,13 +27,13 @@ const CSS = `
 
 const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onLastSearch, onSaveAsCollection, onClose, initialQuery = '' }) {
+export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onLastSearch, onSaveAsCollection, onClose, initialQuery = '', selectionIds = [] }) {
   const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
   const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, operator: 'any', invert: false });
   const [sortCfg, setSortCfg] = useState({ by: 'binder', desc: false });
   const [fields, setFields] = useState(['title', 'text', 'synopsis', 'keywords', 'custom']);
-  const [filters, setFilters] = useState({ labels: [], statuses: [], keywords: [], scope: 'all', includeTrash: false, onlyCompile: false });
+  const [filters, setFilters] = useState({ labels: [], statuses: [], keywords: [], scope: 'all', includeTrash: false, onlyCompile: false, draftOnly: false, selectionScope: false, excludeCompile: false });
   const [notesById, setNotesById] = useState({});
   const [loadingNotes, setLoadingNotes] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -61,7 +61,13 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notesOn, project.tree, readNotes]);
 
-  const criteria = useMemo(() => ({ query, ...opts, fields, ...filters, sort: sortCfg.by, sortDesc: sortCfg.desc }), [query, opts, fields, filters, sortCfg]);
+  const criteria = useMemo(
+    () => ({
+      query, ...opts, fields, ...filters, sort: sortCfg.by, sortDesc: sortCfg.desc,
+      selectionIds: filters.selectionScope && selectionIds.length ? selectionIds : [],
+    }),
+    [query, opts, fields, filters, sortCfg, selectionIds]
+  );
   const parsed = useMemo(() => parseQuery(criteria), [criteria]);
   const invalid = Boolean(query) && parsed === null;
   const results = useMemo(() => searchProject(project, docs, notesById, criteria), [project, docs, notesById, criteria]);
@@ -197,6 +203,15 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
             </label>
             <label className="check">
               <input type="checkbox" checked={filters.onlyCompile} onChange={() => setFilters((f) => ({ ...f, onlyCompile: !f.onlyCompile }))} /> {tr('ui.advancedSearchDialog.doar_incluse_in_compilare')}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={filters.draftOnly} onChange={() => setFilters((f) => ({ ...f, draftOnly: !f.draftOnly }))} /> {tr('ui.advancedSearchDialog.doar_in_manuscris')}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={filters.selectionScope} disabled={!selectionIds.length} onChange={() => setFilters((f) => ({ ...f, selectionScope: !f.selectionScope }))} /> {tr('ui.advancedSearchDialog.doar_selectia')}{selectionIds.length ? ` (${selectionIds.length} ${selectionIds.length === 1 ? 'document' : tr('ui.advancedSearchDialog.documente')})` : ''}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={filters.excludeCompile} onChange={() => setFilters((f) => ({ ...f, excludeCompile: !f.excludeCompile }))} /> {tr('ui.advancedSearchDialog.doar_excluse_compilare')}
             </label>
           </div>
         </div>
