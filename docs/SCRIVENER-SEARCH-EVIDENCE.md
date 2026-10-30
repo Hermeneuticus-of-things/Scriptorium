@@ -114,9 +114,9 @@ Verificat în cod (`src/components/AdvancedSearchDialog.jsx`, `src/lib/projectSe
 
 | Prioritate | Gol | Manual | Efort estimat |
 |---|---|---|---|
-| P1 | Operatori **Starts with / Ends with** (lipsesc din buildTerms; există doar any/all/exact/wholeWord/regex) | §11.2.1, p. 227 | mic |
-| P1 | **Invert Results** (afișează ce NU se potrivește) | §11.1.2, p. 223 | mic |
-| P1 | Sortare rezultate (binder / titlu A-Z / dată, Newest First) în lista de căutare | §11.1.1, p. 219 | mediu |
+| ~~P1~~ ✅ 2026-10-30 | ~~Operatori **Starts with / Ends with**~~ — implementați în `buildTerms` (ancorare la marginea de cuvânt, Unicode) | §11.2.1, p. 227 | făcut |
+| ~~P1~~ ✅ 2026-10-30 | ~~**Invert Results**~~ — criteriul `invert` în `searchProject` (complementul potrivirii; filtrele rămân; fără Coș) | §11.1.2, p. 223 | făcut |
+| ~~P1~~ ✅ 2026-10-30 | ~~Sortare rezultate~~ — `sort: 'binder'/'title'/'created'` + `sortDesc`, collation ro; în dialog | §11.1.1, p. 219 | făcut |
 | P2 | Termeni speciali: ghilimele în All Words, excludere cu `-`, wildcard `*` | §11.1.3, p. 223 | mediu |
 | P2 | Sintaxa de date `mdate:` / `cdate:` (YYYY-MM-DD, #d/#m/#y, >, <) | §11.1.3 + Tabel 11.1, p. 224–225 | mediu |
 | P2 | Colecția persistentă „Search Results" (ultima căutare, supraviețuiește redeschiderii) | §11.1.1, p. 219 | mediu |
@@ -124,6 +124,20 @@ Verificat în cod (`src/components/AdvancedSearchDialog.jsx`, `src/lib/projectSe
 | P3 | Project Replace: afectare **Snapshots** + Custom Metadata text + Swap | §11.3, p. 229 | mediu |
 | P3 | Filter pentru Corkboard/Outliner (text + metadate + Included/Excluded) | §11.4, p. 229–233 | mare |
 | P3 | Find by Formatting: extinderi (caracter, linkuri, imagini, formatting păstrat) | §11.6, p. 237–240 | mediu |
+
+### Etapa P1 — implementată (2026-10-30)
+
+- `src/lib/projectSearch.js`: operatorii `startsWith`/`endsWith` în `buildTerms` (ancorare
+  `(?<![\p{L}\p{N}_])` / `(?![\p{L}\p{N}_])` — marginea de cuvânt, ca la Whole Word); criteriul
+  `invert` (complementul potrivirii termenilor; filtrele se aplică normal, Coșul rămâne ascuns,
+  interogarea goală + invert = toate nodurile care trec de filtre); sortarea `sort`/`sortDesc`
+  (titlu cu collation românesc, dată de creare; „binder" rămâne implicit).
+- `src/components/AdvancedSearchDialog.jsx`: operatorii noi în lista „Potrivire", „Ordonare"
+  (binder/titlu/dată) + „Descrescător", caseta „Inversează rezultatele".
+- i18n ro/en; 7 teste noi în `tests/projectSearch.test.js` (20 total în fișier); suita completă
+  verde (851 trecute), build OK.
+- Semantica fixată în timpul testării: „începe cu" = cuvântul **începe** cu textul („pădur"
+  se potrivește cu „Pădurea"); la invert, dosarele sunt item-uri la fel ca documentele.
 
 ### Lecție de metodă
 

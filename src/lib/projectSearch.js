@@ -12,7 +12,8 @@ const MAX_SNIPPETS = 5;
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Returns the list of regexes to test. operator 'all' -> one per word (each must
-// match somewhere); 'any' -> one alternation; 'exact' or regex -> whole query.
+// match somewhere); 'any' -> one alternation; 'exact' or regex -> whole query;
+// 'startsWith'/'endsWith' (Scrivener §11.2.1) -> the query anchored at a word edge.
 export function buildTerms(criteria) {
   const { query, regex, caseSensitive, wholeWord } = criteria;
   const operator = criteria.operator || 'any';
@@ -21,6 +22,15 @@ export function buildTerms(criteria) {
   if (regex || operator === 'exact') {
     const re = buildRegex({ query: regex ? query : query.trim(), regex, ...base });
     return re ? [re] : null;
+  }
+  if (operator === 'startsWith' || operator === 'endsWith') {
+    const src = escapeRe(query.trim());
+    const anchored = operator === 'startsWith' ? `(?<![\\p{L}\\p{N}_])(?:${src})` : `(?:${src})(?![\\p{L}\\p{N}_])`;
+    try {
+      return [new RegExp(anchored, `g${caseSensitive ? '' : 'i'}u`)];
+    } catch {
+      return null;
+    }
   }
   const words = [...new Set(query.trim().split(/\s+/))];
   if (operator === 'all') return words.map((w) => buildRegex({ query: w, regex: false, ...base }));
@@ -116,7 +126,10 @@ const hasFilter = (c) => Boolean(c.labels?.length || c.statuses?.length || c.key
 
 /**
  * Searches the whole project.
- * @returns {{node, fields: Object<string, number>, snippets: Array}[]} in binder order.
+ * @returns {{node, fields: Object<string, number>, snippets: Array}[]} in binder
+ * order, or sorted by criteria.sort ('title' with Romanian collation, 'created';
+ * criteria.sortDesc flips either). criteria.invert (Scrivener §11.1.2) returns the
+ * nodes that do NOT match the criteria; trash stays hidden unless includeTrash.
  * Empty query + at least one label/status/keyword filter -> every node passing the filters.
  */
 export function searchProject(project, docs, notesById, criteria = {}) {
@@ -124,36 +137,61 @@ export function searchProject(project, docs, notesById, criteria = {}) {
   const terms = buildTerms(criteria);
   if (terms === null || (terms && terms.some((t) => !t))) return []; // invalid regex
   const emptyQuery = terms.length === 0;
-  if (emptyQuery && !hasFilter(criteria)) return [];
+  if (emptyQuery && !hasFilter(criteria) && !criteria.invert) return [];
   const operator = criteria.regex ? 'exact' : criteria.operator || 'any';
   const excluded = compileExcluded(project.tree || []);
   const results = [];
 
   for (const { node, root } of candidates(project.tree || [])) {
-    if (!passesFilters(node, root, criteria, excluded)) continue;
+    if (root === 'trash' && !criteria.includeTrash) continue;
+    const pass = passesFilters(node, root, criteria, excluded);
+    if (criteria.invert) {
+      // Inverted results list the filter-passing nodes the terms do NOT match
+      // (filters still apply normally); an empty query matches nothing, so its
+      // complement is every node passing the filters. No snippets are carried.
+      if (!pass) continue;
+      if (!emptyQuery && matchTerms(node, fields, terms, operator, docs, notesById)) continue;
+      results.push({ node, fields: Object.fromEntries(ALL_FIELDS.map((f) => [f, 0])), snippets: [] });
+      continue;
+    }
+    if (!pass) continue;
     const counts = Object.fromEntries(ALL_FIELDS.map((f) => [f, 0]));
     if (emptyQuery) {
       results.push({ node, fields: counts, snippets: [] });
       continue;
     }
-    const snippets = [];
-    const perTerm = terms.map(() => 0);
-    for (const field of fields) {
-      for (const value of fieldValues(node, field, docs, notesById)) {
-        terms.forEach((re, i) => {
-          const hits = HTML_FIELDS.has(field) ? findInHtml(value, re) : findInPlain(value, re);
-          re.lastIndex = 0;
-          if (!hits.length) return;
-          counts[field] += hits.length;
-          perTerm[i] += hits.length;
-          for (const h of hits) if (snippets.length < MAX_SNIPPETS) snippets.push({ field, ...h });
-        });
-      }
-    }
-    const ok = operator === 'all' ? perTerm.every((c) => c > 0) : perTerm.some((c) => c > 0);
-    if (ok) results.push({ node, fields: counts, snippets });
+    const { ok, counts: hitCounts, snippets } = matchTerms(node, fields, terms, operator, docs, notesById, true);
+    if (ok) results.push({ node, fields: hitCounts, snippets });
+  }
+  if (criteria.sort === 'title' || criteria.sort === 'created') {
+    const dir = criteria.sortDesc ? -1 : 1;
+    const key = (r) => String(criteria.sort === 'title' ? r.node.title || '' : r.node.created || '');
+    const locale = criteria.sort === 'title' ? 'ro' : undefined;
+    results.sort((x, y) => key(x).localeCompare(key(y), locale) * dir);
   }
   return results;
+}
+
+// Term matching shared by the direct and inverted paths. With collect, returns
+// per-field counts and snippets; without, just the boolean decision.
+function matchTerms(node, fields, terms, operator, docs, notesById, collect = false) {
+  const counts = Object.fromEntries(ALL_FIELDS.map((f) => [f, 0]));
+  const snippets = [];
+  const perTerm = terms.map(() => 0);
+  for (const field of fields) {
+    for (const value of fieldValues(node, field, docs, notesById)) {
+      terms.forEach((re, i) => {
+        const hits = HTML_FIELDS.has(field) ? findInHtml(value, re) : findInPlain(value, re);
+        re.lastIndex = 0;
+        if (!hits.length) return;
+        counts[field] += hits.length;
+        perTerm[i] += hits.length;
+        if (collect) for (const h of hits) if (snippets.length < MAX_SNIPPETS) snippets.push({ field, ...h });
+      });
+    }
+  }
+  const ok = operator === 'all' ? perTerm.every((c) => c > 0) : perTerm.some((c) => c > 0);
+  return collect ? { ok, counts, snippets } : ok;
 }
 
 function replacePlain(text, re, replacement) {

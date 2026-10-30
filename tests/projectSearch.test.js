@@ -109,3 +109,66 @@ describe('replaceInFields', () => {
     expect(r.count).toBe(1);
   });
 });
+
+describe('startsWith / endsWith operators (Scrivener §11.2.1)', () => {
+  it('matches only at a word edge', () => {
+    // a word that BEGINS with „pădur" (Pădurea, pădure) matches; nothing begins with „dure",
+    // while „pădure" (word-final) ends with it.
+    expect(ids(searchProject(project, docs, notes, { query: 'pădur', operator: 'startsWith' }))).toEqual(['a', 'c', 'r']);
+    expect(ids(searchProject(project, docs, notes, { query: 'dure', operator: 'startsWith' }))).toEqual([]);
+    expect(ids(searchProject(project, docs, notes, { query: 'dure', operator: 'endsWith' }))).toEqual(['a', 'c', 'r']);
+    expect(ids(searchProject(project, docs, notes, { query: 'păd', operator: 'startsWith' }))).toEqual(['a', 'c', 'r']);
+  });
+  it('is case-insensitive by default and respects caseSensitive', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'PĂD', operator: 'startsWith' }))).toEqual(['a', 'c', 'r']);
+    expect(ids(searchProject(project, docs, notes, { query: 'PĂD', operator: 'startsWith', caseSensitive: true }))).toEqual([]);
+  });
+  it('honours wholeWord-style exclusions: interior matches are ignored', () => {
+    expect(ids(searchProject(project, docs, notes, { query: 'ădur', operator: 'startsWith' }))).toEqual([]);
+  });
+});
+
+describe('invert results (Scrivener §11.1.2)', () => {
+  it('returns the nodes that do NOT match, trash still hidden', () => {
+    // folder „f" is an item too and does not match, so it is listed inverted
+    const res = searchProject(project, docs, notes, { query: 'pădure', invert: true });
+    expect(ids(res)).toEqual(['b', 'f']);
+  });
+  it('uses the same operator for the decision', () => {
+    const res = searchProject(project, docs, notes, { query: 'păd', operator: 'startsWith', invert: true });
+    expect(ids(res)).toEqual(['b', 'f']);
+  });
+  it('with empty query returns everything (filter-driven lists)', () => {
+    const res = searchProject(project, docs, notes, { query: '', invert: true });
+    expect(ids(res)).toEqual(['a', 'b', 'f', 'c', 'r']);
+  });
+  it('combines with filters: onlyCompile keeps compile-included nodes only', () => {
+    // c inherits its folder's compile exclusion, so it fails the filter too
+    const res = searchProject(project, docs, notes, { query: '', onlyCompile: true, invert: true });
+    expect(ids(res)).toEqual(['a', 'b']);
+  });
+});
+
+describe('sorting results (Scrivener §11.1.1)', () => {
+  const titled = {
+    tree: [
+      { id: 'draft', root: 'draft', title: 'Manuscris', children: [
+        { id: 'z', type: 'text', title: 'zar', synopsis: ' comun ', created: '2026-01-03T10:00:00Z' },
+        { id: 'ă', type: 'text', title: 'ază', synopsis: ' comun ', created: '2026-01-01T10:00:00Z' },
+        { id: 'a', type: 'text', title: 'aan', synopsis: ' comun ', created: '2026-01-02T10:00:00Z' },
+      ] },
+    ],
+  };
+  const emptyDocs = { z: '', 'ă': '', a: '' };
+  it('binder order is the default', () => {
+    expect(ids(searchProject(titled, emptyDocs, {}, { query: 'comun' }))).toEqual(['z', 'ă', 'a']);
+  });
+  it('sorts by title with Romanian collation, ascending and descending', () => {
+    expect(ids(searchProject(titled, emptyDocs, {}, { query: 'comun', sort: 'title' }))).toEqual(['a', 'ă', 'z']);
+    expect(ids(searchProject(titled, emptyDocs, {}, { query: 'comun', sort: 'title', sortDesc: true }))).toEqual(['z', 'ă', 'a']);
+  });
+  it('sorts by created date, oldest first and newest first', () => {
+    expect(ids(searchProject(titled, emptyDocs, {}, { query: 'comun', sort: 'created' }))).toEqual(['ă', 'a', 'z']);
+    expect(ids(searchProject(titled, emptyDocs, {}, { query: 'comun', sort: 'created', sortDesc: true }))).toEqual(['z', 'a', 'ă']);
+  });
+});

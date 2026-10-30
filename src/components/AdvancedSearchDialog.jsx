@@ -30,7 +30,8 @@ const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [..
 export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onSaveAsCollection, onClose, initialQuery = '' }) {
   const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
-  const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, operator: 'any' });
+  const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, operator: 'any', invert: false });
+  const [sortCfg, setSortCfg] = useState({ by: 'binder', desc: false });
   const [fields, setFields] = useState(['title', 'text', 'synopsis', 'keywords', 'custom']);
   const [filters, setFilters] = useState({ labels: [], statuses: [], keywords: [], scope: 'all', includeTrash: false, onlyCompile: false });
   const [notesById, setNotesById] = useState({});
@@ -60,7 +61,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notesOn, project.tree, readNotes]);
 
-  const criteria = useMemo(() => ({ query, ...opts, fields, ...filters }), [query, opts, fields, filters]);
+  const criteria = useMemo(() => ({ query, ...opts, fields, ...filters, sort: sortCfg.by, sortDesc: sortCfg.desc }), [query, opts, fields, filters, sortCfg]);
   const terms = useMemo(() => buildTerms(criteria), [criteria]);
   const invalid = Boolean(query) && (terms === null || terms.some((t) => !t));
   const results = useMemo(() => searchProject(project, docs, notesById, criteria), [project, docs, notesById, criteria]);
@@ -134,8 +135,22 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
               <option value="any">{tr('ui.advancedSearchDialog.oricare_cuvant')}</option>
               <option value="all">{tr('ui.advancedSearchDialog.toate_cuvintele')}</option>
               <option value="exact">{tr('ui.advancedSearchDialog.expresia_exacta')}</option>
+              <option value="startsWith">{tr('ui.advancedSearchDialog.incepe_cuvantul')}</option>
+              <option value="endsWith">{tr('ui.advancedSearchDialog.se_termina_cuvantul')}</option>
             </select>
           </label>
+          <label className="check">
+            {tr('ui.advancedSearchDialog.ordoneaza')}
+            <select value={sortCfg.by} onChange={(e) => setSortCfg((s) => ({ ...s, by: e.target.value }))}>
+              <option value="binder">{tr('ui.advancedSearchDialog.ordine_binder')}</option>
+              <option value="title">{tr('ui.advancedSearchDialog.dupa_titlu')}</option>
+              <option value="created">{tr('ui.advancedSearchDialog.dupa_data_crearii')}</option>
+            </select>
+          </label>
+          <label className="check"><input type="checkbox" checked={sortCfg.desc} onChange={() => setSortCfg((s) => ({ ...s, desc: !s.desc }))} /> {tr('ui.advancedSearchDialog.descrescator')}</label>
+        </div>
+        <div className="checks">
+          <label className="check"><input type="checkbox" checked={opts.invert} onChange={toggleOpt('invert')} /> {tr('ui.advancedSearchDialog.inverseaza_rezultatele')}</label>
         </div>
         <div className="checks">
           <strong className="muted">{tr('ui.advancedSearchDialog.cauta_in')}</strong>
