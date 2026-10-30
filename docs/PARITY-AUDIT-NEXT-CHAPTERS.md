@@ -34,14 +34,59 @@ au fost confirmate prin absența oricărui identificator relevant.
 | ~~P3~~ ✅ 2026-10-30 | ~~**Dialogue Focus**~~ — `src/lib/dialogueFocus.js` (pur: paragrafe cu „…”, «…”, "…") + `DialogueFocusDialog.jsx` (panou cu replici pe documente, click deschide documentul) + comanda Unelte „Focalizare pe dialoguri…” | §20.3.2, p. ~446 | făcut |
 | ~~P3~~ ✅ 2026-10-30 | ~~**Custom icons**~~ — existau deja: `node.icon` (emoji, selector în Inspector) + `node.iconColor` + randare în binder (fals negativ de grep în audit; constatat la implementare) | §7.4, p. ~110 | făcut (pre-existent) |
 
-## Ce NU a fost auditat încă (rămâne pentru turele următoare)
+## Tura a doua de audit (2026-10-30): capitolele rămase — COMPLETĂ
 
-Capitolele 8 (editor & views — split/copyholder detaliat), 9 (import & linked research),
-13 (Inspector — tab cu tab), 15 (writing & editing — imagini inline, ruler, preserve
-formatting), 16 (composition/page view — parțial confirmat prin cod), 17 (stylesheets —
-confirmat parțial), 19 (scriptwriting), 21–23 (markdown & compile overview), 25–26 (export
-& printing). Inventarul susține acoperirea lor; auditul pe manual rămâne de făcut cu aceeași
-metodă.
+Capitolele 8, 9, 13, 15–17, 19, 21–23, 25–26 au fost auditate cu aceeași metodă (text extras
+din manualul oficial prin outline-ul PDF, apoi verificare țintită în cod), de 5 agenți paraleli.
+Documentele de dovedi, cu tabelele lor complete de arii și goluri:
+
+| Document | Capitole (pagini PDF) |
+|---|---|
+| `PARITY-AUDIT-ch08-ch15-editor.md` | 8 Editor & Views (118–160), 15 Writing and Editing (322–362) |
+| `PARITY-AUDIT-ch09-ch13-gathering-inspector.md` | 9 Gathering Material (161–175), 13 Inspector (269–297) |
+| `PARITY-AUDIT-ch16-ch17-environments-styles.md` | 16 Writing Environments (363–370), 17 Styles (371–388) |
+| `PARITY-AUDIT-ch19-ch21-ch22-scripting-markdown-toc.md` | 19 Scriptwriting (410–428), 21 MMD & Pandoc (451–473), 22 ToC (474–478) |
+| `PARITY-AUDIT-ch23-ch25-ch26-compile-export-print.md` | 23 Compiling (479–519), 25 Exporting (587–592), 26 Printing (593–600) |
+
+### Backlog consolidat de goluri noi (25 goluri, dedup)
+
+P1 (nucleul workflow-ului de scriere):
+| Gol | Manual | Sursă |
+|---|---|---|
+| **Snapshots Manager** — listă pe tot proiectul, căutare nume/text/dată/regex, ștergere în masă, export | §15.8.4, p. 353–356 | ch8+15 |
+| **Selectare și navigare după stil** — Select Style Range / Next in Same Style / Select All with Style | §17.4.1, p. 379–380 | ch16+17 |
+| **ToC static cu numere de pagină** — „Copy Documents as ToC", evaluarea `<$p>` în corpul documentelor la compile/print | §22.1–22.2, p. 475–477 | ch19+21+22 |
+| **Lista de conținut în Compile + filtre include/exclude** — tabelă per item, bulk toggle, moduri Included/Excluded/All | §23.4.1, p. 488–491 | ch23+25+26 |
+| **Print Settings: fișe index + outline** — corkboard ca fișe (cutting guides, label color), outline indentat cu sinopse/counts | §26.1.1–26.3, p. 590–592 | ch23+25+26 |
+
+P2:
+| Gol | Manual | Sursă |
+|---|---|---|
+| Copyholders — panou subordonat per split, Alt+drag, istoric propriu | §8.1.5, p. 133–136 | ch8+15 |
+| Media viewer avansat — Image Tools, controale PDF, Media Time Stamp | §8.1.3, p. 126–130 | ch8+15 |
+| Linked research — fișiere externe ca referințe în binder (fără copiere) + reparare țintă | §9.2, p. 170–172 | ch9+13 |
+| Import and Split: nesting ierarhic + split Fountain/FDX pe scene cu sinopsis | §9.1.6, p. 166–169 | ch9+13 |
+| Panou Bookmarks în Inspector cu preview + editare URL/redenumire | §13.4, p. 279–283 | ch9+13 |
+| Control strip pentru compoziție (text scale, paper position, Go To fără ieșire) | §16.1.3, p. 361 | ch16+17 |
+| „Remove all styles" din documentele selectate | §17.3.5, p. 378 | ch16+17 |
+| Script Settings: formate de scenariu personalizabile | §19.6, p. 420–427 | ch19+21+22 |
+| Selector de elemente script în UI (comanda există, fără apelant UI) | §19.1, p. 412–413 | ch19+21+22 |
+| Opțiuni de conținut la compile (text tăiat, spații, hyperlinkuri, scalare imagini, backlinks) | §23.4.3, p. 499–501 | ch23+25+26 |
+| Opțiuni compile group & front/back matter (lock pe output, group↔subfoldere pereche) | §23.4.1, p. 487, 492–494 | ch23+25+26 |
+| Extinderea Export Files (PDF/Fountain/FDX/MMD, numerotare, strip comments) | §25.1–25.2, p. 583–584 | ch23+25+26 |
+
+P3: sortarea paragrafelor (§15.2.4); pachetul de comenzi mici din cap. 15 (inclusiv lista
+`project.autoComplete` neconsumată de editor); rafinamentele corkboard/outliner (§8.2–8.3);
+drag&drop import extern (§9.1); import proiect Scrivener în binder (§9.1.5); scratchpad
+two-way (§9.3); scurtături tab-uri Inspector (§13.2.2); monitoare multiple pentru compoziție
+(§16.1.5); import stiluri numite din DOCX/ODT (§17.4.5); post-processing + binare externe
+pandoc/mmd (§21.3/21.5.2); stiluri → markup markdown + CriticMarkup (§21.4.6–21.4.7);
+import & split pe scene FDX/Fountain (§19.2.2/19.5); partajare formate compile (§23.2.5);
+opțiuni fine ToC ebook/OPML/CSV (§23.4.6/§25.3–25.4).
+
+Notă pozitivă: compararea între două snapshots (exclusivă manualului) e implementată;
+golurile din tura întâi (strip/convert notații, Saved Layouts, șabloane de document,
+înlocuiri de proiect în Compile) sunt acum implementate și confirmate la adâncime.
 
 > Concluzie de metodă, re-confirmată: inventarul `FEATURES-SCRIVENER3.md` nu a prins Quick
 > Search și nu prinde nici golurile de mai sus — auditul pe manual rămâne sursa adevărului.
