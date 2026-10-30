@@ -1505,7 +1505,7 @@ export default function App({ api }) {
           onError={report}
           onSettings={() => setDialog('settings')}
           onHelp={() => setHelp({ topic: null, tab: 'manual' })}
-          onTutorial={api.newProject ? () => api.newProject('Tutorial Scribner', 'tutorial').then(openResult).catch(report) : undefined}
+          onTutorial={api.newProject ? () => api.newProject('Tutorial Pneuma Sofer', 'tutorial').then(openResult).catch(report) : undefined}
         />
         {help && (
           <HelpWindow
@@ -1515,7 +1515,7 @@ export default function App({ api }) {
             onClose={() => setHelp(null)}
             onStartTutorial={() => {
               setHelp(null);
-              api.newProject('Tutorial Scribner', 'tutorial').then(openResult).catch(report);
+              api.newProject('Tutorial Pneuma Sofer', 'tutorial').then(openResult).catch(report);
             }}
           />
         )}
@@ -1683,7 +1683,7 @@ export default function App({ api }) {
   const startTutorial = () => {
     setHelp(null);
     flush()
-      .then(() => api.newProject('Tutorial Scribner', 'tutorial'))
+      .then(() => api.newProject('Tutorial Pneuma Sofer', 'tutorial'))
       .then(openResult)
       .catch(report);
   };
@@ -1888,14 +1888,14 @@ export default function App({ api }) {
     ['file', 'saveTemplate', tr('cmd.saveTemplate'), () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
     ['file', 'pageSetup', tr('cmd.pageSetup'), () => setDialog('pageSetup'), !api.getPageSetup],
     ['file', 'printPreview', tr('cmd.printPreview'), () => openPrintPreview(), !api.printPreview],
-    ['help', 'help', 'Manualul Scribner', () => setHelp({ topic: null, tab: 'manual' })],
+    ['help', 'help', 'Manualul Pneuma Sofer', () => setHelp({ topic: null, tab: 'manual' })],
     ['help', 'helpContext', tr('cmd.helpContext'), () => setHelp({ topic: helpContext(), tab: 'manual' })],
     ['help', 'helpShortcuts', tr('cmd.helpShortcuts'), () => setHelp({ topic: null, tab: 'shortcuts' })],
     ['help', 'helpPlaceholders', tr('cmd.helpPlaceholders'), () => setHelp({ topic: null, tab: 'placeholders' })],
     ['help', 'helpSyntax', tr('cmd.helpSyntax'), () => setHelp({ topic: null, tab: 'syntax' })],
     ['help', 'tutorial', 'Tutorial interactiv', startTutorial, !api.newProject],
     ['help', 'reportIssue', tr('cmd.reportIssue'), () => window.open('https://github.com/Hermeneuticus-of-things/Scriptorium/issues', '_blank')],
-    ['help', 'about', 'Despre Scribner', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
+    ['help', 'about', 'Despre Pneuma Sofer', () => window.alert(tr('ui.app.scribner_program_de_scris_pentru')), Boolean(api.setAppMenu)],
     ['tools', 'nameGen', tr('cmd.nameGen'), () => setDialog('names')],
     ['tools', 'scratchpad', 'Ciorne (Scratchpad)', () => setShowScratch((v) => !v)],
     ['tools', 'speech', tr('cmd.speech'), () => setShowSpeech((v) => !v)],

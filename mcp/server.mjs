@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Scribner MCP server: lets AI agents (Claude Code, Claude Desktop, any MCP
-// client) read and edit Scribner projects.
+// Pneuma Sofer MCP server: lets AI agents (Claude Code, Claude Desktop, any MCP
+// client) read and edit Pneuma Sofer projects.
 //
 //   node mcp/server.mjs --project "D:\Carti\Karma.scribner" [--project …] [--read-only]
 //
@@ -37,23 +37,31 @@ for (let i = 0; i < args.length; i++) {
 }
 for (const p of (process.env.SCRIBNER_PROJECTS || '').split(path.delimiter).filter(Boolean)) projects.push(path.resolve(p));
 if (!projects.length) {
-  process.stderr.write('Folosire: scribner-mcp --project <cale către proiect.scribner> [--project …] [--read-only]\n');
+  process.stderr.write('Folosire: pneuma-sofer-mcp --project <cale către proiect.scribner> [--project …] [--read-only]\n');
   process.exit(2);
 }
 for (const p of projects) {
   if (!fs.existsSync(path.join(p, 'project.json'))) {
-    process.stderr.write(`Nu e un proiect Scribner: ${p}\n`);
+    process.stderr.write(`Nu e un proiect Pneuma Sofer: ${p}\n`);
     process.exit(2);
   }
 }
 
 // The app's user data folder (settings.json, user templates, global compile formats).
 // Read only; SCRIBNER_USER_DATA overrides it (portable installs, tests).
+// The folder follows the app's product name ("Pneuma Sofer"); the legacy "Scribner"
+// folder is still read until the new one exists, so renamed installs keep their settings.
 function defaultUserData() {
   const home = process.env.HOME || process.env.USERPROFILE || '';
-  if (process.platform === 'win32') return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Scribner');
-  if (process.platform === 'darwin') return path.join(home, 'Library', 'Application Support', 'Scribner');
-  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'Scribner');
+  const base =
+    process.platform === 'win32'
+      ? process.env.APPDATA || path.join(home, 'AppData', 'Roaming')
+      : process.platform === 'darwin'
+        ? path.join(home, 'Library', 'Application Support')
+        : process.env.XDG_CONFIG_HOME || path.join(home, '.config');
+  const next = path.join(base, 'Pneuma Sofer');
+  const legacy = path.join(base, 'Scribner');
+  return fs.existsSync(next) || !fs.existsSync(legacy) ? next : legacy;
 }
 const userData = process.env.SCRIBNER_USER_DATA ? path.resolve(process.env.SCRIBNER_USER_DATA) : defaultUserData();
 function readJson(file, def) {
@@ -162,7 +170,7 @@ function addProject(dir) {
 // ---------------------------------------------------------------------------
 // Server
 
-const server = new McpServer({ name: 'scribner', version: '0.3.0' });
+const server = new McpServer({ name: 'pneuma-sofer', version: '0.3.0' });
 
 tool('project_info', 'Titlul, autorul, țintele, etichetele, statusurile, profilul editorial și numărul de cuvinte al proiectului.', { project }, (dir) => {
   const p = load(dir);
@@ -631,4 +639,4 @@ server.registerResource(
 );
 
 await server.connect(new StdioServerTransport());
-process.stderr.write(`Scribner MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);
+process.stderr.write(`Pneuma Sofer MCP pornit: ${projects.map((p) => path.basename(p)).join(', ')}${readOnly ? ' (doar citire)' : ''}\n`);

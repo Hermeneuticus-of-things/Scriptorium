@@ -1,4 +1,4 @@
-# CHANGELOG — Scriptorium
+# CHANGELOG — Pneuma Sofer
 
 ## 2026-10-26 — Interogare NotebookLM cu întrebări de continuare (ca la Karma)
 

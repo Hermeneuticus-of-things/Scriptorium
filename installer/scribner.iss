@@ -1,24 +1,24 @@
-; Scribner — installer wizard (Inno Setup 6).
+; Pneuma Sofer — installer wizard (Inno Setup 6).
 ; Input: release\win-unpacked from `npm run dist:win`. Built by installer\build-setup.cjs:
 ;   ISCC /DAppVersion=<version> installer\scribner.iss
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
-#define AppName "Scribner"
-#define AppExe "Scribner.exe"
+#define AppName "Pneuma Sofer"
+#define AppExe "Pneuma Sofer.exe"
 
 [Setup]
 AppId={{6A0E3C52-8F7B-4C1D-9B8E-5C2F1D3A7E41}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
-AppPublisher=Scribner
+AppPublisher=Pneuma Sofer
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 UninstallDisplayIcon={app}\{#AppExe}
 LicenseFile=..\build\license.txt
 OutputDir=..\release
-OutputBaseFilename=Scribner-Setup-{#AppVersion}
+OutputBaseFilename=PneumaSofer-Setup-{#AppVersion}
 SetupIconFile=..\build\icon.ico
 WizardStyle=modern
 Compression=lzma2/max
@@ -48,4 +48,5 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
-; Projects and settings stay on uninstall: they live in the user's folders and %APPDATA%\Scribner.
+; Projects and settings stay on uninstall: they live in the user's folders and %APPDATA%\Pneuma Sofer
+; (installs from before the rename keep %APPDATA%\Scribner; the app reads it until the new folder exists).

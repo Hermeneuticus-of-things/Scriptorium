@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/readme/hero.png" width="100%" alt="Scribner, program de scris gratuit: cartea ta pe bucăți, apoi întreagă. Captură cu panoul de fișe al unui roman.">
+  <img src="./assets/readme/hero.png" width="100%" alt="Pneuma Sofer, program de scris gratuit: cartea ta pe bucăți, apoi întreagă. Captură cu panoul de fișe al unui roman.">
 </p>
 
 <p align="center">
@@ -9,7 +9,7 @@
   <a href="#sub-capotă">Sub capotă</a>
 </p>
 
-Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. În Scribner textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. Când ai terminat, apeși un buton și primești cartea întreagă.
+Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. În Pneuma Sofer textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. Când ai terminat, apeși un buton și primești cartea întreagă.
 
 <p align="center">
   <img src="./assets/readme/workflow.svg" width="100%" alt="Patru pași: aduci textul, scrii pe fișe, verifici, primești cartea întreagă în DOCX, PDF sau EPUB">
@@ -25,7 +25,7 @@ Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini 
   <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
 </p>
 
-Pui fișierul Word primit de la editură și Scribner îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+Pui fișierul Word primit de la editură și Pneuma Sofer îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
 
 <p align="center">
   <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">
@@ -81,20 +81,20 @@ Dacă vrei, asistentul AI face corectură, rezumate sau o a doua părere. Vezi e
   <img src="./assets/readme/compile.png" width="100%" alt="Fereastra în care alegi forma finală: manuscris, carte tipărită sau e-book">
 </p>
 
-Alegi forma: manuscris pentru editură, carte tipărită sau e-book. Scribner adună bucățile într-un singur fișier Word, PDF sau EPUB, cu copertă, pagină de titlu și subtitlu, cuprins și capitole numerotate. Imaginile rămân cât le-ai făcut în text, fără să iasă din pagină; textul se desparte în silabe și nu lasă rânduri singure la capăt de pagină. Fișierele trec verificările programelor care le deschid: Word, LibreOffice, cititoarele de e-book.
+Alegi forma: manuscris pentru editură, carte tipărită sau e-book. Pneuma Sofer adună bucățile într-un singur fișier Word, PDF sau EPUB, cu copertă, pagină de titlu și subtitlu, cuprins și capitole numerotate. Imaginile rămân cât le-ai făcut în text, fără să iasă din pagină; textul se desparte în silabe și nu lasă rânduri singure la capăt de pagină. Fișierele trec verificările programelor care le deschid: Word, LibreOffice, cititoarele de e-book.
 
 ## Cum îl instalezi
 
 Din pagina [Releases](../../releases/latest) descarci una dintre variante:
 
-- **`Scribner-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator. La dezinstalare, cărțile tale rămân.
-- **`Scribner-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
+- **`PneumaSofer-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator. La dezinstalare, cărțile tale rămân.
+- **`PneumaSofer-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
 
 La prima pornire, deschide **Tutorialul interactiv** din ecranul de start: 15 lecții scurte, în care înveți lucrând. Manualul complet se deschide oricând cu F1.
 
 ## Întrebări
 
-**Am nevoie de internet?** Nu. Scribner merge pe calculatorul tău și textele rămân la tine. Internetul îți trebuie doar pentru DeepL, dicționarele online și AI.
+**Am nevoie de internet?** Nu. Pneuma Sofer merge pe calculatorul tău și textele rămân la tine. Internetul îți trebuie doar pentru DeepL, dicționarele online și AI.
 
 **Pot aduce ce am scris deja?** Da: Word, RTF, ODT, Markdown, pagini web, scenarii Fountain sau Final Draft și proiecte `.scriv`.
 
@@ -120,7 +120,7 @@ npm run dist:win         # aplicația împachetată și varianta portabilă, în
 npm run dist:win:setup   # installerul cu wizard (Inno Setup 6, pe Windows)
 ```
 
-Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installer\build-windows.cmd` face tot: dependințele, aplicația, varianta portabilă și `Scribner-Setup-<versiune>.exe`, apoi deschide folderul `release`.
+Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installer\build-windows.cmd` face tot: dependințele, aplicația, varianta portabilă și `PneumaSofer-Setup-<versiune>.exe`, apoi deschide folderul `release`.
 
 `npm run dev` deschide interfața în browser; cu `?demo` la finalul adresei pornește proiectul demonstrativ din capturi.
 
@@ -130,12 +130,12 @@ Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installe
 
 **NotebookLM.** „Exportă pentru NotebookLM” pregătește cartea ca surse: un fișier pe capitol, cercetarea și notele separat, cuprins cu rezumate.
 
-**Interogare NotebookLM (întrebări de continuare).** Opțional: dacă pui un notebook în Setări → Servicii și ai serverul `notebooklm-mcp` configurat în Claude (același folosit de agentul `karma-nlm-doctrina`), editorul poate deschide notebook-ul și întreba sursele cu întrebări de continuare până primește un răspuns, apoi îl folosește pentru o verificare (de pildă doctrină vs ornament, sau consistența cu sursele). Nu ține chei: autentificarea la NotebookLM e gestionată de serverul `notebooklm-mcp` prin sesiunea lui de browser (cookies), ca la Karma — Scribner doar pornește acel server și îi cere răspunsuri. Fără notebook configurat, funcția e oprită și restul programului merge neschimbat.
+**Interogare NotebookLM (întrebări de continuare).** Opțional: dacă pui un notebook în Setări → Servicii și ai serverul `notebooklm-mcp` configurat în Claude (același folosit de agentul `karma-nlm-doctrina`), editorul poate deschide notebook-ul și întreba sursele cu întrebări de continuare până primește un răspuns, apoi îl folosește pentru o verificare (de pildă doctrină vs ornament, sau consistența cu sursele). Nu ține chei: autentificarea la NotebookLM e gestionată de serverul `notebooklm-mcp` prin sesiunea lui de browser (cookies), ca la Karma — Pneuma Sofer doar pornește acel server și îi cere răspunsuri. Fără notebook configurat, funcția e oprită și restul programului merge neschimbat.
 
 **Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
 
 ```bash
-claude mcp add scribner -- node "/cale/Scribner/mcp/server.mjs" --project "/cale/Cartea mea.scribner"
+claude mcp add pneuma-sofer -- node "/cale/Scriptorium/mcp/server.mjs" --project "/cale/Cartea mea.scribner"
 ```
 
 **Formate.** Import: DOCX, RTF, ODT, HTML, Markdown, Fountain, Final Draft, OPML, pagini web, BibTeX/CSL-JSON, `.scriv`. Export și Compile: DOCX, PDF, EPUB, HTML, RTF, ODT, Markdown, MultiMarkdown, text, LaTeX, Fountain, Final Draft, `.scriv`.

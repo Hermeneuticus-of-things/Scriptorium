@@ -299,7 +299,7 @@ export function registerFullTools(ctx) {
 
   tool(
     'import_scriv',
-    'Importă un proiect Scrivener (.scriv) ca proiect Scribner nou în dest_dir. Proiectul nou devine disponibil în această sesiune.',
+    'Importă un proiect Scrivener (.scriv) ca proiect Pneuma Sofer nou în dest_dir. Proiectul nou devine disponibil în această sesiune.',
     { scriv_path: z.string(), dest_dir: z.string() },
     (_dir, { scriv_path, dest_dir }) => {
       const src = existingDir(scriv_path, 'scriv_path');

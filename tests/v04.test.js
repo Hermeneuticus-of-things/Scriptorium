@@ -81,7 +81,7 @@ describe('folderSync', () => {
 
     fs.writeFileSync(path.join(folder, 'Draft', '001 Scena unu.txt'), 'Text nou extern');
     fs.writeFileSync(path.join(folder, 'Draft', '002 Scena doi.txt'), 'Și aici extern');
-    store.writeDoc(dir, s2.id, 'docs', '<p>Editat în Scribner</p>');
+    store.writeDoc(dir, s2.id, 'docs', '<p>Editat în Pneuma Sofer</p>');
     fs.writeFileSync(path.join(folder, 'Notes', 'Nou.md'), '# Titlu\n\n*idee*');
 
     const written = {};
@@ -90,7 +90,7 @@ describe('folderSync', () => {
     expect(written[s1.id]).toContain('Text nou extern');
     expect(res.conflicts).toHaveLength(1);
     expect(res.conflicts[0]).toMatchObject({ id: s2.id });
-    expect(res.conflicts[0].ours).toContain('Editat în Scribner');
+    expect(res.conflicts[0].ours).toContain('Editat în Pneuma Sofer');
     expect(res.conflicts[0].theirs).toContain('Și aici extern');
     expect(written[s2.id]).toBeUndefined();
     expect(res.newDocs).toHaveLength(1);

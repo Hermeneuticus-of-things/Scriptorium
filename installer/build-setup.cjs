@@ -1,4 +1,4 @@
-// Builds release/Scribner-Setup-<version>.exe with Inno Setup from release/win-unpacked.
+// Builds release/PneumaSofer-Setup-<version>.exe with Inno Setup from release/win-unpacked.
 // Needs Windows with Inno Setup 6 (ISCC.exe on PATH or in the default install folders).
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -6,8 +6,8 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const { version } = require(path.join(root, 'package.json'));
-if (!fs.existsSync(path.join(root, 'release', 'win-unpacked', 'Scribner.exe'))) {
-  console.error('Lipsește release/win-unpacked/Scribner.exe. Rulează întâi: npm run dist:win');
+if (!fs.existsSync(path.join(root, 'release', 'win-unpacked', 'Pneuma Sofer.exe'))) {
+  console.error('Lipsește release/win-unpacked/Pneuma Sofer.exe. Rulează întâi: npm run dist:win');
   process.exit(1);
 }
 const ico = path.join(root, 'build', 'icon.ico');
@@ -25,7 +25,7 @@ const candidates = [
 for (const iscc of candidates) {
   try {
     execFileSync(iscc, [`/DAppVersion=${version}`, path.join(__dirname, 'scribner.iss')], { stdio: 'inherit' });
-    console.log(`Gata: release/Scribner-Setup-${version}.exe`);
+    console.log(`Gata: release/PneumaSofer-Setup-${version}.exe`);
     process.exit(0);
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;

@@ -133,8 +133,8 @@ export function blankProject(title) {
 }
 
 export function validateBundle(bundle) {
-  if (!bundle || bundle.format !== BUNDLE_FORMAT) throw new Error('Fișierul nu este un pachet de proiect Scribner.');
-  if (bundle.version > BUNDLE_VERSION) throw new Error('Pachetul a fost creat cu o versiune mai nouă de Scribner.');
+  if (!bundle || bundle.format !== BUNDLE_FORMAT) throw new Error('Fișierul nu este un pachet de proiect Pneuma Sofer.');
+  if (bundle.version > BUNDLE_VERSION) throw new Error('Pachetul a fost creat cu o versiune mai nouă de Pneuma Sofer.');
   if (!bundle.project || !Array.isArray(bundle.project.tree)) throw new Error('Pachet incomplet: lipsește arborele proiectului.');
   return bundle;
 }
@@ -274,7 +274,7 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       throw e;
     }
     const project = await createFolderStore(h).get({ kind: 'project' });
-    if (!project) throw new Error('Folderul ales nu e un proiect Scribner (lipsește project.json).');
+    if (!project) throw new Error('Folderul ales nu e un proiect Pneuma Sofer (lipsește project.json).');
     // Same folder opened again -> same dir (no duplicate entries in "recent").
     let dir = null;
     for (const r of (await settings()).recent || []) {

@@ -1,5 +1,5 @@
 @echo off
-rem Scribner: builds the installer wizard (Inno Setup 6) and the portable .exe on this Windows PC.
+rem Pneuma Sofer: builds the installer wizard (Inno Setup 6) and the portable .exe on this Windows PC.
 rem Double-click this file. Needs Node.js 22+ and Inno Setup 6 (already installed).
 setlocal
 chcp 65001 >nul

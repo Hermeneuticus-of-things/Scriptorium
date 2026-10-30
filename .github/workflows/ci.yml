@@ -1,4 +1,4 @@
-# Scribner CI: unit tests, Vite build and an end-to-end run of the real Electron app.
+# Pneuma Sofer CI: unit tests, Vite build and an end-to-end run of the real Electron app.
 name: CI
 
 on:

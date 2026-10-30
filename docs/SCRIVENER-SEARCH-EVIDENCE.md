@@ -173,5 +173,4 @@ manualului** (774 pag.), nu împotriva inventarului auto-intreținut. Acest docu
 audit de acest tip (cap. 11). Următoarele capitole candidate: 10 (Organisare/metadata),
 12 (editor), 18 (comentarii/adnotări), 24 (Compile).
 
-> Notă de nume: aplicația se numește acum oficial **Pneuma Sofer** (fostul „Scribner");
-> README-ul și fișierele care folosesc numele vechi vor fi redenumite treptat.
+> Notă de nume: aplicația se numește oficial **Pneuma Sofer**.

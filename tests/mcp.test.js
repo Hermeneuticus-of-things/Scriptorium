@@ -39,7 +39,7 @@ afterAll(async () => {
   await client?.close();
 });
 
-describe('Scribner MCP server', () => {
+describe('Pneuma Sofer MCP server', () => {
   it('lists the tools', async () => {
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name)).toEqual(
