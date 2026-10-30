@@ -23,6 +23,7 @@ import CollectionsBar from './components/CollectionsBar.jsx';
 import KeywordsDialog from './components/KeywordsDialog.jsx';
 import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
 import QuickSearch from './components/QuickSearch.jsx';
+import DialogueFocusDialog from './components/DialogueFocusDialog.jsx';
 import FilterBar from './components/FilterBar.jsx';
 import { collectionNodes, createCollection, ensureSearchResults, setLastSearch, SEARCH_RESULTS_ID } from './lib/collections.js';
 import { replaceInFields, replaceSnapshotHtml, searchProject, buildTerms } from './lib/projectSearch.js';
@@ -1773,6 +1774,7 @@ export default function App({ api }) {
     }],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
+    ['tools', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
     ['tools', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['tools', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
     ['view', 'floatInspector', tr('cmd.floatInspector'), () => setShowFloatInspector((v) => !v), !composition],
@@ -2548,6 +2550,18 @@ export default function App({ api }) {
           onFullSearch={(criteria) => {
             setSearchSeed(criteria.query || '');
             setDialog('advsearch');
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'dialoguefocus' && (
+        <DialogueFocusDialog
+          project={project}
+          docs={docs}
+          onOpen={(id) => {
+            go(id);
+            setView('editor');
+            setDialog(null);
           }}
           onClose={() => setDialog(null)}
         />
