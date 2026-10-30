@@ -12,7 +12,8 @@ export function buildRegex({ query, regex, caseSensitive, wholeWord }) {
   }
 }
 
-function decode(s) {
+// Exported for formatFind.js, which reuses the same segment parser approach.
+export function decode(s) {
   return s
     .replace(/&nbsp;/g, ' ')
     .replace(/&lt;/g, '<')
@@ -33,7 +34,7 @@ function encode(s) {
 }
 
 // Splits html into [{tag:true, s}] / [{tag:false, s(decoded)}]
-function segments(html) {
+export function segments(html) {
   const out = [];
   const re = /(<[^>]*>)|([^<]+)/g;
   let m;
@@ -43,7 +44,7 @@ function segments(html) {
 
 // Plain text of html without the DOM (htmlToText needs document; this stays usable
 // in Node): markup dropped, block ends become newlines like htmlToText does.
-const BLOCK_END = /<\/?(?:p|h[1-6]|li|blockquote|div|tr|section)\b|<br\b/i;
+export const BLOCK_END = /<\/?(?:p|h[1-6]|li|blockquote|div|tr|section)\b|<br\b/i;
 
 export function htmlToPlain(html) {
   let out = '';
