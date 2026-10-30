@@ -200,6 +200,22 @@ function compileExcluded(tree) {
   return out;
 }
 
+// Binder selection scope: the chosen items plus every descendant, so a selected
+// chapter folder covers its whole subtree (Scrivener §11.1.2).
+function selectionExpanded(tree, ids) {
+  const wanted = new Set(ids);
+  const out = new Set();
+  const visit = (nodes, inside) => {
+    for (const n of nodes) {
+      const hit = inside || wanted.has(n.id);
+      if (hit) out.add(n.id);
+      if (n.children) visit(n.children, hit);
+    }
+  };
+  visit(tree, false);
+  return out;
+}
+
 // Flat list of non-root nodes in binder order with their root kind.
 function candidates(tree) {
   const out = [];
@@ -214,11 +230,17 @@ function candidates(tree) {
   return out;
 }
 
-export function passesFilters(node, root, criteria, excludedFromCompile) {
+export function passesFilters(node, root, criteria, excludedFromCompile, selection = null) {
   const scope = criteria.scope || 'all';
   if (root === 'trash' && !criteria.includeTrash) return false;
   if (scope !== 'all' && root !== scope && !(root === 'trash' && criteria.includeTrash)) return false;
-  if (criteria.onlyCompile && (root !== 'draft' || excludedFromCompile.has(node.id))) return false;
+  if (criteria.draftOnly && root !== 'draft') return false;
+  if (selection && !selection.has(node.id)) return false;
+  // Included + Excluded from compile together mean no compile restriction (§11.1.2).
+  if (criteria.onlyCompile !== criteria.excludeCompile) {
+    if (criteria.onlyCompile && (root !== 'draft' || excludedFromCompile.has(node.id))) return false;
+    if (criteria.excludeCompile && !excludedFromCompile.has(node.id)) return false;
+  }
   if (criteria.labels?.length && !criteria.labels.includes(node.label)) return false;
   if (criteria.statuses?.length && !criteria.statuses.includes(node.status)) return false;
   if (criteria.keywords?.length) {
@@ -237,6 +259,10 @@ const hasFilter = (c) => Boolean(c.labels?.length || c.statuses?.length || c.key
  * criteria.sortDesc flips either). criteria.invert (Scrivener §11.1.2) returns the
  * nodes that do NOT match the criteria; trash stays hidden unless includeTrash.
  * Empty query + at least one label/status/keyword filter -> every node passing the filters.
+ * Scope options (§11.1.2): criteria.draftOnly restricts to the draft root;
+ * criteria.selectionIds (binder selection) spans whole subtrees; onlyCompile /
+ * excludeCompile keep the compile-included / compile-excluded documents, both
+ * together meaning no compile restriction.
  */
 export function searchProject(project, docs, notesById, criteria = {}) {
   const parsed = parseQuery(criteria);
@@ -247,11 +273,12 @@ export function searchProject(project, docs, notesById, criteria = {}) {
   if (emptyQuery && !hasFilter(criteria) && !criteria.invert) return [];
   const operator = criteria.regex ? 'exact' : criteria.operator || 'any';
   const excluded = compileExcluded(project.tree || []);
+  const selection = criteria.selectionIds?.length ? selectionExpanded(project.tree || [], criteria.selectionIds) : null;
   const results = [];
 
   for (const { node, root } of candidates(project.tree || [])) {
     if (root === 'trash' && !criteria.includeTrash) continue;
-    const pass = passesFilters(node, root, criteria, excluded);
+    const pass = passesFilters(node, root, criteria, excluded, selection);
     if (criteria.invert) {
       // Inverted results list the filter-passing nodes the criteria do NOT match
       // (filters still apply normally); an empty query matches nothing, so its
