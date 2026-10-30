@@ -447,22 +447,17 @@ export function findFormatting(doc, kind, value = null) {
     revision: (m) => m.type.name === 'revision' && (!v || Number(m.attrs.level) === Number(v)),
     style: (m) => m.type.name === 'charStyle' && (!v || m.attrs.name === v),
     bookmark: (m) => m.type.name === 'bookmark' && (!v || m.attrs.name === v),
-<<<<<<< ours
-    link: (m) => m.type.name === 'link',
-=======
     // §11.6.7: bold/italic/underline/strike/superscript/subscript (value = mark name, empty = any).
     charFormat: (m) => CHAR_MARKS.includes(m.type.name) && (!v || m.type.name === v),
     // §11.6.8: links; the text/URL filter runs below, once the range text is known.
     link: (m) => m.type.name === 'link',
     // §11.6.10: preserved (verbatim) text = the inline code mark; codeBlock nodes are added below.
     preserve: (m) => m.type.name === 'code',
->>>>>>> theirs
   }[kind];
   const out = markTest ? markRanges(doc, markTest, (m) => (kind === 'charFormat' ? m.type.name : JSON.stringify(m.attrs))) : [];
   doc.descendants((node, pos) => {
     if (kind === 'footnote' && node.type.name === 'footnote') out.push({ from: pos, to: pos + node.nodeSize });
     if (kind === 'annotation' && node.type.name === 'annotation') out.push({ from: pos, to: pos + node.nodeSize });
-    if (kind === 'image' && node.type.name === 'image') out.push({ from: pos, to: pos + node.nodeSize });
     if (kind === 'table' && node.type.name === 'table') out.push({ from: pos, to: pos + node.nodeSize });
     if (kind === 'style' && node.isTextblock && node.attrs.styleName && (!v || node.attrs.styleName === v)) {
       out.push({ from: pos + 1, to: pos + node.nodeSize - 1 });
