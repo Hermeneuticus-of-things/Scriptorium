@@ -32,7 +32,7 @@ function loadColumns() {
 }
 
 // charCounts {id: n} or docs {id: html} (optional) feed the Characters column.
-export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null }) {
+export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, filterNodes = null }) {
   const charsOf = (n) => (charCounts ? charCounts[n.id] || 0 : docs && docs[n.id] ? htmlToText(docs[n.id]).length : 0);
   const [columns, setColumns] = useState(loadColumns);
   const [collapsed, setCollapsed] = useState({});
@@ -68,6 +68,8 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   };
 
   const rows = useMemo(() => {
+    // Filtered (Scrivener 3 §11.4): flat match list in binder order, no sort.
+    if (filterNodes) return filterNodes.map((n) => ({ n, depth: 0 }));
     const out = [];
     const visit = (nodes, depth) => {
       let list = nodes;
@@ -87,7 +89,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
     visit(root.children || [], 0);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [root, collapsed, sort, counts, charCounts, docs]);
+  }, [root, collapsed, sort, counts, charCounts, docs, filterNodes]);
 
   const focusRow = (id) => setTimeout(() => bodyRef.current?.querySelector(`tr[data-row-id="${CSS.escape(id)}"]`)?.focus(), 0);
   // Keyboard on a focused row: ↑/↓/Home/End move, ←/→ collapse/expand, Enter / F2 edit the
@@ -262,7 +264,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
           {rows.map(({ n, depth }) => (
             <tr
               key={n.id}
-              draggable={!sort}
+              draggable={!sort && !filterNodes}
               data-row-id={n.id}
               tabIndex={0}
               aria-selected={sel === n.id}
@@ -302,7 +304,10 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
               }}
             >
               <td style={{ paddingLeft: 8 + depth * 16 }} className="title-cell">
-                {n.children ? (
+                {filterNodes ? (
+                  // Flat filter result: there are no sub-rows to expand.
+                  <span className="twisty" />
+                ) : n.children ? (
                   <button className="twisty" tabIndex={-1} aria-label={collapsed[n.id] ? t('ui.outliner.extinde') : t('ui.outliner.restrange')} onClick={() => setCollapsed((c) => ({ ...c, [n.id]: !c[n.id] }))}>
                     {collapsed[n.id] ? '▸' : '▾'}
                   </button>

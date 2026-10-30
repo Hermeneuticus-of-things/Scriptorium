@@ -187,7 +187,7 @@ function fieldValues(node, field, docs, notesById) {
 }
 
 // Ids of nodes that are excluded from compile, directly or through an ancestor.
-function compileExcluded(tree) {
+export function compileExcluded(tree) {
   const out = new Set();
   const visit = (nodes, excluded) => {
     for (const n of nodes) {

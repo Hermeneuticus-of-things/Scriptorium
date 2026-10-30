@@ -41,6 +41,16 @@ function segments(html) {
   return out;
 }
 
+// Plain text of html without the DOM (htmlToText needs document; this stays usable
+// in Node): markup dropped, block ends become newlines like htmlToText does.
+const BLOCK_END = /<\/?(?:p|h[1-6]|li|blockquote|div|tr|section)\b|<br\b/i;
+
+export function htmlToPlain(html) {
+  let out = '';
+  for (const seg of segments(html || '')) out += seg.tag ? (BLOCK_END.test(seg.s) ? '\n' : '') : seg.s;
+  return out;
+}
+
 export function findInHtml(html, re, context = 40) {
   if (!re) return [];
   const results = [];

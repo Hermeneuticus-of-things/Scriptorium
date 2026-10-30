@@ -128,7 +128,7 @@ export default function Corkboard(props) {
   return <CorkboardBoard {...props} folder={Array.isArray(folders) && folders.length === 1 ? folders[0] : props.folder} />;
 }
 
-function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia }) {
+function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia, filterNodes = null }) {
   const [drag, setDrag] = useState(null);
   const [hint, setHint] = useState(null);
   const [sel, setSel] = useState(null);
@@ -139,7 +139,11 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   const setCork = (patch) => folder && onPatch(folder.id, { cork: { ...cork, ...patch } });
   const colors = Object.fromEntries(project.labels.map((l) => [l.name, l.color]));
   const keywordColors = Object.fromEntries((project.keywordDefs || []).map((k) => [k.name, k.color]));
-  const items = folder?.children || [];
+  // Filtered (Scrivener 3 §11.4): a flat list of matches replaces the container's
+  // children — no add, no drag, no reorder while it is active.
+  const filtered = Boolean(filterNodes);
+  const items = filtered ? filterNodes : folder?.children || [];
+  const mode = filtered ? 'grid' : cork.mode;
   const side = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
     return e.clientX - r.left < r.width / 2 ? 'before' : 'after';
@@ -179,7 +183,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
     } else if (e.key === 'Enter' || e.key === 'F2') {
       e.preventDefault();
       setEditing(n.id);
-    } else if ((e.ctrlKey || e.metaKey) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    } else if (!filtered && (e.ctrlKey || e.metaKey) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
       e.preventDefault();
       e.stopPropagation();
       const j = e.key === 'ArrowLeft' ? i - 1 : i + 1;
@@ -250,7 +254,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
     return n.label && n.label !== 'Fără' ? n.label : t('ui.corkboard.fara_eticheta');
   };
   const groups = [];
-  if (cork.mode === 'lines') {
+  if (mode === 'lines') {
     for (const n of items) {
       const k = groupKey(n);
       let g = groups.find((x) => x.key === k);
@@ -263,21 +267,23 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
     <div ref={boardRef} className="corkboard" style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
       <div className="cork-head">
         <h2>{folder?.title}</h2>
-        <button onClick={addCard} title={t('ui.corkboard.fisa_noua_dupa_fisa_selectata')}>{t('ui.corkboard.fisa')}</button>
+        {!filtered && <button onClick={addCard} title={t('ui.corkboard.fisa_noua_dupa_fisa_selectata')}>{t('ui.corkboard.fisa')}</button>}
         <span className="spacer" />
+        {!filtered && (
         <div className="seg">
           <button className={cork.mode === 'grid' ? 'on' : ''} onClick={() => setCork({ mode: 'grid' })}>{t('ui.corkboard.grila')}</button>
           <button className={cork.mode === 'lines' ? 'on' : ''} onClick={() => setCork({ mode: 'lines' })}>Linii</button>
           <button className={cork.mode === 'free' ? 'on' : ''} onClick={() => setCork({ mode: 'free' })}>Liber</button>
         </div>
-        {cork.mode === 'lines' && (
+        )}
+        {mode === 'lines' && (
           <select value={cork.by} onChange={(e) => setCork({ by: e.target.value })} title={t('ui.corkboard.aranjeaza_pe_linii_dupa')}>
             <option value="label">{t('ui.corkboard.dupa_eticheta')}</option>
             <option value="status">{t('ui.corkboard.dupa_status')}</option>
             <option value="keyword">{t('ui.corkboard.dupa_cuvant_cheie')}</option>
           </select>
         )}
-        {cork.mode === 'free' && <button onClick={commitOrder} title={t('ui.corkboard.scrie_ordinea_de_pe_panou')}>{t('ui.corkboard.fixeaza_ordinea')}</button>}
+        {mode === 'free' && <button onClick={commitOrder} title={t('ui.corkboard.scrie_ordinea_de_pe_panou')}>{t('ui.corkboard.fixeaza_ordinea')}</button>}
         <select value={cork.size} onChange={(e) => setCork({ size: e.target.value })} title={t('ui.corkboard.marimea_fiselor')}>
           <option value="mic">{t('ui.corkboard.fise_mici')}</option>
           <option value="mediu">{t('ui.corkboard.fise_medii')}</option>
@@ -309,19 +315,23 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
           </div>
         </details>
       </div>
-      {items.length === 0 && <p className="hint">{t('ui.corkboard.nicio_fisa_apasa_fisa_sau')}{folder?.title}”.</p>}
+      {items.length === 0 && (filtered ? (
+        <p className="hint">{t('ui.filterBar.nicio_potrivire')}</p>
+      ) : (
+        <p className="hint">{t('ui.corkboard.nicio_fisa_apasa_fisa_sau')}{folder?.title}”.</p>
+      ))}
 
-      {cork.mode === 'grid' && (
+      {mode === 'grid' && (
         <div className="cards" style={gridStyle} role="grid" aria-label={t('ui.corkboard.panou_x', { title: folder?.title || '' })}>
           <div role="row" style={{ display: 'contents' }}>
             {items.map((n) => (
-              <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={gridDrag(n)} className={cardClass(n)} />
+              <Card key={n.id} n={n} {...common} {...cardState(n)} dragProps={filtered ? undefined : gridDrag(n)} className={cardClass(n)} />
             ))}
           </div>
         </div>
       )}
 
-      {cork.mode === 'lines' &&
+      {mode === 'lines' &&
         groups.map((g) => (
           <section key={g.key} className="cork-line">
             <h3>
@@ -337,7 +347,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
           </section>
         ))}
 
-      {cork.mode === 'free' && (
+      {mode === 'free' && (
         <div className="freeform" ref={freeRef} role="grid" aria-label={t('ui.corkboard.panou_x', { title: folder?.title || '' })}>
           <div role="row" style={{ display: 'contents' }}>
           {items.map((n, i) => {
