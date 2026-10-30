@@ -285,6 +285,31 @@ export default function App({ api: apiProp }) {
         .catch(report);
     },
   });
+  // „Dictează de la cursor": o selecție se colapsează la începutul ei, ca prima bucată să intre la
+  // cursor; fără selecție pornirea e directă (textul intră la cursor oricum).
+  const dictateAtCursor = () => {
+    const ed = activeHandle()?.editor;
+    if (ed && !ed.isDestroyed && !ed.state.selection.empty) {
+      const { from } = ed.state.selection;
+      ed.commands.setTextSelection(from);
+    }
+    dict.start();
+  };
+  // Meniul nativ de clic dreapta (electron/main.cjs) citește asta ca să arate „Oprește dictarea"
+  // doar cât timp dictează.
+  useEffect(() => {
+    window.__dictationActive = () => Boolean(dict.dictation);
+    return () => { delete window.__dictationActive; };
+  }, [dict.dictation]);
+  // Update D&TED anunțat de fundal (verificarea de la pornire): toast discret, instalare doar din Setări.
+  useEffect(() => {
+    if (!api.onDtedEvent) return undefined;
+    const off = api.onDtedEvent((ev) => {
+      if (ev?.ev === 'update_disponibila') setToast(tr('ui.dted.update_disponibila', { v: ev.versiune }));
+      if (ev?.ev === 'update_gata') setToast(tr('ui.dted.update_gata', { v: ev.versiune }));
+    });
+    return off;
+  }, [api]);
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
@@ -2746,6 +2771,10 @@ export default function App({ api: apiProp }) {
     ['tools', 'readAll', tr('cmd.readAll'), () => reader.read(wholeDocText()), !reader.canRead],
     ['tools', 'readBook', tr('cmd.readBook'), () => bookText().then((t) => reader.read(t)).catch(report), !reader.canRead],
     ['tools', 'stopRead', tr('cmd.stopRead'), () => reader.stop()],
+    // Dictarea — și din meniul contextual (nativul trimite menu:command; cel in-app o apelează direct).
+    ['tools', 'dictateHere', tr('cmd.dictateHere'), dictateAtCursor, !dict.available],
+    ['tools', 'dictateSel', tr('cmd.dictateSel'), () => dict.start(), !dict.available],
+    ['tools', 'dictateStop', tr('cmd.dictateStop'), () => dict.stop(), !dict.dictation],
     ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
     [aiEnabled ? 'ai' : 'tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     [aiEnabled ? 'ai' : 'tools', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
@@ -2849,6 +2878,14 @@ export default function App({ api: apiProp }) {
       r.push({ label: tr('ui.ctx.citeste_cartea'), action: () => bookText().then((t) => reader.read(t)).catch(report) });
       if (reader.reading) r.push('-', { label: tr('ui.ctx.opreste_citirea'), action: reader.stop });
       items.push({ label: tr('ui.ctx.citeste'), submenu: r });
+    }
+
+    // Dictarea: de la cursor sau peste selecție, ca redarea audio.
+    if (dict.available) {
+      const d = [{ label: tr('cmd.dictateHere'), action: run('dictateHere') }];
+      if (text) d.push({ label: tr('cmd.dictateSel'), action: run('dictateSel') });
+      if (dict.dictation) d.push('-', { label: tr('cmd.dictateStop'), action: run('dictateStop') });
+      items.push({ label: tr('ui.ctx.dictare'), submenu: d });
     }
 
     // Clipboard: cele mai folosite, sus.

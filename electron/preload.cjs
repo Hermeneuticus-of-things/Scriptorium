@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld('api', {
   dtedDictateStart: (id) => call('dted:dictateStart', id),
   dtedDictateStop: (id) => call('dted:dictateStop', id),
   dtedCancel: (id) => call('dted:cancel', id),
+  dtedCheckUpdate: () => call('dted:checkUpdate'),
+  dtedInstallUpdate: (info) => call('dted:installUpdate', info),
   onDtedEvent: (fn) => {
     const listener = (_e, ev) => fn(ev);
     ipcRenderer.on('dted:event', listener);

@@ -240,6 +240,8 @@ const PRELOAD_COVERAGE = {
   dtedDictateStart: 'gui: dictare la microfon',
   dtedDictateStop: 'gui: dictare la microfon',
   dtedCancel: 'gui: dictare la microfon',
+  dtedCheckUpdate: 'gui: actualizarea D&TED o cere autorul din Setări (docs/DTED.md §8)',
+  dtedInstallUpdate: 'gui: actualizarea D&TED o cere autorul din Setări (docs/DTED.md §8)',
   onDtedEvent: 'gui: evenimentele dictării',
   teamWrite: 'gui: prezența și jurnalul echipei le scrie fereastra persoanei care lucrează (agentul e înregistrat automat ca „agent”)',
   appendAuthorJournal: 'gui: jurnalul MODIFICARI_AUTOR se scrie de fereastra în care autorul salvează (author_journal îl citește)',
