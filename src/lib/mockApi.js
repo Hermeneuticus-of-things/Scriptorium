@@ -448,7 +448,6 @@ export function createMockApi() {
     async listSnapshots(_dir, id) {
       return snaps[id] || [];
     },
-<<<<<<< ours
     async deleteSnapshot(_dir, id, file) {
       snaps[id] = (snaps[id] || []).filter((s) => s.file !== file);
       return true;
@@ -463,7 +462,6 @@ export function createMockApi() {
       for (const [id, list] of Object.entries(snaps)) if (list.length) out[id] = { count: list.length, last: list.reduce((m, s) => (s.date > m ? s.date : m), '') };
       return out;
     },
-=======
     // Mirrors the desktop: replaces only the html of an existing snapshot, never creates one.
     async updateSnapshotHtml(_dir, id, file, html) {
       const list = snaps[id] || [];
@@ -472,7 +470,6 @@ export function createMockApi() {
       hit.html = String(html ?? '');
       return true;
     },
->>>>>>> theirs
     // I-EDIT journal of the author's changes (MODIFICARI_AUTOR.jsonl on the desktop).
     async appendAuthorJournal(dir, rows) {
       const list = (Array.isArray(rows) ? rows : [rows]).filter((r) => r && r.doc && r.old !== r.new);
