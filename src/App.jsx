@@ -96,6 +96,7 @@ import {
   historyUndo,
   historyRedo,
 } from './lib/tree.js';
+import { listTemplates, cloneFromTemplate, templateTargetParent } from './lib/documentTemplates.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
 import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
 import { mergeBibliography } from './lib/bibMerge.js';
@@ -1028,23 +1029,22 @@ export default function App({ api }) {
     if (id) go(id);
   };
 
-  // New document from a Template Sheet: copies its text, notes, synopsis, label and keywords.
-  const newFromTemplate = async (tpl) => {
+  // New from Template (Scrivener 3 §7.5): deep-clones the template (children included,
+  // fresh ids, same title) into the target container, then copies the document contents
+  // (docs/notes live outside the tree) for every cloned node.
+  const newFromTemplate = async (tpl, targetParentId = null) => {
     await flush();
-    const node = newNode(tpl.type === 'folder' ? 'folder' : 'text', tpl.title);
-    Object.assign(node, {
-      synopsis: tpl.synopsis || '',
-      label: tpl.label || 'Fără',
-      keywords: [...(tpl.keywords || [])],
-      custom: tpl.custom ? { ...tpl.custom } : undefined,
-      includeInCompile: true,
-    });
-    setTree(insertNear(project.tree, selectedId, node));
-    const html = docsNow()[tpl.id] ?? (await api.readDoc(dir, tpl.id, 'docs'));
-    const notes = await api.readDoc(dir, tpl.id, 'notes');
-    if (html) await api.writeDoc(dir, node.id, 'docs', html);
-    if (notes) await api.writeDoc(dir, node.id, 'notes', notes);
-    setDocs((d) => ({ ...d, [node.id]: html || '' }));
+    const target = targetParentId || templateTargetParent(project.tree, selectedId);
+    const { tree, newNode: node, pairs } = cloneFromTemplate(project.tree, tpl.id, target);
+    if (!node) return;
+    setTree(tree);
+    for (const [oldId, newId] of pairs) {
+      const html = docsNow()[oldId] ?? (await api.readDoc(dir, oldId, 'docs'));
+      const notes = await api.readDoc(dir, oldId, 'notes');
+      if (html) await api.writeDoc(dir, newId, 'docs', html);
+      if (notes) await api.writeDoc(dir, newId, 'notes', notes);
+      if (html) setDocs((d) => ({ ...d, [newId]: html }));
+    }
     go(node.id);
     setView('editor');
   };
@@ -1659,6 +1659,7 @@ export default function App({ api }) {
     .map((n) => ({ id: n.id, title: n.title, html: docs[n.id] || '' }));
 
   const templateFolder = project.templateFolder ? findNode(project.tree, project.templateFolder) : null;
+  const docTemplates = listTemplates(project);
   const favorites = flatten(project.tree).filter((n) => n.favorite && !inTrash(n.id));
   const canContain = selected && !selected.root && selected.type !== 'file';
 
@@ -2017,6 +2018,11 @@ export default function App({ api }) {
           onCopy={(ids, targetId, pos) => copyItems(ids, targetId, pos).catch(report)}
           onPatchItems={(ids, patch) => setTree(ids.reduce((t, id) => updateNode(t, id, patch), project.tree))}
           onSetTemplateFolder={(id) => saveProject({ ...project, templateFolder: id || null })}
+          templates={docTemplates}
+          onNewFromTemplate={(templateId, targetParentId) => {
+            const tpl = findNode(project.tree, templateId);
+            if (tpl) newFromTemplate(tpl, targetParentId).catch(report);
+          }}
           filterIds={collectionIds}
           filterTitle={activeCollection?.title}
           docs={docs}
