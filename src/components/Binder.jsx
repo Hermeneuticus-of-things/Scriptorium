@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { containerIds, dragIds, iconTint } from '../lib/panelsExtra.js';
 import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
-import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TrashIcon } from './Icons.jsx';
+import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TemplatesIcon, TrashIcon } from './Icons.jsx';
 import ContextMenu from './ContextMenu.jsx';
 import { t as tr } from '../lib/i18n.js';
 import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
@@ -9,7 +9,9 @@ import { ICONS } from './Inspector.jsx';
 import { KEYWORD_MIME, keywordDropTargets } from '../lib/collections.js';
 import { labelColorIn as labelColorInOf, labelTint } from '../lib/settingsDefaults.js';
 
-function iconFor(node) {
+function iconFor(node, templateFolderId) {
+  // The Document Templates folder gets its own icon (Scrivener's "T" folder, §7.5.1).
+  if (templateFolderId && node.id === templateFolderId) return <TemplatesIcon />;
   if (node.root === 'trash') return <TrashIcon />;
   if (node.root === 'draft') return <DraftIcon />;
   if (node.root === 'research') return <ResearchIcon />;
@@ -38,6 +40,7 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
+<<<<<<< ours
 export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null }) {
   const colorIn = labelColorInOf({ labelColorIn });
   const tintIcons = labelTintIcons ?? (labelColorIn ? colorIn.icons : Boolean(project.labelTintIcons));
@@ -49,6 +52,10 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     const name = e.dataTransfer.getData(KEYWORD_MIME);
     if (name) onDropKeyword(keywordDropTargets(id, [...selectedIds]), name);
   };
+=======
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, templates = null, onNewFromTemplate }) {
+  const tintIcons = labelTintIcons ?? Boolean(project.labelTintIcons);
+>>>>>>> theirs
   // Behaviours from Options: Enter = 'rename' | 'newDoc' | 'open' ('edit' = 'open');
   // double-click = 'rename' | 'quickRef' | 'open' ('openQuickRef' = 'quickRef').
   const enterMode = binderEnter === 'edit' ? 'open' : binderEnter;
@@ -127,8 +134,13 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const renderIcon = (node) => {
     const tint = iconTint(node.iconColor, labelColor[node.label], tintIcons);
     return (
+<<<<<<< ours
       <span className={`icon ${tint ? 'tinted' : ''}${snapCounts?.[node.id]?.count ? ' has-snapshots' : ''}`} style={tint ? { color: tint, '--icon-tint': tint } : undefined}>
         {iconFor(node)}
+=======
+      <span className={`icon ${tint ? 'tinted' : ''}`} style={tint ? { color: tint, '--icon-tint': tint } : undefined}>
+        {iconFor(node, project.templateFolder)}
+>>>>>>> theirs
       </span>
     );
   };
@@ -173,6 +185,15 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         { label: tr('cmd.newText'), shortcut: 'Ctrl+N', action: () => onAdd('text') },
         { label: tr('cmd.newFolder'), shortcut: 'Ctrl+Shift+N', action: () => onAdd('folder') },
       ] },
+      // "New from Template" (Scrivener 3 §7.5): clones a template from the templates
+      // folder into the selected container (or the selection's parent folder).
+      ...(templates && onNewFromTemplate ? [{
+        label: tr('cmd.newFromTemplate'),
+        disabled: !templates.length,
+        submenu: templates.length
+          ? templates.map((t) => ({ label: t.title || tr('ui.app.fara_titlu'), action: () => onNewFromTemplate(t.id, node.children ? node.id : hit.parent?.id) }))
+          : [{ label: tr('ui.documentTemplates.niciun_sablon'), disabled: true }],
+      }] : []),
       '-',
       { label: tr('set.binderDbl.rename'), shortcut: 'F2', disabled: isRootNode || ids.length > 1, action: () => setEditing(id) },
       ...(onCopy ? [{ label: tr('cmd.duplicate'), disabled: isRootNode, action: () => onCopy(ids, ids[ids.length - 1], 'after') }] : []),

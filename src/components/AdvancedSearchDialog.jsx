@@ -63,8 +63,13 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
   }, [notesOn, project.tree, readNotes]);
 
   const criteria = useMemo(() => ({ query, ...opts, fields, ...filters, sort: sortCfg.by, sortDesc: sortCfg.desc }), [query, opts, fields, filters, sortCfg]);
+<<<<<<< ours
   const parsed = useMemo(() => parseQuery(criteria), [criteria]);
   const invalid = Boolean(query) && parsed === null;
+=======
+  const terms = useMemo(() => buildTerms(criteria), [criteria]);
+  const invalid = Boolean(query) && (terms === null || terms.some((t) => !t));
+>>>>>>> theirs
   const results = useMemo(() => searchProject(project, docs, notesById, criteria), [project, docs, notesById, criteria]);
 
   // The last results with a query feed the permanent "Search results" tab of the binder.
@@ -144,6 +149,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
               <option value="exact">{tr('ui.advancedSearchDialog.expresia_exacta')}</option>
               <option value="startsWith">{tr('ui.advancedSearchDialog.incepe_cuvantul')}</option>
               <option value="endsWith">{tr('ui.advancedSearchDialog.se_termina_cuvantul')}</option>
+<<<<<<< ours
             </select>
           </label>
           <label className="check">
@@ -154,6 +160,18 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
               <option value="created">{tr('ui.advancedSearchDialog.dupa_data_crearii')}</option>
             </select>
           </label>
+=======
+            </select>
+          </label>
+          <label className="check">
+            {tr('ui.advancedSearchDialog.ordoneaza')}
+            <select value={sortCfg.by} onChange={(e) => setSortCfg((s) => ({ ...s, by: e.target.value }))}>
+              <option value="binder">{tr('ui.advancedSearchDialog.ordine_binder')}</option>
+              <option value="title">{tr('ui.advancedSearchDialog.dupa_titlu')}</option>
+              <option value="created">{tr('ui.advancedSearchDialog.dupa_data_crearii')}</option>
+            </select>
+          </label>
+>>>>>>> theirs
           <label className="check"><input type="checkbox" checked={sortCfg.desc} onChange={() => setSortCfg((s) => ({ ...s, desc: !s.desc }))} /> {tr('ui.advancedSearchDialog.descrescator')}</label>
         </div>
         <div className="checks">

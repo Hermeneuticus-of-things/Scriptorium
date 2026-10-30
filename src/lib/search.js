@@ -80,6 +80,7 @@ function segments(html) {
   return out;
 }
 
+<<<<<<< ours
 // Matches of re inside seg.s, with the neighbours visible to lookbehind/lookahead and ^/$.
 function matchesIn(seg, re) {
   const text = seg.prev + seg.s + seg.next;
@@ -99,6 +100,16 @@ function matchesIn(seg, re) {
   }
   re.lastIndex = 0;
   return found;
+=======
+// Plain text of html without the DOM (htmlToText needs document; this stays usable
+// in Node): markup dropped, block ends become newlines like htmlToText does.
+const BLOCK_END = /<\/?(?:p|h[1-6]|li|blockquote|div|tr|section)\b|<br\b/i;
+
+export function htmlToPlain(html) {
+  let out = '';
+  for (const seg of segments(html || '')) out += seg.tag ? (BLOCK_END.test(seg.s) ? '\n' : '') : seg.s;
+  return out;
+>>>>>>> theirs
 }
 
 export function findInHtml(html, re, context = 40) {

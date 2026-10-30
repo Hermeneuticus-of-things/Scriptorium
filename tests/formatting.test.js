@@ -111,11 +111,33 @@ describe('formatting commands', () => {
     expect(findFormatting(ed.state.doc, 'footnote')).toHaveLength(1);
     expect(findFormatting(ed.state.doc, 'style', 'motto')).toHaveLength(1);
   });
+<<<<<<< ours
   it('find by formatting: links, images, tables', () => {
     make('<p><a href="http://x.ro">lnk</a></p><p><img src="data:image/png;base64,AA=="></p><table><tbody><tr><td><p>c</p></td></tr></tbody></table>');
     expect(findFormatting(ed.state.doc, 'link').length).toBeGreaterThan(0);
     expect(findFormatting(ed.state.doc, 'image')).toHaveLength(1);
     expect(findFormatting(ed.state.doc, 'table')).toHaveLength(1);
+=======
+  it('find by formatting: character formats, links, images, preserved text', () => {
+    make('<p>vezi <a href="https://ex.ro/a">leg</a>, <strong>b</strong>, <u>s</u>, <code>c</code> și <img src="media/f.png" alt="fig"></p>');
+    const hit = (kind, value) => findFormatting(ed.state.doc, kind, value);
+    expect(hit('charFormat', 'bold')).toHaveLength(1);
+    expect(ed.state.doc.textBetween(hit('charFormat', 'bold')[0].from, hit('charFormat', 'bold')[0].to)).toBe('b');
+    expect(hit('charFormat', 'underline')).toHaveLength(1);
+    expect(hit('charFormat', 'strike')).toHaveLength(0);
+    expect(hit('charFormat')).toHaveLength(2);
+    expect(hit('link')).toHaveLength(1);
+    expect(ed.state.doc.textBetween(hit('link')[0].from, hit('link')[0].to)).toBe('leg');
+    expect(hit('link', 'ex.ro')).toHaveLength(1);
+    expect(hit('link', 'leg')).toHaveLength(1);
+    expect(hit('link', 'zzz')).toHaveLength(0);
+    expect(hit('image')).toHaveLength(1);
+    expect(hit('image', 'f.png')).toHaveLength(1);
+    expect(hit('image', 'fig')).toHaveLength(1);
+    expect(hit('image', 'zzz')).toHaveLength(0);
+    expect(hit('preserve')).toHaveLength(1);
+    expect(ed.state.doc.textBetween(hit('preserve')[0].from, hit('preserve')[0].to)).toBe('c');
+>>>>>>> theirs
   });
 });
 

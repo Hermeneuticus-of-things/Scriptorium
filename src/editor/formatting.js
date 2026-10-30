@@ -425,10 +425,17 @@ export const FORMAT_KINDS = [
   ['image', 'Imagini'],
   ['table', 'Tabele'],
 ];
+// §11.6.7–11.6.10 kinds (charFormat/link/image/preserve) are appended in FormatFind.jsx,
+// with labels from i18n-ui; here only their ProseMirror detection.
+
+// StarterKit marks plus Superscript/Subscript (Scrivener "character format", §11.6.7).
+const CHAR_MARKS = ['bold', 'italic', 'underline', 'strike', 'superscript', 'subscript'];
 
 /**
  * Ranges [{from, to}] of content with a given formatting, in document order.
- * value narrows: highlight/color = colour, revision = level, style = style id, bookmark = name.
+ * value narrows: highlight/color = colour, revision = level, style = style id, bookmark = name,
+ * charFormat = mark name (empty = any of the six), link = URL or anchor text substring,
+ * image = src or alt substring.
  */
 export function findFormatting(doc, kind, value = null) {
   const v = value === '' ? null : value;
@@ -440,9 +447,18 @@ export function findFormatting(doc, kind, value = null) {
     revision: (m) => m.type.name === 'revision' && (!v || Number(m.attrs.level) === Number(v)),
     style: (m) => m.type.name === 'charStyle' && (!v || m.attrs.name === v),
     bookmark: (m) => m.type.name === 'bookmark' && (!v || m.attrs.name === v),
+<<<<<<< ours
     link: (m) => m.type.name === 'link',
+=======
+    // §11.6.7: bold/italic/underline/strike/superscript/subscript (value = mark name, empty = any).
+    charFormat: (m) => CHAR_MARKS.includes(m.type.name) && (!v || m.type.name === v),
+    // §11.6.8: links; the text/URL filter runs below, once the range text is known.
+    link: (m) => m.type.name === 'link',
+    // §11.6.10: preserved (verbatim) text = the inline code mark; codeBlock nodes are added below.
+    preserve: (m) => m.type.name === 'code',
+>>>>>>> theirs
   }[kind];
-  const out = markTest ? markRanges(doc, markTest, (m) => JSON.stringify(m.attrs)) : [];
+  const out = markTest ? markRanges(doc, markTest, (m) => (kind === 'charFormat' ? m.type.name : JSON.stringify(m.attrs))) : [];
   doc.descendants((node, pos) => {
     if (kind === 'footnote' && node.type.name === 'footnote') out.push({ from: pos, to: pos + node.nodeSize });
     if (kind === 'annotation' && node.type.name === 'annotation') out.push({ from: pos, to: pos + node.nodeSize });
@@ -451,9 +467,21 @@ export function findFormatting(doc, kind, value = null) {
     if (kind === 'style' && node.isTextblock && node.attrs.styleName && (!v || node.attrs.styleName === v)) {
       out.push({ from: pos + 1, to: pos + node.nodeSize - 1 });
     }
+    if (kind === 'image' && node.type.name === 'image' && (!v || `${node.attrs.src || ''} ${node.attrs.alt || ''}`.toLowerCase().includes(String(v).toLowerCase()))) {
+      out.push({ from: pos, to: pos + node.nodeSize });
+    }
+    if (kind === 'preserve' && node.type.name === 'codeBlock') out.push({ from: pos + 1, to: pos + node.nodeSize - 1 });
     return true;
   });
-  return out.map(({ from, to }) => ({ from, to })).sort((a, b) => a.from - b.from || a.to - b.to);
+  // §11.6.8: keep only links whose URL or anchor text contains the query.
+  const hits = kind === 'link' && v
+    ? out.filter((r) => {
+        const node = doc.nodeAt(r.from);
+        const href = (node && (node.marks.find((mk) => mk.type.name === 'link') || {}).attrs?.href) || '';
+        return href.toLowerCase().includes(String(v).toLowerCase()) || doc.textBetween(r.from, r.to, ' ').toLowerCase().includes(String(v).toLowerCase());
+      })
+    : out;
+  return hits.map(({ from, to }) => ({ from, to })).sort((a, b) => a.from - b.from || a.to - b.to);
 }
 
 // --- Page break (separate from the horizontal rule) ---------------------------

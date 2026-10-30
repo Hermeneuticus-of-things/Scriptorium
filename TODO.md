@@ -123,6 +123,7 @@ Rezumat: tot ce se putea face fără resurse de la autor e închis.
 Rezumat: greșelile corectate o dată se corectează singure.
 
 ### Request: interfață aerisită (după ce termină I-REP/I-EDIT, care lucrează în App.jsx)
+<<<<<<< ours
 - [x] Meniu „AI” unic: Asistent AI, I-REP / I-EDIT, cercetare cu AI, acțiuni AI pe selecție, NotebookLM, setări AI, Conectează la Claude (MCP); ascuns cu AI oprit (I-REP rămâne)
 - [x] Bara de sus fără aglomerare: butoanele rare mutate în meniuri derulante; grupare pe Fișier / Editare / Vizualizare / Proiect / Document / Unelte / AI / Ajutor, ca în Scrivener
 - [x] FormatBar: comenzile rare în meniuri derulante; ce nu încape trece în „Mai mult ▾”
@@ -217,3 +218,18 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [~] Interfața 1:1 cu programul de referință (vezi ROADMAP.md, „Cereri 25.10.2026”)
 - [ ] Import/export și MCP direct din `.scrivx`; `scriv_search`
 - [ ] Skill mcp-builder cu evaluări pentru serverul MCP
+=======
+- [ ] Meniu „AI” unic: Asistent AI, I-REP / I-EDIT, cercetare cu AI, acțiuni AI pe selecție, NotebookLM, setări AI, Conectează la Claude (MCP); ascuns cu AI oprit (I-REP rămâne)
+- [ ] Bara de sus fără aglomerare: butoanele rare mutate în meniuri derulante; grupare pe Fișier / Editare / Vizualizare / Proiect / Document / Unelte / AI / Ajutor, ca în Scrivener
+- [ ] FormatBar: comenzile rare în meniuri derulante; ce nu încape trece în „Mai mult ▾”
+- [ ] Verificat la 900 px și 1366 px, temă luminoasă și întunecată; scurtăturile neschimbate
+
+### Request: Quick Search ca în Scrivener 3 (audit cap. 11 din manualul oficial, 2026-10-30)
+- [x] Dovezi: docs/SCRIVENER-SEARCH-EVIDENCE.md — cele 6 unelte de căutare din Scrivener 3, cu citate + pagini din manualul inclus în instalare
+- [x] Quick Search (§11.5): src/lib/quickSearch.js (pur) + src/components/QuickSearch.jsx + wiring în App.jsx; Ctrl+O; frază exactă, diacritice-insensibil; secțiuni Titluri/Sinopse/Text; Esc golește apoi închide; handoff „Căutare completă în proiect" (fraza → operator exact); Find preseed-at la deschiderea rezultatului; i18n ro/en; 13 teste unitare (tests/quickSearch.test.js); suita completă verde (841 trecute); build OK
+- [ ] Goluri căutare rămase (prioritate + efort în docs/SCRIVENER-SEARCH-EVIDENCE.md §6): operatori Starts/Ends with, Invert Results, sortare rezultate (P1); ghilimele în All Words, excludere cu „-", wildcard „*", mdate:/cdate:, colecția persistentă „Search Results" (P2); scope Draft/selecție/Included-Excluded, Project Replace pe snapshots+metadate+Swap, Filter corkboard/outliner, extinderi Find by Formatting (P3)
+- [ ] Tur manual UI (Ctrl+O): deschide, tastează, Enter deschide documentul, Esc de două ori, butonul de căutare completă
+- [ ] Deviații conștiente de rezolvat: Shift/Alt+click pe rezultat (Quick Reference / split), derulare+selectare a primei apariții din text
+- [ ] Audit de paritate capitol cu capitol (metoda din document): cap. 10 metadata, 12 editor, 18 comentarii, 24 Compile
+Rezumat: Quick Search completat și verificat; inventarul FEATURES-SCRIVENER3.md nu conținea unealta — auditul corect e pe manual, nu pe inventar.
+>>>>>>> theirs
