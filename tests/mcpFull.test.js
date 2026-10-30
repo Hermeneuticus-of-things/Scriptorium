@@ -137,6 +137,7 @@ const PRELOAD_COVERAGE = {
   editorPackage: 'export_editor_package',
   deleteSnapshot: 'manage_snapshot',
   renameSnapshot: 'manage_snapshot',
+  updateSnapshotHtml: 'gui: rescrierea html-ului de snapshot-uri existente e doar din trecerea Project Replace (peste MCP, write_document face snapshot înainte)',
   listAllTemplates: 'list_templates',
   saveAsTemplate: 'gui: scrie în folderul aplicației, nu la o cale dată de client',
   deleteTemplate: 'gui: șterge din folderul aplicației',
