@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { searchProject, replaceInFields, buildTerms } from '../src/lib/projectSearch.js';
+import { searchProject, replaceInFields, replaceSnapshotHtml, buildTerms } from '../src/lib/projectSearch.js';
 import { buildRegex } from '../src/lib/search.js';
 
 const project = {
@@ -107,6 +107,39 @@ describe('replaceInFields', () => {
     const r = replaceInFields(node, '', '', re, '$2 $1', ['synopsis']);
     expect(r.node).toMatchObject({ title: 'Ion Pop', synopsis: 'Pop Ion' });
     expect(r.count).toBe(1);
+  });
+
+  it('replaces in custom metadata: single values, array items, numbers untouched, no mutation', () => {
+    const node = { id: 'm', title: 'Tabără', custom: { Loc: 'Brașov', Tags: ['a', 'b'], An: 2026 } };
+    const re = buildRegex({ query: 'a' });
+    const r = replaceInFields(node, '', '', re, 'X', ['custom']);
+    expect(r.node.custom).toEqual({ Loc: 'BrXșov', Tags: ['X', 'b'], An: 2026 });
+    expect(r.node.title).toBe('Tabără'); // not selected: untouched
+    expect(node.custom).toEqual({ Loc: 'Brașov', Tags: ['a', 'b'], An: 2026 }); // input node not mutated
+    expect(node.custom.Tags).toEqual(['a', 'b']); // the array was copied, not replaced in place
+    expect(r.count).toBe(2);
+    expect(r.docHtml).toBe('');
+  });
+
+  it('replaces every string item inside custom arrays', () => {
+    const node = { id: 'm', custom: { Tags: ['ana', 'bana'] } };
+    const re = buildRegex({ query: 'a' });
+    const r = replaceInFields(node, '', '', re, 'o', ['custom']);
+    expect(r.node.custom.Tags).toEqual(['ono', 'bono']);
+    expect(r.count).toBe(4);
+    expect(node.custom.Tags).toEqual(['ana', 'bana']);
+  });
+});
+
+describe('replaceSnapshotHtml (Scrivener §11.3)', () => {
+  it('replaces the archived html like the document text, markup intact', () => {
+    const re = buildRegex({ query: 'pădure' });
+    const r = replaceSnapshotHtml('<p>Ana în <em>pădure</em>.</p>', re, 'codru');
+    expect(r.html).toBe('<p>Ana în <em>codru</em>.</p>');
+    expect(r.count).toBe(1);
+  });
+  it('no-op without a regex', () => {
+    expect(replaceSnapshotHtml('<p>Ana</p>', null, 'x')).toEqual({ html: '<p>Ana</p>', count: 0 });
   });
 });
 
