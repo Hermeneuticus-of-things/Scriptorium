@@ -138,7 +138,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [x] Goluri P3 (2026-10-30, 3 agenți paralel pe worktree-uri feat/p3-scope, feat/p3-replace, feat/p3-filter, integrate manual): scope Draft/selecție/Included-Excluded; Project Replace custom metadata + Swap + pas snapshot-uri (bifa inactivă până apare api.updateSnapshotHtml — API de scriere lipsește din preload); filtru corkboard/outline (Ctrl+F, listă plată, text/notes, RegEx, metafilă etichetă/stare); suita 885 trecute; build OK
 - [x] Dialogue Focus (§20.3.2): lib pur + panou + comandă în Unelte; 5 teste noi; suita 891 trecute (2026-10-30)
 - [ ] Rămâne din căutare: extinderi Find by Formatting (§11.6: caracter, linkuri, imagini, formatting păstrat) — în lucru pe feat/find-by-formatting-ext; API de scriere snapshot-uri — în lucru pe feat/snapshot-write-api; Shift/Alt+click Quick Search + derulare la prima apariție — în lucru pe feat/quicksearch-polish
-- [ ] Goluri noi din audit (docs/PARITY-AUDIT-NEXT-CHAPTERS.md): P1 strip/convert notații (§18.4.1/18.4.5), P1 Saved Layouts (§12.3); P2 înlocuiri la nivel de proiect (§23.4.4), șabloane de document (§7.5); P3 iconițe personalizate (§7.4)
+- [x] Goluri noi din audit — TOATE închise (2026-10-30): strip/convert notații + Saved Layouts + înlocuiri de proiect + șabloane de document (agenți) ; iconițe personalizate = deja existente (fals negativ de audit)
 - [ ] Tur manual UI (Ctrl+O): deschide, tastează, Enter deschide documentul, Esc de două ori, butonul de căutare completă
 - [ ] Deviații conștiente de rezolvat: Shift/Alt+click pe rezultat (Quick Reference / split), derulare+selectare a primei apariții din text
 - [ ] Audit de paritate capitol cu capitol (metoda din document): cap. 10 metadata, 12 editor, 18 comentarii, 24 Compile

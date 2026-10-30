@@ -1,5 +1,30 @@
 # CHANGELOG — Pneuma Sofer
 
+## 2026-10-30 — v0.12.0: căutarea completă ca în Scrivener 3 + organizare
+
+### Căutare (cap. 11 din manualul oficial — paritate completă)
+- **Quick Search** (§11.5): omnibox Ctrl+O cu rezultate pe secțiuni (Titluri/Sinopse/Text), handoff la căutarea completă, Shift = Quick Reference, Alt = split, derulare la prima apariție.
+- **Project Search**: operatori Începe cu/Se termină cu, Inversează rezultatele, sortare (binder/titlu/dată), termeni speciali (fraze între ghilimele, excludere cu „-”, wildcard „*”), sintaxă de date `mdate:`/`cdate:` (an/lună/zi, relative d/m/y, >, <), scope Doar Manuscris / Doar selecția / Included-Excluded.
+- **Colecția persistentă „Rezultatele căutării”** (§11.1.1): de sistem, nu poate fi ștearsă, păstrează ultima căutare folosită.
+- **Find by Formatting extins** (§11.6): format caracter (bold/italic/subliniat/tăiat/super/subscript), linkuri, imagini, text cu formatare păstrată.
+- **Filter pentru corkboard/outline** (§11.4): Ctrl+F, listă plată, text+note, RegEx, metafilă etichetă/stare.
+
+### Organizare & editor
+- **Înlocuire pe snapshot-uri + metadate personalizate + buton Swap** în Project Replace (§11.3), cu API nou de scriere snapshot-uri.
+- **Eliminare & conversie notații** (§18.4.1/§18.4.5): strip pe document/proiect cu snapshot, conversii inline↔legat.
+- **Dialogue Focus** (§20.3.2): panou cu replicile din proiect pentru corectură.
+- **Aranjamente salvate** (§12.3): salvare/aplicare/redenumire/ștergere, la nivel de aplicație.
+- **Șabloane de document** (§7.5): dosar de șabloane + „Document nou din șablon”, clonare profundă, gardă la compilare.
+
+### Compile
+- **Înlocuiri la nivel de proiect** (§23.4.4): aplicate înaintea celor pe format, cu ordine și activare/dezactivare.
+
+### Denumire
+- **Scribner → Pneuma Sofer** în tot produsul (build `PneumaSofer-Setup-<v>.exe` / `-portabil.exe`, server MCP `pneuma-sofer`, setările vechi se păstrează prin fallback automat).
+
+### Verificare
+- 984 de teste trecute / 0 eșuate (creștere de la 841); build de producție verde la fiecare etapă.
+
 ## 2026-10-26 — Interogare NotebookLM cu întrebări de continuare (ca la Karma)
 
 ### Cerința user

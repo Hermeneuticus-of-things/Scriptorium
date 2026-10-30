@@ -47,6 +47,6 @@ Destinație: versiunea nouă a aplicației, după integrarea completă a valului
 
 ## Rămas deschis (după v0.12.0)
 
-- Custom icons (§7.4) — P3 cosmetic.
-- Audit pe capitolele rămâne din manual: 8, 9, 13, 15, 16, 17, 19, 21–23, 25–26 (metoda din `PARITY-AUDIT-NEXT-CHAPTERS.md`).
+- Custom icons (§7.4) — deja existente (`node.icon` + culoare în Inspector); golul din audit era fals negativ.
+- Audit pe capitolele rămase din manual: 8, 9, 13, 15, 16, 17, 19, 21–23, 25–26 (metoda din `PARITY-AUDIT-NEXT-CHAPTERS.md`).
 - Depinde de autor: §8 din ROADMAP (proiect Karma real, chei reale servicii, pachet de limbă română Windows, proba MCP pe Windows).
