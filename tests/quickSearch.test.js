@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { foldText, quickSearchProject, quickSearchRows, quickNav, handoffCriteria } from '../src/lib/quickSearch.js';
+import { foldText, quickSearchProject, quickSearchRows, quickNav, quickOpenMode, quickRevealPhrase, handoffCriteria } from '../src/lib/quickSearch.js';
 
 const project = {
   tree: [
@@ -104,5 +104,45 @@ describe('quickSearchRows and quickNav', () => {
     expect(quickNav(rows, rows[1].key, 'ArrowUp').select).toBe(rows[0].key);
     expect(quickNav(rows, null, 'Enter').open).toBe(rows[0].node.id);
     expect(quickNav(rows, rows[2].key, 'Enter').open).toBe('b');
+  });
+});
+
+describe('quickOpenMode (manual §11.5: modifier opens)', () => {
+  it('maps Shift to Quick Reference and Alt to the split', () => {
+    expect(quickOpenMode({ shiftKey: true, altKey: false })).toBe('quickRef');
+    expect(quickOpenMode({ shiftKey: false, altKey: true })).toBe('split');
+    expect(quickOpenMode({ shiftKey: false, altKey: false })).toBe('normal');
+  });
+  it('treats missing modifiers as a normal open', () => {
+    expect(quickOpenMode({})).toBe('normal');
+    expect(quickOpenMode(null)).toBe('normal');
+    expect(quickOpenMode(undefined)).toBe('normal');
+  });
+  it('Shift wins when both modifiers are held', () => {
+    expect(quickOpenMode({ shiftKey: true, altKey: true })).toBe('quickRef');
+  });
+});
+
+describe('quickRevealPhrase (jump to first match after a normal open)', () => {
+  const rows = quickSearchRows(quickSearchProject(project, docs, { query: 'cautare' }));
+  const textRow = rows.find((r) => r.section === 'texts');
+  it('carries the exact matched text of a text hit', () => {
+    // docs.a is "…o căutare lungă…": the folded query "cautare" must reveal "căutare"
+    expect(textRow.match).toBe('căutare');
+    expect(quickRevealPhrase(textRow, 'normal')).toBe('căutare');
+  });
+  it('reveals nothing for modifier opens', () => {
+    expect(quickRevealPhrase(textRow, 'quickRef')).toBe(null);
+    expect(quickRevealPhrase(textRow, 'split')).toBe(null);
+  });
+  it('reveals nothing for title and synopsis rows', () => {
+    const titleRow = rows.find((r) => r.section === 'titles');
+    const synRow = rows.find((r) => r.section === 'synopses');
+    expect(quickRevealPhrase(titleRow, 'normal')).toBe(null);
+    expect(quickRevealPhrase(synRow, 'normal')).toBe(null);
+  });
+  it('tolerates rows without a match', () => {
+    expect(quickRevealPhrase({ section: 'texts' }, 'normal')).toBe(null);
+    expect(quickRevealPhrase(null, 'normal')).toBe(null);
   });
 });
