@@ -1,0 +1,305 @@
+{
+  "version": 2,
+  "language": "ro",
+  "sample_rate": 16000,
+  "do_not_run_without_user_ok": true,
+  "samples": [
+    {
+      "id": "01_idei_lungi",
+      "category": "long_ideas",
+      "audio": "audio/01_idei_lungi.wav",
+      "duration_sec": 85.53,
+      "gold": "gold/01_idei_lungi.txt",
+      "tts_text": "tts_text/01_idei_lungi.txt",
+      "facts": "facts/01_idei_lungi.json",
+      "hyp": "hyp/01_idei_lungi.txt",
+      "summary": "hyp/01_idei_lungi.summary.txt",
+      "dted_log": "hyp/01_idei_lungi.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Fraze lungi cu subordonate; ideile se întind peste mai multe propoziții."
+    },
+    {
+      "id": "02_autocorectari",
+      "category": "self_corrections",
+      "audio": "audio/02_autocorectari.wav",
+      "duration_sec": 76.21,
+      "gold": "gold/02_autocorectari.txt",
+      "tts_text": "tts_text/02_autocorectari.txt",
+      "facts": "facts/02_autocorectari.json",
+      "hyp": "hyp/02_autocorectari.txt",
+      "summary": "hyp/02_autocorectari.summary.txt",
+      "dted_log": "hyp/02_autocorectari.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Reveniri și reluări rostite explicit („adică… nu”, „mai bine zis”, „stai”). Gold verbatim păstrează și forma greșită, și corectura."
+    },
+    {
+      "id": "03_intrebari",
+      "category": "questions_rising",
+      "audio": "audio/03_intrebari.wav",
+      "duration_sec": 74.54,
+      "gold": "gold/03_intrebari.txt",
+      "tts_text": "tts_text/03_intrebari.txt",
+      "facts": "facts/03_intrebari.json",
+      "hyp": "hyp/03_intrebari.txt",
+      "summary": "hyp/03_intrebari.summary.txt",
+      "dted_log": "hyp/03_intrebari.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Întrebări totale (da/nu) fără cuvânt interogativ — se disting de afirmații doar prin intonație ascendentă — amestecate cu întrebări parțiale și afirmații.",
+      "focus_marks": [
+        "question"
+      ]
+    },
+    {
+      "id": "04_afirmatii_ferme",
+      "category": "firm_statements",
+      "audio": "audio/04_afirmatii_ferme.wav",
+      "duration_sec": 76.18,
+      "gold": "gold/04_afirmatii_ferme.txt",
+      "tts_text": "tts_text/04_afirmatii_ferme.txt",
+      "facts": "facts/04_afirmatii_ferme.json",
+      "hyp": "hyp/04_afirmatii_ferme.txt",
+      "summary": "hyp/04_afirmatii_ferme.summary.txt",
+      "dted_log": "hyp/04_afirmatii_ferme.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Afirmații scurte, categorice, cu negații și imperative; punctul final e obligatoriu.",
+      "focus_marks": [
+        "period"
+      ]
+    },
+    {
+      "id": "05_liste",
+      "category": "lists",
+      "audio": "audio/05_liste.wav",
+      "duration_sec": 82.3,
+      "gold": "gold/05_liste.txt",
+      "tts_text": "tts_text/05_liste.txt",
+      "facts": "facts/05_liste.json",
+      "hyp": "hyp/05_liste.txt",
+      "summary": "hyp/05_liste.summary.txt",
+      "dted_log": "hyp/05_liste.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Enumerări rostite: cu „în primul rând / apoi”, cu numerotare, cu virgule și „și”.",
+      "focus_marks": [
+        "comma",
+        "colon",
+        "semicolon"
+      ]
+    },
+    {
+      "id": "06_numere_nume",
+      "category": "numbers_names",
+      "audio": "audio/06_numere_nume.wav",
+      "duration_sec": 96.07,
+      "gold": "gold/06_numere_nume.txt",
+      "tts_text": "tts_text/06_numere_nume.txt",
+      "facts": "facts/06_numere_nume.json",
+      "hyp": "hyp/06_numere_nume.txt",
+      "summary": "hyp/06_numere_nume.summary.txt",
+      "dted_log": "hyp/06_numere_nume.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Ore, date, sume, procente, telefoane, nume proprii românești și localități. Gold folosește cifre; TTS rostește în litere. Folosiți --normalize-numbers pentru scor indiferent de forma (cifre/litere)."
+    },
+    {
+      "id": "07_zgomot_suprapunere",
+      "category": "noisy_overlap",
+      "audio": "audio/07_zgomot_suprapunere.wav",
+      "duration_sec": 67.83,
+      "gold": "gold/07_zgomot_suprapunere.txt",
+      "tts_text": "tts_text/07_zgomot_suprapunere.txt",
+      "facts": "facts/07_zgomot_suprapunere.json",
+      "hyp": "hyp/07_zgomot_suprapunere.txt",
+      "summary": "hyp/07_zgomot_suprapunere.summary.txt",
+      "dted_log": "hyp/07_zgomot_suprapunere.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Vorbitor principal (vocea mihai) + al doilea vorbitor (aceeași voce, pitch +3 semitonuri, -12 dB, text diferit, suprapus în ferestre) + zgomot roz la SNR ~10 dB + bâzâit 50 Hz. Gold = DOAR vorbitorul principal. Cuvintele vorbitorului secundar apărute în ipoteză sunt inserții (= conținut neancorat în referință).",
+      "control_clean_audio": "audio/07_zgomot_suprapunere_curat_control.wav",
+      "control_clean_duration_sec": 67.83
+    },
+    {
+      "id": "08_exclamatii",
+      "category": "exclamations",
+      "audio": "audio/08_exclamatii.wav",
+      "duration_sec": 43.09,
+      "gold": "gold/08_exclamatii.txt",
+      "tts_text": "tts_text/08_exclamatii.txt",
+      "facts": "facts/08_exclamatii.json",
+      "hyp": "hyp/08_exclamatii.txt",
+      "summary": "hyp/08_exclamatii.summary.txt",
+      "dted_log": "hyp/08_exclamatii.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Exclamații emfatice amestecate cu afirmații neutre; semnul ! trebuie distins de punct.",
+      "focus_marks": [
+        "exclam",
+        "period"
+      ]
+    },
+    {
+      "id": "09_citate",
+      "category": "quotes",
+      "audio": "audio/09_citate.wav",
+      "duration_sec": 43.85,
+      "gold": "gold/09_citate.txt",
+      "tts_text": "tts_text/09_citate.txt",
+      "facts": "facts/09_citate.json",
+      "hyp": "hyp/09_citate.txt",
+      "summary": "hyp/09_citate.summary.txt",
+      "dted_log": "hyp/09_citate.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Vorbire raportată și expresii citate; gold folosește ghilimele românești „…” (scorer-ul acceptă și \"…\", «…», “…”).",
+      "focus_marks": [
+        "quote",
+        "colon",
+        "comma"
+      ]
+    },
+    {
+      "id": "10_punct_si_virgula",
+      "category": "semicolons",
+      "audio": "audio/10_punct_si_virgula.wav",
+      "duration_sec": 42.13,
+      "gold": "gold/10_punct_si_virgula.txt",
+      "tts_text": "tts_text/10_punct_si_virgula.txt",
+      "facts": "facts/10_punct_si_virgula.json",
+      "hyp": "hyp/10_punct_si_virgula.txt",
+      "summary": "hyp/10_punct_si_virgula.summary.txt",
+      "dted_log": "hyp/10_punct_si_virgula.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Propoziții coordonate legate prin ; (pauză medie, fără coborâre finală de ton).",
+      "focus_marks": [
+        "semicolon",
+        "comma",
+        "period"
+      ]
+    },
+    {
+      "id": "11_virgule",
+      "category": "commas",
+      "audio": "audio/11_virgule.wav",
+      "duration_sec": 41.32,
+      "gold": "gold/11_virgule.txt",
+      "tts_text": "tts_text/11_virgule.txt",
+      "facts": "facts/11_virgule.json",
+      "hyp": "hyp/11_virgule.txt",
+      "summary": "hyp/11_virgule.summary.txt",
+      "dted_log": "hyp/11_virgule.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Virgule: vocativ, incidente, subordonate antepuse, apoziții, enumerări scurte.",
+      "focus_marks": [
+        "comma"
+      ]
+    },
+    {
+      "id": "12_puncte",
+      "category": "periods",
+      "audio": "audio/12_puncte.wav",
+      "duration_sec": 43.84,
+      "gold": "gold/12_puncte.txt",
+      "tts_text": "tts_text/12_puncte.txt",
+      "facts": "facts/12_puncte.json",
+      "hyp": "hyp/12_puncte.txt",
+      "summary": "hyp/12_puncte.summary.txt",
+      "dted_log": "hyp/12_puncte.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Propoziții scurte, declarative, separate de pauze clare; testează segmentarea și punctul final.",
+      "focus_marks": [
+        "period"
+      ]
+    },
+    {
+      "id": "13_dialog_linie",
+      "category": "dialogue_dashes",
+      "audio": "audio/13_dialog_linie.wav",
+      "duration_sec": 31.89,
+      "gold": "gold/13_dialog_linie.txt",
+      "tts_text": "tts_text/13_dialog_linie.txt",
+      "facts": "facts/13_dialog_linie.json",
+      "hyp": "hyp/13_dialog_linie.txt",
+      "summary": "hyp/13_dialog_linie.summary.txt",
+      "dted_log": "hyp/13_dialog_linie.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Un singur vorbitor dictează un dialog literar; gold folosește linia de dialog — (scorer-ul acceptă și – sau - izolat). Fiecare replică pe rând nou.",
+      "focus_marks": [
+        "dash",
+        "question",
+        "exclam",
+        "comma"
+      ]
+    },
+    {
+      "id": "14_puncte_suspensie",
+      "category": "ellipses",
+      "audio": "audio/14_puncte_suspensie.wav",
+      "duration_sec": 32.44,
+      "gold": "gold/14_puncte_suspensie.txt",
+      "tts_text": "tts_text/14_puncte_suspensie.txt",
+      "facts": "facts/14_puncte_suspensie.json",
+      "hyp": "hyp/14_puncte_suspensie.txt",
+      "summary": "hyp/14_puncte_suspensie.summary.txt",
+      "dted_log": "hyp/14_puncte_suspensie.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Ezitări și pauze suspendate → …; scorer-ul acceptă și ... ca echivalent. TTS: pauza e marcată cu virgulă + tăcere; intonația suspendată reală lipsește (sintetic).",
+      "focus_marks": [
+        "ellipsis",
+        "comma",
+        "period"
+      ]
+    },
+    {
+      "id": "15_doua_puncte",
+      "category": "colons",
+      "audio": "audio/15_doua_puncte.wav",
+      "duration_sec": 43.86,
+      "gold": "gold/15_doua_puncte.txt",
+      "tts_text": "tts_text/15_doua_puncte.txt",
+      "facts": "facts/15_doua_puncte.json",
+      "hyp": "hyp/15_doua_puncte.txt",
+      "summary": "hyp/15_doua_puncte.summary.txt",
+      "dted_log": "hyp/15_doua_puncte.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Două puncte înaintea enumerărilor și explicațiilor.",
+      "focus_marks": [
+        "colon",
+        "comma",
+        "period"
+      ]
+    },
+    {
+      "id": "16_numere_date",
+      "category": "numbers_data",
+      "audio": "audio/16_numere_date.wav",
+      "duration_sec": 95.97,
+      "gold": "gold/16_numere_date.txt",
+      "tts_text": "tts_text/16_numere_date.txt",
+      "facts": "facts/16_numere_date.json",
+      "hyp": "hyp/16_numere_date.txt",
+      "summary": "hyp/16_numere_date.summary.txt",
+      "dted_log": "hyp/16_numere_date.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium",
+      "notes": "Formatare date numerice în dictare RO: procente, monede (lei/euro/dolari), ore HH:MM, date zi/lună/an, numere mari, telefoane, adrese. Gold = formatul corect cu cifre; TTS rostește în litere. facts.data grupează valorile pe tip pentru acuratețe per tip.",
+      "focus_marks": [
+        "comma",
+        "period"
+      ]
+    },
+    {
+      "id": "17_dialog_vorbitori",
+      "category": "multi_speaker_dialogue",
+      "audio": "audio/17_dialog_vorbitori.wav",
+      "duration_sec": 40.27,
+      "gold": "gold/17_dialog_vorbitori.txt",
+      "tts_text": "tts_text/17_dialog_vorbitori.txt",
+      "facts": "facts/17_dialog_vorbitori.json",
+      "hyp": "hyp/17_dialog_vorbitori.txt",
+      "summary": "hyp/17_dialog_vorbitori.summary.txt",
+      "dted_log": "hyp/17_dialog_vorbitori.dted.jsonl",
+      "source": "synthetic: Piper ro_RO-mihai-medium (speaker B = same voice, pitch +3 st)",
+      "notes": "Doi vorbitori care alternează (SINTETIC: vorbitorul B = aceeași voce Piper, pitch +3 semitonuri; pauză 0,5 s între replici, fără suprapunere). Gold = toate replicile, câte una pe rând, cu linie de dialog. Metrică: segmentarea la schimbarea vorbitorului (propoziții).",
+      "focus_marks": [
+        "dash",
+        "question",
+        "exclam",
+        "period"
+      ]
+    }
+  ]
+}

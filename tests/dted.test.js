@@ -211,3 +211,37 @@ describe('the service, with a fake D&TED process', () => {
     await expect(missing.status()).rejects.toThrow(/nu a putut porni/);
   }, 15000);
 });
+
+describe('dictation from the context menu (native + in-app, next to read-aloud)', () => {
+  const { contextMenuLabels } = require('../lib/services.cjs');
+  const { t: tr, setLanguage } = require('../src/lib/i18n.js');
+
+  it('the labels exist, in Romanian and English', () => {
+    setLanguage('ro');
+    expect(tr('cmd.dictateHere')).toBe('Dictează de la cursor');
+    expect(tr('cmd.dictateSel')).toBe('Dictează (înlocuiește selecția)');
+    expect(tr('cmd.dictateStop')).toBe('Oprește dictarea');
+    setLanguage('en');
+    expect(tr('cmd.dictateHere')).toBe('Dictate from the cursor');
+    expect(tr('cmd.dictateStop')).toBe('Stop dictation');
+    setLanguage('ro');
+    expect(contextMenuLabels('ro')).toMatchObject({ dictation: 'Dictare', dictHere: 'Dictează de la cursor', dictSel: 'Dictează (înlocuiește selecția)', dictStop: 'Oprește dictarea' });
+    expect(contextMenuLabels('en')).toMatchObject({ dictation: 'Dictation', dictStop: 'Stop dictation' });
+  });
+
+  it('„de la cursor": the selection collapses to its start, the first piece lands before it', () => {
+    const e = make('<p>un doi trei</p>');
+    e.commands.setTextSelection({ from: 4, to: 7 }); // „doi”
+    const { from } = e.state.selection; // what dictateAtCursor does before dict.start()
+    e.commands.setTextSelection(from);
+    insertFragment(e, 'și');
+    expect(e.state.doc.textContent).toBe('un și doi trei');
+  });
+
+  it('„peste selecție": the first piece replaces the selection', () => {
+    const e = make('<p>un doi trei</p>');
+    e.commands.setTextSelection({ from: 4, to: 7 });
+    insertFragment(e, 'și');
+    expect(e.state.doc.textContent).toBe('un și trei');
+  });
+});

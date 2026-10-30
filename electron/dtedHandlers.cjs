@@ -3,11 +3,13 @@
 //   require('./dtedHandlers.cjs')({ handle, assertOpened, getSettings: readSettings, showOpenDialog, app });
 // One D&TED service per app; its events go to the window that made the last request ('dted:event').
 const path = require('path');
+const os = require('os');
 const { createDted, locate } = require('../lib/dted.cjs');
+const { checkLatestDted, installDted, createScheduler, DAY_MS } = require('../lib/dtedUpdate.cjs');
 
 const AUDIO = ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'wma', 'opus', 'webm'];
 
-module.exports = function register({ handle, assertOpened, getSettings, showOpenDialog, app, pickedAudio = new Set(), dtedFactory = createDted }) {
+module.exports = function register({ handle, assertOpened, getSettings, showOpenDialog, app, pickedAudio = new Set(), dtedFactory = createDted, setSettings = () => {}, fetchImpl = null, notifyAll = () => {} }) {
   // Each request's events go to the window that made it; "service stopped" goes to every window.
   const owners = new Map(); // request id -> webContents
   const deliver = (wc, ev) => {
@@ -50,6 +52,14 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
     await dted.start();
     await applyModel();
     const state = await dted.state().catch(() => null);
+    // The version is kept in settings: the update check compares releases against it.
+    if (state?.versiune && state.versiune !== getSettings().dtedVersion) {
+      try {
+        setSettings({ dtedVersion: state.versiune });
+      } catch {
+        /* best effort */
+      }
+    }
     return { found: true, source: how.source, running: dted.running(), state };
   });
   // The model chosen in Settings (dtedModel), sent once per service start.
@@ -99,6 +109,59 @@ module.exports = function register({ handle, assertOpened, getSettings, showOpen
   handle('dted:dictateStop', async (_e, id) => dted.dictateStop(id));
   handle('dted:cancel', async (_e, id) => dted.cancel(id));
 
-  if (app) app.on('will-quit', () => dted.stop());
+  // Update D&TED (docs/DTED.md §8): check the releases of its own repo; the install runs the
+  // protocol-1 handshake BEFORE switching settings.dtedPath, so a failed update leaves the
+  // previous installation active (fallback).
+  handle('dted:checkUpdate', async () => {
+    if (!fetchImpl) throw new Error('Verificarea actualizărilor D&TED e disponibilă doar în aplicația desktop.');
+    return checkLatestDted({ fetchImpl, currentVersion: getSettings().dtedVersion || '' });
+  });
+  handle('dted:installUpdate', async (e, info) => {
+    if (!fetchImpl) throw new Error('Actualizarea D&TED e disponibilă doar în aplicația desktop.');
+    if (process.platform !== 'win32') throw new Error('Instalarea automată D&TED e disponibilă doar pe Windows.');
+    const deliver = (ev) => {
+      try {
+        if (!e.sender.isDestroyed()) e.sender.send('dted:event', ev);
+      } catch {
+        /* window closed */
+      }
+    };
+    const baseDir = process.env.LOCALAPPDATA
+      ? path.join(process.env.LOCALAPPDATA, 'Programs')
+      : path.join(os.homedir(), 'AppData', 'Local', 'Programs');
+    const r = await installDted({
+      fetchImpl,
+      info,
+      baseDir,
+      onProgress: (p) => deliver({ ev: 'update_progres', primit: p.received, total: p.total }),
+    });
+    setSettings({ dtedPath: r.exePath, dtedVersion: r.version, dtedLastUpdateCheck: Date.now() });
+    await dted.stop(); // next start spawns the new build (find() reads the new settings)
+    deliver({ ev: 'update_gata', versiune: r.version });
+    return { exePath: r.exePath, version: r.version };
+  });
+
+  // The background check: at startup and every 3 days, non-blocking; a newer release is announced
+  // to every window ('update_disponibila') — the install happens only on the writer's action.
+  const sched = createScheduler({
+    check: async () => {
+      if (!find()) return;
+      const info = await checkLatestDted({ fetchImpl, currentVersion: getSettings().dtedVersion || '' });
+      if (info.newer && info.asset) notifyAll({ ev: 'update_disponibila', versiune: info.latest, url: info.url });
+    },
+    intervalMs: 3 * DAY_MS,
+    firstDelayMs: 15000,
+    enabled: Boolean(fetchImpl) && getSettings().dtedAutoUpdate !== false,
+    lastCheck: getSettings().dtedLastUpdateCheck,
+    onChecked: (t) => {
+      try {
+        setSettings({ dtedLastUpdateCheck: t });
+      } catch {
+        /* best effort */
+      }
+    },
+  });
+
+  if (app) app.on('will-quit', () => { sched.stop(); dted.stop(); });
   return dted;
 };
