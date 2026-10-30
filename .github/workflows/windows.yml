@@ -1,4 +1,4 @@
-# Windows build: Inno Setup installer wizard (Scribner-Setup-<version>.exe) and portable .exe.
+# Windows build: Inno Setup installer wizard (PneumaSofer-Setup-<version>.exe) and portable .exe.
 # Runs on every PR to main and on pushes to main (artifacts). Publishes a GitHub Release for v* tags and,
 # on main, for the version in package.json when no release v<version> exists yet (tag created by gh).
 name: Windows
@@ -59,7 +59,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Scribner-Windows
+          name: PneumaSofer-Windows
           path: |
             release/*.exe
           if-no-files-found: error
@@ -76,7 +76,7 @@ jobs:
           sparse-checkout: package.json
       - uses: actions/download-artifact@v4
         with:
-          name: Scribner-Windows
+          name: PneumaSofer-Windows
           path: release
       - name: Publish GitHub Release
         env:
@@ -91,4 +91,4 @@ jobs:
               exit 0
             fi
           fi
-          gh release create "$TAG" release/*.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Scribner $TAG" --generate-notes
+          gh release create "$TAG" release/*.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Pneuma Sofer $TAG" --generate-notes

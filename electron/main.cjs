@@ -22,8 +22,22 @@ const bundle = require('../lib/bundle.cjs');
 const projectWatch = require('../lib/projectWatch.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
+// Renamed from "Scribner-data": keep reading the legacy folder until the new one exists,
+// so a portable user's settings survive the product rename.
 if (process.env.PORTABLE_EXECUTABLE_DIR) {
-  app.setPath('userData', path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'Scribner-data'));
+  const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
+  const next = path.join(portableDir, 'PneumaSofer-data');
+  const legacy = path.join(portableDir, 'Scribner-data');
+  app.setPath('userData', fs.existsSync(next) || !fs.existsSync(legacy) ? next : legacy);
+} else {
+  // Same for installed/dev builds: %APPDATA%\<productName> was %APPDATA%\Scribner before the rename.
+  try {
+    const next = app.getPath('userData');
+    const legacy = path.join(path.dirname(next), 'Scribner');
+    if (fs.existsSync(legacy) && !fs.existsSync(next)) app.setPath('userData', legacy);
+  } catch {
+    /* default userData stays */
+  }
 }
 
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -297,7 +311,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     ...(offset ? { x: 80 + offset, y: 60 + offset } : {}),
-    title: 'Scribner',
+    title: 'Pneuma Sofer',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -471,7 +485,7 @@ handle('project:exportBundle', async (e, dir) => {
   const res = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender), {
     title: 'Exportă proiectul ca pachet (pentru web / mobil)',
     defaultPath: `${data.project.title || 'Proiect'}.scribner.json`,
-    filters: [{ name: 'Pachet Scribner', extensions: ['json'] }],
+    filters: [{ name: 'Pachet Pneuma Sofer', extensions: ['json'] }],
   });
   if (res.canceled) return null;
   fs.writeFileSync(res.filePath, JSON.stringify(data));
@@ -482,7 +496,7 @@ handle('project:importBundle', async (e) => {
   const src = await dialog.showOpenDialog(win, {
     title: 'Importă un pachet de proiect',
     properties: ['openFile'],
-    filters: [{ name: 'Pachet Scribner', extensions: ['json'] }],
+    filters: [{ name: 'Pachet Pneuma Sofer', extensions: ['json'] }],
   });
   if (src.canceled) return null;
   const data = JSON.parse(fs.readFileSync(src.filePaths[0], 'utf8'));
@@ -522,7 +536,7 @@ handle('doc:write', (e, dir, id, kind, html) => {
   return true;
 });
 
-// MCP: the command an AI agent client uses to start the Scribner MCP server for
+// MCP: the command an AI agent client uses to start the Pneuma Sofer MCP server for
 // the open project. Packaged builds run the server with Electron's own Node.
 handle('mcp:info', (_e, dir) => {
   assertOpened(dir);
@@ -533,8 +547,8 @@ handle('mcp:info', (_e, dir) => {
   const q = (s) => (/[\s"]/.test(s) ? `"${s.replace(/"/g, '\\"')}"` : s);
   const envPrefix = packaged ? '--env ELECTRON_RUN_AS_NODE=1 ' : '';
   return {
-    claudeCode: `claude mcp add scribner ${envPrefix}-- ${q(command)} ${q(server)} --project ${q(dir)}`,
-    desktopJson: JSON.stringify({ mcpServers: { scribner: { command, args: [server, '--project', dir], env } } }, null, 2),
+    claudeCode: `claude mcp add pneuma-sofer ${envPrefix}-- ${q(command)} ${q(server)} --project ${q(dir)}`,
+    desktopJson: JSON.stringify({ mcpServers: { 'pneuma-sofer': { command, args: [server, '--project', dir], env } } }, null, 2),
   };
 });
 
@@ -645,7 +659,7 @@ handle('menu:set', (e, spec) => {
   // The renderer sends its own Help menu; About and developer tools are appended to it.
   const extra = [
     { type: 'separator' },
-    { label: 'Despre Scribner', click: () => dialog.showMessageBox(win, { message: `Scribner ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi, inspirat de Scrivener 3.' }) },
+    { label: 'Despre Pneuma Sofer', click: () => dialog.showMessageBox(win, { message: `Pneuma Sofer ${app.getVersion()}`, detail: 'Program de scris pentru texte lungi, inspirat de Scrivener 3.' }) },
     { label: 'Instrumente pentru dezvoltatori', role: 'toggleDevTools' },
   ];
   const helpMenu = template.find((m, i) => spec[i] && spec[i].items.some((it) => it !== '-' && it.id === 'help'));
@@ -750,7 +764,7 @@ handle('import:scriv', async (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   const src = await dialog.showOpenDialog(win, { title: 'Alege folderul proiectului Scrivener (.scriv)', properties: ['openDirectory'] });
   if (src.canceled) return null;
-  const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Scribner?', properties: ['openDirectory', 'createDirectory'] });
+  const dest = await dialog.showOpenDialog(win, { title: 'Unde salvez proiectul Pneuma Sofer?', properties: ['openDirectory', 'createDirectory'] });
   if (dest.canceled) return null;
   const result = importScriv(src.filePaths[0], dest.filePaths[0]);
   releaseWindow(e.sender.id);

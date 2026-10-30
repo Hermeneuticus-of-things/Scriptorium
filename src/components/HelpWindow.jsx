@@ -7,14 +7,14 @@ import { buildIndex, searchManual, resolveTopic, terms, fold, CONTEXT_TOPICS } f
 
 const UI = {
   ro: {
-    title: 'Ajutor Scribner', manual: 'Manual', shortcuts: 'Scurtături', placeholders: 'Placeholders', syntax: 'Sintaxă',
+    title: 'Ajutor Pneuma Sofer', manual: 'Manual', shortcuts: 'Scurtături', placeholders: 'Placeholders', syntax: 'Sintaxă',
     search: 'Caută în manual…', results: 'Rezultate', none: 'Niciun rezultat.', back: 'Înapoi', forward: 'Înainte', close: 'Închide',
     tutorial: 'Pornește tutorialul', command: 'Comandă', key: 'Scurtătură', fixed: 'Taste fixe (editor și binder)', code: 'Cod', meaning: 'Ce înseamnă',
     custom: 'personalizată', scriptMode: 'Script Mode: Tab și Enter', element: 'Element', tab: 'Tab →', enter: 'Enter →', def: 'Element implicit',
     phNote: 'Placeholder-ele se scriu în text, în prefixe/sufixe de secțiune, în antet și subsol. Un cod necunoscut rămâne neschimbat.',
   },
   en: {
-    title: 'Scribner Help', manual: 'Manual', shortcuts: 'Shortcuts', placeholders: 'Placeholders', syntax: 'Syntax',
+    title: 'Pneuma Sofer Help', manual: 'Manual', shortcuts: 'Shortcuts', placeholders: 'Placeholders', syntax: 'Syntax',
     search: 'Search the manual…', results: 'Results', none: 'No results.', back: 'Back', forward: 'Forward', close: 'Close',
     tutorial: 'Start the tutorial', command: 'Command', key: 'Shortcut', fixed: 'Fixed keys (editor and binder)', code: 'Code', meaning: 'Meaning',
     custom: 'custom', scriptMode: 'Script Mode: Tab and Enter', element: 'Element', tab: 'Tab →', enter: 'Enter →', def: 'Default element',

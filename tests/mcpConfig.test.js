@@ -1,4 +1,4 @@
-// Connecting Scribner to Claude (MCP) from the app: config paths, merge, command line, and a
+// Connecting Pneuma Sofer to Claude (MCP) from the app: config paths, merge, command line, and a
 // real run of the server through electron with ELECTRON_RUN_AS_NODE (no Node.js needed on Windows).
 import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
@@ -17,28 +17,28 @@ describe('mcpConfig', () => {
     expect(m.claudeDesktopConfigPath({ platform: 'linux', env: {}, home: '/home/i' })).toBe('/home/i/.config/Claude/claude_desktop_config.json');
   });
   it('păstrează celelalte servere și setări; refuză un fișier stricat', () => {
-    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Scribner\\Scribner.exe', serverPath: 'C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Karma.scribner'] });
+    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Pneuma Sofer\\Pneuma Sofer.exe', serverPath: 'C:\\Program Files\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Karma.scribner'] });
     const out = JSON.parse(m.mergeDesktopConfig('{"theme":"dark","mcpServers":{"altul":{"command":"x"}}}', entry));
     expect(out.theme).toBe('dark');
     expect(out.mcpServers.altul).toEqual({ command: 'x' });
-    expect(out.mcpServers.scribner.env).toEqual({ ELECTRON_RUN_AS_NODE: '1' });
-    expect(out.mcpServers.scribner.args).toEqual(['C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Cărți\\Karma.scribner']);
-    expect(JSON.parse(m.mergeDesktopConfig('', entry)).mcpServers.scribner.command).toContain('Scribner.exe');
+    expect(out.mcpServers['pneuma-sofer'].env).toEqual({ ELECTRON_RUN_AS_NODE: '1' });
+    expect(out.mcpServers['pneuma-sofer'].args).toEqual(['C:\\Program Files\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Cărți\\Karma.scribner']);
+    expect(JSON.parse(m.mergeDesktopConfig('', entry)).mcpServers['pneuma-sofer'].command).toContain('Pneuma Sofer.exe');
     expect(() => m.mergeDesktopConfig('{nu e json', entry)).toThrow(/nu l-am modificat/);
   });
   it('comanda claude mcp add, cu spații și diacritice puse între ghilimele', () => {
-    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Scribner\\Scribner.exe', serverPath: 'C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Karma.scribner'] });
-    expect(m.claudeCodeCommand(entry, { platform: 'win32' })).toBe('claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Program Files\\Scribner\\Scribner.exe" "C:\\Program Files\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Cărți\\Karma.scribner"');
-    expect(m.claudeCodeCommand(entry, { platform: 'linux' })).toContain("'C:\\Program Files\\Scribner\\Scribner.exe'");
+    const entry = m.serverEntry({ execPath: 'C:\\Program Files\\Pneuma Sofer\\Pneuma Sofer.exe', serverPath: 'C:\\Program Files\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs', projects: ['D:\\Cărți\\Karma.scribner'] });
+    expect(m.claudeCodeCommand(entry, { platform: 'win32' })).toBe('claude mcp add pneuma-sofer --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Program Files\\Pneuma Sofer\\Pneuma Sofer.exe" "C:\\Program Files\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs" --project "D:\\Cărți\\Karma.scribner"');
+    expect(m.claudeCodeCommand(entry, { platform: 'linux' })).toContain("'C:\\Program Files\\Pneuma Sofer\\Pneuma Sofer.exe'");
   });
   it('scrie config-ul cu copie de siguranță, atomic', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-cfg-'));
     const file = path.join(dir, 'Claude', 'claude_desktop_config.json');
-    const entry = m.serverEntry({ execPath: '/x/Scribner', serverPath: '/x/server.mjs', projects: ['/p'] });
+    const entry = m.serverEntry({ execPath: '/x/Pneuma Sofer', serverPath: '/x/server.mjs', projects: ['/p'] });
     expect(m.writeClaudeDesktopConfig(entry, { file }).backup).toBeNull();
     const r = m.writeClaudeDesktopConfig({ ...entry, args: ['/y'] }, { file });
     expect(fs.existsSync(r.backup)).toBe(true);
-    expect(JSON.parse(fs.readFileSync(file, 'utf8')).mcpServers.scribner.args).toEqual(['/y']);
+    expect(JSON.parse(fs.readFileSync(file, 'utf8')).mcpServers['pneuma-sofer'].args).toEqual(['/y']);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });

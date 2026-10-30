@@ -1,4 +1,4 @@
-// Scribner user manual (English, condensed). Same chapter and section ids as manual.ro.js
+// Pneuma Sofer user manual (English, condensed). Same chapter and section ids as manual.ro.js
 // so context help works in both languages.
 
 const k = (s) => s.split('+').map((p) => `<kbd>${p}</kbd>`).join('+');
@@ -8,7 +8,7 @@ export const MANUAL_EN = [
     id: 'start',
     title: 'Getting started',
     sections: [
-      { id: 'start-intro', title: 'What Scribner is', html: `<p>Scribner is a writing program for long texts. You write in <strong>small documents</strong> (scenes, chapters, sections) arranged in a tree called the <strong>binder</strong>, move them freely, and <strong>Compile</strong> them into one manuscript (DOCX, PDF, EPUB and more). It follows the ideas of Scrivener 3 but is written from scratch; Scrivener <code>.scriv</code> projects can be imported and exported. AI is <strong>optional</strong> and can be switched off entirely in <em>Settings → AI</em>.</p>` },
+      { id: 'start-intro', title: 'What Pneuma Sofer is', html: `<p>Pneuma Sofer is a writing program for long texts. You write in <strong>small documents</strong> (scenes, chapters, sections) arranged in a tree called the <strong>binder</strong>, move them freely, and <strong>Compile</strong> them into one manuscript (DOCX, PDF, EPUB and more). It follows the ideas of Scrivener 3 but is written from scratch; Scrivener <code>.scriv</code> projects can be imported and exported. AI is <strong>optional</strong> and can be switched off entirely in <em>Settings → AI</em>.</p>` },
       { id: 'start-window', title: 'The main window', html: `<p><strong>Binder</strong> on the left (Draft, Research, Trash; toggle ${k('Ctrl+Shift+B')}), the <strong>work area</strong> in the middle (Editor ${k('Ctrl+1')}, Corkboard ${k('Ctrl+2')}, Outline ${k('Ctrl+3')}), the <strong>Inspector</strong> on the right (${k('Ctrl+Shift+I')}). The top bar has Back/Forward, Split, Composition, Compile, Inspector, I-REP and the Document, Navigate and Project menus. Panel widths are remembered per project.</p>` },
       { id: 'start-first-project', title: 'Your first project in five minutes', html: `<ol><li>On the Home screen pick a template, type a title, click Create and choose a folder.</li><li>Select a scene in the binder and write.</li><li>${k('Ctrl+N')} adds a document, ${k('Ctrl+Shift+N')} a folder.</li><li>Fill in the synopsis in the Inspector; it shows on the corkboard card.</li><li>${k('Ctrl+Shift+E')} opens Compile.</li></ol><p>Saving is automatic; ${k('Ctrl+S')} saves immediately. To learn by doing, use <em>Help → Interactive tutorial</em>.</p>` },
       { id: 'start-saving', title: 'Saving, backups and project files', html: `<p>A project is a <code>Name.scribner</code> folder of plain files (<code>project.json</code>, <code>docs/</code>, <code>notes/</code>, <code>snapshots/</code>, <code>media/</code>). Autosave runs after a few idle seconds. Automatic backups are configured in <em>Settings → Backup</em>; <em>File → Backups…</em> lists and restores them (as a separate project). <em>Save as…</em> (${k('Ctrl+Shift+S')}) copies the project.</p>` },
@@ -195,7 +195,7 @@ export const MANUAL_EN = [
   {
     id: 'settings',
     title: 'Settings',
-    sections: [{ id: 'settings-tabs', title: 'Settings tabs', html: `<p>General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard, AI, Language. In Corrections, <em>Learn from my corrections</em> (on by default) adds a misspelled word you fix by hand (select it and type the right form, or pick a suggestion from the right-click menu) to the auto-replacements, marked <em>learned</em>, so it is fixed while typing next time. The portable build keeps settings in <code>Scribner-data/</code> next to the executable.</p>` }],
+    sections: [{ id: 'settings-tabs', title: 'Settings tabs', html: `<p>General, Appearance, Behaviors, Corrections, Editing, Backup, Keyboard, AI, Language. In Corrections, <em>Learn from my corrections</em> (on by default) adds a misspelled word you fix by hand (select it and type the right form, or pick a suggestion from the right-click menu) to the auto-replacements, marked <em>learned</em>, so it is fixed while typing next time. The portable build keeps settings in <code>PneumaSofer-data/</code> next to the executable.</p>` }],
   },
   {
     id: 'shortcuts',
@@ -250,22 +250,22 @@ node scripts\ai-smoke.cjs openrouter</pre>
       {
         id: 'yours-spelling',
         title: 'Romanian spell checking on Windows',
-        html: `<p>Windows uses the system spell checker: <em>Windows Settings → Time &amp; language → Language &amp; region → Add a language → Romanian</em>, with spell checking. Restart Scribner.</p>`,
+        html: `<p>Windows uses the system spell checker: <em>Windows Settings → Time &amp; language → Language &amp; region → Add a language → Romanian</em>, with spell checking. Restart Pneuma Sofer.</p>`,
       },
       {
         id: 'yours-mcp',
         title: 'Connecting Claude, Codex and other AI agents (MCP)',
-        html: `<p>Scribner ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>Help → Connect to Claude (MCP)</em>. Installer paths on Windows (current user):</p>
-<pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
-Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs</pre>
+        html: `<p>Pneuma Sofer ships an MCP server (70+ tools). Any MCP client can use it, and no Node.js is needed: the installed app runs the server itself with <code>ELECTRON_RUN_AS_NODE=1</code>. Easiest: open the project and use <em>Help → Connect to Claude (MCP)</em>. Installer paths on Windows (current user):</p>
+<pre>Program: C:\\Users\\YOU\\AppData\\Local\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe
+Server:  C:\\Users\\YOU\\AppData\\Local\\Programs\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs</pre>
 <p><strong>Claude Code:</strong></p>
-<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<pre>claude mcp add pneuma-sofer --scope user -e ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
 <p><strong>OpenAI Codex:</strong></p>
-<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<pre>codex mcp add pneuma-sofer --env ELECTRON_RUN_AS_NODE=1 -- "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
 <p><strong>Gemini CLI:</strong></p>
-<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
+<pre>gemini mcp add pneuma-sofer -e ELECTRON_RUN_AS_NODE=1 "&lt;Program&gt;" "&lt;Server&gt;" --project "D:\\Books\\My book.scribner"</pre>
 <p><strong>Claude Desktop, Cursor, Windsurf, LM Studio</strong> (<code>mcpServers</code> JSON; double every backslash), and <strong>VS Code</strong> (<code>.vscode\\mcp.json</code>, key <code>servers</code>, <code>"type": "stdio"</code>):</p>
-<pre>"scribner": {
+<pre>"pneuma-sofer": {
   "command": "&lt;Program&gt;",
   "args": ["&lt;Server&gt;", "--project", "D:\\\\Books\\\\My book.scribner"],
   "env": { "ELECTRON_RUN_AS_NODE": "1" }

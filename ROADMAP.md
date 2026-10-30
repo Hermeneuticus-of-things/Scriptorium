@@ -1,4 +1,4 @@
-# Roadmap Scribner: toate funcțiile Scrivener 3 (extins)
+# Roadmap Pneuma Sofer: toate funcțiile Scrivener 3 (extins)
 
 Starea reală la 2026-10-23. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
 Versiuni: **v0.2** în lucru · **v0.3** revizie și publicare · **v0.4** paritate avansată · **v1.0** paritate completă + extra.
@@ -76,7 +76,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [x] VKB2: I-REP repetiția apropiată (SEMNAL, R8b/S70) și I-EDIT textul autorului (poartă HARD, COADA_AUTOR, jurnal), după `docs/VKB2.md`
 
 ### 1.3 Conexiune MCP pentru agenți AI
-- [x] Server MCP `scribner-mcp` (stdio), pornit de Claude Code / Claude Desktop / alți agenți, mod `--read-only`
+- [x] Server MCP `pneuma-sofer-mcp` (stdio), pornit de Claude Code / Claude Desktop / alți agenți, mod `--read-only`
 - [x] 20 de unelte: `project_info`, `list_binder`, `read_document`, `write_document`, `create_document`, `move_item`, `set_metadata`, `trash_item`, `search`, `replace`, `get_notes`, `set_notes`, `add_comment`, `add_footnote`, `lint`, `list_snapshots`, `take_snapshot`, `restore_snapshot`, `compile`, `writing_history`
 - [x] Resurse: binderul și fiecare document (`scribner://doc/{id}`)
 - [x] Aplicația se reîncarcă automat când un agent modifică fișierele
@@ -204,7 +204,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 
 - [x] Meniu Ajutor: manual (F1), ajutor pentru vederea curentă, scurtături, placeholders, sintaxă Markdown / Fountain / Script Mode, raportează o problemă, despre
 - [x] Manual complet în română (22 de capitole, căutare cu evidențiere), variantă scurtă în engleză
-- [x] Tutorial interactiv: proiect „Tutorial Scribner” cu 15 lecții și exerciții
+- [x] Tutorial interactiv: proiect „Tutorial Pneuma Sofer” cu 15 lecții și exerciții
 
 ## 7. Verificare în Electron real
 
@@ -219,5 +219,5 @@ Inventarul detaliat, organizat pe meniuri, e în [`FEATURES-SCRIVENER3.md`](FEAT
 - [ ] Cheile reale DeepL / Google / LanguageTool Premium / Speechify / Zotero pentru o probă cap-coadă (codul e testat cu răspunsuri simulate)
 - [~] Test cu model real: rulat de autor pe Windows prin OpenRouter (model gratuit `nvidia/nemotron-3.5-super-vl:free`): corectura corectă; traducerea și explicarea au picat la furnizorul gratuit („Provider returned error”); scriptul reîncearcă acum și trece la alt model. Rămâne o rulare completă verde.
 - [x] Definițiile VKB2 primite și implementate
-- [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add scribner …`)
+- [ ] O probă cu Claude Code pe Windows prin MCP (`claude mcp add pneuma-sofer …`)
 - [ ] Pachetul de limbă română pentru corectorul ortografic al Windows (setare de sistem)

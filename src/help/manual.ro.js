@@ -1,5 +1,5 @@
-// Manualul Scribner (română). Date structurate: [{ id, title, sections: [{ id, title, html }] }].
-// Text propriu, scris pentru Scribner. Id-urile secțiunilor sunt unice în tot manualul
+// Manualul Pneuma Sofer (română). Date structurate: [{ id, title, sections: [{ id, title, html }] }].
+// Text propriu, scris pentru Pneuma Sofer. Id-urile secțiunilor sunt unice în tot manualul
 // și sunt folosite pentru ajutorul contextual (HelpWindow initialTopic).
 
 const k = (s) => s.split('+').map((p) => `<kbd>${p}</kbd>`).join('+');
@@ -11,8 +11,8 @@ export const MANUAL_RO = [
     sections: [
       {
         id: 'start-intro',
-        title: 'Ce este Scribner',
-        html: `<p>Scribner este un program pentru texte lungi: romane, non-ficțiune, teze, scenarii, volume de poezie. În loc de un singur fișier uriaș, lucrezi cu <strong>documente mici</strong> (scene, capitole, secțiuni) așezate într-un arbore numit <strong>binder</strong>. Le muți, le împarți și le unești liber, iar la final <strong>Compile</strong> le adună într-un singur manuscris (DOCX, PDF, EPUB și altele).</p>
+        title: 'Ce este Pneuma Sofer',
+        html: `<p>Pneuma Sofer este un program pentru texte lungi: romane, non-ficțiune, teze, scenarii, volume de poezie. În loc de un singur fișier uriaș, lucrezi cu <strong>documente mici</strong> (scene, capitole, secțiuni) așezate într-un arbore numit <strong>binder</strong>. Le muți, le împarți și le unești liber, iar la final <strong>Compile</strong> le adună într-un singur manuscris (DOCX, PDF, EPUB și altele).</p>
 <p>Funcțiile urmează logica Scrivener 3, dar programul este scris de la zero. Proiectele Scrivener <code>.scriv</code> se pot importa fără pierderi și se pot exporta înapoi.</p>
 <p>AI-ul este <strong>opțional</strong>: totul merge fără el, iar comutatorul din <em>Setări → AI</em> îl oprește complet.</p>`,
       },
@@ -39,7 +39,7 @@ export const MANUAL_RO = [
 <li>Când vrei să vezi cartea întreagă, apasă ${k('Ctrl+Shift+E')} (Compile), alege formatul și ieșirea (de exemplu Word) și salvează.</li>
 </ol>
 <p>Nu trebuie să salvezi manual: salvarea este automată. ${k('Ctrl+S')} salvează imediat.</p>
-<p>Dacă vrei să înveți făcând, creează proiectul <strong>Tutorial Scribner</strong> din meniul <em>Ajutor → Tutorial interactiv</em>.</p>`,
+<p>Dacă vrei să înveți făcând, creează proiectul <strong>Tutorial Pneuma Sofer</strong> din meniul <em>Ajutor → Tutorial interactiv</em>.</p>`,
       },
       {
         id: 'start-saving',
@@ -219,7 +219,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'styles-compile',
         title: 'Stiluri la import și la Compile',
-        html: `<p>Stilurile pot fi importate dintr-un alt proiect Scribner (butonul din panoul de stiluri). La importul din Scrivener, stilurile din proiect se păstrează.</p>
+        html: `<p>Stilurile pot fi importate dintr-un alt proiect Pneuma Sofer (butonul din panoul de stiluri). La importul din Scrivener, stilurile din proiect se păstrează.</p>
 <p>La Compile, textul cu stil păstrează numele stilului (de exemplu în DOCX), astfel încât în Word poți modifica aspectul tuturor citatelor dintr-o dată.</p>`,
       },
     ],
@@ -642,8 +642,8 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'ai-mcp',
         title: 'Agenți AI prin MCP',
-        html: `<p>Serverul MCP Scribner (<code>mcp/server.mjs</code>) permite unui agent (Claude Code, Claude Desktop sau alt client MCP) să lucreze cu un proiect ca din program: binder, text, căutare, metadate, note pe taburi, cuvinte cheie, etichete și statusuri, ținte, colecții, comentarii și note de subsol, împărțire și unire, coș, snapshot-uri și comparare, I-REP și I-EDIT fără AI, statistici, cronologie, cercetare, glosar, Compile în toate formatele, import și export (inclusiv <code>.scriv</code>, NotebookLM, pachetul PENTRU EDITOR), interogarea unui notebook NotebookLM pe surse cu întrebări de continuare (<code>consult_notebook</code>, opțional, dacă e configurat un notebook și serverul <code>notebooklm-mcp</code>), proiecte noi din șabloane și backup. Fiecare scriere face snapshot înainte și se notează în <code>agent-log.jsonl</code>.</p>
-<pre>claude mcp add scribner -- node "/cale/Scribner/mcp/server.mjs" --project "/cale/Cartea mea.scribner"</pre>
+        html: `<p>Serverul MCP Pneuma Sofer (<code>mcp/server.mjs</code>) permite unui agent (Claude Code, Claude Desktop sau alt client MCP) să lucreze cu un proiect ca din program: binder, text, căutare, metadate, note pe taburi, cuvinte cheie, etichete și statusuri, ținte, colecții, comentarii și note de subsol, împărțire și unire, coș, snapshot-uri și comparare, I-REP și I-EDIT fără AI, statistici, cronologie, cercetare, glosar, Compile în toate formatele, import și export (inclusiv <code>.scriv</code>, NotebookLM, pachetul PENTRU EDITOR), interogarea unui notebook NotebookLM pe surse cu întrebări de continuare (<code>consult_notebook</code>, opțional, dacă e configurat un notebook și serverul <code>notebooklm-mcp</code>), proiecte noi din șabloane și backup. Fiecare scriere face snapshot înainte și se notează în <code>agent-log.jsonl</code>.</p>
+<pre>claude mcp add pneuma-sofer -- node "/cale/Scriptorium/mcp/server.mjs" --project "/cale/Cartea mea.scribner"</pre>
 <p><code>--read-only</code> permite doar citirea. Comanda exactă pentru instalarea ta apare în <em>Setări → AI → Conexiune MCP → Arată comanda de conectare</em>.</p>`,
       },
     ],
@@ -667,7 +667,7 @@ media/                 imagini, PDF, audio, video</pre>
 <li><strong>AI</strong>: funcțiile AI, cheia API, profilul editorial, conexiunea MCP.</li>
 <li><strong>Limbă</strong>: română sau engleză.</li>
 </ul>
-<p>Versiunea portabilă ține setările lângă executabil, în <code>Scribner-data/</code>.</p>`,
+<p>Versiunea portabilă ține setările lângă executabil, în <code>PneumaSofer-data/</code>.</p>`,
       },
     ],
   },
@@ -746,7 +746,7 @@ media/                 imagini, PDF, audio, video</pre>
       {
         id: 'faq-report',
         title: 'Raportarea unei probleme',
-        html: `<p><em>Ajutor → Raportează o problemă</em> deschide pagina de probleme a proiectului pe GitHub. Scrie versiunea (din <em>Ajutor → Despre Scribner</em>), sistemul de operare, pașii care reproduc problema și ce te așteptai să se întâmple.</p>`,
+        html: `<p><em>Ajutor → Raportează o problemă</em> deschide pagina de probleme a proiectului pe GitHub. Scrie versiunea (din <em>Ajutor → Despre Pneuma Sofer</em>), sistemul de operare, pașii care reproduc problema și ce te așteptai să se întâmple.</p>`,
       },
     ],
   },
@@ -795,29 +795,29 @@ node scripts\ai-smoke.cjs nvidia</pre>
       {
         id: 'yours-spelling',
         title: 'Corectorul ortografic românesc pe Windows',
-        html: `<p>Pe Windows programul folosește corectorul sistemului. Instalează limba: <em>Setări Windows → Oră și limbă → Limbă și regiune → Adăugare limbă → Română</em>, cu opțiunea de verificare ortografică bifată. Repornește Scribner. Pe Linux și macOS dicționarul vine cu programul.</p>`,
+        html: `<p>Pe Windows programul folosește corectorul sistemului. Instalează limba: <em>Setări Windows → Oră și limbă → Limbă și regiune → Adăugare limbă → Română</em>, cu opțiunea de verificare ortografică bifată. Repornește Pneuma Sofer. Pe Linux și macOS dicționarul vine cu programul.</p>`,
       },
       {
         id: 'yours-mcp',
         title: 'Legarea de Claude, Codex și alți agenți AI (MCP)',
-        html: `<p>Scribner are un server MCP inclus (peste 70 de unelte: binder, documente, note, metadate, snapshot-uri, căutare, Compile). Orice agent AI care știe MCP îl poate folosi. <strong>Nu ai nevoie de Node.js</strong>: programul instalat pornește serverul singur, cu variabila <code>ELECTRON_RUN_AS_NODE=1</code>. Agentul vede doar proiectele puse după <code>--project</code>; cu <code>--read-only</code> doar citește. Fiecare scriere face întâi un snapshot și se notează în <code>agent-log.jsonl</code> din proiect.</p>
+        html: `<p>Pneuma Sofer are un server MCP inclus (peste 70 de unelte: binder, documente, note, metadate, snapshot-uri, căutare, Compile). Orice agent AI care știe MCP îl poate folosi. <strong>Nu ai nevoie de Node.js</strong>: programul instalat pornește serverul singur, cu variabila <code>ELECTRON_RUN_AS_NODE=1</code>. Agentul vede doar proiectele puse după <code>--project</code>; cu <code>--read-only</code> doar citește. Fiecare scriere face întâi un snapshot și se notează în <code>agent-log.jsonl</code> din proiect.</p>
 <p><strong>Cel mai simplu:</strong> deschide proiectul și alege <em>Ajutor → Conectează la Claude (MCP)</em>. Butonul scrie configurarea pentru Claude Desktop, iar celălalt copiază comanda pentru Claude Code, cu căile tale reale.</p>
 <p>Căile de mai jos sunt cele ale installerului pe Windows (instalare pentru utilizatorul curent). Înlocuiește <code>Ionut</code> cu numele tău de utilizator și calea proiectului cu a ta. Varianta portabilă: folosește calea unde ai pus-o.</p>
-<pre>Program:  C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe
-Server:   C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs
+<pre>Program:  C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe
+Server:   C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs
 Proiect:  D:\\Carti\\Karma.scribner</pre>
 
 <h4>Claude Code (terminal și fila Code din Claude Desktop)</h4>
-<pre>claude mcp add scribner --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
-<p>Verificare: <code>claude mcp list</code> arată <em>scribner: connected</em>. În sesiune, <code>/mcp</code> arată uneltele.</p>
+<pre>claude mcp add pneuma-sofer --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<p>Verificare: <code>claude mcp list</code> arată <em>pneuma-sofer: connected</em>. În sesiune, <code>/mcp</code> arată uneltele.</p>
 
 <h4>Claude Desktop (chat)</h4>
 <p>Fișierul <code>%APPDATA%\\Claude\\claude_desktop_config.json</code> (în Claude Desktop: <em>Settings → Developer → Edit Config</em>). Adaugă în <code>mcpServers</code>, apoi repornește Claude Desktop complet (și din bara de sistem):</p>
 <pre>{
   "mcpServers": {
-    "scribner": {
-      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
-      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
+    "pneuma-sofer": {
+      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Pneuma Sofer\\\\Pneuma Sofer.exe",
+      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Pneuma Sofer\\\\resources\\\\app\\\\mcp\\\\server.mjs",
                "--project", "D:\\\\Carti\\\\Karma.scribner"],
       "env": { "ELECTRON_RUN_AS_NODE": "1" }
     }
@@ -826,16 +826,16 @@ Proiect:  D:\\Carti\\Karma.scribner</pre>
 <p>În JSON, fiecare <code>\\</code> din cale se scrie dublat.</p>
 
 <h4>OpenAI Codex (CLI și extensia de editor)</h4>
-<pre>codex mcp add scribner --env ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<pre>codex mcp add pneuma-sofer --env ELECTRON_RUN_AS_NODE=1 -- "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
 <p>Sau direct în <code>%USERPROFILE%\\.codex\\config.toml</code>:</p>
-<pre>[mcp_servers.scribner]
-command = 'C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe'
-args = ['C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Carti\\Karma.scribner']
+<pre>[mcp_servers.pneuma-sofer]
+command = 'C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe'
+args = ['C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs', '--project', 'D:\\Carti\\Karma.scribner']
 env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
 <p>Verificare: <code>codex mcp list</code>.</p>
 
 <h4>Gemini CLI</h4>
-<pre>gemini mcp add scribner -e ELECTRON_RUN_AS_NODE=1 "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\Scribner.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Scribner\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<pre>gemini mcp add pneuma-sofer -e ELECTRON_RUN_AS_NODE=1 "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\Pneuma Sofer.exe" "C:\\Users\\Ionut\\AppData\\Local\\Programs\\Pneuma Sofer\\resources\\app\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
 <p>Sau în <code>%USERPROFILE%\\.gemini\\settings.json</code>, același bloc <code>mcpServers</code> ca la Claude Desktop.</p>
 
 <h4>Cursor, Windsurf, LM Studio și alți clienți cu <code>mcpServers</code></h4>
@@ -845,10 +845,10 @@ env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
 <p>Fișierul <code>.vscode\\mcp.json</code> din folderul de lucru (cheia e <code>servers</code>, nu <code>mcpServers</code>):</p>
 <pre>{
   "servers": {
-    "scribner": {
+    "pneuma-sofer": {
       "type": "stdio",
-      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\Scribner.exe",
-      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Scribner\\\\resources\\\\app\\\\mcp\\\\server.mjs",
+      "command": "C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Pneuma Sofer\\\\Pneuma Sofer.exe",
+      "args": ["C:\\\\Users\\\\Ionut\\\\AppData\\\\Local\\\\Programs\\\\Pneuma Sofer\\\\resources\\\\app\\\\mcp\\\\server.mjs",
                "--project", "D:\\\\Carti\\\\Karma.scribner"],
       "env": { "ELECTRON_RUN_AS_NODE": "1" }
     }
@@ -856,10 +856,10 @@ env = { ELECTRON_RUN_AS_NODE = '1' }</pre>
 }</pre>
 
 <h4>Din sursă (fără installer, cu Node.js)</h4>
-<pre>claude mcp add scribner -- node "C:\\cale\\Scriptorium\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
+<pre>claude mcp add pneuma-sofer -- node "C:\\cale\\Scriptorium\\mcp\\server.mjs" --project "D:\\Carti\\Karma.scribner"</pre>
 
 <h4>Probă</h4>
-<p>Cere agentului: „listează documentele din proiectul Scribner”, apoi „citește primul capitol și scrie-i sinopsisul în inspector”. Fă un snapshot înainte de modificări mari. Mai multe proiecte: repetă <code>--project</code> pentru fiecare. Dacă agentul nu vede unelte: repornește clientul, verifică dublarea <code>\\</code> în JSON și că Scribner e instalat la calea scrisă.</p>`,
+<p>Cere agentului: „listează documentele din proiectul Pneuma Sofer”, apoi „citește primul capitol și scrie-i sinopsisul în inspector”. Fă un snapshot înainte de modificări mari. Mai multe proiecte: repetă <code>--project</code> pentru fiecare. Dacă agentul nu vede unelte: repornește clientul, verifică dublarea <code>\\</code> în JSON și că Pneuma Sofer e instalat la calea scrisă.</p>`,
       },
       {
         id: 'yours-sync',

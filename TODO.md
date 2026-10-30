@@ -72,7 +72,7 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 
 ### Request: installer cu wizard (.exe), Inno Setup
 - [x] Inno Setup 6: installer/scribner.iss (română + engleză, licență, folder, Start, Desktop, pornire la final), build/icon.ico
-- [x] Workflow Windows: pachet + portabil + Scribner-Setup.exe ca artefact; Release automat la tag v*
+- [x] Workflow Windows: pachet + portabil + PneumaSofer-Setup.exe ca artefact; Release automat la tag v*
 - [ ] Verificat installerul pe un Windows real
 
 ## Session 2026-10-24 (MCP integral)

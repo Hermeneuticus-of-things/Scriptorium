@@ -74,7 +74,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
   };
   return (
     <div className="home">
-      <h1>Scribner</h1>
+      <h1>Pneuma Sofer</h1>
       <p className="muted">{tr('ui.home.scrie_carti_lungi_binder_corkboard')}</p>
       {api.isMock && <p className="warn">{tr('ui.home.mod_demonstrativ_in_browser_salvarea')}</p>}
       <div className="home-grid">

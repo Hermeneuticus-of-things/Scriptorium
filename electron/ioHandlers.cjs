@@ -218,7 +218,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     if (options.compiled) {
       const html = compile.compileHtml(project, readerFor(dir), { ...options, projectDir: dir, target: 'pdf' });
       const pdf = await renderPdf(html, compile.pdfOptions(options, project));
-      const file = path.join(os.tmpdir(), `scribner-preview-${Date.now()}.pdf`);
+      const file = path.join(os.tmpdir(), `pneuma-sofer-preview-${Date.now()}.pdf`);
       fs.writeFileSync(file, pdf);
       // Chromium's PDF viewer: page view, zoom and a Print button.
       const preview = new BrowserWindow({ width: 900, height: 1000, title: `Previzualizare tipărire — ${project.title || ''}`, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, plugins: true } });
@@ -230,7 +230,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     const setup = setupFor(project, options);
     const pdf = await renderPdf(printHtml(dir, project, options, setup), printSetup.pdfPrintOptions(setup));
     const token = `p${++previewSeq}`;
-    previews.set(token, { pdf, title: project.title || 'Scribner' });
+    previews.set(token, { pdf, title: project.title || 'Pneuma Sofer' });
     while (previews.size > 3) previews.delete(previews.keys().next().value);
     return { token, data: new Uint8Array(pdf), pageCount: printSetup.pdfPageCount(pdf), pageSize: printSetup.pdfPageSize(pdf), setup };
   });
@@ -313,7 +313,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     return copy;
   });
 
-  handle('io:printDocument', async (_e, html, title = 'Scribner') => {
+  handle('io:printDocument', async (_e, html, title = 'Pneuma Sofer') => {
     const win = hiddenWindow();
     const setup = setupFor(null);
     const page = printSetup.printPage(html, title, setup);
