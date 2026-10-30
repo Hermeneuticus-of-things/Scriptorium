@@ -101,7 +101,9 @@ import { LANG_NAMES, lookupGroups } from './lib/lookups.js';
 import { mergeBibliography } from './lib/bibMerge.js';
 import ContextMenu from './components/ContextMenu.jsx';
 import ServiceResultDialog from './components/ServiceResultDialog.jsx';
-import { PickNodeDialog, ImportSplitDialog, LayoutsDialog } from './components/BatchADialogs.jsx';
+import { PickNodeDialog, ImportSplitDialog } from './components/BatchADialogs.jsx';
+import LayoutsDialog from './components/LayoutsDialog.jsx';
+import { normalizeLayouts } from './lib/layouts.js';
 import { replaceInHtml } from './lib/search.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
@@ -991,33 +993,27 @@ export default function App({ api }) {
     go(splitId);
     setSplitId(a);
   };
+  // Layouts (Window > Saved layouts…, Scrivener 3 §12.3): named window arrangements kept at
+  // application level (settings.layouts), so they are offered in every project. The payload
+  // captures only arrangement — never selectedId (project content, not layout); persistence of
+  // the applied values continues through the existing saveUi effect.
+  const savedLayouts = normalizeLayouts(settings && settings.layouts);
   const saveLayouts = async (layouts) => {
-    await api.setSettings({ layouts });
+    await api.setSettings({ layouts: normalizeLayouts(layouts) });
     setSettings(await api.getSettings());
+  };
+  const snapshotLayout = () => ({ view, widths, showInspector, showBinder: !hideBinder, splitId, composition });
+  const applyLayout = (payload) => {
+    if (!payload) return;
+    setView(payload.view || 'editor');
+    setWidths(payload.widths || { binder: 260, side: 320 });
+    setShowInspector(payload.showInspector !== false);
+    setHideBinder(!payload.showBinder);
+    // A split pane points at a document of the project the layout was saved in: drop it elsewhere.
+    setSplitId(payload.splitId && project && findNode(project.tree, payload.splitId) ? payload.splitId : null);
+    setComposition(Boolean(payload.composition));
   };
   const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
-
-  // --- Split at cursor (Ctrl+K) and Merge (Ctrl+Shift+M) ---
-  // Layouts (Window > Layouts): named combinations of views and panels.
-  const saveLayout = async () => {
-    const name = window.prompt('Numele layout-ului:', `Layout ${(settings.layouts || []).length + 1}`);
-    if (!name) return;
-    const layout = { name, view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, split: Boolean(splitId) };
-    const layouts = [...(settings.layouts || []).filter((l) => l.name !== name), layout];
-    await api.setSettings({ layouts });
-    setSettings(await api.getSettings());
-    setToast(`Layout „${name}” salvat.`);
-  };
-  const applyLayout = (l) => {
-    setView(l.view || 'editor');
-    setShowInspector(l.showInspector !== false);
-    setShowAi(Boolean(l.showAi));
-    setShowEditorial(Boolean(l.showEditorial));
-    setHideBinder(Boolean(l.hideBinder));
-    if (l.widths) setWidths(l.widths);
-    if (l.editorView) setEditorView(l.editorView);
-    if (!l.split) setSplitId(null);
-  };
 
   // Quick Reference: floating panels with another document (Scrivener: Open in Quick Reference).
   const openQuickRef = (id) =>
@@ -1830,8 +1826,7 @@ export default function App({ api }) {
     ['file', 'exportFountain', tr('cmd.exportFountain'), () => flush().then(() => exportScript('fountain')).catch(report), !api.exportScript || !scriptFormat],
     ['tools', 'settings', tr('cmd.settings'), () => setDialog('settings')],
     ['tools', 'shortcuts', tr('cmd.shortcuts'), () => setDialog('shortcuts')],
-    ['window', 'saveLayout', tr('cmd.saveLayout'), saveLayout],
-    ['window', 'manageLayouts', tr('cmd.manageLayouts'), () => setDialog('layouts')],
+    ['window', 'layouts', tr('cmd.layouts'), () => setDialog('layouts')],
     ['window', 'fullScreen', 'Ecran complet', toggleFullScreen],
     ['document', 'moveTo', tr('cmd.moveTo'), () => setDialog('moveTo'), !selectionList().length],
     ['document', 'toggleSeparator', tr('cmd.toggleSeparator'), toggleSeparator, !selectionList().length],
@@ -1879,7 +1874,7 @@ export default function App({ api }) {
     ['tools', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['tools', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
-    ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
+    ...savedLayouts.map((l, i) => ['window', `layout:${i}`, tr('cmd.layout', { name: l.name }), () => applyLayout(l.payload)]),
   ];
   const commands = Object.fromEntries(
     commandList.map(([group, id, label, run, disabled]) => [id, { group, id, label: cmdLabel(id, label), run, disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
@@ -2671,7 +2666,7 @@ export default function App({ api }) {
       )}
       {dialog === 'importSplit' && <ImportSplitDialog onImport={(mode, sep) => importFilesCmd(mode, sep).catch(report)} onClose={() => setDialog(null)} />}
       {dialog === 'layouts' && (
-        <LayoutsDialog layouts={settings.layouts || []} onChange={(l) => saveLayouts(l).catch(report)} onApply={applyLayout} onClose={() => setDialog(null)} />
+        <LayoutsDialog layouts={savedLayouts} snapshot={snapshotLayout} apply={applyLayout} onChange={(l) => saveLayouts(l).catch(report)} onClose={() => setDialog(null)} />
       )}
       {dialog === 'shortcuts' && (
         <ShortcutsDialog
