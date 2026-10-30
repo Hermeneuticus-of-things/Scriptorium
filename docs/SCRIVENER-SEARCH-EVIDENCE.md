@@ -120,10 +120,23 @@ Verificat în cod (`src/components/AdvancedSearchDialog.jsx`, `src/lib/projectSe
 | ~~P2~~ ✅ 2026-10-30 | ~~Termeni speciali~~ — `parseQuery`: ghilimele în any/all, excludere cu `-` (și pe fraze), wildcard `*` | §11.1.3, p. 223 | făcut |
 | ~~P2~~ ✅ 2026-10-30 | ~~Sintaxa de date `mdate:` / `cdate:`~~ — YYYY/YYYY-MM/zi, relative d/m/y, `>`, `<`; AND cu restul criteriilor | §11.1.3 + Tabel 11.1, p. 224–225 | făcut |
 | P2 | Colecția persistentă „Search Results" (ultima căutare, supraviețuiește redeschiderii) | §11.1.1, p. 219 | mediu |
-| P3 | Search Draft Only · Search Binder Selection Only · Search Included/Excluded separate | §11.1.2, p. 222 | mediu |
-| P3 | Project Replace: afectare **Snapshots** + Custom Metadata text + Swap | §11.3, p. 229 | mediu |
-| P3 | Filter pentru Corkboard/Outliner (text + metadate + Included/Excluded) | §11.4, p. 229–233 | mare |
+| ~~P3~~ ✅ 2026-10-30 | ~~Scope~~ — Draft Only, Binder Selection Only (cu subdocumente), Included/Excluded (combinate = filtru ignorat) | §11.1.2, p. 222 | făcut |
+| ~~P3~~ ✅ 2026-10-30 | ~~Project Replace~~ — Custom Metadata text + Swap + pas pe snapshot-uri (lib complet; bifa e inactivă până apare API-ul de scriere `updateSnapshotHtml` în preload; notele/comentariile din snapshot-uri nu sunt stocate separat → sărite) | §11.3, p. 229 | făcut (parțial la persistare) |
+| ~~P3~~ ✅ 2026-10-30 | ~~Filter Corkboard/Outliner~~ — bară Ctrl+F, text/notes + RegEx, draft any/draft/non-draft, compile included/excluded, metafilă Include/Exclude pe Etichetă/Stare; listă plată, fără drag&drop cât e activ | §11.4, p. 229–233 | făcut |
 | P3 | Find by Formatting: extinderi (caracter, linkuri, imagini, formatting păstrat) | §11.6, p. 237–240 | mediu |
+
+### Etapele P3 — implementate (2026-10-30, trei ramuri paralele pe worktree-uri, integrate manual)
+
+- `feat/p3-scope` → `src/lib/projectSearch.js`: `draftOnly`, `selectionIds` (expandate cu toți
+  descendenții în `searchProject`), `excludeCompile`; `onlyCompile+excludeCompile` = filtru ignorat.
+- `feat/p3-replace` → `replaceInFields` acoperă `custom` (string-uri simple și din array-uri);
+  `replaceSnapshotHtml` pur; App: pas de snapshot-uri în `replaceAdvanced` (gated pe
+  `api.updateSnapshotHtml`); buton Swap + bifă snapshot-uri în dialog.
+- `feat/p3-filter` → `src/lib/viewFilter.js` (pur) + `src/components/FilterBar.jsx`; filtrează
+  corkboard și outline (listă plată), Ctrl+F, Esc în doi pași, „Gata"; metafilă include/exclude
+  pe Etichetă/Stare; note încărcate leneș; `htmlToPlain` exportat din search.js.
+- Integrare: 3 merge-uri în `feat/quick-search`, conflicte rezolvate ca uniuni; suita completă
+  **885 trecute / 0 eșuate**, build OK. Construit de 3 agenți paralel (contract + worktree per agent).
 
 ### Etapa P1 — implementată (2026-10-30)
 
