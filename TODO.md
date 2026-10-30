@@ -14,29 +14,30 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 
 ## Session 2026-10-23 (2)
 ### Request: roadmap v0.2
-- [ ] Backup automat (închidere + interval, păstrează N)
-- [ ] Writing History + dialog
-- [ ] Note de proiect
-- [ ] Keywords
-- [ ] Găsește și înlocuiește în proiect (regex, cuvinte întregi, majuscule, snapshot înainte)
-- [ ] Ghilimele „” românești, — , …
-- [ ] Comparare snapshot (diff)
-- [ ] Corkboard drag & drop
-- [ ] Panouri redimensionabile + starea proiectului memorată
-- [ ] Navigare înapoi/înainte
-- [ ] Split editor
-- [ ] Scrivenings
-- [ ] Split / Merge documente
-- [ ] Comentarii + note de subsol (editor, inspector, compile)
-- [ ] Import DOCX/TXT/MD cu împărțire
-- [ ] Șabloane de proiect
-- [ ] Teste + verificare UI
+- [x] Backup automat (închidere + interval, păstrează N) — verificat în FEATURES-SCRIVENER3.md, 2026-10-30
+- [x] Writing History + dialog
+- [x] Note de proiect
+- [x] Keywords
+- [x] Găsește și înlocuiește în proiect (regex, cuvinte întregi, majuscule, snapshot înainte)
+- [x] Ghilimele „” românești, — , …
+- [x] Comparare snapshot (diff)
+- [x] Corkboard drag & drop
+- [x] Panouri redimensionabile + starea proiectului memorată
+- [x] Navigare înapoi/înainte
+- [x] Split editor
+- [x] Scrivenings
+- [x] Split / Merge documente
+- [x] Comentarii + note de subsol (editor, inspector, compile)
+- [x] Import DOCX/TXT/MD cu împărțire
+- [x] Șabloane de proiect
+- [x] Teste + verificare UI
+> Reconciliat 2026-10-30: toate erau implementate de mult (inventarul 264×[x]); bifele rămăseseră la loc.
 
 ## Session 2026-10-23 (3)
 ### Request: roadmap pas cu pas
 - [x] 1.1 Import Scrivener fără pierderi (+ media, raport, metadate, istoric)
 - [~] 1.2 I-REP / I-EDIT (lipsește test cu Claude real, editare liste cuvinte)
-- [ ] 1.3 Server MCP pentru agenți AI
+- [x] 1.3 Server MCP pentru agenți AI — mcp/server.mjs (citire/scriere cu snapshot, run_script, consult_notebook)
 - [ ] 1.4 Paste and Match Style, Ctrl+F, Split with title, Duplicare, spelling ro
 - [~] Salvare cod: repo GitHub privat hermeneuticus-of-things/Scriptorium
 
