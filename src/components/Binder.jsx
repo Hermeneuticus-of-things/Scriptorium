@@ -40,8 +40,7 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
-<<<<<<< ours
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate }) {
   const colorIn = labelColorInOf({ labelColorIn });
   const tintIcons = labelTintIcons ?? (labelColorIn ? colorIn.icons : Boolean(project.labelTintIcons));
   const rowTint = (node) => (colorIn.binder && node.label && labelColor[node.label] ? labelTint(labelColor[node.label]) : '');
@@ -52,10 +51,6 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     const name = e.dataTransfer.getData(KEYWORD_MIME);
     if (name) onDropKeyword(keywordDropTargets(id, [...selectedIds]), name);
   };
-=======
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, templates = null, onNewFromTemplate }) {
-  const tintIcons = labelTintIcons ?? Boolean(project.labelTintIcons);
->>>>>>> theirs
   // Behaviours from Options: Enter = 'rename' | 'newDoc' | 'open' ('edit' = 'open');
   // double-click = 'rename' | 'quickRef' | 'open' ('openQuickRef' = 'quickRef').
   const enterMode = binderEnter === 'edit' ? 'open' : binderEnter;
@@ -134,13 +129,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const renderIcon = (node) => {
     const tint = iconTint(node.iconColor, labelColor[node.label], tintIcons);
     return (
-<<<<<<< ours
       <span className={`icon ${tint ? 'tinted' : ''}${snapCounts?.[node.id]?.count ? ' has-snapshots' : ''}`} style={tint ? { color: tint, '--icon-tint': tint } : undefined}>
-        {iconFor(node)}
-=======
-      <span className={`icon ${tint ? 'tinted' : ''}`} style={tint ? { color: tint, '--icon-tint': tint } : undefined}>
         {iconFor(node, project.templateFolder)}
->>>>>>> theirs
       </span>
     );
   };

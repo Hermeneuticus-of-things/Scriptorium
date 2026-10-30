@@ -167,11 +167,7 @@ export default function Corkboard(props) {
   return <CorkboardBoard {...props} folder={Array.isArray(folders) && folders.length === 1 ? folders[0] : props.folder} />;
 }
 
-<<<<<<< ours
-function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia, labelColorIn = null, onDropKeyword, selectedIds = null }) {
-=======
-function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia, filterNodes = null }) {
->>>>>>> theirs
+function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia, labelColorIn = null, onDropKeyword, selectedIds = null, filterNodes = null }) {
   const [drag, setDrag] = useState(null);
   const [hint, setHint] = useState(null);
   const [sel, setSel] = useState(null);

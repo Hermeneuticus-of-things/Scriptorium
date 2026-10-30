@@ -42,8 +42,7 @@ function loadColumns() {
 }
 
 // charCounts {id: n} or docs {id: html} (optional) feed the Characters column.
-<<<<<<< ours
-export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null }) {
+export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null, filterNodes = null }) {
   const [showSynopsis, setShowSynopsis] = useState(loadShowSynopsis);
   const toggleSynopsis = (on) => {
     setShowSynopsis(on);
@@ -55,9 +54,6 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   };
   const labelColors = Object.fromEntries((project.labels || []).map((l) => [l.name, l.color]));
   const rowTint = (n) => (labelColorIn?.outliner && n.label ? labelTint(labelColors[n.label]) : '');
-=======
-export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, filterNodes = null }) {
->>>>>>> theirs
   const charsOf = (n) => (charCounts ? charCounts[n.id] || 0 : docs && docs[n.id] ? htmlToText(docs[n.id]).length : 0);
   const [columns, setColumns] = useState(loadColumns);
   const [collapsed, setCollapsed] = useState({});

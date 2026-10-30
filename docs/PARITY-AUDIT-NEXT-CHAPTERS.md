@@ -32,11 +32,7 @@ au fost confirmate prin absența oricărui identificator relevant.
 | P2 | **Project-level Replacements** — înlocuiri la nivel de proiect, aplicate la Compile indiferent de format, cu ordine | §23.4.4, p. ~500 | `project.replacements` în project.json + aplicare în `lib/compile.cjs` înainte de cele pe format |
 | P2 | **Document Templates** — folder special de șabloane de document; „Document nou din șablon"; șablon implicit pe subdocumente | §7.5, p. ~120 | există deja șabloane de proiect (`templates.cjs`) — se adaugă tipul de folder + fluxul de instanțiere |
 | ~~P3~~ ✅ 2026-10-30 | ~~**Dialogue Focus**~~ — `src/lib/dialogueFocus.js` (pur: paragrafe cu „…”, «…”, "…") + `DialogueFocusDialog.jsx` (panou cu replici pe documente, click deschide documentul) + comanda Unelte „Focalizare pe dialoguri…” | §20.3.2, p. ~446 | făcut |
-<<<<<<< ours
 | ~~P3~~ ✅ 2026-10-30 | ~~**Custom icons**~~ — existau deja: `node.icon` (emoji, selector în Inspector) + `node.iconColor` + randare în binder (fals negativ de grep în audit; constatat la implementare) | §7.4, p. ~110 | făcut (pre-existent) |
-=======
-| P3 | **Custom icons** — iconițe personalizate pe item-uri de binder, import/ gestionare | §7.4, p. ~110 | `node.icon` + gallery în Setări; cosmetic |
->>>>>>> theirs
 
 ## Tura a doua de audit (2026-10-30): capitolele rămase — COMPLETĂ
 
