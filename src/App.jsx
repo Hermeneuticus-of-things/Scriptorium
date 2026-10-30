@@ -23,8 +23,10 @@ import CollectionsBar from './components/CollectionsBar.jsx';
 import KeywordsDialog from './components/KeywordsDialog.jsx';
 import AdvancedSearchDialog from './components/AdvancedSearchDialog.jsx';
 import QuickSearch from './components/QuickSearch.jsx';
+import FilterBar from './components/FilterBar.jsx';
 import { collectionNodes, createCollection, ensureSearchResults, setLastSearch, SEARCH_RESULTS_ID } from './lib/collections.js';
 import { replaceInFields, searchProject, buildTerms } from './lib/projectSearch.js';
+import { filterContainer } from './lib/viewFilter.js';
 import { profileFor } from './lib/editorial.js';
 import { htmlToManuscript } from './lib/editorial.js';
 import { diffParagraphs, journalRows, updateAuthorHashes } from './lib/authorText.js';
@@ -224,6 +226,10 @@ export default function App({ api }) {
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
   const [searchSeed, setSearchSeed] = useState('');
+  // View > Filter (Scrivener 3 §11.4) over the corkboard / outliner; filterNotes
+  // caches notes read for the text/notes option (notes are not kept in App state).
+  const [viewFilter, setViewFilter] = useState({ open: false, query: '', regex: false, includeTextNotes: false, draftScope: 'any', compileScope: 'all', meta: { mode: 'any', field: 'label', value: '' } });
+  const [filterNotes, setFilterNotes] = useState({});
   const [editorView, setEditorViewState] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('scribner-editor-view')) || {};
@@ -550,6 +556,50 @@ export default function App({ api }) {
   };
 
   const selected = project && selectedId ? findNode(project.tree, selectedId) : null;
+
+  // --- View > Filter (Scrivener 3 §11.4): narrows the corkboard / outliner to a flat list ---
+  // The container being filtered: the selected folder, or the parent of the selected item.
+  const viewFilterContainer =
+    project && (view === 'corkboard' || view === 'outline')
+      ? selected && selected.children
+        ? selected
+        : view === 'corkboard'
+          ? findParent(project.tree, selectedId) || project.tree[0]
+          : project.tree[0]
+      : null;
+  const filterNodes = useMemo(() => {
+    if (!viewFilterContainer || !viewFilter.open) return null;
+    // Draft scope needs the root kind of nodes without their own `.root`.
+    const rootKind = viewFilterContainer.root || (project.tree.find((r) => findNode([r], viewFilterContainer.id)) || {}).root || null;
+    return filterContainer(viewFilterContainer.children || [], {
+      query: viewFilter.query,
+      regex: viewFilter.regex,
+      includeTextNotes: viewFilter.includeTextNotes,
+      docs,
+      notesById: filterNotes,
+      draftScope: viewFilter.draftScope,
+      compileScope: viewFilter.compileScope,
+      meta: viewFilter.meta,
+      rootKind,
+    });
+  }, [viewFilterContainer, viewFilter, docs, filterNotes, project.tree]);
+  // Text/notes search needs the documents and notes in memory; the filter searches
+  // whatever is loaded until then.
+  const patchViewFilter = (patch) => {
+    setViewFilter((f) => ({ ...f, ...patch }));
+    if (patch.includeTextNotes) loadAllDocs().catch(report);
+  };
+  useEffect(() => {
+    if (!viewFilter.open || !viewFilter.includeTextNotes || !viewFilterContainer || !dir) return undefined;
+    const ids = flatten(viewFilterContainer.children || []).map((n) => n.id).filter((id) => !(id in filterNotes));
+    if (!ids.length) return undefined;
+    let alive = true;
+    Promise.all(ids.map((id) => Promise.resolve(api.readDoc(dir, id, 'notes')).then((h) => [id, h || ''], () => [id, ''])))
+      .then((pairs) => alive && setFilterNotes((m) => ({ ...m, ...Object.fromEntries(pairs) })));
+    return () => {
+      alive = false;
+    };
+  }, [viewFilter.open, viewFilter.includeTextNotes, viewFilterContainer, dir, filterNotes]);
 
   const go = async (id, { push = true } = {}) => {
     await flush();
@@ -1301,6 +1351,12 @@ export default function App({ api }) {
           return;
         }
       }
+      // Filter bar (Scrivener 3 §11.4): Ctrl+F has no default command key, so it is
+      // handled here, only while a corkboard or outliner is the active view.
+      if (combo === 'Ctrl+F' && (view === 'corkboard' || view === 'outline')) {
+        e.preventDefault();
+        setViewFilter((f) => ({ ...f, open: true }));
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -1633,6 +1689,12 @@ export default function App({ api }) {
     { label: tr('cmd.settings'), action: () => setDialog('settings') },
   ];
 
+  // View > Filter (Scrivener 3 §11.4): opens only over a corkboard or outliner.
+  const openViewFilter = () => {
+    if (view !== 'corkboard' && view !== 'outline') return;
+    setViewFilter((f) => ({ ...f, open: true }));
+  };
+
   // Command registry: every command has an id, a label, a menu group and a
   // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
   const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
@@ -1652,6 +1714,7 @@ export default function App({ api }) {
     ['edit', 'findProject', tr('cmd.findProject'), () => { setFindSeed(''); setDialog('find'); }],
     ['edit', 'advSearch', tr('cmd.advSearch'), () => { setSearchSeed(''); setDialog('advsearch'); }],
     ['edit', 'quickSearch', tr('cmd.quickSearch'), () => setDialog('quicksearch')],
+    ['edit', 'viewFilter', tr('cmd.viewFilter'), openViewFilter, !(view === 'corkboard' || view === 'outline')],
     ['view', 'viewEditor', 'Editor', () => setView('editor')],
     ['view', 'viewCorkboard', 'Corkboard', () => setView('corkboard')],
     ['view', 'viewOutline', 'Outline', () => setView('outline')],
@@ -2029,9 +2092,19 @@ export default function App({ api }) {
             {view === 'timeline' && <TimelineView project={project} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
             {view === 'relations' && <RelationMap project={project} docs={docs} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
             {view === 'pacing' && <PacingView project={project} docs={docs} onOpen={(id) => { go(id); setView('editor'); }} onClose={() => setView('editor')} />}
+            {(view === 'corkboard' || view === 'outline') && viewFilter.open && (
+              <FilterBar
+                project={project}
+                filter={viewFilter}
+                matches={filterNodes ? filterNodes.length : null}
+                onChange={patchViewFilter}
+                onDone={() => setViewFilter((f) => ({ ...f, open: false }))}
+              />
+            )}
             {view === 'corkboard' && (
               <Corkboard
                 project={project}
+                filterNodes={selectedIds.size > 1 ? null : filterNodes}
                 folders={selectedIds.size > 1 ? [...selectedIds].map((id) => findNode(project.tree, id)).filter((n) => n && n.children) : undefined}
                 onAddTo={(folderId) => {
                   const f = findNode(project.tree, folderId);
@@ -2071,6 +2144,7 @@ export default function App({ api }) {
                 docs={docs}
                 root={selected && selected.children ? selected : project.tree[0]}
                 counts={counts}
+                filterNodes={filterNodes}
                 onOpen={(id) => {
                   go(id);
                   setView('editor');
