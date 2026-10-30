@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { quickSearchProject, quickSearchRows, quickNav, handoffCriteria } from '../lib/quickSearch.js';
+import { quickSearchProject, quickSearchRows, quickNav, quickOpenMode, quickRevealPhrase, handoffCriteria } from '../lib/quickSearch.js';
 import { findNode } from '../lib/tree.js';
 import { t } from '../lib/i18n.js';
 
@@ -7,7 +7,8 @@ import { t } from '../lib/i18n.js';
 // document by title, synopsis or text. Results come in three labelled
 // sections; Enter opens the selected row (the find tool is seeded with the
 // phrase, as in Scrivener); the handoff button continues into the full
-// Project Search dialog with the same phrase.
+// Project Search dialog with the same phrase. Modifier opens (manual p. 235):
+// Shift = Quick Reference panel, Alt = the other editor split.
 export default function QuickSearch({ project, docs, currentTitle = '', onOpen, onFullSearch, onClose }) {
   const [query, setQuery] = useState('');
   const [selectedKey, setSelectedKey] = useState(null);
@@ -20,7 +21,9 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
     inputRef.current?.focus();
   }, []);
 
-  const open = (id, q) => onOpen(id, q);
+  // Opens one row with the given mode; App receives the mode plus the reveal
+  // phrase (exact matched text) for a normal open of a text hit.
+  const open = (row, mode) => onOpen(row.node.id, query, { mode, reveal: quickRevealPhrase(row, mode) });
 
   const onKeyDown = (e) => {
     if (e.key === 'Escape') {
@@ -35,8 +38,12 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
       const next = quickNav(rows, selectedKey, e.key);
       if (next.select) setSelectedKey(next.select);
       if (next.open) {
-        open(next.open, query);
-        onClose();
+        // Modifier-aware Enter: Shift/Alt open in Quick Reference / split (§11.5).
+        const row = rows.find((r) => r.key === next.select);
+        if (row) {
+          open(row, quickOpenMode(e));
+          onClose();
+        }
       }
     }
   };
@@ -51,8 +58,8 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
             key={r.node.id}
             className={`qs-result${sel ? ' selected' : ''}`}
             onMouseEnter={() => setSelectedKey(r.key)}
-            onClick={() => {
-              open(r.node.id, query);
+            onClick={(e) => {
+              open(r, quickOpenMode(e));
               onClose();
             }}
           >
@@ -78,7 +85,8 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
-            setSelectedId(null);
+            // a new query re-ranks the rows, so the hover/keyboard selection resets
+            setSelectedKey(null);
           }}
           onKeyDown={onKeyDown}
           placeholder={currentTitle ? `${t('ui.quickSearch.placeholder')} — ${currentTitle}` : t('ui.quickSearch.placeholder')}
@@ -106,6 +114,7 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
           >
             {t('ui.quickSearch.cautare_completa')}
           </button>
+          <small className="muted">{t('ui.quickSearch.modificatori')}</small>
           <small className="muted">Esc</small>
         </div>
       </div>
