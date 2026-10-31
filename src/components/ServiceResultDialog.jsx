@@ -8,7 +8,7 @@ import { applyCorrections, correctionEdits } from '../lib/textRange.js';
 // trip to the provider's website). Without `anchored` it falls back to the classic modal.
 // result: { kind: 'translate', text, service, detected } | { kind: 'grammar', matches, language }
 //        | { kind: 'synonyms', word, synonyms } | { kind: 'dict', word, entries: [{label, url}] }
-export default function ServiceResultDialog({ source, result, onReplace, onInsertAfter, onClose, onOpenUrl, anchored = false, pos = null }) {
+export default function ServiceResultDialog({ source, result, onReplace, onInsertAfter, onClose, onOpenUrl, onSearch, anchored = false, pos = null }) {
   const isGrammar = result.kind === 'grammar';
   const isSynonyms = result.kind === 'synonyms';
   const isDict = result.kind === 'dict';
@@ -35,6 +35,16 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
               <button key={`${s}-${i}`} type="button" className="syn-chip" onClick={() => onReplace(s)}>{s}</button>
             ))}
           </div>
+          {result.related && result.related.length > 0 && (
+            <>
+              <p className="muted small" style={{ marginTop: 8 }}>{t('ui.services.cuvinte_apropiate')}</p>
+              <div className="synonyms-list">
+                {result.related.map((r) => (
+                  <button key={r.word} type="button" className="syn-chip" title={r.synonyms.join(', ')} onClick={() => onSearch?.(r.word)}>{r.word}</button>
+                ))}
+              </div>
+            </>
+          )}
         </>
       ) : isGrammar ? (
         <>

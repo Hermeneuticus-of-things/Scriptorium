@@ -1686,10 +1686,20 @@ export default function App({ api: apiProp }) {
   };
   // In-app synonyms (sinonimul.ro): fetch the word's synonyms and show them as chips; clicking one
   // replaces the selected word in place (same mechanism as the in-app translation).
-  const synonymsInApp = async () => {
+  const synonymsInApp = async (word = null) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
-    const source = (handle?.getSelectionText() || '').trim();
+    const source = String(word || (handle?.getSelectionText() || '')).trim();
     if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (word) {
+      // Cuvinte apropiate din popover: re-căutare directă, fără selecție în editor.
+      setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
+      try {
+        const res = await api.fetchSynonyms(source);
+        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 } });
+        setToast('');
+      } catch (e) { setToast(''); report(e); }
+      return undefined;
+    }
     const range = serviceRange(handle.editor, source);
     setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
     try {
@@ -3999,6 +4009,7 @@ export default function App({ api: apiProp }) {
           onReplace={(text, edits) => { applyServiceText(serviceResult, text, false, edits); setServiceResult(null); }}
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onOpenUrl={(u) => openWeb(u)}
+          onSearch={(w) => synonymsInApp(w)}
           anchored={Boolean(serviceResult.anchored)}
           pos={serviceResult.pos}
           onClose={() => setServiceResult(null)}
