@@ -48,7 +48,19 @@ module.exports = function register({ handle, getSettings, assertOpened, app, dep
     if (!notebook) throw new Error('Niciun notebook NotebookLM configurat (Setări → Servicii).');
     const entry = discover({ name: serverName });
     if (!entry) throw new Error(`Serverul „${serverName}” nu este configurat în Claude (MCP). Nu pot întreba NotebookLM.`);
-    const conn = await makeClient({ entry });
+    // Cookie-urile de sesiune din fereastra de logare dedicată (persistent:notebooklm) merg la
+    // server ca env — serverul le folosește dacă le acceptă; setarea nlmCookieHeader le poate
+    // suprascrie manual.
+    let googleCookies = '';
+    try {
+      if (app) {
+        const ses = require('electron').session.fromPartition('persist:notebooklm');
+        const cookies = await ses.cookies.get({ domain: 'google.com' });
+        googleCookies = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+      }
+    } catch { /* fără sesiune: serverul se descurcă cum poate */ }
+    const cookieEnv = googleCookies || String(settings.nlmCookieHeader || '').trim();
+    const conn = await makeClient({ entry, env: cookieEnv ? { ...process.env, GOOGLE_COOKIE_HEADER: cookieEnv } : process.env });
     try {
       const ask = consult.makeAsk({ client: conn });
       return await fn({ notebook, ask, signal });

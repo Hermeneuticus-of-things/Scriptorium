@@ -9,9 +9,17 @@ export default function ServicesPanel({ api }) {
   const [msg, setMsg] = useState('');
   const [acc, setAcc] = useState(null); // account being edited
   const [test, setTest] = useState({}); // service id -> { busy, ok, msg } for "Test connection"
+  const [oauth, setOauth] = useState(null); // starea Google OAuth {connected, hasClientId, busy}
+  const [nlm, setNlm] = useState(null); // starea logării NotebookLM {loggedIn, cookies}
+  const [clientId, setClientId] = useState(''); // Google OAuth Client ID (din setări)
   const supported = Boolean(api.servicesStatus);
 
-  const load = () => api.servicesStatus().then(setData).catch((e) => setMsg(e.message));
+  const load = () => {
+    api.servicesStatus().then(setData).catch((e) => setMsg(e.message));
+    api.googleAuthStatus?.().then(setOauth).catch(() => {});
+    api.nlmAuthStatus?.().then(setNlm).catch(() => {});
+    api.getSettings?.().then((st) => setClientId(String(st.googleOAuthClientId || ''))).catch(() => {});
+  };
   useEffect(() => {
     if (supported) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,6 +100,60 @@ export default function ServicesPanel({ api }) {
             {s.testable && <button type="button" onClick={() => doTest(id)} disabled={test[id]?.busy || !s.configured}>{test[id]?.busy ? t('ui.services.testez') : t('ui.services.testeaza')}</button>}
           </div>
           {test[id] && !test[id].busy && <p className={test[id].ok ? 'ok small' : 'muted small'} role="status">{test[id].msg}</p>}
+          {id === 'googleTranslate' && api.googleAuthStatus && (
+            <div className="oauth-block">
+              <label className="small">
+                Client ID OAuth (Google Cloud Console → „Desktop app”)
+                <input
+                  type="text"
+                  value={typed['settings.googleOAuthClientId'] ?? clientId}
+                  placeholder="1234567890-abc.apps.googleusercontent.com"
+                  onChange={(e) => setTyped((x) => ({ ...x, 'settings.googleOAuthClientId': e.target.value }))}
+                />
+              </label>
+              <div className="actions-inline">
+                <button
+                  type="button"
+                  disabled={oauth?.busy || !(typed['settings.googleOAuthClientId'] || clientId)}
+                  onClick={async () => {
+                    const cid = typed['settings.googleOAuthClientId'] || clientId;
+                    if (cid && cid !== clientId) { await api.setSettings({ googleOAuthClientId: cid }).catch((e) => setMsg(e.message)); setClientId(cid); }
+                    setOauth((o) => ({ ...(o || {}), busy: true }));
+                    setMsg(t('ui.services.oauth_deschid'));
+                    try {
+                      await api.googleAuthConnect();
+                      setOauth({ connected: true, busy: false });
+                      setMsg(t('ui.services.oauth_conectat'));
+                      load();
+                    } catch (e) {
+                      setOauth((o) => ({ ...(o || {}), busy: false }));
+                      setMsg(e.message);
+                    }
+                  }}
+                >
+                  {oauth?.busy ? t('ui.services.oauth_deschid') : t('ui.services.oauth_conecteaza')}
+                </button>
+                {oauth?.connected && (
+                  <button type="button" onClick={async () => { await api.googleAuthDisconnect().catch((e) => setMsg(e.message)); setOauth((o) => ({ ...(o || {}), connected: false })); load(); }}>
+                    {t('ui.services.oauth_deconecteaza')}
+                  </button>
+                )}
+                <span className={`small ${oauth?.connected ? 'ok' : 'muted'}`}>{oauth?.connected ? t('ui.services.oauth_conectat') : t('ui.services.oauth_neconectat')}</span>
+              </div>
+              <p className="muted small">{t('ui.services.oauth_explicatie')}</p>
+            </div>
+          )}
+          {id === 'googleTranslate' && api.nlmLogin && (
+            <div className="oauth-block">
+              <div className="actions-inline">
+                <button type="button" onClick={async () => { await api.nlmLogin().catch((e) => setMsg(e.message)); setNlm(await api.nlmAuthStatus().catch(() => null)); }}>
+                  {t('ui.services.nlm_login')}
+                </button>
+                <span className={`small ${nlm?.loggedIn ? 'ok' : 'muted'}`}>{nlm?.loggedIn ? t('ui.services.nlm_logat') : t('ui.services.nlm_delogat')}</span>
+              </div>
+              <p className="muted small">{t('ui.services.nlm_explicatie')}</p>
+            </div>
+          )}
         </div>
       ))}
 

@@ -90,6 +90,8 @@ Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înai
 
 ### Traduci
 
+Fără nicio configurare, traducerea merge pe endpointul public gratuit al Google (etichetat onest „Google (fără cheie)" — neoficial, fără SLA). Cu cheie Google Cloud Translation sau **conectare cu contul Google (OAuth)**, traducerea folosește API-urile oficiale: se dezvoltă din secțiunea *Setări → Servicii și conturi → Google Cloud Translation* cu butonul „Conectează cu Google" (consimțământ în browser, fără parolă stocată).
+
 <p align="center">
   <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
 </p>
@@ -178,6 +180,12 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 
 ### AI — tot ce ține de AI, într-un singur loc (opțional)
 
+<p align="center">
+  <img src="./assets/readme/irep.png" width="100%" alt="Panoul I-REP / I-EDIT: rundele editoriale cu AI, streaming live și estimare de apeluri">
+</p>
+
+Rundele **I-EDIT / I-REP** arată acum răspunsul AI **pe măsură ce se scrie** (streaming live, cronometru, anulare cu Esc) și o **estimare înainte de rulare**: „Estimare: 7 documente × 3 bucle ≈ 21 apeluri AI". Rezultatele serviciilor (gramatică, sinonime, traducere, dicționare) apar **în interiorul paginii**, într-un popover ancorat la selecție, cu mărimi care se potrivesc conținutului — nu ca fereastră peste text și fără trimitere la site-uri externe.
+
 Tot ce folosește AI stă grupat și se pornește sau se oprește dintr-un singur loc (pastila **AI** din bară și *Setări → Chei și conturi*). Fără AI, programul merge întreg: verificarea **I-REP** și reparațiile sigure (deterministe) rămân.
 
 - **Asistentul AI** — corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce vrei.
@@ -195,6 +203,8 @@ Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze
 > Mai mult, răspunsurile AI-ului sunt influențate de valorile, regulile și interesele companiilor care îl dezvoltă, inclusiv de felul în care acestea stabilesc ce poate spune și cum. Astfel, fără să-ți dai seama, poți ajunge să reproduci viziunea lor asupra lumii, crezând că este propria ta gândire.
 >
 > Pneuma Sofer merge întreg și fără AI: scrisul rămâne al tău, iar AI-ul îl pornești sau îl oprești oricând, dintr-un singur loc. Folosește-l ca pe un instrument de scris mai inteligent, care elimină fricțiunile și birocrația editorială, nu ca pe un înlocuitor al gândirii sau al creativității tale. Tehnologia trebuie să-ți elibereze scrisul, nu să-l scrie în locul tău.
+
+Pentru **NotebookLM**, secțiunea *Servicii și conturi* are un buton dedicat de logare: se deschide o fereastră în care te autentifici o dată pe Google; sesiunea rămâne doar în calculatorul tău și e folosită de serverul NotebookLM la întrebările pe surse.
 
 ### Compilezi
 
