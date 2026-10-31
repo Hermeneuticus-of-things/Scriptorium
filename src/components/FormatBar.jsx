@@ -7,6 +7,7 @@ import { htmlToManuscript } from '../lib/editorial.js';
 import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linkedToFootnotes } from '../lib/noteConvert.js';
 import { isParaStyle } from '../lib/styles.js';
 import { POS_CLASSES } from '../lib/pos.js';
+import { readingLensItems } from '../lib/readingLenses.js';
 import { listBookmarks } from '../editor/formatting.js';
 import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS } from '../lib/editorMenus.js';
 import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
@@ -460,23 +461,8 @@ export default function FormatBar({
     ...(view.revision ? [{ label: tr('ui.formatBar.removeRound', { n: view.revision }), action: () => chain().removeRevisions(view.revision).run() }] : []),
   ];
 
-  const viewItems = [
-    { label: `${view.focus === 'dialogue' ? '✓ ' : ''}${tr('ui.formatBar.focus_dialogue')}`, action: () => setView({ focus: view.focus === 'dialogue' ? 'off' : 'dialogue' }) },
-    { label: `${view.focus === 'paragraph' ? '✓ ' : ''}${tr('ui.formatBar.focus_paragraph')}`, action: () => setView({ focus: view.focus === 'paragraph' ? 'off' : 'paragraph' }) },
-    { label: `${view.focus === 'sentence' ? '✓ ' : ''}${tr('ui.formatBar.focus_sentence')}`, action: () => setView({ focus: view.focus === 'sentence' ? 'off' : 'sentence' }) },
-    ...POS_CLASSES.map(([id]) => ({ label: `${view.posFocus === id ? '✓ ' : ''}${tr('ui.formatBar.posFocus', { name: tr(`ui.formatBar.pos.${id}`) })}`, action: () => setView({ posFocus: view.posFocus === id ? '' : id }) })),
-    { label: tr('ui.formatBar.posLang', { lang: tr(`ui.formatBar.posLang_${view.posLang || 'auto'}`) }), action: () => setView({ posLang: { auto: 'ro', ro: 'en', en: 'auto' }[view.posLang || 'auto'] }) },
-    { label: `${view.currentParagraph ? '✓ ' : ''}${tr('ui.formatBar.curPara')}`, action: () => setView({ currentParagraph: !view.currentParagraph }) },
-    { label: `${view.currentLine ? '✓ ' : ''}${tr('ui.formatBar.curLine')}`, action: () => setView({ currentLine: !view.currentLine }) },
-    ...[[0.1, 'strong'], [0.28, 'medium'], [0.5, 'weak']].map(([v, n]) => ({ label: `${(view.fadeOpacity ?? 0.28) === v ? '✓ ' : ''}${tr(`ui.formatBar.fade_${n}`)}`, action: () => setView({ fadeOpacity: v }) })),
-    '-',
-    ...[['a5', 'A5'], ['a4', 'A4'], ['letter', 'Letter']].map(([id, n]) => ({ label: `${view.pageView && (view.pageSize || 'a5') === id ? '✓ ' : ''}${tr('ui.formatBar.pageView', { n })}`, action: () => setView({ pageView: !(view.pageView && (view.pageSize || 'a5') === id), pageSize: id }) })),
-    { label: `${view.facing ? '✓ ' : ''}${tr('ui.formatBar.facing')}`, action: () => setView({ facing: !view.facing, pageView: true }) },
-    { label: `${view.ruler ? '✓ ' : ''}${tr('ui.formatBar.ruler')}`, action: () => setView({ ruler: !view.ruler }) },
-    { label: `${(onToggleInvisibles ? showInvisibles : view.invisibles) ? '✓ ' : ''}${tr('ui.formatBar.invisibles')}`, action: onToggleInvisibles || (() => setView({ invisibles: !view.invisibles })) },
-    '-',
-    ...[75, 100, 125, 150, 200].map((z) => ({ label: `${(view.zoom || 100) === z ? '✓ ' : ''}Zoom ${z}%`, action: () => setView({ zoom: z }) })),
-  ];
+  // "Lectură" = reading lenses only (B2 2026-10-31); page, zoom, ruler and invisibles are in View / Format.
+  const viewItems = readingLensItems({ t: tr, view, setView });
 
   const p = s.para;
   const setPara = (attrs) => chain().setParagraphFormat(attrs).run();

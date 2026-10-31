@@ -1,8 +1,22 @@
 // Menu bar layout: which command goes in which menu and submenu.
 // Shared by the in-app menu bar (browser) and the native application menu (desktop).
 
-// Menu bar order: File, Edit, Insert, View, Navigate, Project, Documents, Format, Window, Tools, AI, Help.
-export const MENU_GROUPS = ['file', 'edit', 'insert', 'view', 'nav', 'project', 'document', 'format', 'window', 'tools', 'ai', 'help'];
+// Three tiers (menu reorg 2026-10-31), never mixed:
+//   APPLICATION: Program (program settings, shortcuts, toolbar), Window, Help - the program itself.
+//   PROJECT:     File, Project - the open book: files, import/export, project settings.
+//   WORKFLOW:    Edit, Insert, Format, Documents, View, Navigate, Tools, AI - working on the text.
+// PROGRAM settings (Program > Program settings…, AI > AI settings (program)…) and PROJECT settings
+// (Project > Project settings…, AI > AI settings (project)…) are always different doors.
+export const MENU_TIERS = {
+  application: ['app', 'window', 'help'],
+  project: ['file', 'project'],
+  workflow: ['edit', 'insert', 'format', 'document', 'view', 'nav', 'tools', 'ai'],
+};
+// Menu bar order: Program, File, Project, Edit, Insert, Format, Documents, View, Navigate, Tools, AI, Window, Help.
+export const MENU_GROUPS = ['app', 'file', 'project', 'edit', 'insert', 'format', 'document', 'view', 'nav', 'tools', 'ai', 'window', 'help'];
+// Commands that configure the PROGRAM (not a project, not the text): only in the Program menu.
+export const PROGRAM_COMMANDS = ['settings', 'shortcuts', 'customizeToolbar'];
+export const tierOf = (group) => Object.keys(MENU_TIERS).find((k) => MENU_TIERS[k].includes(group)) || null;
 
 // Commands that need Claude: left out of every menu (and shortcut) while AI is off.
 // I-REP, NotebookLM and "AI settings" (to turn AI back on) stay.
@@ -28,7 +42,11 @@ export const SUBMENUS = {
   format: [['menu.scriptMode', ['scriptOff'], (id) => id.startsWith('script_')], ['menu.styles', ['styles', 'stylesPanel']]],
   view: [
     ['menu.bookViews', ['viewTimeline', 'viewRelations', 'viewPacing']],
-    ['menu.posFocus', ['posNouns', 'posVerbs', 'posOff']],
+    // View > Reading (lenses: how the text is read), View > Page, View > Zoom (B2/B3 2026-10-31).
+    // The FormatBar "Lectură" menu shows the same lenses (src/lib/readingLenses.js) and nothing else.
+    ['menu.reading', ['dialogueFocus', 'linguisticFocus', 'posNouns', 'posVerbs', 'posOff']],
+    ['menu.page', ['pageViewSetup', 'pageFull']],
+    ['menu.zoom', ['zoomIn', 'zoomOut', 'zoomReset']],
     ['menu.scrivenings', ['scrivSelection', 'scrivCollection', 'scrivTitles', 'scrivSeparators']],
     ['menu.textLook', ['toggleFormatBar', 'toggleComments', 'toggleRevisions']],
   ],
@@ -88,9 +106,10 @@ function tidy(items) {
  * @param opts.item (id) => menu item; opts.label (key) => text; opts.extras {group: items[]}
  * @param opts.after {group: items[]}: appended after the group's commands
  * @param opts.goto {tree, go, skip?}: Navigate › Go To submenu with the whole binder (first in Navigate)
+ * @param opts.append {submenu label key: items[]}: extra items added to the end of that submenu
  * @returns [{group, label, items}] (items: '-', {id,label,action,...} or {label, submenu})
  */
-export function buildMenuLayout(commands, { item, label, extras = {}, after = {}, goto = null }) {
+export function buildMenuLayout(commands, { item, label, extras = {}, after = {}, goto = null, append = {} }) {
   const ids = (g) => Object.values(commands).filter((c) => c.group === g).map((c) => c.id);
   const groupItems = (g, order) => {
     const defs = SUBMENUS[g] || [];
@@ -104,8 +123,9 @@ export function buildMenuLayout(commands, { item, label, extras = {}, after = {}
       const extra = def[2] ? ids(g).filter((m) => def[2](m) && !def[1].includes(m)) : [];
       const members = [...def[1], ...extra].filter((m) => commands[m] && commands[m].group === g);
       members.forEach((m) => done.add(m));
-      if (members.length === 1) out.push(item(members[0]));
-      else out.push({ label: label(def[0]), submenu: members.map(item) });
+      const add = (append[def[0]] || []).filter(Boolean);
+      if (members.length === 1 && !add.length) out.push(item(members[0]));
+      else out.push({ label: label(def[0]), submenu: tidy([...add, ...(add.length ? ['-'] : []), ...members.map(item)]) });
     }
     return out;
   };

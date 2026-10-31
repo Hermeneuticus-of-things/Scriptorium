@@ -2882,7 +2882,7 @@ export default function App({ api: apiProp }) {
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
-    ['tools', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
+    ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
@@ -2891,7 +2891,7 @@ export default function App({ api: apiProp }) {
     ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
     ['ai', 'aiProjectSettings', tr('cmd.aiProjectSettings'), () => setDialog('projectAi'), !project],
     ['ai', 'mcpConnect', tr('cmd.mcpConnect'), () => setDialog('mcp'), !api.mcpConnectInfo],
-    ['view', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
+    ['app', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
     ['view', 'copyholder', tr('cmd.copyholder'), () => openCopyholder(selected?.id), !selected || Boolean(selected.root) || Boolean(selected.children)],
     ['view', 'copyholderClose', tr('cmd.copyholderClose'), () => setCopyholder(null), !copyholder],
     ['view', 'splitEditor', tr('cmd.splitEditor'), () => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)],
@@ -2922,7 +2922,7 @@ export default function App({ api: apiProp }) {
     ['ai', 'aiZoomReview', tr('cmd.aiZoomReview'), () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
     ['ai', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
     ['ai', 'nlmOpen', tr('cmd.nlmOpen'), () => api.nlmOpen().catch(report), !api.nlmOpen],
-    ['file', 'newWindow', tr('cmd.newWindow'), () => api.newWindow().catch(report), !api.newWindow],
+    ['window', 'newWindow', tr('cmd.newWindow'), () => api.newWindow().catch(report), !api.newWindow],
     ['file', 'exportBundle', tr('cmd.exportBundle'), () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', tr('cmd.importBundle'), () => api.importBundle().then(openResult).catch(report), !api.importBundle],
     ['tools', 'research', tr('cmd.research'), () => setShowResearch((v) => !v), !api.ragQuery],
@@ -2947,8 +2947,8 @@ export default function App({ api: apiProp }) {
     ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, tr('ui.app.mod_scenariu_x', { label: tr(`ui.scriptFormat.${f.id}`) }), () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
     ['file', 'exportFdx', tr('cmd.exportFdx'), () => flush().then(() => exportScript('fdx')).catch(report), !api.exportScript || !scriptFormat],
     ['file', 'exportFountain', tr('cmd.exportFountain'), () => flush().then(() => exportScript('fountain')).catch(report), !api.exportScript || !scriptFormat],
-    ['tools', 'settings', tr('cmd.settings'), () => setDialog('settings')],
-    ['tools', 'shortcuts', tr('cmd.shortcuts'), () => setDialog('shortcuts')],
+    ['app', 'settings', tr('cmd.settings'), () => setDialog('settings')],
+    ['app', 'shortcuts', tr('cmd.shortcuts'), () => setDialog('shortcuts')],
     ['window', 'saveLayout', tr('cmd.saveLayout'), saveLayout],
     ['window', 'manageLayouts', tr('cmd.manageLayouts'), () => setDialog('layouts')],
     ['view', 'pageViewSetup', tr('cmd.pageViewSetup'), () => setEditorView({ ...editorView, pageView: !(editorView.pageView && editorView.pageSize === 'setup'), pageSize: 'setup' })],
@@ -3048,11 +3048,14 @@ export default function App({ api: apiProp }) {
     styleName: (st) => builtinName('style', st),
     run: (id) => commandsRef.current[id]?.run(),
     desktop: Boolean(api.setAppMenu),
+    setZoom: (z) => setZoom(z),
+    curZoom: () => curZoom(),
   });
   const menuLayout = buildMenuLayout(commands, {
     extras: { document: documentMenu, nav: navigateMenu, project: projectMenu, edit: edMenus.edit, insert: edMenus.insert, format: edMenus.format, view: edMenus.view, window: edMenus.window },
     after: { edit: [commands.appendSelection && menuItem('appendSelection'), ...edMenus.editAfter].filter(Boolean) },
     goto: { tree: project.tree, go: (id) => { go(id); setView('editor'); }, skip: (n) => n.root === 'trash' },
+    append: edMenus.append,
     label: (k) => tr(k),
     item: menuItem,
   });
@@ -3721,6 +3724,7 @@ export default function App({ api: apiProp }) {
               )}
               {showAi && aiEnabled && (
                 <AiPanel
+                  projectDir={dir}
                   api={api}
                   hasKey={settings.hasApiKey}
                   aiLabel={settings.aiLabel}

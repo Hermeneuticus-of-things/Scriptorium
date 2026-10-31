@@ -22,7 +22,7 @@ const URL = (process.env.SCRIBNER_URL || 'http://localhost:4183/?demo') + '&whis
   check('no dictation bar without the engine', (await page.locator('.dictation-bar').count()) === 0);
 
   // download from Settings → Services
-  await menuCmd(page, /^Setări…/);
+  await menuCmd(page, /^Setări program…/);
   await page.locator('.modal [role=tab]', { hasText: /Servicii/ }).first().click();
   const eng = page.locator('.local-engine');
   check('the built-in engine is the default choice', (await page.locator('input[name=speechEngine]').first().isChecked()) === true);

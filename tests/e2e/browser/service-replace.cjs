@@ -5,7 +5,7 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
   const cmd = (label) => menuCmd(page, label);
-  await cmd('Setări…');
+  await cmd('Setări program…');
   await page.getByRole('tab', { name: 'Servicii și conturi' }).click();
   const row = page.locator('.service-row', { hasText: 'DeepL' });
   await row.locator('input').first().fill('demo-key:fx');
