@@ -58,6 +58,17 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
   // expires when the text changes.
   const [rejected, setRejected] = useState(() => new Map());
   const [editing, setEditing] = useState(null); // {id, text, warn412?} author edit of a proposal (I-EDIT part 1)
+  // Streaming live al rundei AI (aceeași filieră ca în Asistentul AI): runId + onDelta.
+  const runIdRef = useRef('');
+  const [stream, setStream] = useState('');
+  const [startedAt, setStartedAt] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!busy || !startedAt) return undefined;
+    const iv = setInterval(() => setElapsed(Math.round((Date.now() - startedAt) / 1000)), 1000);
+    return () => clearInterval(iv);
+  }, [busy, startedAt]);
+  useEffect(() => api.onAiDelta?.((p) => { if (p && p.runId === runIdRef.current) setStream((t) => (t + p.delta).slice(-600)); }), [api]);
   const [lastRun, setLastRun] = useState(null);
   const [filter, setFilter] = useState('all');
   // User word lists (Setări → Editorial) and the canonical index (Index_de_Lucru).
@@ -136,8 +147,14 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
   }, [busy, api]);
 
   const ai = async (prompt, effort = 'high') => {
-    const res = await api.runAi({ action: 'editorial', system: systemPrompt(profile), prompt, effort });
-    return cleanModelText(res.text);
+    const runId = `ed${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    runIdRef.current = runId;
+    setStream('');
+    const res = await api.runAi({ action: 'editorial', system: systemPrompt(profile), prompt, effort, runId });
+    const out = cleanModelText(res.text);
+    setStream('');
+    return out;
+    return out;
   };
 
   // One document: repair -> re-verify loop until no blocking issues or maxLoops.
@@ -352,7 +369,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
         {aiEnabled && <button className={tab === 'edit' ? 'on' : ''} onClick={() => setTab('edit')}>I-EDIT</button>}
       </div>
       {aiEnabled && (aiLabel || aiModel) && <p className="muted small ai-provider">Model: {providerText(aiLabel, aiModel)}</p>}
-      <p className="muted small">Profil: {profile.name}{canonNodes.length ? ` · Index_de_Lucru: ${canonNodes.length} noduri` : ''}</p>
+      <p className="muted small">{t('ui.editorialPanel.profil')} {profile.name}{canonNodes.length ? ` · Index_de_Lucru: ${canonNodes.length} noduri` : ''}</p>
       {canonProblems.length > 0 && (
         <details className="small">
           <summary>Index_de_Lucru: {canonProblems.length} probleme</summary>
@@ -379,12 +396,13 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
       {tab === 'rep' && (
         <>
           <label>
-            Bucle maxime
+            {t('ui.editorialPanel.bucle_maxime')}
             <input type="number" min="1" max="8" value={maxLoops} onChange={(e) => setMaxLoops(Math.max(1, Math.min(8, Number(e.target.value) || 1)))} />
           </label>
           <label className="check">
             <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} /> {t('ui.editorialPanel.si_problemele_medii_blocheaza')}
           </label>
+          {level !== 'micro' && <p className="muted small">{t('ui.editorialPanel.estimare', { n: level === 'macro' ? chapter.length : 1, bucle: maxLoops, total: (level === 'macro' ? chapter.length : 1) * maxLoops })}</p>}
           <div className="ai-actions">
             {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>{t('btn.cancel')}</button>}
             <button onClick={() => Promise.resolve(onApply({ id: node.id, title: node.title, before: html, after: fixFor(ownHashes)(html), safe: true })).catch((e) => setError(e.message))} disabled={busy}>
@@ -392,7 +410,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
             </button>
             {aiEnabled && (
               <button className="primary" onClick={runRep} disabled={busy || !hasKey}>
-                {busy ? 'Lucrez…' : t('ui.editorialPanel.i_rep_repara_reverifica')}
+                {busy ? t('ui.editorialPanel.lucrez') : t('ui.editorialPanel.i_rep_repara_reverifica')}
               </button>
             )}
           </div>
@@ -425,13 +443,13 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
             <button onClick={() => setRounds(new Set())}>{t('ui.editorialPanel.niciuna')}</button>
             {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>{t('btn.cancel')}</button>}
             <button className="primary" onClick={runEdit} disabled={busy || !hasKey || !rounds.size || level === 'micro'}>
-              {busy ? 'Lucrez…' : t('ui.editorialPanel.i_edit_ruleaza_rundele')}
+              {busy ? t('ui.editorialPanel.lucrez') : t('ui.editorialPanel.i_edit_ruleaza_rundele')}
             </button>
           </div>
           {level === 'micro' && <p className="muted small">{t('ui.editorialPanel.i_edit_lucreaza_pe_document')}</p>}
           {node.editorial?.rounds && (
             <p className="muted small">
-              Ultimele runde: {Object.entries(node.editorial.rounds).map(([k, d]) => `${k} ${new Date(d).toLocaleDateString(uiLocale())}`).join(' · ')}
+              {t('ui.editorialPanel.ultimele_runde')} {Object.entries(node.editorial.rounds).map(([k, d]) => `${k} ${new Date(d).toLocaleDateString(uiLocale())}`).join(' · ')}
             </p>
           )}
         </>
@@ -448,12 +466,19 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           {lastRun && !busy && <button className="link" onClick={lastRun}>{t('ui.aiPanel.reincearca')}</button>}
         </div>
       )}
-      {busy && <p className="muted" aria-live="polite">Lucrez… {api.cancelAi && t('ui.editorialPanel.esc_anuleaza')}</p>}
+      {busy && (
+        <div className="ai-live" aria-live="polite">
+          <p className="muted">
+            {t('ui.editorialPanel.lucrez')} {elapsed}s {stream ? t('ui.aiPanel.scrie') : t('ui.aiPanel.se_gandeste')}… {api.cancelAi && <button className="link" onClick={() => api.cancelAi().catch(() => {})}>{t('ui.aiPanel.anuleaza_esc')}</button>}
+          </p>
+          {stream && <pre className="ai-stream">{stream}</pre>}
+        </div>
+      )}
       {log.length > 0 && <pre className="rep-log" aria-live="polite">{log.join('\n')}</pre>}
 
       {proposal && (
         <div className="proposal">
-          <h4>Propunere ({proposal.length} document{proposal.length > 1 ? 'e' : ''})</h4>
+          <h4>{t('ui.editorialPanel.propunere', { n: proposal.length })}</h4>
           {proposal.map((p) => {
             const s = summarize(p.issuesAfter || []);
             return (
@@ -520,7 +545,7 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
             <button className="primary" onClick={accept} disabled={!chosen.length}>
               {proposal.length > 1 ? t('ui.editorialPanel.accepta_x_din_x', { length: chosen.length, length1: proposal.length }) : t('ui.editorialPanel.accepta_si_aplica')}
             </button>
-            <button onClick={() => setProposal(null)}>{proposal.length > 1 ? t('ui.editorialPanel.respinge_tot') : 'Respinge'}</button>
+            <button onClick={() => setProposal(null)}>{proposal.length > 1 ? t('ui.editorialPanel.respinge_tot') : t('ui.editorialPanel.respinge')}</button>
           </div>
         </div>
       )}
