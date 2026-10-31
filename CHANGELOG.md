@@ -1,6 +1,13 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.13.3
+- **I-EDIT / I-REP: streaming live** — rundele AI arată textul pe măsură ce e scris (aceeași filieră ca în Asistentul AI), cu cronometru și anulare Esc, în panoul editorial.
+- **Estimare înainte de rulare**: „Estimare: N documente × B bucle ≈ total apeluri AI" apare sub controalele I-REP.
+- **Interfața pe limba ei**: string-urile hardcodate din panoul editorial („Lucrez…", „Bucle maxime", „Propunere", „Respinge"…) au intrat în i18n (ro/en).
+- **Traducere fără cheie**: dacă nu ai cheie Google Cloud Translation, „Google" folosește automat endpointul public gtx (etichetat „Google (fără cheie)" — neoficial, fără SLA); cu cheie, API-ul oficial rămâne neschimbat.
+- Serviciile rămân în pagina de editare: popoverul ancorat cu mărimi dinamice (gramatică, sinonime, traducere, dicționare), fără popup modal și fără trimitere la site-uri externe.
+
 ## v0.13.2
 - **Formatul de proiect, documentat oficial**: `docs/FORMAT-PROIECT.md` — contractul complet al formatului `.scribner` (layout, schema `project.json` cu toate cheile, versiunea `format: 1` cu gardă de compatibilitate, interoperabilitatea lossless cu `.scriv` 1/2/3 în ambele direcții, cu 29 de teste de round-trip). Formatul NU se schimbă: e același dinainte de redenumire, acum scris negru pe alb.
 - **Texte corecte la deschiderea proiectului**: titlul dialogului și butonul de pe ecranul de start nu mai numeau fișierul după vechea marcă („Deschide un proiect .scribner” → „Deschide un proiect Pneuma Sofer (dosarul .scribner)”).
