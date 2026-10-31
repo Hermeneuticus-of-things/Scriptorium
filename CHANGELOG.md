@@ -7,6 +7,8 @@
 - **Interfața pe limba ei**: string-urile hardcodate din panoul editorial („Lucrez…", „Bucle maxime", „Propunere", „Respinge"…) au intrat în i18n (ro/en).
 - **Traducere fără cheie**: dacă nu ai cheie Google Cloud Translation, „Google" folosește automat endpointul public gtx (etichetat „Google (fără cheie)" — neoficial, fără SLA); cu cheie, API-ul oficial rămâne neschimbat.
 - Serviciile rămân în pagina de editare: popoverul ancorat cu mărimi dinamice (gramatică, sinonime, traducere, dicționare), fără popup modal și fără trimitere la site-uri externe.
+- **Conturi & autentificări (Etapa 4)**: Google Translate se poate conecta acum cu **contul Google prin OAuth Desktop** (consimțământ în browser, doar token de reîmprospătare stocat criptat — niciodată parolă); lanțul de traducere devine OAuth → cheie API → endpointul public gratuit. **NotebookLM**: buton de logare cu fereastră dedicată (sesiunea rămâne în calculator) — cookie-urile de sesiune merg la serverul NotebookLM la întrebări.
+- **Popoverul de servicii are mărimi dinamice**: lățimea urmează conținutul (240–560 px), se poziționează sub selecție, se întoarce deasupra când nu încape — acoperă minimul din textul editat.
 
 ## v0.13.2
 - **Formatul de proiect, documentat oficial**: `docs/FORMAT-PROIECT.md` — contractul complet al formatului `.scribner` (layout, schema `project.json` cu toate cheile, versiunea `format: 1` cu gardă de compatibilitate, interoperabilitatea lossless cu `.scriv` 1/2/3 în ambele direcții, cu 29 de teste de round-trip). Formatul NU se schimbă: e același dinainte de redenumire, acum scris negru pe alb.
