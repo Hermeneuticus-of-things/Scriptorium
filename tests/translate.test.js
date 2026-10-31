@@ -30,8 +30,12 @@ describe('deeplTranslate', () => {
 });
 
 describe('googleTranslate', () => {
-  it('necesită cheie', async () => {
-    await expect(googleTranslate({ apiKey: '', text: 'x', to: 'ro' })).rejects.toThrow(/cheia Google Cloud Translation/);
+  it('fără cheie → cade automat pe gtx (fallback fără cheie)', async () => {
+    const r = await googleTranslate({
+      apiKey: '', text: 'Bună', to: 'en',
+      fetchImpl: async () => okJson([[['Hello', 'src', null, null]], null, 'ro']),
+    });
+    expect(r).toMatchObject({ text: 'Hello', service: 'Google (fără cheie)' });
   });
   it('decodifică entitățile HTML din răspuns', async () => {
     const r = await googleTranslate({
