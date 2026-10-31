@@ -731,7 +731,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <legend>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</legend>
           <div className="row">
             <label>
-              Format text
+              {t('ui.settingsDialog.format_text')}
               <select value={sharing.sync.format} onChange={(e) => setSync({ format: e.target.value })}>
                 <option value="rtf">RTF</option>
                 <option value="txt">{t('ui.compileDialog.text_simplu')}</option>
@@ -755,7 +755,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <fieldset>
           <legend>{t('ui.settingsDialog.export_fisiere_implicit')}</legend>
           <label>
-            Format
+            {t('ui.settingsDialog.format_export')}
             <select value={sharing.export.format} onChange={(e) => setExp({ format: e.target.value })}>
               <option value="docx">DOCX</option>
               <option value="rtf">RTF</option>
@@ -765,8 +765,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             </select>
           </label>
           <label className="check"><input type="checkbox" checked={sharing.export.keepFolders} onChange={(e) => setExp({ keepFolders: e.target.checked })} /> {t('ui.settingsDialog.pastreaza_structura_de_dosare')}</label>
-          <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> Include notele</label>
-          <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> Include metadatele</label>
+          <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> {t('ui.settingsDialog.include_notele')}</label>
+          <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> {t('ui.settingsDialog.include_metadatele')}</label>
         </fieldset>
       </>
     ),
