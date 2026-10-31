@@ -217,3 +217,17 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [~] Interfața 1:1 cu programul de referință (vezi ROADMAP.md, „Cereri 25.10.2026”)
 - [ ] Import/export și MCP direct din `.scrivx`; `scriv_search`
 - [ ] Skill mcp-builder cu evaluări pentru serverul MCP
+
+## Session 2026-10-30
+### Request: Quick Search ca în Scrivener 3 (audit cap. 11 din manualul oficial, 2026-10-30)
+- [x] Dovezi: docs/SCRIVENER-SEARCH-EVIDENCE.md — cele 6 unelte de căutare din Scrivener 3, cu citate + pagini din manualul inclus în instalare
+- [x] Quick Search (§11.5): src/lib/quickSearch.js (pur) + src/components/QuickSearch.jsx + wiring în App.jsx; Ctrl+O; frază exactă, diacritice-insensibil; secțiuni Titluri/Sinopse/Text; Esc golește apoi închide; handoff „Căutare completă în proiect" (fraza → operator exact); Find preseed-at la deschiderea rezultatului; i18n ro/en; 13 teste unitare (tests/quickSearch.test.js); suita completă verde (841 trecute); build OK
+- [x] Goluri P1 (2026-10-30): operatori Starts/Ends with (buildTerms, ancorare la marginea de cuvânt), Invert Results (criteriul invert; interogare goală + invert = toate nodurile care trec de filtre), sortare rezultate (binder/titlu ro/dată + Descrescător) — în dialog + i18n; 20 teste în projectSearch.test.js; suita 851 trecute; build OK
+- [x] Goluri P2 (2026-10-30): parseQuery — ghilimele în any/all, excludere cu „-" (și fraze), wildcard „*", mdate:/cdate: (an/lună/zi, d/m/y relative, >, <, AND cu textul); 29 teste în projectSearch.test.js; suita 860 trecute; build OK
+- [x] Dialogue Focus (§20.3.2): lib pur + panou + comandă în Unelte; 5 teste noi; suita 891 trecute (2026-10-30)
+- [ ] Rămâne din căutare: extinderi Find by Formatting (§11.6: caracter, linkuri, imagini, formatting păstrat) — în lucru pe feat/find-by-formatting-ext; API de scriere snapshot-uri — în lucru pe feat/snapshot-write-api; Shift/Alt+click Quick Search + derulare la prima apariție — în lucru pe feat/quicksearch-polish
+- [ ] Goluri noi din audit (docs/PARITY-AUDIT-NEXT-CHAPTERS.md): P1 strip/convert notații (§18.4.1/18.4.5), P1 Saved Layouts (§12.3); P2 înlocuiri la nivel de proiect (§23.4.4), șabloane de document (§7.5); P3 iconițe personalizate (§7.4)
+- [ ] Tur manual UI (Ctrl+O): deschide, tastează, Enter deschide documentul, Esc de două ori, butonul de căutare completă
+- [ ] Deviații conștiente de rezolvat: Shift/Alt+click pe rezultat (Quick Reference / split), derulare+selectare a primei apariții din text
+- [ ] Audit de paritate capitol cu capitol (metoda din document): cap. 10 metadata, 12 editor, 18 comentarii, 24 Compile
+Rezumat: Quick Search completat și verificat; inventarul FEATURES-SCRIVENER3.md nu conținea unealta — auditul corect e pe manual, nu pe inventar.

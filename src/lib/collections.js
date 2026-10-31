@@ -27,9 +27,11 @@ export function createCollection(project, { title = 'Colecție nouă', color = '
 }
 
 export const renameCollection = (project, collectionId, title) =>
-  withCollection(project, collectionId, (c) => {
-    c.title = title;
-  });
+  collectionId === SEARCH_RESULTS_ID
+    ? project
+    : withCollection(project, collectionId, (c) => {
+        c.title = title;
+      });
 
 export const recolorCollection = (project, collectionId, color) =>
   withCollection(project, collectionId, (c) => {
@@ -37,9 +39,37 @@ export const recolorCollection = (project, collectionId, color) =>
   });
 
 export function deleteCollection(project, collectionId) {
+  if (collectionId === SEARCH_RESULTS_ID) return project; // system collection: cannot be removed
   const next = structuredClone(project);
   next.collections = (next.collections || []).filter((c) => c.id !== collectionId);
   return next;
+}
+
+// The special "Search Results" collection (Scrivener §11.1.1, p. 219): fixed id,
+// always present, cannot be removed, and stores the last search used — so it
+// survives closing and reopening the project.
+export const SEARCH_RESULTS_ID = 'search-results';
+
+export function ensureSearchResults(project) {
+  if ((project.collections || []).some((c) => c.id === SEARCH_RESULTS_ID)) return project;
+  return createCollection(project, {
+    id: SEARCH_RESULTS_ID,
+    title: SEARCH_RESULTS_ID,
+    type: 'search',
+    search: { query: '', options: {} },
+  }).project;
+}
+
+// Records the last search used. An empty query only makes sure the collection
+// exists; it never wipes a stored search.
+export function setLastSearch(project, criteria = {}) {
+  const query = String(criteria.query || '').trim();
+  const ensured = ensureSearchResults(project);
+  if (!query) return ensured;
+  const { query: q, ...options } = criteria;
+  return withCollection(ensured, SEARCH_RESULTS_ID, (c) => {
+    c.search = { query: q, options };
+  });
 }
 
 export const addToCollection = (project, collectionId, ids) =>

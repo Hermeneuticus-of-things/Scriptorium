@@ -166,6 +166,7 @@ const PRELOAD_COVERAGE = {
   deleteSnapshot: 'manage_snapshot',
   renameSnapshot: 'manage_snapshot',
   snapshotCounts: 'gui: semnul din Binder și managerul de snapshot-uri (list_snapshots per document)',
+  updateSnapshotHtml: 'gui: rescrierea html-ului de snapshot-uri existente e doar din trecerea Project Replace (peste MCP, write_document face snapshot înainte)',
   listAllTemplates: 'list_templates',
   saveAsTemplate: 'gui: scrie în folderul aplicației, nu la o cale dată de client',
   deleteTemplate: 'gui: șterge din folderul aplicației',

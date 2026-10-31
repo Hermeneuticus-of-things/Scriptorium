@@ -27,6 +27,8 @@ const paths = {
   document: (<><path d="M3.5 1.5h6l3 3v10h-9z" fill="#fff" stroke="#7b8796" strokeWidth="1" strokeLinejoin="round" /><path d="M9.5 1.5v3h3M5.5 7.5h5M5.5 9.5h5M5.5 11.5h3.5" stroke="#9aa6b4" strokeWidth="1" fill="none" /></>),
   draft: (<><path d="M2.5 1.5h9l2 2v11h-11z" fill="#fdfdfd" stroke="#4a6fa5" strokeWidth="1" strokeLinejoin="round" /><path d="M4 1.5v13" stroke="#4a6fa5" strokeWidth="1.6" /><path d="M6 5.5h5M6 7.5h5M6 9.5h3" stroke="#4a6fa5" strokeWidth="1" /></>),
   research: (<><path d="M1.5 4V13a.5.5 0 0 0 .5.5h12a.5.5 0 0 0 .5-.5V5.5a.5.5 0 0 0-.5-.5H7.5L6 3H2a.5.5 0 0 0-.5.5z" fill="#cfe0f2" stroke="#5b84b1" strokeWidth="1" strokeLinejoin="round" /><circle cx="7.5" cy="9" r="2" fill="none" stroke="#2f5d8f" strokeWidth="1.1" /><path d="m9 10.5 2 2" stroke="#2f5d8f" strokeWidth="1.2" strokeLinecap="round" /></>),
+  // Document Templates folder (Scrivener 3 §7.5): folder with a "T".
+  templates: (<><path d="M1.5 4V13a.5.5 0 0 0 .5.5h12a.5.5 0 0 0 .5-.5V5.5a.5.5 0 0 0-.5-.5H7.5L6 3H2a.5.5 0 0 0-.5.5z" fill="#e8e2d4" stroke="#8f8878" strokeWidth="1" strokeLinejoin="round" /><path d="M5.6 6.2h4.8M8 6.2v4.6" stroke="#6b6455" strokeWidth="1.3" strokeLinecap="round" /></>),
   trash: (<><path d="M2.5 4h11M6 4V2.5h4V4" {...S} /><path d="M3.8 4l.8 10h6.8l.8-10" {...S} /><path d="M6.5 6.5v5M9.5 6.5v5" {...S} /></>),
   back: (<path d="M10 3 5 8l5 5" {...S} strokeWidth="1.6" />),
   forward: (<path d="m6 3 5 5-5 5" {...S} strokeWidth="1.6" />),
@@ -66,6 +68,7 @@ export const FolderIcon = make('folder');
 export const DocumentIcon = make('document');
 export const DraftIcon = make('draft');
 export const ResearchIcon = make('research');
+export const TemplatesIcon = make('templates');
 export const TrashIcon = make('trash');
 export const BackIcon = make('back');
 export const ForwardIcon = make('forward');

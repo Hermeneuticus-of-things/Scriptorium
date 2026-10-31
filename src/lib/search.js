@@ -28,7 +28,8 @@ const NAMED = {
   sup1: '¹', sup2: '²', sup3: '³', micro: 'µ', larr: '←', rarr: '→', uarr: '↑', darr: '↓',
 };
 
-function decode(s) {
+// Exported for formatFind.js, which reuses the same segment parser approach.
+export function decode(s) {
   return s
     .replace(/&nbsp;/g, ' ')
     // Named references (&lt; &mdash; &laquo; …; pasted/imported HTML) must become text too, or a
@@ -50,10 +51,11 @@ function encode(s) {
 
 // Splits html into [{tag:true, s}] / [{tag:false, s(decoded), prev, next}]. prev/next: the text
 // around the piece inside the same paragraph (across bold, italic, links…), so "whole word" and
-// ^/$ see the real neighbours ("pre<strong>fix</strong>" is not the word "fix").
+// ^/$ see the real neighbours ("pre<strong>fix</strong>" is not the word "fix"). Exported for
+// formatFind.js, which reuses the same segment parser approach.
 const INLINE = /^<\/?(strong|b|em|i|u|s|span|a|sub|sup|mark|code|small|del|ins)\b/i;
 const CONTEXT = 32;
-function segments(html) {
+export function segments(html) {
   const out = [];
   const re = /(<[^>]*>)|([^<]+)/g;
   let m;
@@ -99,6 +101,16 @@ function matchesIn(seg, re) {
   }
   re.lastIndex = 0;
   return found;
+}
+
+// Plain text of html without the DOM (htmlToText needs document; this stays usable
+// in Node): markup dropped, block ends become newlines like htmlToText does.
+export const BLOCK_END = /<\/?(?:p|h[1-6]|li|blockquote|div|tr|section)\b|<br\b/i;
+
+export function htmlToPlain(html) {
+  let out = '';
+  for (const seg of segments(html || '')) out += seg.tag ? (BLOCK_END.test(seg.s) ? '\n' : '') : seg.s;
+  return out;
 }
 
 export function findInHtml(html, re, context = 40) {

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { tabKeys } from '../lib/tabKeys.js';
 import { styleCss, stylesOf } from '../lib/styles.js';
+import { moveItem } from '../lib/projectSettings.js';
 // The presets live in lib/compileFormats.cjs (used by the main process). The
 // renderer has no Node and no eval, so it reads the JSON block from the source.
 import formatsSource from '../../lib/compileFormats.cjs?raw';
@@ -52,6 +53,7 @@ const TABS = () => ([
   ['continut', tr('ui.compileDialog.continut'), '☰'],
   ['optiuni', tr('ui.compileDialog.optiuni'), '⚙'],
   ['metadate', tr('ui.compileDialog.metadate'), 'ℹ'],
+  ['inlocuiri', tr('ui.compileDialog.inlocuiri'), '⇄'],
 ]);
 
 // Tabs of the "Edit format…" sub-dialog: settings stored in the format itself.
@@ -113,8 +115,8 @@ async function toBase64Image(url) {
   return { mime: blob.type || 'image/jpeg', data: btoa(bin) };
 }
 
-function newCustomId() {
-  return `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+function newCustomId(prefix = 'custom') {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
 export default function CompileDialog({ api, dir, project, selectionIds = [], onProjectChange, onClose, onError }) {
@@ -141,6 +143,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   }, [globalsLoaded, all, formatId]);
   const [collectionId, setCollectionId] = useState(pc.collectionId || '');
   const [trackChanges, setTrackChanges] = useState(Boolean(pc.trackChanges));
+  // Project-level replacements (Scrivener 3 §23.4.4): one list per project, shared by
+  // every format; the engine applies it before the format's own replacements.
+  const [projReps, setProjReps] = useState(() => (Array.isArray(project.replacements) ? clone(project.replacements) : []));
   // Manual collections and saved searches (their documents are found when compiling).
   const collections = (project.collections || []).filter((c) => Array.isArray(c.ids) || c.type === 'search');
 
@@ -323,6 +328,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
 
   const persist = () => {
     const next = { ...project, compile: settings() };
+    // An empty list stays absent on the project, so project.json keeps "feature off".
+    if (projReps.length) next.replacements = projReps;
     onProjectChange(next);
     return next;
   };
@@ -398,7 +405,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     try {
       const opts = await buildOptions(project);
       if (api.previewCompiled) {
-        setPreview(await api.previewCompiled(dir, project, opts));
+        setPreview(await api.previewCompiled(dir, { ...project, replacements: projReps }, opts));
       } else {
         // Simple fallback when the main process has no preview handler.
         const parts = [];
@@ -1031,6 +1038,48 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   </label>
                                   </div>
                 </div>
+              )}
+              {tab === 'inlocuiri' && (
+                <fieldset>
+                  <legend>{tr('ui.projectReplacements.title')}</legend>
+                  <p className="muted small">{tr('ui.projectReplacements.orderNote')}</p>
+                  <table className="cd-table">
+                    <thead>
+                      <tr>
+                        <th>{tr('ui.projectReplacements.enabled')}</th>
+                        <th>{tr('ui.projectReplacements.find')}</th>
+                        <th>{tr('ui.projectReplacements.replace')}</th>
+                        <th>Regex</th>
+                        <th>{tr('ui.compileDialog.cuvant_intreg')}</th>
+                        <th>Majuscule</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projReps.map((r, i) => {
+                        const set = (k, v) => setProjReps(projReps.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
+                        return (
+                          <tr key={r.id || i}>
+                            <td><input type="checkbox" aria-label={tr('ui.projectReplacements.enabled')} checked={r.enabled !== false} onChange={(e) => set('enabled', e.target.checked)} /></td>
+                            <td><input aria-label={tr('ui.projectReplacements.find')} value={r.find || ''} onChange={(e) => set('find', e.target.value)} /></td>
+                            <td><input aria-label={tr('ui.projectReplacements.replace')} value={r.replace || ''} onChange={(e) => set('replace', e.target.value)} /></td>
+                            <td><input type="checkbox" aria-label="Regex" checked={Boolean(r.regex)} onChange={(e) => set('regex', e.target.checked)} /></td>
+                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.cuvant_intreg')} checked={Boolean(r.wholeWord)} onChange={(e) => set('wholeWord', e.target.checked)} /></td>
+                            <td><input type="checkbox" aria-label={tr('ui.compileDialog.tine_cont_de_majuscule')} checked={Boolean(r.caseSensitive)} onChange={(e) => set('caseSensitive', e.target.checked)} /></td>
+                            <td>
+                              <button type="button" title={tr('ui.projectReplacements.up')} disabled={i === 0} onClick={() => setProjReps(moveItem(projReps, i, -1))}>↑</button>
+                              <button type="button" title={tr('ui.projectReplacements.down')} disabled={i === projReps.length - 1} onClick={() => setProjReps(moveItem(projReps, i, 1))}>↓</button>
+                              <button type="button" title={tr('ui.projectReplacements.delete')} onClick={() => setProjReps(projReps.filter((_, j) => j !== i))}>✕</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  <button type="button" onClick={() => setProjReps([...projReps, { id: newCustomId('rep'), find: '', replace: '', regex: false, wholeWord: false, caseSensitive: false, enabled: true }])}>
+                    {tr('ui.projectReplacements.add')}
+                  </button>
+                </fieldset>
               )}
             </div>
           </section>

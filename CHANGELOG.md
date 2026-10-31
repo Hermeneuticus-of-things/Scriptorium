@@ -1,6 +1,20 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.13.0
+- **Unirea celor două linii de dezvoltare**: toate funcțiile căutării și organizării din branch-ul `feat/quick-search` ajung în aplicația principală (istoriile erau orfane una față de alta; unirea s-a făcut funcție cu funcție, cu suita ca poartă).
+- **Quick Search (§11.5)**: omnibox cu Ctrl+O, rezultate pe Titluri / Sinopse / Text, Enter deschide documentul, Shift = panou Quick Reference, Alt = split; handoff la căutarea completă.
+- **Căutarea în proiect**: operatori „începe cu” / „se termină cu”, inversarea rezultatelor, sortare (binder / titlu / dată), termeni speciali (ghilimele, excludere cu „-”, wildcard „*”), sintaxă de date `mdate:`/`cdate:`, scope Draft / selecție / Included-Excluded.
+- **Colecția persistentă „Rezultatele căutării”** și înlocuiri extinse: metadate personalizate, Swap, și **rescrierea snapshot-urilor** („Include snapshot-urile” din Project Replace, prin noul API `updateSnapshotHtml`).
+- **Find by Formatting extins (§11.6)**: formatare de caracter, linkuri, imagini, text păstrat (preserve).
+- **Filtru pentru corkboard și outline (§11.4)**: bare de filtrare cu interogare + regex.
+- **Dialogue Focus (§20.3.2)**: panou cu replicile din proiect, click deschide documentul.
+- **Eliminare și conversie notații (§18.4)**: „elimină toate adnotările/comentariile/subsolurile” și conversia inline ↔ legat, pe selecție sau document.
+- **Șabloane de document (§7.5)**: folder de șabloane, „Document nou din șablon” cu clonare profundă (copii incluse, id-uri proaspete) și umplerea placeholdere-urilor.
+- **Înlocuiri la nivel de proiect (§23.4.4)**: listă proprie pe proiect, aplicată la Compile înaintea celor pe format, cu ordine și bifă activ/inactiv — tab nou „Înlocuiri” în dialogul de compilare.
+- **Auditul de paritate cu manualul Scrivener 3, complet (capitolele 1–26)** — dovezile pe capitole în `docs/PARITY-AUDIT-*.md`, golurile prioritizate în `docs/PARITY-AUDIT-NEXT-CHAPTERS.md`.
+- Suite: 1601 de teste trecute / 0 eșuate; e2e Electron + flows 104/104.
+
 ## v0.12.0
 - **Dictarea, direct din click dreapta:** în editor, lângă „Redă audio", meniul **Dictare** are acum „Dictează de la cursor" (fără selecție, textul intră unde ai cursorul), „Dictează (înlocuiește selecția)" (ce spui înlocuiește textul selectat) și „Oprește dictarea" (apare doar cât timp dictezi). Merge la fel și în varianta web, din același meniu. Un defect prins la teste: bucata de text dictată introdusă în mijlocul unei fraze primește acum spațiu și înaintea textului care urmează.
 - **D&TED se actualizează din program** (docs/DTED.md §8, ieșit din „ON HOLD"): butonul *Caută actualizări D&TED…* din Setări → Voce și traducere arată versiunea ta și pe cea nouă de pe pagina D&TED și o instalează la cerere, în folderul de utilizator (fără admin). Instalarea rulează mai întâi programul nou o dată, pe protocolul 1; dacă nu răspunde, instalația veche rămâne activă (fallback). Verificare discretă la pornire și la fiecare 3 zile (bifa „Caută actualizări D&TED automat"), cu anunț când există versiune nouă. Descărcarea e verificată după dimensiune și amprentă SHA-256, iar arhiva nu poate scrie în afara folderului ei.
