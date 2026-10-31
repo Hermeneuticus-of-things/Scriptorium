@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.13.2
+- **Formatul de proiect, documentat oficial**: `docs/FORMAT-PROIECT.md` — contractul complet al formatului `.scribner` (layout, schema `project.json` cu toate cheile, versiunea `format: 1` cu gardă de compatibilitate, interoperabilitatea lossless cu `.scriv` 1/2/3 în ambele direcții, cu 29 de teste de round-trip). Formatul NU se schimbă: e același dinainte de redenumire, acum scris negru pe alb.
+- **Texte corecte la deschiderea proiectului**: titlul dialogului și butonul de pe ecranul de start nu mai numeau fișierul după vechea marcă („Deschide un proiect .scribner” → „Deschide un proiect Pneuma Sofer (dosarul .scribner)”).
+- Teste: round-trip .scriv + store verzi.
+
 ## v0.13.1
 - **Reparații găsite la proba reală de UI (click cu click):**
   - **Setări → Voce și traducere nu se mai prăbușește** („useEffect is not defined"): un import lipsă din dialogul de setări, rămas după unirea celor două linii de dezvoltare; panoul cu dictare, D&TED și butoanele lui funcționează din nou.
