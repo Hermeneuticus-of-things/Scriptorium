@@ -108,7 +108,9 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   // ---------- Quick text statistics
   await caretEnd(page);
   await page.keyboard.press('Shift+Home');
-  await menuCmd(page, 'Statistici de text…');
+  // P10: the live window opens from Proiect › Statistici… (textStats command unified).
+  await menuCmd(page, 'Statistici…');
+  await page.locator('button.stats-live-text').click();
   const ts = page.locator('.text-stats-panel');
   check('text statistics open', (await ts.count()) === 1);
   check('text statistics count the selection', /Selecția/.test(await ts.locator('.ts-scope').innerText()) && Number(await ts.locator('.ts-words').innerText()) > 0);
