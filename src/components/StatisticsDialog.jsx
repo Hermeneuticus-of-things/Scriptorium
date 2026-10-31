@@ -15,7 +15,8 @@ const SCOPES = () => ([
 
 const fmt = (n) => Number(n || 0).toLocaleString(uiLocale());
 
-export default function StatisticsDialog({ project, docs, selectionIds, onClose }) {
+// P10: one Proiect entry (Statistici…). onLiveText opens the live selection window (TextStatsPanel) and closes the dialog.
+export default function StatisticsDialog({ project, docs, selectionIds, onClose, onLiveText }) {
   const [mainTab, setMainTab] = useState('stats');
   const [textOpen, setTextOpen] = useState(false);
   const [tab, setTab] = useState('project');
@@ -237,6 +238,7 @@ export default function StatisticsDialog({ project, docs, selectionIds, onClose 
         )}
 
         <div className="actions">
+          {onLiveText && <button className="stats-live-text" title={t('ui.stats.live_hint')} onClick={onLiveText}>{t('ui.stats.live_open')}</button>}
           <button className="primary" onClick={onClose}>{t('btn.close')}</button>
         </div>
       </div>

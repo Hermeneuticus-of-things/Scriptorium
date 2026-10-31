@@ -2776,19 +2776,14 @@ export default function App({ api: apiProp }) {
   ];
 
   const projectMenu = [
-    { label: tr('ui.app.cauta_si_inlocuieste'), shortcut: 'Ctrl+Shift+F', action: () => setDialog('find') },
-    { label: tr('ui.app.cautare_avansata_campuri_filtre_colectii'), action: () => { setSearchSeed(''); setDialog('advsearch'); } },
+    // P9 2026-10-31 (owner X5): cross-menu duplicates removed from Proiect — find/advSearch live in Editare, import/backups/compile in Fișier, styles in Format.
     { label: tr('cmd.keywords'), action: () => setDialog('keywords') },
-    { label: tr('cmd.import'), action: () => setDialog('import') },
     '-',
     { label: tr('cmd.history'), action: () => setDialog('history'), disabled: !api.getHistory },
-    { label: tr('cmd.backups'), action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
     // D1 2026-10-27 — duplicate removed; door remains cmd.projectSettings via commandList.
     { label: tr('cmd.targets'), action: () => setFloats((f) => ({ ...f, targets: !f.targets })) },
     { label: tr('cmd.stats'), action: () => setDialog('stats') },
-    { label: tr('cmd.styles'), action: () => setDialog('styles') },
-    { label: tr('cmd.compile'), action: () => flush().then(() => setDialog('compile')) },
     // Program "Setări…" removed from the Proiect menu (duplicate door; PROGRAM settings reorg 2026-10-27).
     // The program settings door is Unelte › Setări… (tools/settings); project and program never share a menu.
     // { label: tr('cmd.settings'), action: () => setDialog('settings') },
@@ -2862,7 +2857,7 @@ export default function App({ api: apiProp }) {
     ['project', 'projectSettings', tr('cmd.projectSettings'), () => setDialog('projectSettings')],
     ['project', 'targets', tr('cmd.targets'), () => setFloats((f) => ({ ...f, targets: !f.targets }))],
     ['project', 'stats', tr('cmd.stats'), () => setDialog('stats')],
-    ['project', 'textStats', tr('cmd.textStats'), () => setFloats((f) => ({ ...f, ts: !f.ts }))],
+    // P10 2026-10-31 (owner X6): textStats unified into Statistici… — the live selection window opens from the dialog.
     ['project', 'keywords', tr('cmd.keywords'), () => setDialog('keywords')],
     ['project', 'history', tr('cmd.history'), async () => {
       await flush();
@@ -4208,7 +4203,7 @@ export default function App({ api: apiProp }) {
           onClose={() => { setDialog(null); setPsTab(''); }}
         />
       )}
-      {dialog === 'stats' && <StatisticsDialog project={project} docs={docs} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} />}
+      {dialog === 'stats' && <StatisticsDialog project={project} docs={docs} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onLiveText={() => { setDialog(null); setFloats((f) => ({ ...f, ts: true })); }} />}
       {floats.targets && (
         <TargetsDialog
           project={project}
