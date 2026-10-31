@@ -41,7 +41,7 @@ describe('menu tiers', () => {
 describe('View > Reading / Page / Zoom', () => {
   const t = (k, v) => (v ? `${k}:${JSON.stringify(v)}` : k);
   const commands = {};
-  for (const [id, group] of [['dialogueFocus', 'view'], ['posNouns', 'view'], ['pageFull', 'view'], ['zoomIn', 'view'], ['zoomOut', 'view'], ['settings', 'app']]) commands[id] = { id, group };
+  for (const [id, group] of [['dialogueFocus', 'view'], ['linguisticFocus', 'view'], ['pageFull', 'view'], ['zoomIn', 'view'], ['zoomOut', 'view'], ['settings', 'app']]) commands[id] = { id, group };
   const layout = buildMenuLayout(commands, {
     item: (id) => ({ id, label: id }),
     label: (k) => k,
@@ -51,7 +51,8 @@ describe('View > Reading / Page / Zoom', () => {
   it('Reading, Page and Zoom are submenus of View', () => {
     expect(SUBMENUS.view.map((d) => d[0])).toEqual(expect.arrayContaining(['menu.reading', 'menu.page', 'menu.zoom']));
     const reading = view.items.find((x) => x.label === 'menu.reading');
-    expect(reading.submenu.map((x) => x.id || x.label)).toEqual(expect.arrayContaining(['dialogueFocus', 'posNouns', 'ui.formatBar.focus_paragraph']));
+    expect(reading.submenu.map((x) => x.id || x.label)).toEqual(expect.arrayContaining(['dialogueFocus', 'linguisticFocus', 'ui.formatBar.focus_paragraph']));
+    expect(reading.submenu.map((x) => x.id || x.label)).not.toContain('posNouns');
     expect(view.items.find((x) => x.label === 'menu.zoom').submenu.some((x) => x.label === 'V Zoom 100%')).toBe(true);
     expect(layout[0].group).toBe('app');
   });

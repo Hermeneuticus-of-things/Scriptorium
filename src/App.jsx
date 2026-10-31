@@ -2735,7 +2735,6 @@ export default function App({ api: apiProp }) {
 
   const documentMenu = [
     { label: tr('cmd.findDoc'), shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
-    { label: tr('cmd.split'), shortcut: 'Ctrl+K', action: () => splitDocument(false) },
     { label: tr('cmd.splitTitle'), shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
     { label: tr('cmd.merge'), shortcut: 'Ctrl+Shift+M', action: mergeSelection },
     { label: tr('ui.app.duplica_cu_sub_documente'), shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
@@ -2841,7 +2840,7 @@ export default function App({ api: apiProp }) {
     ['view', 'composition', tr('cmd.composition'), () => { setView('editor'); setComposition((c) => !c); }],
     ['view', 'toggleInspector', tr('cmd.toggleInspector'), () => setShowInspector((v) => !v)],
     ['view', 'toggleBinder', tr('cmd.toggleBinder'), () => setHideBinder((v) => !v)],
-    ['view', 'split', tr('cmd.split'), () => splitDocument(false)],
+    ['document', 'split', tr('cmd.split'), () => splitDocument(false)],
     ['view', 'quickRef', tr('cmd.quickRef'), () => selected && !selected.root && openQuickRef(selected.id)],
     ['nav', 'goto', tr('cmd.goto'), () => setDialog('goto')],
     ['nav', 'searchResults', tr('cmd.searchResults'), () => {
@@ -2961,7 +2960,7 @@ export default function App({ api: apiProp }) {
     ['document', 'moveTo', tr('cmd.moveTo'), () => setDialog('moveTo'), !selectionList().length],
     ['document', 'toggleSeparator', tr('cmd.toggleSeparator'), toggleSeparator, !selectionList().length],
     ['document', 'restoreTrash', tr('cmd.restoreTrash'), restoreSelection, !selectionList().some((id) => inTrash(id))],
-    ['document', 'appendSelection', tr('cmd.appendSelection'), () => setDialog('appendTo')],
+    ['edit', 'appendSelection', tr('cmd.appendSelection'), () => setDialog('appendTo')],
     ['document', 'openExternal', tr('cmd.openExternal'), openMediaExternal, !selected?.media?.file || !api.openMediaExternal],
     ['document', 'autoSynopsis', tr('cmd.autoSynopsis'), () => autoSynopsisSelection().catch(report), !selectionList().length],
     ['document', 'snapshotSelection', tr('cmd.snapshotSelection'), () => snapshotSelection().catch(report), !selectionList().length],
@@ -3053,7 +3052,7 @@ export default function App({ api: apiProp }) {
   });
   const menuLayout = buildMenuLayout(commands, {
     extras: { document: documentMenu, nav: navigateMenu, project: projectMenu, edit: edMenus.edit, insert: edMenus.insert, format: edMenus.format, view: edMenus.view, window: edMenus.window },
-    after: { edit: [commands.appendSelection && menuItem('appendSelection'), ...edMenus.editAfter].filter(Boolean) },
+    after: { edit: [...edMenus.editAfter].filter(Boolean) },
     goto: { tree: project.tree, go: (id) => { go(id); setView('editor'); }, skip: (n) => n.root === 'trash' },
     append: edMenus.append,
     label: (k) => tr(k),
