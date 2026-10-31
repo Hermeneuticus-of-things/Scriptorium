@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { dictationSupported, loadVoices, pause, pickVoice, resume, speak, startDictation, ttsSupported } from '../lib/speech.js';
 import { t as tr } from '../lib/i18n.js';
 
+// ORPHAN (Zone 6 Z6-2, 2026-10-31): no component in src/ renders SpeechBar; only tests/uiSpeechBar.test.js
+// imports it. Reading aloud in the app goes through the built-in Piper engine (lib/ttsEngine.cjs).
+// Kept on purpose until the owner decides delete vs keep (Z6-O7); do not wire it back in.
+
 /**
  * Props: getText(): string — selection or whole document text;
  *        onInsertText?(text) — inserts dictated text at cursor; onClose().

@@ -461,7 +461,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
         <label>
           {label}
           <select value={s.kind} onChange={(e) => setIn(['separators', key], { ...s, kind: e.target.value })}>
-            <option value="text">Text</option>
+            <option value="text">{tr('ui.compileDialog.lit.text')}</option>
             <option value="decorative">{tr('ui.compileDialog.p23.decorativ')}</option>
             <option value="page">{tr('ui.compileDialog.pagina_noua')}</option>
             <option value="space">{tr('ui.compileDialog.rand_gol')}</option>
@@ -1049,9 +1049,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                         <th>{tr('ui.projectReplacements.enabled')}</th>
                         <th>{tr('ui.projectReplacements.find')}</th>
                         <th>{tr('ui.projectReplacements.replace')}</th>
-                        <th>Regex</th>
+                        <th>{tr('ui.compileDialog.lit.regex')}</th>
                         <th>{tr('ui.compileDialog.cuvant_intreg')}</th>
-                        <th>Majuscule</th>
+                        <th>{tr('ui.compileDialog.lit.matchCase')}</th>
                         <th />
                       </tr>
                     </thead>
@@ -1130,12 +1130,12 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                   <tr>
                     <th>{tr('ui.compileDialog.tip_de_sectiune')}</th>
                     <th>{tr('ui.advancedSearchDialog.titlu')}</th>
-                    <th>Prefix</th>
-                    <th>Sufix</th>
-                    <th>Litere</th>
-                    <th>Aliniere</th>
+                    <th>{tr('ui.compileDialog.lit.prefix')}</th>
+                    <th>{tr('ui.compileDialog.lit.suffix')}</th>
+                    <th>{tr('ui.compileDialog.lit.letterCase')}</th>
+                    <th>{tr('ui.compileDialog.lit.align')}</th>
                     <th>{tr('ui.compileDialog.pagina_noua')}</th>
-                    <th>Text</th>
+                    <th>{tr('ui.compileDialog.lit.text')}</th>
                     <th>{tr('ui.compileDialog.separator_inainte')}</th>
                     <th>{tr('ui.compileDialog.p23.dropCap')}</th>
                     <th>{tr('ui.compileDialog.p23.leadCaps')}</th>
@@ -1152,17 +1152,17 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <tr key={t}>
                         <td>{t}</td>
                         <td><input type="checkbox" aria-label={tr('ui.compileDialog.arata_titlul')} checked={l.showTitle} onChange={(e) => setLayout(t, 'showTitle', e.target.checked)} /></td>
-                        <td><input aria-label="Prefix" value={l.titlePrefix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titlePrefix', e.target.value.replace(/\\n/g, '\n'))} /></td>
-                        <td><input aria-label="Sufix" value={l.titleSuffix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titleSuffix', e.target.value.replace(/\\n/g, '\n'))} /></td>
+                        <td><input aria-label={tr('ui.compileDialog.lit.prefix')} value={l.titlePrefix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titlePrefix', e.target.value.replace(/\\n/g, '\n'))} /></td>
+                        <td><input aria-label={tr('ui.compileDialog.lit.suffix')} value={l.titleSuffix.replace(/\n/g, '\\n')} onChange={(e) => setLayout(t, 'titleSuffix', e.target.value.replace(/\\n/g, '\n'))} /></td>
                         <td>
-                          <select aria-label="Litere" value={l.titleCase} onChange={(e) => setLayout(t, 'titleCase', e.target.value)}>
-                            <option value="normal">Normale</option>
-                            <option value="upper">MAJUSCULE</option>
+                          <select aria-label={tr('ui.compileDialog.lit.letterCase')} value={l.titleCase} onChange={(e) => setLayout(t, 'titleCase', e.target.value)}>
+                            <option value="normal">{tr('ui.compileDialog.lit.caseNormal')}</option>
+                            <option value="upper">{tr('ui.compileDialog.lit.caseUpper')}</option>
                             <option value="smallcaps">{tr('ui.compileDialog.majuscule_mici')}</option>
                           </select>
                         </td>
                         <td>
-                          <select aria-label="Aliniere" value={l.titleAlign || 'center'} onChange={(e) => setLayout(t, 'titleAlign', e.target.value)}>
+                          <select aria-label={tr('ui.compileDialog.lit.align')} value={l.titleAlign || 'center'} onChange={(e) => setLayout(t, 'titleAlign', e.target.value)}>
                             <option value="center">{tr('ui.compileDialog.centru')}</option>
                             <option value="left">{tr('ui.compileDialog.stanga_2')}</option>
                             <option value="right">{tr('ui.compileDialog.dreapta')}</option>
@@ -1174,7 +1174,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                           <select aria-label={tr('ui.compileDialog.separator_inainte')} value={l.separatorBefore} onChange={(e) => setLayout(t, 'separatorBefore', e.target.value)}>
                             <option value="auto">{tr('ui.compileDialog.automat')}</option>
                             <option value="none">{tr('ui.compileDialog.nimic')}</option>
-                            <option value="text">Text</option>
+                            <option value="text">{tr('ui.compileDialog.lit.text')}</option>
                             <option value="page">{tr('ui.compileDialog.pagina_noua')}</option>
                           </select>
                         </td>
@@ -1257,9 +1257,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       <tr>
                         <th>{tr('ui.advancedSearchDialog.cauta')}</th>
                         <th>{tr('ui.advancedSearchDialog.inlocuieste_cu')}</th>
-                        <th>Regex</th>
+                        <th>{tr('ui.compileDialog.lit.regex')}</th>
                         <th>{tr('ui.compileDialog.cuvant_intreg')}</th>
-                        <th>Majuscule</th>
+                        <th>{tr('ui.compileDialog.lit.matchCase')}</th>
                         <th />
                       </tr>
                     </thead>
@@ -1359,7 +1359,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                 {fmtTab === 'pagina' && (
                   <fieldset disabled={!editable}>
                                   <fieldset disabled={!editable}>
-                  <legend>Text</legend>
+                  <legend>{tr('ui.compileDialog.lit.text')}</legend>
                   <div className="row">
                     <label>
                       Font
