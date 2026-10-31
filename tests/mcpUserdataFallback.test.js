@@ -13,7 +13,8 @@ afterEach(() => { for (const d of dirs.splice(0)) fs.rmSync(d, { recursive: true
 const tempDir = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'pneuma-mcp-ud-')); dirs.push(d); return d; };
 
 const talk = async (env) => new Promise((resolve) => {
-  const p = spawn(process.execPath, [SERVER], { env: { ...process.env, ...env }, stdio: ['pipe', 'pipe', 'pipe'] });
+  // XDG_CONFIG_HOME too: on Linux the server reads the config dir from it, not from APPDATA.
+  const p = spawn(process.execPath, [SERVER], { env: { ...process.env, XDG_CONFIG_HOME: env.APPDATA, ...env }, stdio: ['pipe', 'pipe', 'pipe'] });
   let out = '';
   let err = '';
   let code = null;
