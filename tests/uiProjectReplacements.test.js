@@ -79,14 +79,13 @@ describe('Compile dialog: project replacements editor', () => {
     expect(JSON.stringify(saved[0])).not.toContain('replacements');
   });
 
-  it('project list stays editable for built-in formats, the format editor does not', async () => {
+  it('project list stays editable even for built-in formats (per-format editing lives in the format editor)', async () => {
     const saved = [];
     await flushMount(makeProject({ replacements: [{ id: 'r1', find: 'a', replace: 'b', regex: false, wholeWord: false, caseSensitive: false, enabled: true }] }), (next) => saved.push(next));
     await click(buttons(/Înlocuiri$/)[0]);
     const tables = [...el.querySelectorAll('table.cd-table')];
-    expect(tables.length).toBe(2);
+    expect(tables.length).toBe(1); // doar lista de proiect; cea pe format e în sub-dialogul „Editare format”
     expect(tables[0].closest('fieldset').disabled).toBe(false);
-    expect(tables[1].closest('fieldset').disabled).toBe(true);
     setInput(byLabel('Înlocuiește cu', tables[0])[0], 'B');
     await click(buttons(/Salvează setările/)[0]);
     expect(saved[0].replacements[0]).toMatchObject({ find: 'a', replace: 'B' });
