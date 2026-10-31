@@ -32,7 +32,7 @@ describe('service accounts', () => {
   it('services keep only the credentials that drive them — no email/password fields', () => {
     // Only the key (and a user/voice id where needed); nothing that doesn't make the feature work.
     expect(svc.serviceStatus({}, safe).deepl.fields.map((f) => f.id)).toEqual(['apiKey']);
-    expect(svc.serviceStatus({}, safe).googleTranslate.fields.map((f) => f.id)).toEqual(['apiKey']);
+    expect(svc.serviceStatus({}, safe).googleTranslate.fields.map((f) => f.id)).toEqual(['apiKey', 'refreshToken']);
     expect(svc.serviceStatus({}, safe).speechify.fields.map((f) => f.id)).toEqual(['apiKey', 'voiceId']);
     expect(svc.serviceStatus({}, safe).zotero.fields.map((f) => f.id)).toEqual(['userId', 'apiKey']);
     for (const id of ['deepl', 'googleTranslate', 'speechify', 'zotero', 'languagetool', 'github']) {

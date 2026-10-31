@@ -30,8 +30,11 @@ describe('loopbackServer + desktopFlow', () => {
   });
   it('state greșit → respinge (CSRF)', async () => {
     const p = ga.loopbackServer({ port: 12988, state: 'BUN' });
+    const settled = p.then((v) => ({ ok: true, v }), (e) => ({ ok: false, e })); // atașat imediat: niciun rejection neadministrat
     await vi.waitFor(async () => { await fetch('http://127.0.0.1:12988/cb?code=X&state=ALT').catch(() => {}); }, { timeout: 3000 });
-    await expect(p).rejects.toThrow(/CSRF/);
+    const r = await settled;
+    expect(r.ok).toBe(false);
+    expect(r.e).toMatchObject({ message: expect.stringMatching(/CSRF/) });
   });
   it('desktopFlow: deschide browserul, primește redirectul, schimbă codul pe token-uri', async () => {
     const opened = [];
