@@ -1,6 +1,6 @@
 import { LANG_NAMES } from '../lib/lookups.js';
 import ServicesPanel from './ServicesPanel.jsx';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { DEFAULT_SETTINGS, LOOK_DEFAULTS, normalizeLook } from '../lib/settingsDefaults.js';
 import AppearancePane from './AppearancePane.jsx';
 import { colorFor, newMachineId } from '../lib/team.js';

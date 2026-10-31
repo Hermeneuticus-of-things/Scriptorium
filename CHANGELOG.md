@@ -1,6 +1,13 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.13.1
+- **Reparații găsite la proba reală de UI (click cu click):**
+  - **Setări → Voce și traducere nu se mai prăbușește** („useEffect is not defined"): un import lipsă din dialogul de setări, rămas după unirea celor două linii de dezvoltare; panoul cu dictare, D&TED și butoanele lui funcționează din nou.
+  - **Actualizările din aplicație merg și cu un token GitHub stricat**: dacă token-ul salvat (din era în care depozitul era privat) e respins cu 401, verificarea se reîncearcă **fără token** (depozitul fiind public) în loc să eșueze cu „GitHub a răspuns 401". La 403 de limitare de cereri nu se reîncearcă (nu vrem să lovim dublu).
+  - **Serverul MCP citește datele din dosarul corect** (fallback pe dosarul legacy „Scribner", ca aplicația) — lansat din Claude Desktop nu mai ieșea „Niciun proiect" pentru autorii cu date de dinaintea redenumirii.
+- Suite: 1604 de teste trecute / 0 eșuate.
+
 ## v0.13.0
 - **Unirea celor două linii de dezvoltare**: toate funcțiile căutării și organizării din branch-ul `feat/quick-search` ajung în aplicația principală (istoriile erau orfane una față de alta; unirea s-a făcut funcție cu funcție, cu suita ca poartă).
 - **Quick Search (§11.5)**: omnibox cu Ctrl+O, rezultate pe Titluri / Sinopse / Text, Enter deschide documentul, Shift = panou Quick Reference, Alt = split; handoff la căutarea completă.
