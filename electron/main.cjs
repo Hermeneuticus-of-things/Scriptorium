@@ -605,7 +605,7 @@ handle('project:open', async (e, dirArg) => {
   let dir = dirArg;
   if (!dir) {
     const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
-      title: 'Deschide un proiect .scribner',
+      title: 'Deschide un proiect Pneuma Sofer (dosarul .scribner)',
       properties: ['openDirectory'],
     });
     if (res.canceled) return null;
