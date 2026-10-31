@@ -15,6 +15,7 @@ const aiProviders = require('../lib/aiProviders.cjs');
 const aiKeys = require('../lib/aiKeys.cjs');
 const services = require('../lib/services.cjs');
 const translate = require('../lib/translate.cjs');
+const googleAuth = require('../lib/googleAuth.cjs');
 const synonyms = require('../lib/synonyms.cjs');
 const notebookLm = require('../lib/notebookLm.cjs');
 const backup = require('../lib/backup.cjs');
@@ -1398,12 +1399,67 @@ handle('accounts:copyPassword', (_e, id) => {
   }, 30000);
   return true;
 });
+// Google OAuth (desktop loopback): access token ținut în memorie, refresh_token criptat în setări.
+let gOAuth = { access: '', exp: 0 };
+async function googleAccessToken(st) {
+  const svc = services.getService(st, 'googleTranslate', safeStorage);
+  if (!svc.refreshToken) return null;
+  if (gOAuth.access && Date.now() < gOAuth.exp - 30000) return gOAuth.access;
+  const t = await googleAuth.refreshAccessToken({ clientId: String(st.googleOAuthClientId || ''), refreshToken: svc.refreshToken });
+  gOAuth = { access: t.access_token, exp: Date.now() + (Number(t.expires_in) || 3500) * 1000 };
+  return gOAuth.access;
+}
+
 handle('translate:run', async (_e, { service = 'deepl', text, from, to } = {}) => {
   const st = readSettings();
   const opts = { text, from: from || st.translateFrom || 'auto', to: to || st.translateTo || 'ro' };
-  if (service === 'google') return translate.googleTranslate({ ...opts, apiKey: services.getService(st, 'googleTranslate', safeStorage).apiKey });
+  if (service === 'google') {
+    const at = await googleAccessToken(st).catch(() => null);
+    if (at) return translate.googleTranslateOAuth({ ...opts, accessToken: at });
+    return translate.googleTranslate({ ...opts, apiKey: services.getService(st, 'googleTranslate', safeStorage).apiKey });
+  }
   return translate.deeplTranslate({ ...opts, apiKey: services.getService(st, 'deepl', safeStorage).apiKey });
 });
+// NotebookLM: fereastră de logare dedicată (partiție persistentă) — userul se loghează o dată
+// pe Google, cookie-urile rămân în partiție și merg la serverul notebooklm-mcp ca mediu.
+let nlmWin = null;
+handle('nlm:login', async () => {
+  if (nlmWin && !nlmWin.isDestroyed()) { nlmWin.focus(); return { opened: true }; }
+  nlmWin = new BrowserWindow({ width: 1120, height: 820, title: 'NotebookLM — logare Google', autoHideMenuBar: true, webPreferences: { partition: 'persist:notebooklm' } });
+  nlmWin.loadURL('https://notebooklm.google.com/');
+  nlmWin.on('closed', () => { nlmWin = null; });
+  return { opened: true };
+});
+handle('nlm:authStatus', async () => {
+  const ses = require('electron').session.fromPartition('persist:notebooklm');
+  const cookies = await ses.cookies.get({ domain: 'google.com' });
+  const loggedIn = cookies.some((c) => /^(SID|__Secure-1PSID|__Secure-3PSID)$/.test(c.name));
+  return { loggedIn, cookies: cookies.length };
+});
+handle('nlm:cookieHeader', async () => {
+  const ses = require('electron').session.fromPartition('persist:notebooklm');
+  const cookies = await ses.cookies.get({ domain: 'google.com' });
+  return cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+});
+
+handle('googleAuth:connect', async (e) => {
+  const st = readSettings();
+  const t = await googleAuth.desktopFlow({ clientId: String(st.googleOAuthClientId || ''), openExternal: (u) => shell.openExternal(u) });
+  writeSettings(services.setService(readSettings(), 'googleTranslate', { refreshToken: t.refresh_token }, safeStorage));
+  gOAuth = { access: t.access_token, exp: Date.now() + (Number(t.expires_in) || 3500) * 1000 };
+  return { connected: true };
+});
+handle('googleAuth:disconnect', async () => {
+  writeSettings(services.setService(readSettings(), 'googleTranslate', { refreshToken: '' }, safeStorage));
+  gOAuth = { access: '', exp: 0 };
+  return { connected: false };
+});
+handle('googleAuth:status', async () => {
+  const st = readSettings();
+  const svc = services.getService(st, 'googleTranslate', safeStorage);
+  return { connected: Boolean(svc.refreshToken), hasClientId: Boolean(st.googleOAuthClientId) };
+});
+
 // Synonyms read in-app from sinonimul.ro (no key needed); only the one HTTP request leaves the app.
 handle('synonyms:fetch', (_e, word) => synonyms.fetchSynonyms({ word }));
 handle('zotero:import', async (_e, { collection } = {}) => {
