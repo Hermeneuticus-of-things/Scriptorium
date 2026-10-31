@@ -306,7 +306,8 @@ function setupSpelling(win) {
         ...(sv.deepl.configured ? [{ label: L.inAppDeepl, click: cmd('deeplInApp') }] : []),
         ...(sv.googleTranslate.configured ? [{ label: L.inAppGoogle, click: cmd('googleInApp') }] : []),
       ];
-      if (g.translate.length) items.push({ label: L.translate, submenu: [...inApp, ...(inApp.length ? [{ type: 'separator' }] : []), ...links(g.translate)] });
+      // Decizia autorului: traducerea in-app (API), fără trimitere la site-uri externe.
+      if (inApp.length) items.push({ label: L.translate, submenu: inApp });
       items.push({ label: L.grammar, click: cmd('grammarSel') });
       if (g.dict.length) items.push({ label: L.dictionaries, submenu: links(g.dict) });
       items.push({ label: L.research, submenu: links(g.research) });

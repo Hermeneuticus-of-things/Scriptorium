@@ -775,3 +775,15 @@ legend { color: var(--muted); padding: 0 4px; }
 .qs-result mark { background: var(--accent-soft); color: inherit; padding: 0 1px; }
 .qs-empty { margin: 4px 2px; }
 .qs-footer { display: flex; justify-content: space-between; align-items: center; }
+
+/* Popoverul de servicii ancorat la selecție (gramatică, sinonime, traducere, dicționare) */
+.service-popover {
+  position: fixed; z-index: 90;
+  width: max-content; min-width: 240px; max-width: min(560px, 90vw); /* lățimea = cât cere conținutul */
+  max-height: 55vh; overflow: auto; /* scroll doar când lista e mare */
+  background: var(--paper); color: inherit; border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22); padding: 10px 12px;
+}
+.service-popover p, .service-popover li { max-width: 72ch; } /* liniile lungi rămân citibile */
+.service-popover h3 { margin: 0 0 6px; font-size: 13px; }
+.service-popover .actions { margin-top: 8px; }
