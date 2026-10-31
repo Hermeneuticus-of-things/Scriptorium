@@ -198,3 +198,28 @@ describe('createScheduler (once per day)', () => {
     expect(check).not.toHaveBeenCalled();
   });
 });
+
+describe('safeFetch: token invalid → reîncercare anonimă', () => {
+  const res = (status, extra = {}) => ({ status, ok: status >= 200 && status < 300, headers: { get: () => null }, ...extra });
+  it('401 cu token invalid → refacere fără token (repo public)', async () => {
+    const seen = [];
+    const f = async (url, opts) => {
+      seen.push(Boolean(opts.headers.Authorization));
+      return seen[seen.length - 1] ? res(401) : res(200);
+    };
+    const r = await u.safeFetch(f, 'https://api.github.com/repos/x/releases/latest', { token: 'STRICAT' });
+    expect(r.status).toBe(200);
+    expect(seen).toEqual([true, false]); // întâi cu token, apoi anonim
+  });
+  it('401 și anonim → aruncă cu .status (repo privat / token lipsă de sens)', async () => {
+    const f = async () => res(401);
+    await expect(u.safeFetch(f, 'https://api.github.com/repos/x/releases/latest', { token: 'STRICAT' }))
+      .rejects.toMatchObject({ status: 401 });
+  });
+  it('403 rate-limit NU se reîncearcă anonim', async () => {
+    const f = vi.fn(async () => res(403, { headers: { get: (k) => (k === 'retry-after' ? '1' : null) } }));
+    await expect(u.safeFetch(f, 'https://api.github.com/repos/x/releases/latest', { token: 'T' }))
+      .rejects.toMatchObject({ rateLimited: true });
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+});
