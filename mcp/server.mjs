@@ -132,9 +132,17 @@ for (const p of projects) {
 // Read only; SCRIBNER_USER_DATA overrides it (portable installs, tests).
 function defaultUserData() {
   const home = process.env.HOME || process.env.USERPROFILE || '';
-  if (process.platform === 'win32') return path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), 'Pneuma Sofer');
-  if (process.platform === 'darwin') return path.join(home, 'Library', 'Application Support', 'Pneuma Sofer');
-  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), 'Pneuma Sofer');
+  const appData = process.env.APPDATA || path.join(home, 'AppData', 'Roaming');
+  const pick = (name) => (process.platform === 'win32'
+    ? path.join(appData, name)
+    : process.platform === 'darwin' ? path.join(home, 'Library', 'Application Support', name)
+      : path.join(process.env.XDG_CONFIG_HOME || path.join(home, '.config'), name));
+  // The app pins its data to the pre-rename "Scribner" folder (main.cjs), so its settings live
+  // there; the new-name folder is used only when it actually has data (fresh installs).
+  const fresh = pick('Pneuma Sofer');
+  const legacy = pick('Scribner');
+  if (fs.existsSync(path.join(fresh, 'settings.json')) || !fs.existsSync(path.join(legacy, 'settings.json'))) return fresh;
+  return legacy;
 }
 const userData = process.env.SCRIBNER_USER_DATA ? path.resolve(process.env.SCRIBNER_USER_DATA) : defaultUserData();
 function readJson(file, def) {
