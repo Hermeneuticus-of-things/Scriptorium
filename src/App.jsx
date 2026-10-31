@@ -1084,7 +1084,7 @@ export default function App({ api: apiProp }) {
       meta: viewFilter.meta,
       rootKind,
     });
-  }, [viewFilterContainer, viewFilter, docs, filterNotes, project.tree]);
+  }, [viewFilterContainer, viewFilter, docs, filterNotes, project?.tree]);
   // Text/notes search needs the documents and notes in memory; the filter searches
   // whatever is loaded until then.
   const patchViewFilter = (patch) => {
@@ -1810,9 +1810,8 @@ export default function App({ api: apiProp }) {
   // application level (settings.layouts), so they are offered in every project. The payload
   // captures only arrangement — never selectedId (project content, not layout); persistence of
   // the applied values continues through the existing saveUi effect.
-  const savedLayouts = normalizeLayouts(settings && settings.layouts);
   const saveLayouts = async (layouts) => {
-    await api.setSettings({ layouts: normalizeLayouts(layouts) });
+    await api.setSettings({ layouts });
     setSettings(await api.getSettings());
   };
   const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
@@ -1877,7 +1876,6 @@ export default function App({ api: apiProp }) {
     const node = id && findNode(project.tree, id);
     if (node && !node.root && !node.children) setCopyholder((c) => ({ id, editable: c?.id === id ? c.editable : false }));
   };
-  const toggleView = (key) => setEditorView({ ...editorView, [key]: !editorView[key] });
 
   // Quick Reference: floating panels with another document (Scrivener: Open in Quick Reference).
   const openQuickRef = (id) =>
@@ -3015,7 +3013,7 @@ export default function App({ api: apiProp }) {
     ['ai', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['ai', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
-    ...savedLayouts.map((l, i) => ['window', `layout:${i}`, tr('cmd.layout', { name: l.name }), () => applyLayout(l.payload)]),
+    ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];
   // AI off: every command that needs Claude is left out (menus, shortcuts, native menu); I-REP stays.
   // MCP needs the desktop app (browser mode has no api.mcpConnectInfo).
