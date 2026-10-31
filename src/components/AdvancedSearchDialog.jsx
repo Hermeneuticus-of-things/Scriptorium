@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { searchProject, parseQuery } from '../lib/projectSearch.js';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { searchProject, parseQuery, buildTerms } from '../lib/projectSearch.js';
 import { listKeywords } from '../lib/collections.js';
 import { flatten } from '../lib/tree.js';
 import { t as tr } from '../lib/i18n.js';
@@ -24,17 +24,19 @@ const CSS = `
 .as-field { font-size: 11px; color: var(--muted); margin-right: 4px; }
 .as-ops { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .as-ops select { padding: 2px 6px; }
+.as-swap { align-self: end; white-space: nowrap; }
 `;
 
 const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onSaveAsCollection, onClose, initialQuery = '', onResults }) {
+export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onSaveAsCollection, onClose, initialQuery = '', onResults, onLastSearch, selectionIds = [], api }) {
   const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
+  const [affectSnapshots, setAffectSnapshots] = useState(false);
   const [opts, setOpts] = useState({ regex: false, caseSensitive: false, wholeWord: false, operator: 'any', invert: false });
   const [sortCfg, setSortCfg] = useState({ by: 'binder', desc: false });
   const [fields, setFields] = useState(['title', 'text', 'synopsis', 'keywords', 'custom']);
-  const [filters, setFilters] = useState({ labels: [], statuses: [], keywords: [], scope: 'all', includeTrash: false, onlyCompile: false });
+  const [filters, setFilters] = useState({ labels: [], statuses: [], keywords: [], scope: 'all', includeTrash: false, onlyCompile: false, draftOnly: false, selectionScope: false, excludeCompile: false });
   const [notesById, setNotesById] = useState({});
   const [loadingNotes, setLoadingNotes] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -62,14 +64,17 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notesOn, project.tree, readNotes]);
 
-  const criteria = useMemo(() => ({ query, ...opts, fields, ...filters, sort: sortCfg.by, sortDesc: sortCfg.desc }), [query, opts, fields, filters, sortCfg]);
-<<<<<<< ours
+  const criteria = useMemo(
+    () => ({
+      query, ...opts, fields, ...filters, sort: sortCfg.by, sortDesc: sortCfg.desc,
+      selectionIds: filters.selectionScope && selectionIds.length ? selectionIds : [],
+      affectSnapshots,
+    }),
+    [query, opts, fields, filters, sortCfg, selectionIds, affectSnapshots]
+  );
   const parsed = useMemo(() => parseQuery(criteria), [criteria]);
-  const invalid = Boolean(query) && parsed === null;
-=======
   const terms = useMemo(() => buildTerms(criteria), [criteria]);
-  const invalid = Boolean(query) && (terms === null || terms.some((t) => !t));
->>>>>>> theirs
+  const invalid = Boolean(query) && (parsed === null || terms === null || terms.some((t) => !t));
   const results = useMemo(() => searchProject(project, docs, notesById, criteria), [project, docs, notesById, criteria]);
 
   // The last results with a query feed the permanent "Search results" tab of the binder.
@@ -79,7 +84,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
   }, [results]);
 
   const total = results.reduce((s, r) => s + Object.values(r.fields).reduce((a, b) => a + b, 0), 0);
-  const replaceable = results.filter((r) => r.fields.title || r.fields.text || r.fields.notes || r.fields.synopsis);
+  const replaceable = results.filter((r) => r.fields.title || r.fields.text || r.fields.notes || r.fields.synopsis || r.fields.custom);
 
   const keywordNames = useMemo(() => listKeywords(project).map((k) => k.name), [project]);
   const labels = project.labels || [];
@@ -87,6 +92,12 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
 
   const toggleOpt = (k) => () => setOpts((o) => ({ ...o, [k]: !o[k] }));
   const toggleFilter = (k, v) => setFilters((f) => ({ ...f, [k]: toggleIn(f[k], v) }));
+
+  // Scrivener §11.3: Swap exchanges the contents of the Replace and With fields.
+  const swap = () => {
+    setQuery(replacement);
+    setReplacement(query);
+  };
 
   const replaceAll = async () => {
     if (!query || !replaceable.length || !onReplace) return;
@@ -122,6 +133,17 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
   const hasQuery = Boolean(query) && !invalid;
   const hasFilter = filters.labels.length || filters.statuses.length || filters.keywords.length;
 
+  // Scrivener §11.1.1: the last search used lands in the system "Search Results"
+  // collection and survives reopening. Recorded when a result is opened and once
+  // more at close, so the stored criteria match what the user actually used.
+  const latestRef = useRef({ criteria, hasQuery });
+  latestRef.current = { criteria, hasQuery };
+  useEffect(() => () => {
+    const { criteria: c, hasQuery: ok } = latestRef.current;
+    if (ok) onLastSearch?.(c);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal wide" role="dialog" aria-label={tr('ui.advancedSearchDialog.cautare_avansata')} onClick={(e) => e.stopPropagation()}>
@@ -136,6 +158,9 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
             {tr('ui.advancedSearchDialog.inlocuieste_cu')}
             <input value={replacement} onChange={(e) => setReplacement(e.target.value)} placeholder={opts.regex ? tr('ui.advancedSearchDialog.1_pentru_grupuri') : ''} />
           </label>
+          <button type="button" className="as-swap" onClick={swap}>
+            {tr('ui.advancedSearchDialog.swap')}
+          </button>
         </div>
         <div className="as-ops">
           <label className="check"><input type="checkbox" checked={opts.caseSensitive} onChange={toggleOpt('caseSensitive')} /> Majuscule exacte</label>
@@ -149,7 +174,6 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
               <option value="exact">{tr('ui.advancedSearchDialog.expresia_exacta')}</option>
               <option value="startsWith">{tr('ui.advancedSearchDialog.incepe_cuvantul')}</option>
               <option value="endsWith">{tr('ui.advancedSearchDialog.se_termina_cuvantul')}</option>
-<<<<<<< ours
             </select>
           </label>
           <label className="check">
@@ -160,18 +184,6 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
               <option value="created">{tr('ui.advancedSearchDialog.dupa_data_crearii')}</option>
             </select>
           </label>
-=======
-            </select>
-          </label>
-          <label className="check">
-            {tr('ui.advancedSearchDialog.ordoneaza')}
-            <select value={sortCfg.by} onChange={(e) => setSortCfg((s) => ({ ...s, by: e.target.value }))}>
-              <option value="binder">{tr('ui.advancedSearchDialog.ordine_binder')}</option>
-              <option value="title">{tr('ui.advancedSearchDialog.dupa_titlu')}</option>
-              <option value="created">{tr('ui.advancedSearchDialog.dupa_data_crearii')}</option>
-            </select>
-          </label>
->>>>>>> theirs
           <label className="check"><input type="checkbox" checked={sortCfg.desc} onChange={() => setSortCfg((s) => ({ ...s, desc: !s.desc }))} /> {tr('ui.advancedSearchDialog.descrescator')}</label>
         </div>
         <div className="checks">
@@ -184,6 +196,15 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
               <input type="checkbox" checked={fields.includes(f)} onChange={() => setFields((fs) => toggleIn(fs, f))} /> {FIELD_LABELS()[f]}
             </label>
           ))}
+          {/* Snapshots are archived document text: replaceable only if the api can rewrite them. */}
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={affectSnapshots}
+              disabled={!api?.updateSnapshotHtml}
+              onChange={() => setAffectSnapshots((v) => !v)}
+            /> {tr('ui.advancedSearchDialog.include_snapshots')}
+          </label>
           {loadingNotes && <small className="muted">{tr('ui.advancedSearchDialog.se_incarca_notele')}</small>}
         </div>
         <div className="as-grid">
@@ -212,6 +233,15 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
             <label className="check">
               <input type="checkbox" checked={filters.onlyCompile} onChange={() => setFilters((f) => ({ ...f, onlyCompile: !f.onlyCompile }))} /> {tr('ui.advancedSearchDialog.doar_incluse_in_compilare')}
             </label>
+            <label className="check">
+              <input type="checkbox" checked={filters.draftOnly} onChange={() => setFilters((f) => ({ ...f, draftOnly: !f.draftOnly }))} /> {tr('ui.advancedSearchDialog.doar_in_manuscris')}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={filters.selectionScope} disabled={!selectionIds.length} onChange={() => setFilters((f) => ({ ...f, selectionScope: !f.selectionScope }))} /> {tr('ui.advancedSearchDialog.doar_selectia')}{selectionIds.length ? ` (${selectionIds.length} ${selectionIds.length === 1 ? 'document' : tr('ui.advancedSearchDialog.documente')})` : ''}
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={filters.excludeCompile} onChange={() => setFilters((f) => ({ ...f, excludeCompile: !f.excludeCompile }))} /> {tr('ui.advancedSearchDialog.doar_excluse_compilare')}
+            </label>
           </div>
         </div>
         {invalid && <p className="warn">{tr('ui.advancedSearchDialog.expresie_regulata_invalida')}</p>}
@@ -224,7 +254,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
         <div className="results">
           {results.map(({ node, fields: counts, snippets }) => (
             <div key={node.id} className="result">
-              <button className="link" onClick={() => onOpen(node.id)}>
+              <button className="link" onClick={() => { onLastSearch?.(criteria); onOpen(node.id); }}>
                 <strong>{node.title || tr('ui.advancedSearchDialog.fara_titlu')}</strong>
               </button>
               {FIELDS.filter((f) => counts[f]).map((f) => (
