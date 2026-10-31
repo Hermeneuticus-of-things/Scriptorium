@@ -1711,7 +1711,7 @@ export default function App({ api: apiProp }) {
           const r = el.getBoundingClientRect();
           pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
         } catch { pos = { x: 120, y: 140 }; }
-        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms }, handle, range, anchored: true, pos });
+        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, range, anchored: true, pos });
       setToast('');
     } catch (e) {
       setToast('');
