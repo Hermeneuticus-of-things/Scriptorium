@@ -1667,7 +1667,15 @@ export default function App({ api: apiProp }) {
         setToast(msg);
         setTimeout(() => setToast((t) => (t === msg ? '' : t)), 2500);
       } else {
-        setServiceResult({ source, result, handle, range });
+        // Ancorat în pagină: popoverul apare lângă selecție, nu ca fereastră modală.
+        let pos = null;
+        try {
+          const dom = handle.editor.view.domAtPos(range.to);
+          const el = dom.node.nodeType === 1 ? dom.node : dom.node.parentElement;
+          const r = el.getBoundingClientRect();
+          pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
+        } catch { pos = { x: 120, y: 140 }; }
+        setServiceResult({ source, result, handle, range, anchored: true, pos });
         setToast('');
       }
     } catch (e) {
@@ -1686,7 +1694,14 @@ export default function App({ api: apiProp }) {
     setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
     try {
       const res = await api.fetchSynonyms(source);
-      setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms }, handle, range });
+      let pos = null;
+        try {
+          const dom = handle.editor.view.domAtPos(range.to);
+          const el = dom.node.nodeType === 1 ? dom.node : dom.node.parentElement;
+          const r = el.getBoundingClientRect();
+          pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
+        } catch { pos = { x: 120, y: 140 }; }
+        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms }, handle, range, anchored: true, pos });
       setToast('');
     } catch (e) {
       setToast('');
@@ -3129,11 +3144,28 @@ export default function App({ api: apiProp }) {
       const links = (list) => list.map((l) => ({ label: l.label, action: () => openWeb(l.url) }));
       const inApp = api.translateText ? [{ label: tr('cmd.deeplInApp'), action: run('deeplInApp') }, { label: tr('cmd.googleInApp'), action: run('googleInApp') }, '-'] : [];
       sep();
-      if (g.translate.length) items.push({ label: tr('ui.ctx.traduce'), submenu: [...inApp, ...links(g.translate)] });
+      // Decizia autorului: traducerea se vede în pagină (in-app), nu trimite la site-uri externe.
+      if (inApp.length) items.push({ label: tr('ui.ctx.traduce'), submenu: inApp.filter((x) => x !== '-') });
       if (api.checkGrammar) items.push({ label: tr('cmd.grammarSel'), action: run('grammarSel') });
-      if (g.dict.length || api.fetchSynonyms) {
-        const synInApp = api.fetchSynonyms ? [{ label: tr('cmd.synonymsInApp'), action: run('synonymsInApp') }, '-'] : [];
-        items.push({ label: tr('ui.ctx.dictionare'), submenu: [...synInApp, ...links(g.dict)] });
+      // Dicționarele se deschid în popoverul ancorat (în pagină), nu ca submeniu de linkuri externe.
+      if (g.dict.length) {
+        const dhandle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+        items.push({
+          label: tr('ui.ctx.dictionare'),
+          action: () => {
+            let pos = { x: 120, y: 140 };
+            try {
+              const range = dhandle ? serviceRange(dhandle.editor, source) : null;
+              const dom = range && dhandle.editor.view.domAtPos(range.to);
+              const el = dom && (dom.node.nodeType === 1 ? dom.node : dom.node.parentElement);
+              const r = el ? el.getBoundingClientRect() : null;
+              pos = r ? { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) } : pos;
+            } catch { /* fallback la poziția implicită */ }
+            setServiceResult({ source, result: { kind: 'dict', word: source, entries: g.dict.map((l) => ({ label: l.label, url: l.url })) }, handle: dhandle, anchored: true, pos });
+          },
+        });
+      } else if (api.fetchSynonyms) {
+        items.push({ label: tr('cmd.synonymsInApp'), action: run('synonymsInApp') });
       }
       items.push({ label: tr('ui.ctx.cercetare_web'), submenu: links(g.research) });
 
@@ -3966,6 +3998,9 @@ export default function App({ api: apiProp }) {
           result={serviceResult.result}
           onReplace={(text, edits) => { applyServiceText(serviceResult, text, false, edits); setServiceResult(null); }}
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
+          onOpenUrl={(u) => openWeb(u)}
+          anchored={Boolean(serviceResult.anchored)}
+          pos={serviceResult.pos}
           onClose={() => setServiceResult(null)}
         />
       )}
