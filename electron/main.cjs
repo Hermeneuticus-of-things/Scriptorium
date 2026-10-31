@@ -3,6 +3,7 @@ const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell, clipboard
 const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
+const aiRules = require('../lib/aiRules.cjs');
 const { loadHtml } = require('../lib/loadHtml.cjs');
 const teamStore = require('../lib/teamStore.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
@@ -905,7 +906,7 @@ require('./dtedHandlers.cjs')({
   pickedAudio,
   showOpenDialog: (e, o) => dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), o),
 });
-require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app });
+require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, getAiConfig, assertOpened, app, store });
 require('./updateHandlers.cjs')({ handle, app, net, shell, BrowserWindow, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }), githubToken: () => services.getService(readSettings(), 'github', safeStorage).token || process.env.SCRIBNER_GITHUB_TOKEN || '' });
 require('./smallWindowHandlers.cjs')({ handle, app, BrowserWindow, globalShortcut: require('electron').globalShortcut, dialog, shell, claims, assertOpened, isAppUrl, preload: path.join(__dirname, 'preload.cjs'), appPage: { url: process.env.VITE_DEV_SERVER_URL || '', file: path.join(__dirname, '..', 'dist', 'index.html') }, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }) });
 require('./notebookHandlers.cjs')({ handle, getSettings: readSettings, assertOpened, app });
@@ -1313,7 +1314,10 @@ handle('compile:preview', (_e, dir, project, options) => {
 handle('ai:run', (_e, payload) => {
   if (readSettings().aiEnabled === false) throw new Error('Funcțiile AI sunt oprite din Setări.');
   // Provider, model and key come only from settings; the renderer can't pick them per call.
-  const { provider, model, baseUrl, apiKey, signal: _ignored, onDelta: _no, runId, ...rest } = payload || {};
+  const { provider, model, baseUrl, apiKey, signal: _ignored, onDelta: _no, runId, dir, rules: _r, ...rest } = payload || {};
+  // Project AI rules apply to the assistant too (not to 'editorial': I-REP / I-EDIT carry them already).
+  if (dir) assertOpened(dir);
+  const rules = dir && rest.action !== 'editorial' ? aiRules.readRules(store, dir) : '';
   const timeoutMs = (Number(readSettings().aiTimeoutSec) || 300) * 1000;
   // With a runId the answer is streamed to the window as 'ai:delta' events while it is written.
   const onDelta = runId
@@ -1321,7 +1325,7 @@ handle('ai:run', (_e, payload) => {
         try { if (!_e.sender.isDestroyed()) _e.sender.send('ai:delta', { runId, delta }); } catch { /* window gone */ }
       }
     : undefined;
-  return aiRuns.track(_e.sender.id, (signal) => ai.runAction({ ...rest, ...getAiConfig(), signal, onDelta }), timeoutMs);
+  return aiRuns.track(_e.sender.id, (signal) => ai.runAction({ ...rest, ...getAiConfig(), rules, signal, onDelta }), timeoutMs);
 });
 
 // Cancels every AI request started by this window (panels and bulk jobs).

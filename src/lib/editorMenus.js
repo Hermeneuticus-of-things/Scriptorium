@@ -3,6 +3,7 @@
 import { getHTMLFromFragment } from '@tiptap/core';
 import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linkedToFootnotes } from './noteConvert.js';
 import { isParaStyle } from './styles.js';
+import { pageLookItems, readingLensItems, zoomPresetItems } from './readingLenses.js';
 
 export const TEXT_COLORS = ['#b3261e', '#c77700', '#2e7d32', '#1565c0', '#6a1b9a', '#5d4037', '#757575'];
 export const HIGHLIGHTS = ['#fff176', '#a5d6a7', '#90caf9', '#f8bbd0', '#ffcc80'];
@@ -52,7 +53,7 @@ export const DEFAULT_LABEL_COLOR_IN = { binder: false, cards: true, outliner: fa
  *   ctx.run(id) runs a registry command; ctx.desktop native window available
  */
 export function editorMenus(ctx) {
-  const { t, handle, view = {}, setView, settings = {}, setSettings, styles = [], run, desktop, styleName = (st) => st.name } = ctx;
+  const { t, handle, view = {}, setView, settings = {}, setSettings, styles = [], run, desktop, styleName = (st) => st.name, setZoom, curZoom } = ctx;
   const ed = () => {
     const e = handle()?.editor;
     return e && !e.isDestroyed ? e : null;
@@ -246,6 +247,7 @@ export function editorMenus(ctx) {
     { label: t('ui.formatBar.pasteFormat'), shortcut: 'Ctrl+Alt+V', action: on((c) => c.pasteFormat().run()) },
     '-',
     { label: check(!view.hideFormatBar, L('showFormatBar')), action: () => setView({ ...view, hideFormatBar: !view.hideFormatBar }) },
+    { label: check(view.ruler, t('ui.formatBar.ruler')), action: () => setView({ ...view, ruler: !view.ruler }) },
   ];
 
   const lc = { ...DEFAULT_LABEL_COLOR_IN, ...(settings.labelColorIn || {}) };
@@ -253,7 +255,6 @@ export function editorMenus(ctx) {
   const viewMenu = [
     { label: check(settings.typewriter, L('typewriter')), action: toggleSetting({ typewriter: !settings.typewriter }) },
     { label: check(settings.showInvisibles, L('invisibles')), action: toggleSetting({ showInvisibles: !settings.showInvisibles }) },
-    { label: check(view.pageView, L('pageView')), action: () => setView({ ...view, pageView: !view.pageView }) },
     { label: check(!view.hideHeaderBar, L('headerBar')), action: () => setView({ ...view, hideHeaderBar: !view.hideHeaderBar }) },
     { label: check(!view.hideFooterBar, L('footerBar')), action: () => setView({ ...view, hideFooterBar: !view.hideFooterBar }) },
     { label: L('labelColorIn'), submenu: ['binder', 'cards', 'outliner', 'icons'].map((k) => ({
@@ -267,5 +268,13 @@ export function editorMenus(ctx) {
     { label: L('maximize'), role: 'toggleMaximize', hidden: !desktop, action: () => {} },
   ];
 
-  return { edit, editAfter, insert, format, view: viewMenu, window: windowMenu };
+  // View > Reading / Page / Zoom: the lens, page and zoom items join their submenus (menuLayout append).
+  const patchView = (patch) => setView({ ...view, ...patch });
+  const append = {
+    'menu.reading': readingLensItems({ t, view, setView: patchView }),
+    'menu.page': pageLookItems({ t, view, setView: patchView }),
+    'menu.zoom': zoomPresetItems({ setZoom, curZoom }),
+  };
+
+  return { edit, editAfter, insert, format, view: viewMenu, window: windowMenu, append };
 }

@@ -61,8 +61,9 @@ describe('menu layout', () => {
     expect(ai[ai.length - 1].id).toBe('aiSettings');
   });
   it('Format and Window are menus of their own, in the bar order; submenus group commands', () => {
-    expect(MENU_GROUPS).toEqual(['file', 'edit', 'insert', 'view', 'nav', 'project', 'document', 'format', 'window', 'tools', 'ai', 'help']);
-    expect(layout.map((m) => m.group)).toEqual(['file', 'edit', 'view', 'nav', 'format', 'window', 'ai']);
+    // Menu reorg 2026-10-31: Program first (APPLICATION), File + Project (PROJECT), workflow menus, Window + Help.
+    expect(MENU_GROUPS).toEqual(['app', 'file', 'project', 'edit', 'insert', 'format', 'document', 'view', 'nav', 'tools', 'ai', 'window', 'help']);
+    expect(layout.map((m) => m.group)).toEqual(['file', 'edit', 'format', 'view', 'nav', 'ai', 'window']);
     expect(layout.find((m) => m.group === 'format').items[0].id).toBe('styles');
     expect(layout.find((m) => m.group === 'edit').items.some((x) => x.label === 'group.format')).toBe(false);
     expect(layout.find((m) => m.group === 'file').items.find((x) => x.label === 'menu.import').submenu.map((x) => x.id)).toEqual(['import', 'importOpml']);

@@ -16,7 +16,7 @@ const { check, done, menuPick } = require('./_helpers.cjs');
   await p.keyboard.press('Escape');
   // turn AI off in Settings
   const n = await p.locator('.menu').count();
-  for (let i = 0; i < n; i++) { await p.locator('.menu').nth(i).locator('button').first().click(); const it = p.locator('.menu').nth(i).getByText('Setări…'); if (await it.count()) { await it.first().click(); break; } await p.keyboard.press('Escape'); }
+  for (let i = 0; i < n; i++) { await p.locator('.menu').nth(i).locator('button').first().click(); const it = p.locator('.menu').nth(i).getByText('Setări program…'); if (await it.count()) { await it.first().click(); break; } await p.keyboard.press('Escape'); }
   await p.waitForTimeout(300);
   await p.locator('.settings-dialog [role=tab]:has-text("AI")').click();
   const box = p.locator('.settings-dialog input[type=checkbox]').first();
