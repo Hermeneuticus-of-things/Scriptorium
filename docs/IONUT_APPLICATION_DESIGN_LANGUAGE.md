@@ -1,5 +1,9 @@
 # Ionuț Application Design Language
 
+**Version:** v1.0 · **Date:** 2026-11-01 (Europe/Paris)
+
+Every change bumps the version and the date (§16). The number in this header is the only current version.
+
 *Also recognized as:* **design application language** (the app-facing side: what the user sees, does, and moves through) and **design logic language** (the tool/engine side: how the app tracks the active surface, routes input, and dispatches commands). These are alternate names for this same document. File names stay unchanged: `IONUT_APPLICATION_DESIGN_LANGUAGE.md` (full) and `IONUT_APPLICATION_DESIGN_LANGUAGE.SKILL.md` (loadable skill).
 
 This is a **general application design language**. It applies to **every application** — writing tools, news readers, email clients, AI assistants, image editors, dashboards, and any other app type. The rules do not change with product name or domain; only *which* surface is the core function changes.
@@ -7,7 +11,7 @@ This is a **general application design language**. It applies to **every applica
 **Purpose:** eliminate generic, noisy, AI-generated interface slop. Put the app's real work in front, give whatever the user is working in right now its own focus, and keep surrounding controls quiet, complete, and reachable.
 
 **How the document builds (one arc, each part resting on the one before):**
-§0 sets the scope (UX and UI) and the shared words → §1 decides *whether* this language is used on a project → §2 decides *where the user's attention and input are right now* (the core of the language) → §3 decides *what the product puts in front overall* → §4–§14 are the practical rules that every surface obeys while it is or is not the active surface → §15 is the visual floor (Hallmark) that all of the above is drawn on → §16 keeps the document alive → §17 verifies and closes.
+§0 sets the scope (UX and UI) and the shared words → §1 decides *whether* this language is used on a project → §2 decides *where the user's attention and input are right now* (the core of the language) → §3 decides *what the product puts in front overall* → §4–§14 are the practical rules that every surface obeys while it is or is not the active surface → §15 is Hallmark (the skill + our product foundation under the Floor) that all of the above is drawn on → §16 keeps the document alive → §17 verifies and closes.
 
 ---
 
@@ -28,7 +32,7 @@ This is a **general application design language**. It applies to **every applica
 - 12. Feedback and errors
 - 13. Theming and motion
 - 14. AI-assisted UI work
-- 15. Hallmark visual foundation (15.6 Liquid Glass — effect layer hybrid)
+- 15. Hallmark — skill, Floor, themes, product foundation, Liquid Glass hybrid
 - 16. Maintenance — living document
 - 17. Conformance checklist and closing
 
@@ -577,67 +581,126 @@ When an AI edits UI (after §1 adoption = yes):
 
 ---
 
-## 15. Hallmark visual foundation
+## 15. Hallmark — the skill, the Floor, and our product foundation
 
-**If you are implementing this, your job is:** draw every surface on the Hallmark visual floor — warm, opaque, line-art, content-first — so the visuals make the active surface and the core function obvious and never compete with §2 routing or §3 foreground.
+**If you are implementing this, your job is:** treat Hallmark as the full anti-slop **design skill** (Floor, themes-as-materials, deal/draw, job anatomy, real material, sloplint gates, named redesign/audit), draw every app surface on **our chosen product foundation** under that Floor (warm opaque corkboard/paper, line-art — not Hallmark itself), and keep Liquid Glass as an **effect layer on chrome only** (§15.8).
 
-### 15.1 What Hallmark is here
+**Source skill (installed):** [nutlope/hallmark](https://github.com/nutlope/hallmark) — globally at `~/.agents/skills/hallmark` (also copied for Claude Code / Cursor / OpenCode / Codex by `npx skills add nutlope/hallmark -g`). Tagline: *a design skill for Claude Code, Codex, Cursor and OpenCode that refuses to look AI-generated.* Powered by Together AI. MIT.
 
-Hallmark is **not a separate product language** and not a second design track. It is the **visual foundation under this design language** — the warm opaque base. Liquid Glass supplies only an **effect layer** on chrome/overlays (§15.6); it never replaces this base: the look on which §2–§14 are drawn. §2 decides *where* attention goes; Hallmark decides *how it looks* when it gets there. (An older `docs/DESIGN_LANGUAGE.md` titled "Hallmark design language" may exist in some repos; its rules are carried into this document, and on any conflict this document wins.)
+### 15.1 Two things that must stay separate
 
-**Source of truth (in the Scriptorium repository):** the README images in `assets/readme/` — `hero.png`, `corkboard.png`, `aimenu.png`, and related shots (`cli.png`, `compile*.png`, `dictation.png`, `team.png`, `timeline.png`, `snapshots.png`, SVG diagrams `features.svg`, `workflow.svg`) — and the Hallmark comments in Scriptorium's code: line icons, no emoji in surrounding controls, warm brown/copper accent, anti-slop.
+| Name | What it is | What it is NOT |
+|------|------------|----------------|
+| **Hallmark-the-skill** | The full Nutlope Hallmark skill: Floor, fifty themes as materials, deal-and-draw flow, job-based anatomy, real material only, Floor/Reflex/Finish gates via `sloplint`, redesign/audit only when named. | Not our corkboard palette. Not a single product look. |
+| **Hallmark-as-our-product-foundation** | The warm, opaque, line-art look chosen for apps under this design language (Scriptorium `assets/readme/` corkboard/hero/aimenu and related). One **product theme under the Floor**. | Not Hallmark itself. Not permission to ignore the Floor. |
 
-### 15.2 The look
+§2 decides *where* attention goes; Hallmark-the-skill decides *that the result must not look generated*; our product foundation decides *the material this product is drawn in*. Liquid Glass is only chrome effects (§15.8).
 
-- **Warm paper ground:** pages and backgrounds in warm off-white (reference `#F3EFE6`), cards and the writing page in near-white paper (`#FFFEF6`), text in warm near-black (`#1F1B16`, secondary `#3D362D`). Not cold grey, not pure `#FFFFFF`/`#000000` fields.
-- **Corkboard warmth:** the board/start surfaces use a matte cork brown (reference `#B98F5F`) with index cards on it; status shown as small stamped labels (e.g. "REVIZUIT", "PRIMA CIORNĂ") in a muted red — real information, not decoration.
-- **Copper/warm-brown accent** for app marks, badges, and Hallmark-specific highlights; text **selection** may follow the OS accent (as in the screenshots) for platform familiarity, through the §2.9 tokens.
-- **Line-art icons** at 16/20 px (§4, §9), single weight, monochrome in surrounding controls; **no emoji** in menus, toolbars, or status.
-- **Serif for content and README headlines, clean sans for UI** labels (12–14 px).
-- **Content-first imagery:** screenshots show the real app with real content (a novel's scenes, the Binder, the Inspector) — no fake window frames, no "kicker" taglines, no stock gradients, no glowing AI orbs.
-- **Opaque, matte surfaces for content:** flat fills, thin 1 px borders, small consistent radius (§4), at most a soft shadow to lift a card or a window. Content and work surfaces stay opaque (no glass fill). Liquid Glass effects on chrome/overlays only — §15.6.
+An older `docs/DESIGN_LANGUAGE.md` titled "Hallmark design language" may exist; its rules that still hold are carried here. **This document wins on conflict.** When UI work needs the live skill (new page, redesign, audit), load `~/.agents/skills/hallmark/SKILL.md` (or the Claude/Codex copy) — do not invent a parallel Hallmark.
 
-### 15.3 How Hallmark reinforces focus levels
+### 15.2 Hallmark-the-skill — full scope (put it all in)
 
-- The **active surface** reads as the brightest paper with full-contrast warm-black text and the active header (§2.9); inactive surfaces keep their content readable but their header and selection go neutral.
-- **Surrounding controls stay quiet** — light neutral bars, line icons, small labels — so the eye lands on the active surface, not on the frame.
-- Corkboard and card warmth belongs to **content surfaces** (board, cards, page), never to toolbars or menus; the frame never competes with the work.
-- One AI menu holding every AI command (`aimenu.png`) shows the Hallmark rule for complexity: complete (§3.1), grouped (§11), quiet until opened — and once open, it is the active surface (§2).
+Hallmark holds a hard floor and then gets out of the way. It deals themes from a catalog of **fifty materials**, builds around what the visitor (or user) came to do, and lints against machine-made tells. A fresh-context reviewer gets the last word on page builds.
 
-### 15.4 Effort matters / out of scope
+**What it covers beyond colour:**
 
-- **Effort matters:** warm opaque palette as tokens; line icons; no emoji in controls; content-first screenshots; active vs inactive contrast.
-- **Out of scope:** recreating the cork texture pixel-for-pixel; custom illustrations; a logo redesign.
+1. **The Floor** — non-waivable anti-slop rules (tokens, motion, type tells, access, honesty, house bans). See §15.3.
+2. **Fifty themes as materials, not page plans** — each theme is paper/type/colour/surfaces/components/texture with a picture; it never dictates what a page contains or in what order. Two prompts in one theme make two different pages. Custom drops themes and designs under Floor + gates only.
+3. **Deal-and-draw build flow** — pre-flight → ask once (material, audience, use, tone) → shape from the job → deal three fitting themes (or custom) → load layout/anatomy/imagery/craft/genre/theme + gates → Picks block → build (hero first) → sweep with `sloplint --render` + judged gates + finish review.
+4. **Job-based page anatomy** — name what the visitor comes to do (subscribe, book, buy, try, …); build from that category's real anatomy, never a default of figures / steps / email band.
+5. **Real material only** — never invent metrics, testimonials, logo walls, quotes, or case-study counts. Screenshots of the real product when reachable; library photos credited; absent proofs stay absent.
+6. **Gates in three tiers** — **Floor** (never waivable; FAIL blocks ship), **Reflex** (model defaults; fix or waive on the record), **Finish** (craft detail; answer, never blocking). Implemented by `scripts/sloplint.mjs` (static + `--render` / `--url`).
+7. **Redesign / audit only when named** — Hallmark never starts on an existing design unless the user says `/hallmark redesign <path>` or `/hallmark audit <path>`. Redesign keeps content and wiring; audit only reports. Any other change to an existing design uses the project's own system.
 
-### 15.5 Correct / Avoid / What this is NOT
+**Harnesses:** Claude Code `~/.claude/skills/hallmark`; Codex/agents `~/.agents/skills/hallmark`; Cursor and OpenCode find those copies. Invoke by naming Hallmark or `/hallmark <prompt>`.
 
-- **Correct:** a settings panel on warm paper with line icons and a full-contrast header while active; README screenshots of the real app with real content.
-- **Avoid:** emoji in the toolbar; purple-blue gradients; glassy floating panels; a screenshot with a fake browser frame and a marketing kicker.
-- **What this is NOT:** not a separate product language; not permission to decorate; not a replacement for §4 sizes or §8 contrast.
+### 15.3 The Floor — non-waivable rules that apply to app UI
 
-### 15.6 Liquid Glass — effect layer (adopted hybrid)
+These bind every Hallmark output and, under this design language, every app surface drawn for a project that adopted Ionuț ADL. None are waivable. (Full gate list lives in the skill's `references/gates.md`; this is the Floor that always applies to **app UI**, stated so an implementer does not need another doc for the house bans.)
+
+1. **Tokens only** — every colour and font goes through a declared token (`:root` or theme block). No literal colour or `font-family` past the token block.
+2. **Motion discipline** — never `transition: all`; never animate `width`, `height`, `top`, or `left`. Prefer `transform` / `opacity`. Every animation has a `prefers-reduced-motion: reduce` fallback; content remains usable with scripting off (§8, §13).
+3. **Type honesty** — never one italic word inside an otherwise roman heading; never an eyebrow above a heading; never tracked-capital / small-caps labels for UI chrome (labels stay sentence or lower case, untracked, body or label face).
+4. **No purple-to-blue (or purple-to-pink / cyan-on-dark) gradient** as a signature look; no card-inside-card nesting as decoration; **no emoji as icons** in menus/toolbars/status; no hand-drawn fake browser/OS window frames.
+5. **Focus and access** — every interactive control has `:focus-visible` (or platform equivalent) appearing instantly; AA contrast (§8); content visible without depending on colour alone.
+6. **No invented facts** — never invent metrics, testimonials, logo walls, or case-study counts in UI copy or marketing surfaces.
+7. **Overflow and layout hygiene** — no `100vw` horizontal blowout; image/grid tracks that can shrink use `minmax(0, 1fr)`-style constraints; display heads can wrap without clipping.
+8. **Hero / first screen (for marketing or start pages)** — headline, one sentence, and primary action visible at ~1280×800 without scrolling when that pattern applies; do not pad with empty frames or photo-only wallpaper.
+9. **Stamp when building pages with the skill** — first CSS comment lines carry the Hallmark stamp, critique, and any waivers; then run `sloplint` before handoff.
+
+**Reflex** (fix or waive on the record with a real page-specific reason) and **Finish** (answer, never block) sit above the Floor; do not promote them to Floor. Past three identical Reflex waivers → house style belongs in a locked `design.md`.
+
+### 15.4 Themes are materials — our corkboard is one product foundation
+
+A Hallmark theme is a **material** (paper, type, colour, surfaces, texture, its own components). It is **not** a wireframe and not "the Hallmark look."
+
+**Our product foundation** (chosen under the Floor for apps under this language):
+
+- Warm paper ground `#F3EFE6`; cards/page `#FFFEF6`; text `#1F1B16` / `#3D362D`.
+- Matte cork `#B98F5F` boards with index cards; muted-red stamped status labels when they carry real information.
+- Copper/warm-brown accent for marks; selection may follow OS accent via §2.9 tokens.
+- Single-weight line icons 16/20 px; **no emoji** in surrounding controls.
+- Serif for content / README headlines; sans 12–14 for UI.
+- Content-first screenshots of the real app — no fake frames, kickers, stock gradients, AI orbs.
+- **Opaque matte content surfaces** — flat fills, 1 px borders, small radius, soft shadow at most. Liquid Glass only on chrome (§15.8).
+
+**Source of truth for this product look:** Scriptorium `assets/readme/` (`hero.png`, `corkboard.png`, `aimenu.png`, related shots and SVGs) plus Hallmark Floor comments in code.
+
+Other Hallmark catalog themes may be dealt for **new marketing/landing pages** when the skill runs; they do not silently replace this product foundation inside the app chrome and work surfaces unless the caller locks a different `design.md`.
+
+### 15.5 Deal-and-draw, job anatomy, real material (when building with the skill)
+
+When the user names Hallmark for a **new** page or UI:
+
+1. **Pre-flight** the project (fonts, palette, framework, locked `design.md`, real product URL/app).
+2. **Ask once** for material, audience, use, tone (or infer on "go ahead" and stamp inferences — never invent facts).
+3. **Shape from the job** — what the user came to do; read that job's anatomy; design the page; name a signature.
+4. **Direction** — named theme → use it; "custom" → Floor+gates only; else **deal** three themes and pick one material that can carry the prompt.
+5. **Draw** (theme builds) deals shape / hero posture / nav / footer / first section / action placement — take it unless material refuses a pick; mirror-test against neighbouring prompts.
+6. **Build hero first**, then the rest; stamp; tokens; log.
+7. **Sweep** — `sloplint --render` until Floor clean; fix or waive Reflex; answer Finish; finish review in fresh context; close with the material ask.
+
+**App screens and components** under Ionuț ADL still obey §2–§14 and §15.3–§15.4 even when a full Hallmark page flow is not run.
+
+### 15.6 How the product foundation reinforces focus levels
+
+- Active surface = brightest paper + full-contrast header (§2.9); inactive = neutral header/selection, content still readable.
+- Surrounding controls stay quiet (line icons, small labels) so the eye lands on the work.
+- Cork/card warmth belongs on **content** surfaces, never as the fill of toolbars/menus.
+- One complete AI menu = complete, grouped, quiet until open — then it is the active surface (§2, §3.1).
+
+### 15.7 Redesign and audit — only when named
+
+- **Do not** run Hallmark redesign/audit on an existing UI unless the caller names it (`/hallmark redesign …`, `/hallmark audit …`, or clear spoken equivalent).
+- Redesign keeps content and wiring; records before/after; fails if kept links/fields/handlers/headings go missing.
+- Audit reports only.
+- Polish / restyle / "keep the layout" are narrower modes when the caller says so.
+- Unnamed edits to an existing design follow this document and the project's system — not a silent Hallmark rebuild.
+
+### 15.8 Liquid Glass — effect layer (adopted hybrid)
 
 **Roles are split — do not merge into one material.**
 
 | Role | Owner | What it is |
 |------|--------|------------|
-| **Foundation (base)** | Hallmark | Warm, **opaque** surfaces: corkboard/paper fields, line-art icons, content panels. Always the body of the app. Never replaced by glass. |
-| **Effect layer (chrome / overlays only)** | Liquid Glass *effects* | Translucency, depth, specular highlights, and adaptive surfaces — applied **selectively** on surrounding controls and overlays that float above the Hallmark base (toolbars, floating panels, menus, transient chrome). |
+| **Foundation (base)** | Our Hallmark product foundation under the Floor | Warm, **opaque** surfaces: corkboard/paper, line-art, content panels. Always the body of the app. Never replaced by glass. |
+| **Effect layer (chrome / overlays only)** | Liquid Glass *effects* | Translucency, depth, specular highlights, adaptive surfaces — selectively on toolbars, floating panels, menus, transient chrome above the base. |
 
-**Principle retained from Liquid Glass research:** interface chrome remains **secondary to content**. Effects exist to separate chrome from the work surface, not to decorate the work surface itself.
+**Principle retained:** interface chrome remains **secondary to content**.
 
-**Rules for the hybrid:**
+**Rules:** (1) Foundation owns every content/work surface. (2) Glass effects only on chrome/overlays — never filling the core function or text surfaces. (3) Effects must not steal focus (§2, §3). (4) If translucency drops AA over the base, drop the effect. (5) Do not blend into one muddy material.
 
-1. **Hallmark owns every content and work surface** — editors, corkboard, document pages, settings body fields, image canvases stay opaque and warm (§15.2).
-2. **Liquid Glass effects may appear only on chrome/overlays** — thin toolbars, floating inspectors, menus, popovers, status strips — never as the fill of the core function or of an active work surface that holds text or primary content.
-3. **Effects must not steal focus or foreground** — same as §2 and §3: chrome recedes while the user works; it never takes input unless the user moves into it (§2.6 toolbar rule).
-4. **Legibility first** — if translucency or adaptation drops label/icon contrast below §8 AA over the Hallmark base, reduce or drop the effect; the base stays readable.
-5. **Do not blend** — do not tint the corkboard/paper body into glass, and do not make glass the new Hallmark identity. Two layers, two roles.
+**Correct:** warm opaque editor + lightly translucent floating toolbar.  
+**Avoid:** glass-filling the window; see-through text; refractive icon blobs; merging warmth and glass into one look.  
+**NOT:** full Apple Liquid Glass as the product identity; rejecting all chrome depth; putting glass on content.
 
-**Correct:** warm opaque editor; a lightly translucent floating toolbar or menu above it with a soft specular edge.  
-**Avoid:** glass-filling the whole window; see-through text surfaces; replacing line-art icons with refractive blobs; merging Hallmark warmth and glass into one muddy material.
+### 15.9 Effort matters / out of scope / Correct · Avoid · NOT
 
-**What this is NOT:** not a full adoption of Apple Liquid Glass as the product look; not a rejection of all depth/translucency on chrome; not permission to put glass on content.
+- **Effort matters:** load Hallmark skill when named; obey the Floor on every adopted UI; keep product foundation tokens + line icons; run sloplint on Hallmark page builds; keep redesign/audit gated; keep Liquid Glass on chrome only.
+- **Out of scope:** recreating cork texture pixel-for-pixel; custom brand illustrations unless asked; waiving Floor gates; inventing facts to fill empty UI.
+- **Correct:** Floor-clean settings on warm paper; a dealt theme for a new landing page; corkboard start screen as product foundation; translucent menu over opaque editor.
+- **Avoid:** treating corkboard colours as "all of Hallmark"; purple-blue gradients; emoji toolbar icons; silent redesign of an existing screen; glass body panels.
+- **What this is NOT:** not a second product language beside Ionuț ADL; not permission to decorate; not a replacement for §4 sizes or §8 contrast; not Hallmark = one palette.
 
 
 ---
@@ -647,6 +710,7 @@ Hallmark is **not a separate product language** and not a second design track. I
 **If you are implementing this, your job is:** when a new app is built or a rule changes, update this document incrementally in the same pattern and mirror the change everywhere it lives, in the same session.
 
 - **When:** every new app (add its core function to §3, any new surface kinds to §2.6 ids) and every rule change the caller makes.
+- **Version:** every change **bumps the version** in the document header (e.g. v1.0 → v1.1) **and** updates the **date** (Europe/Paris). The header version is the only current version; never leave two conflicting numbers. Skill mirrors must show the same version.
 - **How:** add to the existing structure — new subsection, new table row, new example — instead of rewriting from zero. Keep each section's pattern: rule · "If you are implementing this, your job is:" · effort/out of scope · correct/avoid · what this is NOT. Keep the glossary (§0.1) as the single meaning of each term; add a term there before using it.
 - **Recorded decisions** (like §15.6) are changed only by the caller.
 - **Mirror every time:** `IONUT_APPLICATION_DESIGN_LANGUAGE.md` (full) → `IONUT_APPLICATION_DESIGN_LANGUAGE.SKILL.md` (condensed, same rules and job lines) → the `desktop-user-interface` copy → the repositories that carry it. A change that is not mirrored is not done.
@@ -683,7 +747,7 @@ Hallmark is **not a separate product language** and not a second design track. I
 - [ ] Spacing and nested menus organized (§11).
 - [ ] Feedback in place, actionable, not stealing focus (§12).
 - [ ] Tokens for color; AA in every theme; motion optional (§13).
-- [ ] Hallmark opaque base + Liquid Glass effects only on chrome/overlays; line icons, no emoji in controls (§15.6).
+- [ ] Hallmark Floor obeyed; product foundation (warm opaque) under Floor; Liquid Glass only on chrome; redesign/audit only when named (§15).
 - [ ] Changes mirrored to the skill and desktop-user-interface copy (§16).
 
 ### Closing — this document stands alone

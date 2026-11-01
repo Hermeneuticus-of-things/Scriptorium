@@ -1,9 +1,11 @@
 ---
 name: ionut-application-design-language
-description: Ionuț Application Design Language (also "design application language" / "design logic language") — UX and UI rules for every app. For ANY AI (OpenCode, Claude, Cursor, GitHub Copilot, Grok Bot, or any other). At the start of every new project, before any UI work, ask the caller yes/no whether to use this design language; apply it only on yes. Covers focus levels (active surface + level, routing, return), core function, complete menus, scales, dropdowns, a11y, Hallmark visual floor, maintenance.
+description: Ionuț Application Design Language (also "design application language" / "design logic language") — UX and UI rules for every app. For ANY AI (OpenCode, Claude, Cursor, GitHub Copilot, Grok Bot, or any other). At the start of every new project, before any UI work, ask the caller yes/no whether to use this design language; apply it only on yes. Covers focus levels, core function, complete menus, scales, dropdowns, a11y, full Hallmark skill (Floor, themes-as-materials, deal/draw, sloplint) plus our warm opaque product foundation and Liquid Glass chrome effects, maintenance with version bumps.
 ---
 
 # Ionuț Application Design Language — skill
+
+**Version:** v1.0 · **Date:** 2026-11-01 (Europe/Paris) — must match the full document header; every change bumps both (§16).
 
 *Also recognized as:* **design application language** (app-facing) and **design logic language** (tool/engine logic). Full source: `IONUT_APPLICATION_DESIGN_LANGUAGE.md`. This skill is the same rules, condensed; on any doubt the full file wins. Tool-agnostic: plain Markdown, loadable as a skill, rules file, project instruction, or by reading it.
 
@@ -14,7 +16,7 @@ description: Ionuț Application Design Language (also "design application langua
 At the start of **every new project** (new repo, new app, or a new product area the caller calls a new project), **before** proposing layouts or writing UI code, ask exactly this, as a yes/no widget if your tool has one, else as one clear question:
 
 > **Use the Ionuț Application Design Language for this project? (yes / no)**
-> It covers UX and UI: focus levels, core function in front, complete menus, compact controls, the Hallmark opaque foundation (Liquid Glass only as chrome effects).
+> It covers UX and UI: focus levels, core function in front, complete menus, compact controls, full Hallmark skill (Floor, themes-as-materials) plus our warm opaque product foundation (Liquid Glass only as chrome effects).
 
 - **Yes** → follow every rule below (and the full file), run the checklist before handing over UI work. Record `Design language: Ionuț ADL — yes` in README / `AGENTS.md` / project instructions.
 - **No** → do not apply; do not bring it up again unless asked. Record `Design language: Ionuț ADL — no`.
@@ -43,7 +45,7 @@ At the start of **every new project** (new repo, new app, or a new product area 
 - §12 Feedback — at the cause, quiet, actionable, non-blocking for short waits, never stealing focus.
 - §13 Theming/motion — tokens on the Hallmark foundation; AA in every theme; motion optional and short.
 - §14 AI-assisted UI — change toward this doc without removing anything; focus as engine logic; report command count + checklist.
-- §15 Hallmark — draw every surface on the warm opaque line-art floor so the active surface and core function are obvious.
+- §15 Hallmark — obey the full skill Floor; keep product foundation (warm opaque) under Floor; Liquid Glass on chrome only; redesign/audit only when named.
 - §16 Maintenance — update incrementally in the same pattern; mirror to .md, .SKILL.md, desktop-user-interface every time.
 - §17 Checklist — verify every item; report failures.
 
@@ -108,22 +110,31 @@ Writing → editor; news → news; email → emails; AI → the interaction; ima
 - **§13 Theming/motion:** tokens on the Hallmark foundation; AA in all themes; dark theme stays warm; motion ≤~200 ms, skipped under reduced motion.
 - **§14 AI-assisted UI:** preserve every command; rearrange over delete; apply scales + Hallmark; no hero/filler; doc is mandatory; §2 as engine logic; report command count before/after + checklist.
 
-## §15 Hallmark visual foundation
+## §15 Hallmark — skill, Floor, product foundation, Liquid Glass
 
-Not a separate product language — the **warm opaque foundation under** this language (§2 decides where attention goes; Hallmark how it looks). Source: Scriptorium `assets/readme/` (`hero.png`, `corkboard.png`, `aimenu.png`, related shots and SVGs) and Hallmark code comments (line icons, no emoji in controls, warm brown/copper, anti-slop). Older `DESIGN_LANGUAGE.md` (Hallmark) rules are carried here; this doc wins on conflict.
+**Two things, keep separate:** (1) **Hallmark-the-skill** = [nutlope/hallmark](https://github.com/nutlope/hallmark) (`~/.agents/skills/hallmark`) — anti-slop design skill for Claude Code, Codex, Cursor, OpenCode. (2) **Our product foundation** = warm opaque corkboard/paper + line-art under the Floor (Scriptorium `assets/readme/`) — one chosen product theme, **not** Hallmark itself.
 
-Look: warm paper ground `#F3EFE6`, cards/page `#FFFEF6`, text `#1F1B16` / `#3D362D`; matte cork `#B98F5F` boards with index cards and muted-red stamped status labels; copper/warm-brown accent for marks; selection may follow OS accent via tokens; single-weight line icons 16/20 px, no emoji in menus/toolbars/status; serif for content and README headlines, sans 12–14 for UI; content-first screenshots of the real app (no fake frames, kickers, gradients, AI orbs); opaque matte surfaces, 1 px borders, small radius, at most soft shadow.
+**Skill scope (all of it):** Floor (non-waivable) · fifty themes as **materials not page plans** · deal-and-draw flow · job-based anatomy · real material only (never invent metrics/quotes/logos) · sloplint gates **Floor / Reflex / Finish** · redesign or audit **only when named**.
 
-Reinforces focus: active surface = brightest paper + full-contrast header; inactive = neutral header/selection, content readable; surrounding controls quiet; cork/card warmth only on content surfaces; one complete AI menu = complete, grouped, quiet, active when open.
+**Floor for app UI (never waive):** tokens only for colour/font · no `transition: all` / no animate width|height|top|left · reduced-motion fallback · no italic word in roman heading · no eyebrow · no tracked-caps labels · no purple-blue gradient signature · no emoji-as-icons · no fake OS/browser frames · focus-visible + AA · no invented facts · no 100vw blowout · stamp + sloplint on Hallmark page builds.
 
-**Liquid Glass — effect layer (adopted hybrid with Hallmark):** Roles are split — do not merge into one material. **Hallmark** = warm **opaque** foundation (corkboard/paper, line-art, content panels). **Liquid Glass effects** (translucency, depth, specular highlights, adaptive surfaces) apply **only** on chrome/overlays floating above that base (toolbars, menus, popovers, floating panels) — never as the fill of content or the core-function surface. Retained principle: chrome stays secondary to content. If an effect drops AA contrast over the Hallmark base, reduce or drop the effect. Correct: opaque editor + lightly translucent floating toolbar. Avoid: glass-filling the window; see-through text surfaces; blending Hallmark warmth and glass into one material.
+**Themes:** materials only. Our corkboard warm opaque look is the **product foundation under the Floor**, not "Hallmark." Other catalog themes may be dealt for new marketing pages when the skill runs.
+
+**When building with the skill:** pre-flight → ask once → shape from job → deal/custom → Picks → hero first → `sloplint --render` sweep. App screens under ADL still obey §2–§14 + Floor + product foundation.
+
+**Redesign/audit:** only if caller names `/hallmark redesign` or `audit` (or clear equivalent). Else use this doc + project system.
+
+**Liquid Glass (hybrid §15.8):** Hallmark product foundation = opaque base; Liquid Glass effects only on chrome/overlays; chrome secondary to content; do not merge materials.
+
+**Correct:** Floor-clean warm settings; dealt theme for a new landing; opaque editor + translucent toolbar. **Avoid:** corkboard colours as all of Hallmark; silent redesign; glass body; emoji toolbar.
+
 
 ## §16 Maintenance
 
-Update when a new app is built or a rule changes: add to the existing structure (subsection, row, example), don't rewrite from zero; keep the pattern (rule · job line · effort/out of scope · correct/avoid · what this is NOT); add new terms to the glossary first; recorded decisions change only by the caller. Mirror every change to `IONUT_APPLICATION_DESIGN_LANGUAGE.md`, this `.SKILL.md`, and the `desktop-user-interface` copy (and repos carrying it). Unmirrored = not done. After edits check numbering, cross-references, checklist.
+Every change **bumps Version and Date** in the header (match the full `.md`). Update when a new app is built or a rule changes: add to the existing structure (subsection, row, example), don't rewrite from zero; keep the pattern (rule · job line · effort/out of scope · correct/avoid · what this is NOT); add new terms to the glossary first; recorded decisions change only by the caller. Mirror every change to `IONUT_APPLICATION_DESIGN_LANGUAGE.md`, this `.SKILL.md`, and the `desktop-user-interface` copy (and repos carrying it). Unmirrored = not done. After edits check numbering, cross-references, checklist.
 
 ## §17 Checklist (run before shipping UI)
 
-Adoption asked + recorded · UX and UI checked · every input surface registered with id pattern · routing + bubbling · open moves focus in, modals trap Tab · close restores surface/control/caret/scroll, never stranded, no jump to app-level · focus ≠ selection · toolbar clicks keep focus, per-window stacks · focus tests pass · core function primary and active on open · nothing stripped · scales/targets · hidden controls reachable · dropdowns · buttons + six states · AA, ring, keyboard, SR labels, reduced motion · vector at 100/150/200% · precise wording · density/menus · feedback in place without stealing focus · color tokens, AA all themes · unmapped cases flagged (§2.13) · Hallmark opaque base + Liquid Glass effects only on chrome (line icons, no emoji) · mirrored.
+Adoption asked + recorded · UX and UI checked · every input surface registered with id pattern · routing + bubbling · open moves focus in, modals trap Tab · close restores surface/control/caret/scroll, never stranded, no jump to app-level · focus ≠ selection · toolbar clicks keep focus, per-window stacks · focus tests pass · core function primary and active on open · nothing stripped · scales/targets · hidden controls reachable · dropdowns · buttons + six states · AA, ring, keyboard, SR labels, reduced motion · vector at 100/150/200% · precise wording · density/menus · feedback in place without stealing focus · color tokens, AA all themes · unmapped cases flagged (§2.13) · Hallmark Floor + product foundation + Liquid Glass chrome only · redesign/audit only when named · version bumped · mirrored.
 
 **Closing:** the full document stands alone with the codebase — no other design doc or external guideline is needed to implement it. If something can't be implemented as written, fix the document (§16), don't improvise.
