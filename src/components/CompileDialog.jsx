@@ -10,6 +10,7 @@ import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 import { collectionNodes, listKeywords } from '../lib/collections.js';
 import { exportFormatFile, formatFileName, importFormatFile, FORMAT_FILE_EXT } from '../lib/compileFormatFile.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
+import { Icon } from './Icons.jsx';
 
 function readPresets() {
   try {
@@ -50,10 +51,10 @@ const FONTS = ['Times New Roman', 'Georgia', 'Garamond', 'Palatino Linotype', 'B
 
 // Right-hand column of the window: what goes in, how, and the book's metadata.
 const TABS = () => ([
-  ['continut', tr('ui.compileDialog.continut'), '☰'],
-  ['optiuni', tr('ui.compileDialog.optiuni'), '⚙'],
-  ['metadate', tr('ui.compileDialog.metadate'), 'ℹ'],
-  ['inlocuiri', tr('ui.compileDialog.inlocuiri'), '⇄'],
+  ['continut', tr('ui.compileDialog.continut'), 'outline'],
+  ['optiuni', tr('ui.compileDialog.optiuni'), 'sliders'],
+  ['metadate', tr('ui.compileDialog.metadate'), 'info'],
+  ['inlocuiri', tr('ui.compileDialog.inlocuiri'), 'swap'],
 ]);
 
 // Tabs of the "Edit format…" sub-dialog: settings stored in the format itself.
@@ -596,7 +597,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     }}
                   >
                     {builtinName('format', f)}
-                    {f.builtin ? '' : f.global && !formats.some((x) => x.id === f.id) ? ' 🌐' : ' ✎'}
+                    {!f.builtin && <span className="cd-format-tag">{f.global && !formats.some((x) => x.id === f.id) ? tr('ui.compileDialog.tag_global') : tr('ui.compileDialog.tag_proiect')}</span>}
                   </button>
                 </li>
               ))}
@@ -722,7 +723,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
             <nav className="cd-tabs cd-icon-tabs" role="tablist" onKeyDown={tabKeys(TABS().map(([id]) => id), tab, setTab)}>
               {TABS().map(([id, label, icon]) => (
                 <button key={id} type="button" role="tab" aria-selected={tab === id} tabIndex={tab === id ? 0 : -1} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
-                  <span className="cd-tab-icon" aria-hidden="true">{icon}</span>
+                  <span className="cd-tab-icon" aria-hidden="true"><Icon name={icon} size={18} /></span>
                   <span>{label}</span>
                 </button>
               ))}
@@ -767,7 +768,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                             <input type="checkbox" aria-label={`${tr('ui.compileDialog.p1.include')}: ${n.title}`} checked={n.includeInCompile !== false} onChange={(e) => setIncluded(n.id, e.target.checked)} />
                           </td>
                           <td style={{ paddingLeft: `${0.3 + depth * 1.1}em` }}>
-                            <span className="cd-item-icon" aria-hidden="true">{n.type === 'folder' ? '📁' : '📄'}</span> {n.title}
+                            <span className="cd-item-icon" aria-hidden="true"><Icon name={n.type === 'folder' ? 'folderLine' : 'docLine'} size={13} /></span> {n.title}
                           </td>
                           <td>
                             <select

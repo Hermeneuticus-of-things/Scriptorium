@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { tabKeys } from '../lib/tabKeys.js';
 import { incomingLinks } from '../lib/backlinks.js';
 import { findNode, rootOf } from '../lib/tree.js';
-import { BookmarkIcon, CommentIcon, LockIcon, MetaIcon, NotesIcon, SnapshotIcon, UnlockIcon } from './Icons.jsx';
+import { AttachIcon, BookmarkIcon, CommentIcon, LockIcon, MetaIcon, NotesIcon, SnapshotIcon, UnlockIcon } from './Icons.jsx';
 import { EditorContent, useEditor } from '@tiptap/react';
 import SnapshotsPane from './SnapshotsPane.jsx';
 import { buildExtensions } from '../editor/extensions.js';
@@ -493,7 +493,7 @@ function AnnotationItem({ it, no, editable, editing, setEditing, authorName, onJ
       style={isComment ? { borderLeftColor: it.color || 'var(--comment-default, #e0b84a)' } : undefined}
     >
       <div className="annot-head" role="button" tabIndex={0} onClick={onJump} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onJump())} title={tr('ui.inspector.salt_la_text')}>
-        <span className="annot-kind" aria-label={isComment ? tr('ui.inspector.annot_comment') : tr('ui.inspector.annot_footnote')}>{isComment ? '💬' : <sup>{no}</sup>}</span>
+        <span className="annot-kind" aria-label={isComment ? tr('ui.inspector.annot_comment') : tr('ui.inspector.annot_footnote')}>{isComment ? <CommentIcon size={13} /> : <sup>{no}</sup>}</span>
         {anchor && <q className="jump">{anchor}</q>}
       </div>
       {editing ? (
@@ -781,7 +781,7 @@ function DocumentExtras({ api, dir, project, node, onPatch, linkTargets, onOpen,
               {b.url ? (
                 <a href={b.url} target="_blank" rel="noreferrer">{b.url}</a>
               ) : b.file ? (
-                <button className="link bm-file" title={b.file} onClick={() => api?.openBookmarkFile?.(dir, b.file).catch?.((e) => onError?.(e))}>📎 {b.title || b.file.split(/[\\/]/).pop()}</button>
+                <button className="link bm-file" title={b.file} onClick={() => api?.openBookmarkFile?.(dir, b.file).catch?.((e) => onError?.(e))}><AttachIcon size={13} /> {b.title || b.file.split(/[\\/]/).pop()}</button>
               ) : (
                 <button className="link" onClick={() => onOpen?.(b.id)}>{linkTargets.find((t) => t.id === b.id)?.title || tr('ui.inspector.document_sters')}</button>
               )}
