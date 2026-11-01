@@ -794,3 +794,14 @@ legend { color: var(--muted); padding: 0 4px; }
 .service-popover p, .service-popover li { max-width: 72ch; } /* liniile lungi rămân citibile */
 .service-popover h3 { margin: 0 0 6px; font-size: 13px; }
 .service-popover .actions { margin-top: 8px; }
+/* Hallmark Phase D: line icons replace emoji / decorative glyphs in the format bar, binder and mini player. */
+.format-bar button .sc-icon { width: 15px; height: 15px; vertical-align: -3px; }
+.format-bar .fb-space button { display: inline-flex; align-items: center; gap: 1px; }
+.binder-tools button .sc-icon { width: 14px; height: 14px; vertical-align: -2px; }
+.binder-row .badge { display: inline-flex; align-items: center; margin-left: 4px; vertical-align: -1px; }
+.binder-row .badge .sc-icon { width: 11px; height: 11px; }
+.mini-player .mini-title .sc-icon { width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px; }
+.mini-player .mini-clip .sc-icon { width: 12px; height: 12px; vertical-align: -2px; }
+.mini-player .mini-row button .sc-icon { width: 14px; height: 14px; vertical-align: -2px; }
+.binder-tools button:focus-visible,
+.mini-player button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

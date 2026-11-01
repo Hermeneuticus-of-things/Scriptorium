@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { containerIds, dragIds, iconTint } from '../lib/panelsExtra.js';
 import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
-import { DocumentIcon, DraftIcon, FolderIcon, ResearchIcon, TemplatesIcon, TrashIcon } from './Icons.jsx';
+import { DocumentIcon, DraftIcon, FolderIcon, Icon, ResearchIcon, TemplatesIcon, TrashIcon } from './Icons.jsx';
 import ContextMenu from './ContextMenu.jsx';
 import { t as tr } from '../lib/i18n.js';
 import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
@@ -19,13 +19,13 @@ function iconFor(node, templateFolderId) {
   if (node.icon && /\p{Extended_Pictographic}/u.test(node.icon)) return node.icon;
   if (node.type === 'file') {
     const mime = node.media?.mime || '';
-    if (mime.startsWith('image/')) return '🖼';
-    if (mime === 'application/pdf') return '📕';
-    if (mime.startsWith('audio/')) return '🎵';
-    if (mime.startsWith('video/')) return '🎬';
-    return '📎';
+    if (mime.startsWith('image/')) return <Icon name="image" />;
+    if (mime === 'application/pdf') return <Icon name="pdf" />;
+    if (mime.startsWith('audio/')) return <Icon name="audio" />;
+    if (mime.startsWith('video/')) return <Icon name="video" />;
+    return <Icon name="attach" />;
   }
-  if (node.children && node.type !== 'folder') return '📑';
+  if (node.children && node.type !== 'folder') return <Icon name="stack" />;
   return node.children ? <FolderIcon /> : <DocumentIcon />;
 }
 
@@ -426,8 +426,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
               </span>
             ) : <span className={`title ${node.includeInCompile === false ? 'excluded' : ''}`}>
               {node.title}
-              {node.locked && <span className="badge" title={tr('ui.binder.blocat_doar_citire')}> 🔒</span>}
-              {node.favorite && <span className="badge" title={tr('ui.binder.favorit')}> ★</span>}
+              {node.locked && <span className="badge" title={tr('ui.binder.blocat_doar_citire')} aria-label={tr('ui.binder.blocat_doar_citire')}><Icon name="lock" size={11} /></span>}
+              {node.favorite && <span className="badge" title={tr('ui.binder.favorit')} aria-label={tr('ui.binder.favorit')}><Icon name="star" size={11} /></span>}
             </span>
           )}
         </div>
@@ -501,10 +501,10 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
       <div className="binder-tools">
         <button onClick={() => onAdd('text')} title={tr('ui.binder.document_nou_ctrl_n')}>+ Doc</button>
         <button onClick={() => onAdd('folder')} title={tr('ui.binder.dosar_nou_ctrl_shift_n')}>{tr('ui.binder.dosar')}</button>
-        <button disabled={!selected || isRoot} onClick={() => setEditing(selected)} title={tr('ui.binder.redenumeste_f2_dublu_clic')}>✎</button>
-        <button disabled={!selected || isRoot} onClick={() => onTrash()} title={tr('ui.binder.muta_in_cos_selectia')}>🗑</button>
-        <button onClick={() => setAllCollapsed(false)} title={tr('ui.binder.extinde_tot')}>⊞</button>
-        <button onClick={() => setAllCollapsed(true)} title={tr('ui.binder.restrange_tot')}>⊟</button>
+        <button disabled={!selected || isRoot} onClick={() => setEditing(selected)} title={tr('ui.binder.redenumeste_f2_dublu_clic')} aria-label={tr('ui.binder.redenumeste_f2_dublu_clic')}><Icon name="pencil" size={14} /></button>
+        <button disabled={!selected || isRoot} onClick={() => onTrash()} title={tr('ui.binder.muta_in_cos_selectia')} aria-label={tr('ui.binder.muta_in_cos_selectia')}><Icon name="trash" size={14} /></button>
+        <button onClick={() => setAllCollapsed(false)} title={tr('ui.binder.extinde_tot')} aria-label={tr('ui.binder.extinde_tot')}><Icon name="expandAll" size={14} /></button>
+        <button onClick={() => setAllCollapsed(true)} title={tr('ui.binder.restrange_tot')} aria-label={tr('ui.binder.restrange_tot')}><Icon name="collapseAll" size={14} /></button>
       </div>
       <input className="search" type="search" aria-label={tr('ui.binder.cauta_in_proiect')} placeholder={tr('ui.binder.cauta_in_proiect')} title={tr('ui.binder.ctrl_shift_clic_selectie_multipla')} value={query} onChange={(e) => setQuery(e.target.value)} />
       {filterIds ? (
