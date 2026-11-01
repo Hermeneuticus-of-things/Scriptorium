@@ -41,7 +41,7 @@ import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
 import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc, findGlossaryDoc, glossaryEntryHtml, glossaryHasTerm } from './lib/glossary.js';
-import { AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, UnlockIcon, NotesIcon, OutlineIcon, ScriveningsIcon, SearchIcon, SnapshotIcon, SplitIcon } from './components/Icons.jsx';
+import { Icon, iconNames, AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, UnlockIcon, NotesIcon, OutlineIcon, ScriveningsIcon, SearchIcon, SnapshotIcon, SplitIcon } from './components/Icons.jsx';
 import { TOP_ITEMS, topItemAvailable, toolbarPrefs, setFormatLayout } from './lib/toolbars.js';
 import ToolbarCustomizeDialog from './components/ToolbarCustomizeDialog.jsx';
 import { measure, mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
@@ -3084,7 +3084,7 @@ export default function App({ api: apiProp }) {
     const cmd = commands[it.command];
     if (!cmd) return null;
     const Ic = it.icon && TB_ICONS[it.icon];
-    const icon = Ic ? <Ic /> : it.glyph ? <span className="tb-glyph" aria-hidden="true">{it.glyph}</span> : null;
+    const icon = Ic ? <Ic /> : it.icon && iconNames.includes(it.icon) ? <Icon name={it.icon} /> : it.glyph ? <span className="tb-glyph" aria-hidden="true">{it.glyph}</span> : null;
     const text = it.text ? (it.text.includes('.') ? tr(it.text) : it.text) : '';
     const showText = toolbars.display === 'text' || (toolbars.display === 'iconText' && text) || !icon;
     return (

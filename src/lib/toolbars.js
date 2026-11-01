@@ -7,13 +7,13 @@ export const SEP = 'sep';
 export const SPACE = 'space';
 export const SPECIAL_ITEMS = [SEP, SPACE];
 
-// Top toolbar. icon: name in components/Icons.jsx (or a text glyph); command: command id.
+// Top toolbar. icon: name in components/Icons.jsx (line SVG; Hallmark: no emoji or text glyphs); command: command id.
 // kind: 'views' (Editor/Corkboard/Outline switch), 'title'.
 // AI isolation (2026-10-27): no AI item on the toolbar (no AI ▾ copy, no Asistent / I-REP buttons).
 // Every AI command lives only in the top-level AI menu; saved bars drop the old ids on load (normalizeList).
 // needs: 'ai' (only while AI is on), 'desktop' (only in the desktop app).
 export const TOP_ITEMS = [
-  { id: 'home', label: 'cmd.closeProject', glyph: '⌂', command: 'closeProject' },
+  { id: 'home', label: 'cmd.closeProject', icon: 'home', command: 'closeProject' },
   { id: 'back', label: 'cmd.back', icon: 'back', command: 'back' },
   { id: 'forward', label: 'cmd.forward', icon: 'forward', command: 'forward' },
   { id: 'title', label: 'ui.tb.title', kind: 'title' },
@@ -28,11 +28,11 @@ export const TOP_ITEMS = [
   { id: 'snapshot', label: 'cmd.snapshot', icon: 'snapshot', command: 'snapshot' },
   { id: 'bookmarks', label: 'cmd.bookmarks', icon: 'bookmark', command: 'bookmarks' },
   { id: 'projectNotes', label: 'cmd.projectNotes', icon: 'notes', command: 'projectNotes' },
-  { id: 'targets', label: 'cmd.targets', glyph: '◎', command: 'targets' },
-  { id: 'voice', label: 'cmd.speech', glyph: '🎙', command: 'speech', text: 'ui.tb.voice' },
-  { id: 'settings', label: 'cmd.settings', glyph: '⚙', command: 'settings' },
-  { id: 'help', label: 'cmd.help', glyph: '?', command: 'help' },
-  { id: 'update', label: 'cmd.checkUpdates', glyph: '⟳', command: 'checkUpdates', needs: 'desktop' },
+  { id: 'targets', label: 'cmd.targets', icon: 'target', command: 'targets' },
+  { id: 'voice', label: 'cmd.speech', icon: 'mic', command: 'speech', text: 'ui.tb.voice' },
+  { id: 'settings', label: 'cmd.settings', icon: 'settings', command: 'settings' },
+  { id: 'help', label: 'cmd.help', icon: 'help', command: 'help' },
+  { id: 'update', label: 'cmd.checkUpdates', icon: 'refresh', command: 'checkUpdates', needs: 'desktop' },
 ];
 // Decluttered default: navigation, title, view switch, Compile, Inspector (AI: only the top-level AI menu).
 // The update button is NOT here on purpose: a new version shows itself through the discreet banner,

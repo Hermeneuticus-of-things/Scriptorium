@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { chunkText, loadVoices, pause, pickVoice, resume, speak, stop as stopSystem, ttsSupported } from '../lib/speech.js';
 import { clock } from '../lib/dictation.js';
 import { t as tr } from '../lib/i18n.js';
+import { Icon } from './Icons.jsx';
 
 // The voice mini-player: a small floating window for dictating into the text and for hearing it
 // read aloud, with the engines that come with Pneuma Sofer (dictation: built-in engine or D&TED;
@@ -216,7 +217,7 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
   return (
     <div className="mini-player" ref={boxRef} style={style} role="dialog" aria-label={tr('ui.mini.titlu')}>
       <div className="mini-head" onMouseDown={startDrag}>
-        <span className="mini-title">🎙 {tr('ui.mini.titlu')}</span>
+        <span className="mini-title"><Icon name="mic" size={13} /> {tr('ui.mini.titlu')}</span>
         <button className="mini-x" onClick={onClose} title={tr('btn.close')} aria-label={tr('btn.close')}>×</button>
       </div>
       <div className="mini-row">
@@ -227,28 +228,28 @@ export default function MiniPlayer({ api = {}, dict, getText, onClose }) {
           title={d ? tr('ui.dted.stop') : tr('cmd.dictate')}
           aria-label={d ? tr('ui.dted.stop') : tr('cmd.dictate')}
         >
-          {d ? '■' : '●'}
+          {d ? <Icon name="stop" /> : <Icon name="record" />}
         </button>
         {d ? (
           <>
             <div className="mini-meter-wrap">
               <meter className={`mini-level ${clipping ? 'clip' : ''}`} min="0" max="1" low="0.75" high="0.9" optimum="0.5" value={d.paused ? 0 : d.level || 0} aria-label={tr('ui.dted.nivel')} />
-              {clipping && <span className="mini-clip" title={tr('ui.mini.prea_tare_tip')}>⚠ {tr('ui.mini.prea_tare')}</span>}
+              {clipping && <span className="mini-clip" title={tr('ui.mini.prea_tare_tip')}><Icon name="warn" size={12} /> {tr('ui.mini.prea_tare')}</span>}
             </div>
             <span className="mini-time">{clock((Date.now() - d.since) / 1000)}</span>
-            <button onClick={dict.togglePause} disabled={!d.id} title={d.paused ? tr('ui.dted.continua') : tr('ui.dted.pauza')} aria-label={d.paused ? tr('ui.dted.continua') : tr('ui.dted.pauza')}>{d.paused ? '▶' : '❚❚'}</button>
-            <button onClick={dict.cancel} title={tr('ui.dted.anuleaza_tip')} aria-label={tr('ui.dted.anuleaza')}>✕</button>
+            <button onClick={dict.togglePause} disabled={!d.id} title={d.paused ? tr('ui.dted.continua') : tr('ui.dted.pauza')} aria-label={d.paused ? tr('ui.dted.continua') : tr('ui.dted.pauza')}>{d.paused ? <Icon name="play" /> : <Icon name="pause" />}</button>
+            <button onClick={dict.cancel} title={tr('ui.dted.anuleaza_tip')} aria-label={tr('ui.dted.anuleaza')}><Icon name="close" /></button>
           </>
         ) : (
           <span className="mini-hint">{tr('ui.mini.dicteaza')}</span>
         )}
       </div>
       <div className="mini-row">
-        <button onClick={read} disabled={reading === 'loading'} title={tr('ui.speechBar.citeste_selectia_sau_documentul')} aria-label={tr('ui.speechBar.citeste')}>
-          {reading === 'speaking' ? '♪' : '▶'}
+        <button onClick={read} className={reading === 'speaking' ? 'on' : ''} disabled={reading === 'loading'} title={tr('ui.speechBar.citeste_selectia_sau_documentul')} aria-label={tr('ui.speechBar.citeste')}>
+          <Icon name="play" />
         </button>
-        <button onClick={doPause} disabled={reading !== 'speaking'} title={tr('ui.speechBar.pauza')} aria-label={tr('ui.speechBar.pauza')}>❚❚</button>
-        <button onClick={doStop} disabled={reading === 'idle'} title={tr('ui.speechBar.opreste')} aria-label={tr('ui.speechBar.opreste')}>■</button>
+        <button onClick={doPause} disabled={reading !== 'speaking'} title={tr('ui.speechBar.pauza')} aria-label={tr('ui.speechBar.pauza')}><Icon name="pause" /></button>
+        <button onClick={doStop} disabled={reading === 'idle'} title={tr('ui.speechBar.opreste')} aria-label={tr('ui.speechBar.opreste')}><Icon name="stop" /></button>
         <select value={voice} onChange={(e) => { doStop(); setVoice(e.target.value); }} title={tr('ui.speechBar.voce')} aria-label={tr('ui.speechBar.voce')}>
           {cloudReady && <option value="speechify">Speechify</option>}
           {builtIn && <option value="">{tr('ui.mini.vocea_pneuma')}</option>}
