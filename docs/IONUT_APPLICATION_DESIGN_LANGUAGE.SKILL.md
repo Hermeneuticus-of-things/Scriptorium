@@ -14,7 +14,7 @@ description: Ionuț Application Design Language (also "design application langua
 At the start of **every new project** (new repo, new app, or a new product area the caller calls a new project), **before** proposing layouts or writing UI code, ask exactly this, as a yes/no widget if your tool has one, else as one clear question:
 
 > **Use the Ionuț Application Design Language for this project? (yes / no)**
-> It covers UX and UI: focus levels, core function in front, complete menus, compact controls, the Hallmark visual floor.
+> It covers UX and UI: focus levels, core function in front, complete menus, compact controls, the Hallmark opaque foundation (Liquid Glass only as chrome effects).
 
 - **Yes** → follow every rule below (and the full file), run the checklist before handing over UI work. Record `Design language: Ionuț ADL — yes` in README / `AGENTS.md` / project instructions.
 - **No** → do not apply; do not bring it up again unless asked. Record `Design language: Ionuț ADL — no`.
@@ -23,7 +23,7 @@ At the start of **every new project** (new repo, new app, or a new product area 
 
 ## Glossary (one meaning each)
 
-**Core function** — the app's primary job, product-wide foreground (writing app → editor). **Surface** — any region the user works in (editor, settings, menu, dropdown, image viewer, panel, list, dialog, palette). **Active surface** — the one surface owning input, commands, emphasis now; one per window. **Focus level** — app → window → surface → object. **Focus** — always this level-based focus; the control indicator is the **focus ring**. **Selection** — what is chosen inside a surface; not focus. **Trigger** — what opened a surface. **Surrounding controls** — menus, toolbars, panels, status bars (never "chrome"). **Hallmark visual floor** — warm, opaque, line-art, content-first look under everything.
+**Core function** — the app's primary job, product-wide foreground (writing app → editor). **Surface** — any region the user works in (editor, settings, menu, dropdown, image viewer, panel, list, dialog, palette). **Active surface** — the one surface owning input, commands, emphasis now; one per window. **Focus level** — app → window → surface → object. **Focus** — always this level-based focus; the control indicator is the **focus ring**. **Selection** — what is chosen inside a surface; not focus. **Trigger** — what opened a surface. **Surrounding controls** — menus, toolbars, panels, status bars (never "chrome"). **Hallmark visual foundation** — warm, opaque, line-art, content-first base under everything; Liquid Glass is an effect layer on surrounding controls only (§15.6).
 
 ## Implementer job lines (all sections)
 
@@ -40,7 +40,7 @@ At the start of **every new project** (new repo, new app, or a new product area 
 - §10 Surrounding controls — precise names; visually secondary; reachable; can become active surface.
 - §11 Density — group on 4/8/12; one hierarchy per view; organize, never delete, nested menus.
 - §12 Feedback — at the cause, quiet, actionable, non-blocking for short waits, never stealing focus.
-- §13 Theming/motion — tokens on the Hallmark floor; AA in every theme; motion optional and short.
+- §13 Theming/motion — tokens on the Hallmark foundation; AA in every theme; motion optional and short.
 - §14 AI-assisted UI — change toward this doc without removing anything; focus as engine logic; report command count + checklist.
 - §15 Hallmark — draw every surface on the warm opaque line-art floor so the active surface and core function are obvious.
 - §16 Maintenance — update incrementally in the same pattern; mirror to .md, .SKILL.md, desktop-user-interface every time.
@@ -99,18 +99,18 @@ Writing → editor; news → news; email → emails; AI → the interaction; ima
 - **§10 Surrounding controls:** say surrounding controls / interface elements / menus / toolbars / panels; quiet, reachable; become active surface when worked in (except pointer toolbar clicks).
 - **§11 Density:** 4 inside group, 8 between controls, 12 between groups; core → local tools → app navigation; organize nested menus, never delete.
 - **§12 Feedback:** in place; no takeover <2 s; long ops show progress, cancellable; errors = what happened + what to do, next to cause; quiet success; never steal focus unless blocking (then push/pop per §2.5).
-- **§13 Theming/motion:** tokens on the Hallmark floor; AA in all themes; dark theme stays warm; motion ≤~200 ms, skipped under reduced motion.
+- **§13 Theming/motion:** tokens on the Hallmark foundation; AA in all themes; dark theme stays warm; motion ≤~200 ms, skipped under reduced motion.
 - **§14 AI-assisted UI:** preserve every command; rearrange over delete; apply scales + Hallmark; no hero/filler; doc is mandatory; §2 as engine logic; report command count before/after + checklist.
 
 ## §15 Hallmark visual foundation
 
-Not a separate product language — the **visual floor under** this language (§2 decides where attention goes; Hallmark how it looks). Source: Scriptorium `assets/readme/` (`hero.png`, `corkboard.png`, `aimenu.png`, related shots and SVGs) and Hallmark code comments (line icons, no emoji in controls, warm brown/copper, anti-slop). Older `DESIGN_LANGUAGE.md` (Hallmark) rules are carried here; this doc wins on conflict.
+Not a separate product language — the **warm opaque foundation under** this language (§2 decides where attention goes; Hallmark how it looks). Source: Scriptorium `assets/readme/` (`hero.png`, `corkboard.png`, `aimenu.png`, related shots and SVGs) and Hallmark code comments (line icons, no emoji in controls, warm brown/copper, anti-slop). Older `DESIGN_LANGUAGE.md` (Hallmark) rules are carried here; this doc wins on conflict.
 
 Look: warm paper ground `#F3EFE6`, cards/page `#FFFEF6`, text `#1F1B16` / `#3D362D`; matte cork `#B98F5F` boards with index cards and muted-red stamped status labels; copper/warm-brown accent for marks; selection may follow OS accent via tokens; single-weight line icons 16/20 px, no emoji in menus/toolbars/status; serif for content and README headlines, sans 12–14 for UI; content-first screenshots of the real app (no fake frames, kickers, gradients, AI orbs); opaque matte surfaces, 1 px borders, small radius, at most soft shadow.
 
 Reinforces focus: active surface = brightest paper + full-contrast header; inactive = neutral header/selection, content readable; surrounding controls quiet; cork/card warmth only on content surfaces; one complete AI menu = complete, grouped, quiet, active when open.
 
-**Liquid Glass (recorded decision):** Apple's 2025 translucent, refracting, specular, adaptive material with floating controls. **Adopted:** only "floating surrounding controls recede and never steal focus or foreground from content". **Not adopted:** translucency, blur, lensing, specular highlights, glass layers. **Why (final unless the caller changes it):** clashes with warm opaque paper/cork/line-art; lowers contrast (§8); makes emphasis colors depend on background (§2.9); platform-specific, hurts cross-platform consistency; decoration that doesn't help the work.
+**Liquid Glass — effect layer (hybrid with Hallmark):** Roles are split — do not merge into one material. **Hallmark** = warm **opaque** foundation (corkboard/paper, line-art, content panels). **Liquid Glass effects** (translucency, depth, specular highlights, adaptive surfaces) apply **only** on chrome/overlays floating above that base (toolbars, menus, popovers, floating panels) — never as the fill of content or the core-function surface. Retained principle: chrome stays secondary to content. If an effect drops AA contrast over the Hallmark base, reduce or drop the effect. Correct: opaque editor + lightly translucent floating toolbar. Avoid: glass-filling the window; see-through text surfaces; blending Hallmark warmth and glass into one material.
 
 ## §16 Maintenance
 
@@ -118,6 +118,6 @@ Update when a new app is built or a rule changes: add to the existing structure 
 
 ## §17 Checklist (run before shipping UI)
 
-Adoption asked + recorded · UX and UI checked · every input surface registered with id pattern · routing + bubbling · open moves focus in, modals trap Tab · close restores surface/control/caret/scroll, never stranded, no jump to app-level · focus ≠ selection · toolbar clicks keep focus, per-window stacks · focus tests pass · core function primary and active on open · nothing stripped · scales/targets · hidden controls reachable · dropdowns · buttons + six states · AA, ring, keyboard, SR labels, reduced motion · vector at 100/150/200% · precise wording · density/menus · feedback in place without stealing focus · color tokens, AA all themes · Hallmark floor (warm opaque, line icons, no emoji, no glass) · mirrored.
+Adoption asked + recorded · UX and UI checked · every input surface registered with id pattern · routing + bubbling · open moves focus in, modals trap Tab · close restores surface/control/caret/scroll, never stranded, no jump to app-level · focus ≠ selection · toolbar clicks keep focus, per-window stacks · focus tests pass · core function primary and active on open · nothing stripped · scales/targets · hidden controls reachable · dropdowns · buttons + six states · AA, ring, keyboard, SR labels, reduced motion · vector at 100/150/200% · precise wording · density/menus · feedback in place without stealing focus · color tokens, AA all themes · Hallmark opaque base + Liquid Glass effects only on chrome (line icons, no emoji) · mirrored.
 
 **Closing:** the full document stands alone with the codebase — no other design doc or external guideline is needed to implement it. If something can't be implemented as written, fix the document (§16), don't improvise.

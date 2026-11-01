@@ -28,7 +28,7 @@ This is a **general application design language**. It applies to **every applica
 - 12. Feedback and errors
 - 13. Theming and motion
 - 14. AI-assisted UI work
-- 15. Hallmark visual foundation (15.6 Liquid Glass — recorded decision)
+- 15. Hallmark visual foundation (15.6 Liquid Glass — effect layer hybrid)
 - 16. Maintenance — living document
 - 17. Conformance checklist and closing
 
@@ -562,7 +562,7 @@ When an AI edits UI (after §1 adoption = yes):
 
 ### 15.1 What Hallmark is here
 
-Hallmark is **not a separate product language** and not a second design track. It is the **visual floor under this design language**: the look on which §2–§14 are drawn. §2 decides *where* attention goes; Hallmark decides *how it looks* when it gets there. (An older `docs/DESIGN_LANGUAGE.md` titled "Hallmark design language" may exist in some repos; its rules are carried into this document, and on any conflict this document wins.)
+Hallmark is **not a separate product language** and not a second design track. It is the **visual foundation under this design language** — the warm opaque base. Liquid Glass supplies only an **effect layer** on chrome/overlays (§15.6); it never replaces this base: the look on which §2–§14 are drawn. §2 decides *where* attention goes; Hallmark decides *how it looks* when it gets there. (An older `docs/DESIGN_LANGUAGE.md` titled "Hallmark design language" may exist in some repos; its rules are carried into this document, and on any conflict this document wins.)
 
 **Source of truth (in the Scriptorium repository):** the README images in `assets/readme/` — `hero.png`, `corkboard.png`, `aimenu.png`, and related shots (`cli.png`, `compile*.png`, `dictation.png`, `team.png`, `timeline.png`, `snapshots.png`, SVG diagrams `features.svg`, `workflow.svg`) — and the Hallmark comments in Scriptorium's code: line icons, no emoji in surrounding controls, warm brown/copper accent, anti-slop.
 
@@ -594,15 +594,30 @@ Hallmark is **not a separate product language** and not a second design track. I
 - **Avoid:** emoji in the toolbar; purple-blue gradients; glassy floating panels; a screenshot with a fake browser frame and a marketing kicker.
 - **What this is NOT:** not a separate product language; not permission to decorate; not a replacement for §4 sizes or §8 contrast.
 
-### 15.6 Liquid Glass — recorded decision
+### 15.6 Liquid Glass — effect layer (adopted hybrid)
 
-**What it is:** Apple's 2025 visual language (iOS/iPadOS 26, macOS Tahoe 26, and the other Apple platforms, growing out of visionOS's glass): a translucent material that refracts and reflects what is behind it, with specular highlights, light/dark adaptation to the content underneath, and controls that float above content and shrink or recede while the user works.
+**Roles are split — do not merge into one material.**
 
-**Adopted (one idea only):** floating or overlaying surrounding controls must **not steal focus or foreground from content**. They recede while the user works in the core function and never take input unless the user moves into them (§2.6 toolbar rule, §3). This complements §2 and Hallmark.
+| Role | Owner | What it is |
+|------|--------|------------|
+| **Foundation (base)** | Hallmark | Warm, **opaque** surfaces: corkboard/paper fields, line-art icons, content panels. Always the body of the app. Never replaced by glass. |
+| **Effect layer (chrome / overlays only)** | Liquid Glass *effects* | Translucency, depth, specular highlights, and adaptive surfaces — applied **selectively** on surrounding controls and overlays that float above the Hallmark base (toolbars, floating panels, menus, transient chrome). |
 
-**Not adopted:** translucency, blur, refraction/lensing, specular highlights, and layered glass materials as Hallmark visuals.
+**Principle retained from Liquid Glass research:** interface chrome remains **secondary to content**. Effects exist to separate chrome from the work surface, not to decorate the work surface itself.
 
-**Why not (final — do not re-litigate without the caller changing this section):** (1) they clash with Hallmark's warm, opaque, matte paper/corkboard/line-art identity; (2) see-through controls let content bleed into labels and lower contrast, against §8 AA; (3) adaptive glass makes a control's color depend on what is behind it, which breaks the stable active/inactive emphasis of §2.9; (4) the effect is platform-specific and costly to reproduce on Windows, Linux, and web, against §2.10 cross-platform consistency; (5) it is decoration that does not help the user's work.
+**Rules for the hybrid:**
+
+1. **Hallmark owns every content and work surface** — editors, corkboard, document pages, settings body fields, image canvases stay opaque and warm (§15.2).
+2. **Liquid Glass effects may appear only on chrome/overlays** — thin toolbars, floating inspectors, menus, popovers, status strips — never as the fill of the core function or of an active work surface that holds text or primary content.
+3. **Effects must not steal focus or foreground** — same as §2 and §3: chrome recedes while the user works; it never takes input unless the user moves into it (§2.6 toolbar rule).
+4. **Legibility first** — if translucency or adaptation drops label/icon contrast below §8 AA over the Hallmark base, reduce or drop the effect; the base stays readable.
+5. **Do not blend** — do not tint the corkboard/paper body into glass, and do not make glass the new Hallmark identity. Two layers, two roles.
+
+**Correct:** warm opaque editor; a lightly translucent floating toolbar or menu above it with a soft specular edge.  
+**Avoid:** glass-filling the whole window; see-through text surfaces; replacing line-art icons with refractive blobs; merging Hallmark warmth and glass into one muddy material.
+
+**What this is NOT:** not a full adoption of Apple Liquid Glass as the product look; not a rejection of all depth/translucency on chrome; not permission to put glass on content.
+
 
 ---
 
@@ -647,7 +662,7 @@ Hallmark is **not a separate product language** and not a second design track. I
 - [ ] Spacing and nested menus organized (§11).
 - [ ] Feedback in place, actionable, not stealing focus (§12).
 - [ ] Tokens for color; AA in every theme; motion optional (§13).
-- [ ] Hallmark floor: warm opaque palette, line icons, no emoji in controls, no glass (§15).
+- [ ] Hallmark opaque base + Liquid Glass effects only on chrome/overlays; line icons, no emoji in controls (§15.6).
 - [ ] Changes mirrored to the skill and desktop-user-interface copy (§16).
 
 ### Closing — this document stands alone
