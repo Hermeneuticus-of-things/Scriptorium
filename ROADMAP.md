@@ -7,6 +7,11 @@ Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATU
 
 ---
 
+## Hallmark design language (governing)
+
+**Hallmark and the design language are one system.** Full rules: [`docs/DESIGN_LANGUAGE.md`](docs/DESIGN_LANGUAGE.md). Applies to every application (not only Pneuma Soft). Issue: [#41](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/41). Related formatting request: [#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40).
+
+
 ## Tips ghidate (help contextual) — ca un nou utilizator să înțeleagă
 
 Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăsăm un mesaj sec: arătăm **unde** e controlul (un glow scurt pe el) și spunem ce să facă. Mecanismul: `showHint(name)` în `App.jsx` + clasa `.hint-glow` (CSS, respectă `prefers-reduced-motion`).
