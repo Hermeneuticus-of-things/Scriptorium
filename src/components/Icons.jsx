@@ -43,6 +43,13 @@ const paths = {
   comment: (<path d="M2 2.5h12v8H7l-3.5 3v-3H2z" {...S} />),
   search: (<><circle cx="6.8" cy="6.8" r="4.3" {...S} /><path d="m10 10 4.3 4.3" {...S} strokeWidth="1.5" /></>),
   add: (<path d="M8 2.5v11M2.5 8h11" {...S} strokeWidth="1.5" />),
+  // Compile window tabs and dialog rows (Hallmark: line icons, no emoji).
+  sliders: (<path d="M2 4h7M12 4h2M2 8h2M7 8h7M2 12h8M13 12h1M10.5 2.5v3M5.5 6.5v3M11.5 10.5v3" {...S} />),
+  info: (<><circle cx="8" cy="8" r="6.5" {...S} /><path d="M8 7v4.5" {...S} /><circle cx="8" cy="4.8" r=".8" fill="currentColor" /></>),
+  swap: (<path d="M2.5 5h10M10 2.5 12.5 5 10 7.5M13.5 11h-10M6 8.5 3.5 11 6 13.5" {...S} />),
+  docLine: (<><path d="M3.5 1.5h6l3 3v10h-9z" {...S} /><path d="M9.5 1.5v3h3" {...S} /></>),
+  folderLine: (<path d="M1.5 4V13a.5.5 0 0 0 .5.5h12a.5.5 0 0 0 .5-.5V5.5a.5.5 0 0 0-.5-.5H7.5L6 3H2a.5.5 0 0 0-.5.5z" {...S} />),
+  attach: (<path d="M10.5 4.5 5.8 9.2a1.4 1.4 0 0 0 2 2L13 6a2.8 2.8 0 0 0-4-4L3.6 7.4a4.2 4.2 0 0 0 6 6l4-4" {...S} />),
   // Start screen template categories (Hallmark: line icons, no emoji).
   tplPage: (<><path d="M3.5 1.5h6l3 3v10h-9z" {...S} strokeWidth="0.8" /><path d="M9.5 1.5v3h3M5.5 7.5h5M5.5 9.5h5M5.5 11.5h3.5" {...S} strokeWidth="0.8" /></>),
   tplBook: (<><path d="M8 3.5C6.5 2.3 4.3 2 2 2.3v10.5c2.3-.3 4.5 0 6 1.2 1.5-1.2 3.7-1.5 6-1.2V2.3C11.7 2 9.5 2.3 8 3.5z" {...S} strokeWidth="0.8" /><path d="M8 3.5V14" {...S} strokeWidth="0.8" /></>),
@@ -91,6 +98,9 @@ export const SnapshotIcon = make('snapshot');
 export const CommentIcon = make('comment');
 export const SearchIcon = make('search');
 export const AddIcon = make('add');
+export const AttachIcon = make('attach');
+export const FolderLineIcon = make('folderLine');
+export const DocLineIcon = make('docLine');
 
 export const iconNames = Object.keys(paths);
 export default Icon;

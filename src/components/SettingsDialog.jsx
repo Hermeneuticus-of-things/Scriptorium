@@ -527,7 +527,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             Furnizor
             <select value={ai.provider} onChange={(e) => setAiProvider(e.target.value)}>
               {Object.entries(AI_PRESETS).map(([id, p]) => (
-                <option key={id} value={id}>{p.label}{hasKeys[id] ? ' ✓' : ''}</option>
+                <option key={id} value={id}>{p.label}{hasKeys[id] ? ` (${t('ui.settingsDialog.cheie_salvata')})` : ''}</option>
               ))}
             </select>
           </label>
