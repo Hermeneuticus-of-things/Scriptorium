@@ -28,7 +28,21 @@ Putting the core function in the foreground does **not** mean removing controls.
 
 ---
 
-## 2. Measurable scales
+## 2. Focus levels
+
+Focus is **not only** the application’s overall purpose or core task. It also tracks the **active window** and the **level of the object** the user is working on.
+
+Examples:
+
+- Writing text → focus is on that text.
+- Opening settings from that text → focus shifts to settings so they can be configured with the same clarity and detail.
+- Opening settings (or another panel) for something else → focus shifts to that surface.
+
+**Rule:** when the user is in the core task, keep focus there. When they enter an intermediate surface that itself needs detail — settings, inspectors, panels, dialogs — focus the **active level**, not only the app’s global scope. Focus must follow both the active window and the object’s level.
+
+This does not replace §1: the core function still defines the product. It requires that intermediate levels receive real focus while they are active, then return focus to the core surface when the user leaves them.
+
+## 3. Measurable scales
 
 Use these sizes unless a platform standard forces a documented exception:
 
@@ -47,7 +61,7 @@ No immense buttons. No oversized icons. Controls are only large enough to read a
 
 ---
 
-## 3. Disappear vs stay available
+## 4. Disappear vs stay available
 
 Supporting controls stay **available**; they must not vanish permanently.
 
@@ -64,7 +78,7 @@ Preferred patterns:
 
 ---
 
-## 4. Dropdown specifications
+## 5. Dropdown specifications
 
 Prefer **compact dropdown menus** for changing a field value (instead of large button rows or icon banks).
 
@@ -83,7 +97,7 @@ Prefer **compact dropdown menus** for changing a field value (instead of large b
 
 ---
 
-## 5. Buttons and actions
+## 6. Buttons and actions
 
 - Buttons are for a **primary action** or an explicit **confirmation**.
 - No huge buttons.
@@ -95,7 +109,7 @@ Destructive actions require confirmation when irreversible.
 
 ---
 
-## 6. Accessibility
+## 7. Accessibility
 
 Quiet does **not** mean low contrast.
 
@@ -107,13 +121,13 @@ Quiet does **not** mean low contrast.
 
 ---
 
-## 7. Vector-scalable interface (one rule)
+## 8. Vector-scalable interface (one rule)
 
 **One rule:** the interface is **vector-scalable** — layout, icons, and controls scale cleanly with resolution and user zoom as vectors (or equivalent crisp scaling), without separate “raster” and “vector” product modes. Density tokens above stay proportional when the UI scale factor changes.
 
 ---
 
-## 8. Surrounding controls (wording)
+## 9. Surrounding controls (wording)
 
 Call supporting UI **surrounding controls**, **interface elements**, **menus**, **toolbars**, or **panels**. Do not use vague slang for the frame around the core function.
 
@@ -121,11 +135,11 @@ Surrounding controls:
 
 - Stay in the background visually (small, discrete, readable at needed size).
 - Never steal the foreground from the core function.
-- Remain reachable (see §3 and the completeness rule in §1).
+- Remain reachable (see §4 and the completeness rule in §1).
 
 ---
 
-## 9. Density and layout
+## 10. Density and layout
 
 - Prefer compact grouping over scattered large hit areas.
 - Align to the spacing scale (4/8/12).
@@ -134,7 +148,7 @@ Surrounding controls:
 
 ---
 
-## 10. Feedback and errors
+## 11. Feedback and errors
 
 - Loading: in-place on the control or a small status, not a blocking full-screen takeover for short waits.
 - Errors: actionable text next to the relevant control; avoid generic empty alerts.
@@ -142,7 +156,7 @@ Surrounding controls:
 
 ---
 
-## 11. Theming and motion
+## 12. Theming and motion
 
 - Support light and dark if the product has themes; keep AA contrast in both.
 - Motion is optional polish; never required to understand state.
@@ -150,7 +164,7 @@ Surrounding controls:
 
 ---
 
-## 12. AI-assisted UI work
+## 13. AI-assisted UI work
 
 When an AI edits UI:
 
@@ -162,17 +176,18 @@ When an AI edits UI:
 
 ---
 
-## 13. Conformance checklist
+## 14. Conformance checklist
 
 Before shipping a screen or accepting an AI UI change, verify:
 
 - [ ] Core function for **this** app type is visually primary.
+- [ ] Focus tracks active window and object level (§2), not only app scope.
 - [ ] No needed menu/submenu items were removed for “simplicity.”
 - [ ] Control heights are 24/28/32; icons 16/20; UI type 12–14; spacing 4/8/12.
 - [ ] Click targets ≥32 px pointer / ≥44 px touch.
 - [ ] Supporting controls are small, discrete, and still reachable.
 - [ ] Hide patterns use toolbar / panel / popover / palette / shortcuts — not permanent loss.
-- [ ] Field changes use compact dropdowns where appropriate (§4).
+- [ ] Field changes use compact dropdowns where appropriate (§5).
 - [ ] Buttons only for primary or confirm; hierarchy and states present.
 - [ ] AA contrast, visible focus, keyboard, screen-reader labels, reduced motion.
 - [ ] Vector-scalable rule applied (one rule).
@@ -182,3 +197,4 @@ Before shipping a screen or accepting an AI UI change, verify:
 ---
 
 *Ionuț Application Design Language — governing UI rules for every application.*
+
