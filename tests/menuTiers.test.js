@@ -53,7 +53,7 @@ describe('View > Reading / Page / Zoom', () => {
     const reading = view.items.find((x) => x.label === 'menu.reading');
     expect(reading.submenu.map((x) => x.id || x.label)).toEqual(expect.arrayContaining(['dialogueFocus', 'linguisticFocus', 'ui.formatBar.focus_paragraph']));
     expect(reading.submenu.map((x) => x.id || x.label)).not.toContain('posNouns');
-    expect(view.items.find((x) => x.label === 'menu.zoom').submenu.some((x) => x.label === 'V Zoom 100%')).toBe(true);
+    expect(view.items.find((x) => x.label === 'menu.zoom').submenu.some((x) => x.label === 'Zoom 100%' && x.checked === true)).toBe(true);
     expect(layout[0].group).toBe('app');
   });
   it('reading lenses carry no page, zoom, ruler or invisibles item', () => {

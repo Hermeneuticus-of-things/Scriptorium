@@ -3,7 +3,8 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 // Top menu (menu bar). Keyboard: Enter/Space/↓ on the button opens it on the first item;
 // ↑/↓/Home/End move; Enter activates; Esc or Tab closes it (Esc from inside the menu puts
 // focus back on its button). A command chosen from the menu runs with focus back in the editor.
-// Items: '-' (separator), { label, action, shortcut, disabled, hidden } or { label, submenu: [...] }.
+// Items: '-' (separator), { label, action, shortcut, disabled, hidden, checked } or { label, submenu: [...] }.
+// `checked` (boolean) marks a toggle; the mark sits in its own column so labels stay aligned.
 // A submenu opens on hover, click, Enter or →; ← or Esc goes back to its item.
 export default function Menu({ label, items, caret = true, className = '', title }) {
   const [open, setOpen] = useState(false);
@@ -165,9 +166,10 @@ export default function Menu({ label, items, caret = true, className = '', title
     if (before.current?.isConnected && before.current.closest?.('.ProseMirror')) before.current.focus();
     it.action();
   };
-  const leaf = (it, key, onEnter) => (
-    <button key={key} role="menuitem" tabIndex={-1} disabled={it.disabled} onMouseEnter={onEnter} onClick={() => run(it)}>
-      <span>{it.label}</span>
+  const hasChecks = (list) => list.some((x) => x !== '-' && typeof x?.checked === 'boolean');
+  const leaf = (it, key, onEnter, checks = false) => (
+    <button key={key} role="menuitem" tabIndex={-1} disabled={it.disabled} onMouseEnter={onEnter} onClick={() => run(it)} data-checked={it.checked ? 'true' : undefined}>
+      <span>{checks && <span className="menu-check">{it.checked ? '✓' : ''}</span>}{it.label}</span>
       {it.shortcut && <kbd>{it.shortcut}</kbd>}
     </button>
   );
@@ -193,7 +195,7 @@ export default function Menu({ label, items, caret = true, className = '', title
         <div className="menu-pop" role="menu" aria-label={typeof label === 'string' ? label : title} onKeyDown={onPopKey}>
           {visible.map((it, i) => {
             if (it === '-') return i > 0 && i < visible.length - 1 && visible[i - 1] !== '-' ? <hr key={i} /> : null;
-            if (!it.submenu) return leaf(it, it.id || it.label, () => sub >= 0 && setSub(-1));
+            if (!it.submenu) return leaf(it, it.id || it.label, () => sub >= 0 && setSub(-1), hasChecks(visible));
             const children = shown(it.submenu);
             return (
               <div className="menu-subwrap" data-i={i} key={it.id || it.label} onMouseEnter={() => !it.disabled && children.length && setSub(i)}>
@@ -218,7 +220,7 @@ export default function Menu({ label, items, caret = true, className = '', title
                 </button>
                 {sub === i && (
                   <div className="menu-pop menu-sub" role="menu" aria-label={it.label}>
-                    {children.map((c, j) => (c === '-' ? <hr key={`s${j}`} /> : leaf(c, c.id || c.label)))}
+                    {children.map((c, j) => (c === '-' ? <hr key={`s${j}`} /> : leaf(c, c.id || c.label, undefined, hasChecks(children))))}
                   </div>
                 )}
               </div>

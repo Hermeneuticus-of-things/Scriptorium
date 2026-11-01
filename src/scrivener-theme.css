@@ -137,7 +137,8 @@
   border-radius: 0; border: 1px solid #a0a0a0; background: var(--sc-paper); padding: 2px;
   box-shadow: 2px 3px 6px rgba(0,0,0,.25); min-width: 220px;
 }
-[data-ui='classic'] .menu-pop button { border-radius: 0; padding: 4px 24px 4px 28px; min-height: 0; border: none; }
+[data-ui='classic'] .menu-pop button { border-radius: 0; padding: 4px 24px 4px 28px; min-height: 0; border: none; position: relative; }
+[data-ui='classic'] .menu-pop .menu-check { position: absolute; left: 8px; width: 14px; }
 [data-ui='classic'] .menu-pop button:hover:not(:disabled) { background: var(--sc-hover); border: none; }
 [data-ui='classic'] .menu-pop hr { margin: 2px 4px 2px 28px; }
 [data-ui='classic'] kbd { font: 11px var(--sc-font); }

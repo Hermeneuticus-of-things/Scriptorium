@@ -479,13 +479,13 @@ export default function FormatBar({
   // Line spacing as in the classic paragraph bar: 1.0 / 1.2 / 1.5 / 2.0 / 2.5 / 3.0 / Other…
   const fmtSpacing = (v) => Number(v).toLocaleString(uiLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 2 });
   const spacingItems = [
-    ...LINE_SPACINGS.map((v) => ({ label: `${Number(p.lineHeight) === v ? '✓ ' : ''}${fmtSpacing(v)}`, action: () => setPara({ lineHeight: v }) })),
+    ...LINE_SPACINGS.map((v) => ({ label: fmtSpacing(v), checked: Number(p.lineHeight) === v, action: () => setPara({ lineHeight: v }) })),
     '-',
-    { label: `${p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight)) ? `✓ ${fmtSpacing(p.lineHeight)} · ` : ''}${tr('ui.formatBar.lineSpacingOther')}`, action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
+    { label: p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight)) ? `${tr('ui.formatBar.lineSpacingOther')} (${fmtSpacing(p.lineHeight)})` : tr('ui.formatBar.lineSpacingOther'), checked: Boolean(p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight))), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
     { label: tr('ui.formatBar.lineSpacingDefault'), action: () => setPara({ lineHeight: null }), disabled: !p.lineHeight },
   ];
   const paraItems = [
-    ...LINE_SPACINGS.map((v) => ({ label: `${Number(p.lineHeight) === v ? '✓ ' : ''}${tr('ui.formatBar.lineSpacing', { v: fmtSpacing(v) })}`, action: () => setPara({ lineHeight: v }) })),
+    ...LINE_SPACINGS.map((v) => ({ label: tr('ui.formatBar.lineSpacing', { v: fmtSpacing(v) }), checked: Number(p.lineHeight) === v, action: () => setPara({ lineHeight: v }) })),
     { label: tr('ui.formatBar.lineSpacingCustom'), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
     '-',
     { label: tr('ui.formatBar.spaceBefore', { v: p.spaceBefore ?? '–' }), action: () => num(tr('ui.formatBar.spaceBeforePrompt'), 'spaceBefore', p.spaceBefore) },
@@ -497,8 +497,8 @@ export default function FormatBar({
     { label: tr('ui.formatBar.decIndent'), action: () => setPara({ indentLeft: Math.max(0, (p.indentLeft || 0) - 1) || null }) },
     { label: tr('ui.formatBar.tabStops'), action: async () => { const v = await uiPrompt(tr('ui.formatBar.tabStopsPrompt'), p.tabStops || ''); if (v !== null) setPara({ tabStops: v.replace(/\s+/g, '') || null }); } },
     '-',
-    { label: `${p.dir === 'rtl' ? '✓ ' : ''}${tr('ui.formatBar.rtl')}`, action: () => chain().toggleRtl().run() },
-    { label: `${view.ruler ? '✓ ' : ''}${tr('ui.formatBar.ruler')}`, action: () => setView({ ruler: !view.ruler }) },
+    { label: tr('ui.formatBar.rtl'), checked: p.dir === 'rtl', action: () => chain().toggleRtl().run() },
+    { label: tr('ui.formatBar.ruler'), checked: Boolean(view.ruler), action: () => setView({ ruler: !view.ruler }) },
     '-',
     { label: tr('ui.formatBar.copyFormat'), shortcut: 'Ctrl+Alt+C', action: () => chain().copyFormat().run() },
     { label: tr('ui.formatBar.pasteFormat'), shortcut: 'Ctrl+Alt+V', action: () => chain().pasteFormat().run() },
