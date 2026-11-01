@@ -928,6 +928,7 @@ function buildAppMenu(win, spec) {
         ? { label: it.label, role: it.role, enabled: !it.disabled, accelerator: it.key ? it.key.replace('Ctrl', 'CmdOrCtrl') : undefined, registerAccelerator: false }
         : {
             label: it.label,
+            ...(typeof it.checked === 'boolean' ? { type: 'checkbox', checked: it.checked } : {}),
             enabled: !it.disabled,
             accelerator: it.key ? it.key.replace('↑', 'Up').replace('↓', 'Down').replace('←', 'Left').replace('→', 'Right').replace('Ctrl', 'CmdOrCtrl') : undefined,
             registerAccelerator: false,

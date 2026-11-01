@@ -43,6 +43,14 @@ const paths = {
   comment: (<path d="M2 2.5h12v8H7l-3.5 3v-3H2z" {...S} />),
   search: (<><circle cx="6.8" cy="6.8" r="4.3" {...S} /><path d="m10 10 4.3 4.3" {...S} strokeWidth="1.5" /></>),
   add: (<path d="M8 2.5v11M2.5 8h11" {...S} strokeWidth="1.5" />),
+  // Start screen template categories (Hallmark: line icons, no emoji).
+  tplPage: (<><path d="M3.5 1.5h6l3 3v10h-9z" {...S} strokeWidth="0.8" /><path d="M9.5 1.5v3h3M5.5 7.5h5M5.5 9.5h5M5.5 11.5h3.5" {...S} strokeWidth="0.8" /></>),
+  tplBook: (<><path d="M8 3.5C6.5 2.3 4.3 2 2 2.3v10.5c2.3-.3 4.5 0 6 1.2 1.5-1.2 3.7-1.5 6-1.2V2.3C11.7 2 9.5 2.3 8 3.5z" {...S} strokeWidth="0.8" /><path d="M8 3.5V14" {...S} strokeWidth="0.8" /></>),
+  tplShelf: (<><rect x="2" y="3" width="3" height="10.5" {...S} strokeWidth="0.8" /><rect x="5.5" y="2" width="3" height="11.5" {...S} strokeWidth="0.8" /><path d="m9.6 3.6 2.8-.8 2.6 10-2.8.8z" {...S} strokeWidth="0.8" /><path d="M1.5 14.5h13" {...S} strokeWidth="0.8" /></>),
+  tplScript: (<><rect x="2" y="6" width="12" height="8" {...S} strokeWidth="0.8" /><path d="m2 6 11.2-3.3.6 2.1L2.6 8" {...S} strokeWidth="0.8" /><path d="m5.4 5 1.9 2M8.9 4l1.9 2" {...S} strokeWidth="0.8" /></>),
+  tplPoem: (<><path d="M13.5 2.5C9 3 5.5 6.5 4.5 11.5l-1 3" {...S} strokeWidth="0.8" /><path d="M13.5 2.5c-.5 4.5-3.5 8-8.5 8.8" {...S} strokeWidth="0.8" /><path d="M7 8.5h3.5" {...S} strokeWidth="0.8" /></>),
+  tplMine: (<path d="m8 2 1.8 3.8 4.2.5-3.1 2.9.8 4.1L8 11.3l-3.7 2 .8-4.1L2 6.3l4.2-.5z" {...S} strokeWidth="0.8" />),
+  tplMisc: (<><rect x="2" y="2" width="5" height="5" {...S} strokeWidth="0.8" /><rect x="9" y="2" width="5" height="5" {...S} strokeWidth="0.8" /><rect x="2" y="9" width="5" height="5" {...S} strokeWidth="0.8" /><circle cx="11.5" cy="11.5" r="2.5" {...S} strokeWidth="0.8" /></>),
 };
 
 export function Icon({ name, ...rest }) {

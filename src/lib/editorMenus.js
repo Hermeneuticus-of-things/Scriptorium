@@ -62,7 +62,8 @@ export function editorMenus(ctx) {
     const e = ed();
     if (e) fn(e.chain().focus(), e);
   };
-  const check = (b, label) => `${b ? '✓ ' : ''}${label}`;
+  // Toggle state travels as `checked`; menus draw the mark in their own column (Hallmark: no glyph glued to labels).
+  const check = (b, label) => ({ label, checked: Boolean(b) });
   const L = (k, v) => t(`ui.menu.${k}`, v);
 
   const transform = (fn) => on((c, e) => {
@@ -231,8 +232,8 @@ export function editorMenus(ctx) {
       { label: t('ui.formatBar.manageStyles'), action: () => run('styles') },
     ] },
     { label: L('revisionMode'), submenu: [
-      { label: check(!rev, L('revisionOff')), action: () => setView({ ...view, revision: 0 }) },
-      ...[1, 2, 3, 4, 5].map((n) => ({ label: check(rev === n, t('ui.formatBar.revisionRound', { n })), action: () => setView({ ...view, revision: n }) })),
+      { ...check(!rev, L('revisionOff')), action: () => setView({ ...view, revision: 0 }) },
+      ...[1, 2, 3, 4, 5].map((n) => ({ ...check(rev === n, t('ui.formatBar.revisionRound', { n })), action: () => setView({ ...view, revision: n }) })),
       '-',
       { label: t('ui.formatBar.acceptRevisions'), action: on((c) => c.removeRevisions().run()) },
     ] },
@@ -246,19 +247,19 @@ export function editorMenus(ctx) {
     { label: t('ui.formatBar.copyFormat'), shortcut: 'Ctrl+Alt+C', action: on((c) => c.copyFormat().run()) },
     { label: t('ui.formatBar.pasteFormat'), shortcut: 'Ctrl+Alt+V', action: on((c) => c.pasteFormat().run()) },
     '-',
-    { label: check(!view.hideFormatBar, L('showFormatBar')), action: () => setView({ ...view, hideFormatBar: !view.hideFormatBar }) },
-    { label: check(view.ruler, t('ui.formatBar.ruler')), action: () => setView({ ...view, ruler: !view.ruler }) },
+    { ...check(!view.hideFormatBar, L('showFormatBar')), action: () => setView({ ...view, hideFormatBar: !view.hideFormatBar }) },
+    { ...check(view.ruler, t('ui.formatBar.ruler')), action: () => setView({ ...view, ruler: !view.ruler }) },
   ];
 
   const lc = { ...DEFAULT_LABEL_COLOR_IN, ...(settings.labelColorIn || {}) };
   const toggleSetting = (patch) => () => setSettings(patch);
   const viewMenu = [
-    { label: check(settings.typewriter, L('typewriter')), action: toggleSetting({ typewriter: !settings.typewriter }) },
-    { label: check(settings.showInvisibles, L('invisibles')), action: toggleSetting({ showInvisibles: !settings.showInvisibles }) },
-    { label: check(!view.hideHeaderBar, L('headerBar')), action: () => setView({ ...view, hideHeaderBar: !view.hideHeaderBar }) },
-    { label: check(!view.hideFooterBar, L('footerBar')), action: () => setView({ ...view, hideFooterBar: !view.hideFooterBar }) },
+    { ...check(settings.typewriter, L('typewriter')), action: toggleSetting({ typewriter: !settings.typewriter }) },
+    { ...check(settings.showInvisibles, L('invisibles')), action: toggleSetting({ showInvisibles: !settings.showInvisibles }) },
+    { ...check(!view.hideHeaderBar, L('headerBar')), action: () => setView({ ...view, hideHeaderBar: !view.hideHeaderBar }) },
+    { ...check(!view.hideFooterBar, L('footerBar')), action: () => setView({ ...view, hideFooterBar: !view.hideFooterBar }) },
     { label: L('labelColorIn'), submenu: ['binder', 'cards', 'outliner', 'icons'].map((k) => ({
-      label: check(lc[k], L(`labelIn_${k}`)),
+      ...check(lc[k], L(`labelIn_${k}`)),
       action: toggleSetting({ labelColorIn: { ...lc, [k]: !lc[k] } }),
     })) },
   ];

@@ -149,13 +149,14 @@ describe('editor menus (Edit, Insert, Format, View, Window)', () => {
     expect(font.slice(0, 3).map((x) => x.shortcut)).toEqual(['Ctrl+B', 'Ctrl+I', 'Ctrl+U']);
     expect(font.every((x) => x === '-' || !x.id)).toBe(true);
     const rev = m.format.find((x) => x.label === 'ui.menu.revisionMode').submenu;
-    expect(rev.filter((x) => x !== '-' && x.label.startsWith('✓')).length).toBe(1);
+    expect(rev.filter((x) => x !== '-' && x.checked).length).toBe(1);
+    expect(rev.some((x) => x !== '-' && x.label.startsWith('✓'))).toBe(false);
     rev[0].action();
     expect(calls.at(-1)).toEqual({ revision: 0 });
   });
   it('View: label color toggles are stored in settings.labelColorIn with the defaults', () => {
     const sub = m.view.find((x) => x.label === 'ui.menu.labelColorIn').submenu;
-    expect(sub.map((x) => x.label.startsWith('✓'))).toEqual([false, true, false, true]);
+    expect(sub.map((x) => x.checked)).toEqual([false, true, false, true]);
     sub[0].action();
     expect(settingsPatches.at(-1)).toEqual({ labelColorIn: { binder: true, cards: true, outliner: false, icons: true } });
   });

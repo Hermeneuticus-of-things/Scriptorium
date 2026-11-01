@@ -158,7 +158,7 @@ export function nativeMenuSpec(layout) {
         actions[id] = it.action;
       }
       // role: a native window/edit action (minimize, paste…) the desktop menu does itself.
-      return { id, label: it.label, key: it.shortcut, disabled: it.disabled, ...(it.role ? { role: it.role } : {}) };
+      return { id, label: it.label, key: it.shortcut, disabled: it.disabled, ...(typeof it.checked === 'boolean' ? { checked: it.checked } : {}), ...(it.role ? { role: it.role } : {}) };
     });
   return { spec: layout.map((m) => ({ label: m.label, items: conv(m.items) })), actions };
 }
