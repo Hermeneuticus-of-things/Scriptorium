@@ -1,14 +1,11 @@
-<p align="center">
-  <img src="./assets/readme/hero.png" width="100%" alt="Pneuma Sofer, program de scris gratuit: cartea ta pe bucăți, apoi întreagă. Captură cu panoul de fișe al unui roman.">
-</p>
+# Pneuma Sofer
+
+Program gratuit de scris cărți lungi, în română și engleză: textul stă pe fișe, câte una pentru fiecare scenă sau capitol, iar la final primești cartea întreagă.
+
+**[Descarcă pentru Windows](../../releases/latest)**
 
 <p align="center">
-  <a href="../../releases/latest"><strong>Descarcă pentru Windows</strong></a> ·
-  <a href="#3-ce-face">Ce face</a> ·
-  <a href="#5-cum-lucrezi">Cum lucrezi</a> ·
-  <a href="#7-cum-lucrați-împreună">Împreună</a> ·
-  <a href="#8-ce-urmează">Ce urmează</a> ·
-  <a href="#instalare">Instalare</a>
+  <img src="./assets/readme/hero.png" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">
 </p>
 
 ## 1. Ce este
@@ -25,10 +22,6 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 
 ## 3. Ce face
 
-<p align="center">
-  <img src="./assets/readme/features.svg" width="100%" alt="Ce face: scrii pe fișe, traduci, dictezi, corectezi, cercetezi, lucrați împreună, agenți AI, compilezi cartea întreagă">
-</p>
-
 | Funcția | Pe scurt |
 |---|---|
 | [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, cronologie, legături între documente |
@@ -36,7 +29,8 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 | [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
 | [Corectezi](#corectezi) | revizie fără AI, corecturi învățate, asistent AI opțional, versiuni |
 | [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri |
-| [Agenți AI](#agenți-ai) | Claude sau Codex lucrează direct în carte, dacă vrei |
+| [Cauți](#cauți-oriunde) | căutare rapidă, căutare avansată, căutare după formatare |
+| [Agenți AI](#ai-opțional-într-un-singur-loc) | Claude sau Codex lucrează direct în carte, dacă vrei |
 | [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate |
 | [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când |
 
@@ -90,13 +84,13 @@ Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înai
 
 ### Traduci
 
-Fără nicio configurare, traducerea merge pe endpointul public gratuit al Google (etichetat onest „Google (fără cheie)" — neoficial, fără SLA). Cu cheie Google Cloud Translation sau **conectare cu contul Google (OAuth)**, traducerea folosește API-urile oficiale: se dezvoltă din secțiunea *Setări → Servicii și conturi → Google Cloud Translation* cu butonul „Conectează cu Google" (consimțământ în browser, fără parolă stocată).
-
 <p align="center">
   <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
 </p>
 
 Pui fișierul Word primit de la editură și Pneuma Sofer îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă; fereastra în care scrii are chenar verde, cealaltă e ușor estompată. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+
+Fără nicio configurare, traducerea folosește serviciul public gratuit al Google, marcat în program „Google (fără cheie)”: neoficial și fără garanții. Cu o cheie Google Cloud Translation sau conectat cu contul Google, folosești API-ul oficial; se configurează din *Setări → Servicii și conturi → Google Cloud Translation*, cu butonul „Conectează cu Google” (consimțământ în browser, fără parolă salvată).
 
 <p align="center">
   <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">
@@ -111,10 +105,6 @@ Clic dreapta pe un cuvânt și ai la îndemână:
 - **Asistent AI, În proiect, NotebookLM:** explicație sau traducere, căutare în toată cartea, glosar, întrebări despre termen în sursele tale. Cu un notebook configurat (Setări → Chei și conturi) și serverul `notebooklm-mcp` pornit, apare și „Întreabă NotebookLM pe surse (întrebări de continuare)”: editorul interoghează notebook-ul cu întrebări de continuare până primește un răspuns pe surse.
 
 ### Dictezi: D&TED – Dictare și transcriere
-
-<p align="center">
-  <img src="./assets/readme/voice-team.svg" width="100%" alt="Scrii cu vocea: vorbești și fraza apare pe fișa scenei, fără internet. Lucrați împreună: fiecare om cu culoarea lui pe fișele aceleiași cărți, una blocată de Ana">
-</p>
 
 <p align="center">
   <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Pneuma Sofer: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
@@ -178,15 +168,19 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 
 În **Cercetare → Întreabă** discuți cu sursele tale: primești răspunsul cu trimiteri [1], [2], iar un clic te duce la pasaj. Continui discuția, alegi ce surse folosește (manuscrisul, cercetarea, notele sau anumite dosare), aduci PDF, Word, text sau pagini web și salvezi răspunsul ca notă ori îl inserezi în text, cu trimiterile ca note de subsol. Fără AI, panoul doar caută în surse. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT** sau **Manus**, gata împărțită.
 
-### AI — tot ce ține de AI, într-un singur loc (opțional)
+### Cauți oriunde
 
-<p align="center">
-  <img src="./assets/readme/irep.png" width="100%" alt="Panoul I-REP / I-EDIT: rundele editoriale cu AI, streaming live și estimare de apeluri">
-</p>
+**Ctrl+O** deschide *Căutarea rapidă*: bați câteva litere și apar instant rezultate pe **Titluri**, **Sinopse** și **Text**, cu bucata de context; Enter deschide documentul, Shift îl deschide în panou de referință, Alt în cealaltă jumătate de editor, iar „Căutare completă în proiect" te duce în căutarea avansată cu interogarea precompletată.
 
-Rundele **I-EDIT / I-REP** arată acum răspunsul AI **pe măsură ce se scrie** (streaming live, cronometru, anulare cu Esc) și o **estimare înainte de rulare**: „Estimare: 7 documente × 3 bucle ≈ 21 apeluri AI". Rezultatele serviciilor (gramatică, sinonime, traducere, dicționare) apar **în interiorul paginii**, într-un popover ancorat la selecție, cu mărimi care se potrivesc conținutului — nu ca fereastră peste text și fără trimitere la site-uri externe.
+Căutarea avansată înțelege **operatorii** „începe cu cuvântul" / „se termină cu", **inversarea rezultatelor** (ce NU se potrivește), **sortarea** (binder, titlu A-Z/Z-A, dată), **termenii speciali** („frază exactă", -excludere, wildcard cu *), **sintaxa de date** (`mdate:2026-05`, `cdate:<2y`), filtrul Draft / selecție / Included-Excluded, și ține rezultatele într-o **colecție vie** („Rezultatele căutării") care se actualizează la fiecare deschidere. *Înlocuire* are, pe lângă format, și metadatele personalizate, snapshot-uri („Include snapshot-urile") și schimbă titlurile.
 
-Tot ce folosește AI stă grupat și se pornește sau se oprește dintr-un singur loc (pastila **AI** din bară și *Setări → Chei și conturi*). Fără AI, programul merge întreg: verificarea **I-REP** și reparațiile sigure (deterministe) rămân.
+**Căutare după formatare** (Ctrl+Alt+F) găsește text după stiluri de caracter, linkuri, imagini sau text păstrat (preserve), iar corkboard-ul și outline-ul au **bare de filtrare** (Ctrl+F în vederea lor) care restrâng fișele la ce cauți. Uneltele adaugă **Focalizarea pe dialoguri**: toate replicile din proiect, într-un singur panou, pentru corectură.
+
+### AI, opțional, într-un singur loc
+
+Tot ce folosește AI stă grupat și se pornește sau se oprește dintr-un singur loc: pastila AI din bară și *Setări → Chei și conturi*. Fără AI, programul merge întreg; verificarea I-REP și reparațiile sigure rămân.
+
+Rundele I-EDIT și I-REP arată răspunsul AI pe măsură ce se scrie, cu cronometru și anulare cu Esc, plus o estimare înainte de rulare: „Estimare: 7 documente × 3 bucle ≈ 21 apeluri AI”. Rezultatele serviciilor (gramatică, sinonime, traducere, dicționare) apar în pagină, lângă selecție, nu într-o fereastră peste text.
 
 - **Asistentul AI** — corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce vrei.
 - **I-EDIT** — runde editoriale pe tot textul, cu regulile tale.
@@ -261,15 +255,7 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 
 **5. Separatoare și înlocuiri.** În *Separatoare* alegi ce se pune între scene (rând gol, „#”, „* * *”) și între bucăți de tipuri diferite. În *Înlocuiri* schimbi la Compile un text cu altul, cu sau fără majuscule, cuvânt întreg sau expresie regulată; textul tău din proiect rămâne neatins. Tab-ul **Înlocuiri** de la nivel de proiect ține o listă separată, comună tuturor formatelor, aplicată înaintea celor pe format — cu ordine, bifă activ/inactiv și editare chiar și pentru formatele integrate.
 
-### Cauți oriunde, dintr-o lovitură
-
-**Ctrl+O** deschide *Căutarea rapidă*: batzi câteva litere și apar instant rezultate pe **Titluri**, **Sinopse** și **Text**, cu bucata de context; Enter deschide documentul, Shift îl deschide în panou de referință, Alt în cealaltă jumătate de editor, iar „Căutare completă în proiect" te duce în căutarea avansată cu interogarea precompletată.
-
-Căutarea avansată înțelege **operatorii** „începe cu cuvântul" / „se termină cu", **inversarea rezultatelor** (ce NU se potrivește), **sortarea** (binder, titlu A-Z/Z-A, dată), **termenii speciali** („frază exactă", -excludere, wildcard cu *), **sintaxa de date** (`mdate:2026-05`, `cdate:<2y`), filtrul Draft / selecție / Included-Excluded, și ține rezultatele într-o **colecție vie** („Rezultatele căutării") care se actualizează la fiecare deschidere. *Înlocuire* are, pe lângă format, și metadatele personalizate, snapshot-uri („Include snapshot-urile") și schimbă titlurile.
-
-**Căutare după formatare** (Ctrl+Alt+F) găsește text după îngrășăminte de caracter, linkuri, imagini sau text păstrat (preserve), iar corkboard-ul și outline-ul au **bare de filtrare** (Ctrl+F în vederea lor) care restrâng fișele la ce cauți. Uneltele adaugă **Focalizarea pe dialoguri**: toate replicile din proiect, într-un singur panou, pentru corectură.
-
-**6. Note și comentarii.** Notele de subsol rămân note de subsol sau devin note la finalul fiecărui capitol ori al cărții. Comentariile devin comentarii Word (în DOCX) sau dispar. Adnotările din text nu ajung în carte, iar evidențierile și culorile se pot elimina. Numerotarea notelor o alegi: 1, 2, 3 · i, ii, iii · a, b, c sau simboluri (*, †, ‡, §), cu reluare de la 1 în fiecare capitol, dacă vrei.
+**6. Note și comentarii.** Notele de subsol rămân note de subsol sau devin note la finalul fiecărui capitol ori al cărții. Comentariile devin comentarii Word (în DOCX) sau dispar. Adnotările din text nu ajung în carte, iar evidențierile și culorile se pot elimina. Numerotarea notelor o alegi: 1, 2, 3; i, ii, iii; a, b, c sau simboluri (*, †, ‡, §), cu reluare de la 1 în fiecare capitol, dacă vrei.
 
 **7. Pagina de tipar.** În fila *Pagină* alegi dimensiunea (A4, A5, Letter, 6 × 9 in sau personalizată), marginile sus, jos, interior și exterior, cu *margini în oglindă* pentru pagini față-verso. Antetul și subsolul au câte trei câmpuri (stânga, centru, dreapta), cu substituenți: titlul capitolului curent în antet, numărul paginii în subsol. Prima pagină a fiecărui capitol și paginile de la început (copertă, titlu, cuprins) rămân fără antet, iar numerotarea pornește de la textul cărții. Tot aici alegi fontul textului și al titlurilor, mărimea, spațierea și alineatul.
 
@@ -309,7 +295,7 @@ Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire
   <img src="./assets/readme/customize.png" width="100%" alt="Fereastra Personalizează bara de instrumente: elementele disponibile în stânga, cele din bară în dreapta">
 </p>
 
-Sus vezi doar ce folosești des; restul stă în meniuri ordonate. Din *Vizualizare → Personalizează bara de instrumente* alegi singur butoanele și le muți cu mouse-ul. Tot ce ține de AI stă într-un singur meniu. Rigla (Ctrl+Alt+Shift+R) arată indentările și tab-urile, ca în Word.
+Sus vezi doar ce folosești des; restul stă în meniuri ordonate. Din *Program → Personalizează bara de instrumente* alegi singur butoanele și le muți cu mouse-ul. Tot ce ține de AI stă într-un singur meniu. Rigla (Ctrl+Alt+Shift+R) arată indentările și tab-urile, ca în Word.
 
 <details>
 <summary><strong>Meniul AI și rigla</strong></summary>
@@ -362,7 +348,7 @@ Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.
-- **Golurile din auditul de paritate cu Scrivener 3**: manualul oficial (capitolele 1–26) a fost comparat capitol cu capitol cu Pneuma Sofer; diferențele sunt prioritize în [`docs/PARITY-AUDIT-NEXT-CHAPTERS.md`](docs/PARITY-AUDIT-NEXT-CHAPTERS.md) (5 goluri P1: Snapshots Manager, selectarea textului după stil, cuprinsul cu numere de pagină, lista de conținut din Compile, printarea fișelor și a outline-ului).
+- **Golurile din auditul de paritate cu Scrivener 3**: manualul oficial (capitolele 1–26) a fost comparat capitol cu capitol cu Pneuma Sofer; diferențele sunt prioritizate în [`docs/PARITY-AUDIT-NEXT-CHAPTERS.md`](docs/PARITY-AUDIT-NEXT-CHAPTERS.md) (5 goluri P1: Snapshots Manager, selectarea textului după stil, cuprinsul cu numere de pagină, lista de conținut din Compile, printarea fișelor și a outline-ului).
 
 Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea e descrisă în [`docs/DTED.md`](docs/DTED.md).
 

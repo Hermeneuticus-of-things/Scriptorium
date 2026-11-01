@@ -6,8 +6,8 @@
 //   node scripts/readme-shots.cjs              # all images
 //   node scripts/readme-shots.cjs irep ruler   # only some
 //
-// Each image: the app is captured at 1440×900 (device scale 2), then placed in a framed
-// composite (kicker, serif headline, subtitle, macOS-style window) rendered from an HTML
+// Each image: the app is captured at 1440×900 (device scale 2), then placed in a plain framed
+// composite (serif headline, one-sentence subtitle, the screenshot) rendered from an HTML
 // template and saved at 2400×1910 (hero: 2400×1200). If pngquant is installed, the PNGs are
 // compressed with it. Env: SCRIBNER_URL (default http://localhost:4183/?demo; e.g. http://localhost:4199/?demo for a
 // second preview server).
@@ -30,7 +30,7 @@ async function openApp(browser, query = '') {
   const page = await ctx.newPage();
   page.on('dialog', (d) => d.accept());
   await page.goto(URL + query);
-  await page.getByText('Deschide proiect .scribner').first().click();
+  await page.getByText(/Deschide (un )?proiect.*\.scribner/).first().click();
   await page.waitForSelector('.pane .ProseMirror');
   await page.waitForTimeout(400);
   return page;
@@ -182,9 +182,10 @@ const SHOTS = {
     sub: 'Compari versiunile una lângă alta și te întorci oricând la cea bună.',
     async setup(p) {
       await pick(p, 'Începutul');
-      const tab = p.locator('.inspector .tabs button[title*="Snapshot"]').first();
+      const tab = p.locator('.inspector button[title*="Snapshot"]').first();
       await tab.click();
       await p.locator('.snapshots .snap-add').first().click(); // take a snapshot of the current text
+      if (await p.locator('.modal-backdrop').count()) { await p.keyboard.press('Enter'); await p.locator('.modal-backdrop').waitFor({ state: 'detached', timeout: 3000 }).catch(() => {}); }
       await p.waitForTimeout(300);
       await ed(p).click();
       await p.keyboard.press('Control+End');
@@ -251,7 +252,7 @@ const SHOTS = {
     title: 'Bara de instrumente o alegi tu',
     sub: 'Adaugi, scoți și muți butoanele. Ce scoți rămâne în meniuri.',
     async setup(p) {
-      await menuPick(p, 'Vizualizare', 'Personalizează bara de instrumente…');
+      await menuPick(p, 'Program', 'Personalizează bara de instrumente…');
       await p.waitForSelector('.tb-customize');
       await p.waitForTimeout(300);
     },
@@ -378,7 +379,7 @@ const SHOTS = {
     sub: 'Setări → Voce și traducere → D&TED → Verifică: eek, antrenat pe română, greșește aproape de două ori mai puțin decât modelul standard.',
     query: '&dted',
     async setup(p) {
-      await menuCmd(p, 'Setări…');
+      await menuPick(p, 'Program', 'Setări program…');
       await p.getByRole('tab', { name: 'Voce și traducere' }).click();
       await p.getByRole('button', { name: 'Verifică' }).click();
       await p.getByText(/Folosit acum:/).waitFor();
@@ -425,56 +426,42 @@ const SHOTS = {
 };
 
 // --- composition ------------------------------------------------------------------------------
-const FONT_SERIF = "'DejaVu Serif', Georgia, 'Times New Roman', serif";
-const FONT_SANS = "Inter, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif";
+// Hallmark floor: no eyebrow/kicker labels, no tracked capitals, no fake window chrome, no
+// decorative pins or tilted cards. Each image is a headline, one sentence and the real app
+// screenshot in a plain frame. The `kicker` field in SHOTS is kept as an internal note only.
+const T = {
+  paper: '#f3efe6',
+  ink: '#1f1b16',
+  inkSoft: '#3d362d',
+  line: '#ddd5c4',
+  serif: "'DejaVu Serif', Georgia, 'Times New Roman', serif",
+  sans: "Inter, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif",
+};
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const windowHtml = (src, w) => `
-  <div class="win" style="width:${w}px">
-    <div class="bar"><i style="background:#ec6a5e"></i><i style="background:#f4bf4f"></i><i style="background:#61c554"></i></div>
-    <img src="${src}" style="width:${w}px;display:block">
-  </div>`;
+  <div class="win" style="width:${w}px"><img src="${src}" style="width:${w}px;display:block"></div>`;
 const BASE_CSS = `
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#f3efe6;font-family:${FONT_SANS};color:#1f1b16;overflow:hidden}
-  .kicker{font-family:${FONT_SANS};font-weight:700;letter-spacing:.24em;text-transform:uppercase;font-size:19px}
-  .win{border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 30px 60px rgba(60,45,25,.18),0 6px 16px rgba(60,45,25,.10);border:1px solid #e3dccd}
-  .bar{height:38px;background:#ebe5d8;display:flex;align-items:center;gap:9px;padding-left:16px}
-  .bar i{width:14px;height:14px;border-radius:50%;display:block}`;
+  body{background:${T.paper};font-family:${T.sans};color:${T.ink};overflow:hidden}
+  .win{border-radius:10px;overflow:hidden;background:#fff;border:1px solid ${T.line};box-shadow:0 18px 40px rgba(60,45,25,.12)}`;
 
 function frameHtml(s, src) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>${BASE_CSS}
-  body{width:1200px;height:955px;padding:46px 47px 0}
-  .kicker{color:#3f8f5a}
-  h1{font-family:${FONT_SERIF};font-weight:400;font-size:52px;line-height:1.15;margin:18px 0 14px;letter-spacing:-.01em}
-  p.sub{font-size:22px;line-height:1.5;color:#3d362d;max-width:830px}
-  .holder{margin-top:24px;display:flex;justify-content:center}
+  body{width:1200px;height:955px;padding:52px 47px 0}
+  h1{font-family:${T.serif};font-weight:400;font-size:50px;line-height:1.15;margin:0 0 14px;letter-spacing:-.01em}
+  p.sub{font-size:22px;line-height:1.5;color:${T.inkSoft};max-width:860px}
+  .holder{margin-top:30px;display:flex;justify-content:center}
   </style></head><body>
-  <div class="kicker">${esc(s.kicker)}</div><h1>${esc(s.title)}</h1><p class="sub">${esc(s.sub)}</p>
+  <h1>${esc(s.title)}</h1><p class="sub">${esc(s.sub)}</p>
   <div class="holder">${windowHtml(src, 1030)}</div></body></html>`;
 }
 function heroHtml(src) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>${BASE_CSS}
-  body{width:1200px;height:600px;padding:50px 47px;position:relative}
-  .kicker{color:#c2413a}
-  h1{font-family:${FONT_SERIF};font-weight:400;font-size:62px;margin:12px 0 18px;letter-spacing:-.02em;max-width:440px}
-  .tag{font-family:${FONT_SERIF};font-style:italic;font-size:30px;line-height:1.3;color:#2a241d}
-  p.sub{font-size:19px;line-height:1.55;color:#4a4238;width:420px;margin:22px 0 26px}
-  .btn{display:inline-block;font-size:17px;font-weight:600;border-radius:30px;padding:11px 18px;margin-right:8px;border:2px solid #1f1b16}
-  .dark{background:#1f1b16;color:#fff}
-  .shot{position:absolute;left:510px;top:84px;transform:rotate(-1.2deg)}
-  .card{position:absolute;background:#fffdf6;border-radius:4px;box-shadow:0 12px 26px rgba(60,45,25,.22);padding:24px 18px 16px;width:200px}
-  .card b{font-size:18px;display:block;padding-bottom:6px;border-bottom:2px solid #c2413a}
-  .card span{font-family:${FONT_SERIF};font-size:15px;display:block;margin-top:10px;color:#3d362d}
-  .pin{position:absolute;top:-8px;left:50%;width:16px;height:16px;border-radius:50%;margin-left:-8px}
+  body{width:1200px;height:600px;padding:40px 0 0;display:flex;flex-direction:column;align-items:center}
+  p.sub{font-size:20px;line-height:1.5;color:${T.inkSoft};margin-bottom:22px}
   </style></head><body>
-  <div class="kicker">Program de scris · gratuit</div>
-  <h1>Pneuma Sofer</h1>
-  <div class="tag">Cartea ta, pe bucăți.<br>Apoi întreagă.</div>
-  <p class="sub">Scrii sau traduci scenă cu scenă, le muți ca pe fișe și la final primești cartea în Word, PDF sau EPUB.</p>
-  <span class="btn dark">Windows · fără internet</span><span class="btn">AI doar dacă vrei</span>
-  <div class="shot">${windowHtml(src, 650)}</div>
-  <div class="card" style="left:470px;top:410px;transform:rotate(-3deg)"><i class="pin" style="background:#c2413a"></i><b>Cap. 1</b><span>Plecarea de acasă</span></div>
-  <div class="card" style="left:960px;top:400px;transform:rotate(2.5deg)"><i class="pin" style="background:#2b6fd6"></i><b>Notă</b><span>Ilinca are ochi verzi.</span></div>
+  <p class="sub">Panoul de fișe al unui roman: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta.</p>
+  ${windowHtml(src, 1060)}
   </body></html>`;
 }
 
