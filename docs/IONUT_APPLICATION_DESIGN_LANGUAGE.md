@@ -28,8 +28,6 @@ Putting the core function in the foreground does **not** mean removing controls.
 
 ---
 
----
-
 ## 2. Focus levels
 
 Focus is **not only** the application’s overall purpose or core task. It also tracks the **active window** and the **level of the object** the user is working on.
