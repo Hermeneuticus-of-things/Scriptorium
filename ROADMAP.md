@@ -1,3 +1,7 @@
+## Ionuț Application Design Language
+
+Governing UI rules for **every application** (general — not product-specific): [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md) · skill: [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.SKILL.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.SKILL.md).
+
 # Roadmap Pneuma Sofer
 
 Starea reală la 2026-10-23. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
