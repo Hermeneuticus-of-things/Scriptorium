@@ -15,7 +15,7 @@ This is a **general application design language**. It applies to **every applica
 
 - 0. Scope — UX as well as UI (0.1 Glossary · 0.2 How to read · 0.3 Acceptance bar)
 - 1. Adoption — ask before every new project (any AI)
-- 2. Focus levels (core)
+- 2. Focus levels (core) — includes 2.13 new cases that do not fit
 - 3. Core function and completeness
 - 4. Measurable scales
 - 5. Disappear vs stay available
@@ -297,6 +297,27 @@ Dense panels and data views keep full keyboard rigor — every field and row rea
 
 ---
 
+### 2.13 New cases that do not fit an existing level
+
+**If you are implementing this, your job is:** when a request or surface does not map cleanly to an existing focus level or section, stop and ask — do not invent a level or force the case into the wrong one.
+
+**Direction:** The documented levels and surface kinds (text/editor, settings, menu, dropdown, image viewer, panel, list, dialog, palette, window, and the ids in §2.6) are the closed set until the caller extends them. A new kind of work (for example a live canvas that is neither image nor text, a collaborative presence strip, a timeline scrubber that owns its own input, a map, a 3D viewport, a terminal pane) is a **candidate**, not a free invention.
+
+**Rule:**
+
+1. **Do not guess.** If the case does not fit an existing level or surface kind, do **not** invent a new level, rename an existing one, or stretch a nearby kind to cover it.
+2. **Ask or flag.** Ask the caller how it should sit in the level model, **or** flag it explicitly as a **new level / surface-kind candidate** with: what the user is doing there, what owns input, what commands stay local, and what close/return should restore.
+3. **Document first.** Record the decision in this document (§2.6 ids, glossary if a new term, a short example) **before** implementing focus routing for that case.
+4. **Then implement.** Only after the documented decision exists may the surface be registered and shipped.
+
+**Correct:** "This live waveform scrubber is not text, settings, menu, or image — flagging as a new surface-kind candidate; waiting for the caller's decision before registering it."  
+**Avoid:** silently treating it as an image viewer; inventing a fifth focus level above "object"; copying Settings' modal rules onto a free-floating timeline because "it felt close."
+
+**What this is NOT:** not permission to stall forever on ordinary cases that clearly map (a normal dialog is still a dialog); not a bypass of §16 maintenance once the caller decides; not an excuse to leave focus unregistered after the decision is written.
+
+
+---
+
 ## 3. Core function and completeness
 
 **If you are implementing this, your job is:** name the app's single core function, give its surface the largest area and visual priority and make it the active surface when a window opens, and keep every existing surrounding control available around it.
@@ -574,7 +595,7 @@ Hallmark is **not a separate product language** and not a second design track. I
 - **Line-art icons** at 16/20 px (§4, §9), single weight, monochrome in surrounding controls; **no emoji** in menus, toolbars, or status.
 - **Serif for content and README headlines, clean sans for UI** labels (12–14 px).
 - **Content-first imagery:** screenshots show the real app with real content (a novel's scenes, the Binder, the Inspector) — no fake window frames, no "kicker" taglines, no stock gradients, no glowing AI orbs.
-- **Opaque, matte surfaces:** flat fills, thin 1 px borders, small consistent radius (§4), at most a soft shadow to lift a card or a window. No glass, no blur.
+- **Opaque, matte surfaces for content:** flat fills, thin 1 px borders, small consistent radius (§4), at most a soft shadow to lift a card or a window. Content and work surfaces stay opaque (no glass fill). Liquid Glass effects on chrome/overlays only — §15.6.
 
 ### 15.3 How Hallmark reinforces focus levels
 

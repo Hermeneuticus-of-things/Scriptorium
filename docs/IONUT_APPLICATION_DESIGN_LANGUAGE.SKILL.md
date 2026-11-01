@@ -30,6 +30,7 @@ At the start of **every new project** (new repo, new app, or a new product area 
 - §0 Scope — apply rules to how the app behaves and how it looks, never one without the other.
 - §1 Adoption — ask the yes/no question at project start; apply fully on yes, not at all on no.
 - §2 Focus levels — know the active surface; route input, commands, emphasis to it at its level; move focus in on open; return exactly on leave.
+- §2.13 New cases — if it does not fit an existing level/kind, ask or flag as a candidate; document; then implement. Never invent a level.
 - §3 Core function — name it, give it the largest area and priority, make it active on window open, keep every surrounding control.
 - §4 Scales — named tokens; replace off-scale sizes with the nearest token.
 - §5 Disappear vs available — every hidden control returns from a fixed place; never remove a command's last access path.
@@ -84,6 +85,11 @@ Tests: open→close restores caret; settings→dropdown→dialog then 3× `Escap
 
 **NOT:** focus rings alone; one global focus forever; stripping menus; the same as §3; platform keyboard-only guidance; distraction-free mode.
 
+
+### §2.13 New cases that do not fit
+
+If a request or surface does not map cleanly to an existing level/kind (text, settings, menu, image, panel, dialog, palette, …): **do not invent a level or force it**. Ask the caller or flag it as a **new level / surface-kind candidate** (what the user does there, what owns input, local commands, close/return). Document the decision in the full ADL first, then implement. Correct: flag a live waveform scrubber and wait. Avoid: silently treating it as an image viewer; inventing a fifth focus level.
+
 ## §3 Core function + completeness
 
 Writing → editor; news → news; email → emails; AI → the interaction; image editor → the image. Largest area, highest contrast, active on window open; stays visible/readable when another surface is active. **Never strip** commands, menus, submenus, settings unless the owner explicitly removes them; when unsure keep. Correct: full menu bar intact; all AI commands in one AI menu. Avoid: deleting Export submenu; dashboard pushing editor below the fold. NOT minimalism by deletion.
@@ -118,6 +124,6 @@ Update when a new app is built or a rule changes: add to the existing structure 
 
 ## §17 Checklist (run before shipping UI)
 
-Adoption asked + recorded · UX and UI checked · every input surface registered with id pattern · routing + bubbling · open moves focus in, modals trap Tab · close restores surface/control/caret/scroll, never stranded, no jump to app-level · focus ≠ selection · toolbar clicks keep focus, per-window stacks · focus tests pass · core function primary and active on open · nothing stripped · scales/targets · hidden controls reachable · dropdowns · buttons + six states · AA, ring, keyboard, SR labels, reduced motion · vector at 100/150/200% · precise wording · density/menus · feedback in place without stealing focus · color tokens, AA all themes · Hallmark opaque base + Liquid Glass effects only on chrome (line icons, no emoji) · mirrored.
+Adoption asked + recorded · UX and UI checked · every input surface registered with id pattern · routing + bubbling · open moves focus in, modals trap Tab · close restores surface/control/caret/scroll, never stranded, no jump to app-level · focus ≠ selection · toolbar clicks keep focus, per-window stacks · focus tests pass · core function primary and active on open · nothing stripped · scales/targets · hidden controls reachable · dropdowns · buttons + six states · AA, ring, keyboard, SR labels, reduced motion · vector at 100/150/200% · precise wording · density/menus · feedback in place without stealing focus · color tokens, AA all themes · unmapped cases flagged (§2.13) · Hallmark opaque base + Liquid Glass effects only on chrome (line icons, no emoji) · mirrored.
 
 **Closing:** the full document stands alone with the codebase — no other design doc or external guideline is needed to implement it. If something can't be implemented as written, fix the document (§16), don't improvise.
