@@ -37,7 +37,7 @@ function stillThere(ed, range) {
 export default function AiPanel({
   api, hasKey, node, getText, hasSelection, getContext, getHandle,
   onInsert, onReplace, onReplaceAll, onSynopsis, onOpenSettings, aiLabel = '', aiModel = '',
-  translateTo = '', request = null,
+  translateTo = '', request = null, projectDir = null,
 }) {
   const [busy, setBusy] = useState(null); // { action, started }
   const [live, setLive] = useState('');
@@ -115,6 +115,8 @@ export default function AiPanel({
         runId,
         context: action === 'consistency' || action === 'ask' ? getContext() : '',
         lang: action === 'translate' ? translateTo : undefined,
+        // The main process reads this project's AI rules (Project > AI settings) and applies them.
+        dir: projectDir || undefined,
       });
       if (runIdRef.current !== runId) return; // cancelled meanwhile
       const entry = sessionHistory.add({

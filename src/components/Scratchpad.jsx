@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { t } from '../lib/i18n.js';
 import { sanitizeHtml } from '../lib/sanitize.js';
+import { FolderLineIcon, TrashIcon } from './Icons.jsx';
 import { noteHtml, noteFileName, noteFromFile, noteToFileHtml } from '../lib/smallWindows.js';
 
 const download = (name, text, type) => {
@@ -206,7 +207,7 @@ export default function Scratchpad({ api, load, save, onClose, onSendToProject, 
         </select>
         {api?.scratchChooseFolder && (
           folder
-            ? <button className="sp-folder on" onClick={clearFolder} title={t('ui.p11.sp_folder_clear')}>📁 {folder.split(/[\\/]/).pop()}</button>
+            ? <button className="sp-folder on" onClick={clearFolder} title={t('ui.p11.sp_folder_clear')}><FolderLineIcon size={13} /> {folder.split(/[\\/]/).pop()}</button>
             : <button className="sp-folder" onClick={chooseFolder} title={t('ui.p11.sp_folder_hint')}>{t('ui.p11.sp_folder')}</button>
         )}
         {standalone ? (
@@ -221,7 +222,7 @@ export default function Scratchpad({ api, load, save, onClose, onSendToProject, 
           {notes.map((n) => (
             <li key={n.id} className="sp-note" onClick={() => setSel(n.id)} style={{ padding: '4px 6px', cursor: 'pointer', background: n.id === sel ? 'var(--selection, #dde8ff)' : undefined, display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title || t('ui.app.fara_titlu')}</span>
-              <button onClick={(e) => { e.stopPropagation(); if (confirm(t('ui.scratchpad.stergi_nota'))) remove(n.id); }} title={t('btn.delete')} aria-label={t('btn.delete')}>🗑</button>
+              <button onClick={(e) => { e.stopPropagation(); if (confirm(t('ui.scratchpad.stergi_nota'))) remove(n.id); }} title={t('btn.delete')} aria-label={t('btn.delete')}><TrashIcon size={13} /></button>
             </li>
           ))}
           {!notes.length && <li style={{ padding: 6, opacity: 0.6 }}>{t('ui.scratchpad.nicio_nota')}</li>}

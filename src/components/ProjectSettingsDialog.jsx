@@ -6,6 +6,7 @@ import {
 import { t as tr } from '../lib/i18n.js';
 import DefaultFormatPane from './DefaultFormatPane.jsx';
 import { profileId } from '../lib/editorial.js';
+import { makeSyncDraft, applySyncDraft, syncFormatOptions } from '../lib/projectSync.js';
 
 // Languages offered for the project (spelling and Compile); any BCP-47 tag can be typed too.
 const LANGS = ['ro', 'en', 'en-GB', 'fr', 'de', 'es', 'it', 'pt', 'hu', 'pl', 'ru', 'uk'];
@@ -68,6 +69,7 @@ const TABS = () => ([
   ['tinte', tr('set.tab.projectTargets')],
   ['editorial', tr('set.tab.projectEditorial')],
   ['backup', tr('ui.projectSettingsDialog.backup')],
+  ['sincronizare', tr('ui.ps.sincronizare')],
   ['proiect', tr('group.project')],
 ]);
 
@@ -79,6 +81,8 @@ function makeExtras(project) {
     autoComplete: (project.autoComplete || []).join('\n'),
     backup: { override: Boolean(b.override), onClose: b.onClose !== false, everyMin: b.everyMin || 0, keep: b.keep || 10, exclude: Boolean(b.exclude) },
     importFolder: project.importFolder || null,
+    // Per-project folder sync (P8, 2026-10-31): overrides Settings › Sharing.
+    sync: makeSyncDraft(project),
     inboxFolder: project.inboxFolder || null,
     // Moved here from the program Settings (General / Editorial), PROGRAM settings reorg 2026-10-27.
     targets: { draft: project.targets?.draft || 0, session: project.targets?.session || 0 },
@@ -140,6 +144,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
   const setBk = (p) => setX((o) => ({ ...o, backup: { ...o.backup, ...p } }));
   const setTg = (p) => setX((o) => ({ ...o, targets: { ...o.targets, ...p } }));
   const setEd = (p) => setX((o) => ({ ...o, editorial: { ...o.editorial, ...p } }));
+  const setSy = (p) => setX((o) => ({ ...o, sync: { ...o.sync, ...p } }));
 
   const tabKeys = (e) => {
     const ids = TABS().map(([id]) => id);
@@ -163,7 +168,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
     setErrors(errs);
     if (errs.length) return;
     const base = applyProjectSettings(project, d);
-    onSave({
+    onSave(applySyncDraft({
       ...base,
       targets: { ...(base.targets || project.targets || {}), draft: Number(x.targets.draft) || 0, session: Number(x.targets.session) || 0 },
       editorialProfile: { ...(base.editorialProfile || project.editorialProfile || {}), base: x.editorial.base, rules: x.editorial.rules, canvasWordLimit: Number(x.editorial.limit) || 0 },
@@ -172,7 +177,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
       backup: { ...x.backup, everyMin: Number(x.backup.everyMin) || 0, keep: Math.max(1, Number(x.backup.keep) || 10) },
       importFolder: x.importFolder,
       inboxFolder: x.inboxFolder,
-    });
+    }, x.sync));
   };
 
   const fullFromParts = () => set({ author: [d.authorFirst, d.authorLast].filter(Boolean).join(' ') });
@@ -671,6 +676,44 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {tab === 'sincronizare' && (
+          <div className="fields ps-sync">
+            <p className="muted">{tr('ui.ps.sync_intro')}</p>
+            <p className="ps-sync-folder">
+              <strong>{tr('ui.ps.sync_folder')}:</strong>{' '}
+              {project.syncFolder ? <code>{project.syncFolder}</code> : <span className="muted">{tr('ui.ps.sync_folder_none')}</span>}
+            </p>
+            <label className="check">
+              <input type="checkbox" className="ps-sync-auto" checked={x.sync.auto} onChange={(e) => setSy({ auto: e.target.checked })} /> {tr('ui.ps.sync_auto')}
+            </label>
+            <p className="muted small">{tr('ui.ps.sync_auto_hint')}</p>
+            <div className="row">
+              <label>
+                {tr('ui.ps.sync_format')}
+                <select className="ps-sync-format" value={x.sync.format} onChange={(e) => setSy({ format: e.target.value })}>
+                  <option value="">{tr('ui.ps.sync_inherit')}</option>
+                  {syncFormatOptions(x.sync.format).map((f) => <option key={f} value={f}>{f === 'txt' ? tr('ui.compileDialog.text_simplu') : f === 'md' ? 'Markdown' : f.toUpperCase()}</option>)}
+                </select>
+              </label>
+              <label>
+                {tr('ui.ps.sync_notes_format')}
+                <select className="ps-sync-notes-format" value={x.sync.notesFormat} onChange={(e) => setSy({ notesFormat: e.target.value })}>
+                  <option value="">{tr('ui.ps.sync_inherit')}</option>
+                  {syncFormatOptions(x.sync.notesFormat).map((f) => <option key={f} value={f}>{f === 'txt' ? tr('ui.compileDialog.text_simplu') : f === 'md' ? 'Markdown' : f.toUpperCase()}</option>)}
+                </select>
+              </label>
+            </div>
+            <label>
+              {tr('ui.ps.sync_include_notes')}
+              <select className="ps-sync-include-notes" value={x.sync.includeNotes} onChange={(e) => setSy({ includeNotes: e.target.value })}>
+                <option value="">{tr('ui.ps.sync_inherit')}</option>
+                <option value="yes">{tr('ui.ps.sync_yes')}</option>
+                <option value="no">{tr('ui.ps.sync_no')}</option>
+              </select>
+            </label>
           </div>
         )}
 

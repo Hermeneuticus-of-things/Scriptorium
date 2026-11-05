@@ -235,12 +235,18 @@ const flat = (nodes, out = []) => {
     const alfa = nodeBy('Alfa');
     // The write lands asynchronously after Ctrl+S: wait for it instead of reading once.
     check('typing saved to Alfa', Boolean(await waitFor(() => /Prima parte a textului\./.test(docOnDisk(alfa.id)) && /A doua parte\./.test(docOnDisk(alfa.id)), 3000)));
+    // Put the caret back in the editor explicitly: after Ctrl+S focus may sit elsewhere, and a bare
+    // Home then leaves the caret at the end, so the split lands after "A doua parte." (CI flake).
+    await ed().locator('p', { hasText: 'A doua parte.' }).last().click();
+    await win.keyboard.press('End');
     await win.keyboard.press('Home'); // caret at the start of "A doua parte."
+    await win.waitForTimeout(100);
     await cmd('split');
     const second = await waitFor(() => flat(project().tree).find((n) => /Alfa \(continuare\)/.test(n.title)), 5000);
     check('split creates "Alfa (continuare)"', Boolean(second));
     if (!second) return;
     await save();
+    await waitFor(() => /A doua parte/.test(docOnDisk(second.id)) && !/A doua parte/.test(docOnDisk(alfa.id)), 4000);
     const a1 = docOnDisk(alfa.id);
     const a2 = docOnDisk(second.id);
     check('split: first part keeps the text before the cursor', /Prima parte/.test(a1) && !/A doua parte/.test(a1), a1.slice(0, 120));
@@ -261,6 +267,7 @@ const flat = (nodes, out = []) => {
     await win.keyboard.press('Control+End');
     await win.keyboard.type(' Editat în Scrivenings.');
     await save();
+    await waitFor(() => /Editat în Scrivenings/.test(docOnDisk(second.id)), 4000);
     check('Scrivenings edit saved to the second document', /Editat în Scrivenings/.test(docOnDisk(second.id)));
     check('Scrivenings edit not leaked into the first document', !/Editat în Scrivenings/.test(docOnDisk(alfa.id)));
     check('Scrivenings edit not leaked into any other document', fs.readdirSync(path.join(dir, 'docs')).filter((f) => /Editat în Scrivenings/.test(fs.readFileSync(path.join(dir, 'docs', f), 'utf8'))).length === 1);

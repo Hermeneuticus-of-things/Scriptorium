@@ -13,7 +13,7 @@
       <text x="28" y="132" font-size="21" fill="#3d362d">Fiecare scenă e o fișă.</text>
       <text x="28" y="166" font-size="21" fill="#3d362d">Le muți până stă povestea.</text>
       <text x="28" y="200" font-size="21" fill="#3d362d">Vezi câte cuvinte ai scris azi.</text>
-      <text x="28" y="250" font-size="19" fill="#8a5a2b" font-weight="600">roman · povestiri · scenariu</text>
+      <text x="28" y="250" font-size="19" fill="#8a5a2b" font-weight="600">roman, povestiri, scenariu</text>
     </g>
     <!-- Translator -->
     <g transform="translate(426 100)">
@@ -37,7 +37,7 @@
       <text x="28" y="132" font-size="21" fill="#3d362d">Cercetarea lângă text.</text>
       <text x="28" y="166" font-size="21" fill="#3d362d">Bibliografie din Zotero.</text>
       <text x="28" y="200" font-size="21" fill="#3d362d">Cuprins și note, automat.</text>
-      <text x="28" y="250" font-size="19" fill="#2b6fd6" font-weight="600">teză · eseu · articol</text>
+      <text x="28" y="250" font-size="19" fill="#2b6fd6" font-weight="600">teză, eseu, articol</text>
     </g>
   </g>
 </svg>

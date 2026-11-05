@@ -103,8 +103,8 @@ export default function ToolbarCustomizeDialog({ api, settings, aiEnabled, deskt
             </ul>
           </div>
           <div className="tb-mid">
-            <button onClick={() => add(avSel)} disabled={!avSel} aria-label={t('ui.tb.add')} title={t('ui.tb.add')}>{t('ui.tb.add')} →</button>
-            <button onClick={() => remove()} disabled={sel < 0} aria-label={t('ui.tb.remove')} title={t('ui.tb.remove')}>← {t('ui.tb.remove')}</button>
+            <button onClick={() => add(avSel)} disabled={!avSel} aria-label={t('ui.tb.add')} title={t('ui.tb.add')}>{t('ui.tb.add')}</button>
+            <button onClick={() => remove()} disabled={sel < 0} aria-label={t('ui.tb.remove')} title={t('ui.tb.remove')}>{t('ui.tb.remove')}</button>
             <button onClick={() => move(sel, sel - 1)} disabled={sel <= 0} aria-label={t('ui.tb.up')} title={t('ui.tb.up')}>↑</button>
             <button onClick={() => move(sel, sel + 1)} disabled={sel < 0 || sel >= current.length - 1} aria-label={t('ui.tb.down')} title={t('ui.tb.down')}>↓</button>
           </div>

@@ -9,7 +9,6 @@
     <g fill="#c19466"><path d="M440 165 l-12 -7 v14 z"/><path d="M302 165 l12 -7 v14 z"/><path d="M898 165 l-12 -7 v14 z"/><path d="M760 165 l12 -7 v14 z"/></g>
     <g transform="translate(40 52)">
       <rect width="262" height="226" rx="6" fill="#fffdf6" stroke="#e5dccb"/><rect y="62" width="262" height="3" fill="#c2413a"/>
-      <circle cx="131" cy="-2" r="10" fill="#2b6fd6"/>
       <text x="20" y="44" font-size="26" font-weight="700" fill="#1f1b16">Pe calculator</text>
       <text x="20" y="104" font-size="20" fill="#3d362d">Aplicația Pneuma Sofer</text>
       <text x="20" y="134" font-size="20" fill="#3d362d">deschide proiectul</text>
@@ -18,7 +17,6 @@
     </g>
     <g transform="translate(440 40)">
       <rect width="320" height="250" rx="6" fill="#1f1b16"/><rect y="66" width="320" height="3" fill="#e9b07a"/>
-      <circle cx="160" cy="-2" r="10" fill="#e9b07a"/>
       <text x="20" y="46" font-size="26" font-weight="700" fill="#fbf7ef">Cartea mea.scribner</text>
       <text x="20" y="108" font-size="20" fill="#e6dccb">Un folder sincronizat:</text>
       <g font-size="17" font-weight="700" fill="#fff">
@@ -31,7 +29,6 @@
     </g>
     <g transform="translate(898 52)">
       <rect width="262" height="226" rx="6" fill="#fffdf6" stroke="#e5dccb"/><rect y="62" width="262" height="3" fill="#c2413a"/>
-      <circle cx="131" cy="-2" r="10" fill="#3f8f5a"/>
       <text x="20" y="44" font-size="26" font-weight="700" fill="#1f1b16">În browser</text>
       <text x="20" y="104" font-size="20" fill="#3d362d">Chrome sau Edge,</text>
       <text x="20" y="134" font-size="20" fill="#3d362d">pe alt calculator,</text>

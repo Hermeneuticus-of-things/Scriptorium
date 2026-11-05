@@ -41,7 +41,7 @@ import { styleCss, stylesOf } from './lib/styles.js';
 import CompileDialog from './components/CompileDialog.jsx';
 import ExportDialog from './components/ExportDialog.jsx';
 import { collectBookDocs, buildAlogenGlossary, buildReadingGlossary, buildPrintToc, findGlossaryDoc, glossaryEntryHtml, glossaryHasTerm } from './lib/glossary.js';
-import { AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, UnlockIcon, NotesIcon, OutlineIcon, ScriveningsIcon, SearchIcon, SnapshotIcon, SplitIcon } from './components/Icons.jsx';
+import { Icon, iconNames, AddIcon, BackIcon, BinderIcon, BookmarkIcon, CompileIcon, ComposeIcon, CorkboardIcon, DocumentIcon, ForwardIcon, InspectorIcon, LockIcon, UnlockIcon, NotesIcon, OutlineIcon, ScriveningsIcon, SearchIcon, SnapshotIcon, SplitIcon } from './components/Icons.jsx';
 import { TOP_ITEMS, topItemAvailable, toolbarPrefs, setFormatLayout } from './lib/toolbars.js';
 import ToolbarCustomizeDialog from './components/ToolbarCustomizeDialog.jsx';
 import { measure, mediaNode, opmlToNodes, targetCrossed } from './lib/panelsExtra.js';
@@ -2761,7 +2761,6 @@ export default function App({ api: apiProp }) {
 
   const documentMenu = [
     { label: tr('cmd.findDoc'), shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
-    { label: tr('cmd.split'), shortcut: 'Ctrl+K', action: () => splitDocument(false) },
     { label: tr('cmd.splitTitle'), shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
     { label: tr('cmd.merge'), shortcut: 'Ctrl+Shift+M', action: mergeSelection },
     { label: tr('ui.app.duplica_cu_sub_documente'), shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
@@ -2802,19 +2801,14 @@ export default function App({ api: apiProp }) {
   ];
 
   const projectMenu = [
-    { label: tr('ui.app.cauta_si_inlocuieste'), shortcut: 'Ctrl+Shift+F', action: () => setDialog('find') },
-    { label: tr('ui.app.cautare_avansata_campuri_filtre_colectii'), action: () => { setSearchSeed(''); setDialog('advsearch'); } },
+    // P9 2026-10-31 (owner X5): cross-menu duplicates removed from Proiect — find/advSearch live in Editare, import/backups/compile in Fișier, styles in Format.
     { label: tr('cmd.keywords'), action: () => setDialog('keywords') },
-    { label: tr('cmd.import'), action: () => setDialog('import') },
     '-',
     { label: tr('cmd.history'), action: () => setDialog('history'), disabled: !api.getHistory },
-    { label: tr('cmd.backups'), action: () => setDialog('backup'), disabled: !api.listBackups },
     '-',
     // D1 2026-10-27 — duplicate removed; door remains cmd.projectSettings via commandList.
     { label: tr('cmd.targets'), action: () => setFloats((f) => ({ ...f, targets: !f.targets })) },
     { label: tr('cmd.stats'), action: () => setDialog('stats') },
-    { label: tr('cmd.styles'), action: () => setDialog('styles') },
-    { label: tr('cmd.compile'), action: () => flush().then(() => setDialog('compile')) },
     // Program "Setări…" removed from the Proiect menu (duplicate door; PROGRAM settings reorg 2026-10-27).
     // The program settings door is Unelte › Setări… (tools/settings); project and program never share a menu.
     // { label: tr('cmd.settings'), action: () => setDialog('settings') },
@@ -2872,7 +2866,7 @@ export default function App({ api: apiProp }) {
     ['view', 'composition', tr('cmd.composition'), () => { setView('editor'); setComposition((c) => !c); }],
     ['view', 'toggleInspector', tr('cmd.toggleInspector'), () => setShowInspector((v) => !v)],
     ['view', 'toggleBinder', tr('cmd.toggleBinder'), () => setHideBinder((v) => !v)],
-    ['view', 'split', tr('cmd.split'), () => splitDocument(false)],
+    ['document', 'split', tr('cmd.split'), () => splitDocument(false)],
     ['view', 'quickRef', tr('cmd.quickRef'), () => selected && !selected.root && openQuickRef(selected.id)],
     ['nav', 'goto', tr('cmd.goto'), () => setDialog('goto')],
     ['nav', 'searchResults', tr('cmd.searchResults'), () => {
@@ -2888,7 +2882,7 @@ export default function App({ api: apiProp }) {
     ['project', 'projectSettings', tr('cmd.projectSettings'), () => setDialog('projectSettings')],
     ['project', 'targets', tr('cmd.targets'), () => setFloats((f) => ({ ...f, targets: !f.targets }))],
     ['project', 'stats', tr('cmd.stats'), () => setDialog('stats')],
-    ['project', 'textStats', tr('cmd.textStats'), () => setFloats((f) => ({ ...f, ts: !f.ts }))],
+    // P10 2026-10-31 (owner X6): textStats unified into Statistici… — the live selection window opens from the dialog.
     ['project', 'keywords', tr('cmd.keywords'), () => setDialog('keywords')],
     ['project', 'history', tr('cmd.history'), async () => {
       await flush();
@@ -2913,7 +2907,7 @@ export default function App({ api: apiProp }) {
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
-    ['tools', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
+    ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
@@ -2922,7 +2916,7 @@ export default function App({ api: apiProp }) {
     ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
     ['ai', 'aiProjectSettings', tr('cmd.aiProjectSettings'), () => setDialog('projectAi'), !project],
     ['ai', 'mcpConnect', tr('cmd.mcpConnect'), () => setDialog('mcp'), !api.mcpConnectInfo],
-    ['view', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
+    ['app', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
     ['view', 'copyholder', tr('cmd.copyholder'), () => openCopyholder(selected?.id), !selected || Boolean(selected.root) || Boolean(selected.children)],
     ['view', 'copyholderClose', tr('cmd.copyholderClose'), () => setCopyholder(null), !copyholder],
     ['view', 'splitEditor', tr('cmd.splitEditor'), () => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)],
@@ -2953,7 +2947,7 @@ export default function App({ api: apiProp }) {
     ['ai', 'aiZoomReview', tr('cmd.aiZoomReview'), () => runZoomReview(ZOOM_LEVELS).catch(report), !aiEnabled || !api.aiZoomReview],
     ['ai', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
     ['ai', 'nlmOpen', tr('cmd.nlmOpen'), () => api.nlmOpen().catch(report), !api.nlmOpen],
-    ['file', 'newWindow', tr('cmd.newWindow'), () => api.newWindow().catch(report), !api.newWindow],
+    ['window', 'newWindow', tr('cmd.newWindow'), () => api.newWindow().catch(report), !api.newWindow],
     ['file', 'exportBundle', tr('cmd.exportBundle'), () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', tr('cmd.importBundle'), () => api.importBundle().then(openResult).catch(report), !api.importBundle],
     ['tools', 'research', tr('cmd.research'), () => setShowResearch((v) => !v), !api.ragQuery],
@@ -2978,8 +2972,8 @@ export default function App({ api: apiProp }) {
     ...SCRIPT_FORMAT_LIST.map((f) => ['format', `script_${f.id}`, tr('ui.app.mod_scenariu_x', { label: tr(`ui.scriptFormat.${f.id}`) }), () => setScriptFormat(f.id).catch(report), scriptFormat === f.id]),
     ['file', 'exportFdx', tr('cmd.exportFdx'), () => flush().then(() => exportScript('fdx')).catch(report), !api.exportScript || !scriptFormat],
     ['file', 'exportFountain', tr('cmd.exportFountain'), () => flush().then(() => exportScript('fountain')).catch(report), !api.exportScript || !scriptFormat],
-    ['tools', 'settings', tr('cmd.settings'), () => setDialog('settings')],
-    ['tools', 'shortcuts', tr('cmd.shortcuts'), () => setDialog('shortcuts')],
+    ['app', 'settings', tr('cmd.settings'), () => setDialog('settings')],
+    ['app', 'shortcuts', tr('cmd.shortcuts'), () => setDialog('shortcuts')],
     ['window', 'saveLayout', tr('cmd.saveLayout'), saveLayout],
     ['window', 'manageLayouts', tr('cmd.manageLayouts'), () => setDialog('layouts')],
     ['view', 'pageViewSetup', tr('cmd.pageViewSetup'), () => setEditorView({ ...editorView, pageView: !(editorView.pageView && editorView.pageSize === 'setup'), pageSize: 'setup' })],
@@ -2992,7 +2986,7 @@ export default function App({ api: apiProp }) {
     ['document', 'moveTo', tr('cmd.moveTo'), () => setDialog('moveTo'), !selectionList().length],
     ['document', 'toggleSeparator', tr('cmd.toggleSeparator'), toggleSeparator, !selectionList().length],
     ['document', 'restoreTrash', tr('cmd.restoreTrash'), restoreSelection, !selectionList().some((id) => inTrash(id))],
-    ['document', 'appendSelection', tr('cmd.appendSelection'), () => setDialog('appendTo')],
+    ['edit', 'appendSelection', tr('cmd.appendSelection'), () => setDialog('appendTo')],
     ['document', 'openExternal', tr('cmd.openExternal'), openMediaExternal, !selected?.media?.file || !api.openMediaExternal],
     ['document', 'autoSynopsis', tr('cmd.autoSynopsis'), () => autoSynopsisSelection().catch(report), !selectionList().length],
     ['document', 'snapshotSelection', tr('cmd.snapshotSelection'), () => snapshotSelection().catch(report), !selectionList().length],
@@ -3079,11 +3073,14 @@ export default function App({ api: apiProp }) {
     styleName: (st) => builtinName('style', st),
     run: (id) => commandsRef.current[id]?.run(),
     desktop: Boolean(api.setAppMenu),
+    setZoom: (z) => setZoom(z),
+    curZoom: () => curZoom(),
   });
   const menuLayout = buildMenuLayout(commands, {
     extras: { document: documentMenu, nav: navigateMenu, project: projectMenu, edit: edMenus.edit, insert: edMenus.insert, format: edMenus.format, view: edMenus.view, window: edMenus.window },
-    after: { edit: [commands.appendSelection && menuItem('appendSelection'), ...edMenus.editAfter].filter(Boolean) },
+    after: { edit: [...edMenus.editAfter].filter(Boolean) },
     goto: { tree: project.tree, go: (id) => { go(id); setView('editor'); }, skip: (n) => n.root === 'trash' },
+    append: edMenus.append,
     label: (k) => tr(k),
     item: menuItem,
   });
@@ -3113,7 +3110,7 @@ export default function App({ api: apiProp }) {
     const cmd = commands[it.command];
     if (!cmd) return null;
     const Ic = it.icon && TB_ICONS[it.icon];
-    const icon = Ic ? <Ic /> : it.glyph ? <span className="tb-glyph" aria-hidden="true">{it.glyph}</span> : null;
+    const icon = Ic ? <Ic /> : it.icon && iconNames.includes(it.icon) ? <Icon name={it.icon} /> : it.glyph ? <span className="tb-glyph" aria-hidden="true">{it.glyph}</span> : null;
     const text = it.text ? (it.text.includes('.') ? tr(it.text) : it.text) : '';
     const showText = toolbars.display === 'text' || (toolbars.display === 'iconText' && text) || !icon;
     return (
@@ -3752,6 +3749,7 @@ export default function App({ api: apiProp }) {
               )}
               {showAi && aiEnabled && (
                 <AiPanel
+                  projectDir={dir}
                   api={api}
                   hasKey={settings.hasApiKey}
                   aiLabel={settings.aiLabel}
@@ -4235,7 +4233,7 @@ export default function App({ api: apiProp }) {
           onClose={() => { setDialog(null); setPsTab(''); }}
         />
       )}
-      {dialog === 'stats' && <StatisticsDialog project={project} docs={docs} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} />}
+      {dialog === 'stats' && <StatisticsDialog project={project} docs={docs} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onLiveText={() => { setDialog(null); setFloats((f) => ({ ...f, ts: true })); }} />}
       {floats.targets && (
         <TargetsDialog
           project={project}

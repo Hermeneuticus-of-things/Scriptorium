@@ -1,3 +1,7 @@
+## Ionuț Application Design Language
+
+Governing UI rules for **every application** (general — not product-specific): [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md) · skill: [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.SKILL.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.SKILL.md).
+
 # Roadmap Pneuma Sofer
 
 Starea reală la 2026-10-23. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
@@ -130,6 +134,10 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 - [x] Insert: dată, placeholdere Scrivener, caractere speciale (inclusiv diacritice sanscrite), linie / salt de pagină
 - [x] Copy Special (text simplu, Markdown, HTML, HTML fără note)
 - [x] Auto-complete cu nume din proiect (Tab)
+
+### Cereri — formatare ([#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40))
+- [ ] Formatare pe tot manuscrisul (justify/aliniere etc.) dintr-o singură acțiune, pentru proiecte noi și vechi ([#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40))
+- [ ] La Proiect nou: alegerea stilurilor/formatării implicite la creare ([#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40))
 
 ### 2.2 Proiect și organizare
 - [x] Project Settings: proprietăți proiect, Labels (culori, ordine, titlul coloanei), Status, Custom Metadata (Text/Checkbox/List/Date), Section Types cu implicite pe nivel, Template Sheets; redenumirile și ștergerile se propagă în tot proiectul
@@ -444,11 +452,11 @@ Audit opțiune cu opțiune, făcut pe codul din `src/components/`, `src/extensio
 
 ### A6. Opțiuni: Editare / Formatare
 **Identic:** font implicit, mărime, interlinie, indentarea primei linii, spațiu după paragraf.
-- [ ] **parțial** Lipsește mini-editorul cu riglă pentru formatarea implicită: aliniere, indent stânga/dreapta, spațiu înainte, tab-uri.
+- [ ] **parțial** Lipsește mini-editorul cu riglă pentru formatarea implicită: aliniere, indent stânga/dreapta, spațiu înainte, tab-uri. Vezi [#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40).
 - [ ] **lipsă** Font separat pentru notițe (notele documentului și ale proiectului).
 - [ ] **lipsă** Font implicit pentru notele de subsol și comentarii.
 - [ ] **lipsă** „Aplică formatarea implicită textului lipit”.
-- [ ] **lipsă** „Convertește documentele existente la formatarea implicită” pe tot proiectul (există pe document, în bara de format).
+- [ ] **lipsă** „Convertește documentele existente la formatarea implicită” pe tot proiectul (există pe document, în bara de format). Vezi [#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40).
 - [ ] **lipsă** Unități de măsură pentru riglă și indent (cm / in / pt).
 
 ### A7. Opțiuni: Editare / Revizii

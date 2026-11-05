@@ -14,7 +14,7 @@ const { open, ed, check, done, menuCmd } = require('./_helpers.cjs');
   check('without a key: tells where to put it', /Setări/.test(toast), toast);
   while (await page.locator('.toast button').count()) await page.locator('.toast button').first().click();
   // save a DeepL key in Settings
-  await cmd('Setări…');
+  await cmd('Setări program…');
   await page.getByRole('tab', { name: 'Servicii și conturi' }).click();
   const row = page.locator('.service-row', { hasText: 'DeepL' });
   await row.locator('input').first().fill('demo-key:fx');
@@ -84,7 +84,7 @@ const { open, ed, check, done, menuCmd } = require('./_helpers.cjs');
   await page.waitForTimeout(300);
   const engine = await page.locator('.mini-player select').first().inputValue();
   check('voice mini-player offers Speechify and picks it', engine === 'speechify', engine);
-  await page.locator('.mini-player button[aria-label="▶ Citește"]').click();
+  await page.locator('.mini-player button[aria-label="Citește"]').click();
   await page.waitForTimeout(800);
   const barMsg = await page.locator('.mini-player').innerText();
   check('Speechify plays without an error', !/Pune cheia|eroare|Error/i.test(barMsg), barMsg);

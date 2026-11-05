@@ -6,7 +6,7 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   const { browser, page, errors } = await open();
   const dlg = () => page.locator('.modal[role=dialog]').last();
   // turn on automatic back-links (Settings → Editing)
-  await menuCmd(page, /^Setări…|^Settings…/);
+  await menuCmd(page, /^Setări program…|^Program settings…/);
   await page.waitForSelector('.modal [role=tablist]');
   await dlg().locator('[role=tab]', { hasText: /Editare|Editing/ }).first().click();
   await dlg().locator('label.check', { hasText: /legătura înapoi|back-links/ }).locator('input').check();

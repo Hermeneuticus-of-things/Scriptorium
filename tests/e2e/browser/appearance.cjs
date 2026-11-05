@@ -5,7 +5,7 @@ const { open, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   const { browser, page, errors } = await open();
   const dlg = () => page.locator('.modal[role=dialog]').last();
   const openLook = async () => {
-    await menuCmd(page, /^Setări…|^Settings…/);
+    await menuCmd(page, /^Setări program…|^Program settings…/);
     await page.waitForSelector('.modal [role=tablist]');
     await dlg().locator('[role=tablist] [role=tab]').nth(1).click();
     await page.waitForSelector('.appearance-pane');

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { t as tr, categoryLabel } from '../lib/i18n.js';
+import { Icon } from './Icons.jsx';
 
 // Recent projects: pinned ones (settings.recentPinned = [dir]) first, in pin order.
 export function orderRecent(recent = [], pinned = []) {
@@ -129,8 +130,12 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
     pickCategory(groups[n].category);
     e.currentTarget.querySelectorAll('[role=option]')[n]?.focus();
   };
-  const CAT_ICON = { Generale: '📄', 'Ficțiune': '📖', 'Non-ficțiune': '📚', Scenariu: '🎬', Poezie: '🪶', 'Ale mele': '⭐' };
-  const iconOf = (t) => t.icon || CAT_ICON[t.category] || '📄';
+  // Line icons per category (Hallmark: no emoji-as-icon in chrome). User templates may keep the icon
+  // the author picked when saving them; built-in templates always use the category icon.
+  const CAT_ICON = { Generale: 'tplPage', 'Ficțiune': 'tplBook', 'Non-ficțiune': 'tplShelf', Scenariu: 'tplScript', Poezie: 'tplPoem', Diverse: 'tplMisc', 'Ale mele': 'tplMine' };
+  const iconOf = (t) => (t.user && t.icon && t.icon !== '📄'
+    ? <span className="tpl-icon-text">{t.icon}</span>
+    : <Icon name={CAT_ICON[t.category] || 'tplPage'} size={32} />);
   const canSync = api.isWeb && typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
   return (
     <div className="home">
@@ -175,7 +180,7 @@ export default function Home({ api, settings: initialSettings, onOpen, onError, 
             <div className="tpl-desc" aria-live="polite">
               {chosen ? (
                 <>
-                  <strong>{iconOf(chosen)} {chosen.name}</strong>
+                  <strong>{chosen.name}</strong>
                   <p className="muted small">{chosen.description || tr('ui.home.sablon_fara_descriere')}</p>
                 </>
               ) : <p className="muted small">{tr('ui.home.alege_un_sablon')}</p>}

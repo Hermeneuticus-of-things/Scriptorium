@@ -5,7 +5,8 @@ const { open, ed, caretEnd, check, done, menuPick } = require('./_helpers.cjs');
   const { browser, page, errors } = await open();
   const bar = await page.locator('header.toolbar .menu > button').allInnerTexts();
   const names = bar.map((s) => s.replace(/\s*▾\s*$/, '').trim());
-  const want = ['Fișier', 'Editare', 'Inserare', 'Vizualizare', 'Navigare', 'Proiect', 'Documente', 'Format', 'Fereastră', 'Unelte'];
+  // Menu reorg 2026-10-31: APPLICATION (Program) / PROJECT (Fișier, Proiect) / WORKFLOW / Fereastră, Ajutor.
+  const want = ['Program', 'Fișier', 'Proiect', 'Editare', 'Inserare', 'Format', 'Documente', 'Vizualizare', 'Navigare', 'Unelte', 'Fereastră'];
   check('menu bar order', want.every((w, i) => names.indexOf(w) >= 0 && (i === 0 || names.indexOf(w) > names.indexOf(want[i - 1]))), names.join(' | '));
 
   await caretEnd(page);

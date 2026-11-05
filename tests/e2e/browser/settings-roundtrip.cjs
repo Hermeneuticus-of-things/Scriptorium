@@ -4,7 +4,7 @@ const { open, check, done, menuCmd } = require('./_helpers.cjs');
 (async () => {
   const { browser, page, errors } = await open();
   const dlg = () => page.locator('.modal[role=dialog]').last();
-  const openSettings = async () => { await menuCmd(page, /^Setări…|^Settings…/); await page.waitForSelector('.modal [role=tablist]'); };
+  const openSettings = async () => { await menuCmd(page, /^Setări program…|^Program settings…/); await page.waitForSelector('.modal [role=tablist]'); };
   const tab = async (i) => { await dlg().locator('[role=tab]').nth(i).click(); await page.waitForTimeout(80); };
   const field = (label) => dlg().locator('label', { hasText: label }).locator('input').first();
   // appearance: composition width/fade

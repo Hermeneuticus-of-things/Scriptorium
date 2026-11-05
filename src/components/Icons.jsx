@@ -43,6 +43,57 @@ const paths = {
   comment: (<path d="M2 2.5h12v8H7l-3.5 3v-3H2z" {...S} />),
   search: (<><circle cx="6.8" cy="6.8" r="4.3" {...S} /><path d="m10 10 4.3 4.3" {...S} strokeWidth="1.5" /></>),
   add: (<path d="M8 2.5v11M2.5 8h11" {...S} strokeWidth="1.5" />),
+  // Compile window tabs and dialog rows (Hallmark: line icons, no emoji).
+  sliders: (<path d="M2 4h7M12 4h2M2 8h2M7 8h7M2 12h8M13 12h1M10.5 2.5v3M5.5 6.5v3M11.5 10.5v3" {...S} />),
+  info: (<><circle cx="8" cy="8" r="6.5" {...S} /><path d="M8 7v4.5" {...S} /><circle cx="8" cy="4.8" r=".8" fill="currentColor" /></>),
+  swap: (<path d="M2.5 5h10M10 2.5 12.5 5 10 7.5M13.5 11h-10M6 8.5 3.5 11 6 13.5" {...S} />),
+  docLine: (<><path d="M3.5 1.5h6l3 3v10h-9z" {...S} /><path d="M9.5 1.5v3h3" {...S} /></>),
+  folderLine: (<path d="M1.5 4V13a.5.5 0 0 0 .5.5h12a.5.5 0 0 0 .5-.5V5.5a.5.5 0 0 0-.5-.5H7.5L6 3H2a.5.5 0 0 0-.5.5z" {...S} />),
+  attach: (<path d="M10.5 4.5 5.8 9.2a1.4 1.4 0 0 0 2 2L13 6a2.8 2.8 0 0 0-4-4L3.6 7.4a4.2 4.2 0 0 0 6 6l4-4" {...S} />),
+  // Start screen template categories (Hallmark: line icons, no emoji).
+  tplPage: (<><path d="M3.5 1.5h6l3 3v10h-9z" {...S} strokeWidth="0.8" /><path d="M9.5 1.5v3h3M5.5 7.5h5M5.5 9.5h5M5.5 11.5h3.5" {...S} strokeWidth="0.8" /></>),
+  tplBook: (<><path d="M8 3.5C6.5 2.3 4.3 2 2 2.3v10.5c2.3-.3 4.5 0 6 1.2 1.5-1.2 3.7-1.5 6-1.2V2.3C11.7 2 9.5 2.3 8 3.5z" {...S} strokeWidth="0.8" /><path d="M8 3.5V14" {...S} strokeWidth="0.8" /></>),
+  tplShelf: (<><rect x="2" y="3" width="3" height="10.5" {...S} strokeWidth="0.8" /><rect x="5.5" y="2" width="3" height="11.5" {...S} strokeWidth="0.8" /><path d="m9.6 3.6 2.8-.8 2.6 10-2.8.8z" {...S} strokeWidth="0.8" /><path d="M1.5 14.5h13" {...S} strokeWidth="0.8" /></>),
+  tplScript: (<><rect x="2" y="6" width="12" height="8" {...S} strokeWidth="0.8" /><path d="m2 6 11.2-3.3.6 2.1L2.6 8" {...S} strokeWidth="0.8" /><path d="m5.4 5 1.9 2M8.9 4l1.9 2" {...S} strokeWidth="0.8" /></>),
+  tplPoem: (<><path d="M13.5 2.5C9 3 5.5 6.5 4.5 11.5l-1 3" {...S} strokeWidth="0.8" /><path d="M13.5 2.5c-.5 4.5-3.5 8-8.5 8.8" {...S} strokeWidth="0.8" /><path d="M7 8.5h3.5" {...S} strokeWidth="0.8" /></>),
+  tplMine: (<path d="m8 2 1.8 3.8 4.2.5-3.1 2.9.8 4.1L8 11.3l-3.7 2 .8-4.1L2 6.3l4.2-.5z" {...S} strokeWidth="0.8" />),
+  tplMisc: (<><rect x="2" y="2" width="5" height="5" {...S} strokeWidth="0.8" /><rect x="9" y="2" width="5" height="5" {...S} strokeWidth="0.8" /><rect x="2" y="9" width="5" height="5" {...S} strokeWidth="0.8" /><circle cx="11.5" cy="11.5" r="2.5" {...S} strokeWidth="0.8" /></>),
+  // Toolbar, format bar, binder and speech controls (Hallmark Phase D: line icons, no emoji or decorative glyphs).
+  home: (<path d="M2 7.5 8 2.5l6 5M3.5 6.5v7h9v-7M6.5 13.5v-4h3v4" {...S} />),
+  target: (<><circle cx="8" cy="8" r="6" {...S} /><circle cx="8" cy="8" r="3" {...S} /><circle cx="8" cy="8" r=".8" fill="currentColor" /></>),
+  mic: (<><rect x="6" y="1.5" width="4" height="8" rx="2" {...S} /><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.5M5.5 14.5h5" {...S} /></>),
+  settings: (<><circle cx="8" cy="8" r="2.2" {...S} /><circle cx="8" cy="8" r="4.6" {...S} /><path d="M8 1.5v1.9M8 12.6v1.9M1.5 8h1.9M12.6 8h1.9M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" {...S} /></>),
+  help: (<><circle cx="8" cy="8" r="6.5" {...S} /><path d="M6.2 6.2a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.6" {...S} /><circle cx="8" cy="11.6" r=".8" fill="currentColor" /></>),
+  refresh: (<path d="M13 2.5V6H9.5M12.7 6A5.5 5.5 0 1 0 13.5 9" {...S} />),
+  alignLeft: (<path d="M2 3.5h12M2 6.5h8M2 9.5h12M2 12.5h8" {...S} />),
+  alignCenter: (<path d="M2 3.5h12M4 6.5h8M2 9.5h12M4 12.5h8" {...S} />),
+  alignRight: (<path d="M2 3.5h12M6 6.5h8M2 9.5h12M6 12.5h8" {...S} />),
+  alignJustify: (<path d="M2 3.5h12M2 6.5h12M2 9.5h12M2 12.5h12" {...S} />),
+  lineSpacing: (<path d="M3.5 2.5v11M2 4 3.5 2.5 5 4M2 12l1.5 1.5L5 12M7.5 4h6.5M7.5 8h6.5M7.5 12h6.5" {...S} />),
+  spaceBefore: (<path d="M2 2.5h12M8 4v2.5M6.5 5 8 6.5 9.5 5M2 9h12M2 11.5h12M2 14h8" {...S} />),
+  spaceAfter: (<path d="M2 2h12M2 4.5h12M2 7h8M8 9.5V12M6.5 10.5 8 12l1.5-1.5M2 13.5h12" {...S} />),
+  listBullet: (<><circle cx="3" cy="4" r=".9" fill="currentColor" /><circle cx="3" cy="8" r=".9" fill="currentColor" /><circle cx="3" cy="12" r=".9" fill="currentColor" /><path d="M6 4h8M6 8h8M6 12h8" {...S} /></>),
+  indent: (<path d="M2 3h12M7 6.5h7M7 9.5h7M2 13h12M2 6l2.5 2L2 10" {...S} />),
+  outdent: (<path d="M2 3h12M7 6.5h7M7 9.5h7M2 13h12M4.5 6 2 8l2.5 2" {...S} />),
+  commentOff: (<><path d="M2 2.5h12v8H7l-3.5 3v-3H2z" {...S} /><path d="m6.5 4.5 3 3M9.5 4.5l-3 3" {...S} /></>),
+  pencil: (<path d="m10.5 2.5 3 3-8 8h-3v-3zM9 4l3 3" {...S} />),
+  link: (<path d="m6.8 9.2 2.4-2.4M7.5 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7l-1.2 1.2M8.5 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7l1.2-1.2" {...S} />),
+  undo: (<path d="M5.5 3 2.5 6l3 3M2.5 6h7a3.5 3.5 0 0 1 0 7H7" {...S} />),
+  redo: (<path d="m10.5 3 3 3-3 3M13.5 6h-7a3.5 3.5 0 0 0 0 7H9" {...S} />),
+  expandAll: (<><rect x="2.5" y="2.5" width="11" height="11" rx="1" {...S} /><path d="M8 5.5v5M5.5 8h5" {...S} /></>),
+  collapseAll: (<><rect x="2.5" y="2.5" width="11" height="11" rx="1" {...S} /><path d="M5.5 8h5" {...S} /></>),
+  image: (<><rect x="1.5" y="2.5" width="13" height="11" rx="1" {...S} /><circle cx="5.5" cy="6" r="1.2" {...S} /><path d="m1.5 12 4-3.5 3 2.5 2.5-2 3.5 3" {...S} /></>),
+  pdf: (<><path d="M3.5 1.5h6l3 3v10h-9z" {...S} /><path d="M9.5 1.5v3h3M5.5 8h5M5.5 10.5h5M5.5 13h3" {...S} /></>),
+  audio: (<><path d="M6 12V3.5l7-1.5v8.5" {...S} /><circle cx="4.5" cy="12" r="1.6" {...S} /><circle cx="11.5" cy="10.5" r="1.6" {...S} /></>),
+  video: (<><rect x="1.5" y="4" width="9" height="8" rx="1" {...S} /><path d="m10.5 7 4-2v6l-4-2" {...S} /></>),
+  stack: (<><path d="M5 1.5h6.5l2 2v9H5z" {...S} /><path d="M2.5 4v10.5H11" {...S} /></>),
+  star: (<path d="m8 2 1.8 3.8 4.2.5-3.1 2.9.8 4.1L8 11.3l-3.7 2 .8-4.1L2 6.3l4.2-.5z" {...S} />),
+  play: (<path d="M5 3v10l8-5z" {...S} />),
+  pause: (<path d="M5.5 3.5v9M10.5 3.5v9" {...S} strokeWidth="1.8" />),
+  stop: (<rect x="4" y="4" width="8" height="8" rx="1" {...S} />),
+  record: (<circle cx="8" cy="8" r="4.5" fill="currentColor" />),
+  close: (<path d="m4 4 8 8M12 4l-8 8" {...S} />),
+  warn: (<><path d="M8 2 14.5 13.5h-13z" {...S} /><path d="M8 6.5V10" {...S} /><circle cx="8" cy="11.8" r=".7" fill="currentColor" /></>),
 };
 
 export function Icon({ name, ...rest }) {
@@ -83,6 +134,9 @@ export const SnapshotIcon = make('snapshot');
 export const CommentIcon = make('comment');
 export const SearchIcon = make('search');
 export const AddIcon = make('add');
+export const AttachIcon = make('attach');
+export const FolderLineIcon = make('folderLine');
+export const DocLineIcon = make('docLine');
 
 export const iconNames = Object.keys(paths);
 export default Icon;

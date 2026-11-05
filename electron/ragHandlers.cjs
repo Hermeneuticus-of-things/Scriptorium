@@ -3,6 +3,7 @@
 //   require('./ragHandlers.cjs')({ handle, store, assertOpened, getSettings: readSettings, getApiKey, getAiConfig, ai });
 // Indexes live in memory per project dir; progress goes to the sender as 'rag:progress'.
 const rag = require('../lib/rag.cjs');
+const aiRules = require('../lib/aiRules.cjs');
 const aiRuns = require('../lib/aiRuns.cjs');
 
 const collectSources = rag.collectSources;
@@ -53,9 +54,10 @@ module.exports = function register({ handle, store, assertOpened, getSettings, g
     const timeoutMs = (Number(getSettings().aiTimeoutSec) || 300) * 1000;
     return queue.push('ask', () =>
       aiRuns.track(e.sender.id, (signal) => {
+        const rules = aiRules.readRules(store, dir); // project AI rules apply to research too
         const run =
-          (makeRun && makeRun({ ...cfg, signal })) ||
-          (({ text, question }) => ai.runAction({ action: 'ask', ...cfg, text, question, signal }));
+          (makeRun && aiRules.wrapRun(makeRun({ ...cfg, signal }), rules)) ||
+          (({ text, question }) => ai.runAction({ action: 'ask', ...cfg, text, question, rules, signal }));
         return rag.ask(indexFor(dir), String(q || ''), run, { k: Math.min(Number(opts.k) || 6, 20) });
       }, timeoutMs),
     );
@@ -100,9 +102,10 @@ module.exports = function register({ handle, store, assertOpened, getSettings, g
       : undefined;
     const turn = await queue.push('ask', () =>
       aiRuns.track(e.sender.id, (signal) => {
+        const rules = aiRules.projectRules(project); // project AI rules apply to research too
         const run =
-          (makeRun && makeRun({ ...cfg, signal, onDelta })) ||
-          (({ text, question: instr }) => ai.runAction({ action: 'ask', ...cfg, text, question: instr, signal, onDelta }));
+          (makeRun && aiRules.wrapRun(makeRun({ ...cfg, signal, onDelta }), rules)) ||
+          (({ text, question: instr }) => ai.runAction({ action: 'ask', ...cfg, text, question: instr, rules, signal, onDelta }));
         return researchChat.askChat({ index: indexFor(dir), question, history: chat ? chat.turns : [], run, filter, k: Math.min(Number(opts.k) || 6, 20) });
       }, timeoutMs),
     );

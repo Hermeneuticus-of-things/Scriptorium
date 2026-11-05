@@ -7,10 +7,12 @@ import { htmlToManuscript } from '../lib/editorial.js';
 import { annotationsToComments, commentsToAnnotations, footnotesToLinked, linkedToFootnotes } from '../lib/noteConvert.js';
 import { isParaStyle } from '../lib/styles.js';
 import { POS_CLASSES } from '../lib/pos.js';
+import { readingLensItems } from '../lib/readingLenses.js';
 import { listBookmarks } from '../editor/formatting.js';
 import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS } from '../lib/editorMenus.js';
 import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
+import { Icon } from './Icons.jsx';
 
 const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Verdana', 'Calibri', 'Courier New', 'Courier Prime'];
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
@@ -460,23 +462,8 @@ export default function FormatBar({
     ...(view.revision ? [{ label: tr('ui.formatBar.removeRound', { n: view.revision }), action: () => chain().removeRevisions(view.revision).run() }] : []),
   ];
 
-  const viewItems = [
-    { label: `${view.focus === 'dialogue' ? '✓ ' : ''}${tr('ui.formatBar.focus_dialogue')}`, action: () => setView({ focus: view.focus === 'dialogue' ? 'off' : 'dialogue' }) },
-    { label: `${view.focus === 'paragraph' ? '✓ ' : ''}${tr('ui.formatBar.focus_paragraph')}`, action: () => setView({ focus: view.focus === 'paragraph' ? 'off' : 'paragraph' }) },
-    { label: `${view.focus === 'sentence' ? '✓ ' : ''}${tr('ui.formatBar.focus_sentence')}`, action: () => setView({ focus: view.focus === 'sentence' ? 'off' : 'sentence' }) },
-    ...POS_CLASSES.map(([id]) => ({ label: `${view.posFocus === id ? '✓ ' : ''}${tr('ui.formatBar.posFocus', { name: tr(`ui.formatBar.pos.${id}`) })}`, action: () => setView({ posFocus: view.posFocus === id ? '' : id }) })),
-    { label: tr('ui.formatBar.posLang', { lang: tr(`ui.formatBar.posLang_${view.posLang || 'auto'}`) }), action: () => setView({ posLang: { auto: 'ro', ro: 'en', en: 'auto' }[view.posLang || 'auto'] }) },
-    { label: `${view.currentParagraph ? '✓ ' : ''}${tr('ui.formatBar.curPara')}`, action: () => setView({ currentParagraph: !view.currentParagraph }) },
-    { label: `${view.currentLine ? '✓ ' : ''}${tr('ui.formatBar.curLine')}`, action: () => setView({ currentLine: !view.currentLine }) },
-    ...[[0.1, 'strong'], [0.28, 'medium'], [0.5, 'weak']].map(([v, n]) => ({ label: `${(view.fadeOpacity ?? 0.28) === v ? '✓ ' : ''}${tr(`ui.formatBar.fade_${n}`)}`, action: () => setView({ fadeOpacity: v }) })),
-    '-',
-    ...[['a5', 'A5'], ['a4', 'A4'], ['letter', 'Letter']].map(([id, n]) => ({ label: `${view.pageView && (view.pageSize || 'a5') === id ? '✓ ' : ''}${tr('ui.formatBar.pageView', { n })}`, action: () => setView({ pageView: !(view.pageView && (view.pageSize || 'a5') === id), pageSize: id }) })),
-    { label: `${view.facing ? '✓ ' : ''}${tr('ui.formatBar.facing')}`, action: () => setView({ facing: !view.facing, pageView: true }) },
-    { label: `${view.ruler ? '✓ ' : ''}${tr('ui.formatBar.ruler')}`, action: () => setView({ ruler: !view.ruler }) },
-    { label: `${(onToggleInvisibles ? showInvisibles : view.invisibles) ? '✓ ' : ''}${tr('ui.formatBar.invisibles')}`, action: onToggleInvisibles || (() => setView({ invisibles: !view.invisibles })) },
-    '-',
-    ...[75, 100, 125, 150, 200].map((z) => ({ label: `${(view.zoom || 100) === z ? '✓ ' : ''}Zoom ${z}%`, action: () => setView({ zoom: z }) })),
-  ];
+  // "Lectură" = reading lenses only (B2 2026-10-31); page, zoom, ruler and invisibles are in View / Format.
+  const viewItems = readingLensItems({ t: tr, view, setView });
 
   const p = s.para;
   const setPara = (attrs) => chain().setParagraphFormat(attrs).run();
@@ -493,13 +480,13 @@ export default function FormatBar({
   // Line spacing as in the classic paragraph bar: 1.0 / 1.2 / 1.5 / 2.0 / 2.5 / 3.0 / Other…
   const fmtSpacing = (v) => Number(v).toLocaleString(uiLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 2 });
   const spacingItems = [
-    ...LINE_SPACINGS.map((v) => ({ label: `${Number(p.lineHeight) === v ? '✓ ' : ''}${fmtSpacing(v)}`, action: () => setPara({ lineHeight: v }) })),
+    ...LINE_SPACINGS.map((v) => ({ label: fmtSpacing(v), checked: Number(p.lineHeight) === v, action: () => setPara({ lineHeight: v }) })),
     '-',
-    { label: `${p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight)) ? `✓ ${fmtSpacing(p.lineHeight)} · ` : ''}${tr('ui.formatBar.lineSpacingOther')}`, action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
+    { label: p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight)) ? `${tr('ui.formatBar.lineSpacingOther')} (${fmtSpacing(p.lineHeight)})` : tr('ui.formatBar.lineSpacingOther'), checked: Boolean(p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight))), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
     { label: tr('ui.formatBar.lineSpacingDefault'), action: () => setPara({ lineHeight: null }), disabled: !p.lineHeight },
   ];
   const paraItems = [
-    ...LINE_SPACINGS.map((v) => ({ label: `${Number(p.lineHeight) === v ? '✓ ' : ''}${tr('ui.formatBar.lineSpacing', { v: fmtSpacing(v) })}`, action: () => setPara({ lineHeight: v }) })),
+    ...LINE_SPACINGS.map((v) => ({ label: tr('ui.formatBar.lineSpacing', { v: fmtSpacing(v) }), checked: Number(p.lineHeight) === v, action: () => setPara({ lineHeight: v }) })),
     { label: tr('ui.formatBar.lineSpacingCustom'), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
     '-',
     { label: tr('ui.formatBar.spaceBefore', { v: p.spaceBefore ?? '–' }), action: () => num(tr('ui.formatBar.spaceBeforePrompt'), 'spaceBefore', p.spaceBefore) },
@@ -511,8 +498,8 @@ export default function FormatBar({
     { label: tr('ui.formatBar.decIndent'), action: () => setPara({ indentLeft: Math.max(0, (p.indentLeft || 0) - 1) || null }) },
     { label: tr('ui.formatBar.tabStops'), action: async () => { const v = await uiPrompt(tr('ui.formatBar.tabStopsPrompt'), p.tabStops || ''); if (v !== null) setPara({ tabStops: v.replace(/\s+/g, '') || null }); } },
     '-',
-    { label: `${p.dir === 'rtl' ? '✓ ' : ''}${tr('ui.formatBar.rtl')}`, action: () => chain().toggleRtl().run() },
-    { label: `${view.ruler ? '✓ ' : ''}${tr('ui.formatBar.ruler')}`, action: () => setView({ ruler: !view.ruler }) },
+    { label: tr('ui.formatBar.rtl'), checked: p.dir === 'rtl', action: () => chain().toggleRtl().run() },
+    { label: tr('ui.formatBar.ruler'), checked: Boolean(view.ruler), action: () => setView({ ruler: !view.ruler }) },
     '-',
     { label: tr('ui.formatBar.copyFormat'), shortcut: 'Ctrl+Alt+C', action: () => chain().copyFormat().run() },
     { label: tr('ui.formatBar.pasteFormat'), shortcut: 'Ctrl+Alt+V', action: () => chain().pasteFormat().run() },
@@ -531,7 +518,7 @@ export default function FormatBar({
     { label: tr('ui.formatBar.addBookmark'), action: addBookmark },
     { label: s.inBookmark ? tr('ui.formatBar.removeBookmark', { name: s.inBookmark }) : tr('ui.formatBar.removeBookmarkHere'), action: () => chain().removeBookmark(s.inBookmark).run(), disabled: !s.inBookmark },
     '-',
-    ...(s.bookmarks.length ? s.bookmarks.map((b) => ({ label: `→ ${b}`, action: () => chain().goToBookmark(b).run() })) : [{ label: tr('ui.formatBar.noBookmarks'), action: () => {}, disabled: true }]),
+    ...(s.bookmarks.length ? s.bookmarks.map((b) => ({ label: b, action: () => chain().goToBookmark(b).run() })) : [{ label: tr('ui.formatBar.noBookmarks'), action: () => {}, disabled: true }]),
     '-',
     { label: tr('ui.formatBar.findFormatting'), action: () => onFindFormatting?.(), disabled: !onFindFormatting },
   ];
@@ -613,33 +600,33 @@ export default function FormatBar({
           <CustomColor label={tr('ui.formatBar.otherColor')} onPick={(c) => chain().setHighlight({ color: c }).run()} />
         </Pop>, false),
     g(4, <>
-        {btn('⯇', s.align === 'left', () => chain().unsetTextAlign().run(), tr('ui.formatBar.left'))}
-        {btn('≡', s.align === 'center', () => chain().setTextAlign('center').run(), tr('ui.formatBar.centerText'))}
-        {btn('⯈', s.align === 'right', () => chain().setTextAlign('right').run(), tr('ui.formatBar.right'))}
-        {btn('☰', s.align === 'justify', () => chain().setTextAlign('justify').run(), tr('ui.formatBar.justify'))}
+        {btn(<Icon name="alignLeft" />, s.align === 'left', () => chain().unsetTextAlign().run(), tr('ui.formatBar.left'))}
+        {btn(<Icon name="alignCenter" />, s.align === 'center', () => chain().setTextAlign('center').run(), tr('ui.formatBar.centerText'))}
+        {btn(<Icon name="alignRight" />, s.align === 'right', () => chain().setTextAlign('right').run(), tr('ui.formatBar.right'))}
+        {btn(<Icon name="alignJustify" />, s.align === 'justify', () => chain().setTextAlign('justify').run(), tr('ui.formatBar.justify'))}
     </>),
-    g(4, <span className="fb-spacing" data-label={tr('ui.formatBar.lineSpacingMenu')} style={{ display: 'contents' }}><Menu label={`↕ ${fmtSpacing(p.lineHeight || 1)}`} items={spacingItems} /></span>, false, tr('ui.formatBar.lineSpacingMenu')),
+    g(4, <span className="fb-spacing" data-label={tr('ui.formatBar.lineSpacingMenu')} style={{ display: 'contents' }}><Menu label={<><Icon name="lineSpacing" /> {fmtSpacing(p.lineHeight || 1)}</>} items={spacingItems} /></span>, false, tr('ui.formatBar.lineSpacingMenu')),
     g(4, <span className="fb-space" data-label={tr('ui.formatBar.spaceButtons')} style={{ display: 'contents' }}>
-        {btn('↥−', null, () => bumpSpace('spaceBefore', -1), tr('ui.formatBar.spaceBeforeLess', { v: p.spaceBefore ?? '–' }), !(Number(p.spaceBefore) > 0))}
-        {btn('↥+', null, () => bumpSpace('spaceBefore', 1), tr('ui.formatBar.spaceBeforeMore', { v: p.spaceBefore ?? '–' }))}
-        {btn('↧−', null, () => bumpSpace('spaceAfter', -1), tr('ui.formatBar.spaceAfterLess', { v: p.spaceAfter ?? '–' }), !(Number(p.spaceAfter) > 0))}
-        {btn('↧+', null, () => bumpSpace('spaceAfter', 1), tr('ui.formatBar.spaceAfterMore', { v: p.spaceAfter ?? '–' }))}
+        {btn(<><Icon name="spaceBefore" />−</>, null, () => bumpSpace('spaceBefore', -1), tr('ui.formatBar.spaceBeforeLess', { v: p.spaceBefore ?? '–' }), !(Number(p.spaceBefore) > 0))}
+        {btn(<><Icon name="spaceBefore" />+</>, null, () => bumpSpace('spaceBefore', 1), tr('ui.formatBar.spaceBeforeMore', { v: p.spaceBefore ?? '–' }))}
+        {btn(<><Icon name="spaceAfter" />−</>, null, () => bumpSpace('spaceAfter', -1), tr('ui.formatBar.spaceAfterLess', { v: p.spaceAfter ?? '–' }), !(Number(p.spaceAfter) > 0))}
+        {btn(<><Icon name="spaceAfter" />+</>, null, () => bumpSpace('spaceAfter', 1), tr('ui.formatBar.spaceAfterMore', { v: p.spaceAfter ?? '–' }))}
     </span>, false, tr('ui.formatBar.spaceButtons')),
     g(5, <>
-        {btn('•', s.bullet, () => chain().toggleBulletList().run(), tr('ui.formatBar.bullets'))}
+        {btn(<Icon name="listBullet" />, s.bullet, () => chain().toggleBulletList().run(), tr('ui.formatBar.bullets'))}
         {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), tr('ui.formatBar.ordered'))}
         <span data-label={tr('ui.formatBar.listType')} style={{ display: 'contents' }}><Menu label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} /></span>
-        {btn('⇥', null, () => chain().sinkListItem('listItem').run(), tr('ui.formatBar.sink'), !s.inList)}
-        {btn('⇤', null, () => chain().liftListItem('listItem').run(), tr('ui.formatBar.lift'), !s.inList)}
+        {btn(<Icon name="indent" />, null, () => chain().sinkListItem('listItem').run(), tr('ui.formatBar.sink'), !s.inList)}
+        {btn(<Icon name="outdent" />, null, () => chain().liftListItem('listItem').run(), tr('ui.formatBar.lift'), !s.inList)}
     </>),
     g(2, btn('— ', null, () => chain().insertContent('— ').run(), tr('ui.formatBar.dialogue')), false),
     g(0, <>
         {s.comment
-          ? btn('💬✕', null, () => chain().unsetComment().run(), tr('ui.formatBar.removeComment'))
-          : btn('💬', null, onAddComment, tr('ui.formatBar.comment'))}
+          ? btn(<Icon name="commentOff" />, null, () => chain().unsetComment().run(), tr('ui.formatBar.removeComment'))
+          : btn(<Icon name="comment" />, null, onAddComment, tr('ui.formatBar.comment'))}
         {btn('¹', null, onAddFootnote, tr('ui.formatBar.footnoteBtn'))}
-        {btn('✎', null, onAddAnnotation, tr('ui.formatBar.annotationBtn'))}
-        {btn('🔗', s.link, insertLinkExternal, tr('ui.formatBar.linkBtn'))}
+        {btn(<Icon name="pencil" />, null, onAddAnnotation, tr('ui.formatBar.annotationBtn'))}
+        {btn(<Icon name="link" />, s.link, insertLinkExternal, tr('ui.formatBar.linkBtn'))}
     </>),
     g(3, <Menu
           label="[[ ]]"
@@ -657,8 +644,8 @@ export default function FormatBar({
     g(5, <Menu label={tr('ui.formatBar.menuView')} items={viewItems} />, false),
     g(8, <Menu label={tr('ui.fb.copySpecial')} items={copyItems} />, false),
     g(1, <>
-        {btn('↶', null, () => chain().undo().run(), tr('ui.formatBar.undo'))}
-        {btn('↷', null, () => chain().redo().run(), tr('ui.formatBar.redo'))}
+        {btn(<Icon name="undo" />, null, () => chain().undo().run(), tr('ui.formatBar.undo'))}
+        {btn(<Icon name="redo" />, null, () => chain().redo().run(), tr('ui.formatBar.redo'))}
     </>),
   ];
   // Customized layout (View → Customize Toolbar…): groups in the chosen order, "sep" starts a

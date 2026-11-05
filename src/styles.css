@@ -180,7 +180,7 @@ label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--t
 .ai-status .ai-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger, #c94040); box-shadow: 0 0 0 0 rgba(0,0,0,0); }
 .ai-status.on .ai-dot { background: #1e9e52; }
 .ai-status.on { color: #1e9e52; }
-.ai-status .ai-status-label { letter-spacing: .04em; }
+.ai-status .ai-status-label { letter-spacing: normal; }
 .ai-status input { margin: 0; }
 
 /* uiPrompt: the single-field replacement for Electron's disabled window.prompt(). */
@@ -537,6 +537,7 @@ legend { color: var(--muted); padding: 0 4px; }
 .menu-subwrap > button { width: 100%; }
 .menu-pop button.open { background: var(--accent-soft); }
 .menu-pop .menu-arrow { opacity: .7; font-size: 10px; }
+.menu-pop .menu-check { display: inline-block; width: 1.25em; flex: none; text-align: center; }
 .menu-pop.menu-sub { position: fixed; right: auto; top: 0; left: 0; z-index: 31; }
 /* narrow windows: icons only for labelled toolbar buttons, shorter title */
 @media (max-width: 1180px) {
@@ -719,7 +720,9 @@ legend { color: var(--muted); padding: 0 4px; }
 .compile-dialog .cd-thumb-lines { flex: 1; background: repeating-linear-gradient(#bbb 0 1px, transparent 1px 5px); }
 .compile-dialog .cd-layout-name { font-weight: 600; margin-top: .25em; overflow-wrap: anywhere; }
 .compile-dialog .cd-icon-tabs button { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 5.5em; }
-.compile-dialog .cd-tab-icon { font-size: 1.25em; line-height: 1; }
+.compile-dialog .cd-tab-icon { display: inline-flex; line-height: 1; }
+.compile-dialog .cd-item-icon { display: inline-flex; vertical-align: -2px; opacity: .7; }
+.compile-dialog .cd-format-tag { margin-left: .5em; font-size: .85em; font-weight: 400; opacity: .7; }
 .compile-dialog .cd-items { list-style: none; margin: .4em 0 0; padding: .3em; border: 1px solid var(--line, #ddd); max-height: 34vh; overflow: auto; }
 .compile-dialog .cd-items li { margin: 1px 0; }
 .compile-dialog .cd-sub-backdrop { z-index: 20; }
@@ -743,7 +746,11 @@ legend { color: var(--muted); padding: 0 4px; }
 .tpl-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border: 1px solid transparent; border-radius: 8px; cursor: pointer; text-align: center; }
 .tpl-card:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .tpl-card.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
-.tpl-icon { font-size: 34px; line-height: 1; }
+.tpl-icon { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; color: var(--muted, #777); }
+.tpl-icon .sc-icon { width: 32px; height: 32px; }
+.tpl-icon .tpl-icon-text { font-size: 28px; line-height: 1; }
+.tpl-card.on .tpl-icon { color: var(--accent); }
+.tpl-card:focus-visible, .tpl-cats li:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .tpl-name { font-size: 13px; overflow-wrap: anywhere; }
 .tpl-desc { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 64px; }
 .tpl-desc p { margin: 4px 0 0; }
@@ -787,3 +794,14 @@ legend { color: var(--muted); padding: 0 4px; }
 .service-popover p, .service-popover li { max-width: 72ch; } /* liniile lungi rămân citibile */
 .service-popover h3 { margin: 0 0 6px; font-size: 13px; }
 .service-popover .actions { margin-top: 8px; }
+/* Hallmark Phase D: line icons replace emoji / decorative glyphs in the format bar, binder and mini player. */
+.format-bar button .sc-icon { width: 15px; height: 15px; vertical-align: -3px; }
+.format-bar .fb-space button { display: inline-flex; align-items: center; gap: 1px; }
+.binder-tools button .sc-icon { width: 14px; height: 14px; vertical-align: -2px; }
+.binder-row .badge { display: inline-flex; align-items: center; margin-left: 4px; vertical-align: -1px; }
+.binder-row .badge .sc-icon { width: 11px; height: 11px; }
+.mini-player .mini-title .sc-icon { width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px; }
+.mini-player .mini-clip .sc-icon { width: 12px; height: 12px; vertical-align: -2px; }
+.mini-player .mini-row button .sc-icon { width: 14px; height: 14px; vertical-align: -2px; }
+.binder-tools button:focus-visible,
+.mini-player button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

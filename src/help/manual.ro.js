@@ -433,7 +433,7 @@ media/                 imagini, PDF, audio, video</pre>
 <li><strong>Ieșirea</strong>: Word (.docx), PDF, EPUB, HTML, RTF, OpenDocument (.odt), Markdown, MultiMarkdown, Text simplu, Fountain, scenariu .fdx, LaTeX, Tipărire (previzualizare).</li>
 <li><strong>Conținutul</strong>: ce documente intră.</li>
 </ol>
-<p>Formatele predefinite nu se modifică: apasă <em>Duplică</em> și editează copia. <em>Salvează global</em> face formatul disponibil în toate proiectele (🌐). Previzualizarea arată rezultatul înainte de salvare.</p>`,
+<p>Formatele predefinite nu se modifică: apasă <em>Duplică</em> și editează copia. <em>Salvează global</em> face formatul disponibil în toate proiectele (eticheta „global” în listă). Previzualizarea arată rezultatul înainte de salvare.</p>`,
       },
       {
         id: 'compile-content',

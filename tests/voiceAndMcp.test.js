@@ -37,4 +37,28 @@ describe('built-in reading voice', () => {
     await expect(tts.install()).rejects.toThrow(/amprentei/);
     expect(fs.existsSync(path.join(root, 'piper.zip.part'))).toBe(false);
   });
+  it('pins the Mihai voice and its config by SHA-256 (Z6-1)', () => {
+    const { VOICE } = require('../lib/ttsEngine.cjs');
+    expect(VOICE.sha256).toBe('e0608bbbd53c80267c09ece681b09f5199f54e792356684c8073738e5f15d29f');
+    expect(VOICE.configSha256).toBe('8cc0c9f077dc0cec3c25a6a055ec8046db8e40a2510591582f2c9c869f4bc47e');
+  });
+  it('refuses a voice of the right size whose fingerprint does not match; nothing is installed', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tts-'));
+    fs.mkdirSync(path.join(root, 'piper'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'piper', 'piper.exe'), '');
+    const tts = createTtsEngine({
+      root,
+      platform: 'win32',
+      download: async (_u, file) => {
+        fs.writeFileSync(file, '');
+        fs.truncateSync(file, 40 * 1024 * 1024); // in size range, wrong bytes
+      },
+    });
+    await expect(tts.install()).rejects.toThrow(/Vocea desc\S+ nu corespunde amprentei/);
+    const voices = path.join(root, 'voices');
+    expect(fs.existsSync(path.join(voices, 'ro_RO-mihai-medium.onnx'))).toBe(false);
+    expect(fs.existsSync(path.join(voices, 'ro_RO-mihai-medium.onnx.part'))).toBe(false);
+    expect(fs.existsSync(path.join(voices, 'ro_RO-mihai-medium.onnx.json'))).toBe(false);
+    expect(tts.status().installed).toBe(false);
+  });
 });

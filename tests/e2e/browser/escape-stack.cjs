@@ -15,7 +15,7 @@ const { open, ed, check, done } = require('./_helpers.cjs');
   };
   const layers = () => page.evaluate(() => ({ modals: document.querySelectorAll('.modal-backdrop > .modal').length, help: document.querySelectorAll('.help-window, [class*=help-win]').length, ctx: document.querySelectorAll('.ctx-menu').length, menu: document.querySelectorAll('.menu-pop').length }));
   // Settings, then Keyboard shortcuts on top (from inside Settings → keyboard tab)
-  await cmd(/^Setări…/);
+  await cmd(/^Setări program…/);
   const m0 = (await layers()).modals;
   await cmd(/^Lista scurtăturilor|^Scurtături/).catch(() => {});
   const l1 = await layers();
