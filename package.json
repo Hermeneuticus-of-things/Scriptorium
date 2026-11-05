@@ -1,7 +1,7 @@
 {
   "name": "pneuma-sofer",
   "productName": "Pneuma Sofer",
-  "version": "0.13.3",
+  "version": "0.13.4",
   "description": "Program de scris pentru cărți lungi: scrii pe bucăți, le aranjezi liber și primești cartea în Word, PDF sau EPUB.",
   "main": "electron/main.cjs",
   "private": true,

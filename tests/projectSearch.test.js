@@ -226,11 +226,13 @@ describe('special search terms (Scrivener §11.1.3)', () => {
 });
 
 describe('date search syntax mdate:/cdate: (Scrivener §11.1.3, Table 11.1)', () => {
+  // Dates relative to NOW: the '7d'/'<1y' queries must not break as the calendar advances.
+  const daysAgoIso = (n) => new Date(Date.now() - n * 86400000).toISOString();
   const dated = {
     tree: [
       { id: 'draft', root: 'draft', title: 'Manuscris', children: [
         { id: 'd1', type: 'text', title: 'Vechi', created: '2017-03-05T10:00:00Z', modified: '2017-04-01T10:00:00Z' },
-        { id: 'd2', type: 'text', title: 'Recent', created: '2026-01-15T10:00:00Z', modified: '2026-10-29T10:00:00Z' },
+        { id: 'd2', type: 'text', title: 'Recent', created: daysAgoIso(30), modified: daysAgoIso(2) },
         { id: 'd3', type: 'text', title: 'Fără date' },
       ] },
     ],

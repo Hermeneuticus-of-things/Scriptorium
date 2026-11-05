@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.13.4
+- **Sinonimele arată tot ce are sinonimul.ro**: pe lângă sinonimele directe, popoverul arată acum și secțiunea **„Cuvinte apropiate"** (cuvintele înrudite cu listele lor de sinonime, ca pe site); apăsarea unui cuvânt apropiat face o nouă căutare direct în popover, fără să părăsești pagina.
+- Popoverul afișează corect grupurile (sinonime directe / cuvinte apropiate) și pe proiecte reale, cu selectarea corectă a cuvântului (dublu-click / Ctrl+Shift+săgeată).
+- Versiunea 0.13.3 → **0.13.4**.
+
 ## v0.13.3
 - **I-EDIT / I-REP: streaming live** — rundele AI arată textul pe măsură ce e scris (aceeași filieră ca în Asistentul AI), cu cronometru și anulare Esc, în panoul editorial.
 - **Estimare înainte de rulare**: „Estimare: N documente × B bucle ≈ total apeluri AI" apare sub controalele I-REP.

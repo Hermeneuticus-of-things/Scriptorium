@@ -147,6 +147,7 @@ import { mergeDoc, resolveMerge } from './lib/team.js';
 import { useTeam } from './lib/useTeam.js';
 import { useDictation } from './lib/useDictation.js';
 import { createLocalSpeech } from './lib/localSpeech.js';
+import { createFocusEngine } from './lib/focusEngine.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
 import TeamDialog from './components/TeamDialog.jsx';
@@ -340,11 +341,26 @@ export default function App({ api: apiProp }) {
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
+  // ADL §2: focus engine — per-window stacks, surface registration, Escape cascade.
+  const focusEngine = useRef(createFocusEngine()).current;
+  useEffect(() => {
+    const eng = focusEngine;
+    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: {} });
+    const un2 = eng.registerFocusableSurface({ id: 'settings.app', commands: {} });
+    const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: {} });
+    return () => { un1(); un2(); un3(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusEngine]);
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
   const [aiRequest, setAiRequest] = useState(null);
   const [researchRequest, setResearchRequest] = useState(null); // { q, mode, n } run by ResearchPanel
   const [findSeed, setFindSeed] = useState('');
   const [serviceResult, setServiceResult] = useState(null); // { source, result, handle } from DeepL / Google / LanguageTool // { action, n } run by AiPanel
+  useEffect(() => {
+    if (serviceResult) focusEngine.push('popover.service');
+    else if (focusEngine.top() === 'popover.service') focusEngine.pop('popover.service');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceResult]);
   const [showEditorial, setShowEditorial] = useState(false);
   const [editorialTabReq, setEditorialTabReq] = useState(null); // {tab, n}: AI › I-EDIT opens the panel on that tab
   const [importStats, setImportStats] = useState(null);
@@ -1686,10 +1702,20 @@ export default function App({ api: apiProp }) {
   };
   // In-app synonyms (sinonimul.ro): fetch the word's synonyms and show them as chips; clicking one
   // replaces the selected word in place (same mechanism as the in-app translation).
-  const synonymsInApp = async () => {
+  const synonymsInApp = async (word = null) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
-    const source = (handle?.getSelectionText() || '').trim();
+    const source = String(word || (handle?.getSelectionText() || '')).trim();
     if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (word) {
+      // Cuvinte apropiate din popover: re-căutare directă, fără selecție în editor.
+      setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
+      try {
+        const res = await api.fetchSynonyms(source);
+        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 } });
+        setToast('');
+      } catch (e) { setToast(''); report(e); }
+      return undefined;
+    }
     const range = serviceRange(handle.editor, source);
     setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
     try {
@@ -1701,7 +1727,7 @@ export default function App({ api: apiProp }) {
           const r = el.getBoundingClientRect();
           pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
         } catch { pos = { x: 120, y: 140 }; }
-        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms }, handle, range, anchored: true, pos });
+        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, range, anchored: true, pos });
       setToast('');
     } catch (e) {
       setToast('');
@@ -3997,6 +4023,7 @@ export default function App({ api: apiProp }) {
           onReplace={(text, edits) => { applyServiceText(serviceResult, text, false, edits); setServiceResult(null); }}
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onOpenUrl={(u) => openWeb(u)}
+          onSearch={(w) => synonymsInApp(w)}
           anchored={Boolean(serviceResult.anchored)}
           pos={serviceResult.pos}
           onClose={() => setServiceResult(null)}

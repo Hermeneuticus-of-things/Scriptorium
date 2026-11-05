@@ -26,6 +26,14 @@ export function useDictation({ api, getEditor, onTranscript, onMessage, replacem
     state.current.jobs = jobs;
     setJobs(jobs);
   };
+  // Mic level (ADL §12): kept in a ref and pushed to subscribers directly — NOT React state.
+  // It arrives every ~150 ms; as state it would re-render the whole app 6–7×/sec while dictating.
+  const levelRef = useRef(0);
+  const levelSubs = useRef(new Set());
+  const onLevel = useCallback((fn) => {
+    levelSubs.current.add(fn);
+    return () => levelSubs.current.delete(fn);
+  }, []);
   const cb = useRef({});
   cb.current = { getEditor, onTranscript, onMessage, replacements, switchedMessage };
 
@@ -52,7 +60,10 @@ export function useDictation({ api, getEditor, onTranscript, onMessage, replacem
           }
           break;
         case 'nivel':
-          if (mine) setDict((x) => x && { ...x, level: ev.nivel });
+          if (mine) {
+            levelRef.current = ev.nivel;
+            levelSubs.current.forEach((fn) => { try { fn(ev.nivel); } catch { /* subscriber error never breaks dictation */ } });
+          }
           break;
         case 'dictare_oprita':
         case 'anulat':
@@ -150,5 +161,5 @@ export function useDictation({ api, getEditor, onTranscript, onMessage, replacem
   );
   const cancelJob = useCallback((id) => api.dtedCancel(id).catch(() => {}), [api]);
 
-  return { dictation, jobs, start, stop, cancel, togglePause, transcribe, cancelJob, available: Boolean(api.dtedDictateStart) };
+  return { dictation, jobs, start, stop, cancel, togglePause, transcribe, cancelJob, levelRef, onLevel, available: Boolean(api.dtedDictateStart) };
 }

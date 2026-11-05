@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { parseSynonyms, fetchSynonyms } = require('../lib/synonyms.cjs');
+const { parseSynonyms, parseRelated, fetchSynonyms } = require('../lib/synonyms.cjs');
 
 const ok = (url, html) => ({ ok: true, status: 200, url, text: async () => html });
 
@@ -18,7 +18,7 @@ describe('sinonimul.ro synonyms', () => {
 
   it('fetches a lemma and returns its synonyms', async () => {
     const res = await fetchSynonyms({ word: 'frumos', fetchImpl: async (url) => ok(url, "<ol><li style='font-size:22px'>plăcut, splendid</li></ol>") });
-    expect(res).toEqual({ word: 'frumos', synonyms: ['plăcut', 'splendid'] });
+    expect(res).toMatchObject({ word: 'frumos', synonyms: ['plăcut', 'splendid'] });
   });
 
   it('percent-encodes diacritics in the URL (the server needs the encoded form)', async () => {
@@ -34,5 +34,18 @@ describe('sinonimul.ro synonyms', () => {
 
   it('refuses a multi-word selection (synonyms are per word)', async () => {
     await expect(fetchSynonyms({ word: 'foc de tabără' })).rejects.toThrow(/un singur cuvânt/);
+  });
+});
+
+
+describe('parseRelated (Sinonime Apropiate)', () => {
+  const html = `<h2>Sinonime Apropiate</h2><ul><li><a href='x'><b>percepe</b></a> - a simți, a sesiza, a observa<li><a href='y'><b>prescrie</b></a> - a indica, a anula</ul><h2>Altceva</h2>`;
+  it('extrage cuvintele apropiate cu listele lor', () => {
+    const rel = parseRelated(html);
+    expect(rel.map((r) => r.word)).toEqual(['percepe', 'prescrie']);
+    expect(rel[0].synonyms).toContain('a simți');
+  });
+  it('fără secțiune → listă goală', () => {
+    expect(parseRelated('<p>nimic</p>')).toEqual([]);
   });
 });
