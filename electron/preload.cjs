@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('api', {
   listSnapshots: (dir, id) => call('snap:list', dir, id),
   appendAuthorJournal: (dir, rows) => call('editorial:appendAuthorJournal', dir, rows),
   teamFiles: (dir) => call('team:files', dir),
+  dictationStats: () => call('dictation:stats'),
   googleAuthConnect: () => call('googleAuth:connect'),
   googleAuthDisconnect: () => call('googleAuth:disconnect'),
   googleAuthStatus: () => call('googleAuth:status'),

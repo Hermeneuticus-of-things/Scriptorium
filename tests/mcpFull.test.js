@@ -242,6 +242,7 @@ const PRELOAD_COVERAGE = {
   dtedDictateStart: 'gui: dictare la microfon',
   dtedDictateStop: 'gui: dictare la microfon',
   dtedCancel: 'gui: dictare la microfon',
+  dictationStats: 'gui: CPU/RAM/VRAM live pentru motoarele de dictare, doar în Setări (ADL §12)',
   googleAuthConnect: 'gui: conectarea Google OAuth o face autorul din Setări (consimțământ în browser)',
   googleAuthDisconnect: 'gui: deconectarea Google OAuth se face din Setări',
   googleAuthStatus: 'gui: starea conexiunii Google OAuth se arată în Setări',

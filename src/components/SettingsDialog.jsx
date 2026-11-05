@@ -776,6 +776,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <fieldset>
           <legend>{t('ui.dted.setari_titlu')}</legend>
           <p className="muted small">{t('ui.dted.setari_explicatie')}</p>
+          {api.dictationStats && <EngineStatsLine />}
           {api.whisperStatus && (
             <div role="radiogroup" aria-label={t('ui.dted.motor')}>
               <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine !== 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'local' }))} /> {t('ui.dted.motor_local')}</label>
@@ -920,6 +921,34 @@ function ProjectDoor({ onOpen }) {
 }
 
 // The built-in recogniser: download (with progress), state, removal (docs/DTED.md §7).
+// ADL §12: live engine stats (CPU/RAM of DTED.exe & whisper-server.exe + GPU/VRAM from nvidia-smi),
+// polled only while Settings is open. Quiet line, no focus stealing.
+function EngineStatsLine() {
+  const [st, setSt] = useState(null);
+  useEffect(() => {
+    if (!api.dictationStats) return undefined;
+    let alive = true;
+    const poll = () => api.dictationStats().then((x) => { if (alive) setSt(x); }).catch(() => {});
+    poll();
+    const iv = setInterval(poll, 2000);
+    return () => { alive = false; clearInterval(iv); };
+  }, [api]);
+  if (!st || !st.engines || !st.engines.length) return null;
+  const fmt = (x) => {
+    const cpu = x.cpuPct != null ? `CPU ${x.cpuPct}%` : '';
+    const ram = x.ramMB ? `RAM ${x.ramMB >= 1024 ? `${(x.ramMB / 1024).toFixed(1)} GB` : `${x.ramMB} MB`}` : '';
+    return [cpu, ram].filter(Boolean).join(' · ');
+  };
+  const gpu = st.gpu && st.gpu.present
+    ? `GPU (VRAM): ${st.gpu.vramUsedGB}/${st.gpu.vramTotalGB} GB${st.gpu.gpuUtilPct != null ? ` · GPU ${st.gpu.gpuUtilPct}%` : ''}`
+    : '';
+  return (
+    <p className="muted small dictation-stats" role="status" aria-live="off">
+      {st.engines.map((x) => `${x.name}: ${fmt(x)}`).join(' · ')}{gpu ? ` · ${gpu}` : ''}
+    </p>
+  );
+}
+
 function LocalEngine({ api, onError }) {
   const [st, setSt] = React.useState(null);
   const [prog, setProg] = React.useState(null);
