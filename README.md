@@ -8,6 +8,8 @@ Program gratuit de scris cărți lungi, în română și engleză: textul stă p
   <img src="./assets/readme/hero.png" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">
 </p>
 
+Design language: Ionuț ADL — yes. *(Vezi `docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md` și `docs/ADL-AUDIT.md`.)*
+
 ## 1. Ce este
 
 Pneuma Sofer e un program gratuit de scris cărți lungi, în română și engleză. Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. Aici textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. La final apeși un buton și primești cartea întreagă.
