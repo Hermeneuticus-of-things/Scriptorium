@@ -776,6 +776,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <fieldset>
           <legend>{t('ui.dted.setari_titlu')}</legend>
           <p className="muted small">{t('ui.dted.setari_explicatie')}</p>
+          {api.dictationStats && <EngineStatsLine />}
           {api.whisperStatus && (
             <div role="radiogroup" aria-label={t('ui.dted.motor')}>
               <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine !== 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'local' }))} /> {t('ui.dted.motor_local')}</label>
@@ -920,6 +921,34 @@ function ProjectDoor({ onOpen }) {
 }
 
 // The built-in recogniser: download (with progress), state, removal (docs/DTED.md §7).
+// ADL §12: live engine stats (CPU/RAM of DTED.exe & whisper-server.exe + GPU/VRAM from nvidia-smi),
+// polled only while Settings is open. Quiet line, no focus stealing.
+function EngineStatsLine() {
+  const [st, setSt] = useState(null);
+  useEffect(() => {
+    if (!api.dictationStats) return undefined;
+    let alive = true;
+    const poll = () => api.dictationStats().then((x) => { if (alive) setSt(x); }).catch(() => {});
+    poll();
+    const iv = setInterval(poll, 2000);
+    return () => { alive = false; clearInterval(iv); };
+  }, [api]);
+  if (!st || !st.engines || !st.engines.length) return null;
+  const fmt = (x) => {
+    const cpu = x.cpuPct != null ? `CPU ${x.cpuPct}%` : '';
+    const ram = x.ramMB ? `RAM ${x.ramMB >= 1024 ? `${(x.ramMB / 1024).toFixed(1)} GB` : `${x.ramMB} MB`}` : '';
+    return [cpu, ram].filter(Boolean).join(' · ');
+  };
+  const gpu = st.gpu && st.gpu.present
+    ? `GPU (VRAM): ${st.gpu.vramUsedGB}/${st.gpu.vramTotalGB} GB${st.gpu.gpuUtilPct != null ? ` · GPU ${st.gpu.gpuUtilPct}%` : ''}`
+    : '';
+  return (
+    <p className="muted small dictation-stats" role="status" aria-live="off">
+      {st.engines.map((x) => `${x.name}: ${fmt(x)}`).join(' · ')}{gpu ? ` · ${gpu}` : ''}
+    </p>
+  );
+}
+
 function LocalEngine({ api, onError }) {
   const [st, setSt] = React.useState(null);
   const [prog, setProg] = React.useState(null);
@@ -943,6 +972,24 @@ function LocalEngine({ api, onError }) {
       setProg(null);
     }
   };
+  // ADL §6: alegerea explicită a variantei — CPU sau GPU CUDA, cu stare per variantă.
+  const variantRows = [
+    { id: 'cpu', label: t('ui.dted.var_cpu'), installed: st.installed },
+    { id: 'cuda', label: t('ui.dted.var_cuda'), installed: st.variants.includes('cuda') },
+  ];
+  const variantChooser = st.supported && (
+    <>
+      <p className="muted small">{t('ui.dted.alege_varianta')}</p>
+      <div role="radiogroup" aria-label={t('ui.dted.alege_varianta')}>
+        {variantRows.map((v) => (
+          <label key={v.id} className="check">
+            <input type="radio" name="whisperVariant" checked={cuda === (v.id === 'cuda')} onChange={() => setCuda(v.id === 'cuda')} />
+            <span>{v.label} — <em className="muted">{v.installed ? t('ui.dted.var_instalata') : t('ui.dted.var_lipsa')}</em>{st.variants.includes(v.id) ? ` · ${t('ui.dted.var_activa')}` : ''}</span>
+          </label>
+        ))}
+      </div>
+    </>
+  );
   const remove = async () => {
     if (!window.confirm(t('ui.dted.sterge_confirma'))) return;
     try {
@@ -957,9 +1004,7 @@ function LocalEngine({ api, onError }) {
         {st.installed ? t('ui.dted.motor_gata', { varianta: st.variants.includes('cuda') ? 'NVIDIA (CUDA)' : t('ui.dted.procesor') }) : t('ui.dted.motor_lipsa', { mb: st.sizes.model + (cuda ? st.sizes.cuda : st.sizes.cpu) })}
       </p>
       {!st.supported && <p className="muted small">{t('ui.dted.doar_windows')}</p>}
-      {st.supported && !st.installed && (
-        <label className="check"><input type="checkbox" checked={cuda} onChange={(e) => setCuda(e.target.checked)} /> {t('ui.dted.am_nvidia', { mb: st.sizes.cuda })}</label>
-      )}
+      {variantChooser}
       {prog && (
         <div className="row">
           <progress max={prog.totalMb || 1} value={prog.mb || 0} />
@@ -967,7 +1012,7 @@ function LocalEngine({ api, onError }) {
         </div>
       )}
       <div className="row">
-        {st.supported && !st.installed && <button className="primary" onClick={() => install()} disabled={Boolean(prog)}>{t('ui.dted.descarca')}</button>}
+        {st.supported && !st.installed && <button className="primary" onClick={() => install(cuda ? 'cuda' : 'cpu')} disabled={Boolean(prog)}>{t('ui.dted.descarca')} ({cuda ? 'CUDA' : 'CPU'})</button>}
         {st.supported && st.installed && !st.variants.includes('cuda') && <button onClick={() => install('cuda')} disabled={Boolean(prog)}>{t('ui.dted.adauga_cuda')}</button>}
         {(st.installed || st.model) && <button onClick={remove} disabled={Boolean(prog)}>{t('ui.dted.sterge_motor')}</button>}
       </div>

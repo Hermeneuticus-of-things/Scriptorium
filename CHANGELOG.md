@@ -1,6 +1,12 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.13.5
+- **Dictarea, live în bară**: textul dictat apare acum în bara de dictare pe măsură ce e recunoscut („…ultimele cuvinte dictate"), împreună cu un **puls de silabe** care urmărește vorbirea (nivelul microfonului, actualizat direct pe DOM — zero re-randări ale aplicației).
+- **CPU / GPU (VRAM) în Setări → Voce și traducere**: stare live pentru motoarele de dictare (DTED.exe / whisper-server.exe) — CPU%, RAM — plus **VRAM și utilizarea GPU** de la nvidia-smi (când există placă NVIDIA). Sondaj doar cât timp Setările sunt deschise, la 2 secunde.
+- **Alegi tu varianta motorului de dictare**: selector clar în Setări — *CPU (compatibil, 16 MB)* sau *GPU NVIDIA CUDA (mai rapid, 423 MB)*, cu stare per variantă (instalată/neinstalată/folosită acum) și descărcare pentru varianta aleasă. Cardul D&TED e etichetat ca motor optimizat pentru limba română (modelul eek).
+- Suite: 1675 teste trecute / 0 eșuate (apoi +7 teste de statistici).
+
 ## v0.13.4
 - **Sinonimele arată tot ce are sinonimul.ro**: pe lângă sinonimele directe, popoverul arată acum și secțiunea **„Cuvinte apropiate"** (cuvintele înrudite cu listele lor de sinonime, ca pe site); apăsarea unui cuvânt apropiat face o nouă căutare direct în popover, fără să părăsești pagina.
 - Popoverul afișează corect grupurile (sinonime directe / cuvinte apropiate) și pe proiecte reale, cu selectarea corectă a cuvântului (dublu-click / Ctrl+Shift+săgeată).

@@ -805,3 +805,11 @@ legend { color: var(--muted); padding: 0 4px; }
 .mini-player .mini-row button .sc-icon { width: 14px; height: 14px; vertical-align: -2px; }
 .binder-tools button:focus-visible,
 .mini-player button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Bara de dictare: textul live + pulsul de silabe (direct-DOM, fără re-randări) */
+.dictation-live { font-style: italic; opacity: 0.85; max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dictation-pulse {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #b5651d);
+  display: inline-block; transform-origin: center; transition: transform 90ms linear, opacity 90ms linear;
+}
+.dictation-pulse[data-paused='true'] { opacity: 0.25; }

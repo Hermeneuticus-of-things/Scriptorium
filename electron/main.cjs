@@ -1466,6 +1466,52 @@ handle('googleAuth:status', async () => {
 });
 
 // Synonyms read in-app from sinonimul.ro (no key needed); only the one HTTP request leaves the app.
+// Live dictation-engine stats (ADL §12): CPU%/RAM of DTED.exe & whisper-server.exe + GPU/VRAM
+// from nvidia-smi (present only on NVIDIA machines). CPU% is differential between polls.
+const dictationStats = require('../lib/dictationStats.cjs');
+const ENGINE_IMAGES = ['DTED.exe', 'whisper-server.exe'];
+let lastSample = null; // pid -> { cpuSec, at }
+handle('dictation:stats', async () => {
+  const exec = (cmd, opts = {}) => new Promise((resolve) => {
+    try {
+      require('child_process').exec(cmd, { timeout: 4000, windowsHide: true, ...opts }, (err, stdout) => resolve(err ? '' : String(stdout || '')));
+    } catch { resolve(''); }
+  });
+  const csv = await exec(`tasklist /FI "IMAGENAME eq DTED.exe" /FO CSV /NH & tasklist /FI "IMAGENAME eq whisper-server.exe" /FO CSV /NH`);
+  const enginesRaw = dictationStats.aggregateTasklist(csv, ENGINE_IMAGES);
+  // CPU%: sample TotalProcessorTime per PID twice across polls (state kept in main).
+  const ps = await exec(`powershell -NoProfile -Command "Get-Process DTED,whisper-server -ErrorAction SilentlyContinue | Select-Object Id,@{n='cpu';e={$_.TotalProcessorTime.TotalSeconds}} | ConvertTo-Json -Compress"`);
+  let cpuNow = {};
+  try {
+    const arr = JSON.parse(ps || '[]');
+    for (const p of (Array.isArray(arr) ? arr : [arr])) if (p && p.Id) cpuNow[p.Id] = Number(p.cpu) || 0;
+  } catch { /* PowerShell absent/fail: CPU% rămâne n/d */ }
+  const now = Date.now();
+  const engines = enginesRaw.map((en) => {
+    let cpuPct = null;
+    const deltas = en.pids.map((pid) => {
+      const prev = lastSample && lastSample.pids ? lastSample.pids[pid] : null;
+      const cur = cpuNow[pid];
+      if (prev && isFinite(cur) && cur >= prev.cpuSec) {
+        const wall = (now - prev.at) / 1000;
+        return dictationStats.computeCpuPct(prev.cpuSec, cur, wall);
+      }
+      return null;
+    }).filter((x) => x !== null);
+    if (deltas.length) cpuPct = Math.round(deltas.reduce((a, b) => a + b, 0) / deltas.length);
+    return { ...en, cpuPct };
+  });
+  lastSample = { at: now, pids: cpuNow };
+  // GPU/VRAM via nvidia-smi (doar NVIDIA); eșuează silențios altfel.
+  let gpu = { present: false };
+  try {
+    const g = await exec('nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits');
+    const parsed = dictationStats.parseNvidiaSmi(g);
+    if (parsed) gpu = { present: true, ...parsed };
+  } catch { /* fără NVIDIA */ }
+  return { engines, gpu };
+});
+
 handle('synonyms:fetch', (_e, word) => synonyms.fetchSynonyms({ word, signal: AbortSignal.timeout(10000) }));
 handle('zotero:import', async (_e, { collection } = {}) => {
   const zt = services.getService(readSettings(), 'zotero', safeStorage);

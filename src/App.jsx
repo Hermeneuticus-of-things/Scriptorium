@@ -148,6 +148,7 @@ import { useTeam } from './lib/useTeam.js';
 import { useDictation } from './lib/useDictation.js';
 import { createLocalSpeech } from './lib/localSpeech.js';
 import { createFocusEngine } from './lib/focusEngine.js';
+import { convertHtmlToDefault } from './lib/projectFormat.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
 import TeamDialog from './components/TeamDialog.jsx';
@@ -2188,6 +2189,41 @@ export default function App({ api: apiProp }) {
     setToast(tr('ui.app.eliminate_x', { parts: parts }));
   };
 
+  // ROADMAP #40: „Convertește documentele existente la formatarea implicită" pe tot proiectul —
+  // același reset ca din bara de format, rulat headless pe fiecare document, cu snapshot înainte.
+  const convertFormatting = async (scope) => {
+    await flush();
+    const docs = docsNow();
+    const trash = project.tree.find((n) => n.root === 'trash');
+    const trashIds = new Set(flatten(trash ? trash.children : []).map((n) => n.id));
+    const inScope = (n) => {
+      if (n.root || trashIds.has(n.id) || n.type !== 'text') return false;
+      if (scope === 'draft') {
+        const draft = project.tree.find((r) => r.root === 'draft');
+        return Boolean(draft && findNode([draft], n.id));
+      }
+      return true;
+    };
+    const defaults = project.defaultFormatting || {};
+    const changed = [];
+    for (const n of flatten(project.tree)) {
+      if (!inScope(n)) continue;
+      const { html, changed: did } = convertHtmlToDefault(docs[n.id] || '', buildExtensions, defaults);
+      if (did) changed.push([n.id, html]);
+    }
+    if (!changed.length) return setToast(tr('ui.app.deja_implicit'));
+    if (!window.confirm(tr('ui.app.conversie_confirma', { length: changed.length }))) return;
+    for (const [id, html] of changed) {
+      await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_conversie')).catch(report);
+      await api.writeDoc(dir, id, 'docs', html);
+    }
+    setDocs((d) => ({ ...d, ...Object.fromEntries(changed) }));
+    for (const [id, html] of changed) editorRefs.current.get(id)?.setHtml(html);
+    recordHistory();
+    setToast(tr('ui.app.conversie_gata', { length: changed.length }));
+  };
+  const convertFormattingDraft = () => convertFormatting('draft');
+  const convertFormattingAll = () => convertFormatting('all');
   const stripNotationInProject = async () => {
     await flush();
     const docs = docsNow();
@@ -2907,6 +2943,8 @@ export default function App({ api: apiProp }) {
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
+    ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
+    ['format', 'convertDefaultAll', tr('cmd.convertDefaultAll'), () => convertFormattingAll().catch(report), !project],
     ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],

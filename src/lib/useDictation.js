@@ -56,7 +56,7 @@ export function useDictation({ api, getEditor, onTranscript, onMessage, replacem
               break;
             }
             const text = insertFragment(ed, ev.text, session.current, { replacements: cb.current.replacements });
-            if (text) setDict((x) => x && { ...x, words: x.words + text.trim().split(/\s+/).length });
+            if (text) setDict((x) => x && { ...x, words: x.words + text.trim().split(/\s+/).length, lastText: (x.lastText ? `${x.lastText} ${text.trim()}` : text.trim()).slice(-90) });
           }
           break;
         case 'nivel':
