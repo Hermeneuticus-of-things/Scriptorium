@@ -82,7 +82,9 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
   // (folder 'draft' → Manuscript, 'notes' → Research).
   const syncInto = (dir, project, folder) => {
     const write = (id, html) => {
-      noteSelfWrite(path.join(dir, 'docs', `${id}.html`));
+      // The content, not just the time: the watcher (and the doc:write overwrite guard) then
+      // recognises this exact version as the app's own, however late the autosave comes.
+      noteSelfWrite(path.join(dir, 'docs', `${id}.html`), html);
       store.writeDoc(dir, id, 'docs', html);
     };
     const res = folderSync.syncIn(project, folder, reader(dir), write);
