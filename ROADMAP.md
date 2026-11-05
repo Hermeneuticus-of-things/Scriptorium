@@ -136,7 +136,7 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 - [x] Auto-complete cu nume din proiect (Tab)
 
 ### Cereri — formatare ([#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40))
-- [ ] Formatare pe tot manuscrisul (justify/aliniere etc.) dintr-o singură acțiune, pentru proiecte noi și vechi ([#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40))
+- [x] Formatare pe tot manuscrisul (justify/aliniere etc.) dintr-o singură acțiune — Format ▸ „Convertește Manuscrisul / tot proiectul la formatarea implicită” (headless per document, snapshot automat înainte) ([#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40))
 - [ ] La Proiect nou: alegerea stilurilor/formatării implicite la creare ([#40](https://github.com/Hermeneuticus-of-things/Scriptorium/issues/40))
 
 ### 2.2 Proiect și organizare
