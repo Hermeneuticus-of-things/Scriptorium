@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.13.6
+- **Focusul, ca motor (ADL §2)**: toate cele 34 de dialoguri rulează pe stiva de focus a aplicației — push/pop cu restaurare, cascade Escape deterministă (cel mai interior primul), sub-dialogurile Compile pe stivă, comenzi locale prin dispatch cu bubbling. 15 teste noi + fix latent în motor (comenzile care își închid propria suprafață nu mai aruncă).
+- **Fix-uri motoare (T24)**: listenerul care arunca oprea tăierea bucăților de dictare (buffer nelimitat la dictare+editare simultană), DTED căzut la mijlocul unei stări nu mai agăța 10 s, handshake fără răspuns primește timeout 30 s, cache-ul AI nu mai rescrie tot fișierul per răspuns (debounce).
+- Suite: 1694+ teste trecute / 0 eșuate.
+
 ## v0.13.5
 - **Dictarea, live în bară**: textul dictat apare acum în bara de dictare pe măsură ce e recunoscut („…ultimele cuvinte dictate"), împreună cu un **puls de silabe** care urmărește vorbirea (nivelul microfonului, actualizat direct pe DOM — zero re-randări ale aplicației).
 - **CPU / GPU (VRAM) în Setări → Voce și traducere**: stare live pentru motoarele de dictare (DTED.exe / whisper-server.exe) — CPU%, RAM — plus **VRAM și utilizarea GPU** de la nvidia-smi (când există placă NVIDIA). Sondaj doar cât timp Setările sunt deschise, la 2 secunde.
