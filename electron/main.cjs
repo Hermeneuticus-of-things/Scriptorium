@@ -1461,7 +1461,7 @@ handle('googleAuth:status', async () => {
 });
 
 // Synonyms read in-app from sinonimul.ro (no key needed); only the one HTTP request leaves the app.
-handle('synonyms:fetch', (_e, word) => synonyms.fetchSynonyms({ word }));
+handle('synonyms:fetch', (_e, word) => synonyms.fetchSynonyms({ word, signal: AbortSignal.timeout(10000) }));
 handle('zotero:import', async (_e, { collection } = {}) => {
   const zt = services.getService(readSettings(), 'zotero', safeStorage);
   return { entries: await require('../lib/zotero.cjs').fetchZoteroLibrary({ userId: zt.userId, apiKey: zt.apiKey, collection }) };

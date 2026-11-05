@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { t } from '../lib/i18n.js';
 import { clock } from '../lib/dictation.js';
 
@@ -6,10 +6,16 @@ import { clock } from '../lib/dictation.js';
 export default function DictationBar({ dict }) {
   const { dictation, jobs } = dict;
   const [, tick] = useState(0);
+  const meterRef = useRef(null);
   useEffect(() => {
     if (!dictation) return undefined;
     const t1 = setInterval(() => tick((n) => n + 1), 1000);
-    return () => clearInterval(t1);
+    // ADL §12: mic level arrives every ~150 ms — applied straight to the meter DOM node
+    // through dict.onLevel, never through component state (0 app re-renders for level).
+    const off = dict.onLevel ? dict.onLevel((v) => {
+      if (meterRef.current && !dictation.paused) meterRef.current.value = v;
+    }) : null;
+    return () => { clearInterval(t1); off && off(); };
   }, [dictation]);
   const list = Object.entries(jobs);
   if (!dictation && !list.length) return null;
@@ -19,7 +25,7 @@ export default function DictationBar({ dict }) {
         <div className="dictation-row">
           <span className={`dictation-mic ${dictation.paused ? 'paused' : ''}`} aria-hidden="true" />
           <strong>{dictation.id ? (dictation.paused ? t('ui.dted.pauza_activa') : t('ui.dted.dictezi')) : t('ui.dted.pornesc')}</strong>
-          <meter className="dictation-level" min="0" max="1" value={dictation.paused ? 0 : dictation.level || 0} aria-label={t('ui.dted.nivel')} />
+          <meter ref={meterRef} className="dictation-level" min="0" max="1" value={dictation.paused ? 0 : 0} aria-label={t('ui.dted.nivel')} />
           <span className="muted small">{clock((Date.now() - dictation.since) / 1000)} · {t('ui.dted.cuvinte', { n: dictation.words })}</span>
           <span className="spacer" />
           <button onClick={dict.togglePause} disabled={!dictation.id}>{dictation.paused ? t('ui.dted.continua') : t('ui.dted.pauza')}</button>

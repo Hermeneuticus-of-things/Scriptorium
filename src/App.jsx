@@ -147,6 +147,7 @@ import { mergeDoc, resolveMerge } from './lib/team.js';
 import { useTeam } from './lib/useTeam.js';
 import { useDictation } from './lib/useDictation.js';
 import { createLocalSpeech } from './lib/localSpeech.js';
+import { createFocusEngine } from './lib/focusEngine.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
 import TeamDialog from './components/TeamDialog.jsx';
@@ -340,11 +341,26 @@ export default function App({ api: apiProp }) {
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
+  // ADL §2: focus engine — per-window stacks, surface registration, Escape cascade.
+  const focusEngine = useRef(createFocusEngine()).current;
+  useEffect(() => {
+    const eng = focusEngine;
+    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: {} });
+    const un2 = eng.registerFocusableSurface({ id: 'settings.app', commands: {} });
+    const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: {} });
+    return () => { un1(); un2(); un3(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusEngine]);
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
   const [aiRequest, setAiRequest] = useState(null);
   const [researchRequest, setResearchRequest] = useState(null); // { q, mode, n } run by ResearchPanel
   const [findSeed, setFindSeed] = useState('');
   const [serviceResult, setServiceResult] = useState(null); // { source, result, handle } from DeepL / Google / LanguageTool // { action, n } run by AiPanel
+  useEffect(() => {
+    if (serviceResult) focusEngine.push('popover.service');
+    else if (focusEngine.top() === 'popover.service') focusEngine.pop('popover.service');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceResult]);
   const [showEditorial, setShowEditorial] = useState(false);
   const [editorialTabReq, setEditorialTabReq] = useState(null); // {tab, n}: AI › I-EDIT opens the panel on that tab
   const [importStats, setImportStats] = useState(null);
