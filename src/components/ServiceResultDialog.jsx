@@ -38,9 +38,16 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
           {result.related && result.related.length > 0 && (
             <>
               <p className="muted small" style={{ marginTop: 8 }}>{t('ui.services.cuvinte_apropiate')}</p>
-              <div className="synonyms-list">
+              <div className="related-list">
                 {result.related.map((r) => (
-                  <button key={r.word} type="button" className="syn-chip" title={r.synonyms.join(', ')} onClick={() => onSearch?.(r.word)}>{r.word}</button>
+                  <div key={r.word} className="related-row">
+                    <button type="button" className="link" onClick={() => onSearch?.(r.word)}>{r.word}</button>
+                    <span className="related-syns">
+                      {r.synonyms.map((syn) => (
+                        <button key={syn} type="button" className="syn-chip" title={t('ui.services.inlocuieste_selectia')} onClick={() => onReplace(syn)}>{syn}</button>
+                      ))}
+                    </span>
+                  </div>
                 ))}
               </div>
             </>
