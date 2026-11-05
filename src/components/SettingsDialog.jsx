@@ -972,6 +972,24 @@ function LocalEngine({ api, onError }) {
       setProg(null);
     }
   };
+  // ADL §6: alegerea explicită a variantei — CPU sau GPU CUDA, cu stare per variantă.
+  const variantRows = [
+    { id: 'cpu', label: t('ui.dted.var_cpu'), installed: st.installed },
+    { id: 'cuda', label: t('ui.dted.var_cuda'), installed: st.variants.includes('cuda') },
+  ];
+  const variantChooser = st.supported && (
+    <>
+      <p className="muted small">{t('ui.dted.alege_varianta')}</p>
+      <div role="radiogroup" aria-label={t('ui.dted.alege_varianta')}>
+        {variantRows.map((v) => (
+          <label key={v.id} className="check">
+            <input type="radio" name="whisperVariant" checked={cuda === (v.id === 'cuda')} onChange={() => setCuda(v.id === 'cuda')} />
+            <span>{v.label} — <em className="muted">{v.installed ? t('ui.dted.var_instalata') : t('ui.dted.var_lipsa')}</em>{st.variants.includes(v.id) ? ` · ${t('ui.dted.var_activa')}` : ''}</span>
+          </label>
+        ))}
+      </div>
+    </>
+  );
   const remove = async () => {
     if (!window.confirm(t('ui.dted.sterge_confirma'))) return;
     try {
@@ -986,9 +1004,7 @@ function LocalEngine({ api, onError }) {
         {st.installed ? t('ui.dted.motor_gata', { varianta: st.variants.includes('cuda') ? 'NVIDIA (CUDA)' : t('ui.dted.procesor') }) : t('ui.dted.motor_lipsa', { mb: st.sizes.model + (cuda ? st.sizes.cuda : st.sizes.cpu) })}
       </p>
       {!st.supported && <p className="muted small">{t('ui.dted.doar_windows')}</p>}
-      {st.supported && !st.installed && (
-        <label className="check"><input type="checkbox" checked={cuda} onChange={(e) => setCuda(e.target.checked)} /> {t('ui.dted.am_nvidia', { mb: st.sizes.cuda })}</label>
-      )}
+      {variantChooser}
       {prog && (
         <div className="row">
           <progress max={prog.totalMb || 1} value={prog.mb || 0} />
@@ -996,7 +1012,7 @@ function LocalEngine({ api, onError }) {
         </div>
       )}
       <div className="row">
-        {st.supported && !st.installed && <button className="primary" onClick={() => install()} disabled={Boolean(prog)}>{t('ui.dted.descarca')}</button>}
+        {st.supported && !st.installed && <button className="primary" onClick={() => install(cuda ? 'cuda' : 'cpu')} disabled={Boolean(prog)}>{t('ui.dted.descarca')} ({cuda ? 'CUDA' : 'CPU'})</button>}
         {st.supported && st.installed && !st.variants.includes('cuda') && <button onClick={() => install('cuda')} disabled={Boolean(prog)}>{t('ui.dted.adauga_cuda')}</button>}
         {(st.installed || st.model) && <button onClick={remove} disabled={Boolean(prog)}>{t('ui.dted.sterge_motor')}</button>}
       </div>
