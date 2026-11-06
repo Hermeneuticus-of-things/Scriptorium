@@ -41,13 +41,13 @@ function SynopsisImage({ file, readMedia }) {
   return url ? <img className="card-image" src={url} alt="" /> : null;
 }
 
-function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins, selected, tabStop, editing, onSelect, onKey, onEndEdit, tintCards = true, keywordStrips = true, onDropKeyword }) {
+function Card({ n, colors, keywordColors, onOpen, onPatch, readMedia, dragProps, style, className = '', pins, selected, inactive, tabStop, editing, onSelect, onKey, onEndEdit, tintCards = true, keywordStrips = true, onDropKeyword }) {
   const [kwOver, setKwOver] = useState(false);
   const isKw = (e) => onDropKeyword && [...(e.dataTransfer?.types || [])].includes(KEYWORD_MIME);
   const stripColors = keywordStrips ? (n.keywords || []).map((k) => keywordColors[k]).filter(Boolean) : [];
   return (
     <article
-      className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''} ${kwOver ? 'drop-keyword' : ''}`}
+      className={`card ${className} ${pins ? 'pinned' : ''} ${selected ? 'selected' : ''} ${selected && inactive ? 'inactive' : ''} ${kwOver ? 'drop-keyword' : ''}`}
       style={{ borderTopColor: (tintCards && colors[n.label]) || 'transparent', ...(tintCards && colors[n.label] ? { '--label-color': colors[n.label] } : {}), ...style }}
       data-card-id={n.id}
       role="gridcell"
@@ -167,7 +167,7 @@ export default function Corkboard(props) {
   return <CorkboardBoard {...props} folder={Array.isArray(folders) && folders.length === 1 ? folders[0] : props.folder} />;
 }
 
-function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia, labelColorIn = null, onDropKeyword, selectedIds = null, filterNodes = null }) {
+function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReorder, readMedia, labelColorIn = null, onDropKeyword, selectedIds = null, filterNodes = null, surfaceActive = true }) {
   const [drag, setDrag] = useState(null);
   const [hint, setHint] = useState(null);
   const [sel, setSel] = useState(null);
@@ -257,7 +257,9 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
       setEditing(node.id);
     }
   };
-  const cardState = (n) => ({ selected: sel === n.id, tabStop: sel && items.some((x) => x.id === sel) ? sel === n.id : n.id === items[0]?.id, editing: editing === n.id, onSelect: setSel, onKey, onEndEdit: (id) => (setEditing(null), focusCard(id)) });
+  // `inactive`: ADL §2 focus ≠ selection — the card stays selected (aria-selected kept, never
+  // cleared on blur) but renders in the inactive colour while another surface owns the focus.
+  const cardState = (n) => ({ selected: sel === n.id, inactive: !surfaceActive, tabStop: sel && items.some((x) => x.id === sel) ? sel === n.id : n.id === items[0]?.id, editing: editing === n.id, onSelect: setSel, onKey, onEndEdit: (id) => (setEditing(null), focusCard(id)) });
   const dropKeyword = onDropKeyword ? (id, name) => onDropKeyword(keywordDropTargets(id, selectedIds ? [...selectedIds] : sel ? [sel] : []), name) : undefined;
   const common = { colors, keywordColors, onOpen, onPatch, readMedia, pins: Boolean(cork.pins), tintCards: labelColorIn?.cards !== false, keywordStrips: cork.keywordStrips !== false, onDropKeyword: dropKeyword };
 
