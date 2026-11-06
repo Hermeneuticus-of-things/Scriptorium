@@ -120,11 +120,12 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
   function dispatch(cmd, args) {
     const st = stack();
     for (let i = st.length - 1; i >= 0; i--) {
-      const r = reg(st[i].surfaceId);
+      const sid = st[i].surfaceId; // captured before fn runs: a close command may pop its own surface
+      const r = reg(sid);
       const fn = r && r.commands[cmd];
       if (fn) {
         fn(args);
-        return st[i].surfaceId;
+        return sid;
       }
     }
     return null; // unhandled → the caller may apply a window/app-level default
