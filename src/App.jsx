@@ -3617,6 +3617,7 @@ export default function App({ api: apiProp }) {
                 commentColor={settings.commentColor || ''}
                 authorName={settings.authorName || project.author || ''}
                 onSelectionWords={setSelWords}
+                focusEngine={focusEngine}
               />
             )}
             {view === 'editor' && selected && !isFolderView && selected.type !== 'file' && !composition && !editorView.hideFooterBar && (
@@ -3777,6 +3778,7 @@ export default function App({ api: apiProp }) {
                   view={{ ...editorView, zoom: paneZoom(editorView, 'split') }}
                   onViewChange={(v) => setEditorView({ ...v, zoom: editorViewRef.current.zoom, zoom2: v.zoom })}
                   onManageStyles={() => setDialog('styles')}
+                  focusEngine={focusEngine}
                 />
               )}
               {!splitNode.children && !editorView.hideFooterBar && (
@@ -3825,6 +3827,7 @@ export default function App({ api: apiProp }) {
                 onOpenLink={openLink}
                 words={words}
                 styles={projectStyles}
+                focusEngine={focusEngine}
               />
             </div>
           )}
