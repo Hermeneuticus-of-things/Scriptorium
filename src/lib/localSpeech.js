@@ -135,7 +135,10 @@ export async function decodeAudio(bytes) {
  */
 export function createLocalSpeech(api, { terms = () => '', media = globalThis.navigator?.mediaDevices } = {}) {
   const listeners = new Set();
-  const emit = (ev) => listeners.forEach((f) => f(ev));
+  // A listener's error (an editor closed mid-dictation) must not break the fan-out to the others
+  // nor bubble into onaudioprocess — there it would skip the piece-cutting and the mic buffer
+  // would grow without bound.
+  const emit = (ev) => listeners.forEach((f) => { try { f(ev); } catch { /* keep dictating */ } });
   let dict = null;
   const cancelled = new Set();
   const jobs = new Set(); // file transcriptions running

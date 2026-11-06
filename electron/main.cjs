@@ -700,13 +700,32 @@ handle('project:save', (e, dir, project) => {
 
 handle('doc:read', (_e, dir, id, kind) => {
   assertOpened(dir);
-  return store.readDoc(dir, id, kind === 'notes' ? 'notes' : 'docs');
+  kind = kind === 'notes' ? 'notes' : 'docs';
+  const html = store.readDoc(dir, id, kind);
+  // The version the window was given counts as known: a later autosave that overwrites exactly
+  // this text must not be mistaken for the destruction of an outside edit (doc:write below).
+  noteSelfWrite(path.join(dir, kind, `${id}.html`), html);
+  return html;
 });
 handle('doc:write', (e, dir, id, kind, html) => {
   assertOpened(dir);
   assertOwner(e.sender, dir);
-  noteSelfWrite(path.join(dir, kind === 'notes' ? 'notes' : 'docs', `${id}.html`), html);
-  store.writeDoc(dir, id, kind === 'notes' ? 'notes' : 'docs', html);
+  kind = kind === 'notes' ? 'notes' : 'docs';
+  const file = path.join(dir, kind, `${id}.html`);
+  // An outside version (agent via MCP, sync client) may have landed since the window last wrote
+  // or read this document, inside the race window where the watcher cannot report it: this save
+  // would destroy it silently. Keep a copy first — the autosave itself then proceeds untouched.
+  const lost = projectWatch.lostExternalContent(trackerFor(dir), file, html);
+  if (lost !== null) {
+    try {
+      store.backupFile(dir, `${id}.html`, lost);
+      console.warn(`[pneuma] ${kind}/${id}.html: o versiune externă era pe disc și a fost păstrată în snapshots/_backup înainte de salvare.`);
+    } catch {
+      /* best effort: the save must not be blocked by the backup */
+    }
+  }
+  noteSelfWrite(file, html);
+  store.writeDoc(dir, id, kind, html);
   dirtyDirs.add(path.resolve(dir));
   return true;
 });

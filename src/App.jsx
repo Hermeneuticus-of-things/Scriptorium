@@ -2,7 +2,7 @@ import { addBacklinks, addedLinks, insertLinkedDoc } from './lib/backlinks.js';
 import { uiPrompt } from './lib/uiPrompt.jsx';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { keyFromEvent, shortcutFor } from './lib/commands.js';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Home from './components/Home.jsx';
 import Binder from './components/Binder.jsx';
 import Editor from './components/Editor.jsx';
@@ -148,6 +148,9 @@ import { useTeam } from './lib/useTeam.js';
 import { useDictation } from './lib/useDictation.js';
 import { createLocalSpeech } from './lib/localSpeech.js';
 import { createFocusEngine } from './lib/focusEngine.js';
+import { registerDialogSurface, closeTopModal, escapeThroughEngine, dialogSurfaceId } from './lib/focusDialogs.js';
+import { VIEW_SURFACES, surfaceForView, registerViewSurfaces, syncViewSurface } from './lib/focusViews.js';
+import { setDefaultFocusEngine, activeFocusEngine } from './lib/focusMenus.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
@@ -346,11 +349,62 @@ export default function App({ api: apiProp }) {
   const focusEngine = useRef(createFocusEngine()).current;
   useEffect(() => {
     const eng = focusEngine;
-    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: {} });
+    const serviceClose = () => closeTopModal(document) || setServiceResult(null);
+    // ADL §10: the core surface answers the command registry, so a command chosen from any
+    // menu (engine.dispatch) reaches the active surface first and lands here when no transient
+    // layer owns it. commandsRef fills after this effect runs — read through a lazy lookup.
+    const coreCommands = new Proxy({}, { get: (_, cmd) => commandsRef.current?.[String(cmd)]?.run });
+    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: coreCommands });
     const un2 = eng.registerFocusableSurface({ id: 'settings.app', commands: {} });
-    const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: {} });
-    return () => { un1(); un2(); un3(); };
+    const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: { close: serviceClose, escape: serviceClose } });
+    // ADL T7: the three main views (and the floating panels) are engine surfaces too. The row
+    // delete action is read through a ref, so the command never captures stale selection state.
+    const un4 = registerViewSurfaces(eng, { onDeleteRow: () => trashRef.current?.() });
+    const un5 = eng.registerFocusableSurface({ id: 'panel.inspector', commands: {} });
+    const un6 = eng.registerFocusableSurface({ id: 'panel.quickref', commands: {} });
+    eng.push('editor.document.core'); // the core function sits at the bottom of the stack
+    setDefaultFocusEngine(eng); // menus anywhere in the tree (FormatBar) find the engine
+    return () => {
+      if (activeFocusEngine() === eng) setDefaultFocusEngine(null);
+      eng.pop('editor.document.core');
+      un4(); un5(); un6(); un1(); un2(); un3();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusEngine]);
+  // ADL §2 focus ≠ selection: the ACTIVE surface is reactive, so a selection can be drawn in the
+  // inactive colour while another surface (settings, inspector, quick-ref) owns the focus.
+  const activeSurface = useSyncExternalStore(focusEngine.subscribe, focusEngine.top);
+  // ADL T7: the visible view owns the active surface — Ctrl+1/2/3 (viewEditor / viewCorkboard /
+  // viewOutline) switch it. Only the ACTIVE view is ever on the stack, so row commands can never
+  // bubble to a hidden board while the user works (types) somewhere else.
+  const viewSurfaceRef = useRef(VIEW_SURFACES.scrivenings);
+  useEffect(() => {
+    const id = surfaceForView(view);
+    viewSurfaceRef.current = id;
+    syncViewSurface(focusEngine, id);
+  }, [view, focusEngine]);
+  useEffect(() => () => {
+    // unmount: take the view surface off the stack (whatever was pushed over it goes with it)
+    const st = focusEngine.stack();
+    const i = st.findIndex((s) => String(s).startsWith('view.'));
+    if (i >= 0) focusEngine.pop(st[i]);
+  }, [focusEngine]);
+  // ADL §2: the Inspector is an intermediate surface too (§2 names it) — while the user works in
+  // it, it owns the focus (the view underneath renders its selection inactive); leaving it hands
+  // the active surface back to the visible view. mousedown heals the unmount-with-focus case
+  // (the inspector disappearing fires no focusin), so the very next interaction re-syncs.
+  useEffect(() => {
+    const eng = focusEngine;
+    const onAct = (e) => {
+      if (e.target?.closest?.('.inspector')) eng.switchFocus('panel.inspector');
+      else if (eng.top() === 'panel.inspector') eng.switchFocus(viewSurfaceRef.current);
+    };
+    document.addEventListener('focusin', onAct);
+    document.addEventListener('mousedown', onAct);
+    return () => {
+      document.removeEventListener('focusin', onAct);
+      document.removeEventListener('mousedown', onAct);
+    };
   }, [focusEngine]);
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
   const [aiRequest, setAiRequest] = useState(null);
@@ -384,8 +438,26 @@ export default function App({ api: apiProp }) {
   }, []);
   // Help → Report a problem, and the discreet "send a report?" toast for a newly captured error.
   const [reportOpen, setReportOpen] = useState(false);
+  // ADL §2: the report modal can open over any dialog (onError from inside it) — its own layer.
+  useEffect(() => {
+    if (!reportOpen) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.report', {
+      close: () => closeTopModal(document),
+      fallback: () => setReportOpen(false),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportOpen, focusEngine]);
   // Help → Check for updates, and the "new version" banner (once per new version; remembered in settings).
   const [updateOpen, setUpdateOpen] = useState(null); // null | { initial }
+  // ADL §2: same for the update dialog (it can pop up over whatever is open).
+  useEffect(() => {
+    if (!updateOpen) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.update', {
+      close: () => closeTopModal(document),
+      fallback: () => setUpdateOpen(null),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateOpen, focusEngine]);
   const [aboutOpen, setAboutOpen] = useState(false); // Help → About Pneuma Sofer
   const [updateBanner, setUpdateBanner] = useState(null);
   const bannerShown = useRef('');
@@ -468,6 +540,19 @@ export default function App({ api: apiProp }) {
   }, [activeCollectionId, project?.collections, project?.tree, dir, api]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
+  // ADL T7 §2: a quick-reference panel is a floating surface — pushed above the view while at
+  // least one is open, popped when the last one closes; then the view surface is re-synced (the
+  // view may have changed under the panel, and syncViewSurface refused to touch the stack while
+  // the panel owned the top).
+  useEffect(() => {
+    const open = focusEngine.stack().includes('panel.quickref');
+    if (quickRefs.length && !open) focusEngine.push('panel.quickref');
+    else if (!quickRefs.length && open) {
+      focusEngine.pop('panel.quickref');
+      syncViewSurface(focusEngine, surfaceForView(view));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickRefs.length, view, focusEngine]);
   // Copyholder: a reference pane beside the editor (and the split), read-only unless toggled.
   const [copyholder, setCopyholder] = useState(null); // {id, editable} | null
   const copyScroll = useRef(new Map()); // doc id -> scrollTop of the copyholder pane
@@ -520,6 +605,25 @@ export default function App({ api: apiProp }) {
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
+  // ADL §2: every dialog is a focus surface — push on open, pop on close; Escape cascade and
+  // local 'close' commands go through the engine (innermost first, one per press).
+  useEffect(() => {
+    if (!dialog) return undefined;
+    return registerDialogSurface(focusEngine, dialogSurfaceId(dialog), {
+      close: () => closeTopModal(document),
+      fallback: () => setDialog(null),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialog, focusEngine]);
+  // ADL §2: the engine answers Escape BEFORE the old document-level handler (DialogA11y): it
+  // decides which layer closes; when no surface handles it, the old behavior stands untouched.
+  useEffect(() => {
+    const host = document.getElementById('root') || document;
+    const onKey = (e) => { escapeThroughEngine(focusEngine, e); };
+    host.addEventListener('keydown', onKey);
+    return () => host.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusEngine]);
   const [floats, setFloats] = useState({ lf: false, kh: false, sc: false }); // audit 2 floating windows
   const toggleFloat = (k) => setFloats((f) => ({ ...f, [k]: !f[k] }));
   const [printOpts, setPrintOpts] = useState(null); // File > Print Preview: { ids, pageSetup? }
@@ -1422,6 +1526,10 @@ export default function App({ api: apiProp }) {
     setSelectedId(sel);
     setSelectedIds(new Set([sel]));
   };
+  // ADL T7: the engine surfaces read the row-delete action through this ref, so the `delete`
+  // command registered once at mount always runs with the current selection (no stale capture).
+  const trashRef = useRef(null);
+  trashRef.current = trashSelection;
 
   // --- Batch A: binder and document commands ---
   const selectionList = () => (selectedIds.size ? [...selectedIds] : selectedId ? [selectedId] : []).filter((id) => {
@@ -1714,7 +1822,10 @@ export default function App({ api: apiProp }) {
         const res = await api.fetchSynonyms(source);
         setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 } });
         setToast('');
-      } catch (e) { setToast(''); report(e); }
+      } catch (e) {
+        setServiceResult({ source, result: { kind: 'error', message: e.message }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 }, retry: () => synonymsInApp(source) });
+        setToast('');
+      }
       return undefined;
     }
     const range = serviceRange(handle.editor, source);
@@ -1731,8 +1842,16 @@ export default function App({ api: apiProp }) {
         setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, range, anchored: true, pos });
       setToast('');
     } catch (e) {
+      // ADL §12: eroarea LA CAUZĂ — popover ancorat cu mesaj și Reîncearcă.
+      let pos = { x: 120, y: 140 };
+      try {
+        const dom = handle.editor.view.domAtPos(range.to);
+        const el = dom.node.nodeType === 1 ? dom.node : dom.node.parentElement;
+        const r = el.getBoundingClientRect();
+        pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
+      } catch { pos = { x: 120, y: 140 }; }
+      setServiceResult({ source, result: { kind: 'error', message: e.message }, handle, range, anchored: true, pos, retry: () => synonymsInApp() });
       setToast('');
-      report(e);
     }
     return undefined;
   };
@@ -3272,7 +3391,8 @@ export default function App({ api: apiProp }) {
         {/* Browser: the full menu bar lives here; desktop: the native menu has it (AI can stay in-app via the toolbar). */}
         {!api.setAppMenu && (
           <nav className="menubar" aria-label={tr('ui.tb.menubar')}>
-            {menuLayout.map((m) => <Menu key={m.group} label={m.label} items={m.items} caret={false} className={m.group === 'ai' ? 'menu-ai' : ''} />)}
+            {/* ADL §2/§10: each menu bar menu registers as menu.<group> on the focus engine while open. */}
+            {menuLayout.map((m) => <Menu key={m.group} label={m.label} items={m.items} caret={false} className={m.group === 'ai' ? 'menu-ai' : ''} engine={focusEngine} surfaceId={m.group} />)}
           </nav>
         )}
         {toolbars.top.map((id, i) => renderTopItem(id, i))}
@@ -3574,6 +3694,7 @@ export default function App({ api: apiProp }) {
                 labelColorIn={colorIn}
                 selectedIds={selectedIds}
                 onDropKeyword={dropKeyword}
+                surfaceActive={activeSurface === VIEW_SURFACES.corkboard}
               />
             )}
             {view === 'outline' && (
@@ -3592,6 +3713,7 @@ export default function App({ api: apiProp }) {
                 onPatch={patchNode}
                 onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
                 labelColorIn={colorIn}
+                surfaceActive={activeSurface === VIEW_SURFACES.outliner}
               />
             )}
           </div>
@@ -4062,6 +4184,7 @@ export default function App({ api: apiProp }) {
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onOpenUrl={(u) => openWeb(u)}
           onSearch={(w) => synonymsInApp(w)}
+          onRetry={serviceResult.retry}
           anchored={Boolean(serviceResult.anchored)}
           pos={serviceResult.pos}
           onClose={() => setServiceResult(null)}
@@ -4070,7 +4193,7 @@ export default function App({ api: apiProp }) {
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
       {showSpeech && <MiniPlayer api={api} dict={dict} getText={speechText} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
-      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} focusEngine={focusEngine} />}
       {dialog === 'settings' && (
         <SettingsDialog
             initialTab={settingsTab}

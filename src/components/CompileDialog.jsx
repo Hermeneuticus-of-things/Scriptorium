@@ -10,6 +10,7 @@ import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 import { collectionNodes, listKeywords } from '../lib/collections.js';
 import { exportFormatFile, formatFileName, importFormatFile, FORMAT_FILE_EXT } from '../lib/compileFormatFile.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
+import { registerDialogSurface, closeTopModal } from '../lib/focusDialogs.js';
 import { Icon } from './Icons.jsx';
 
 function readPresets() {
@@ -120,7 +121,7 @@ function newCustomId(prefix = 'custom') {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-export default function CompileDialog({ api, dir, project, selectionIds = [], onProjectChange, onClose, onError }) {
+export default function CompileDialog({ api, dir, project, selectionIds = [], onProjectChange, onClose, onError, focusEngine }) {
   const pc = project.compile || {};
   const [formats, setFormats] = useState(() => (Array.isArray(pc.formats) ? clone(pc.formats) : []));
   // Global formats (userData/compile-formats.json), shared by all projects.
@@ -174,9 +175,27 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [coverId, setCoverId] = useState(pc.coverId || '');
   const [tab, setTab] = useState('continut');
   const [editing, setEditing] = useState(false); // "Edit format…" sub-dialog
+  // ADL §2: each sub-dialog drawn over this window is its own focus layer — Esc closes only the
+  // top layer (engine cascade), then the Compile window itself, then back to the core function.
+  useEffect(() => {
+    if (!editing || !focusEngine) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.compile.editing', {
+      close: () => closeTopModal(document),
+      fallback: () => setEditing(false),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, focusEngine]);
   const [editLayout, setEditLayout] = useState(null); // section type whose layout detail is open
   const [fmtTab, setFmtTab] = useState('separatoare');
   const [assigning, setAssigning] = useState(false); // "Assign layouts…" sub-dialog
+  useEffect(() => {
+    if (!assigning || !focusEngine) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.compile.assigning', {
+      close: () => closeTopModal(document),
+      fallback: () => setAssigning(false),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assigning, focusEngine]);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState('');
   const [preview, setPreview] = useState(null);
