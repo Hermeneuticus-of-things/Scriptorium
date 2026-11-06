@@ -1,115 +1,140 @@
 ---
 name: ionut-application-design-language
-description: General UI design language for any application — core function foreground, focus levels (active window and object level), complete menus, quiet discrete controls, measurable scales, dropdowns, button hierarchy, accessibility, vector-scalable as one rule. Use when designing or redesigning any app UI, menus, toolbars, or reviewing AI-generated interface changes.
+description: Ionuț Application Design Language (also "design application language" / "design logic language") — UX and UI rules for every app. For ANY AI (OpenCode, Claude, Cursor, GitHub Copilot, Grok Bot, or any other). At the start of every new project, before any UI work, ask the caller yes/no whether to use this design language; apply it only on yes. Covers focus levels, core function, complete menus, scales, dropdowns, a11y, full Hallmark skill (Floor, themes-as-materials, deal/draw, sloplint) plus our warm opaque product foundation and Liquid Glass chrome effects, maintenance with version bumps.
 ---
 
-# Ionuț Application Design Language
+# Ionuț Application Design Language — skill
 
-This is a **general application design language**. It applies to **every application**, any app, any project. Follow it exactly when designing, redesigning, or reviewing UI.
+**Version:** v1.0 · **Date:** 2026-11-01 (Europe/Paris) — must match the full document header; every change bumps both (§16).
 
-**Purpose:** eliminate generic, noisy, AI-generated interface slop. Put the app’s real work in front; keep supporting controls quiet, complete, and reachable.
+*Also recognized as:* **design application language** (app-facing) and **design logic language** (tool/engine logic). Full source: `IONUT_APPLICATION_DESIGN_LANGUAGE.md`. This skill is the same rules, condensed; on any doubt the full file wins. Tool-agnostic: plain Markdown, loadable as a skill, rules file, project instruction, or by reading it.
 
-## 1. Core function (varies by app type)
+**Scope:** UX as well as UI — interaction, focus, movement through the app, engine state, and visuals. **Acceptance bar:** with only the full document plus the codebase you can implement everything; no external references needed.
 
-Define the **core function** first. It occupies the foreground.
+## Step 1 — Adoption: ask first (mandatory for any AI)
 
-Examples (same language for all app types):
+At the start of **every new project** (new repo, new app, or a new product area the caller calls a new project), **before** proposing layouts or writing UI code, ask exactly this, as a yes/no widget if your tool has one, else as one clear question:
 
-- Writing app → writing
-- News app → showing news
-- Email app → showing emails
-- AI app → the AI interaction
-- Any other app → that app’s primary job
+> **Use the Ionuț Application Design Language for this project? (yes / no)**
+> It covers UX and UI: focus levels, core function in front, complete menus, compact controls, full Hallmark skill (Floor, themes-as-materials) plus our warm opaque product foundation (Liquid Glass only as chrome effects).
 
-### Completeness is required — do not strip controls
+- **Yes** → follow every rule below (and the full file), run the checklist before handing over UI work. Record `Design language: Ionuț ADL — yes` in README / `AGENTS.md` / project instructions.
+- **No** → do not apply; do not bring it up again unless asked. Record `Design language: Ionuț ADL — no`.
+- **No answer yet** → no UI work; non-UI work is fine.
+- **Never assume silently** — not from past projects, memory, or because this skill is installed. Ask once per project, not per task.
 
-Foreground core function does **not** mean removing controls. Do **not** simplify menus by deleting items the user needs. Keep complex menus, submenus, and sub-submenus; arrange them with clear layout. Stripping needed items violates this language. Completeness of functionality is required; only visual presentation should be quiet and organized.
+## Glossary (one meaning each)
 
-## 2. Focus levels
+**Core function** — the app's primary job, product-wide foreground (writing app → editor). **Surface** — any region the user works in (editor, settings, menu, dropdown, image viewer, panel, list, dialog, palette). **Active surface** — the one surface owning input, commands, emphasis now; one per window. **Focus level** — app → window → surface → object. **Focus** — always this level-based focus; the control indicator is the **focus ring**. **Selection** — what is chosen inside a surface; not focus. **Trigger** — what opened a surface. **Surrounding controls** — menus, toolbars, panels, status bars (never "chrome"). **Hallmark visual foundation** — warm, opaque, line-art, content-first base under everything; Liquid Glass is an effect layer on surrounding controls only (§15.6).
 
-Focus is **not only** the app’s overall purpose. It also tracks the **active window** and the **level of the object**.
+## Implementer job lines (all sections)
 
-- Writing text → focus on that text.
-- Open settings from that text → focus shifts to settings.
-- Open another settings/panel → focus shifts there.
+- §0 Scope — apply rules to how the app behaves and how it looks, never one without the other.
+- §1 Adoption — ask the yes/no question at project start; apply fully on yes, not at all on no.
+- §2 Focus levels — know the active surface; route input, commands, emphasis to it at its level; move focus in on open; return exactly on leave.
+- §2.13 New cases — if it does not fit an existing level/kind, ask or flag as a candidate; document; then implement. Never invent a level.
+- §3 Core function — name it, give it the largest area and priority, make it active on window open, keep every surrounding control.
+- §4 Scales — named tokens; replace off-scale sizes with the nearest token.
+- §5 Disappear vs available — every hidden control returns from a fixed place; never remove a command's last access path.
+- §6 Dropdowns — compact dropdowns for choosing values; exceptions untouched.
+- §7 Buttons — visible buttons only for primary/confirm; secondary in menus/icons/palette; six states.
+- §8 Accessibility — keyboard + screen reader everywhere, AA contrast, visible focus ring, every theme.
+- §9 Vector-scalable — crisp at any zoom via vectors and scaled tokens; no scaling modes.
+- §10 Surrounding controls — precise names; visually secondary; reachable; can become active surface.
+- §11 Density — group on 4/8/12; one hierarchy per view; organize, never delete, nested menus.
+- §12 Feedback — at the cause, quiet, actionable, non-blocking for short waits, never stealing focus.
+- §13 Theming/motion — tokens on the Hallmark foundation; AA in every theme; motion optional and short.
+- §14 AI-assisted UI — change toward this doc without removing anything; focus as engine logic; report command count + checklist.
+- §15 Hallmark — obey the full skill Floor; keep product foundation (warm opaque) under Floor; Liquid Glass on chrome only; redesign/audit only when named.
+- §16 Maintenance — update incrementally in the same pattern; mirror to .md, .SKILL.md, desktop-user-interface every time.
+- §17 Checklist — verify every item; report failures.
 
-**Rule:** focus the active level (core task *or* intermediate surface that needs detail). Follow both the active window and the object’s level — not only the app’s global scope. When the user leaves an intermediate surface, return focus to the core function (§1).
+## §2 Focus levels (core)
 
-## 3. Measurable scales
+**Rule (caller's words):** focus is not only on the app's overall purpose; it is on the **active window** and the **level of the object**. Writing text → focus on the text. Into settings → focus on settings. Settings for something else, a menu for something else, a window or image for something else → focus on that. Each task/window gets its own focus at its level. **The active window owns the work**; the app never moves focus on its own except opening/closing surfaces and blocking feedback.
 
-- Control height: **24 / 28 / 32 px**
-- Icons: **16 / 20 px**
-- UI typography: **12–14 px**
-- Spacing: **4 / 8 / 12 px**
-- Corner radius: **4–8 px**
-- Control padding: **4–8 px**
-- Toolbar height: **32–40 px**
-- Min click target: **32 px** pointer · **44 px** touch
+**Levels:** app → window → surface → object. Each top-level window has its own focus stack; exactly one active surface per window; outer levels stay visible and reachable.
 
-No immense buttons. No oversized icons.
+**Receiving focus = all three:** (1) input routing to the active surface first; (2) command dispatch active surface first, then bubble outward if unhandled; (3) visual emphasis — active header/selection; inactive only neutral header/selection, never hidden, blurred, dimmed below AA, or stripped.
 
-## 4. Disappear vs stay available
+**Focus ≠ selection:** store separately. Do: paragraph stays selected (inactive color) while Settings has focus; restored active on return. Don't: clear selection on blur; route `Delete` to a selected row while user types in the editor; same color for both.
 
-Controls stay available. Prefer: minimal persistent toolbar; collapsible panels; popover/overlay; command palette; keyboard shortcuts. Hide only when another discoverable path remains. Reappear from the same entry point every time.
+**Open → in:** push and activate immediately. Initial target: last-focused control this session → search field → first editable control → surface container; never Close or destructive. Modal: `Tab` trapped, background inert. Non-modal: `Tab`/`F6`/click move between siblings.
 
-## 5. Dropdown specifications
+**Close → back:** restore previous surface (usually the trigger's) + control/trigger, caret, selection, scroll. If gone → nearest open parent's last object. Never focus on nothing (after deleting a focused row → next, else previous, else list). Never jump to app-level controls unless the whole work level closed. Siblings remember their own state. `Escape` closes innermost transient first (dropdown → menu → popover → dialog → non-modal surface), one per press; no-op in the core function at window level; IME composition owns `Escape`.
 
-Prefer compact dropdowns for field value changes.
+**Engine:**
+```
+FocusState { stack: FocusEntry[] (per window; top = active), registry }
+FocusEntry { surfaceId, level, triggerId?, lastFocusedControlId?, caret?, scroll?, selection? }
+SurfaceRegistration { id, level, parentId, modal, commands, initialFocus?, onFocus, onBlur }
+registerFocusableSurface(reg) -> unregister
+pushFocus(id, triggerId) | popFocus(id) (also pops children) | switchFocus(id) | dispatch(cmd, args) | onSurfaceDestroyed(id)
+```
+Ids: `<kind>.<scope>[.<instanceId>]` — `editor.document.<docId>`, `settings.app`, `settings.document.<docId>`, `settings.plugin.<id>`, `menu.<id>`, `dropdown.<fieldId>`, `dialog.<id>`, `panel.<id>`, `image.viewer.<assetId>`, `palette.commands`, `window.<windowId>`.
+Rules: `stack.top` is the single source of truth; native focus is synced to it (web `focus({preventScroll:true})` + `inert`; Qt `setFocus`; WPF `FocusManager`); wrap an existing framework focus manager, don't duplicate; pointer clicks call push/switch; **toolbar button clicks dispatch to the active surface and do not take focus** (toolbar is active only when entered by keyboard); unregistered input surfaces are bugs.
+Tests: open→close restores caret; settings→dropdown→dialog then 3× `Escape` reverses; parent close pops children; dispatch + bubbling; delete row → next row; toolbar click keeps editor focus; two windows, two stacks.
 
-- Enumerations/modes/presets/sort/filter/status/view → dropdown
-- Binary → toggle; free text/numbers → inline edit
-- Max width ~280–320 px; item height matches control height
-- Search/filter above ~12 items; arrow/Enter/Escape/typeahead
-- Clear selected state; optional grouping
-- Exceptions: primary commit, live data, steppers, free text
+**Commands:** local to active surface — find, select all, copy/cut/paste, delete, navigation, field undo/redo, Escape/close, surface-specific actions. Bubble to window — save, save as, print, export, close document. Bubble to app — new, open, quit, preferences, toggle panels, palette, help. Menus/palette list active surface's commands first.
 
-## 6. Buttons and actions
+**Reference: Settings in a writing app.** Id `settings.document.<docId>` or `settings.app`, level surface, parent = window. Non-modal panel/page when live effect on text helps; modal only for one-shot confirmed choices; app preferences may be a separate window (own stack). Open via menu/gear/shortcut → `pushFocus` → search field or first field. Groups with labels, §6 fields, ≤1 primary button; apply live with per-field reset unless expensive/irreversible (then Apply/Cancel). `find/reset/close` local; `save/export` → window; `palette/quit` → app. Close → editor caret, selection, scroll restored.
 
-Buttons only for **primary action** or **confirmation**. No huge buttons. Secondary actions in menus, small icons, or command palette. Hierarchy: primary / secondary / tertiary / destructive. States: hover, focus, active, disabled, loading, error. Confirm irreversible destructive actions.
+**Emphasis tokens:** `focus.surface.header.text` active `text.primary` / inactive `text.secondary`; `focus.surface.border` 1 px `border.active` or 2 px top accent / 1 px `border.subtle`; `selection.bg` `selection.active.bg` / `selection.inactive.bg`; `focus.ring` 2 px on focused control; content text always full contrast. No blur/opacity/animation required.
 
-## 7. Accessibility
+**Reinforcements:** dense panels keep full keyboard rigor (Carbon); same model across platforms and inputs (Fluent); patterns, not just components (Polaris).
 
-Quiet ≠ low contrast. Min WCAG AA. Visible focus. Full keyboard. Screen reader labels. Honor reduced motion.
+**Effort:** tracking, routing, dispatch, exact return, focus vs selection, registration, tests. **Out of scope:** transition animation, header hue, framework choice, persisting the stack across restarts.
 
-## 8. Vector-scalable interface (one rule)
+**NOT:** focus rings alone; one global focus forever; stripping menus; the same as §3; platform keyboard-only guidance; distraction-free mode.
 
-The interface is **vector-scalable**: layout, icons, and controls scale cleanly with resolution and zoom. One rule — not separate raster/vector modes. Density tokens stay proportional to UI scale.
 
-## 9. Surrounding controls (wording)
+### §2.13 New cases that do not fit
 
-Say surrounding controls, interface elements, menus, toolbars, panels. Supporting UI stays visually background, discrete, readable, and reachable.
+If a request or surface does not map cleanly to an existing level/kind (text, settings, menu, image, panel, dialog, palette, …): **do not invent a level or force it**. Ask the caller or flag it as a **new level / surface-kind candidate** (what the user does there, what owns input, local commands, close/return). Document the decision in the full ADL first, then implement. Correct: flag a live waveform scrubber and wait. Avoid: silently treating it as an image viewer; inventing a fifth focus level.
 
-## 10. Density and layout
+## §3 Core function + completeness
 
-Compact grouping; spacing 4/8/12; clear hierarchy. Nested menus allowed — organize, do not delete.
+Writing → editor; news → news; email → emails; AI → the interaction; image editor → the image. Largest area, highest contrast, active on window open; stays visible/readable when another surface is active. **Never strip** commands, menus, submenus, settings unless the owner explicitly removes them; when unsure keep. Correct: full menu bar intact; all AI commands in one AI menu. Avoid: deleting Export submenu; dashboard pushing editor below the fold. NOT minimalism by deletion.
 
-## 11. Feedback and errors
+## §4–§14 Practical rules (condensed)
 
-Short waits: in-place/status. Errors: actionable next to the control. Success: quiet.
+- **§4 Scales:** control 24/28/32 px; icons 16/20; UI type 12–14 (content text exempt); spacing 4/8/12; one radius 4–8; padding 4–8; toolbar 32–40; targets ≥32 pointer / ≥44 touch (hit area may exceed visual); named tokens. Avoid 56 px buttons, 32 px toolbar icons.
+- **§5 Disappear vs available:** toolbar → collapsible panels → popover → palette → shortcuts. Hide only if an equal path remains (shortcut alone is not enough). Test: every command always has a menu item, palette entry, or visible toolbar button. Popover/palette open = `pushFocus`.
+- **§6 Dropdowns:** toggle for on/off; dropdown 3+ choices; segmented or dropdown for 2; inline edit for typed text/numbers; width ≤280–320; items at control height; search >12 items; arrows/Enter/Escape/typeahead; selected not by color alone; open dropdown = active surface `dropdown.<fieldId>`, close returns to trigger. Exceptions: primary commits, live readouts, steppers, free text.
+- **§7 Buttons:** primary or confirm only; ≤1 primary per surface; primary/secondary/tertiary/destructive; hover·focus·active·disabled·loading·error; confirm irreversible destructive, prefer undo; default control never destructive.
+- **§8 Accessibility:** AA (4.5:1 text, 3:1 large/icons/boundaries); 2 px focus ring; full keyboard; name/role/state; announce active-surface changes; reduced motion. Ring ≠ §2.
+- **§9 Vector-scalable:** vector icons; tokens × scale; test 100/150/200%; no "High-DPI mode"; user images exempt.
+- **§10 Surrounding controls:** say surrounding controls / interface elements / menus / toolbars / panels; quiet, reachable; become active surface when worked in (except pointer toolbar clicks).
+- **§11 Density:** 4 inside group, 8 between controls, 12 between groups; core → local tools → app navigation; organize nested menus, never delete.
+- **§12 Feedback:** in place; no takeover <2 s; long ops show progress, cancellable; errors = what happened + what to do, next to cause; quiet success; never steal focus unless blocking (then push/pop per §2.5).
+- **§13 Theming/motion:** tokens on the Hallmark foundation; AA in all themes; dark theme stays warm; motion ≤~200 ms, skipped under reduced motion.
+- **§14 AI-assisted UI:** preserve every command; rearrange over delete; apply scales + Hallmark; no hero/filler; doc is mandatory; §2 as engine logic; report command count before/after + checklist.
 
-## 12. Theming and motion
+## §15 Hallmark — skill, Floor, product foundation, Liquid Glass
 
-AA in every theme. Motion optional; never required to understand state.
+**Two things, keep separate:** (1) **Hallmark-the-skill** = [nutlope/hallmark](https://github.com/nutlope/hallmark) (`~/.agents/skills/hallmark`) — anti-slop design skill for Claude Code, Codex, Cursor, OpenCode. (2) **Our product foundation** = warm opaque corkboard/paper + line-art under the Floor (Scriptorium `assets/readme/`) — one chosen product theme, **not** Hallmark itself.
 
-## 13. AI-assisted UI work
+**Skill scope (all of it):** Floor (non-waivable) · fifty themes as **materials not page plans** · deal-and-draw flow · job-based anatomy · real material only (never invent metrics/quotes/logos) · sloplint gates **Floor / Reflex / Finish** · redesign or audit **only when named**.
 
-1. Preserve every command/menu/setting unless the human removes it.
-2. Prefer rearrange/resize over delete.
-3. Apply scales and quiet presentation.
-4. No hero buttons, marketing filler, or decorative empty panels.
-5. This document is mandatory.
+**Floor for app UI (never waive):** tokens only for colour/font · no `transition: all` / no animate width|height|top|left · reduced-motion fallback · no italic word in roman heading · no eyebrow · no tracked-caps labels · no purple-blue gradient signature · no emoji-as-icons · no fake OS/browser frames · focus-visible + AA · no invented facts · no 100vw blowout · stamp + sloplint on Hallmark page builds.
 
-## 14. Conformance checklist
+**Themes:** materials only. Our corkboard warm opaque look is the **product foundation under the Floor**, not "Hallmark." Other catalog themes may be dealt for new marketing pages when the skill runs.
 
-- [ ] Core function for this app type is primary
-- [ ] Focus tracks active window and object level (§2)
-- [ ] No needed menu items removed for “simplicity”
-- [ ] Heights 24/28/32; icons 16/20; type 12–14; spacing 4/8/12; targets 32/44
-- [ ] Supporting controls small, discrete, reachable
-- [ ] Hide via toolbar/panel/popover/palette/shortcuts only
-- [ ] Focus levels per §2; dropdowns per §5; buttons per §6; a11y per §7
-- [ ] Vector-scalable one rule applied
-- [ ] General language — any application
+**When building with the skill:** pre-flight → ask once → shape from job → deal/custom → Picks → hero first → `sloplint --render` sweep. App screens under ADL still obey §2–§14 + Floor + product foundation.
 
-*Ionuț Application Design Language — governing UI rules for every application.*
+**Redesign/audit:** only if caller names `/hallmark redesign` or `audit` (or clear equivalent). Else use this doc + project system.
 
+**Liquid Glass (hybrid §15.8):** Hallmark product foundation = opaque base; Liquid Glass effects only on chrome/overlays; chrome secondary to content; do not merge materials.
+
+**Correct:** Floor-clean warm settings; dealt theme for a new landing; opaque editor + translucent toolbar. **Avoid:** corkboard colours as all of Hallmark; silent redesign; glass body; emoji toolbar.
+
+
+## §16 Maintenance
+
+Every change **bumps Version and Date** in the header (match the full `.md`). Update when a new app is built or a rule changes: add to the existing structure (subsection, row, example), don't rewrite from zero; keep the pattern (rule · job line · effort/out of scope · correct/avoid · what this is NOT); add new terms to the glossary first; recorded decisions change only by the caller. Mirror every change to `IONUT_APPLICATION_DESIGN_LANGUAGE.md`, this `.SKILL.md`, and the `desktop-user-interface` copy (and repos carrying it). Unmirrored = not done. After edits check numbering, cross-references, checklist.
+
+## §17 Checklist (run before shipping UI)
+
+Adoption asked + recorded · UX and UI checked · every input surface registered with id pattern · routing + bubbling · open moves focus in, modals trap Tab · close restores surface/control/caret/scroll, never stranded, no jump to app-level · focus ≠ selection · toolbar clicks keep focus, per-window stacks · focus tests pass · core function primary and active on open · nothing stripped · scales/targets · hidden controls reachable · dropdowns · buttons + six states · AA, ring, keyboard, SR labels, reduced motion · vector at 100/150/200% · precise wording · density/menus · feedback in place without stealing focus · color tokens, AA all themes · unmapped cases flagged (§2.13) · Hallmark Floor + product foundation + Liquid Glass chrome only · redesign/audit only when named · version bumped · mirrored.
+
+**Closing:** the full document stands alone with the codebase — no other design doc or external guideline is needed to implement it. If something can't be implemented as written, fix the document (§16), don't improvise.
