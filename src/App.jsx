@@ -151,6 +151,7 @@ import { createFocusEngine } from './lib/focusEngine.js';
 import { registerDialogSurface, closeTopModal, escapeThroughEngine, dialogSurfaceId } from './lib/focusDialogs.js';
 import { VIEW_SURFACES, surfaceForView, registerViewSurfaces, syncViewSurface } from './lib/focusViews.js';
 import { setDefaultFocusEngine, activeFocusEngine } from './lib/focusMenus.js';
+import { registerSplitSurface, splitSurfaceId } from './lib/focusPanes.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
@@ -361,13 +362,14 @@ export default function App({ api: apiProp }) {
     // delete action is read through a ref, so the command never captures stale selection state.
     const un4 = registerViewSurfaces(eng, { onDeleteRow: () => trashRef.current?.() });
     const un5 = eng.registerFocusableSurface({ id: 'panel.inspector', commands: {} });
-    const un6 = eng.registerFocusableSurface({ id: 'panel.quickref', commands: {} });
+    // ADL T4: Quick Reference panels register their own surfaces (quickref.<id>, in QuickRef.jsx);
+    // the split editor pane registers in the effect below, on splitNode.
     eng.push('editor.document.core'); // the core function sits at the bottom of the stack
     setDefaultFocusEngine(eng); // menus anywhere in the tree (FormatBar) find the engine
     return () => {
       if (activeFocusEngine() === eng) setDefaultFocusEngine(null);
       eng.pop('editor.document.core');
-      un4(); un5(); un6(); un1(); un2(); un3();
+      un4(); un5(); un1(); un2(); un3();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusEngine]);
@@ -398,6 +400,30 @@ export default function App({ api: apiProp }) {
     const onAct = (e) => {
       if (e.target?.closest?.('.inspector')) eng.switchFocus('panel.inspector');
       else if (eng.top() === 'panel.inspector') eng.switchFocus(viewSurfaceRef.current);
+    };
+    document.addEventListener('focusin', onAct);
+    document.addEventListener('mousedown', onAct);
+    return () => {
+      document.removeEventListener('focusin', onAct);
+      document.removeEventListener('mousedown', onAct);
+    };
+  }, [focusEngine]);
+  // ADL T4 §2: the same sibling model for the split editor pane and the Quick Reference panels —
+  // the pane the user works in owns the focus. A click inside the split pane makes it the active
+  // surface; a click anywhere else hands the active surface back to the visible view. The Quick
+  // Reference panels switch themselves (QuickRef.jsx); the inspector has its own handler above.
+  const splitSurfaceRef = useRef(null); // the split surface id while the pane exists (set below, on splitNode)
+  useEffect(() => {
+    const eng = focusEngine;
+    const onAct = (e) => {
+      const t = e.target;
+      if (!t?.closest) return;
+      if (t.closest('.inspector')) return; // the inspector's own switch (above)
+      if (t.closest('.quickref')) return; // the panels switch themselves (QuickRef.jsx)
+      const sid = splitSurfaceRef.current;
+      if (t.closest('.workspace .pane.second') && sid) { eng.switchFocus(sid); return; }
+      const top = eng.top();
+      if ((sid && top === sid) || String(top).startsWith('quickref.')) eng.switchFocus(viewSurfaceRef.current);
     };
     document.addEventListener('focusin', onAct);
     document.addEventListener('mousedown', onAct);
@@ -540,17 +566,12 @@ export default function App({ api: apiProp }) {
   }, [activeCollectionId, project?.collections, project?.tree, dir, api]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
-  // ADL T7 §2: a quick-reference panel is a floating surface — pushed above the view while at
-  // least one is open, popped when the last one closes; then the view surface is re-synced (the
-  // view may have changed under the panel, and syncViewSurface refused to touch the stack while
-  // the panel owned the top).
+  // ADL T4 §2: every Quick Reference panel is its own engine surface — `quickref.<docId>`,
+  // registered and pushed by the panel itself (QuickRef.jsx) and popped when it closes. What
+  // stays here is the hand-back: while a panel owned the top, syncViewSurface refused view
+  // switches, so when the last panel closes the visible view takes the active surface back.
   useEffect(() => {
-    const open = focusEngine.stack().includes('panel.quickref');
-    if (quickRefs.length && !open) focusEngine.push('panel.quickref');
-    else if (!quickRefs.length && open) {
-      focusEngine.pop('panel.quickref');
-      syncViewSurface(focusEngine, surfaceForView(view));
-    }
+    if (!quickRefs.length) syncViewSurface(focusEngine, surfaceForView(view));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quickRefs.length, view, focusEngine]);
   // Copyholder: a reference pane beside the editor (and the split), read-only unless toggled.
@@ -1258,7 +1279,7 @@ export default function App({ api: apiProp }) {
     }
     if (alt) {
       const node = findNode(project.tree, id);
-      if (node && !node.root) setSplitId(id);
+      if (node && !node.root) openSplit(id);
       return;
     }
     if (ctrl) {
@@ -1284,7 +1305,7 @@ export default function App({ api: apiProp }) {
     if (!target) { setToast(tr('ui.app.panou_blocat')); showHint('paneLock'); return; }
     if (target === 'split') {
       const node = findNode(project.tree, id);
-      if (node && !node.root) flush().then(() => setSplitId(id));
+      if (node && !node.root) flush().then(() => openSplit(id));
       return;
     }
     go(id);
@@ -1462,7 +1483,7 @@ export default function App({ api: apiProp }) {
   // Shows a research file next to the text: the file goes to the split pane, the text stays in the main one.
   const openBeside = (mediaId) => {
     if (splitId === mediaId) return;
-    setSplitId(mediaId);
+    openSplit(mediaId);
   };
   // Files dropped from the system on the binder are copied into the project and added to Research.
   const MAX_DROP_MB = 200;
@@ -2710,6 +2731,43 @@ export default function App({ api: apiProp }) {
   };
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
   const splitNode = splitId ? findNode(project.tree, splitId) : null;
+  // ADL T4 §2: the split editor pane is a surface of the core function at document level —
+  // `editor.document.<id>:split` registered and pushed for as long as the pane exists
+  // (view === 'editor'), popped + unregistered on every close path (button, command, Escape
+  // through the engine, unmount). Opening it by hand takes the real focus into the pane (the
+  // armed flag below, set by openSplit); when it comes back with the project (splitId persisted
+  // in the UI state) or after a view switch, the focus stays where the user has it.
+  const splitFocusArmed = useRef(false);
+  const openSplit = (id) => {
+    if (id) splitFocusArmed.current = true; // a user open, not a restore
+    setSplitId(id);
+  };
+  // Real focus into the split pane's editor: the handle may still be mounting (TipTap), so the
+  // same retry pattern as focusEditor, preferring the `split:` key the pane registers under.
+  const focusSplitEditor = (id, tries = 10) => {
+    const h = editorRefs.current.get(`split:${id}`) || editorRefs.current.get(id);
+    if (h?.editor && !h.editor.isDestroyed) { h.focus(); return; }
+    if (tries > 0) setTimeout(() => focusSplitEditor(id, tries - 1), 50);
+  };
+  const splitSurface = splitNode && view === 'editor' ? splitSurfaceId(splitNode.id) : null;
+  useEffect(() => {
+    splitSurfaceRef.current = splitSurface;
+    if (!splitSurface) {
+      // The pane went away (closed, view switched, document deleted): the view may have changed
+      // under it — re-sync the view surface (syncViewSurface refused while the pane owned the top).
+      syncViewSurface(focusEngine, surfaceForView(view));
+      return undefined;
+    }
+    return registerSplitSurface(focusEngine, splitNode.id, {
+      close: () => setSplitId(null),
+      focus: () => {
+        if (!splitFocusArmed.current) return;
+        splitFocusArmed.current = false;
+        focusSplitEditor(splitNode.id);
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [splitSurface, focusEngine]);
   const copyNode = copyholder ? findNode(project.tree, copyholder.id) : null;
   const registerRef = (id, r) => {
     if (r) editorRefs.current.set(id, r);
@@ -3076,7 +3134,7 @@ export default function App({ api: apiProp }) {
     ['app', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
     ['view', 'copyholder', tr('cmd.copyholder'), () => openCopyholder(selected?.id), !selected || Boolean(selected.root) || Boolean(selected.children)],
     ['view', 'copyholderClose', tr('cmd.copyholderClose'), () => setCopyholder(null), !copyholder],
-    ['view', 'splitEditor', tr('cmd.splitEditor'), () => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)],
+    ['view', 'splitEditor', tr('cmd.splitEditor'), () => openSplit(splitId ? null : selected && !selected.root ? selected.id : null)],
     ['view', 'floatInspector', tr('cmd.floatInspector'), () => setShowFloatInspector((v) => !v), !composition],
     ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
     ['view', 'viewRelations', tr('cmd.viewRelations'), () => showWholeBook('relations')],
@@ -3557,7 +3615,7 @@ export default function App({ api: apiProp }) {
                 <button className="hdr-arrow" onClick={() => goSibling(-1)} title={tr('cmd.prevDoc')} aria-label={tr('cmd.prevDoc')}>▲</button>
                 <button className="hdr-arrow" onClick={() => goSibling(1)} title={tr('cmd.nextDoc')} aria-label={tr('cmd.nextDoc')}>▼</button>
                 <button data-hint="paneLock" className={`pane-lock ${paneLocks.main ? 'on' : ''}`} onClick={() => toggleLockPane('main')} aria-pressed={Boolean(paneLocks.main)} title={paneLocks.main ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLoc')}>{paneLocks.main ? <LockIcon /> : <UnlockIcon />}</button>
-                <button className="split-btn" onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
+                <button className="split-btn" onClick={() => openSplit(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
               </div>
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type === 'file' && !selected.children && (
@@ -4312,13 +4370,13 @@ export default function App({ api: apiProp }) {
           onOpen={(id, q, { mode = 'normal', reveal = null } = {}) => {
             // Modifier opens (manual §11.5, p. 235): Shift = Quick Reference panel
             // (same floating panels as the quickRef command), Alt = the other editor
-            // split (same setSplitId as Alt+click in the binder).
+            // split (same openSplit as Alt+click in the binder).
             if (mode === 'quickRef') {
               openQuickRef(id);
               return;
             }
             if (mode === 'split') {
-              setSplitId(id);
+              openSplit(id);
               setView('editor');
               return;
             }
