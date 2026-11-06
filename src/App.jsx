@@ -151,6 +151,7 @@ import { createFocusEngine } from './lib/focusEngine.js';
 import { registerDialogSurface, closeTopModal, escapeThroughEngine, dialogSurfaceId } from './lib/focusDialogs.js';
 import { VIEW_SURFACES, surfaceForView, registerViewSurfaces, syncViewSurface } from './lib/focusViews.js';
 import { setDefaultFocusEngine, activeFocusEngine } from './lib/focusMenus.js';
+import { editorSurfaceRegistration } from './lib/focusEditorState.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
@@ -347,6 +348,9 @@ export default function App({ api: apiProp }) {
   const [showAi, setShowAi] = useState(false);
   // ADL §2: focus engine — per-window stacks, surface registration, Escape cascade.
   const focusEngine = useRef(createFocusEngine()).current;
+  // ADL T5: captura/restaurarea reală a editorului citesc handle-ul LIVE la push/pop (panoul se
+  // poate remonta sub același id); ref-ul se umple la fiecare randare, ca commandsRef mai jos.
+  const editorHandleRef = useRef(null);
   useEffect(() => {
     const eng = focusEngine;
     const serviceClose = () => closeTopModal(document) || setServiceResult(null);
@@ -354,7 +358,10 @@ export default function App({ api: apiProp }) {
     // menu (engine.dispatch) reaches the active surface first and lands here when no transient
     // layer owns it. commandsRef fills after this effect runs — read through a lazy lookup.
     const coreCommands = new Proxy({}, { get: (_, cmd) => commandsRef.current?.[String(cmd)]?.run });
-    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: coreCommands });
+    // ADL T5: suprafața funcției de bază captează starea reală a editorului (caret, selecție,
+    // scroll) la push-ul oricărui strat translucid peste ea și o restaurează la pop; handle-ul
+    // se citește prin ref la momentul apelului, nu la mount.
+    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', ...editorSurfaceRegistration(() => editorHandleRef.current?.(), coreCommands) });
     const un2 = eng.registerFocusableSurface({ id: 'settings.app', commands: {} });
     const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: { close: serviceClose, escape: serviceClose } });
     // ADL T7: the three main views (and the floating panels) are engine surfaces too. The row
@@ -2978,6 +2985,7 @@ export default function App({ api: apiProp }) {
   // Command registry: every command has an id, a label, a menu group and a
   // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
   const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+  editorHandleRef.current = editorHandle; // ADL T5: captura/restaurarea citesc handle-ul curent, nu cel de la mount
   const commandList = [
     ['file', 'save', tr('cmd.save'), () => saveCommand().then(() => dir && api.backupOnSave?.(dir)).catch(report)],
     ['file', 'compile', tr('cmd.compile'), () => flush().then(() => setDialog('compile'))],
