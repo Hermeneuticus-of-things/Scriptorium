@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { registerDropdownSurface } from '../lib/focusDropdowns.js';
 
 // Top menu (menu bar). Keyboard: Enter/Space/↓ on the button opens it on the first item;
 // ↑/↓/Home/End move; Enter activates; Esc or Tab closes it (Esc from inside the menu puts
@@ -6,7 +7,11 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 // Items: '-' (separator), { label, action, shortcut, disabled, hidden, checked } or { label, submenu: [...] }.
 // `checked` (boolean) marks a toggle; the mark sits in its own column so labels stay aligned.
 // A submenu opens on hover, click, Enter or →; ← or Esc goes back to its item.
-export default function Menu({ label, items, caret = true, className = '', title }) {
+// ADL §2/§5 (focus engine): with the optional `engine` + `surfaceId` props an open menu is the
+// active surface `dropdown.<id>` — open pushes it on the stack, every close path pops it, and
+// Escape goes through the engine cascade (innermost layer first), so a menu under a dialog
+// closes alone and the dialog underneath stays put. Without the props nothing changes.
+export default function Menu({ label, items, caret = true, className = '', title, engine = null, surfaceId = null }) {
   const [open, setOpen] = useState(false);
   const [sub, setSub] = useState(-1); // index of the open submenu
   const subRef = useRef(-1);
@@ -37,6 +42,25 @@ export default function Menu({ label, items, caret = true, className = '', title
     if (restore === 'before' && before.current?.isConnected) before.current.focus();
     else if (restore === 'button') btnRef.current?.focus();
   };
+
+  // ADL §2: the engine's close/escape command for this menu. Innermost transient first — an
+  // open submenu closes alone (the menu stays open, the surface stays on the stack), otherwise
+  // the menu closes and the trigger gets focus back, like the old Esc path did.
+  const engineClose = useRef(null);
+  engineClose.current = () => {
+    if (subRef.current >= 0) {
+      closeSub();
+      return true;
+    }
+    close('button');
+    return true;
+  };
+  // The surface lives on the stack exactly while the menu is rendered open; every close path
+  // (item chosen, outside mousedown, blur, engine Escape) flips `open` and this cleanup pops it.
+  useEffect(() => {
+    if (!open || !engine || !surfaceId) return undefined;
+    return registerDropdownSurface(engine, surfaceId, { close: () => engineClose.current() });
+  }, [open, engine, surfaceId]);
 
   // The popup is right-aligned to its button; when the menu bar wraps (narrow windows) a menu near
   // the left edge would open off-screen. Shift it back inside the window (and cap its height).
@@ -83,9 +107,12 @@ export default function Menu({ label, items, caret = true, className = '', title
     const onDown = (e) => {
       if (!ref.current?.contains(e.target)) setOpen(false);
     };
-    // Esc anywhere closes the open menu (also when focus stayed in the editor).
+    // Esc anywhere closes the open menu (also when focus stayed in the editor). With a focus
+    // engine the cascade decides instead: the document-level engine handler dispatches 'escape'
+    // to the innermost surface (a sub-dialog above this menu first, then this menu's own close).
     const onKey = (e) => {
       if (e.key === 'Escape') {
+        if (engine && surfaceId) return;
         e.preventDefault();
         e.stopPropagation();
         if (subRef.current >= 0 && document.activeElement?.closest?.('.menu-sub')) return closeSub();

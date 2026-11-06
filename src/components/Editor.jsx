@@ -68,6 +68,7 @@ const Editor = forwardRef(function Editor(
     showStylesPanel = false,
     onStylesChange = null,
     onCloseStylesPanel = null,
+    focusEngine = null,
   },
   ref,
 ) {
@@ -628,6 +629,7 @@ const Editor = forwardRef(function Editor(
           onViewChange={onViewChange}
           showInvisibles={showInvisibles}
           onToggleInvisibles={onToggleInvisibles}
+          focusEngine={focusEngine}
         />
       )}
       <div
