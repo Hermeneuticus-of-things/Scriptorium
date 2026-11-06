@@ -8,7 +8,7 @@ import { applyCorrections, correctionEdits } from '../lib/textRange.js';
 // trip to the provider's website). Without `anchored` it falls back to the classic modal.
 // result: { kind: 'translate', text, service, detected } | { kind: 'grammar', matches, language }
 //        | { kind: 'synonyms', word, synonyms } | { kind: 'dict', word, entries: [{label, url}] }
-export default function ServiceResultDialog({ source, result, onReplace, onInsertAfter, onClose, onOpenUrl, onSearch, anchored = false, pos = null }) {
+export default function ServiceResultDialog({ source, result, onReplace, onInsertAfter, onClose, onOpenUrl, onSearch, onRetry, anchored = false, pos = null }) {
   const isGrammar = result.kind === 'grammar';
   const isSynonyms = result.kind === 'synonyms';
   const isDict = result.kind === 'dict';
@@ -17,17 +17,25 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
   const corrected = () => applyCorrections(source, result.matches, chosen);
   const copy = (text) => navigator.clipboard && navigator.clipboard.writeText(text);
 
-  const title = isGrammar
-    ? t('ui.services.verificare_gramatica')
-    : isSynonyms
-      ? t('ui.services.sinonime_pentru', { word: result.word })
-      : isDict
-        ? t('ui.ctx.dictionare')
-        : t('ui.services.traducere_cu', { service: result.service });
+  const isError = result.kind === 'error';
+  const title = isError
+    ? t('ui.services.eroare')
+    : isGrammar
+      ? t('ui.services.verificare_gramatica')
+      : isSynonyms
+        ? t('ui.services.sinonime_pentru', { word: result.word })
+        : isDict
+          ? t('ui.ctx.dictionare')
+          : t('ui.services.traducere_cu', { service: result.service });
 
   const body = (
     <>
-      {isSynonyms ? (
+      {isError ? (
+        <>
+          <p className="muted small">{result.message}</p>
+          {onRetry && <button className="primary" onClick={onRetry}>{t('ui.services.reincearca')}</button>}
+        </>
+      ) : isSynonyms ? (
         <>
           <p className="muted small">{t('ui.services.alege_sinonim')}</p>
           <div className="synonyms-list">
@@ -96,7 +104,7 @@ export default function ServiceResultDialog({ source, result, onReplace, onInser
 
   const actions = (
     <div className="actions">
-      {isSynonyms || isDict ? null : isGrammar ? (
+      {isSynonyms || isDict || isError ? null : isGrammar ? (
         <button className="primary" disabled={!result.matches.length} onClick={() => onReplace(corrected(), correctionEdits(source, result.matches, chosen))}>{t('ui.services.aplica_corecturile')}</button>
       ) : (
         <>
