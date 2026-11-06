@@ -59,8 +59,8 @@ describe('regressions', () => {
   });
 
   // Sanity: the parser keeps only the direct synonym rows (font-size:22px), not the related words.
-  it('synonyms: parser reads the direct rows and drops the word itself', () => {
-    const html = "<ol><li style='font-size:22px'>plăcut, frumos, splendid</li></ol><li><a href='x'><b>alt</b></a> - y</li>";
+  it('synonyms: parser reads the direct list (meta) and drops the word itself and related rows', () => {
+    const html = '<meta name="description" content="Sinonimele cuvântului frumos sunt: plăcut, frumos, splendid"><li><a href="x"><b>alt</b></a> - y</li>';
     expect(parseSynonyms(html, 'frumos')).toEqual(['plăcut', 'splendid']);
   });
 
