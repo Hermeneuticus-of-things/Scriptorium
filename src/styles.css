@@ -127,6 +127,15 @@ textarea { resize: vertical; width: 100%; }
 .outliner .num { text-align: right; }
 .outliner .syn { color: var(--muted); max-width: 30em; }
 
+/* ADL §2 focus ≠ selection (T7): a selection keeps its place and stays visible while another
+   surface owns the focus (Settings, Inspector, a quick-ref panel) — drawn in the inactive
+   colour; active again when its surface is back. It is never cleared on blur, and the row
+   Delete command is refused meanwhile (engine dispatch, src/lib/focusViews.js). */
+.card.selected.inactive { outline: 2px dashed var(--muted); outline-offset: 2px; box-shadow: none; }
+.outliner tr.selected.inactive > td { color: var(--muted); }
+[data-ui='classic'] .card.selected.inactive { outline-color: var(--sc-line); box-shadow: none; }
+[data-ui='classic'] .outliner tbody tr.selected.inactive > td { color: var(--muted); }
+
 /* Inspector & AI */
 .inspector, .ai-panel { width: 300px; flex-shrink: 0; border-left: 1px solid var(--line); background: var(--panel); padding: 10px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
 .fields { display: flex; flex-direction: column; gap: 10px; }
