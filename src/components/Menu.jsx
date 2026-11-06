@@ -11,7 +11,8 @@ import { activeFocusEngine, registerMenuSurface, runMenuItem } from '../lib/focu
 // pushed on open, popped on every close path (click outside, Escape, item selection, Tab, blur,
 // unmount). `engine` overrides the app's registered engine; `surfaceId` names the surface
 // (the menu bar passes its group; other menus derive a stable id from label/title).
-export default function Menu({ label, items, caret = true, className = '', title, engine = null, surfaceId = null }) {
+export default function Menu({ label, items, caret = true, className = '', title, engine = null, focusEngine = null, surfaceId = null }) {
+  const resolvedEngine = engine || focusEngine; // FormatBar pasează `focusEngine`; meniul barei `engine`
   const [open, setOpen] = useState(false);
   const [sub, setSub] = useState(-1); // index of the open submenu
   const subRef = useRef(-1);
@@ -21,7 +22,7 @@ export default function Menu({ label, items, caret = true, className = '', title
   const btnRef = useRef(null);
   const before = useRef(null); // element focused before the menu opened
   const focusItem = useRef(null); // 'first' | 'last' | null: where focus goes when the menu opens
-  const engineOf = () => engine || activeFocusEngine();
+  const engineOf = () => resolvedEngine || activeFocusEngine();
   const surface = surfaceId
     || (typeof label === 'string' ? label : typeof title === 'string' ? title : 'menu').trim().toLowerCase().replace(/\s+/g, '-');
 
