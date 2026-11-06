@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { activeFocusEngine, registerMenuSurface, runMenuItem } from '../lib/focusMenus.js';
 
 // Top menu (menu bar). Keyboard: Enter/Space/↓ on the button opens it on the first item;
 // ↑/↓/Home/End move; Enter activates; Esc or Tab closes it (Esc from inside the menu puts
@@ -6,7 +7,11 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 // Items: '-' (separator), { label, action, shortcut, disabled, hidden, checked } or { label, submenu: [...] }.
 // `checked` (boolean) marks a toggle; the mark sits in its own column so labels stay aligned.
 // A submenu opens on hover, click, Enter or →; ← or Esc goes back to its item.
-export default function Menu({ label, items, caret = true, className = '', title }) {
+// ADL §2/§10: while it is open, a menu is the active surface on the focus engine — `menu.<id>`
+// pushed on open, popped on every close path (click outside, Escape, item selection, Tab, blur,
+// unmount). `engine` overrides the app's registered engine; `surfaceId` names the surface
+// (the menu bar passes its group; other menus derive a stable id from label/title).
+export default function Menu({ label, items, caret = true, className = '', title, engine = null, surfaceId = null }) {
   const [open, setOpen] = useState(false);
   const [sub, setSub] = useState(-1); // index of the open submenu
   const subRef = useRef(-1);
@@ -16,6 +21,9 @@ export default function Menu({ label, items, caret = true, className = '', title
   const btnRef = useRef(null);
   const before = useRef(null); // element focused before the menu opened
   const focusItem = useRef(null); // 'first' | 'last' | null: where focus goes when the menu opens
+  const engineOf = () => engine || activeFocusEngine();
+  const surface = surfaceId
+    || (typeof label === 'string' ? label : typeof title === 'string' ? title : 'menu').trim().toLowerCase().replace(/\s+/g, '-');
 
   const shown = (list) => (list || []).filter((it) => it === '-' || !it.hidden);
   const rootPop = () => ref.current?.querySelector(':scope > .menu-pop');
@@ -80,15 +88,37 @@ export default function Menu({ label, items, caret = true, className = '', title
 
   useEffect(() => {
     if (!open) return undefined;
+    // ADL §2/§10: the open menu is the active surface — registered above whatever was active;
+    // the cleanup pops it on every close path below (state settles, the layer leaves the stack).
+    const eng = engineOf();
+    const offSurface = eng
+      ? registerMenuSurface(eng, surface, {
+        close: () => {
+          close(ref.current?.contains(document.activeElement) ? 'button' : null);
+          return true;
+        },
+      })
+      : null;
     const onDown = (e) => {
-      if (!ref.current?.contains(e.target)) setOpen(false);
+      if (!ref.current?.contains(e.target)) close(null);
     };
-    // Esc anywhere closes the open menu (also when focus stayed in the editor).
+    // Esc closes the open menu (also when focus stayed in the editor). An open submenu is
+    // self-managing (the engine never sees this press, like the other self-managing fields);
+    // with the engine connected the root close is the engine's decision: the event reaches the
+    // app's Escape routing (inside #root) and dispatch('escape') lands on this menu's surface —
+    // one press closes the menu alone, whatever is underneath stays. Events that cannot reach
+    // the host (focus outside #root) still close the menu here.
     const onKey = (e) => {
       if (e.key === 'Escape') {
+        if (subRef.current >= 0 && document.activeElement?.closest?.('.menu-sub')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return closeSub();
+        }
+        const host = document.getElementById('root');
+        if (eng && host && host.contains(e.target)) return;
         e.preventDefault();
         e.stopPropagation();
-        if (subRef.current >= 0 && document.activeElement?.closest?.('.menu-sub')) return closeSub();
         close(ref.current?.contains(document.activeElement) ? 'button' : null);
       }
     };
@@ -105,6 +135,7 @@ export default function Menu({ label, items, caret = true, className = '', title
       focusItem.current = null;
     }
     return () => {
+      offSurface?.();
       window.removeEventListener('mousedown', onDown);
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('pneuma:closeMenus', onAway);
@@ -164,7 +195,10 @@ export default function Menu({ label, items, caret = true, className = '', title
     close();
     // Commands act on the editor: give it focus back before running them.
     if (before.current?.isConnected && before.current.closest?.('.ProseMirror')) before.current.focus();
-    it.action();
+    // ADL §2/§10: active surface first — dispatch reaches the surface that owns the command
+    // (a transient layer above the core, or the core registry); items without a command id
+    // (or ids no surface owns) run their own action, as before.
+    runMenuItem(engineOf(), it);
   };
   const hasChecks = (list) => list.some((x) => x !== '-' && typeof x?.checked === 'boolean');
   const leaf = (it, key, onEnter, checks = false) => (

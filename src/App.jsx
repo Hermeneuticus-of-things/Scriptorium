@@ -150,6 +150,7 @@ import { createLocalSpeech } from './lib/localSpeech.js';
 import { createFocusEngine } from './lib/focusEngine.js';
 import { registerDialogSurface, closeTopModal, escapeThroughEngine, dialogSurfaceId } from './lib/focusDialogs.js';
 import { VIEW_SURFACES, surfaceForView, registerViewSurfaces, syncViewSurface } from './lib/focusViews.js';
+import { setDefaultFocusEngine, activeFocusEngine } from './lib/focusMenus.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
@@ -349,7 +350,11 @@ export default function App({ api: apiProp }) {
   useEffect(() => {
     const eng = focusEngine;
     const serviceClose = () => closeTopModal(document) || setServiceResult(null);
-    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: {} });
+    // ADL §10: the core surface answers the command registry, so a command chosen from any
+    // menu (engine.dispatch) reaches the active surface first and lands here when no transient
+    // layer owns it. commandsRef fills after this effect runs — read through a lazy lookup.
+    const coreCommands = new Proxy({}, { get: (_, cmd) => commandsRef.current?.[String(cmd)]?.run });
+    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: coreCommands });
     const un2 = eng.registerFocusableSurface({ id: 'settings.app', commands: {} });
     const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: { close: serviceClose, escape: serviceClose } });
     // ADL T7: the three main views (and the floating panels) are engine surfaces too. The row
@@ -358,7 +363,12 @@ export default function App({ api: apiProp }) {
     const un5 = eng.registerFocusableSurface({ id: 'panel.inspector', commands: {} });
     const un6 = eng.registerFocusableSurface({ id: 'panel.quickref', commands: {} });
     eng.push('editor.document.core'); // the core function sits at the bottom of the stack
-    return () => { eng.pop('editor.document.core'); un4(); un5(); un6(); un1(); un2(); un3(); };
+    setDefaultFocusEngine(eng); // menus anywhere in the tree (FormatBar) find the engine
+    return () => {
+      if (activeFocusEngine() === eng) setDefaultFocusEngine(null);
+      eng.pop('editor.document.core');
+      un4(); un5(); un6(); un1(); un2(); un3();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusEngine]);
   // ADL §2 focus ≠ selection: the ACTIVE surface is reactive, so a selection can be drawn in the
@@ -3370,7 +3380,8 @@ export default function App({ api: apiProp }) {
         {/* Browser: the full menu bar lives here; desktop: the native menu has it (AI can stay in-app via the toolbar). */}
         {!api.setAppMenu && (
           <nav className="menubar" aria-label={tr('ui.tb.menubar')}>
-            {menuLayout.map((m) => <Menu key={m.group} label={m.label} items={m.items} caret={false} className={m.group === 'ai' ? 'menu-ai' : ''} />)}
+            {/* ADL §2/§10: each menu bar menu registers as menu.<group> on the focus engine while open. */}
+            {menuLayout.map((m) => <Menu key={m.group} label={m.label} items={m.items} caret={false} className={m.group === 'ai' ? 'menu-ai' : ''} engine={focusEngine} surfaceId={m.group} />)}
           </nav>
         )}
         {toolbars.top.map((id, i) => renderTopItem(id, i))}
