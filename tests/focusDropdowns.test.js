@@ -172,14 +172,15 @@ describe('focusDropdowns (modul): suprafața `dropdown.<id>` pe stivă', () => {
 });
 
 describe('componentă: dropdown-urile FormatBar deschise = suprafețe active pe motor', () => {
-  it('Tabel: open → top = dropdown.table; Escape (event, prin root) → pop + editorul rămâne dedesubt', async () => {
+  it('Tabel: open → top = menu.dropdown.table; Escape (event, prin root) → pop + editorul rămâne dedesubt', async () => {
     const engine = engineWithCore();
     await mountBar(engine);
     const btn = trigger(t('ui.formatBar.menuTable'));
     expect(btn).toBeTruthy();
     await act(async () => btn.click());
-    expect(engine.top()).toBe('dropdown.table');
-    expect(engine.stack()).toEqual(['editor.document.core', 'dropdown.table']);
+    // Dropdown-urile FormatBar sunt componente Menu → convenția T2: suprafața `menu.<id>` (ADL §2/§10).
+    expect(engine.top()).toBe('menu.dropdown.table');
+    expect(engine.stack()).toEqual(['editor.document.core', 'menu.dropdown.table']);
     expect(el.querySelector('.menu-pop')).toBeTruthy();
 
     const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
@@ -187,7 +188,7 @@ describe('componentă: dropdown-urile FormatBar deschise = suprafețe active pe 
     expect(ev.defaultPrevented).toBe(true); // motorul a consumat evenimentul (DialogA11y rămâne afară)
     expect(el.querySelector('.menu-pop')).toBeFalsy();
     expect(engine.top()).toBe('editor.document.core');
-    expect(engine.registry()).not.toContain('dropdown.table'); // fără scurgeri de înregistrare
+    expect(engine.registry()).not.toContain('menu.dropdown.table'); // fără scurgeri de înregistrare
   });
 
   it('dropdown deschis peste dialog: Escape închide doar dropdownul, dialogul dedesubt rămâne', async () => {
@@ -199,15 +200,19 @@ describe('componentă: dropdown-urile FormatBar deschise = suprafețe active pe 
     await mountBar(engine);
     const btn = trigger(t('ui.formatBar.menuTable'));
     await act(async () => btn.click());
-    expect(engine.stack()).toEqual(['editor.document.core', 'dialog.compile', 'dropdown.table']);
+    expect(engine.stack()).toEqual(['editor.document.core', 'dialog.compile', 'menu.dropdown.table']);
 
     const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    // jsdom nu mută focusul la click (browserul real da): îl punem explicit pe item, ca la
+    // navigarea cu tastatura — altfel close() nu poate restaura focusul pe butonul meniului.
+    popItems()[0].focus();
     await act(async () => popItems()[0].dispatchEvent(ev));
     expect(closedDialogs).toEqual([]); // dialogul dedesubt NU s-a închis
     expect(engine.top()).toBe('dialog.compile');
     expect(engine.registry()).toContain('dialog.compile');
 
-    // a doua apăsare ajunge la comanda dialogului (self-managed ca în aplicație)
+    // a doua apăsare ajunge la comanda dialogului (self-managed ca în aplicație — focusul
+    // restaurat pe butonul meniului, înăuntrul root-ului, merge prin router spre motor)
     const ev2 = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
     await act(async () => document.activeElement.dispatchEvent(ev2));
     expect(closedDialogs).toEqual(['compile']);
@@ -227,7 +232,7 @@ describe('componentă: dropdown-urile FormatBar deschise = suprafețe active pe 
     expect(recorded).toContain('run');
     expect(el.querySelector('.menu-pop')).toBeFalsy(); // meniul s-a închis
     expect(engine.top()).toBe('editor.document.core'); // suprafața a părăsit stiva
-    expect(engine.registry()).not.toContain('dropdown.table');
+    expect(engine.registry()).not.toContain('menu.dropdown.table');
   });
 
   it('select-ul nativ „block”: mousedown → dropdown.block pe stivă; close prin motor → înapoi în editor', async () => {
