@@ -6,24 +6,25 @@ const { parseSynonyms, parseRelated, fetchSynonyms } = require('../lib/synonyms.
 
 const ok = (url, html) => ({ ok: true, status: 200, url, text: async () => html });
 
-describe('sinonimul.ro synonyms', () => {
-  it('parses the comma lists, dedupes and drops the word itself and related-word rows', () => {
-    const html = `<ol>
-      <li style='font-size:22px'>arătos, plăcut, frumos, arătos</li>
-      <li style='font-size:22px'>senin, luminos</li>
-    </ol>
-    <li><a href='https://sinonimul.ro/aspectuos'><b>aspectuos</b></a> - arătos, plăcut</li>`;
+describe('sinonimul.ro synonyms (structura nouă: meta + <li> simple)', () => {
+  it('lista completă din <li> simple, dedup, fără cuvântul însuși; meniurile (goluri mari) sunt sărite', () => {
+    const html = `<meta name="description" content="Sinonimele cuvântului frumos sunt: arătos, plăcut">
+      <ul><li>arătos</li><li>plăcut</li><li>frumos</li><li>arătos</li></ul><ul><li>senin</li><li>luminos</li></ul>
+      <div class="socials"><span style='padding-right:10px'><a rel="nofollow" href='javascript:;'><img data-toggle='tooltip' src='https://sinonimul.ro/assets/images/socials/favorite.png'></a></span><span style='padding-right:10px'><a rel="nofollow" href='javascript:;' onclick='showReport()'><img src='https://sinonimul.ro/assets/images/socials/bug.png'></a></span></div><li>Învață</li><li>Contact</li>
+      <li><a href='https://sinonimul.ro/aspectuos'><b>aspectuos</b></a> - arătos, plăcut</li>`;
+    // listele alăturate intră; meniul (după golul socials > 80) e sărit; aspectuos e rând apropiat
     expect(parseSynonyms(html, 'frumos')).toEqual(['arătos', 'plăcut', 'senin', 'luminos']);
   });
 
-  it('fetches a lemma and returns its synonyms', async () => {
-    const res = await fetchSynonyms({ word: 'frumos', fetchImpl: async (url) => ok(url, "<ol><li style='font-size:22px'>plăcut, splendid</li></ol>") });
+  it('fetches a lemma and returns its synonyms + related', async () => {
+    const res = await fetchSynonyms({ word: 'frumos', fetchImpl: async (url) => ok(url, '<meta name="description" content="Sinonimele cuvântului frumos sunt: plăcut, splendid"><h2>Sinonime Apropiate</h2><li><a href="x"><b>aspectuos</b></a> - arătos</li>') });
     expect(res).toMatchObject({ word: 'frumos', synonyms: ['plăcut', 'splendid'] });
+    expect(res.related.length).toBe(1);
   });
 
   it('percent-encodes diacritics in the URL (the server needs the encoded form)', async () => {
     let seen = '';
-    await fetchSynonyms({ word: 'mâncare', fetchImpl: async (url) => { seen = url; return ok(url, "<ol><li style='font-size:22px'>hrană, bucate</li></ol>"); } });
+    await fetchSynonyms({ word: 'mâncare', fetchImpl: async (url) => { seen = url; return ok(url, '<meta name="description" content="Sinonimele cuvântului mâncare sunt: hrană, bucate">'); } });
     expect(seen).toBe('https://sinonimul.ro/m%C3%A2ncare');
   });
 

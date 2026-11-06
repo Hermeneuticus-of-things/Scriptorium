@@ -1822,7 +1822,10 @@ export default function App({ api: apiProp }) {
         const res = await api.fetchSynonyms(source);
         setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 } });
         setToast('');
-      } catch (e) { setToast(''); report(e); }
+      } catch (e) {
+        setServiceResult({ source, result: { kind: 'error', message: e.message }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 }, retry: () => synonymsInApp(source) });
+        setToast('');
+      }
       return undefined;
     }
     const range = serviceRange(handle.editor, source);
@@ -1839,8 +1842,16 @@ export default function App({ api: apiProp }) {
         setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, range, anchored: true, pos });
       setToast('');
     } catch (e) {
+      // ADL §12: eroarea LA CAUZĂ — popover ancorat cu mesaj și Reîncearcă.
+      let pos = { x: 120, y: 140 };
+      try {
+        const dom = handle.editor.view.domAtPos(range.to);
+        const el = dom.node.nodeType === 1 ? dom.node : dom.node.parentElement;
+        const r = el.getBoundingClientRect();
+        pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
+      } catch { pos = { x: 120, y: 140 }; }
+      setServiceResult({ source, result: { kind: 'error', message: e.message }, handle, range, anchored: true, pos, retry: () => synonymsInApp() });
       setToast('');
-      report(e);
     }
     return undefined;
   };
@@ -4173,6 +4184,7 @@ export default function App({ api: apiProp }) {
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onOpenUrl={(u) => openWeb(u)}
           onSearch={(w) => synonymsInApp(w)}
+          onRetry={serviceResult.retry}
           anchored={Boolean(serviceResult.anchored)}
           pos={serviceResult.pos}
           onClose={() => setServiceResult(null)}
