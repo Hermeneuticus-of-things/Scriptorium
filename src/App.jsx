@@ -148,6 +148,7 @@ import { useTeam } from './lib/useTeam.js';
 import { useDictation } from './lib/useDictation.js';
 import { createLocalSpeech } from './lib/localSpeech.js';
 import { createFocusEngine } from './lib/focusEngine.js';
+import { registerDialogSurface, closeTopModal, escapeThroughEngine, dialogSurfaceId } from './lib/focusDialogs.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
@@ -346,10 +347,12 @@ export default function App({ api: apiProp }) {
   const focusEngine = useRef(createFocusEngine()).current;
   useEffect(() => {
     const eng = focusEngine;
+    const serviceClose = () => closeTopModal(document) || setServiceResult(null);
     const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: {} });
     const un2 = eng.registerFocusableSurface({ id: 'settings.app', commands: {} });
-    const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: {} });
-    return () => { un1(); un2(); un3(); };
+    const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: { close: serviceClose, escape: serviceClose } });
+    eng.push('editor.document.core'); // the core function sits at the bottom of the stack
+    return () => { eng.pop('editor.document.core'); un1(); un2(); un3(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusEngine]);
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
@@ -384,8 +387,26 @@ export default function App({ api: apiProp }) {
   }, []);
   // Help → Report a problem, and the discreet "send a report?" toast for a newly captured error.
   const [reportOpen, setReportOpen] = useState(false);
+  // ADL §2: the report modal can open over any dialog (onError from inside it) — its own layer.
+  useEffect(() => {
+    if (!reportOpen) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.report', {
+      close: () => closeTopModal(document),
+      fallback: () => setReportOpen(false),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportOpen, focusEngine]);
   // Help → Check for updates, and the "new version" banner (once per new version; remembered in settings).
   const [updateOpen, setUpdateOpen] = useState(null); // null | { initial }
+  // ADL §2: same for the update dialog (it can pop up over whatever is open).
+  useEffect(() => {
+    if (!updateOpen) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.update', {
+      close: () => closeTopModal(document),
+      fallback: () => setUpdateOpen(null),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateOpen, focusEngine]);
   const [aboutOpen, setAboutOpen] = useState(false); // Help → About Pneuma Sofer
   const [updateBanner, setUpdateBanner] = useState(null);
   const bannerShown = useRef('');
@@ -520,6 +541,25 @@ export default function App({ api: apiProp }) {
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
+  // ADL §2: every dialog is a focus surface — push on open, pop on close; Escape cascade and
+  // local 'close' commands go through the engine (innermost first, one per press).
+  useEffect(() => {
+    if (!dialog) return undefined;
+    return registerDialogSurface(focusEngine, dialogSurfaceId(dialog), {
+      close: () => closeTopModal(document),
+      fallback: () => setDialog(null),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialog, focusEngine]);
+  // ADL §2: the engine answers Escape BEFORE the old document-level handler (DialogA11y): it
+  // decides which layer closes; when no surface handles it, the old behavior stands untouched.
+  useEffect(() => {
+    const host = document.getElementById('root') || document;
+    const onKey = (e) => { escapeThroughEngine(focusEngine, e); };
+    host.addEventListener('keydown', onKey);
+    return () => host.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusEngine]);
   const [floats, setFloats] = useState({ lf: false, kh: false, sc: false }); // audit 2 floating windows
   const toggleFloat = (k) => setFloats((f) => ({ ...f, [k]: !f[k] }));
   const [printOpts, setPrintOpts] = useState(null); // File > Print Preview: { ids, pageSetup? }
@@ -4070,7 +4110,7 @@ export default function App({ api: apiProp }) {
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
       {showSpeech && <MiniPlayer api={api} dict={dict} getText={speechText} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
-      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} focusEngine={focusEngine} />}
       {dialog === 'settings' && (
         <SettingsDialog
             initialTab={settingsTab}
