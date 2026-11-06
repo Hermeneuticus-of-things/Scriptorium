@@ -1,6 +1,11 @@
 # CHANGELOG — Scriptorium
 
 
+## v0.13.7
+- **Sinonimele complete, pe structura nouă a sinonimul.ro** (site-ul și-a schimbat pagina — listele nu mai stăteau în vechiul stil): toate sensurile (ex. „repara” = 28 de sinonime) + **TOATE** cuvintele apropiate cu listele lor (15), nu doar primele 8.
+- **Popover inteligent, mai bun decât pagina**: fiecare cuvânt apropiat = buton de căutare; **fiecare sinonim din listele lui = clic-l înlocuiești direct în text**; popoverul e flotant și **redimensionabil pe verticală** (mâner jos), cu lățimea după conținut.
+- **Erorile apar la cauză**: când serviciul eșuează (rețea, limitare, cuvânt ne-lemmatizat), popoverul ancorat arată mesajul și butonul **Reîncearcă** — nu se mai întâmplă nimic tăcut.
+
 ## v0.13.6
 - **Focusul, ca motor (ADL §2)**: toate cele 34 de dialoguri rulează pe stiva de focus a aplicației — push/pop cu restaurare, cascade Escape deterministă (cel mai interior primul), sub-dialogurile Compile pe stivă, comenzi locale prin dispatch cu bubbling. 15 teste noi + fix latent în motor (comenzile care își închid propria suprafață nu mai aruncă).
 - **Fix-uri motoare (T24)**: listenerul care arunca oprea tăierea bucăților de dictare (buffer nelimitat la dictare+editare simultană), DTED căzut la mijlocul unei stări nu mai agăța 10 s, handshake fără răspuns primește timeout 30 s, cache-ul AI nu mai rescrie tot fișierul per răspuns (debounce).

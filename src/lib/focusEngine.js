@@ -19,11 +19,18 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
   const registry = new Map(); // id -> SurfaceRegistration
   const stacks = new Map(); // windowId -> FocusEntry[]
   if (!stacks.has(windowId)) stacks.set(windowId, []);
+  const listeners = new Set(); // UI subscriptions (the active surface drives focus ≠ selection)
 
   const stack = () => stacks.get(windowId);
   const top = () => stack()[stack().length - 1] || null;
   const entryOf = (id) => stack().find((e) => e.surfaceId === id) || null;
   const reg = (id) => registry.get(id);
+  // One signal after any stack change; a broken listener never breaks the engine itself.
+  const notify = () => { for (const l of [...listeners]) { try { l(); } catch { /* keep going */ } } };
+  const subscribe = (l) => {
+    listeners.add(l);
+    return () => listeners.delete(l);
+  };
 
   function nativeFocus(id) {
     if (!syncNativeFocus) return;
@@ -55,6 +62,7 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
     const st = stack();
     const i = st.findIndex((e) => e.surfaceId === id);
     if (i >= 0) st.splice(i);
+    notify();
   }
 
   /** A surface dies (document closed, dialog unmounted): pop it and its children, restore parent. */
@@ -66,6 +74,7 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
     for (let j = st.length - 1; j >= i; j--) st.splice(j, 1); // children above it
     const t = top();
     if (t) nativeFocus(t.surfaceId);
+    notify();
     return gone ? gone.surfaceId : null;
   }
 
@@ -83,6 +92,7 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
     st.push({ surfaceId: id, level: r.level, triggerId, saved: {} });
     if (r.initialFocus) r.initialFocus();
     nativeFocus(id);
+    notify();
     return id;
   }
 
@@ -99,6 +109,7 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
       t.saved = {};
       if (tr) tr.restore(saved);
       nativeFocus(t.surfaceId);
+      notify();
       return t.surfaceId;
     }
     return null;
@@ -109,10 +120,11 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
     const st = stack();
     const i = st.findIndex((e) => e.surfaceId === id);
     if (i < 0) return push(id);
-    if (i === st.length - 1) return id; // already top
+    if (i === st.length - 1) return id; // already top — no change, no notification
     const [e] = st.splice(i, 1);
     st.push(e);
     nativeFocus(id);
+    notify();
     return id;
   }
 
@@ -143,6 +155,7 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
 
   return {
     windowId,
+    subscribe, // (listener) => unsubscribe — fired once after every stack change
     registerFocusableSurface,
     unregister,
     onSurfaceDestroyed,

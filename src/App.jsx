@@ -2,7 +2,7 @@ import { addBacklinks, addedLinks, insertLinkedDoc } from './lib/backlinks.js';
 import { uiPrompt } from './lib/uiPrompt.jsx';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { keyFromEvent, shortcutFor } from './lib/commands.js';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Home from './components/Home.jsx';
 import Binder from './components/Binder.jsx';
 import Editor from './components/Editor.jsx';
@@ -149,6 +149,7 @@ import { useDictation } from './lib/useDictation.js';
 import { createLocalSpeech } from './lib/localSpeech.js';
 import { createFocusEngine } from './lib/focusEngine.js';
 import { registerDialogSurface, closeTopModal, escapeThroughEngine, dialogSurfaceId } from './lib/focusDialogs.js';
+import { VIEW_SURFACES, surfaceForView, registerViewSurfaces, syncViewSurface } from './lib/focusViews.js';
 import { setDefaultFocusEngine, activeFocusEngine } from './lib/focusMenus.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
@@ -356,14 +357,54 @@ export default function App({ api: apiProp }) {
     const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', commands: coreCommands });
     const un2 = eng.registerFocusableSurface({ id: 'settings.app', commands: {} });
     const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: { close: serviceClose, escape: serviceClose } });
+    // ADL T7: the three main views (and the floating panels) are engine surfaces too. The row
+    // delete action is read through a ref, so the command never captures stale selection state.
+    const un4 = registerViewSurfaces(eng, { onDeleteRow: () => trashRef.current?.() });
+    const un5 = eng.registerFocusableSurface({ id: 'panel.inspector', commands: {} });
+    const un6 = eng.registerFocusableSurface({ id: 'panel.quickref', commands: {} });
     eng.push('editor.document.core'); // the core function sits at the bottom of the stack
     setDefaultFocusEngine(eng); // menus anywhere in the tree (FormatBar) find the engine
     return () => {
       if (activeFocusEngine() === eng) setDefaultFocusEngine(null);
       eng.pop('editor.document.core');
-      un1(); un2(); un3();
+      un4(); un5(); un6(); un1(); un2(); un3();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusEngine]);
+  // ADL §2 focus ≠ selection: the ACTIVE surface is reactive, so a selection can be drawn in the
+  // inactive colour while another surface (settings, inspector, quick-ref) owns the focus.
+  const activeSurface = useSyncExternalStore(focusEngine.subscribe, focusEngine.top);
+  // ADL T7: the visible view owns the active surface — Ctrl+1/2/3 (viewEditor / viewCorkboard /
+  // viewOutline) switch it. Only the ACTIVE view is ever on the stack, so row commands can never
+  // bubble to a hidden board while the user works (types) somewhere else.
+  const viewSurfaceRef = useRef(VIEW_SURFACES.scrivenings);
+  useEffect(() => {
+    const id = surfaceForView(view);
+    viewSurfaceRef.current = id;
+    syncViewSurface(focusEngine, id);
+  }, [view, focusEngine]);
+  useEffect(() => () => {
+    // unmount: take the view surface off the stack (whatever was pushed over it goes with it)
+    const st = focusEngine.stack();
+    const i = st.findIndex((s) => String(s).startsWith('view.'));
+    if (i >= 0) focusEngine.pop(st[i]);
+  }, [focusEngine]);
+  // ADL §2: the Inspector is an intermediate surface too (§2 names it) — while the user works in
+  // it, it owns the focus (the view underneath renders its selection inactive); leaving it hands
+  // the active surface back to the visible view. mousedown heals the unmount-with-focus case
+  // (the inspector disappearing fires no focusin), so the very next interaction re-syncs.
+  useEffect(() => {
+    const eng = focusEngine;
+    const onAct = (e) => {
+      if (e.target?.closest?.('.inspector')) eng.switchFocus('panel.inspector');
+      else if (eng.top() === 'panel.inspector') eng.switchFocus(viewSurfaceRef.current);
+    };
+    document.addEventListener('focusin', onAct);
+    document.addEventListener('mousedown', onAct);
+    return () => {
+      document.removeEventListener('focusin', onAct);
+      document.removeEventListener('mousedown', onAct);
+    };
   }, [focusEngine]);
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
   const [aiRequest, setAiRequest] = useState(null);
@@ -499,6 +540,19 @@ export default function App({ api: apiProp }) {
   }, [activeCollectionId, project?.collections, project?.tree, dir, api]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
+  // ADL T7 §2: a quick-reference panel is a floating surface — pushed above the view while at
+  // least one is open, popped when the last one closes; then the view surface is re-synced (the
+  // view may have changed under the panel, and syncViewSurface refused to touch the stack while
+  // the panel owned the top).
+  useEffect(() => {
+    const open = focusEngine.stack().includes('panel.quickref');
+    if (quickRefs.length && !open) focusEngine.push('panel.quickref');
+    else if (!quickRefs.length && open) {
+      focusEngine.pop('panel.quickref');
+      syncViewSurface(focusEngine, surfaceForView(view));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickRefs.length, view, focusEngine]);
   // Copyholder: a reference pane beside the editor (and the split), read-only unless toggled.
   const [copyholder, setCopyholder] = useState(null); // {id, editable} | null
   const copyScroll = useRef(new Map()); // doc id -> scrollTop of the copyholder pane
@@ -1472,6 +1526,10 @@ export default function App({ api: apiProp }) {
     setSelectedId(sel);
     setSelectedIds(new Set([sel]));
   };
+  // ADL T7: the engine surfaces read the row-delete action through this ref, so the `delete`
+  // command registered once at mount always runs with the current selection (no stale capture).
+  const trashRef = useRef(null);
+  trashRef.current = trashSelection;
 
   // --- Batch A: binder and document commands ---
   const selectionList = () => (selectedIds.size ? [...selectedIds] : selectedId ? [selectedId] : []).filter((id) => {
@@ -1764,7 +1822,10 @@ export default function App({ api: apiProp }) {
         const res = await api.fetchSynonyms(source);
         setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 } });
         setToast('');
-      } catch (e) { setToast(''); report(e); }
+      } catch (e) {
+        setServiceResult({ source, result: { kind: 'error', message: e.message }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 }, retry: () => synonymsInApp(source) });
+        setToast('');
+      }
       return undefined;
     }
     const range = serviceRange(handle.editor, source);
@@ -1781,8 +1842,16 @@ export default function App({ api: apiProp }) {
         setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, range, anchored: true, pos });
       setToast('');
     } catch (e) {
+      // ADL §12: eroarea LA CAUZĂ — popover ancorat cu mesaj și Reîncearcă.
+      let pos = { x: 120, y: 140 };
+      try {
+        const dom = handle.editor.view.domAtPos(range.to);
+        const el = dom.node.nodeType === 1 ? dom.node : dom.node.parentElement;
+        const r = el.getBoundingClientRect();
+        pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
+      } catch { pos = { x: 120, y: 140 }; }
+      setServiceResult({ source, result: { kind: 'error', message: e.message }, handle, range, anchored: true, pos, retry: () => synonymsInApp() });
       setToast('');
-      report(e);
     }
     return undefined;
   };
@@ -3626,6 +3695,7 @@ export default function App({ api: apiProp }) {
                 labelColorIn={colorIn}
                 selectedIds={selectedIds}
                 onDropKeyword={dropKeyword}
+                surfaceActive={activeSurface === VIEW_SURFACES.corkboard}
               />
             )}
             {view === 'outline' && (
@@ -3644,6 +3714,7 @@ export default function App({ api: apiProp }) {
                 onPatch={patchNode}
                 onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
                 labelColorIn={colorIn}
+                surfaceActive={activeSurface === VIEW_SURFACES.outliner}
               />
             )}
           </div>
@@ -4116,6 +4187,7 @@ export default function App({ api: apiProp }) {
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onOpenUrl={(u) => openWeb(u)}
           onSearch={(w) => synonymsInApp(w)}
+          onRetry={serviceResult.retry}
           anchored={Boolean(serviceResult.anchored)}
           pos={serviceResult.pos}
           onClose={() => setServiceResult(null)}

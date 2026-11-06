@@ -42,7 +42,10 @@ function loadColumns() {
 }
 
 // charCounts {id: n} or docs {id: html} (optional) feed the Characters column.
-export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null, filterNodes = null }) {
+// surfaceActive: ADL §2 focus ≠ selection — while another surface owns the focus (settings,
+// inspector, quick-ref), the selected row keeps its place (aria-selected kept, never cleared on
+// blur) and renders in the inactive colour; back on the outliner it is active again.
+export default function Outliner({ project, root, counts, onOpen, onPatch, onMove, charCounts = null, docs = null, labelColorIn = null, filterNodes = null, surfaceActive = true }) {
   const [showSynopsis, setShowSynopsis] = useState(loadShowSynopsis);
   const toggleSynopsis = (on) => {
     setShowSynopsis(on);
@@ -327,7 +330,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
                 setDrag(null);
                 setDropHint(null);
               }}
-              className={`${drag === n.id ? 'dragging' : ''} ${sel === n.id ? 'selected' : ''} ${dropHint && dropHint.id === n.id ? `drop-${dropHint.pos}` : ''} ${rowTint(n) ? 'tinted' : ''}`}
+              className={`${drag === n.id ? 'dragging' : ''} ${sel === n.id ? 'selected' : ''} ${sel === n.id && !surfaceActive ? 'inactive' : ''} ${dropHint && dropHint.id === n.id ? `drop-${dropHint.pos}` : ''} ${rowTint(n) ? 'tinted' : ''}`}
               style={{
                 ...(rowTint(n) ? { '--row-tint': rowTint(n) } : null),
                 ...(dropHint && dropHint.id === n.id ? { boxShadow: `inset 0 ${dropHint.pos === 'before' ? 2 : -2}px 0 var(--accent, #3b82f6)` } : null),
