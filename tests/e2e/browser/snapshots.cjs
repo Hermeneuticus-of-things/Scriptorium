@@ -18,6 +18,9 @@ const SHOTS = process.env.SNAP_SHOTS || '';
   const pane = page.locator('.inspector .snapshots');
   await pane.locator('button.snap-add').click();
   await page.waitForTimeout(300);
+  // The take prompt (uiPrompt) is prefilled: confirm it with Enter.
+  await page.locator('.prompt-modal input').press('Enter');
+  await page.waitForTimeout(400);
   check('snapshot listed', (await pane.locator('li').count()) === 1);
   check('binder marks the document', (await page.locator('.binder-row', { hasText: 'Începutul' }).first().locator('.icon.has-snapshots').count()) === 1);
 

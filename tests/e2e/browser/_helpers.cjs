@@ -14,7 +14,8 @@ async function open({ beforeOpen } = {}) {
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   await page.goto(URL);
   if (beforeOpen) await beforeOpen(page);
-  await page.getByText('Deschide proiect .scribner').first().click();
+  // The home button was renamed ("Deschide un proiect Pneuma Sofer (.scribner)"): match both.
+  await page.getByText(/Deschide.*\.scribner/).first().click();
   await page.waitForSelector('.pane .ProseMirror');
   return { browser, page, errors };
 }
