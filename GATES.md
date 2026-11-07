@@ -1,139 +1,80 @@
-# Gates: ADL T27 — Selectarea și navigarea după stil (Scrivener §17.4.1, P1 #27)
-# Gates: P1 #26 — Snapshots Manager pe tot proiectul (feat/adl-t26)
+# Gates: ADL T28 — ToC static cu `<$p>` (P1 #28) + filtre include/exclude în Compile (P1 #29)
 
-OWNS: lib/store.cjs, lib/snapshotSearch.cjs, electron/main.cjs, electron/preload.cjs,
-src/lib/mockApi.js, src/lib/webApi.js, src/lib/snapshotSearch.js, src/lib/snapshotList.js,
-src/components/SnapshotManagerDialog.jsx, src/components/SnapshotDiff.jsx, src/components/SnapshotsPane.jsx,
-src/lib/i18n-ui.js, src/App.jsx, src/styles.css, tests/snapshotManager.test.js,
-tests/snapshotManagerDialog.test.js, tests/e2e/browser/snapshots.cjs, tests/e2e/browser/scratchpad-small-windows.cjs
+OWNS: src/lib/toc.js, lib/pageEstimate.cjs, lib/compile.cjs, src/components/CompileDialog.jsx,
+src/lib/i18n-ui.js, src/App.jsx, src/styles.css, tests/toc.test.js,
+tests/compilePageNumbers.test.js, tests/compileFilters.test.js, tests/compileT28Dialog.test.js
 
-Scope: paritate cu Scrivener 3.1.6 §15.8.4 — Snapshots Manager pe tot proiectul: listă grupată
-pe document (arbore document → snapshot-uri, cu binder path), căutare nume/text/dată cu regex,
-ștergere în masă (Ctrl/Shift) cu confirmare, export .html/.txt prin dialog nativ, comparare
-reutilizată din Inspector. Fără schimbarea formatului de proiect (doar citire/ștergere în snapshots/).
-Reporter JSON în CHECK-uri (fără coduri ANSI, numărători deterministe).
+Scope: paritate cu Scrivener 3.1.6 §22.1–22.2 (P1 #28) și §23.4.1 (P1 #29).
+#28: „Copy Documents as ToC" (text, titlu + indentare pe structura binder, `<$p>` pe documentele
+text), evaluarea `<$p>` din titluri la compile/print/preview cu numărul paginii pe care cade
+documentul (ESTIMARE documentată — compilerul nu paginează; PDF-ul se paginează în Chromium,
+DOCX în Word), numere de pagină estimate în cuprinsul generat la ieșiri paginate.
+#29: filtru de vizualizare în lista de conținut din CompileDialog (doar text / text+foldere /
+toate + filtru pe etichete), afișarea excluderii în cascadă (dosar „fără compile" → copii excluși
+automat — conceptul există deja în buildDocument), compilerul respectă include/exclude per item
+(doar testat). Fără schimbări de format de proiect (câmpuri noi doar adăugitive, implicite neutre:
+`compile.contentFilter`, `compile.contentLabel`). Ledger-ul anterior (T26/T27, verificat complet)
+rămâne în istoricul git (`git show 538a050:GATES.md`); aici doar campania T28, ca să nu existe
+ID-uri dublate.
 
-- [x] G1: Backend listă pe tot proiectul — store.listAllSnapshots(dir) returnează toate
-  snapshot-urile grupate pe document (fără html, _backup și fișierele deteriorate excluse),
-  demonstrat prin teste noi pe proiecte temporare.
-  CHECK: npx vitest run tests/snapshotManager.test.js --reporter=json
-  EXPECT: /"numTotalTests":11,"numPassedTests":11,"numFailedTests":0/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=89e1e15fe67187ae818d2307741784bded4910a155c093f9ee866129f9dd5e3d; exit=0; EXPECT=matched; output-sha256=75e3cc86cee80eb66a87f111793a54e40e34401d525a092c4381ed1044ec3c82; output-bytes=4428; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
+- [ ] G1: Modulul pur src/lib/toc.js — buildTocText(nodes, {selection}) produce text ToC cu
+  indentare tab pe adâncime: dosar selectat → întregul subarbore (dosarul primul, adâncime 0),
+  document text selectat → doar el, documentele text primesc `<$p>` după tab, coșul e sărit,
+  selecție multiplă acceptată; evalPagePlaceholders(title, pageNo) înlocuiește `<$p>` multiplu,
+  cu prefixe/sufixe, iar `<$p:fmt>` doar prin fmtFn dat; format necunoscut → rămâne neschimbat.
+  CHECK: npx vitest run tests/toc.test.js --reporter=json
+  EXPECT: /"numFailedTests":0,"numPendingTests":0/
 
-- [x] G2: Căutare pe tot proiectul — lib/snapshotSearch.cjs (+ oglinda ESM src/lib/snapshotSearch.js
-  pentru mockApi/webApi) găsește după titlu, text și dată ISO, plain sau regex, regex invalid
-  semnalat ca eroare, _backup niciodată; fără html în rezultate.
-  CHECK: npx vitest run tests/snapshotManager.test.js --reporter=json
-  EXPECT: /"numTotalTests":11,"numPassedTests":11,"numFailedTests":0/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=89e1e15fe67187ae818d2307741784bded4910a155c093f9ee866129f9dd5e3d; exit=0; EXPECT=matched; output-sha256=88a522fad2f1fac970b9437879150352e6a96503448a8a7168905bb9bb1b75cc; output-bytes=4415; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
+- [ ] G2: Comanda „copyAsToC" — înregistrată în App.jsx în grupul „document", dezactivată fără
+  selecție, rulează prin navigator.clipboard.writeText cu textul produs de buildTocText;
+  intrare în meniul Documente (documentMenu); etichete cmd.copyAsToC + ui.app.toc_copiat în
+  AMBLE blocurile i18n (uiRo și uiEn); analiza statică a meniurilor (menuTiers) rămâne verde.
+  CHECK: npx vitest run tests/toc.test.js tests/menuTiers.test.js tests/menuDedupe.test.js --reporter=json
+  EXPECT: /"numFailedTests":0,"numPendingTests":0/
 
-- [x] G3: Ștergere în masă — store.deleteSnapshots(dir, [{id,file}]) șterge exact perechile
-  cerute, sare perechile invalide și fișierele lipsă, returnează numărul real; nu atinge
-  docs/, notes/ sau project.json.
-  CHECK: npx vitest run tests/snapshotManager.test.js --reporter=json
-  EXPECT: /"numTotalTests":11,"numPassedTests":11,"numFailedTests":0/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=89e1e15fe67187ae818d2307741784bded4910a155c093f9ee866129f9dd5e3d; exit=0; EXPECT=matched; output-sha256=fbc8825f221e01630f2e06a89942b7b1bbbed8c835daacf536ba922039b877b2; output-bytes=4391; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
+- [ ] G3: Evaluarea `<$p>` la compile (estimare documentată) — lib/pageEstimate.cjs calculează
+  pagina de start estimată per secțiune din dimensiunile paginii, margini, font, spațiere și
+  marcă de pagină nouă (estimateStartPages(items, opts)); lib/compile.cjs aplică după
+  buildDocument: `<$p>` din titlurile secțiunilor (prefix+titlu+sufix) și din subtitluri se
+  înlocuiește cu pagina estimată a secțiunii, iar `<$p>` din corpul text cu pagina proprie a
+  documentului; corpul reîncepe de la 1 după front matter când page.frontRoman (același
+  comportament ca scriitorii DOCX/PDF); blocurile „Preserve Formatting" nu se ating.
+  Teste pe estimator + pe buildDocument.
+  CHECK: npx vitest run tests/compilePageNumbers.test.js --reporter=json
+  EXPECT: /"numFailedTests":0,"numPendingTests":0/
 
-- [x] G4: Handler-e IPC + preload + mockApi + webApi — snap:listAll, snap:search,
-  snap:deleteMany, snap:export (dialog nativ de salvare, .html sau .txt după extensie)
-  prezente în electron/main.cjs, electron/preload.cjs, src/lib/mockApi.js, src/lib/webApi.js;
-  sintaxă validă în main.cjs și preload.cjs.
-  CHECK: node --check electron/main.cjs && node --check electron/preload.cjs && node --check lib/snapshotSearch.cjs && node -e "const fs=require('fs');for(const f of ['electron/main.cjs','electron/preload.cjs']){const s=fs.readFileSync(f,'utf8');for(const ch of ['snap:listAll','snap:search','snap:deleteMany','snap:export'])if(!s.includes(ch))throw new Error(f+' lipsa '+ch)}for(const f of ['src/lib/mockApi.js','src/lib/webApi.js']){const s=fs.readFileSync(f,'utf8');for(const m of ['listAllSnapshots','searchSnapshots','deleteSnapshots','exportSnapshot'])if(!s.includes(m))throw new Error(f+' lipsa '+m)}console.log('T26 IPC ok')"
-  EXPECT: T26 IPC ok
-  EVIDENCE: automatic-evidence=v1; definition-sha256=65420cb74b2aa8af4492eebd97bf686f6d287733a24cf86254392af1ed29cca0; exit=0; EXPECT=matched; output-sha256=e57871dc8583c11213eac3d9b55fd9293fa33cd3a554e6c9956755afc050382c; output-bytes=11; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
+- [ ] G4: Cuprinsul generat la compile arată numere de pagină estimate la ieșiri paginate —
+  tocHtml primește estPage per intrare și pentru target pdf (paged) cu settings.pageNumbers
+  !== false redenerează numărul; DOCX păstrează câmpurile PAGEREF reale (neschimbat); fără
+  numere la HTML nepaginat/preview.
+  CHECK: npx vitest run tests/compilePageNumbers.test.js --reporter=json
+  EXPECT: /"numFailedTests":0,"numPendingTests":0/
 
-- [x] G5: UI — SnapshotManagerDialog rescris: căutare cu regex, grupuri document → snapshot-uri
-  cu binder path, selecție Ctrl/Shift (multi-select), Delete = confirm + ștergere în masă,
-  Exportă activ la exact 1 selectat, Compară deschide aceeași vedere de diff (SnapshotDiff).
-  Teste jsdom pe componente.
-  CHECK: npx vitest run tests/snapshotManagerDialog.test.js --reporter=json
-  EXPECT: /"numTotalTests":15,"numPassedTests":15,"numFailedTests":0/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=97afaba0a5baf0c27a027c92720ae0de4a1a45118ecb0e4f704eaa828769b394; exit=0; EXPECT=matched; output-sha256=917c640e5e7fe794d907cca125054498b04cb6dc2d6c86c596b69b1201d17503; output-bytes=5988; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
+- [ ] G5: Filtre în lista de conținut din CompileDialog — rând de filtrare deasupra tabelului:
+  filtru pe tip (toate / doar text / text+foldere) și filtru pe etichete (lista proiectului,
+  „(toate)"); setările se persistă în project.compile (contentFilter, contentLabel, implicite
+  neutre); rândurile sub un dosar cu includeInCompile=false apar ca excluse (clasă cd-excluded,
+  bifă dezactivată + title explicativ); i18n ro/en pentru toate cheile noi; teste jsdom pe
+  componentă.
+  CHECK: npx vitest run tests/compileT28Dialog.test.js --reporter=json
+  EXPECT: /"numFailedTests":0,"numPendingTests":0/
 
-- [x] G6: Fără regresii la Inspector — SnapshotDiff extras din SnapshotsPane păstrează clasele
-  .snap-preview.diff / .diff-level / .snap-next / .snap-count și navigarea ◀ ▶; testele
-  existente de snapshot trec neschimbate.
-  CHECK: npx vitest run tests/snapshotList.test.js tests/smallWindows.test.js --reporter=json
-  EXPECT: /"numTotalTests":27,"numPassedTests":27,"numFailedTests":0/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=5fcf663b8cf14c4b00aace23c2d3b1d0c6fe337f519ffbc09732fe524e899829; exit=0; EXPECT=matched; output-sha256=04b91a0cc9a4ec32ca950d097faf2c4a7550bb00bd800c670f3dd31d511fc1ea; output-bytes=8467; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
+- [ ] G6: Compilarea respectă include/exclude (teste pe compiler) — documentul cu
+  includeInCompile=false nu intră în output, dosarul exclus își exclude automat copiii,
+  ordinea din binder e păstrată pentru cele rămase, filterInvert (exclude ce corespunde) și
+  filtrele pe etichete/status rămân corecte; scope explicit (selection/folder) nu se filtrează,
+  ca înainte.
+  CHECK: npx vitest run tests/compileFilters.test.js --reporter=json
+  EXPECT: /"numFailedTests":0,"numPendingTests":0/
 
-- [x] G7: i18n ro/en complet — fiecare cheie nouă ui.snap.* există în AMBLE blocuri (ro = uiRo,
-  en = uiEn) din src/lib/i18n-ui.js.
-  CHECK: node -e "const fs=require('fs');const s=fs.readFileSync('src/lib/i18n-ui.js','utf8');const ks=['ui.snap.search_hint','ui.snap.search_regex','ui.snap.search_regex_bad','ui.snap.search_no_hits','ui.snap.export','ui.snap.export_hint','ui.snap.exported','ui.snap.orphan_doc','ui.snap.manager_list','ui.snap.manager_results','ui.snap.search_hit_title','ui.snap.search_hit_text','ui.snap.search_hit_date'];const ro=s.indexOf('export const uiRo'),en=s.indexOf('export const uiEn');if(ro<0||en<0)throw new Error('blocuri ro/en negăsitate');const roB=s.slice(ro,en),enB=s.slice(en);for(const k of ks){if(!roB.includes('\"'+k+'\"'))throw new Error('ro lipsa '+k);if(!enB.includes('\"'+k+'\"'))throw new Error('en lipsa '+k)}console.log('T26 i18n ok')"
-  EXPECT: T26 i18n ok
-  EVIDENCE: automatic-evidence=v1; definition-sha256=9e33fdc31d50b4970ca8baed0a246be9446aba622ed9abb465d686d23270cbd3; exit=0; EXPECT=matched; output-sha256=84a3080428d3c2948243618559d9cd3f2bab7e2a88da601df22a67b637c4f7fe; output-bytes=12; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
-
-- [x] G8: Suita integrală verde (170+ fișiere, 0 eșuate).
+- [ ] G7: Fără regresii — întreaga suită vitest verde.
   CHECK: npx vitest run --reporter=json
-  EXPECT: /"numTotalTests":1820,"numPassedTests":1816,"numFailedTests":0/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=9edb0adcf37a023247f212e6cc3dcb21bc64311f59dda739451d1de28a718280; exit=0; EXPECT=matched; output-sha256=530ee4f71f27df3f3d18b87f98c4c1ebb4a5b17d8cee01a8c4757cea2be57ebc; output-bytes=585260; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
+  EXPECT: /"numFailedTests":0,"numPendingTests":0/
 
-- [x] G9: Build production OK.
+- [ ] G8: Build-ul de producție trece.
   CHECK: npx vite build
   EXPECT: /built in/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=202b6423274a1e776d6ddcc8d133917c5c706a45d1cd69c285f24b4a854abbd3; exit=0; EXPECT=matched; output-sha256=df5348289ae61c9acbe7bbe3f8f673fb4326b886ba95534d4f89455a029b2eec; output-bytes=868; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
 
-- [x] G10: E2E Electron verde.
-  CHECK: cmd /c "set PLAYWRIGHT_PATH=C:/Users/Ionut/Documents/Scriptorium/node_modules/playwright/index.js&& node tests/e2e/electron.e2e.cjs"
-  EXPECT: /E2E OK/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=103a37575ec782d55570c4ead35f86f44270fba542dc781d488e0501d448f780; exit=0; EXPECT=matched; output-sha256=931ca8b1c967bdb4495312d96bb156cb8009ba0f4b553f8e82cf4ff34283471d; output-bytes=802; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
-
-- [x] G11: E2E browser manager nou — tests/e2e/browser/snapshots.cjs actualizat la DOM-ul nou
-  și verde contra `npx vite preview --port 4183` (necesită preview pornit).
-  CHECK: node tests/e2e/browser/snapshots.cjs
-  EXPECT: /all passing/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=9c7151b7c41b673d29e1a72489d866b27adcd27c65195cdf78f00883c93bcfbe; exit=0; EXPECT=matched; output-sha256=cc1a5871e9af35df623dbd8015034bb295e152b4d9000964b13e8889094069a4; output-bytes=1148; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
-
-- [x] G12: Commit-uri mici pe feat/adl-t26, mesaje în română cu prefixul „P1 #26:", fără push.
-  CHECK: git -C "C:/Users/Ionut/Documents/Scriptorium-wt-t26" log --oneline origin/main..HEAD
-  EXPECT: /P1 #26/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=4f7fa5b01c4561d7b279aa4cd5fea16be5ce9916901bad7a923d84f52ae3abcb; exit=0; EXPECT=matched; output-sha256=5ee36052fab7f2617203bd98da190aa7fd9a5b20434788d0f304c5d65302c196; output-bytes=600; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t26; path=a68386b800d3/59 entries
-# Gates: ADL T8 — MediaView / Image viewer → suprafață `image.viewer.<assetId>` pe motorul de focus
-
-OWNS: src/lib/styleNavigation.js, tests/styleNavigation.test.js, src/components/Editor.jsx, src/components/FormatBar.jsx, src/components/StylesPanel.jsx, src/App.jsx, src/lib/menuLayout.js, src/lib/i18n.js, GATES.md
-
-Scope: În editor, la cursor pe un paragraf cu stil identificabil (styleName numit sau heading
-fără stil → „heading:<nivel>”), patru comenzi noi în registry: `selectStyleRange` (intervalul
-contiguu de paragrafe cu același stil), `nextInSameStyle` / `prevInSameStyle` (următorul /
-precedentul cu același stil, ciclic), `selectAllWithStyle` (de la primul la ultimul cu stilul
-dat — decizie de paritate documentată, ca în Scrivener). Logica pură în `src/lib/styleNavigation.js`
-(testabilă fără editor), expusă prin handle-ul Editor-ului, meniul Format (submenu „Navigare
-după stil”), meniul „Stil” din FormatBar și butoane ⮃⮁ + „selectează tot” în panoul de stiluri;
-disabled când cursorul nu e pe un paragraf cu stil identificabil; i18n ro/en. TDD, branch
-feat/adl-t27, fără push.
-
-- [x] G1: Modulul pur `src/lib/styleNavigation.js` (paraStyleId, textblocks, styleRangeAt,
-  EVIDENCE: automatic-evidence=v1; definition-sha256=074abbe241b10f72a4ae2e778555a76c57aa7769c59f6d5b40c96a0d6b778757; exit=0; EXPECT=matched; output-sha256=4bfb0328dc4cd504218d9550cc6ecbd38c2bd76df10cda1dec39d40dfd5003f6; output-bytes=278; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t27; path=a68386b800d3/59 entries
-  nextStyleBlock, prevStyleBlock, allStyleRange, hasIdentifiableStyle) — testele sale trec
-  (RED confirmat înainte de implementare: importul eșua).
-  CHECK: node -e "process.env.NO_COLOR='1'; require('child_process').execSync('npx vitest run tests/styleNavigation.test.js', {stdio: 'inherit'});"
-  EXPECT: /Test Files\s+1 passed \(1\)/
-
-- [x] G2: Cablarea: comenzi în registry-ul din App (grupa format, disabled din starea de stil
-  EVIDENCE: automatic-evidence=v1; definition-sha256=a55cad62cbd051a7470e0fbf0622df4e72f63305f48d2a9591631da1c934d5ab; exit=0; EXPECT=matched; output-sha256=65f054e22780733fd77c010e70b69da5338fa16d6cef877dc3798b83d99924e1; output-bytes=318; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t27; path=a68386b800d3/59 entries
-  la cursor), handle Editor (4 metode care citesc starea la momentul apelului), submenu
-  „menu.styleNav” în menuLayout, intrări în FormatBar și StylesPanel, i18n ro/en complet.
-  CHECK: node -e "process.env.NO_COLOR='1'; require('child_process').execSync('npx vitest run tests/styleNavigation.test.js tests/i18n.test.js', {stdio: 'inherit'});"
-  EXPECT: /Tests\s+30 passed/
-
-- [x] G3: Nicio regresie pe registre, meniuri, editor și stiluri (zonele atinse).
-  CHECK: node -e "process.env.NO_COLOR='1'; require('child_process').execSync('npx vitest run tests/commands.test.js tests/menuTiers.test.js tests/menuDedupe.test.js tests/g5classic.test.js', {stdio: 'inherit'});"
-  EXPECT: /Test Files\s+4 passed \(4\)/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=5a188cc89d57fc6522a2feab9dba781b1b7f184fe67796b06e82949969d5d8ea; exit=0; EXPECT=matched; output-sha256=4903569205fba8e63f46bf4d85112b28569aa45e7cc833011ac5c6f2d4618850; output-bytes=405; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t27; path=a68386b800d3/59 entries
-
-- [x] G4: Suita completă rămâne verde (baseline măsurat: 170 fișiere / 1810 trecute | 4 skip;
-  EVIDENCE: automatic-evidence=v1; definition-sha256=118714a421f479f4b00c84dfcb2332e4c375a82c280fb53857f9a7c3f9aa4e7d; exit=0; EXPECT=matched; output-sha256=3a1b41e3800ef05660a87cb12e86cb72b2e64b535875cc90f26f0cec73ccab5d; output-bytes=31328; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t27; path=a68386b800d3/59 entries
-  după T27: 171 fișiere / 1835 trecute | 4 skip — +1 fișier, +25 teste, 0 regresii).
-  CHECK: node -e "process.env.NO_COLOR='1'; require('child_process').execSync('npx vitest run', {stdio: 'inherit'});"
-  EXPECT: /Tests\s+1835 passed/
-
-- [x] G5: Build de producție reușit.
-  CHECK: npx vite build
-  EXPECT: built in
-  EVIDENCE: automatic-evidence=v1; definition-sha256=eb7927ff401164e9130a88dab7901297d5f77cb289dcb3369ac86d4469033452; exit=0; EXPECT=matched; output-sha256=6322374d1c2608615b25729dd574584957dbc695f5f96f291a0428cec59df9c6; output-bytes=868; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t27; path=a68386b800d3/59 entries
-
-- [x] G6: E2E Electron integral (garda lecției #310 — hook-ul nou din App rămâne deasupra
-  EVIDENCE: automatic-evidence=v1; definition-sha256=c4ae94e4fac418756b110a149529c92699b10598184db80696ef66ba435cc3d8; exit=0; EXPECT=matched; output-sha256=3fddaea48a7213f634d6dd7b49e23d0073ae2ed4c37ba3eb563878d97bd5fdda; output-bytes=802; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t27; path=a68386b800d3/59 entries
-  returnărilor timpurii).
+- [ ] G9: E2E Electron (garda lecției #310) rămâne verde.
   CHECK: node -e "process.env.PLAYWRIGHT_PATH='C:/Users/Ionut/Documents/Scriptorium/node_modules/playwright/index.js'; require('./tests/e2e/electron.e2e.cjs');"
-  EXPECT: E2E OK
+  EXPECT: /E2E OK/
