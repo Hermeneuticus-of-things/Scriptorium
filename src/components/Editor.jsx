@@ -26,6 +26,7 @@ import { PARSE_OPTIONS, htmlToDoc, replaceChangedRange } from '../editor/syncDoc
 import { collectCharacters, collectSceneHeadings } from '../lib/scriptFormats.js';
 import { countWords, textToHtml } from '../lib/text.js';
 import { insertable } from '../lib/inlineInsert.js';
+import { allStyleRange, hasIdentifiableStyle, nextStyleBlock, prevStyleBlock, styleRangeAt } from '../lib/styleNavigation.js';
 import FindBar, { findAgain, lastFind } from './FindBar.jsx';
 import FormatBar from './FormatBar.jsx';
 import FormatFind from './FormatFind.jsx';
@@ -55,6 +56,7 @@ const Editor = forwardRef(function Editor(
     onOpenLink,
     onChange,
     onFocus,
+    onSelectionStyle = null,
     onTitleClick,
     scriptFormat = null,
     defaultFormatting = null,
@@ -78,6 +80,21 @@ const Editor = forwardRef(function Editor(
   const selWordsRef = useRef(onSelectionWords);
   selWordsRef.current = onSelectionWords;
   const lastSelWords = useRef(0);
+  // Whether the caret is on a paragraph with an identifiable style (drives the disabled
+  // state of the style-navigation commands in App); reported only on transitions.
+  const selStyleRef = useRef(onSelectionStyle);
+  selStyleRef.current = onSelectionStyle;
+  const lastSelStyle = useRef(null);
+  // Whether the caret sits on a paragraph with an identifiable style, reported on transitions
+  // only — App disables/enables the style navigation commands with it.
+  function reportSelStyle(ed) {
+    if (!selStyleRef.current || !ed || ed.isDestroyed) return;
+    const onStyle = hasIdentifiableStyle(ed.state.doc, ed.state.selection.from);
+    if (onStyle !== lastSelStyle.current) {
+      lastSelStyle.current = onStyle;
+      selStyleRef.current(onStyle);
+    }
+  }
   const typewriterRef = useRef(typewriter);
   typewriterRef.current = typewriter;
   const histRef = useRef(null); // { base, groups } recorded for historyKey
@@ -139,7 +156,12 @@ const Editor = forwardRef(function Editor(
         clearTimeout(dirtyTimer.current);
         dirtyTimer.current = setTimeout(() => flushRef.current(), SERIALIZE_DELAY);
       },
-      onFocus: () => onFocus?.(),
+      onFocus: ({ editor: ed }) => {
+        onFocus?.();
+        // The focused editor becomes the commands' target, so its caret style state must be
+        // the reported one (the other pane's last report may say the opposite).
+        reportSelStyle(ed);
+      },
       onBlur: () => flushRef.current(),
       onDestroy: () => flushRef.current(),
       onSelectionUpdate: ({ editor: ed }) => {
@@ -152,6 +174,9 @@ const Editor = forwardRef(function Editor(
             selWordsRef.current(n);
           }
         }
+        // Caret on a styled paragraph (style navigation commands): report transitions so the
+        // menus can disable them while the caret is on an unstyled paragraph.
+        reportSelStyle(ed);
         if (!typewriterRef.current) return; // a ref: turning the mode on reaches editors already open
         // Keeps the typing line at the position chosen in Options (Aspect > Editor), 50 % by default.
         if (!typewriterScroll(ed.view)) {
@@ -259,6 +284,16 @@ const Editor = forwardRef(function Editor(
     return true;
   }
 
+  // Style navigation (Scrivener §17.4.1): computes the range with the pure module at call
+  // time and applies it as the selection; false when the caret has no identifiable style.
+  function runStyleNav(nav) {
+    if (!editor || editor.isDestroyed) return false;
+    const r = nav(editor.state.doc, editor.state.selection.from);
+    if (!r) return false;
+    editor.chain().focus().setTextSelection({ from: r.from, to: r.to }).scrollIntoView().run();
+    return true;
+  }
+
   // Restore (replay) the kept history on creation; keep it when the editor goes away.
   useEffect(() => {
     if (!editor || !historyKey) return undefined;
@@ -330,6 +365,12 @@ const Editor = forwardRef(function Editor(
         if (replaceChangedRange(tr, htmlToDoc(h, editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true).setMeta('addToHistory', false));
       },
       selectAround: (kind) => Boolean(editor && !editor.isDestroyed && selectAround(editor.view, undefined, kind)),
+      // Format › Navigare după stil (Scrivener §17.4.1). All four read the caret position at
+      // call time; false tells the caller there was no identifiable style to act on.
+      selectStyleRange: () => runStyleNav(styleRangeAt),
+      nextInSameStyle: () => runStyleNav(nextStyleBlock),
+      prevInSameStyle: () => runStyleNav(prevStyleBlock),
+      selectAllWithStyle: () => runStyleNav(allStyleRange),
       getSelectionText: () => {
         if (!editor) return '';
         const { from, to } = editor.state.selection;

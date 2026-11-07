@@ -54,7 +54,7 @@ P1 (nucleul workflow-ului de scriere):
 | Gol | Manual | Sursă |
 |---|---|---|
 | **Snapshots Manager** — listă pe tot proiectul, căutare nume/text/dată/regex, ștergere în masă, export | §15.8.4, p. 353–356 | ch8+15 |
-| **Selectare și navigare după stil** — Select Style Range / Next in Same Style / Select All with Style | §17.4.1, p. 379–380 | ch16+17 |
+| ~~Selectare și navigare după stil~~ ✅ 2026-11-07 — `src/lib/styleNavigation.js` (pur) + comenzi `selectStyleRange` / `nextInSameStyle` / `prevInSameStyle` / `selectAllWithStyle` (Format ▸ Navigare după stil + meniul „Stil" din FormatBar + butoane ⮃⮁ în panoul de stiluri); stil identificabil = `styleName` numit sau heading fără stil → `heading:<nivel>`; „Select All" = interval primul→ultimul (decizie de paritate, ca în Scrivener) | §17.4.1, p. 379–380 | ch16+17 |
 | **ToC static cu numere de pagină** — „Copy Documents as ToC", evaluarea `<$p>` în corpul documentelor la compile/print | §22.1–22.2, p. 475–477 | ch19+21+22 |
 | **Lista de conținut în Compile + filtre include/exclude** — tabelă per item, bulk toggle, moduri Included/Excluded/All | §23.4.1, p. 488–491 | ch23+25+26 |
 | **Print Settings: fișe index + outline** — corkboard ca fișe (cutting guides, label color), outline indentat cu sinopse/counts | §26.1.1–26.3, p. 590–592 | ch23+25+26 |

@@ -9,6 +9,7 @@ import { isParaStyle } from '../lib/styles.js';
 import { POS_CLASSES } from '../lib/pos.js';
 import { readingLensItems } from '../lib/readingLenses.js';
 import { listBookmarks } from '../editor/formatting.js';
+import { allStyleRange, hasIdentifiableStyle, nextStyleBlock, prevStyleBlock, styleRangeAt } from '../lib/styleNavigation.js';
 import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS } from '../lib/editorMenus.js';
 import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
@@ -368,6 +369,7 @@ export default function FormatBar({
       para: { ...ed.state.selection.$from.parent.attrs },
       bookmarks: [...new Set(listBookmarks(ed.state.doc).map((b) => b.name))],
       inBookmark: ed.isActive('bookmark') ? ed.getAttributes('bookmark').name : null,
+      styledPara: hasIdentifiableStyle(ed.state.doc, ed.state.selection.from),
     }),
   });
   const chain = () => editor.chain().focus();
@@ -501,9 +503,20 @@ export default function FormatBar({
     setTimeout(() => editor.commands.focus(), 0);
   };
 
+  // Style navigation (Scrivener §17.4.1): same ranges as the registry commands — the pure
+  // module computes at click time, disabled while the caret is on an unstyled paragraph.
+  const styleNav = (nav) => {
+    const r = nav(editor.state.doc, editor.state.selection.from);
+    if (r) chain().setTextSelection({ from: r.from, to: r.to }).scrollIntoView().run();
+  };
   const styleItems = [
     ...styles.filter(isParaStyle).map((st) => ({ label: `${st.type === 'both' ? '¶a' : '¶'} ${builtinName('style', st)}`, shortcut: st.shortcut || undefined, action: () => chain().setParagraphStyle(st.id).run() })),
     ...styles.filter((st) => st.type === 'char').map((st) => ({ label: `a ${builtinName('style', st)}`, shortcut: st.shortcut || undefined, action: () => chain().setCharStyle(st.id).run(), disabled: !s.hasSelection })),
+    '-',
+    { label: tr('cmd.selectStyleRange'), action: () => styleNav(styleRangeAt), disabled: !s.styledPara },
+    { label: tr('cmd.nextInSameStyle'), action: () => styleNav(nextStyleBlock), disabled: !s.styledPara },
+    { label: tr('cmd.prevInSameStyle'), action: () => styleNav(prevStyleBlock), disabled: !s.styledPara },
+    { label: tr('cmd.selectAllWithStyle'), action: () => styleNav(allStyleRange), disabled: !s.styledPara },
     '-',
     { label: tr('ui.formatBar.noParaStyle'), action: () => chain().setParagraphStyle(null).run() },
     { label: tr('ui.formatBar.noCharStyle'), action: () => chain().setCharStyle(null).run() },
