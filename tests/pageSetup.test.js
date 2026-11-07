@@ -61,3 +61,23 @@ describe('page setup mapping', () => {
     expect(ps.pdfPageSize(Buffer.from('x'))).toBe(null);
   });
 });
+
+// P1 #30 — print format (manuscris / fișe index / outline) în Page Setup, cu dimensiuni card.
+describe('page setup print format (P1 #30)', () => {
+  it('normalizează formatul: implicit manuscris, invalid → manuscris, valide păstrate', () => {
+    expect(ps.normalizePageSetup({}).format).toBe('manuscript');
+    expect(ps.normalizePageSetup({ format: 'carte' }).format).toBe('manuscript');
+    expect(ps.normalizePageSetup(null).format).toBe('manuscript');
+    expect(ps.normalizePageSetup({ format: 'indexCards' }).format).toBe('indexCards');
+    expect(ps.normalizePageSetup({ format: 'outline' }).format).toBe('outline');
+    // lista de formate e aceeași ca în modulul de generare (o singură sursă de adevăr)
+    const pf = require('../lib/printFormats.cjs');
+    expect([...ps.FORMATS].sort()).toEqual([...pf.FORMATS].sort());
+  });
+
+  it('normalizează dimensiunile cardului (clamp 5..30, implicite 10×15)', () => {
+    expect(ps.normalizePageSetup({ cardWidthCm: 1, cardHeightCm: 99 })).toEqual(expect.objectContaining({ cardWidthCm: 5, cardHeightCm: 30 }));
+    expect(ps.normalizePageSetup({ cardWidthCm: 'x' }).cardWidthCm).toBe(10);
+    expect(ps.normalizePageSetup(null).cardHeightCm).toBe(15);
+  });
+});
