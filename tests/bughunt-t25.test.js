@@ -284,7 +284,10 @@ describe('T25-HISTORY: writing history survives and stays cheap', () => {
     expect(sum[sum.length - 1].draftWords).toBe(465000);
     // eslint-disable-next-line no-console
     console.log(`[T25-HISTORY] recordHistory on a 10-year history: ${ms.toFixed(1)} ms per autosave`);
-    expect(ms).toBeLessThan(20);
+    // Pragul verifică că cache-ul mtime sari peste re-citirea fișierului mare (regresia reală e în
+    // sute de ms). 20 ms a fost marginal pe runner CI (20.3 ms măsurat) — 60 lasă loc de jitter
+    // fără să piardă semnalul de regresie.
+    expect(ms).toBeLessThan(60);
   }, 60000);
 
   it('marker', () => {
