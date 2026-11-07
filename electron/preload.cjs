@@ -152,6 +152,11 @@ contextBridge.exposeInMainWorld('api', {
   renameSnapshot: (dir, id, file, name) => call('snap:rename', dir, id, file, name),
   snapshotCounts: (dir) => call('snap:counts', dir),
   updateSnapshotHtml: (dir, id, file, html) => call('snap:updateHtml', dir, id, file, html),
+  // Snapshots Manager (the whole project): list / search / mass delete / export.
+  listAllSnapshots: (dir) => call('snap:listAll', dir),
+  searchSnapshots: (dir, query, opts) => call('snap:search', dir, query, opts),
+  deleteSnapshots: (dir, items) => call('snap:deleteMany', dir, items),
+  exportSnapshot: (dir, id, file, docTitle) => call('snap:export', dir, id, file, docTitle),
   listAllTemplates: () => call('io:listTemplates'),
   saveAsTemplate: (dir, meta) => call('io:saveAsTemplate', dir, meta),
   deleteTemplate: (id) => call('io:deleteTemplate', id),

@@ -150,21 +150,35 @@ label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--t
 .snap-toolbar .snap-compare.on { background: var(--accent); color: #fff; }
 .snap-toolbar .snap-rollback { margin-left: auto; }
 .snap-head { display: grid; grid-template-columns: 9.5em 1fr; gap: 6px; font-size: 12px; border-bottom: 1px solid var(--line); padding: 0 4px 2px; }
-.snap-head-3 { grid-template-columns: 1fr 6em 9.5em; }
 .snapshots ul, .snap-manager ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; max-height: 30vh; overflow: auto; }
 .snapshots li { display: grid; grid-template-columns: 9.5em 1fr; gap: 6px; align-items: center; padding: 3px 4px; border-bottom: 1px solid var(--line); cursor: default; }
-.snap-manager-docs li { display: grid; grid-template-columns: 1fr 6em 9.5em; gap: 6px; align-items: center; padding: 3px 4px; border-bottom: 1px solid var(--line); cursor: default; }
-.snapshots li.selected, .snap-manager-docs li.selected { background: var(--accent-soft); }
-.snapshots li:focus-visible, .snap-manager-docs li:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.snapshots li.selected { background: var(--accent-soft); }
+.snapshots li:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .snapshots li .snap-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .snapshots li .snap-rename { font: inherit; padding: 1px 4px; }
 .snap-nav { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 4px; }
 .snap-nav .diff-level { flex-direction: row; align-items: center; gap: 4px; margin-right: auto; }
 .diff ins.current, .diff del.current { outline: 2px solid var(--accent); }
-.modal.snap-manager { width: min(1000px, 94vw); max-width: 94vw; }
-.snap-head-3 span, .snap-manager-docs li > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.snap-manager-body { display: grid; grid-template-columns: minmax(220px, 1fr) 2fr; gap: 14px; align-items: start; }
-.snap-manager-body .snapshots ul { max-height: 22vh; }
+
+/* Snapshots Manager (the whole project): search row, grouped list, detail pane. */
+.modal.snap-manager { width: min(1060px, 94vw); max-width: 94vw; }
+.snap-search-row { display: flex; align-items: center; gap: 8px; margin: 2px 0 10px; }
+.snap-search { flex: 1; min-width: 0; }
+.snap-search.invalid { border-color: var(--danger); }
+.snap-regex { display: flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; }
+.snap-manager-body { display: grid; grid-template-columns: minmax(340px, 1.2fr) minmax(240px, 1fr); gap: 14px; align-items: start; }
+.snap-groups li[role="option"] { display: grid; grid-template-columns: 9.5em 1fr; gap: 6px; align-items: center; padding: 3px 4px; border-bottom: 1px solid var(--line); cursor: default; }
+.snap-groups li[role="option"].selected { background: var(--accent-soft); }
+.snap-groups li[role="option"]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.snap-groups li[role="option"] > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.snap-groups .snap-head { position: sticky; top: 0; background: var(--bg); z-index: 1; }
+.snap-group { display: grid; grid-template-columns: auto minmax(6em, 1fr) auto auto; gap: 6px; align-items: baseline; padding: 8px 4px 2px; border-bottom: 1px solid var(--line); }
+.snap-group > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.snap-group .snap-group-title { font-weight: 700; }
+.snap-group .snap-group-path, .snap-group .snap-group-count { color: var(--muted); }
+.snap-group .sm-reveal { justify-self: end; font-size: 12px; }
+.snap-where::before { content: '· '; }
+.snap-export-msg { margin: 4px 0 0; }
 .binder .icon.has-snapshots { position: relative; }
 .binder .icon.has-snapshots::after { content: ''; position: absolute; right: -2px; top: -1px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px var(--bg, #fff); }
 .snap-preview { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 10px; font-family: Georgia, serif; max-height: 40vh; overflow: auto; }

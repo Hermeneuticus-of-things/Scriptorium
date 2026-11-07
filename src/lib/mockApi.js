@@ -2,6 +2,7 @@
 // browser. Keeps a demo project in memory so the UI can be tried without Electron.
 import { newNode } from './text.js';
 import { noteTitle } from './researchChat.js';
+import { parseQuery, matchSnapshot } from './snapshotSearch.js';
 
 function demoProject() {
   // A short story with dates, points of view and several characters, so every view
@@ -469,6 +470,40 @@ export function createMockApi() {
       if (!hit) throw new Error(`Snapshot inexistent: ${file}`);
       hit.html = String(html ?? '');
       return true;
+    },
+    // Snapshots Manager: project-wide list (no html), search (title/date/text), mass delete,
+    // export (the demo returns the file name it would have been saved under).
+    async listAllSnapshots(_dir) {
+      return Object.entries(snaps)
+        .filter(([, list]) => list.length)
+        .map(([id, list]) => ({ id, snaps: list.map(({ file, name, date }) => ({ file, name, date })) }));
+    },
+    async searchSnapshots(_dir, query, { regex = false } = {}) {
+      const m = parseQuery(query, regex);
+      const out = [];
+      for (const [id, list] of Object.entries(snaps)) {
+        for (const s of list) {
+          const where = matchSnapshot(s, m);
+          if (where.length) out.push({ id, file: s.file, name: s.name, date: s.date, where });
+        }
+      }
+      return out;
+    },
+    async deleteSnapshots(_dir, items) {
+      let n = 0;
+      for (const it of items || []) {
+        const list = snaps[it && it.id] || [];
+        const before = list.length;
+        snaps[it.id] = list.filter((x) => x.file !== (it && it.file));
+        if (snaps[it.id].length < before) n += 1;
+      }
+      return n;
+    },
+    async exportSnapshot(_dir, id, file, docTitle) {
+      const s = (snaps[id] || []).find((x) => x.file === file);
+      if (!s) throw new Error(`Snapshot inexistent: ${file}`);
+      const safe = (v) => String(v || 'Snapshot').replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'Snapshot';
+      return `${safe(docTitle)} - ${safe(s.name)}.html`;
     },
     // I-EDIT journal of the author's changes (MODIFICARI_AUTOR.jsonl on the desktop).
     async appendAuthorJournal(dir, rows) {

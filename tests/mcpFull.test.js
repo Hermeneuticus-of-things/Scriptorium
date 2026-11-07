@@ -167,6 +167,13 @@ const PRELOAD_COVERAGE = {
   renameSnapshot: 'manage_snapshot',
   snapshotCounts: 'gui: semnul din Binder și managerul de snapshot-uri (list_snapshots per document)',
   updateSnapshotHtml: 'gui: rescrierea html-ului de snapshot-uri existente e doar din trecerea Project Replace (peste MCP, write_document face snapshot înainte)',
+  // P1 #26 Snapshots Manager: funcții interactive ale dialogului (listă pe tot proiectul, căutare,
+  // ștergere în masă cu confirmare, export prin dialog nativ) — peste MCP rămân list_snapshots /
+  // manage_snapshot per document, la nivelul unui singur proiect deschis.
+  listAllSnapshots: 'gui: managerul de snapshot-uri pe tot proiectul (list_snapshots acoperă per document)',
+  searchSnapshots: 'gui: căutarea din managerul de snapshot-uri (nume/text/dată, plain sau regex)',
+  deleteSnapshots: 'gui: ștergerea în masă cere confirmare interactivă (manage_snapshot șterge pe pereche)',
+  exportSnapshot: 'gui: dialogul nativ de salvare pentru exportul unui snapshot (.html/.txt)',
   listAllTemplates: 'list_templates',
   saveAsTemplate: 'gui: scrie în folderul aplicației, nu la o cale dată de client',
   deleteTemplate: 'gui: șterge din folderul aplicației',

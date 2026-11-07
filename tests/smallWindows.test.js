@@ -15,7 +15,6 @@ import { generateNames, parseNameList, customCultures } from '../src/lib/nameGen
 import { isPreposition, tagText } from '../src/lib/pos.js';
 import { matchesClass } from '../src/extensions/LinguisticFocus.js';
 import { createMockApi } from '../src/lib/mockApi.js';
-import { sortManagerRows } from '../src/components/SnapshotManagerDialog.jsx';
 
 const require = createRequire(import.meta.url);
 const history = require('../lib/history.cjs');
@@ -207,12 +206,5 @@ describe('linguistic focus: pronouns and prepositions', () => {
   });
 });
 
-describe('snapshot manager sorting', () => {
-  const rows = [{ title: 'B', count: 1, last: '2026-01-02' }, { title: 'A', count: 3, last: '2026-01-01' }];
-  it('sorts by title, count and last date; null keeps binder order', () => {
-    expect(sortManagerRows(rows, { key: 'title', dir: 'asc' }).map((r) => r.title)).toEqual(['A', 'B']);
-    expect(sortManagerRows(rows, { key: 'count', dir: 'desc' }).map((r) => r.title)).toEqual(['A', 'B']);
-    expect(sortManagerRows(rows, { key: 'last', dir: 'desc' }).map((r) => r.title)).toEqual(['B', 'A']);
-    expect(sortManagerRows(rows, null)).toBe(rows);
-  });
-});
+// Snapshot manager sorting moved to tests/snapshotManagerDialog.test.js (P1 #26: the manager
+// groups by document in binder order; rows sort by date/title — sortManagerRows was removed).
