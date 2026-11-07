@@ -427,10 +427,13 @@ export default function App({ api: apiProp }) {
       if (!t?.closest) return;
       if (t.closest('.inspector')) return; // the inspector's own switch (above)
       if (t.closest('.quickref')) return; // the panels switch themselves (QuickRef.jsx)
+      if (t.closest('.media-view')) return; // ADL T8: the media viewer switches itself (MediaView.jsx)
       const sid = splitSurfaceRef.current;
       if (t.closest('.workspace .pane.second') && sid) { eng.switchFocus(sid); return; }
       const top = eng.top();
-      if ((sid && top === sid) || String(top).startsWith('quickref.')) eng.switchFocus(viewSurfaceRef.current);
+      // ADL T8: the media viewer (image.viewer.*, either pane) hands the focus back too — same
+      // sibling model as the split pane and the Quick Reference panels.
+      if ((sid && top === sid) || String(top).startsWith('quickref.') || String(top).startsWith('image.viewer.')) eng.switchFocus(viewSurfaceRef.current);
     };
     document.addEventListener('focusin', onAct);
     document.addEventListener('mousedown', onAct);
@@ -1255,6 +1258,9 @@ export default function App({ api: apiProp }) {
   const go = async (id, { push = true } = {}) => {
     await flush();
     setScrivList(null);
+    // ADL T8: a user navigation to a media document opens the media viewer — arm its real focus.
+    const target = findNode(project.tree, id);
+    if (target && target.type === 'file' && target.media) mediaFocusArmed.current = true;
     setSelectedId(id);
     setSelectedIds(new Set([id]));
     if (push) {
@@ -1491,6 +1497,7 @@ export default function App({ api: apiProp }) {
   const openBeside = (mediaId) => {
     if (splitId === mediaId) return;
     openSplit(mediaId);
+    mediaFocusArmed.current = true; // ADL T8: a user open — the split viewer takes the real focus
   };
   // Files dropped from the system on the binder are copied into the project and added to Research.
   const MAX_DROP_MB = 200;
@@ -2673,6 +2680,10 @@ export default function App({ api: apiProp }) {
   // created (39796d9 regression, fixed here).
   const splitNode = splitId && project ? findNode(project.tree, splitId) : null;
   const splitFocusArmed = useRef(false);
+  // ADL T8: the media viewer's real focus is armed the same way — by a user open (go() to a media
+  // document, „deschide alături"), never by the project restore (the persisted selection may be a
+  // media file, and the viewer must not steal the focus at boot).
+  const mediaFocusArmed = useRef(false);
   const openSplit = (id) => {
     if (id) splitFocusArmed.current = true; // a user open, not a restore
     setSplitId(id);
@@ -3647,6 +3658,7 @@ export default function App({ api: apiProp }) {
                 onInsertTimestamp={(sec) => insertTimestamp(selected.id, sec)}
                 onAppendNotes={(html) => appendNotes(selected.id, html).catch(report)}
                 onOpenBeside={splitId === selected.id ? null : () => openBeside(selected.id)}
+                focusArmed={mediaFocusArmed}
               />
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type !== 'file' && !selected.children && (
@@ -3818,6 +3830,9 @@ export default function App({ api: apiProp }) {
                   onPatch={(p) => patchMedia(splitNode.id, p)}
                   onInsertTimestamp={(sec) => insertTimestamp(splitNode.id, sec)}
                   onAppendNotes={(html) => appendNotes(splitNode.id, html).catch(report)}
+                  onClose={() => setSplitId(null)}
+                  pane="split"
+                  focusArmed={mediaFocusArmed}
                 />
               ) : (
                 <Editor
