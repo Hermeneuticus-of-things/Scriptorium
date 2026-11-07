@@ -60,6 +60,25 @@ export function runMenuItem(engine, item) {
   return null;
 }
 
+/**
+ * ADL T6 — comanda din meniul NATIV (IPC `menu:command`: electron/main.cjs → preload
+ * (`onMenuCommand`) → receptorul din App.jsx): exact modelul runMenuItem — dispatch ÎNTÂI prin
+ * motorul de focus, cu bubbling din suprafața translucidă activă spre exterior (un dialog
+ * self-managed poate consuma comanda înaintea nucleului); abia când niciun strat nu o consumă
+ * (dispatch → null) cade în fallback-ul istoric din App.jsx (commandList → menuActions).
+ * Comenzi fără id sau fără motor (comanda a sosit înainte de montarea/înregistrarea motorului)
+ * → fallback direct, comportament identic cu cel de dinainte. Returnează suprafața care a
+ * consumat comanda, sau null când a rulat fallback-ul.
+ */
+export function runNativeMenuItem(engine, id, fallback) {
+  if (engine && id) {
+    const via = engine.dispatch(id);
+    if (via) return via;
+  }
+  if (typeof fallback === 'function') fallback();
+  return null;
+}
+
 // ADL §2 "menus list the active surface's commands first" — ordering decision (campaign
 // adl-campaign item 2, T2): the in-app menu bar keeps its fixed APPLICATION/PROJECT/WORKFLOW
 // order (src/lib/menuLayout.js). Dynamic reordering of Fișier/Format entries per active surface

@@ -150,7 +150,7 @@ import { createLocalSpeech } from './lib/localSpeech.js';
 import { createFocusEngine } from './lib/focusEngine.js';
 import { registerDialogSurface, closeTopModal, escapeThroughEngine, dialogSurfaceId } from './lib/focusDialogs.js';
 import { VIEW_SURFACES, surfaceForView, registerViewSurfaces, syncViewSurface } from './lib/focusViews.js';
-import { setDefaultFocusEngine, activeFocusEngine } from './lib/focusMenus.js';
+import { setDefaultFocusEngine, activeFocusEngine, runNativeMenuItem } from './lib/focusMenus.js';
 import { editorSurfaceRegistration } from './lib/focusEditorState.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
@@ -2609,12 +2609,18 @@ export default function App({ api: apiProp }) {
   useEffect(() => {
     if (!api.onMenuCommand) return undefined;
     const offOpen = api.onNativeMenuOpen?.(() => window.dispatchEvent(new Event('pneuma:closeMenus')));
-    const offCmd = api.onMenuCommand((id) => (commandsRef.current[id] ? commandsRef.current[id].run() : menuActionsRef.current[id]?.()));
+    // ADL T6 (§2+§10): comanda aleasă din meniul nativ trece ÎNTÂI prin motorul de focus —
+    // suprafața translucidă activă o poate consuma (ex. un dialog self-managed), iar abia când
+    // niciun strat nu o consumă (dispatch → null) rulează fallback-ul istoric (commandList →
+    // menuActions), exact ca înainte. Dacă motorul nu e încă montat/înregistrat, fallback-ul
+    // direct e comportamentul acceptat (meniul nativ e accesibil doar cu proiectul deschis,
+    // deci în practică motorul e deja pe stivă când comanda sosește).
+    const offCmd = api.onMenuCommand((id) => runNativeMenuItem(focusEngine, id, () => (commandsRef.current[id] ? commandsRef.current[id].run() : menuActionsRef.current[id]?.())));
     return () => {
       offCmd?.();
       offOpen?.();
     };
-  }, [api]);
+  }, [api, focusEngine]);
 
   // --- resizable panels ---
   const startResize = (which) => (e) => {
