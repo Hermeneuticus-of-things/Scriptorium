@@ -85,6 +85,16 @@ const Editor = forwardRef(function Editor(
   const selStyleRef = useRef(onSelectionStyle);
   selStyleRef.current = onSelectionStyle;
   const lastSelStyle = useRef(null);
+  // Whether the caret sits on a paragraph with an identifiable style, reported on transitions
+  // only — App disables/enables the style navigation commands with it.
+  function reportSelStyle(ed) {
+    if (!selStyleRef.current || !ed || ed.isDestroyed) return;
+    const onStyle = hasIdentifiableStyle(ed.state.doc, ed.state.selection.from);
+    if (onStyle !== lastSelStyle.current) {
+      lastSelStyle.current = onStyle;
+      selStyleRef.current(onStyle);
+    }
+  }
   const typewriterRef = useRef(typewriter);
   typewriterRef.current = typewriter;
   const histRef = useRef(null); // { base, groups } recorded for historyKey
@@ -146,7 +156,12 @@ const Editor = forwardRef(function Editor(
         clearTimeout(dirtyTimer.current);
         dirtyTimer.current = setTimeout(() => flushRef.current(), SERIALIZE_DELAY);
       },
-      onFocus: () => onFocus?.(),
+      onFocus: ({ editor: ed }) => {
+        onFocus?.();
+        // The focused editor becomes the commands' target, so its caret style state must be
+        // the reported one (the other pane's last report may say the opposite).
+        reportSelStyle(ed);
+      },
       onBlur: () => flushRef.current(),
       onDestroy: () => flushRef.current(),
       onSelectionUpdate: ({ editor: ed }) => {
@@ -161,13 +176,7 @@ const Editor = forwardRef(function Editor(
         }
         // Caret on a styled paragraph (style navigation commands): report transitions so the
         // menus can disable them while the caret is on an unstyled paragraph.
-        if (selStyleRef.current) {
-          const onStyle = hasIdentifiableStyle(ed.state.doc, ed.state.selection.from);
-          if (onStyle !== lastSelStyle.current) {
-            lastSelStyle.current = onStyle;
-            selStyleRef.current(onStyle);
-          }
-        }
+        reportSelStyle(ed);
         if (!typewriterRef.current) return; // a ref: turning the mode on reaches editors already open
         // Keeps the typing line at the position chosen in Options (Aspect > Editor), 50 % by default.
         if (!typewriterScroll(ed.view)) {
