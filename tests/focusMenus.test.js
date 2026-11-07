@@ -10,7 +10,7 @@ import { createRoot } from 'react-dom/client';
 import { act } from 'react';
 import { createFocusEngine } from '../src/lib/focusEngine.js';
 import { registerDialogSurface, dialogSurfaceId, escapeThroughEngine } from '../src/lib/focusDialogs.js';
-import { menuSurfaceId, registerMenuSurface, runMenuItem, setDefaultFocusEngine, activeFocusEngine } from '../src/lib/focusMenus.js';
+import { menuSurfaceId, registerMenuSurface, runMenuItem, runNativeMenuItem, setDefaultFocusEngine, activeFocusEngine } from '../src/lib/focusMenus.js';
 import Menu from '../src/components/Menu.jsx';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -132,6 +132,43 @@ describe('runMenuItem: comanda aleasă din meniu ajunge la suprafața activă', 
     expect(handled).toEqual(['fallback', 'fallback']);
     expect(runMenuItem(null, { id: 'exportFiles', action: fallback })).toBe(null);
     expect(handled).toEqual(['fallback', 'fallback', 'fallback']);
+  });
+});
+
+// ADL T6 (audit item 6): comanda din meniul NATIV (IPC `menu:command`) — modelul exact al
+// runMenuItem („dispatch întâi, fallback doar la null”), aplicat receptorului din App.jsx:
+// motorul bubblează din suprafața translucidă activă spre exterior; doar când niciun strat nu
+// consumă comanda cade în fallback-ul istoric (commandList / menuActions).
+describe('runNativeMenuItem: comanda nativă (menu:command) trece ÎNTÂI prin motor', () => {
+  it('suprafața activă consumă comanda → commandList NU rulează (STOP)', () => {
+    const handled = [];
+    const e = engineWithCore({ commands: { exportFiles: () => handled.push('core') } });
+    // Strat translucid self-managed (ex. dialog) care deține comanda — nu registerDialogSurface
+    // (acela înregistrează doar close/escape), ci înregistrare directă, ca în testul runMenuItem.
+    e.registerFocusableSurface({ id: 'dialog.compile', modal: true, commands: { exportFiles: () => handled.push('compile') } });
+    e.push('dialog.compile');
+    const fallback = () => handled.push('commandList');
+    expect(runNativeMenuItem(e, 'exportFiles', fallback)).toBe('dialog.compile');
+    expect(handled).toEqual(['compile']); // nici nucleul, nici fallback-ul nu rulează
+  });
+
+  it('nimeni nu consumă (dispatch → null) → fallback istoric (commandList) rulează', () => {
+    const handled = [];
+    const e = engineWithCore(); // nucleul nu deține comanda
+    const fallback = () => handled.push('commandList');
+    expect(runNativeMenuItem(e, 'exportFiles', fallback)).toBe(null);
+    expect(handled).toEqual(['commandList']);
+  });
+
+  it('fără motor sau fără id → fallback direct, ca înainte', () => {
+    const handled = [];
+    const e = engineWithCore({ commands: { exportFiles: () => handled.push('core') } });
+    const fallback = () => handled.push('commandList');
+    expect(runNativeMenuItem(null, 'exportFiles', fallback)).toBe(null);
+    expect(handled).toEqual(['commandList']);
+    expect(runNativeMenuItem(e, undefined, fallback)).toBe(null);
+    expect(handled).toEqual(['commandList', 'commandList']);
+    expect(handled).not.toContain('core'); // fără id, motorul nu e întrebat deloc
   });
 });
 
