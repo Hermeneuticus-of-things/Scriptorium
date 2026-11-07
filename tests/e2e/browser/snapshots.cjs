@@ -74,14 +74,21 @@ const SHOTS = process.env.SNAP_SHOTS || '';
   await page.waitForTimeout(200);
   check('delete removes the snapshot', (await pane.locator('li').count()) === 1);
 
-  // manager
+  // manager (P1 #26: grupat pe document, cu binder path, căutare, multi-select)
   await menuPick(page, 'Documente', 'Snapshot-uri', 'Managerul de snapshot-uri');
   const mgr = page.locator('.modal.snap-manager');
   await mgr.waitFor({ timeout: 3000 });
-  check('manager lists the document', (await mgr.locator('.snap-manager-docs li', { hasText: 'Începutul' }).count()) === 1);
-  check('manager shows its snapshots', (await mgr.locator('.snapshots li', { hasText: 'Versiunea A' }).count()) === 1);
+  check('manager lists the document', (await mgr.locator('li.snap-group', { hasText: 'Începutul' }).count()) === 1);
+  check('manager shows the binder path', (await mgr.locator('li.snap-group .snap-group-path', { hasText: 'Partea întâi' }).count()) >= 1);
+  check('manager shows its snapshots', (await mgr.locator('li[role="option"]', { hasText: 'Versiunea A' }).count()) === 1);
+  await mgr.locator('input.snap-search').fill('Versiunea');
+  await page.waitForTimeout(450);
+  check('manager search filters', (await mgr.locator('li[role="option"]').count()) === 1);
+  await mgr.locator('input.snap-search').fill('');
+  await page.waitForTimeout(450);
+  check('manager clears the search', (await mgr.locator('li[role="option"]').count()) >= 1);
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/snap-manager.png` });
-  await mgr.locator('.actions button').click();
+  await mgr.locator('.actions button', { hasText: 'Închide' }).click();
 
   await page.locator('.binder-row', { hasText: 'Partea întâi' }).first().click();
   await page.waitForTimeout(250);

@@ -2,13 +2,10 @@
 // roll back, inline rename, sortable Date | Title list. Used by the Inspector and the Snapshots Manager.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { t as tr, uiLocale } from '../lib/i18n.js';
-import { htmlToText } from '../lib/text.js';
 import { sanitizeHtml } from '../lib/sanitize.js';
-import { diffText, DIFF_LEVELS } from '../lib/snapshotDiff.js';
-import { sortSnapshots, toggleSort, selectSnapshot, changeStarts, stepChange } from '../lib/snapshotList.js';
+import { sortSnapshots, toggleSort, selectSnapshot } from '../lib/snapshotList.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
-
-const LEVELS_COARSE_FIRST = [...DIFF_LEVELS].reverse(); // paragraf, frază, sintagmă, cuvânt
+import SnapshotDiff from './SnapshotDiff.jsx';
 
 export default function SnapshotsPane({ api, dir, node, html, canRestore = true, flush, onRestore, onError = () => {}, onChanged }) {
   const [snaps, setSnaps] = useState([]);
@@ -22,7 +19,6 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
     renameRef.current = r;
     setRenamingState(r);
   };
-  const [current, setCurrent] = useState(-1);
   const diffRef = useRef(null);
   const listRef = useRef(null);
   const previewRef = useRef(null);
@@ -70,31 +66,7 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
 
   // Two snapshots: older → newer. One: snapshot → current text.
   const pair = chosen.length === 2 ? [...chosen].sort((a, b) => Date.parse(a.date) - Date.parse(b.date)) : null;
-  const diff = useMemo(() => {
-    if (!comparing || !chosen.length) return null;
-    const [a, b] = pair ? [pair[0].html, pair[1].html] : [chosen[0].html, html];
-    return diffText(htmlToText(a), htmlToText(b), diffLevel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [comparing, selected.join('|'), snaps, html, diffLevel]);
-  const starts = useMemo(() => (diff ? changeStarts(diff) : []), [diff]);
-  useEffect(() => setCurrent(-1), [diff]);
-  // part index → change number (for highlighting the current change)
-  const groupOf = useMemo(() => {
-    const g = [];
-    let n = -1;
-    (diff || []).forEach((p, i) => {
-      if (starts.includes(i)) n += 1;
-      g[i] = p.added || p.removed ? n : -1;
-    });
-    return g;
-  }, [diff, starts]);
-
-  const jump = (delta) => {
-    const next = stepChange(starts.length, current, delta);
-    setCurrent(next);
-    if (next < 0) return;
-    setTimeout(() => diffRef.current?.querySelector(`[data-change="${next}"]`)?.scrollIntoView?.({ block: 'nearest' }), 0);
-  };
+  const diffA = comparing && chosen.length ? (pair ? pair[0] : chosen[0]) : null;
 
   const take = async () => {
     const name = await uiPrompt(tr('ui.inspector.nume_snapshot'), tr('ui.inspector.inainte_de_revizie_x', { v0: new Date().toLocaleDateString(uiLocale()) }));
@@ -212,30 +184,16 @@ export default function SnapshotsPane({ api, dir, node, html, canRestore = true,
       {!comparing && one && <div ref={previewRef} className="snap-preview prose" aria-readonly="true" dangerouslySetInnerHTML={{ __html: sanitizeHtml(one.html) }} />}
       {!comparing && !one && snaps.length > 0 && <p className="muted small">{tr('ui.snap.select_hint')}</p>}
       {comparing && !chosen.length && snaps.length > 0 && <p className="muted small">{tr('ui.snap.select_hint')}</p>}
-      {diff && (
-        <div className="snap-compare-pane">
-          <p className="muted small">
-            <del>{tr('ui.inspector.sters')}</del> {tr('ui.inspector.fata_de')}{pair ? pair[0].name : chosen[0].name}” · <ins>{tr('ui.inspector.adaugat')}</ins> {tr('ui.inspector.in')} {pair ? `„${pair[1].name}”` : tr('ui.inspector.textul_curent')}
-          </p>
-          <div className="snap-nav">
-            <label className="diff-level">
-              {tr('ui.inspector.diffLevel')}{' '}
-              <select value={diffLevel} onChange={(e) => setDiffLevel(e.target.value)}>
-                {LEVELS_COARSE_FIRST.map((l) => <option key={l} value={l}>{tr(`ui.inspector.diff_${l}`)}</option>)}
-              </select>
-            </label>
-            <button className="snap-prev" onClick={() => jump(-1)} disabled={!starts.length} aria-label={tr('ui.snap.prev_change')} title={tr('ui.snap.prev_change')}>◀</button>
-            <button className="snap-next" onClick={() => jump(1)} disabled={!starts.length} aria-label={tr('ui.snap.next_change')} title={tr('ui.snap.next_change')}>▶</button>
-            <span className="snap-count muted small" aria-live="polite">{starts.length ? `${current < 0 ? '–' : current + 1} / ${starts.length}` : tr('ui.snap.no_changes')}</span>
-          </div>
-          <div className="snap-preview diff" ref={diffRef}>
-            {diff.map((part, i) => {
-              const g = groupOf[i];
-              const props = { key: i, className: g >= 0 && g === current ? 'current' : undefined, 'data-change': starts.includes(i) ? g : undefined };
-              return part.added ? <ins {...props}>{part.value}</ins> : part.removed ? <del {...props}>{part.value}</del> : <span key={i}>{part.value}</span>;
-            })}
-          </div>
-        </div>
+      {diffA && (
+        <SnapshotDiff
+          aHtml={diffA.html}
+          bHtml={pair ? pair[1].html : html}
+          aName={diffA.name}
+          bLabel={pair ? `„${pair[1].name}”` : tr('ui.inspector.textul_curent')}
+          diffLevel={diffLevel}
+          onDiffLevel={setDiffLevel}
+          boxRef={diffRef}
+        />
       )}
     </div>
   );

@@ -25,6 +25,7 @@ const { listTemplates } = require('../lib/templates.cjs');
 const { fileToHtml, splitHtml } = require('../lib/docxImport.cjs');
 const bundle = require('../lib/bundle.cjs');
 const projectWatch = require('../lib/projectWatch.cjs');
+const snapshotSearch = require('../lib/snapshotSearch.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
 // The data folder name stays "Scribner" after the rename to "Pneuma Sofer" so existing users keep
@@ -1320,6 +1321,41 @@ handle('snap:rename', (e, dir, id, file, name) => {
 handle('snap:updateHtml', (_e, dir, id, file, html) => {
   assertOpened(dir);
   return store.updateSnapshotHtml(dir, id, file, html);
+});
+
+// Snapshots Manager (the whole project): list without html, search in titles/dates/text,
+// mass delete of chosen pairs, export of one snapshot through the native save dialog.
+handle('snap:listAll', (_e, dir) => {
+  assertOpened(dir);
+  return store.listAllSnapshots(dir);
+});
+handle('snap:search', (_e, dir, query, opts) => {
+  assertOpened(dir);
+  return snapshotSearch.searchSnapshots(dir, String(query || ''), opts || {});
+});
+handle('snap:deleteMany', (e, dir, items) => {
+  assertOpened(dir);
+  assertOwner(e.sender, dir);
+  return store.deleteSnapshots(dir, items);
+});
+handle('snap:export', async (e, dir, id, file, docTitle) => {
+  assertOpened(dir);
+  const data = JSON.parse(fs.readFileSync(snapPath(dir, id, file), 'utf8')); // snapPath validates both
+  const safe = (v) => String(v || '').replace(/[\\/:*?"<>|\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Snapshot';
+  const res = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Exportă snapshot-ul',
+    defaultPath: `${safe(docTitle)} - ${safe(data.name)}.html`,
+    filters: [{ name: 'Pagină HTML', extensions: ['html'] }, { name: 'Text simplu', extensions: ['txt'] }],
+  });
+  if (res.canceled || !res.filePath) return null;
+  // The content follows the chosen extension: .txt gets plain text, anything else gets a
+  // minimal HTML page (snapshot html is sanitized when the snapshot is taken).
+  const body = /\.txt$/i.test(res.filePath)
+    ? snapshotSearch.toSearchText(data.html)
+    : `<!doctype html>\n<html lang="ro">\n<head>\n<meta charset="utf-8">\n<title>${safe(data.name)}</title>\n</head>\n<body>\n${String(data.html ?? '')}\n</body>\n</html>\n`;
+  fs.writeFileSync(res.filePath, body, 'utf8');
+  shell.showItemInFolder(res.filePath);
+  return res.filePath;
 });
 
 // Personal spelling dictionary (Options → Corrections).

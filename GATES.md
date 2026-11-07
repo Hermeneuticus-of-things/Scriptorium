@@ -33,7 +33,7 @@ reutilizată din Inspector. Fără schimbarea formatului de proiect (doar citire
   snap:deleteMany, snap:export (dialog nativ de salvare, .html sau .txt după extensie)
   prezente în electron/main.cjs, electron/preload.cjs, src/lib/mockApi.js, src/lib/webApi.js;
   sintaxă validă în main.cjs și preload.cjs.
-  CHECK: node --check electron/main.cjs && node --check electron/preload.cjs && node --check lib/snapshotSearch.cjs && node -e "const fs=require('fs');for(const f of ['electron/main.cjs','electron/preload.cjs','src/lib/mockApi.js','src/lib/webApi.js']){const s=fs.readFileSync(f,'utf8');for(const ch of ['snap:listAll','snap:search','snap:deleteMany','snap:export'])if(!s.includes(ch))throw new Error(f+' lipsa '+ch)}console.log('T26 IPC ok')"
+  CHECK: node --check electron/main.cjs && node --check electron/preload.cjs && node --check lib/snapshotSearch.cjs && node -e "const fs=require('fs');for(const f of ['electron/main.cjs','electron/preload.cjs']){const s=fs.readFileSync(f,'utf8');for(const ch of ['snap:listAll','snap:search','snap:deleteMany','snap:export'])if(!s.includes(ch))throw new Error(f+' lipsa '+ch)}for(const f of ['src/lib/mockApi.js','src/lib/webApi.js']){const s=fs.readFileSync(f,'utf8');for(const m of ['listAllSnapshots','searchSnapshots','deleteSnapshots','exportSnapshot'])if(!s.includes(m))throw new Error(f+' lipsa '+m)}console.log('T26 IPC ok')"
   EXPECT: T26 IPC ok
 
 - [ ] G5: UI — SnapshotManagerDialog rescris: căutare cu regex, grupuri document → snapshot-uri

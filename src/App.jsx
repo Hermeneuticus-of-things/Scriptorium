@@ -4314,14 +4314,6 @@ export default function App({ api: apiProp }) {
           api={api}
           dir={dir}
           project={project}
-          counts={snapCounts}
-          docs={docs}
-          canRestore={(id) => !findNode(project.tree, id)?.locked && !team.lockOf(id)}
-          flush={flush}
-          onRestore={(id, html) => {
-            writeDocNow(id, html);
-            setEditorHtml(id, html);
-          }}
           onChanged={refreshSnapCounts}
           onOpen={(id) => go(id)}
           onReveal={(id) => {
