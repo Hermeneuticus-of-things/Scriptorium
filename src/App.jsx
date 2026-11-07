@@ -154,6 +154,7 @@ import { setDefaultFocusEngine, activeFocusEngine, runNativeMenuItem } from './l
 import { registerSplitSurface, splitSurfaceId } from './lib/focusPanes.js';
 import { editorSurfaceRegistration } from './lib/focusEditorState.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
+import { buildTocText } from './lib/toc.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
 import TeamDialog from './components/TeamDialog.jsx';
@@ -3004,10 +3005,23 @@ export default function App({ api: apiProp }) {
   const favorites = flatten(project.tree).filter((n) => n.favorite && !inTrash(n.id));
   const canContain = selected && !selected.root && selected.type !== 'file';
 
+  // „Copy Documents as ToC" (Scrivener §22.2, P1 #28): selecția din binder ca cuprins static
+  // cu tab-uri, gata de lipit în draft — dosar selectat aduce întregul subarbore, document
+  // text doar pe el; titlurile documentelor text poartă `<$p>`, completat la compilare.
+  const copyAsToCCommand = async () => {
+    const ids = selectionList();
+    if (!ids.length) return;
+    const text = buildTocText(project.tree, { ids });
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    setToast(tr('ui.app.toc_copiat', { n: text.split('\n').length }));
+  };
+
   const documentMenu = [
     { label: tr('cmd.findDoc'), shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
     { label: tr('cmd.splitTitle'), shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
     { label: tr('cmd.merge'), shortcut: 'Ctrl+Shift+M', action: mergeSelection },
+    { label: tr('cmd.copyAsToC'), action: () => copyAsToCCommand().catch(report), disabled: !selectedId },
     { label: tr('ui.app.duplica_cu_sub_documente'), shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
     { label: tr('ui.app.duplica_doar_elementul'), action: () => duplicateSelection(false) },
     '-',
@@ -3138,6 +3152,7 @@ export default function App({ api: apiProp }) {
     ['project', 'team', tr('cmd.team'), () => setDialog('team'), !api.teamFiles],
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],
+    ['document', 'copyAsToC', tr('cmd.copyAsToC'), () => copyAsToCCommand().catch(report), !selectedId],
     ['document', 'duplicate', tr('cmd.duplicate'), () => duplicateSelection(true)],
     ['document', 'snapshot', tr('cmd.snapshot'), async () => {
       if (!selected || selected.root) return;

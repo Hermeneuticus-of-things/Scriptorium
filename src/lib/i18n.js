@@ -122,6 +122,7 @@ const ro = {
   'cmd.stripNotationDoc': 'Elimină notațiile din document…', 'cmd.stripNotationProject': 'Elimină notațiile din tot proiectul…',
   'cmd.convertAnnotToComment': 'Convertește adnotările inline în comentarii', 'cmd.convertCommentToAnnot': 'Convertește comentariile în adnotări inline',
   'cmd.convertFootnoteToLinked': 'Convertește notele de subsol inline în note legate', 'cmd.convertLinkedToFootnote': 'Convertește notele legate în note de subsol inline',
+  'cmd.copyAsToC': 'Copiază documentele ca cuprins',
   'cmd.styles': 'Stiluri…', 'cmd.irep': 'I-REP / I-EDIT', 'cmd.ai': 'Asistent AI', 'cmd.settings': 'Setări program…',
   'cmd.shortcuts': 'Scurtături de tastatură…', 'cmd.layouts': 'Aranjamente salvate…', 'cmd.layout': 'Layout: {name}',
   // buttons
@@ -356,6 +357,7 @@ const en = {
   'cmd.stripNotationDoc': 'Remove notation from document…', 'cmd.stripNotationProject': 'Remove notation from whole project…',
   'cmd.convertAnnotToComment': 'Convert inline annotations to comments', 'cmd.convertCommentToAnnot': 'Convert comments to inline annotations',
   'cmd.convertFootnoteToLinked': 'Convert inline footnotes to linked footnotes', 'cmd.convertLinkedToFootnote': 'Convert linked footnotes to inline footnotes',
+  'cmd.copyAsToC': 'Copy Documents as ToC',
   'cmd.styles': 'Styles…', 'cmd.irep': 'I-REP / I-EDIT', 'cmd.ai': 'AI assistant', 'cmd.settings': 'Program settings…',
   'cmd.shortcuts': 'Keyboard shortcuts…', 'cmd.layouts': 'Saved layouts…', 'cmd.layout': 'Layout: {name}',
   'btn.save': 'Save', 'btn.cancel': 'Cancel', 'btn.ok': 'OK', 'btn.close': 'Close', 'btn.choose': 'Choose…',
