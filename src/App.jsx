@@ -2655,6 +2655,49 @@ export default function App({ api: apiProp }) {
     window.addEventListener('mouseup', up);
   };
 
+  // ADL T4 §2: the split editor pane is a surface of the core function at document level —
+  // `editor.document.<id>:split` registered and pushed for as long as the pane exists
+  // (view === 'editor'), popped + unregistered on every close path (button, command, Escape
+  // through the engine, unmount). Opening it by hand takes the real focus into the pane (the
+  // armed flag below, set by openSplit); when it comes back with the project (splitId persisted
+  // in the UI state) or after a view switch, the focus stays where the user has it.
+  // These hooks MUST stay above the `!settings` / `!project` early returns: a hook that only runs
+  // once the project exists makes the home-screen render run fewer hooks than the next one —
+  // React #310, „Rendered more hooks than during the previous render", right when a project is
+  // created (39796d9 regression, fixed here).
+  const splitNode = splitId && project ? findNode(project.tree, splitId) : null;
+  const splitFocusArmed = useRef(false);
+  const openSplit = (id) => {
+    if (id) splitFocusArmed.current = true; // a user open, not a restore
+    setSplitId(id);
+  };
+  // Real focus into the split pane's editor: the handle may still be mounting (TipTap), so the
+  // same retry pattern as focusEditor, preferring the `split:` key the pane registers under.
+  const focusSplitEditor = (id, tries = 10) => {
+    const h = editorRefs.current.get(`split:${id}`) || editorRefs.current.get(id);
+    if (h?.editor && !h.editor.isDestroyed) { h.focus(); return; }
+    if (tries > 0) setTimeout(() => focusSplitEditor(id, tries - 1), 50);
+  };
+  const splitSurface = splitNode && view === 'editor' ? splitSurfaceId(splitNode.id) : null;
+  useEffect(() => {
+    splitSurfaceRef.current = splitSurface;
+    if (!splitSurface) {
+      // The pane went away (closed, view switched, document deleted): the view may have changed
+      // under it — re-sync the view surface (syncViewSurface refused while the pane owned the top).
+      syncViewSurface(focusEngine, surfaceForView(view));
+      return undefined;
+    }
+    return registerSplitSurface(focusEngine, splitNode.id, {
+      close: () => setSplitId(null),
+      focus: () => {
+        if (!splitFocusArmed.current) return;
+        splitFocusArmed.current = false;
+        focusSplitEditor(splitNode.id);
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [splitSurface, focusEngine]);
+
   if (!settings) return <div className="loading">{tr('ui.app.se_incarca')}</div>;
 
   if (!project) {
@@ -2737,44 +2780,6 @@ export default function App({ api: apiProp }) {
     setRenameId(folder.id);
   };
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
-  const splitNode = splitId ? findNode(project.tree, splitId) : null;
-  // ADL T4 §2: the split editor pane is a surface of the core function at document level —
-  // `editor.document.<id>:split` registered and pushed for as long as the pane exists
-  // (view === 'editor'), popped + unregistered on every close path (button, command, Escape
-  // through the engine, unmount). Opening it by hand takes the real focus into the pane (the
-  // armed flag below, set by openSplit); when it comes back with the project (splitId persisted
-  // in the UI state) or after a view switch, the focus stays where the user has it.
-  const splitFocusArmed = useRef(false);
-  const openSplit = (id) => {
-    if (id) splitFocusArmed.current = true; // a user open, not a restore
-    setSplitId(id);
-  };
-  // Real focus into the split pane's editor: the handle may still be mounting (TipTap), so the
-  // same retry pattern as focusEditor, preferring the `split:` key the pane registers under.
-  const focusSplitEditor = (id, tries = 10) => {
-    const h = editorRefs.current.get(`split:${id}`) || editorRefs.current.get(id);
-    if (h?.editor && !h.editor.isDestroyed) { h.focus(); return; }
-    if (tries > 0) setTimeout(() => focusSplitEditor(id, tries - 1), 50);
-  };
-  const splitSurface = splitNode && view === 'editor' ? splitSurfaceId(splitNode.id) : null;
-  useEffect(() => {
-    splitSurfaceRef.current = splitSurface;
-    if (!splitSurface) {
-      // The pane went away (closed, view switched, document deleted): the view may have changed
-      // under it — re-sync the view surface (syncViewSurface refused while the pane owned the top).
-      syncViewSurface(focusEngine, surfaceForView(view));
-      return undefined;
-    }
-    return registerSplitSurface(focusEngine, splitNode.id, {
-      close: () => setSplitId(null),
-      focus: () => {
-        if (!splitFocusArmed.current) return;
-        splitFocusArmed.current = false;
-        focusSplitEditor(splitNode.id);
-      },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [splitSurface, focusEngine]);
   const copyNode = copyholder ? findNode(project.tree, copyholder.id) : null;
   const registerRef = (id, r) => {
     if (r) editorRefs.current.set(id, r);
