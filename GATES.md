@@ -1,75 +1,78 @@
-# Gates: ADL T30 — Print Settings: fișe index + outline (P1 #30)
+# Gates: ADL T9 — migrarea dimensiunilor pe token-e (itemii 9–13)
 
-OWNS: lib/printFormats.cjs, lib/printSetup.cjs, electron/ioHandlers.cjs,
-src/components/PageSetupDialog.jsx, src/components/PrintPreviewDialog.jsx,
-src/lib/i18n-ui.js, tests/printFormats.test.js, tests/pageSetup.test.js,
-tests/pageSetupDialogT30.test.js
+OWNS: src/styles.css, tests/adlTokens.test.js, GATES.md
 
-Scope: paritate cu Scrivener 3 §26.1.1–26.3 (P1 #30, docs/PARITY-AUDIT-NEXT-CHAPTERS.md):
-Page Setup (print) poate imprima documentele ca **fișe index** (grilă de carduri — titlu sus,
-corp = synopsis/fallback text, culoarea etichetei, cutting guides, 2 coloane × N rânduri per
-pagină, corpul trunchiat la ce încap) și ca **outline** (listă ierarhică indentată pe structura
-binder: titlu bold + synopsis + număr de cuvinte). Formatul ales („manuscris | fișe index |
-schiță”) e un dropdown în Page Setup, persistat în pageSetup (project.pageSetup +
-userData/page-setup.json — aceeași normalizare; format de proiect NEATINS structural, cheie
-aditivă). HTML-ul celor două formate e generat de modulul pur `lib/printFormats.cjs` (CSS
-inline, document complet), apoi trece prin același pipeline printSetup.applyToHtml (page box,
-antet/subsol) ca manuscrisul — preview și print cad la fix. Ledger-ul anterior (T28, verificat
-complet) rămâne în istoricul git (`git show HEAD:GATES.md`); aici doar campania T30, ca să nu
-existe ID-uri dublate.
+Scope: ADL §4 + §11 (docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md; itemii 9–13 din
+adl-campaign.md): control sizes 24/28/32, toolbar 32–40 + pointer target ≥32, spacing
+4/8/12, icons 16/20, tip UI 12–14, radius 4–8 (token-e), padding control 4–8. Perimetrul
+declarat: **src/styles.css** (audit + migrare + token-e în `:root`). Celelalte fișiere CSS
+(ai, behaviour, editor-extra, panels-extra, appearance, script, help, component dialogs,
+smallWindows, scrivener-theme) — doar auditate, enumerate în raport ca urmatoare; NU migrate
+în T9 (risc de conflict cu worktree-urile paralele ale aceleiași campanii).
 
-- [x] G1: Modulul pur lib/printFormats.cjs — indexCardsHtml + outlineHtml + formatHtml(dispatch):
-  EVIDENCE: exit=0; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t30; path=a68386b800d3/59 entries; EXPECT=matched; output-sha256=035ba0ad17b4dbb7d46784fae353911ef1993d31e10e5bc9edbca23aea98294b; output-bytes=4553
-  din tree + readDoc + opțiuni produce document HTML COMPLET (doctype…</html>) cu CSS inline;
-  fișe: text docs din Draft (folderele se expandează la descendenții text), card = titlu +
-  corp (synopsis, fallback = începutul textului), culoarea etichetei ca bordură superioară,
-  grilă de 2 coloane cu carduri break-inside:avoid și înălțime fixă (overflow hidden =
-  trunchiere), cutting guides (borduriă întreruptă), opțiuni cardWidthCm/cardHeightCm/cutLines;
-  outline: ierarhie binder cu indentare pe adâncime, titlu bold, synopsis dedesubt, număr de
-  cuvinte per document (opțional counts); ids filtrează (folderele se expandează la fișe;
-  la outline păstrează strămoșii ca context); formatHtml cu setup.format necunoscut/„manuscris”
-  → null; escapeHtml pe toate texte.
-  CHECK: npx vitest run tests/printFormats.test.js --reporter=json
+Decizii de încadrare (audit complet în tests/adlTokens.test.js — allowlist cu motiv per valoare):
+- Token-e noi: `--ctl-sm/md/lg` 24/28/32, `--icon-sm/md` 16/20, `--sp-1/2/3` 4/8/12,
+  `--radius` 6, `--radius-lg` 8, `--font-ui-sm` 12, `--font-ui` 13, `--font-ui-md` 14.
+- Defect PRE-EXISTENT găsit la audit, NE-reparat aici (arenă diferită — layout bară modernă):
+  la `data-ui='modern'` menubarul colapsează peste titlul proiectului (`.menubar` shrink+min-width:0,
+  copii neshrinkabili — la baseline ~207px suprapunere; T9 adaugă ~40px presiune prin controale
+  mai late → ~249px). Tema implicită e classic (neafectată). De rezolvat într-o campanie dedicată
+  barei moderne (wrap/scroll/overflow-menu).
+- Rămân (documentate în allowlist): lățimile de layout (binder 260, inspector 300, modale,
+  panouri), padding-urile de suprafață (pagini, dialoguri, panouri, bare — orizontal), indicatoarele
+  (puncte 5–12px, metre, bare de grafic), pill-urile/stadioanele (radius 10–14 pe înălțime de pastile,
+  999px), glifele-în-text (badge 11, mini-title 13, mini-clip 12), tipul de afișare (home h1 42,
+  stats 22, tile glyph 28), etichetele de grafic 9/10px, conținutul (doc-title 15, quickref 15,
+  editor 18, --editor-font-size),-thumbnailurile-preview (tpl-icon 36/32, cd-layout-thumb 46).
+- 4px→6px la radius: card/page/tile — subtil, unifică pe 2 token-uri (6/8).
+- Gap 6px: 8 între controale, 4 în interiorul compozitelor (label+input, chip, titlu+meta);
+  10px: 8 (liste de controale) / 12 (secțiuni de panou); 14/16/24 → 12.
+- Toolbar (header + format bar): padding-y 4px + controale min-height 32 → fâșie 40px
+  (testul e2e topbar-layout cere <58 și un singur rând — rămâne în limite).
+- Pointer target 32: butoanele din toolbar/menubar/seg, format-bar, binder-tools, modal-x
+  (30→32), mini-mic (34→32); rândurile dense secundare (pane-head, statusbar, snap-toolbar,
+  find-bar, comp-bar) primesc 24/28 — excepție documentată (context dens, țintă vecină).
+
+- [x] G1: Token-ele ADL există în `:root` (src/styles.css): --ctl-sm/md/lg, --icon-sm/md,
+  EVIDENCE: automatic-evidence=v1; definition-sha256=0dff0d85d88bc2285390619b587b9ad99331df0dddfc49b1c339b1eddb5687e6; exit=0; EXPECT=matched; output-sha256=8fe875b66cff3e8f27d72af25617e80db09042365dc93d3f0428bec54060a88e; output-bytes=10; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  --sp-1/2/3, --radius, --radius-lg, --font-ui-sm/--font-ui/--font-ui-md cu valorile scalei.
+  CHECK: node -e "const s=require('fs').readFileSync('src/styles.css','utf8');const t=['--ctl-sm: 24px','--ctl-md: 28px','--ctl-lg: 32px','--icon-sm: 16px','--icon-md: 20px','--sp-1: 4px','--sp-2: 8px','--sp-3: 12px','--radius: 6px','--radius-lg: 8px','--font-ui-sm: 12px','--font-ui: 13px','--font-ui-md: 14px'];const miss=t.filter(x=>!s.includes(x));if(miss.length){console.error('MISSING '+miss.join(', '));process.exit(1)}console.log('TOKENS OK')"
+  EXPECT: /TOKENS OK/
+
+- [x] G2: Testul de conformitate executabil (tests/adlTokens.test.js) codifică auditul: fără
+  EVIDENCE: automatic-evidence=v1; definition-sha256=ea47fabf2b386c026ffbece8f12027683f2ec84782b2da17cf28bfc61c432c52; exit=0; EXPECT=matched; output-sha256=d40927a91cc2b8e665156ca35058c314439f5f6cecae756f622fc10b1988cfaf; output-bytes=8806; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  valori off-scale în styles.css în afara allowlist-ului documentat (heights/widths de
+  control, gap, radius, font-size UI, iconițe) și fără `transition: all`.
+  CHECK: npx vitest run tests/adlTokens.test.js --reporter=json
   EXPECT: /"numFailedTests":0,"numPendingTests":0/
 
-- [x] G2: pageSetup.format + dimensiuni card în normalizare — format: 'manuscript'|'indexCards'|
-  EVIDENCE: exit=0; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t30; path=a68386b800d3/59 entries; EXPECT=matched; output-sha256=5a133dbcfffe935fcc73ae20d270b1b909f8431a7bb1506f13272731400fbac8; output-bytes=3154
-  'outline' (implicit 'manuscript', valoare invalidă → 'manuscript'), cardWidthCm/cardHeightCm
-  clamp 5..30 (default 10/15); DEFAULT_PAGE_SETUP actualizat și în PageSetupDialog.jsx;
-  persistența existentă (api.setPageSetup → userData/page-setup.json + onSave →
-  project.pageSetup) nu se schimbă structural — doar chei aditive.
-  CHECK: npx vitest run tests/pageSetup.test.js --reporter=json
-  EXPECT: /"numFailedTests":0,"numPendingTests":0/
-
-- [x] G3: Pipeline-ul print folosește formatul — printHtml din electron/ioHandlers.cjs ramifică
-  EVIDENCE: exit=0; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t30; path=a68386b800d3/59 entries; EXPECT=matched; output-sha256=92476c160c3e3edcde8b8f2dbca7c99ec158d198bade17fd9cfd097077e694cc; output-bytes=7213
-  după setup.format: indexCards/outline → formatHtml + printSetup.applyToHtml (același page box,
-  antet/subsol, opțiuni printToPDF/print), manuscris → comportamentul vechi neatins; preview
-  (io:printPreview) și print (io:printDocuments) cad pe aceeași funcție.
-  CHECK: npx vitest run tests/printFormats.test.js tests/pageSetup.test.js --reporter=json
-  EXPECT: /"numFailedTests":0,"numPendingTests":0/
-
-- [x] G4: Selectorul în Page Setup + preview — dropdown „Format” (data-testid="print-format")
-  EVIDENCE: exit=0; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t30; path=a68386b800d3/59 entries; EXPECT=matched; output-sha256=5ae48878685250a33cbac75107b0e3b5c95ed9ffc8e7ff75177c5dcd39e9ab0b; output-bytes=3762
-  cu Manuscris | Fișe index | Schiță (outline), dimensiunile cardului vizibile doar la Fișe
-  index, salvat prin fluxul existent (api.setPageSetup + onSave); PrintPreviewDialog arată
-  eticheta formatului din setup-ul primit; i18n ro/en pentru toate cheile noi (paritatea cheilor
-  e garantată de tests/i18n.test.js); fără butoane primary noi.
-  CHECK: npx vitest run tests/pageSetupDialogT30.test.js tests/i18n.test.js --reporter=json
-  EXPECT: /"numFailedTests":0,"numPendingTests":0/
-
-- [x] G5: Fără regresii — întreaga suită vitest verde (0 eșuate; cele 4 skip existente înainte
-  EVIDENCE: exit=0; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t30; path=a68386b800d3/59 entries; EXPECT=matched; output-sha256=cde6e80ff645af04f245874eded011e50022d8648d16819719e48b2318a4dc80; output-bytes=622895
-  de campanie rămân singurele pending).
+- [x] G3: Fără regresii — întreaga suită vitest verde (4 skip preexistente rămân singurele pending).
   CHECK: npx vitest run --reporter=json
-  EXPECT: /"numFailedTests":0,"numPendingTests":4,"numTodoTests":0/
+  EXPECT: /"numFailedTests":0,"numPendingTests":4/
+  EVIDENCE: automatic-evidence=v1; definition-sha256=444d343f04e84f4242df4e5dec428820e0ed92c3adde6d13f329308b243f59d3; exit=0; EXPECT=matched; output-sha256=9e44d677882e809580f78b609d5a84911b6be75a71e4cc9ae645b727813c21c2; output-bytes=630997; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
 
-- [x] G6: Build-ul de producție trece.
-  EVIDENCE: exit=0; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t30; path=a68386b800d3/59 entries; EXPECT=matched; output-sha256=5166d76cfde51d537b0d9cb97cd322781cff4443264b2c184e7825dd0a40222d; output-bytes=868
+- [x] G4: Build-ul de producție trece.
   CHECK: npx vite build
   EXPECT: /built in/
+  EVIDENCE: automatic-evidence=v1; definition-sha256=202b6423274a1e776d6ddcc8d133917c5c706a45d1cd69c285f24b4a854abbd3; exit=0; EXPECT=matched; output-sha256=88a62467dd2ed44e175d9f4d57c556a67c70dc82c54f2367e409f9683e0c5fa2; output-bytes=868; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
 
-- [x] G7: E2E Electron (garda lecției #310) rămâne verde.
-  EVIDENCE: exit=0; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t30; path=a68386b800d3/59 entries; EXPECT=matched; output-sha256=0544b191d28a9f885511e4ae2ee435c6ea1bd6a6d07a612402a3fd7899c8c4f5; output-bytes=802
+- [x] G5: E2E Electron rămâne verde.
   CHECK: node -e "process.env.PLAYWRIGHT_PATH='C:/Users/Ionut/Documents/Scriptorium/node_modules/playwright/index.js'; require('./tests/e2e/electron.e2e.cjs');"
   EXPECT: /E2E OK/
+  EVIDENCE: automatic-evidence=v1; definition-sha256=e82f851dcf926cad47bf29548d46338ae00eb5cd68890f78d9ff4637ca3af995; exit=0; EXPECT=matched; output-sha256=8e9c6930dd9ffbc50f521f61c5778640a37461dec23b4ee8c6a2c04fa0a39273; output-bytes=802; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+
+- [x] G6: Suita de flows (Electron) rămâne verde.
+  CHECK: node -e "process.env.PLAYWRIGHT_PATH='C:/Users/Ionut/Documents/Scriptorium/node_modules/playwright/index.js'; require('./tests/e2e/flows.e2e.cjs');"
+  EXPECT: /FLOWS OK/
+  EVIDENCE: automatic-evidence=v1; definition-sha256=b770413524aa15cf7fc568584eba8f1ba19b257a3df4e463793be1d0383edcb9; exit=0; EXPECT=matched; output-sha256=babcbb2cdbc6b4a5a51746879b23f8d6b051d08d5f52024c72bc7dc161cb9f8b; output-bytes=5992; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+
+- [x] G7: Flows-urile browser sensibile la dimensiuni rămân verzi (topbar-layout: toolbar <58px
+  EVIDENCE: automatic-evidence=v1; definition-sha256=d84957158c65662ff8c51f08d67e557a8aa9a090878d0ca33725829306561929; exit=0; EXPECT=matched; output-sha256=abc2fb70522f32d709ba2219773e8ff889e64a28bdeb0a8cdb94a52f224ba3f9; output-bytes=136; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  + un rând + nimic tăiat; formatbar-binder-ui; dialogs-electron; keyboard-only: ținte vizibile;
+  menu-viewport) pe `vite preview :4183`. Excepții documentate (PRE-EXISTENTE, măsurate la
+  baseline cu git stash: „light-900" ȘI „dark-900 top bar is one row — 86.1875px" — tema
+  classic își permite prin design bara pe 2 rânduri la ≤960px, scrivener-theme.css
+  `[data-ui='classic'] .toolbar { flex-wrap: wrap }`; cu T9 măsoară 67px — îmbunătățit,
+  tot pe 2 rânduri). Orice ALT FAIL = poarta căzută.
+  CHECK: bash "C:/Users/Ionut/AppData/Local/Temp/adl-t9-audit/run-browser-flows.sh"
+  EXPECT: /BROWSER FLOWS OK/

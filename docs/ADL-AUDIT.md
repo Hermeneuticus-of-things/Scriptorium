@@ -47,13 +47,13 @@ popover, apăsare = re-căutare în popover (fără ieșire din pagină); timeou
 | Focus ≠ selecție | 🟡 motorul le ține separat; UI-ul păstrează selecția inactivă |
 | Core function (editor) cel mai mare, activ la deschidere | ✅ |
 | Nimic eliminat (comenzi/menuri intacte) | ✅ (AI isolation = mutat în meniul AI, nu șters) |
-| Scales/token-e (§4) | 🟡 parțial tokenizat în styles.css; audit de scală rămâne |
+| Scales/token-e (§4) | ✅ styles.css pe token-e (T9: --ctl 24/28/32, --icon 16/20, --sp 4/8/12, --radius 6/8, --font-ui 12-14; audit executabil tests/adlTokens.test.js; restul fișierelor CSS rămân) |
 | Disappear vs available (§5) | ✅ totul are cale fixă de revenire (meniu/paletă/shortcut) |
 | Dropdownuri (§6) | 🟡 majoritatea conforme; audit rămâne |
 | Butoane + 6 stări (§7) | 🟡 stările de bază există; loading/error sistematizat rămâne |
 | AA contrast + ring + tastatură + SR | 🟡 ring și tastatură existente; audit AA pe teme rămâne |
 | Vector la 100/150/200% (§9) | ✅ icons SVG |
-| Densitate 4/8/12 (§11) | 🟡 aproximativ conform; tokenizare rămâne |
+| Densitate 4/8/12 (§11) | ✅ gap-urile din styles.css pe token-e (T9: 8 între controale, 4 în compozite, 12 între grupuri; allowlist în tests/adlTokens.test.js) |
 | Feedback la cauză, fără furt (§12) | ✅ **reparat acum** (nivel dictare, popover ancorat, toast-uri non-blocante) |
 | Teme/mișcare pe token-uri (§13) | 🟡 teme existente; motion audit rămâne |
 | §14 AI-assisted UI: nimic șters, raport comenzi | ✅ 190 comenzi păstrate (bug-hunt) |
@@ -64,5 +64,8 @@ popover, apăsare = re-căutare în popover (fără ieșire din pagină); timeou
 
 1. Integrarea completă a motorului de focus pe toate suprafețele (dialoguri, meniuri, dropdown-uri,
    split-uri, quick-ref) — schema de id per instanță, capture/restore pe caret real.
-2. Audit de scală/AA/motion pe toate temele (§4/§8/§13).
+2. Audit de scală/AA/motion pe toate temele (§4/§8/§13) — după T9 rămân: fișierele CSS secundare
+   (ai, editor-extra, panels-extra, help, dialoguri-componentă, smallWindows, scrivener-theme),
+   layoutul barei moderne (menubarul colapsează peste titlu la fereastră îngustă — defect
+   preexistent, vezi GATES.md T9) și AA/motion.
 3. Etapele 2–3 AI (coada de revizuire per paragraf, o singură suprafață Editorial) — docs/PLAN-AI-DEDICAT.md.
