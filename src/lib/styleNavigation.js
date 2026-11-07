@@ -45,6 +45,8 @@ function textblockAt(doc, pos) {
 
 /** Current block if it carries an identifiable style, else null (the commands' gate). */
 function currentStyledBlock(doc, pos) {
+  // Not a real ProseMirror doc (test mocks pass a plain {descendants, textBetween}): no style.
+  if (!doc || typeof doc.resolve !== 'function') return null;
   const tb = textblockAt(doc, pos);
   if (!tb) return null;
   const style = paraStyleId(tb.node);

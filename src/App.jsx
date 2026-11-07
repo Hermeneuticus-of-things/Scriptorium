@@ -2550,6 +2550,9 @@ export default function App({ api: apiProp }) {
   // Words in the main editor's selection (footer "Words: 37 of 1,234"); reset with the document.
   const [selWords, setSelWords] = useState(0);
   useEffect(() => setSelWords(0), [selectedId]);
+  // Caret on a paragraph with an identifiable style (named style or bare heading): enables the
+  // Format › style navigation commands (Scrivener §17.4.1). Reported on transitions by Editor.
+  const [stylePara, setStylePara] = useState(false);
   const statusChars = useMemo(() => htmlToText(selectedHtml).replace(/\s+/g, ' ').trim().length, [selectedHtml]);
   const projectStyles = stylesOf(project);
 
@@ -3148,6 +3151,13 @@ export default function App({ api: apiProp }) {
     }],
     ['document', 'snapshotManager', tr('cmd.snapshotManager'), () => flush().then(() => { refreshSnapCounts(); setDialog('snapshotManager'); })],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
+    // Style navigation (Scrivener §17.4.1, P1 #27): the Editor handle re-reads the caret at
+    // click time and returns false on an unstyled paragraph — the disabled flag below only
+    // mirrors that state for the menus (reported on transitions via onSelectionStyle).
+    ['format', 'selectStyleRange', tr('cmd.selectStyleRange'), () => activeHandle()?.selectStyleRange(), !stylePara],
+    ['format', 'nextInSameStyle', tr('cmd.nextInSameStyle'), () => activeHandle()?.nextInSameStyle(), !stylePara],
+    ['format', 'prevInSameStyle', tr('cmd.prevInSameStyle'), () => activeHandle()?.prevInSameStyle(), !stylePara],
+    ['format', 'selectAllWithStyle', tr('cmd.selectAllWithStyle'), () => activeHandle()?.selectAllWithStyle(), !stylePara],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
     ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
@@ -3698,6 +3708,7 @@ export default function App({ api: apiProp }) {
                 commentColor={settings.commentColor || ''}
                 authorName={settings.authorName || project.author || ''}
                 onSelectionWords={setSelWords}
+                onSelectionStyle={setStylePara}
                 focusEngine={focusEngine}
               />
             )}
@@ -3862,6 +3873,7 @@ export default function App({ api: apiProp }) {
                   view={{ ...editorView, zoom: paneZoom(editorView, 'split') }}
                   onViewChange={(v) => setEditorView({ ...v, zoom: editorViewRef.current.zoom, zoom2: v.zoom })}
                   onManageStyles={() => setDialog('styles')}
+                  onSelectionStyle={setStylePara}
                   focusEngine={focusEngine}
                 />
               )}
