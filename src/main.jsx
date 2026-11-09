@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import AdlAdoptionWidget from './components/AdlAdoptionWidget.jsx';
 import Scratchpad from './components/Scratchpad.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { createMockApi } from './lib/mockApi.js';

@@ -1,3 +1,4 @@
+import AdlAdoptionWidget from './components/AdlAdoptionWidget.jsx';
 import { addBacklinks, addedLinks, insertLinkedDoc } from './lib/backlinks.js';
 import { uiPrompt } from './lib/uiPrompt.jsx';
 import { getHTMLFromFragment } from '@tiptap/core';
@@ -2724,6 +2725,7 @@ export default function App({ api: apiProp }) {
   if (!project) {
     return (
       <>
+        <AdlAdoptionWidget />
         <DialogA11y />
         <Home
           api={api}
@@ -3499,6 +3501,7 @@ export default function App({ api: apiProp }) {
           : undefined
       }
     >
+      <AdlAdoptionWidget />
       <style>{styleCss(projectStyles)}</style>
       <header className={`toolbar tb-${toolbars.display}`}>
         {/* Browser: the full menu bar lives here; desktop: the native menu has it (AI can stay in-app via the toolbar). */}
