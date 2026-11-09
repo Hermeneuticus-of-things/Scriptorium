@@ -14,9 +14,9 @@ Acest roadmap conține pașii atomici pentru trecerea definitivă a aplicației 
 7. [x] **Validare D&TED v0.4.2 & Dictare:** Verificare pe Windows (NVIDIA, F9/F8) a dictării locale și transcrierii audio.
 
 ## Faza 3: Pregătirea Lansării Oficiale v1.0.0 Stable (GA)
-8. [ ] **Eliminarea etichetelor Beta:** Actualizarea versiunii din `package.json`, `main.cjs` și interfața About/Header la `1.0.0` (eliminarea oricăror mențiuni de "Beta").
-9. [ ] **Semnarea Codului (Code Signing) & Inno Setup:** Generarea scriptului final de instalare `PneumaSofer-Setup-1.0.0.exe` cu certificare nativă pe Windows.
-10. [ ] **Documentația Finală & Jurnalul v1.0.0:** Actualizarea completă a `CHANGELOG.md`, `FEATURES.md` și ghidului de utilizare pentru versiunea stabilă de producție.
+8. [x] **Eliminarea etichetelor Beta:** `package.json` la `1.0.0`; interfața About/Header folosește `APP_VERSION` din `package.json`; zero mențiuni de "Beta" în `src/`, `electron/`, `CHANGELOG.md`.
+9. [x] **Semnarea Codului & Inno Setup:** `PneumaSofer-Setup-1.0.0.exe` generat cu Inno Setup 6 (122 MB); portabil `PneumaSofer-1.0.0-portabil.exe` (107 MB).
+10. [x] **Documentația Finală v1.0.0:** `CHANGELOG.md` actualizat la v1.0.0 Stable (GA); `DETERMINISTIC_ROADMAP.md` reflectă trecerea definitivă.
 
 ---
-*Status curent: Executare Faza 3 — Trecerea la v1.0.0 Stable (GA).*
+*Status curent: Toate pașii din Faza 3 finalizați — Pneuma Sofer este v1.0.0 Stable (GA).*
