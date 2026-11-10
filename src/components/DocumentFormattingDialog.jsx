@@ -3,6 +3,10 @@ import {t} from '../lib/i18n.js';
 import {FONTS} from './DefaultFormatPane.jsx';
 import {cleanFormattingPatch} from '../lib/paragraphAlignment.js';
 const FIELDS=['align','font','size','lineHeight','firstIndent','indentLeft','indentRight','spaceBefore','spaceAfter'];
+// Full literal keys (the static i18n audit in tests/bugs-editor2.test.js requires every t() call
+// to be a complete key present in the dictionaries — no runtime concatenation).
+const FIELD_LABEL={align:'ui.format.align',font:'ui.format.font',size:'ui.format.size',lineHeight:'ui.format.lineHeight',firstIndent:'ui.format.firstIndent',indentLeft:'ui.format.indentLeft',indentRight:'ui.format.indentRight',spaceBefore:'ui.format.spaceBefore',spaceAfter:'ui.format.spaceAfter'};
+const ALIGN_LABEL={left:'ui.dfp.align_stanga',center:'ui.dfp.align_centru',right:'ui.dfp.align_dreapta',justify:'ui.dfp.align_justify'};
 const RANGES={size:[8,96,1],lineHeight:[0.5,4,0.1],firstIndent:[-8,32,0.25],indentLeft:[0,32,0.25],indentRight:[0,32,0.25],spaceBefore:[0,32,0.1],spaceAfter:[0,32,0.1]};
 export default function DocumentFormattingDialog({scope,count,defaults={},onApply,onClose}) {
  const [chosen,setChosen]=useState({align:true});
@@ -17,8 +21,8 @@ export default function DocumentFormattingDialog({scope,count,defaults={},onAppl
   catch(e){setError(t('ui.justify.failed',{count:e.alignmentResult?.completed||0})+' '+(e.code==='ALIGNMENT_CONFLICT'?t('ui.justify.conflict'):e.message))}
   finally{setBusy(false)}
  };
- const control=k=>{const props={'aria-label':t('ui.format.'+k),value:values[k],disabled:busy||!chosen[k],onChange:e=>setValues(v=>({...v,[k]:e.target.value}))};
-  if(k==='align')return <select {...props}>{['left','center','right','justify'].map(a=><option key={a} value={a}>{t('ui.dfp.align_'+({left:'stanga',center:'centru',right:'dreapta',justify:'justify'}[a]))}</option>)}</select>;
+ const control=k=>{const props={'aria-label':t(FIELD_LABEL[k]),value:values[k],disabled:busy||!chosen[k],onChange:e=>setValues(v=>({...v,[k]:e.target.value}))};
+  if(k==='align')return <select {...props}>{['left','center','right','justify'].map(a=><option key={a} value={a}>{t(ALIGN_LABEL[a])}</option>)}</select>;
   if(k==='font')return <select {...props}>{FONTS.filter(Boolean).map(f=><option key={f} value={f}>{f.split(',')[0].replace(/'/g,'')}</option>)}</select>;
   const [min,max,step]=RANGES[k];return <input {...props} type="number" min={min} max={max} step={step}/>;
  };
@@ -27,7 +31,7 @@ export default function DocumentFormattingDialog({scope,count,defaults={},onAppl
    <h2 id="document-formatting-title">{t(scope==='draft'?'cmd.formatManuscript':'cmd.formatDocument')}</h2>
    <p id="document-formatting-description">{t('ui.format.description')}</p><p className="muted">{t('ui.justify.scope',{count})}</p>
    <div className="document-formatting-fields">{FIELDS.map(k=><div className="document-formatting-field" key={k}>
-    <label><input type="checkbox" autoFocus={k==='align'} checked={Boolean(chosen[k])} disabled={busy} onChange={e=>setChosen(v=>({...v,[k]:e.target.checked}))} aria-label={t('ui.format.select',{field:t('ui.format.'+k)})}/> {t('ui.format.'+k)}</label>
+    <label><input type="checkbox" autoFocus={k==='align'} checked={Boolean(chosen[k])} disabled={busy} onChange={e=>setChosen(v=>({...v,[k]:e.target.checked}))} aria-label={t('ui.format.select',{field:t(FIELD_LABEL[k])})}/> {t(FIELD_LABEL[k])}</label>
     {control(k)}<span className="muted">{k==='size'?'px':k==='font'||k==='align'||k==='lineHeight'?'':'em'}</span>
    </div>)}</div>
    {scope==='draft'&&<p className="muted">{t('ui.format.default')}</p>}
