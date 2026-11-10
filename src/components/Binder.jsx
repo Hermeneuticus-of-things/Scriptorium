@@ -40,7 +40,7 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate, onRestore }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onAddInside, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate, onRestore }) {
   const colorIn = labelColorInOf({ labelColorIn });
   const tintIcons = labelTintIcons ?? (labelColorIn ? colorIn.icons : Boolean(project.labelTintIcons));
   const rowTint = (node) => (colorIn.binder && node.label && labelColor[node.label] ? labelTint(labelColor[node.label]) : '');
@@ -159,7 +159,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const contextItems = (id) => buildBinderContextMenu({
     project, id, selectedIds, tr, templates: templates || [], collections: collections || [], activeCollectionId, filterIds, icons: ICONS,
     callbacks: {
-      add: onAdd, newFromTemplate: onNewFromTemplate, rename: setEditing, copy: onCopy,
+      add: onAdd, addInside: onAddInside, newFromTemplate: onNewFromTemplate, rename: setEditing, copy: onCopy,
       drop: doDrop, trash: onTrash, restore: onRestore, patch: onPatchItems,
       addToCollection: onAddToCollection, newCollection: onNewCollection, removeFromCollection: onRemoveFromCollection,
       convert: onConvert, sortChildren: onSortChildren, group: onGroup, copyLink: onCopyLink,

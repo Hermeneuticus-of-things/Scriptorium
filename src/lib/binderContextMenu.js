@@ -49,7 +49,14 @@ export function buildBinderContextMenu(options) {
       item('newText', tr('cmd.newText'), () => cb.add('text'), { shortcut: 'Ctrl+N' }),
       item('newFolder', tr('cmd.newFolder'), () => cb.add('folder'), { shortcut: 'Ctrl+Shift+N' }),
     ];
-    if (cb.newFromTemplate && templates.length) add.push(group('binder.templates', 'cmd.newFromTemplate', templates.map((t) => item('newFromTemplate', t.title || tr('ui.app.fara_titlu'), () => cb.newFromTemplate(t.id, node.children ? id : c.parent?.id), { payload: { templateId: t.id, targetId: node.children ? id : c.parent?.id } }))));
+    // Nesting as in Scrivener 3: on a document WITHOUT children the default add places a
+    // sibling, so the explicit "inside" variants live in a nested submenu (top-level density
+    // unchanged). On a document with children the default add already goes inside.
+    if (cb.addInside && single && node.type === 'text' && !hasChildren) add.push(group('binder.addInside', 'ui.binder.addInside', [
+      item('newTextInside', tr('cmd.newText'), () => cb.addInside('text'), { payload: { ids: [...ids], targetId: id, inside: true } }),
+      item('newFolderInside', tr('cmd.newFolder'), () => cb.addInside('folder'), { payload: { ids: [...ids], targetId: id, inside: true } }),
+    ]));
+    if (cb.newFromTemplate && templates.length) add.push(group('binder.templates', 'cmd.newFromTemplate', templates.map((t) => item('newFromTemplate', t.title || tr('ui.app.fara_titlu'), () => cb.newFromTemplate(t.id, node.children || node.type === 'text' ? id : c.parent?.id), { payload: { templateId: t.id, targetId: node.children || node.type === 'text' ? id : c.parent?.id } }))));
     out.push(group('binder.add', 'btn.add', add));
   }
   if (editable && single && cb.rename) out.push(item('rename', tr('set.binderDbl.rename'), () => cb.rename(id), { shortcut: 'F2' }));

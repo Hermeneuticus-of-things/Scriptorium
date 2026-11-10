@@ -30,3 +30,26 @@ describe('P2 — command identity and menu normalization',()=>{
   it('empty groups, hidden actions and redundant separators disappear',()=>{expect(tidyMenuItems(['-',commandGroup('x','X',[{hidden:true,label:'No'}]),'-',commandItem('save',{label:'Save'}),'-','-']).map(x=>x.id)).toEqual(['save'])});
   it('native scoped actions stay distinct but share the canonical command',()=>{const yes=vi.fn(),no=vi.fn();const result=nativeMenuSpec([{label:'Documente',items:[commandGroup('dup','Duplică',[commandItem('duplicate',{label:'Cu',payload:{includeChildren:true},action:yes}),commandItem('duplicate',{label:'Fără',payload:{includeChildren:false},action:no})])]}]);const children=result.spec[0].items[0].items;expect(children.map(x=>x.commandId)).toEqual(['duplicate','duplicate']);expect(children[0].id).not.toBe(children[1].id);result.actions[children[0].id]();result.actions[children[1].id]();expect(yes).toHaveBeenCalledOnce();expect(no).toHaveBeenCalledOnce()});
 });
+
+describe('Adaugă în interior pe documente (Scrivener file-in-file)', () => {
+  it('text fără copii are submenu-ul în interior în grupul Adaugă, cu Document și Dosar', () => {
+    const f = fixture('a', { callbacks: { add: vi.fn(), addInside: vi.fn() } });
+    const addGroup = group(f.items, 'binder.add');
+    const nested = (addGroup.submenu || []).find((x) => x !== '-' && x.groupId === 'binder.addInside');
+    expect(nested).toBeTruthy();
+    expect(nested.submenu.map((x) => x.id)).toEqual(['newTextInside', 'newFolderInside']);
+    nested.submenu[0].action();
+    expect(f.callbacks.addInside).toHaveBeenCalledWith('text');
+  });
+  it('folder și text-cu-copii NU au submenu-ul (adăugarea implicită e deja în interior)', () => {
+    const withCb = { callbacks: { add: vi.fn(), addInside: vi.fn() } };
+    expect(group(fixture('folder', withCb).items, 'binder.add').submenu.find((x) => x !== '-' && x.groupId === 'binder.addInside')).toBeUndefined();
+    const p = project();
+    p.tree[0].children[0].children[0].children = [{ id: 'c', type: 'text' }];
+    expect(group(fixture('a', { project: p, ...withCb }).items, 'binder.add').submenu.find((x) => x !== '-' && x.groupId === 'binder.addInside')).toBeUndefined();
+  });
+  it('fără callback addInside grupul nu apare (variante imposibile ascunse)', () => {
+    const f = fixture('a');
+    expect((group(f.items, 'binder.add').submenu || []).find((x) => x !== '-' && x.groupId === 'binder.addInside')).toBeUndefined();
+  });
+});
