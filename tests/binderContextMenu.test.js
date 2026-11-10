@@ -31,6 +31,45 @@ describe('P2 — command identity and menu normalization',()=>{
   it('native scoped actions stay distinct but share the canonical command',()=>{const yes=vi.fn(),no=vi.fn();const result=nativeMenuSpec([{label:'Documente',items:[commandGroup('dup','Duplică',[commandItem('duplicate',{label:'Cu',payload:{includeChildren:true},action:yes}),commandItem('duplicate',{label:'Fără',payload:{includeChildren:false},action:no})])]}]);const children=result.spec[0].items[0].items;expect(children.map(x=>x.commandId)).toEqual(['duplicate','duplicate']);expect(children[0].id).not.toBe(children[1].id);result.actions[children[0].id]();result.actions[children[1].id]();expect(yes).toHaveBeenCalledOnce();expect(no).toHaveBeenCalledOnce()});
 });
 
+describe('AI pe niveluri din meniul contextual (directivă autor 2026-11-10)', () => {
+  const run = (id, cbExtra = {}, cbAbsent = false) => {
+    const callbacks = Object.fromEntries(['add','rename','copy','duplicate','drop','trash','restore','patch','convert','sortChildren','group','copyLink','snapshot','showInExplorer','quickRef','select','setAllCollapsed','emptyTrash','setTemplateFolder','addToCollection','newCollection','removeFromCollection'].map((k) => [k, vi.fn()]));
+    const ai = vi.fn();
+    const f = fixture(id, { callbacks: { ...callbacks, ...(cbAbsent ? {} : { ai, ...cbExtra }) } });
+    return { f, ai };
+  };
+  const grp = (f) => group(f.items, 'binder.ai');
+  it('document simplu: secțiunea + capitolul + manuscrisul + cartea, în ordine', () => {
+    const { f, ai } = run('a');
+    const g = grp(f);
+    expect(g).toBeTruthy();
+    expect(g.submenu.map((x) => x.id)).toEqual(['aiSection', 'aiChapter', 'aiManuscript', 'aiBook']);
+    g.submenu[0].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'a', level: 'section' });
+    g.submenu[1].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'folder', level: 'chapter' });
+    g.submenu[2].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'manuscript' });
+    g.submenu[3].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'book' });
+  });
+  it('dosar: capitolul + manuscrisul + cartea (fără secțiune)', () => {
+    const { f, ai } = run('folder');
+    expect(grp(f).submenu.map((x) => x.id)).toEqual(['aiChapter', 'aiManuscript', 'aiBook']);
+    grp(f).submenu[0].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'folder', level: 'chapter' });
+  });
+  it('rădăcina Manuscris: manuscrisul + cartea (fără secțiune/capitol redundante)', () => {
+    const { f, ai } = run('draft');
+    expect(grp(f).submenu.map((x) => x.id)).toEqual(['aiManuscript', 'aiBook']);
+  });
+  it('media din Cercetare: manuscrisul + cartea (niveluri de proiect, fără secțiune pe media)', () => {
+    const { f, ai } = run('media');
+    expect(grp(f).submenu.map((x) => x.id)).toEqual(['aiManuscript', 'aiBook']);
+    grp(f).submenu[1].action();
+    expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'book' });
+  });
+  it('subarborele Coșului rămâne în afara grupului; fără callback (AI off) grupul lipsește', () => {
+    expect(grp(run('gone').f)).toBeUndefined();
+    expect(grp(run('trash').f)).toBeUndefined();
+    expect(grp(run('a', {}, true).f)).toBeUndefined();
+  });
+});
 describe('Adaugă în interior pe documente (Scrivener file-in-file)', () => {
   it('text fără copii are submenu-ul în interior în grupul Adaugă, cu Document și Dosar', () => {
     const f = fixture('a', { callbacks: { add: vi.fn(), addInside: vi.fn() } });
