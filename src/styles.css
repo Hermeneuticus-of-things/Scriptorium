@@ -936,3 +936,13 @@ legend { color: var(--muted); padding: 0 var(--sp-1); }
 .ai-status[hidden] { display: none; }
 .services-panel .row label.service-checkbox { display: inline-flex; flex-direction: row-reverse; align-items: center; justify-content: flex-end; gap: var(--space-2); flex: 0 1 auto; }
 .services-panel label.service-checkbox input[type="checkbox"] { width: auto; }
+
+/* A one-shot formatting choice, not a full-width settings window. */
+html body .backdrop .modal.document-formatting-dialog { width: min(var(--settings-content-width), calc(100vw - var(--window-gutter))); max-height: calc(100vh - var(--window-gutter)); overflow: auto; }
+.document-formatting-dialog .actions { justify-content: flex-end; gap: var(--sp-2); }
+.document-formatting-dialog progress { width: 100%; }
+
+.document-formatting-fields { display: flex; flex-direction: column; gap: var(--sp-2); max-height: 48vh; overflow: auto; }
+.document-formatting-field { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: var(--sp-2); }
+.document-formatting-field label { display: flex; gap: var(--sp-1); align-items: center; }
+.document-formatting-field input[type=number], .document-formatting-field select { width: 100%; min-width: 0; }

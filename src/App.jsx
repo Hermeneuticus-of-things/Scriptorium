@@ -156,6 +156,8 @@ import { setDefaultFocusEngine, activeFocusEngine, runNativeMenuItem } from './l
 import { registerSplitSurface, splitSurfaceId } from './lib/focusPanes.js';
 import { editorSurfaceRegistration } from './lib/focusEditorState.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
+import { alignmentTargets, formatDocuments } from './lib/paragraphAlignment.js';
+import DocumentFormattingDialog from './components/DocumentFormattingDialog.jsx';
 import { buildTocText } from './lib/toc.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
@@ -689,6 +691,7 @@ export default function App({ api: apiProp }) {
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
+  const [formatScope, setFormatScope] = useState('document'); // Formatare document / manuscris: domeniul ales în dialog
   // ADL §2: every dialog is a focus surface — push on open, pop on close; Escape cascade and
   // local 'close' commands go through the engine (innermost first, one per press).
   useEffect(() => {
@@ -2473,6 +2476,34 @@ export default function App({ api: apiProp }) {
   };
   const convertFormattingDraft = () => convertFormatting('draft');
   const convertFormattingAll = () => convertFormatting('all');
+  // Formatare document / manuscris (directivă autor 2026-11-10): se aplică doar proprietățile
+  // bifate, cu snapshot înainte de fiecare document modificat, vizibil imediat în editor și citire.
+  const formatContent = async ({ patch, signal, onProgress }) => {
+    await flush();
+    if (pending.current.size) throw new Error(tr('ui.justify.save_first'));
+    const ids = alignmentTargets(projectRef.current.tree, formatScope, selectedId).map((n) => n.id);
+    if (!ids.length) throw new Error(tr('ui.justify.no_documents'));
+    const result = await formatDocuments({
+      ids, patch, signal, onProgress,
+      read: (id) => api.readDoc(dir, id, 'docs'),
+      snapshot: (id) => api.takeSnapshot(dir, id, tr('ui.format.snapshot')),
+      write: (id, html) => api.writeDoc(dir, id, 'docs', html),
+      onSaved: (id, html) => {
+        setDocs((d) => ({ ...d, [id]: html }));
+        setEditorHtml(id, html);
+      },
+    });
+    if (formatScope === 'draft' && !result.cancelled) {
+      const next = { ...projectRef.current, defaultFormatting: { ...(projectRef.current.defaultFormatting || {}), ...patch } };
+      try { await api.saveProject(dir, next); } catch (e) { e.alignmentResult = result; throw e; }
+      projectRef.current = next;
+      setProject(next);
+    }
+    refreshSnapCounts();
+    setToast(tr('ui.format.done', { count: result.changed }));
+    return result;
+  };
+  const openDocumentFormatting = (scope) => { setFormatScope(scope); setDialog('documentFormatting'); };
   const stripNotationInProject = async () => {
     await flush();
     const docs = docsNow();
@@ -3283,6 +3314,8 @@ export default function App({ api: apiProp }) {
       await takeSnapshotOf(selected.id, name.trim() || 'Snapshot');
     }],
     ['document', 'snapshotManager', tr('cmd.snapshotManager'), () => flush().then(() => { refreshSnapCounts(); setDialog('snapshotManager'); })],
+    ['format', 'formatDocument', tr('cmd.formatDocument'), () => openDocumentFormatting('document'), !alignmentTargets(project?.tree, 'document', selectedId).length],
+    ['format', 'formatManuscript', tr('cmd.formatManuscript'), () => openDocumentFormatting('draft'), !alignmentTargets(project?.tree, 'draft').length],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     // Style navigation (Scrivener §17.4.1, P1 #27): the Editor handle re-reads the caret at
     // click time and returns false on an unstyled paragraph — the disabled flag below only
@@ -4500,6 +4533,15 @@ export default function App({ api: apiProp }) {
             setTimeout(() => setRevealId(id), 0);
           }}
           onError={report}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'documentFormatting' && (
+        <DocumentFormattingDialog
+          defaults={project.defaultFormatting || {}}
+          scope={formatScope}
+          count={alignmentTargets(project.tree, formatScope, selectedId).length}
+          onApply={formatContent}
           onClose={() => setDialog(null)}
         />
       )}
