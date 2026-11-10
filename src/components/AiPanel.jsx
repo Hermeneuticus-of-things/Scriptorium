@@ -57,7 +57,7 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
   const runId=`r${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`;runIdRef.current=runId;
   setTask(action==='ask'?task:action);setBusy({action,started:Date.now()});setElapsed(0);setLive('');setError(null);setResult(null);
   try{
-   const res=await api.runAi({action,text,question:action==='ask'?question:instructions,analysis:basis?.text||'',runId,context:contextText,lang:action==='translate'?translateTo:undefined,dir:projectDir||undefined,projectTitle,documentTitle:node.title,textScope:selection?'selection':'document'});
+   const res=await api.runAi({action,text,question:action==='ask'?question:instructions,analysis:basis?.text||'',runId,context:contextText,lang:action==='translate'?translateTo:undefined,dir: projectDir || undefined,projectTitle,documentTitle:node.title,textScope:selection?'selection':'document'});
    if(!mounted.current||runIdRef.current!==runId)return;
    const entry=sessionHistory.add({action,text:res.text,before:range?.before||text,question:action==='ask'?question:'',docId:node.id,docTitle:node.title,projectDir,projectTitle,provider:res.provider||aiLabel,model:res.model||aiModel});
    setHistory(sessionHistory.list());setUsedBy(providerText(res.provider,res.model));setResult({...entry,selection,range,handle,contextSnapshot:context});
