@@ -956,6 +956,7 @@ require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, get
 require('./updateHandlers.cjs')({ handle, app, net, shell, BrowserWindow, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }), githubToken: () => services.getService(readSettings(), 'github', safeStorage).token || process.env.SCRIBNER_GITHUB_TOKEN || '' });
 require('./smallWindowHandlers.cjs')({ handle, app, BrowserWindow, globalShortcut: require('electron').globalShortcut, dialog, shell, claims, assertOpened, isAppUrl, preload: path.join(__dirname, 'preload.cjs'), appPage: { url: process.env.VITE_DEV_SERVER_URL || '', file: path.join(__dirname, '..', 'dist', 'index.html') }, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }) });
 require('./notebookHandlers.cjs')({ handle, getSettings: readSettings, assertOpened, app });
+require('./speechHandlers.cjs')({ handle, getSettings: readSettings, net, safeStorage, app });
 
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.

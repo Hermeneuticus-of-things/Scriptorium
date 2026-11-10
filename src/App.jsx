@@ -326,6 +326,8 @@ export default function App({ api: apiProp }) {
   useEffect(() => () => speechApi.dispose?.(), [speechApi]);
   const dict = useDictation({
     api: speechApi,
+    engine: settings?.speechEngine === 'online' ? 'online' : 'local',
+    onlineNotConfigured: tr('ui.dted.online_not_configured'),
     getEditor: () => activeHandle()?.editor,
     replacements: settings?.autoReplacements,
     switchedMessage: tr('ui.dted.oprita_la_schimbare'),
@@ -1773,7 +1775,9 @@ export default function App({ api: apiProp }) {
   };
   const selectedText = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.getSelectionText() || '';
   // Read aloud from the right-click menu (uses the local Mihai voice when installed, else system voices).
-  const reader = useReader(api);
+  // Motoarele online (directivă autor 2026-11-10): dictare cloud + voce Speechify, pentru
+  // calculatoare slabe. Disponibile doar când serviciul e configurat (cheia în registry).
+  const reader = useReader(api, { ttsEngine: settings?.ttsEngine || 'auto', speechifyReady: Boolean(speechReady.speechify), onMessage: (m) => setToast(m) });
   const wholeDocText = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.getText?.() || '';
   const textFromCursor = () => {
     const ed = (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.editor;
@@ -2904,6 +2908,7 @@ export default function App({ api: apiProp }) {
         )}
         {dialog === 'settings' && (
           <SettingsDialog
+            speechReady={speechReady}
             initialTab={settingsTab}
             aiOnly={settingsTab === 'ai'}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
@@ -4539,6 +4544,7 @@ export default function App({ api: apiProp }) {
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} focusEngine={focusEngine} />}
       {dialog === 'settings' && (
         <SettingsDialog
+          speechReady={speechReady}
             initialTab={settingsTab}
             aiOnly={settingsTab === 'ai'}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
