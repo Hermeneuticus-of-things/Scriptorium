@@ -18,8 +18,8 @@ export default function PaneNav({ history, titleOf, onBack, onForward, onJump, p
   const items = recentList(h).filter((x) => titleOf(x.id) !== null);
   return (
     <span className="pane-nav" ref={box} data-pane={pane}>
-      <button className="pane-back" onClick={onBack} disabled={h.index <= 0} title={tr('ui.app.inapoi_alt')} aria-label={tr('cmd.back')}><BackIcon /></button>
-      <button className="pane-forward" onClick={onForward} disabled={h.index >= h.stack.length - 1} title={tr('ui.app.inainte_alt')} aria-label={tr('cmd.forward')}><ForwardIcon /></button>
+      <button className="pane-back" onClick={onBack} disabled={h.index <= 0} title={`${tr('cmd.back')} · ${tr('ui.g5.istoricPanou')}`} aria-label={`${tr('cmd.back')} · ${tr('ui.g5.istoricPanou')}`}><BackIcon /></button>
+      <button className="pane-forward" onClick={onForward} disabled={h.index >= h.stack.length - 1} title={`${tr('cmd.forward')} · ${tr('ui.g5.istoricPanou')}`} aria-label={`${tr('cmd.forward')} · ${tr('ui.g5.istoricPanou')}`}><ForwardIcon /></button>
       <button className="pane-history" onClick={() => setOpen((o) => !o)} disabled={!items.length} aria-expanded={open} aria-haspopup="menu" title={tr('ui.g5.istoricPanou')} aria-label={tr('ui.g5.istoricPanou')}>▾</button>
       {open && (
         <ul className="pane-history-list" role="menu" aria-label={tr('ui.g5.istoricPanou')}>

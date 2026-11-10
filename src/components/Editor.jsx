@@ -675,6 +675,7 @@ const Editor = forwardRef(function Editor(
       )}
       <div
         className={`page ${typewriter ? 'typewriter' : ''} ${compact ? 'flow' : ''} ${view.pageView ? `page-view page-${view.pageSize || 'a5'}` : ''} ${view.pageView && view.facing ? 'facing' : ''} ${showInvisibles ? 'invisibles' : ''}`}
+        data-hint={!readOnly ? 'editor-selection' : undefined}
         style={{
           ...(view.zoom && view.zoom !== 100 ? { '--zoom': view.zoom / 100 } : {}),
           // Width chosen by dragging the page edges (or the whole window, double-click on an edge).

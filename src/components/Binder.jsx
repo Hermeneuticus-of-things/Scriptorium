@@ -4,7 +4,7 @@ import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
 import { DocumentIcon, DraftIcon, FolderIcon, Icon, ResearchIcon, TemplatesIcon, TrashIcon } from './Icons.jsx';
 import ContextMenu from './ContextMenu.jsx';
 import { t as tr } from '../lib/i18n.js';
-import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
+import { binderContext, binderContextTitle, buildBinderContextMenu } from '../lib/binderContextMenu.js';
 import { ICONS } from './Inspector.jsx';
 import { KEYWORD_MIME, keywordDropTargets } from '../lib/collections.js';
 import { labelColorIn as labelColorInOf, labelTint } from '../lib/settingsDefaults.js';
@@ -40,7 +40,7 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate }) {
+export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate, onRestore }) {
   const colorIn = labelColorInOf({ labelColorIn });
   const tintIcons = labelTintIcons ?? (labelColorIn ? colorIn.icons : Boolean(project.labelTintIcons));
   const rowTint = (node) => (colorIn.binder && node.label && labelColor[node.label] ? labelTint(labelColor[node.label]) : '');
@@ -58,7 +58,8 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const runBehaviour = (mode, id, isRootNode) => {
     if (!id) return false;
     if (mode === 'rename') {
-      if (isRootNode) return false;
+      const context = binderContext({ project, id, selectedIds: new Set([id]) });
+      if (isRootNode || !context?.mutable || !context.noneInTrash) return false;
       setEditing(id);
     } else if (mode === 'newDoc') onAdd('text');
     else if (mode === 'open') {
@@ -88,12 +89,12 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     if (!renameId) return;
     const trail = [];
     const find = (ns, path) => (ns || []).some((n) => (n.id === renameId ? (trail.push(...path), true) : n.children ? find(n.children, [...path, n.id]) : false));
-    find(project.tree, []);
+    if (!find(project.tree, [])) { setEditing(null); onRenameDone?.(renameId, false); return; }
     if (trail.length) setCollapsed((c) => ({ ...c, ...Object.fromEntries(trail.map((id) => [id, false])) }));
     setQuery('');
     setEditing(renameId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [renameId]);
+  }, [renameId, project.tree]);
   // Keep the keyboard-selected row visible.
   useEffect(() => {
     if (!selectedId || !rootRef.current || !rootRef.current.contains(document.activeElement)) return;
@@ -155,110 +156,17 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     }
     setCtx({ x, y, id });
   };
-  const contextItems = (id) => {
-    const hit = findById(id);
-    if (!hit) return [];
-    const node = hit.node;
-    const isRootNode = Boolean(node.root) || project.tree.some((r) => r.id === id);
-    const ids = selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [id];
-    const inside = (a, b) => { const h = findById(a); return h && (function has(n) { return n.id === b || (n.children || []).some(has); })(h.node); };
-    const targets = [];
-    const walk = (ns, depth) => (ns || []).forEach((n) => {
-      if (!n.children || n.root === 'trash' || ids.some((x) => inside(x, n.id))) return;
-      targets.push({ label: `${'\u2002'.repeat(depth)}${n.title}`, action: () => doDrop(ids, n.id, 'inside', false) });
-      walk(n.children, depth + 1);
-    });
-    walk(project.tree, 0);
-    const statusName = (st) => (typeof st === 'string' ? st : st?.name);
-    const items = [
-      { label: tr('btn.add'), submenu: [
-        { label: tr('cmd.newText'), shortcut: 'Ctrl+N', action: () => onAdd('text') },
-        { label: tr('cmd.newFolder'), shortcut: 'Ctrl+Shift+N', action: () => onAdd('folder') },
-      ] },
-      // "New from Template" (Scrivener 3 §7.5): clones a template from the templates
-      // folder into the selected container (or the selection's parent folder).
-      ...(templates && onNewFromTemplate ? [{
-        label: tr('cmd.newFromTemplate'),
-        disabled: !templates.length,
-        submenu: templates.length
-          ? templates.map((t) => ({ label: t.title || tr('ui.app.fara_titlu'), action: () => onNewFromTemplate(t.id, node.children ? node.id : hit.parent?.id) }))
-          : [{ label: tr('ui.documentTemplates.niciun_sablon'), disabled: true }],
-      }] : []),
-      '-',
-      { label: tr('set.binderDbl.rename'), shortcut: 'F2', disabled: isRootNode || ids.length > 1, action: () => setEditing(id) },
-      ...(onCopy ? [{ label: tr('cmd.duplicate'), disabled: isRootNode, action: () => onCopy(ids, ids[ids.length - 1], 'after') }] : []),
-      { label: tr('ui.binder.muta_in'), disabled: isRootNode || !targets.length, submenu: targets },
-      { label: tr('ui.binder.muta_in_cos'), shortcut: 'Del', disabled: isRootNode || node.root === 'trash', action: () => onTrash() },
-    ];
-    if (onPatchItems) {
-      items.push('-',
-        { label: labelTitleOf(project, tr), disabled: isRootNode, submenu: (project.labels || []).map((l) => ({ label: noneLabel(l.name, tr), checked: (node.label || '') === l.name, action: () => onPatchItems(ids, { label: l.name }) })) },
-        { label: statusTitleOf(project, tr), disabled: isRootNode, submenu: (project.statuses || []).map((st) => ({ label: noneStatus(statusName(st), tr), checked: (node.status || '') === statusName(st), action: () => onPatchItems(ids, { status: statusName(st) }) })) },
-        { label: tr('ui.binder.include_in_compile'), checked: node.includeInCompile !== false, disabled: isRootNode, action: () => onPatchItems(ids, { includeInCompile: node.includeInCompile === false }) },
-        { label: tr('ui.binder.favorit'), checked: Boolean(node.favorite), disabled: isRootNode, action: () => onPatchItems(ids, { favorite: !node.favorite }) });
-    }
-    const extra = [];
-    const manual = (collections || []).filter((c) => c.type !== 'search');
-    if (onAddToCollection && !isRootNode) {
-      extra.push({ label: tr('ui.binder.adauga_la_colectie'), submenu: [
-        ...manual.map((c) => ({ label: c.title, checked: ids.every((x) => (c.ids || []).includes(x)), action: () => onAddToCollection(c.id, ids) })),
-        ...(onNewCollection ? [...(manual.length ? ['-'] : []), { label: tr('ui.binder.colectie_noua_din_selectie'), action: () => onNewCollection(ids) }] : []),
-      ] });
-    }
-    const activeCol = (collections || []).find((c) => c.id === activeCollectionId);
-    if (onRemoveFromCollection && activeCol && activeCol.type !== 'search' && filterIds) {
-      extra.push({ label: tr('ui.binder.scoate_din_colectie'), action: () => onRemoveFromCollection(activeCol.id, ids) });
-    }
-    if (onConvert && !isRootNode && node.type !== 'file') {
-      extra.push(
-        { label: tr('ui.app.converteste_in_dosar'), disabled: node.type === 'folder', action: () => onConvert(ids, 'folder') },
-        { label: tr('ui.app.converteste_in_document_text'), disabled: node.type !== 'folder', action: () => onConvert(ids, 'text') },
-      );
-    }
-    if (onPatchItems && !isRootNode) {
-      const custom = node.icon && /\p{Extended_Pictographic}/u.test(node.icon) ? node.icon : '';
-      extra.push({ label: tr('ui.binder.schimba_iconita'), submenu: [
-        { label: tr('ui.binder.iconita_implicita'), checked: !custom, action: () => onPatchItems(ids, { icon: null }) },
-        '-',
-        ...ICONS.map((ic) => ({ label: ic, checked: custom === ic, action: () => onPatchItems(ids, { icon: ic }) })),
-      ] });
-      const types = project.sectionTypes || [];
-      if (types.length) {
-        extra.push({ label: tr('ui.inspector.tip_sectiune'), submenu: [
-          { label: tr('ui.inspector.dupa_nivel'), checked: !node.sectionType, action: () => onPatchItems(ids, { sectionType: null }) },
-          '-',
-          ...types.map((ty) => ({ label: ty.title, checked: node.sectionType === ty.title, action: () => onPatchItems(ids, { sectionType: ty.title }) })),
-        ] });
-      }
-    }
-    if (onSortChildren && node.children) {
-      extra.push({ label: tr('ui.binder.sorteaza_copiii'), disabled: node.children.length < 2, submenu: [
-        { label: tr('ui.binder.sort_az'), action: () => onSortChildren(id, false) },
-        { label: tr('ui.binder.sort_za'), action: () => onSortChildren(id, true) },
-      ] });
-    }
-    if (onGroup && !isRootNode && !filterIds) extra.push({ label: tr('ui.binder.grupeaza'), shortcut: 'Ctrl+Alt+G', action: () => onGroup(ids) });
-    if (extra.length) items.push('-', ...extra);
-    const more = [];
-    if (onCopyLink && !isRootNode) more.push({ label: tr('ui.binder.copiaza_legatura'), action: () => onCopyLink(id) });
-    if (onSnapshot && !isRootNode) more.push({ label: tr('ui.binder.snapshot'), disabled: !ids.some((x) => findById(x)?.node.type === 'text'), action: () => onSnapshot(ids) });
-    if (onDuplicate && !isRootNode && node.children && node.children.length) more.push({ label: tr('ui.binder.duplica_fara_sub'), disabled: ids.length > 1, action: () => onDuplicate(id, false) });
-    if (onShowInExplorer && !isRootNode) more.push({ label: tr('ui.binder.arata_in_explorer'), action: () => onShowInExplorer(id) });
-    if (more.length) items.push('-', ...more);
-    items.push('-',
-      { label: tr('ui.binder.deschide_in_quick_reference'), disabled: !onQuickRef || isRootNode, action: () => onQuickRef(id) },
-      { label: tr('ui.binder.deschide_in_panoul_2'), disabled: Boolean(node.children), action: () => onSelect(id, { alt: true }) },
-      '-',
-      { label: tr('ui.binder.extinde_tot'), action: () => setAllCollapsed(false) },
-      { label: tr('ui.binder.restrange_tot'), action: () => setAllCollapsed(true) });
-    if (onSetTemplateFolder && node.children && !isRootNode) {
-      items.push('-', { label: tr('ui.binder.seteaza_ca'), submenu: [
-        { label: tr('ui.binder.dosar_de_sabloane'), checked: project.templateFolder === id, action: () => onSetTemplateFolder(project.templateFolder === id ? null : id) },
-      ] });
-    }
-    if (node.root === 'trash') items.push('-', { label: tr('ui.binder.goleste_cosul'), action: () => onEmptyTrash() });
-    return items;
-  };
+  const contextItems = (id) => buildBinderContextMenu({
+    project, id, selectedIds, tr, templates: templates || [], collections: collections || [], activeCollectionId, filterIds, icons: ICONS,
+    callbacks: {
+      add: onAdd, newFromTemplate: onNewFromTemplate, rename: setEditing, copy: onCopy,
+      drop: doDrop, trash: onTrash, restore: onRestore, patch: onPatchItems,
+      addToCollection: onAddToCollection, newCollection: onNewCollection, removeFromCollection: onRemoveFromCollection,
+      convert: onConvert, sortChildren: onSortChildren, group: onGroup, copyLink: onCopyLink,
+      snapshot: onSnapshot, duplicate: onDuplicate, showInExplorer: onShowInExplorer,
+      quickRef: onQuickRef, select: onSelect, setAllCollapsed, setTemplateFolder: onSetTemplateFolder, emptyTrash: onEmptyTrash,
+    },
+  });
 
   const labelColor = useMemo(() => Object.fromEntries(project.labels.map((l) => [l.name, l.color])), [project.labels]);
 
@@ -311,6 +219,53 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     if (node.root) return 'inside';
     return y < 0.5 ? 'before' : 'after';
   };
+
+  // One title/editor renderer: tree rows and collection rows must behave identically.
+  const renderTitle = (node) => (
+editing === node.id ? (
+            <input
+              aria-label={tr('ui.binder.itemTitle')}
+              autoFocus
+              defaultValue={node.title}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.target.select()}
+              onBlur={(e) => {
+                const outcome = renameOutcome.current;
+                renameOutcome.current = null;
+                if (outcome !== 'cancel') onRename(node.id, e.target.value.trim() || node.title);
+                setEditing(null);
+                onRenameDone?.(node.id, outcome === 'commit');
+                // back to the binder after Esc so arrow keys keep working
+                if (outcome === 'cancel') setTimeout(() => (treeRef.current || rootRef.current)?.focus(), 0);
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  renameOutcome.current = 'commit';
+                  e.target.blur();
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  renameOutcome.current = 'cancel';
+                  e.target.blur();
+                }
+              }}
+            />
+          ) : (
+            node.separator ? (
+              <span className="title separator-title" title={node.title}>
+                <span className="separator-rule" aria-hidden="true" />
+                {node.title && <span className="separator-label">{node.title.replace(/^[─—-]+\s*/, '')}</span>}
+                <span className="separator-rule" aria-hidden="true" />
+              </span>
+            ) : <span className={`title ${node.includeInCompile === false ? 'excluded' : ''}`}>
+              {node.title}
+              {node.locked && <span className="badge" title={tr('ui.binder.blocat_doar_citire')} aria-label={tr('ui.binder.blocat_doar_citire')}><Icon name="lock" size={11} /></span>}
+              {node.favorite && <span className="badge" title={tr('ui.binder.favorit')} aria-label={tr('ui.binder.favorit')}><Icon name="star" size={11} /></span>}
+            </span>
+          )
+  );
 
   const renderNode = (node, depth) => {
     if (!visible(node)) return null;
@@ -388,48 +343,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           )}
           {renderIcon(node)}
           {labelColor[node.label] && <span className="label-dot" style={{ background: labelColor[node.label] }} />}
-          {editing === node.id ? (
-            <input
-              autoFocus
-              defaultValue={node.title}
-              onClick={(e) => e.stopPropagation()}
-              onFocus={(e) => e.target.select()}
-              onBlur={(e) => {
-                const outcome = renameOutcome.current;
-                renameOutcome.current = null;
-                if (outcome !== 'cancel') onRename(node.id, e.target.value.trim() || node.title);
-                setEditing(null);
-                onRenameDone?.(node.id, outcome === 'commit');
-                // back to the binder after Esc so arrow keys keep working
-                if (outcome === 'cancel') setTimeout(() => (treeRef.current || rootRef.current)?.focus(), 0);
-              }}
-              onKeyDown={(e) => {
-                e.stopPropagation();
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  renameOutcome.current = 'commit';
-                  e.target.blur();
-                }
-                if (e.key === 'Escape') {
-                  e.preventDefault();
-                  renameOutcome.current = 'cancel';
-                  e.target.blur();
-                }
-              }}
-            />
-          ) : (
-            node.separator ? (
-              <span className="title separator-title" title={node.title}>
-                <span className="separator-rule" aria-hidden="true" />
-                {node.title && <span className="separator-label">{node.title.replace(/^[─—-]+\s*/, '')}</span>}
-                <span className="separator-rule" aria-hidden="true" />
-              </span>
-            ) : <span className={`title ${node.includeInCompile === false ? 'excluded' : ''}`}>
-              {node.title}
-              {node.locked && <span className="badge" title={tr('ui.binder.blocat_doar_citire')} aria-label={tr('ui.binder.blocat_doar_citire')}><Icon name="lock" size={11} /></span>}
-              {node.favorite && <span className="badge" title={tr('ui.binder.favorit')} aria-label={tr('ui.binder.favorit')}><Icon name="star" size={11} /></span>}
-            </span>
-          )}
+          {renderTitle(node)}
         </div>
         {node.children && isOpen && <ul role="group">{node.children.map((c) => renderNode(c, depth + 1))}</ul>}
       </li>
@@ -437,6 +351,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   };
 
   const selected = selectedId;
+  const actionContext = useMemo(() => binderContext({ project, id: selected, selectedIds }), [project.tree, selected, selectedIds]);
   const isRoot = project.tree.some((r) => r.id === selected);
 
   return (
@@ -449,13 +364,13 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
         const mod = e.ctrlKey || e.metaKey;
         const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'outdent', ArrowRight: 'indent' };
         const key = e.key;
-        if (mod && e.altKey && !e.shiftKey && (key === 'g' || key === 'G') && onGroup && !filterIds && selected && !isRoot) {
+        if (mod && e.altKey && !e.shiftKey && (key === 'g' || key === 'G') && onGroup && !filterIds && selected && !isRoot && actionContext?.mutable && actionContext.noneInTrash) {
           e.preventDefault();
           e.stopPropagation();
           onGroup(selectionFor(selected));
         } else if (mod && !e.altKey && !e.shiftKey && map[key]) {
           e.preventDefault();
-          if (!filterIds) onKeyMove(map[key]);
+          if (!filterIds && actionContext?.mutable && actionContext.noneInTrash) onKeyMove(map[key]);
         } else if (mod && !e.altKey && (key === 'z' || key === 'Z' || key === 'y' || key === 'Y')) {
           // Undo / redo of binder structure (Ctrl+Z, Ctrl+Y / Ctrl+Shift+Z)
           e.preventDefault();
@@ -470,10 +385,10 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           if (r.select) select(r.select, { shift: e.shiftKey && (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Home' || key === 'End') });
         } else if ((key === 'ContextMenu' || (key === 'F10' && e.shiftKey)) && selected) {
           openContext(e, selected);
-        } else if (key === 'F2' && selected && !isRoot) {
+        } else if (key === 'F2' && selected && !isRoot && actionContext?.mutable && actionContext.noneInTrash && !actionContext.multi) {
           e.preventDefault();
           setEditing(selected);
-        } else if ((key === 'Delete' || (key === 'Backspace' && mod)) && !e.altKey && selected && !isRoot) {
+        } else if ((key === 'Delete' || (key === 'Backspace' && mod)) && !e.altKey && selected && !isRoot && actionContext?.mutable && actionContext.noneInTrash) {
           // Delete / Ctrl+Delete: move the selection to the trash (no confirmation, it is undoable)
           e.preventDefault();
           onTrash();
@@ -499,12 +414,12 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
       tabIndex={-1}
     >
       <div className="binder-tools">
-        <button onClick={() => onAdd('text')} title={tr('ui.binder.document_nou_ctrl_n')}>+ Doc</button>
-        <button onClick={() => onAdd('folder')} title={tr('ui.binder.dosar_nou_ctrl_shift_n')}>{tr('ui.binder.dosar')}</button>
-        <button disabled={!selected || isRoot} onClick={() => setEditing(selected)} title={tr('ui.binder.redenumeste_f2_dublu_clic')} aria-label={tr('ui.binder.redenumeste_f2_dublu_clic')}><Icon name="pencil" size={14} /></button>
-        <button disabled={!selected || isRoot} onClick={() => onTrash()} title={tr('ui.binder.muta_in_cos_selectia')} aria-label={tr('ui.binder.muta_in_cos_selectia')}><Icon name="trash" size={14} /></button>
-        <button onClick={() => setAllCollapsed(false)} title={tr('ui.binder.extinde_tot')} aria-label={tr('ui.binder.extinde_tot')}><Icon name="expandAll" size={14} /></button>
-        <button onClick={() => setAllCollapsed(true)} title={tr('ui.binder.restrange_tot')} aria-label={tr('ui.binder.restrange_tot')}><Icon name="collapseAll" size={14} /></button>
+        {!actionContext?.inTrash && <button data-command-id="newText" onClick={() => onAdd('text')} title={tr('ui.binder.document_nou_ctrl_n')}>+ Doc</button>}
+        {!actionContext?.inTrash && <button data-command-id="newFolder" onClick={() => onAdd('folder')} title={tr('ui.binder.dosar_nou_ctrl_shift_n')}>{tr('ui.binder.dosar')}</button>}
+        {actionContext?.mutable && !actionContext.inTrash && !actionContext.multi && <button data-command-id="rename" onClick={() => setEditing(selected)} title={tr('ui.binder.redenumeste_f2_dublu_clic')} aria-label={tr('ui.binder.redenumeste_f2_dublu_clic')}><Icon name="pencil" size={14} /></button>}
+        {actionContext?.mutable && actionContext.noneInTrash && <button data-command-id="trash" onClick={() => onTrash()} title={tr('ui.binder.muta_in_cos_selectia')} aria-label={tr('ui.binder.muta_in_cos_selectia')}><Icon name="trash" size={14} /></button>}
+        <button data-command-id="expandAll" onClick={() => setAllCollapsed(false)} title={tr('ui.binder.extinde_tot')} aria-label={tr('ui.binder.extinde_tot')}><Icon name="expandAll" size={14} /></button>
+        <button data-command-id="collapseAll" onClick={() => setAllCollapsed(true)} title={tr('ui.binder.restrange_tot')} aria-label={tr('ui.binder.restrange_tot')}><Icon name="collapseAll" size={14} /></button>
       </div>
       <input className="search" type="search" aria-label={tr('ui.binder.cauta_in_proiect')} placeholder={tr('ui.binder.cauta_in_proiect')} title={tr('ui.binder.ctrl_shift_clic_selectie_multipla')} value={query} onChange={(e) => setQuery(e.target.value)} />
       {filterIds ? (
@@ -542,10 +457,11 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
                   }}
                   onClick={(e) => select(id, { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey, alt: e.altKey })}
                   onContextMenu={(e) => openContext(e, id)}
+                  onDoubleClick={(e) => { if (e.target.tagName === 'INPUT') return; e.preventDefault(); e.stopPropagation(); runBehaviour(dblMode, id, Boolean(node.root)); }}
                 >
                   {renderIcon(node)}
                   {labelColor[node.label] && <span className="label-dot" style={{ background: labelColor[node.label] }} />}
-                  <span className="title">{node.title}</span>
+                  {renderTitle(node)}
                 </div>
               </li>
             );
@@ -564,8 +480,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
           {project.tree.map((n) => renderNode(n, 0))}
         </ul>
       )}
-      <button className="link" onClick={onEmptyTrash}>{tr('ui.binder.goleste_cosul')}</button>
-      {ctx && <ContextMenu x={ctx.x} y={ctx.y} items={contextItems(ctx.id)} onClose={() => setCtx(null)} />}
+      {ctx && <ContextMenu x={ctx.x} y={ctx.y} title={binderContextTitle(binderContext({ project, id: ctx.id, selectedIds }), tr)} items={contextItems(ctx.id)} onClose={() => setCtx(null)} />}
     </aside>
   );
 }

@@ -2,7 +2,9 @@
 
 Program gratuit de scris cărți lungi, în română și engleză: textul stă pe fișe, câte una pentru fiecare scenă sau capitol, iar la final primești cartea întreagă.
 
-**[Descarcă pentru Windows](../../releases/latest)**
+**[Descarcă Pneuma Sofer 1.1.0 pentru Windows](../../releases/latest)**
+
+[Schimbări și verificări pentru 1.1.0](docs/RELEASE-1.1.0-VERIFICATION.md). AI și serviciile externe sunt opționale; scrierea, organizarea, salvarea și exportul funcționează fără ele.
 
 <p align="center">
   <img src="./assets/readme/hero.png" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">

@@ -12,6 +12,8 @@ describe('P7 template folder dual hint', () => {
     const d = fs.readFileSync(new URL('../src/components/ProjectSettingsDialog.jsx', import.meta.url), 'utf8');
     expect(d).toContain("tr('ui.ps.template_folder_dual_hint')");
     const b = fs.readFileSync(new URL('../src/components/Binder.jsx', import.meta.url), 'utf8');
-    expect(b).toContain("tr('ui.binder.dosar_de_sabloane')");
+    expect(b).toContain('buildBinderContextMenu');
+    const model = fs.readFileSync(new URL('../src/lib/binderContextMenu.js', import.meta.url), 'utf8');
+    expect(model).toContain("tr('ui.binder.dosar_de_sabloane')");
   });
 });

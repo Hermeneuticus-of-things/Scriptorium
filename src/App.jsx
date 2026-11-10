@@ -1,4 +1,5 @@
-import AdlAdoptionWidget from './components/AdlAdoptionWidget.jsx';
+import { isCommandApplicable } from './lib/commandApplicability.js';
+import { commandItem, commandGroup } from './lib/commands.js';
 import { addBacklinks, addedLinks, insertLinkedDoc } from './lib/backlinks.js';
 import { uiPrompt } from './lib/uiPrompt.jsx';
 import { getHTMLFromFragment } from '@tiptap/core';
@@ -243,6 +244,19 @@ export default function App({ api: apiProp }) {
     });
   }, [apiProp]);
   const [settings, setSettings] = useState(null);
+  const [serviceAvailability, setServiceAvailability] = useState({});
+  useEffect(() => {
+    let alive = true, timer;
+    const refresh = async () => {
+      const [data, auth, flags] = await Promise.all([api.servicesStatus?.().catch(() => null), api.nlmAuthStatus?.().catch(() => null), api.getSettings?.().catch(() => null)]);
+      if (alive) { setServiceAvailability({ ...(data?.services || {}), notebookLm: { configured: auth?.loggedIn === true } }); if (flags) setSettings((s) => s ? { ...s, hasApiKey: flags.hasApiKey, hasKeys: flags.hasKeys } : s); }
+    };
+    const changed = () => { clearTimeout(timer); timer = setTimeout(refresh, 100); };
+    refresh();
+    window.addEventListener('pneuma-services-changed', changed);
+    const off = api.onServicesChanged?.(changed);
+    return () => { alive = false; clearTimeout(timer); off?.(); window.removeEventListener('pneuma-services-changed', changed); };
+  }, []);
   const settingsRef = useRef(null);
   settingsRef.current = settings;
   const openResultRef = useRef(null);
@@ -512,6 +526,34 @@ export default function App({ api: apiProp }) {
   }, [api]);
   const [errorPrompt, setErrorPrompt] = useState(false);
   const seenErrors = useRef(new Set());
+  const [unsavedPrompt, setUnsavedPrompt] = useState(null);
+  const unsavedDecision = useRef(null);
+  const unsavedPromise = useRef(null);
+  const hasUnsavedChanges = () => Boolean(pending.current.size || typed.current.size || authorBase.current.size || queuedRef.current);
+  const askUnsavedDecision = () => {
+    if (unsavedPromise.current) return unsavedPromise.current;
+    if (!hasUnsavedChanges()) return Promise.resolve('discard');
+    unsavedPromise.current = new Promise((resolve) => {
+      unsavedDecision.current = resolve;
+      setUnsavedPrompt({});
+    });
+    return unsavedPromise.current;
+  };
+  const resolveUnsavedDecision = useCallback((choice) => {
+    const resolve = unsavedDecision.current;
+    unsavedDecision.current = null;
+    unsavedPromise.current = null;
+    setUnsavedPrompt(null);
+    resolve?.(choice);
+  }, []);
+  // The unsaved confirmation is a real top layer, including when opened over another dialog.
+  useEffect(() => {
+    if (!unsavedPrompt) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.unsaved', {
+      close: () => { resolveUnsavedDecision('cancel'); return true; },
+    });
+  }, [unsavedPrompt, focusEngine, resolveUnsavedDecision]);
+
   useEffect(() => {
     const onErr = (e) => {
       const k = errorKey(e || {});
@@ -633,6 +675,15 @@ export default function App({ api: apiProp }) {
         setTimeout(() => el.classList.remove('hint-glow'), 3600);
       });
     });
+  };
+  const showSelectionHint = () => {
+    setToast(tr('ui.app.selecteaza_un_cuvant'));
+    showHint('editor-selection');
+  };
+  const showServiceHint = (service) => {
+    openSettings('accounts');
+    // Settings mounts after the command returns; wait one frame before glowing its input.
+    window.setTimeout(() => showHint(`service-key-${service}`), 120);
   };
   const [splitNav, setSplitNav] = useState({ stack: [], index: -1 });
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
@@ -948,10 +999,37 @@ export default function App({ api: apiProp }) {
   );
 
   useEffect(() => {
-    const onUnload = () => flush();
+    const onUnload = (event) => {
+      // Electron intercepts the native close in main.cjs and asks the renderer through the
+      // three-button dialog below. Blocking beforeunload here would prevent that handshake.
+      if (hasUnsavedChanges() && !api.windowCloseResponse) {
+        event.preventDefault();
+        event.returnValue = '';
+        return;
+      }
+      flush();
+    };
     window.addEventListener('beforeunload', onUnload);
     return () => window.removeEventListener('beforeunload', onUnload);
   }, [flush]);
+
+  useEffect(() => {
+    if (!api.onWindowCloseRequest || !api.windowCloseResponse) return undefined;
+    return api.onWindowCloseRequest(async () => {
+      const choice = await askUnsavedDecision();
+      if (choice === 'save') {
+        await flush();
+        return api.windowCloseResponse('close');
+      }
+      if (choice === 'discard') {
+        pending.current.clear();
+        dropTyped();
+        changedSinceSave.current.clear();
+        authorBase.current.clear();
+      }
+      return api.windowCloseResponse(choice === 'cancel' ? 'cancel' : 'close');
+    });
+  }, [api, flush]);
 
   // Reload documents changed outside the app (AI agents via MCP, sync clients, the same folder
   // open on another computer). A document with unsaved local edits keeps the local text; the
@@ -1099,6 +1177,7 @@ export default function App({ api: apiProp }) {
   const openResult = useCallback(
     async (res) => {
       if (!res) return;
+      setRenameId(null);
       if (res.stats) {
         setImportStats({ ...res.stats, source: res.project.importReport?.source });
         setDialog('importReport');
@@ -1175,10 +1254,20 @@ export default function App({ api: apiProp }) {
   openResultRef.current = openResult;
 
   const closeProject = async () => {
-    await flush();
+    const choice = await askUnsavedDecision();
+    if (choice === 'cancel') return;
+    if (choice === 'save') await flush();
+    if (choice === 'discard') {
+      pending.current.clear();
+      dropTyped();
+      changedSinceSave.current.clear();
+      authorBase.current.clear();
+    }
     parkQueue(dir);
     if (project?.syncFolder && (project.syncAuto || settings?.sharingSync?.syncOnClose)) await api.syncAuto?.(dir, { ...withSyncDefaults(project), syncAuto: true }, 'close').catch(() => {});
     api.releaseProject?.().catch(() => {});
+    setRenameId(null);
+    setActiveCollectionId(null);
     setProject(null);
     setDir(null);
     dropTyped();
@@ -1545,9 +1634,9 @@ export default function App({ api: apiProp }) {
     }
   };
 
-  const trashSelection = () => {
+  const trashSelection = (requestedIds) => {
     let tree = project.tree;
-    const ids = [...(selectedIds.size ? selectedIds : [selectedId])].filter((id) => {
+    const ids = [...(Array.isArray(requestedIds) ? requestedIds : selectedIds.size ? selectedIds : [selectedId])].filter((id) => {
       const n = findNode(tree, id);
       return n && !n.root && !inTrash(id);
     });
@@ -1573,8 +1662,8 @@ export default function App({ api: apiProp }) {
     const n = findNode(project.tree, id);
     return n && !n.root;
   });
-  const restoreSelection = () => {
-    const tree = restoreManyFromTrash(project.tree, selectionList());
+  const restoreSelection = (requestedIds) => {
+    const tree = restoreManyFromTrash(project.tree, Array.isArray(requestedIds) ? requestedIds : selectionList());
     if (tree !== project.tree) setTreeU(tree);
     else setToast(tr('ui.app.selectia_nu_e_in_cos'));
   };
@@ -1701,7 +1790,7 @@ export default function App({ api: apiProp }) {
   // Word or phrase lookups; translation takes the whole selection, dictionaries a short phrase.
   const lookupWord = (kind) => {
     const text = selectedText().trim();
-    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (!text) return showSelectionHint();
     const url = lookupUrl(kind, text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro' });
     if (!url) return setToast(tr('ui.app.selectie_prea_lunga'));
     return openWeb(url);
@@ -1813,7 +1902,7 @@ export default function App({ api: apiProp }) {
   const runService = async (kind, service) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
     const source = (handle?.getSelectionText() || '').trim();
-    if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (!source) return showSelectionHint();
     const range = serviceRange(handle.editor, source);
     const label = kind === 'grammar' ? 'LanguageTool' : service === 'google' ? 'Google Translate' : 'DeepL';
     setToast(tr('ui.services.lucrez', { service: label }));
@@ -1842,7 +1931,11 @@ export default function App({ api: apiProp }) {
       }
     } catch (e) {
       setToast('');
-      report(e);
+      const msg = String(e?.message || '');
+      if (/Pune cheia|cheia nu e acceptată|Setări.*Servicii|conectat cu Google/i.test(msg)) {
+        setToast(msg);
+        showServiceHint(service === 'google' ? 'googleTranslate' : kind === 'grammar' ? 'languagetool' : 'deepl');
+      } else report(e);
     }
     return undefined;
   };
@@ -1851,7 +1944,7 @@ export default function App({ api: apiProp }) {
   const synonymsInApp = async (word = null) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
     const source = String(word || (handle?.getSelectionText() || '')).trim();
-    if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (!source) return showSelectionHint();
     if (word) {
       // Cuvinte apropiate din popover: re-căutare directă, fără selecție în editor.
       setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
@@ -1952,10 +2045,10 @@ export default function App({ api: apiProp }) {
     setTree(tree);
     setToast(tr('ui.app.sinopsis_generat_pentru_x_documente', { n: n }));
   };
-  const snapshotSelection = async () => {
+  const snapshotSelection = async (requestedIds) => {
     await flush();
     const stamp = `Snapshot ${new Date().toLocaleString(uiLocale())}`;
-    const ids = selectionList().filter((id) => findNode(project.tree, id).type === 'text');
+    const ids = (Array.isArray(requestedIds) ? requestedIds : selectionList()).filter((id) => findNode(project.tree, id)?.type === 'text' && !inTrash(id));
     for (const id of ids) await api.takeSnapshot(dir, id, stamp);
     setToast(tr('ui.app.snapshot_salvat_pentru_x_documente', { length: ids.length }));
     refreshSnapCounts();
@@ -2150,8 +2243,8 @@ export default function App({ api: apiProp }) {
   };
 
   // Duplicates the selected item (with its notes, synopsis and, optionally, children).
-  const duplicateSelection = async (withChildren) => {
-    const node = selectedId && findNode(project.tree, selectedId);
+  const duplicateSelection = async (withChildren, targetId = selectedId) => {
+    const node = targetId && findNode(project.tree, targetId);
     if (!node || node.root) return;
     await flush();
     const { tree, pairs, id } = duplicateNode(projectRef.current.tree, node.id, { withChildren });
@@ -2579,12 +2672,28 @@ export default function App({ api: apiProp }) {
   const commandsRef = useRef({});
   useEffect(() => {
     const onKey = (e) => {
-      if (!project) return;
+      if (!project || e.defaultPrevented || e.isComposing) return;
       if (e.key === 'Escape' && composition) {
         // Esc closes only the top-most layer: a dialog, menu or find bar handles its own Esc
         // (the target may already be detached when the layer closed, closest() still works).
         const layer = e.target?.closest?.('.modal-backdrop, .modal, .menu-pop, .ctx-menu, .find-bar, .help-window, input, textarea, select');
         if (!layer) setComposition(false);
+        return;
+      }
+      const reload = e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r');
+      if (reload && hasUnsavedChanges()) {
+        e.preventDefault();
+        askUnsavedDecision().then(async (choice) => {
+          if (choice === 'cancel') return;
+          if (choice === 'save') await flush();
+          if (choice === 'discard') {
+            pending.current.clear();
+            dropTyped();
+            changedSinceSave.current.clear();
+            authorBase.current.clear();
+          }
+          window.location.reload();
+        });
         return;
       }
       let combo = keyFromEvent(e);
@@ -2600,7 +2709,7 @@ export default function App({ api: apiProp }) {
         if ((inDialog && id !== 'save') || inField) continue;
         if (cmd.key && cmd.key === combo && !cmd.disabled) {
           e.preventDefault();
-          cmd.run();
+          if (!focusEngine.dispatch(id) && focusEngine.mayBubble(id)) cmd.run();
           return;
         }
       }
@@ -2621,7 +2730,7 @@ export default function App({ api: apiProp }) {
       if (!cmd) return;
       e.preventDefault();
       e.stopPropagation();
-      cmd.run();
+      if (!focusEngine.dispatch(cmd.id) && focusEngine.mayBubble(cmd.id)) cmd.run();
     };
     window.addEventListener('keydown', onEditorKey, true);
     window.addEventListener('keydown', onKey);
@@ -2642,13 +2751,11 @@ export default function App({ api: apiProp }) {
   useEffect(() => {
     if (!api.onMenuCommand) return undefined;
     const offOpen = api.onNativeMenuOpen?.(() => window.dispatchEvent(new Event('pneuma:closeMenus')));
-    // ADL T6 (§2+§10): comanda aleasă din meniul nativ trece ÎNTÂI prin motorul de focus —
-    // suprafața translucidă activă o poate consuma (ex. un dialog self-managed), iar abia când
-    // niciun strat nu o consumă (dispatch → null) rulează fallback-ul istoric (commandList →
-    // menuActions), exact ca înainte. Dacă motorul nu e încă montat/înregistrat, fallback-ul
-    // direct e comportamentul acceptat (meniul nativ e accesibil doar cu proiectul deschis,
-    // deci în practică motorul e deja pe stivă când comanda sosește).
-    const offCmd = api.onMenuCommand((id) => runNativeMenuItem(focusEngine, id, () => (commandsRef.current[id] ? commandsRef.current[id].run() : menuActionsRef.current[id]?.())));
+    const offCmd = api.onMenuCommand((id) => {
+      const command = commandsRef.current[id];
+      if (command?.disabled || command?.hidden) return;
+      return runNativeMenuItem(focusEngine, id, () => command ? command.run() : menuActionsRef.current[id]?.());
+    });
     return () => {
       offCmd?.();
       offOpen?.();
@@ -2720,12 +2827,24 @@ export default function App({ api: apiProp }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [splitSurface, focusEngine]);
 
-  if (!settings) return <div className="loading">{tr('ui.app.se_incarca')}</div>;
+  if (!settings) {
+    return (
+      <main className="loading loading-screen" role="status" aria-live="polite">
+        <div className="loading-brand" aria-hidden="true">P</div>
+        <h1>Pneuma Sofer</h1>
+        <p className="muted">{tr('ui.app.se_incarca')}</p>
+        <div className="loading-skeleton" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+      </main>
+    );
+  }
 
   if (!project) {
     return (
       <>
-        <AdlAdoptionWidget />
         <DialogA11y />
         <Home
           api={api}
@@ -2821,7 +2940,7 @@ export default function App({ api: apiProp }) {
   const corrKey = JSON.stringify(corrections);
   const toolbars = toolbarPrefs(settings.toolbars);
   // AI is optional: with it off, every feature that needs Claude is hidden and nothing else changes.
-  const aiEnabled = settings.aiEnabled !== false;
+  const aiEnabled = settings.aiEnabled !== false && settings.hasApiKey === true;
   // Loads every text document of the project into memory (views and AI jobs over the whole book).
   const loadAllDocs = async () => {
     const loaded = {};
@@ -3023,9 +3142,6 @@ export default function App({ api: apiProp }) {
     { label: tr('cmd.findDoc'), shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
     { label: tr('cmd.splitTitle'), shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
     { label: tr('cmd.merge'), shortcut: 'Ctrl+Shift+M', action: mergeSelection },
-    { label: tr('cmd.copyAsToC'), action: () => copyAsToCCommand().catch(report), disabled: !selectedId },
-    { label: tr('ui.app.duplica_cu_sub_documente'), shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
-    { label: tr('ui.app.duplica_doar_elementul'), action: () => duplicateSelection(false) },
     '-',
     { label: tr('cmd.stripNotationDoc'), action: () => stripNotationInDoc().catch(report), disabled: !selected || selected.root },
     { label: tr('cmd.stripNotationProject'), action: () => stripNotationInProject().catch(report) },
@@ -3155,7 +3271,7 @@ export default function App({ api: apiProp }) {
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],
     ['document', 'copyAsToC', tr('cmd.copyAsToC'), () => copyAsToCCommand().catch(report), !selectedId],
-    ['document', 'duplicate', tr('cmd.duplicate'), () => duplicateSelection(true)],
+    ['document', 'duplicate', tr('cmd.duplicate'), (payload) => selectedIds.size > 1 ? copyItems(selectionList(), selectionList().at(-1), 'after').catch(report) : duplicateSelection(payload?.includeChildren !== false)],
     ['document', 'snapshot', tr('cmd.snapshot'), async () => {
       if (!selected || selected.root) return;
       await takeSnapshotOf(selected.id, `Snapshot ${new Date().toLocaleString(uiLocale())}`);
@@ -3325,14 +3441,28 @@ export default function App({ api: apiProp }) {
   // AI off: every command that needs Claude is left out (menus, shortcuts, native menu); I-REP stays.
   // MCP needs the desktop app (browser mode has no api.mcpConnectInfo).
   const activeCommands = commandList.filter(([, id]) => (aiEnabled || !AI_ONLY_COMMANDS.has(id)) && (id !== 'mcpConnect' || api.mcpConnectInfo));
+  const applicability = {
+    node: selected && { ...selected, inTrash: inTrash(selected.id) },
+    nodes: selectionList().map((id) => ({ ...findNode(project.tree, id), inTrash: inTrash(id) })),
+    textSelection: selectedText().trim(), reading: reader.reading,
+    services: serviceAvailability, canRead: reader.canRead, canDictate: dict.available, dictating: dict.dictation,
+  };
   const commands = Object.fromEntries(
-    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run: (...a) => (noteAction(id), run(...a)), disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
+    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run: (...a) => { if (commandsRef.current[id]?.disabled) return; noteAction(id); return run(...a); }, disabled: Boolean(disabled) || !isCommandApplicable(id, applicability), hidden: !isCommandApplicable(id, applicability), key: shortcutFor(id, settings) }]),
   );
   commandsRef.current = commands;
+  // The native context menu uses the same capability decisions, not its own guesses.
+  window.__commandAvailability = (id) => Boolean(document.querySelector('.binder') && commandsRef.current[id] && !commandsRef.current[id].hidden && !commandsRef.current[id].disabled);
   // Menu bar (in-app menus and the native application menu share this layout).
   const menuItem = (id) => {
     const c = commands[id];
-    return c && { id, label: c.label, action: c.run, disabled: c.disabled, shortcut: c.key };
+    if (id === 'duplicate' && selected?.children?.length && selectedIds.size <= 1 && !selected.root && !inTrash(selected.id)) {
+      return commandGroup('document.duplicate', c.label, [
+        commandItem('duplicate', { label: tr('ui.binder.duplicateWithChildren'), payload: { includeChildren: true }, action: () => duplicateSelection(true), shortcut: c.key }),
+        commandItem('duplicate', { label: tr('ui.binder.duplicateOnlyItem'), payload: { includeChildren: false }, action: () => duplicateSelection(false) }),
+      ]);
+    }
+    return c && commandItem(id, { label: c.label, action: c.run, disabled: c.disabled, hidden: c.hidden, shortcut: c.key });
   };
   const edMenus = editorMenus({
     t: tr,
@@ -3372,7 +3502,7 @@ export default function App({ api: apiProp }) {
       return (
         <div key={id} className="seg" role="group" aria-label={tr('ui.tb.views')}>
           {[['editor', 'Editor', ScriveningsIcon, 'Editor / Scrivenings (Ctrl+1)'], ['corkboard', 'Corkboard', CorkboardIcon, 'Corkboard (Ctrl+2)'], ['outline', 'Outline', OutlineIcon, 'Outline (Ctrl+3)']].map(([v, l, Ic, t]) => (
-            <button key={v} className={view === v ? 'on' : ''} onClick={() => setView(v)} title={t} aria-label={l}>
+            <button key={v} data-command-id={{ editor: 'viewEditor', corkboard: 'viewCorkboard', outline: 'viewOutline' }[v]} aria-pressed={view === v} className={view === v ? 'on' : ''} onClick={() => setView(v)} title={t} aria-label={l}>
               <span className="sc-ico">{toolbars.display !== 'text' && <Ic />}{toolbars.display !== 'icon' && <span className="tb-label">{l}</span>}</span>
             </button>
           ))}
@@ -3380,13 +3510,13 @@ export default function App({ api: apiProp }) {
       );
     }
     const cmd = commands[it.command];
-    if (!cmd) return null;
+    if (!cmd || cmd.hidden || cmd.disabled) return null;
     const Ic = it.icon && TB_ICONS[it.icon];
     const icon = Ic ? <Ic /> : it.icon && iconNames.includes(it.icon) ? <Icon name={it.icon} /> : it.glyph ? <span className="tb-glyph" aria-hidden="true">{it.glyph}</span> : null;
     const text = it.text ? (it.text.includes('.') ? tr(it.text) : it.text) : '';
     const showText = toolbars.display === 'text' || (toolbars.display === 'iconText' && text) || !icon;
     return (
-      <button key={id} data-tb={id} className={tbOn[id] ? 'on' : ''} disabled={tbDisabled[id] || cmd.disabled} onClick={cmd.run} title={cmd.key ? `${cmd.label} (${cmd.key})` : cmd.label} aria-label={cmd.label}>
+      <button key={id} data-tb={id} data-command-id={it.command} className={tbOn[id] ? 'on' : ''} disabled={tbDisabled[id] || cmd.disabled} onClick={cmd.run} title={cmd.key ? `${cmd.label} (${cmd.key})` : cmd.label} aria-label={cmd.label}>
         <span className="sc-ico">
           {toolbars.display !== 'text' && icon}
           {showText && <span className="tb-label">{text || cmd.label}</span>}
@@ -3501,7 +3631,6 @@ export default function App({ api: apiProp }) {
           : undefined
       }
     >
-      <AdlAdoptionWidget />
       <style>{styleCss(projectStyles)}</style>
       <header className={`toolbar tb-${toolbars.display}`}>
         {/* Browser: the full menu bar lives here; desktop: the native menu has it (AI can stay in-app via the toolbar). */}
@@ -3513,7 +3642,7 @@ export default function App({ api: apiProp }) {
         )}
         {toolbars.top.map((id, i) => renderTopItem(id, i))}
         {/* AI status on the bar: green when AI is on with a working key, red otherwise; the box turns it on/off. */}
-        <label
+        <label hidden={settings.hasApiKey !== true}
           className={`ai-status ${aiEnabled && settings.hasApiKey ? 'on' : 'off'}`}
           data-hint="aiToggle"
           title={aiEnabled ? (settings.hasApiKey ? tr('ui.app.ai_activ') : tr('ui.app.ai_fara_cheie')) : tr('ui.app.ai_oprit')}
@@ -3603,8 +3732,8 @@ export default function App({ api: apiProp }) {
           onSortChildren={(id, desc) => setTreeU(sortChildren(project.tree, id, 'title', desc))}
           onGroup={groupItems}
           onCopyLink={(id) => navigator.clipboard?.writeText(docLink(id)).catch(report)}
-          onSnapshot={() => snapshotSelection().catch(report)}
-          onDuplicate={(id, withChildren) => duplicateSelection(withChildren).catch(report)}
+          onSnapshot={(ids) => snapshotSelection(ids).catch(report)}
+          onDuplicate={(id, withChildren) => duplicateSelection(withChildren, id).catch(report)}
           onDropKeyword={dropKeyword}
           docs={docs}
           width={widths.binder}
@@ -3628,6 +3757,7 @@ export default function App({ api: apiProp }) {
             if (id) setSelectedId(id);
           }}
           onTrash={trashSelection}
+          onRestore={restoreSelection}
           onEmptyTrash={() => {
             const trash = project.tree.find((n) => n.root === 'trash');
             if (!trash || !(trash.children || []).length) return;
@@ -4620,6 +4750,13 @@ export default function App({ api: apiProp }) {
       <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
       <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
+      {unsavedPrompt && (
+        <UnsavedChangesDialog
+          onSave={() => resolveUnsavedDecision('save')}
+          onDiscard={() => resolveUnsavedDecision('discard')}
+          onCancel={() => resolveUnsavedDecision('cancel')}
+        />
+      )}
       <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
     </div>
   );
@@ -4676,6 +4813,22 @@ function ReportUi({ api, open, setOpen, prompt, setPrompt, onDone }) {
         />
       )}
     </>
+  );
+}
+
+function UnsavedChangesDialog({ onSave, onDiscard, onCancel }) {
+  return (
+    <div className="modal-backdrop unsaved-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="modal unsaved-dialog" role="alertdialog" aria-modal="true" aria-labelledby="unsaved-title" aria-describedby="unsaved-description">
+        <h2 id="unsaved-title">{tr('ui.unsaved.title')}</h2>
+        <p id="unsaved-description">{tr('ui.unsaved.question')}</p>
+        <div className="actions">
+          <button data-initial-focus onClick={onCancel}>{tr('btn.cancel')}</button>
+          <button className="danger" onClick={onDiscard}>{tr('ui.unsaved.discard')}</button>
+          <button className="primary" onClick={onSave}>{tr('btn.save')}</button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -8,6 +8,7 @@ import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const JSZip = require('jszip');
@@ -32,7 +33,8 @@ const decodeXml = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/
 const norm = (s) => String(s).replace(/\s+/g, ' ').trim().toLocaleLowerCase('ro-RO');
 const has = (cmd) => {
   try {
-    execFileSync('sh', ['-c', `command -v ${cmd}`], { stdio: 'ignore' });
+    if (process.platform === 'win32') execFileSync('where.exe', [cmd], { stdio: 'ignore' });
+    else execFileSync('sh', ['-c', `command -v ${cmd}`], { stdio: 'ignore' });
     return true;
   } catch {
     return false;
@@ -436,7 +438,8 @@ describe.skipIf(!has('soffice') || !has('pdftotext'))('LibreOffice opens DOCX / 
   it('converts each to PDF with all text, diacritics and footnotes', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lo-'));
     for (const f of ['docx', 'odt', 'rtf']) fs.writeFileSync(path.join(dir, `book-${f}.${f}`), out[f]);
-    execFileSync('soffice', [`-env:UserInstallation=file://${dir}/profile`, '--headless', '--convert-to', 'pdf', '--outdir', dir, ...['docx', 'odt', 'rtf'].map((f) => path.join(dir, `book-${f}.${f}`))], { stdio: 'ignore', timeout: 170000 });
+    const profileUrl = pathToFileURL(path.join(dir, 'profile')).href;
+    execFileSync('soffice', [`-env:UserInstallation=${profileUrl}`, '--headless', '--convert-to', 'pdf', '--outdir', dir, ...['docx', 'odt', 'rtf'].map((f) => path.join(dir, `book-${f}.${f}`))], { stdio: 'pipe', timeout: 170000 });
     for (const f of ['docx', 'odt', 'rtf']) {
       const pdf = path.join(dir, `book-${f}.pdf`);
       expect(fs.existsSync(pdf), f).toBe(true);

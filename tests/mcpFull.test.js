@@ -87,6 +87,9 @@ const NEW_READ_TOOLS = (ctx) => ({
 // Every renderer API (electron/preload.cjs) is either reachable over MCP (tool name) or GUI-only
 // (reason). A new preload function makes this test fail until it is listed here.
 const PRELOAD_COVERAGE = {
+  onServicesChanged: 'gui:reactive service configuration notification, not a business operation',
+  onWindowCloseRequest: 'gui: cererea de închidere a ferestrei, cu alegere explicită Save/Discard/Cancel',
+  windowCloseResponse: 'gui: răspunsul confirmării de închidere; nu este comandă de agent',
   deleteHistory: 'gui: ștergerea zilelor din istoricul scrisului se face din fereastra Istoric',
   scratchOpenWindow: 'gui: fereastra separată de notițe (scratchpad)',
   scratchSetOnTop: 'gui: fereastra de notițe mereu deasupra',

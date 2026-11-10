@@ -303,7 +303,7 @@ function setupSpelling(win) {
       const st = readSettings();
       const g = lookupGroups(text, { from: st.translateFrom || 'auto', to: st.translateTo || 'ro', lang: st.language || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, click: () => lookup(l.url) }));
-      const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
+      const cmd = (id) => Object.assign(() => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); }, { commandId: id });
       const sv = services.serviceStatus(st, safeStorage);
       const inApp = [
         ...(sv.deepl.configured ? [{ label: L.inAppDeepl, click: cmd('deeplInApp') }] : []),
@@ -311,9 +311,9 @@ function setupSpelling(win) {
       ];
       // Decizia autorului: traducerea in-app (API), fără trimitere la site-uri externe.
       if (inApp.length) items.push({ label: L.translate, submenu: inApp });
-      items.push({ label: L.grammar, click: cmd('grammarSel') });
-      if (g.dict.length) items.push({ label: L.dictionaries, submenu: links(g.dict) });
-      items.push({ label: L.research, submenu: links(g.research) });
+      if (sv.languagetool.configured) items.push({ label: L.grammar, click: cmd('grammarSel') });
+      if (sv.webResearch.configured && g.dict.length) items.push({ label: L.dictionaries, submenu: links(g.dict) });
+      if (sv.webResearch.configured) items.push({ label: L.research, submenu: links(g.research) });
       // AI isolation (2026-10-27): AI on selection, „Întreabă AI-ul”, NotebookLM (ask/consult) are
       // reachable only from the top-level AI menu; the right-click menu carries no AI entries.
       items.push({
@@ -327,7 +327,7 @@ function setupSpelling(win) {
       items.push({ type: 'separator' });
     }
     if (params.isEditable) {
-      const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
+      const cmd = (id) => Object.assign(() => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); }, { commandId: id });
       // Read aloud with the built-in voice (Mihai): selection / from the cursor / the whole document.
       items.push({
         label: L.readAloud,
@@ -375,7 +375,12 @@ function setupSpelling(win) {
     } else if (params.selectionText) {
       items.push({ label: L.copy, role: 'copy' });
     }
-    if (items.length) Menu.buildFromTemplate(items).popup({ window: win });
+    const ids = []; const collect = (list) => list.forEach((item) => { if (item.click?.commandId) ids.push(item.click.commandId); if (item.submenu) collect(item.submenu); }); collect(items);
+    const allowed = await win.webContents.executeJavaScript('window.__commandAvailability ? Object.fromEntries('+JSON.stringify(ids)+'.map(id => [id, window.__commandAvailability(id)])) : {}').catch(() => ({}));
+    if (win.isDestroyed()) return;
+    const prune = (list) => { const out = []; for (const item of list) { if (item.click?.commandId && allowed[item.click.commandId] !== true) continue; if (item.submenu) { const sub = prune(item.submenu); if (!sub.length) continue; item.submenu = sub; } if (item.type === 'separator' && (!out.length || out[out.length-1].type === 'separator')) continue; out.push(item); } while (out[out.length-1]?.type === 'separator') out.pop(); return out; };
+    const visibleItems = prune(items);
+    if (visibleItems.length) Menu.buildFromTemplate(visibleItems).popup({ window: win });
   });
 }
 
@@ -417,6 +422,15 @@ function createWindow() {
   win.setMenuBarVisibility(false);
   setupSpelling(win);
   const wcId = win.webContents.id;
+  win.__allowClose = false;
+  win.__closePromptPending = false;
+  win.on('close', (event) => {
+    if (win.__allowClose || quitting) return;
+    event.preventDefault();
+    if (win.__closePromptPending) return;
+    win.__closePromptPending = true;
+    win.webContents.send('window:close-request');
+  });
   win.on('closed', () => releaseWindow(wcId));
   // A crashed or reloaded renderer has lost its project: free it for other windows.
   win.webContents.on('render-process-gone', () => releaseWindow(wcId));
@@ -444,6 +458,17 @@ function createWindow() {
   else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   return win;
 }
+
+handle('window:close-response', (e, choice) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (!win) return false;
+  win.__closePromptPending = false;
+  if (choice === 'close') {
+    win.__allowClose = true;
+    win.close();
+  }
+  return true;
+});
 
 // The window closed its project (back to the start screen): free it for other windows.
 handle('project:release', (e) => {
@@ -570,6 +595,7 @@ handle('settings:set', (_e, patch) => {
   }
   if (apiKey !== undefined) setApiKey(apiKey, rest.aiProvider);
   scheduleBackups();
+  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send('services:changed');
   return true;
 });
 handle('settings:chooseBackupDir', async (e) => {
@@ -1438,6 +1464,7 @@ handle('services:test', async (_e, id) => {
 });
 handle('services:set', (_e, id, values) => {
   writeSettings(services.setService(readSettings(), id, values || {}, safeStorage));
+  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send('services:changed');
   return services.serviceStatus(readSettings(), safeStorage)[id];
 });
 handle('accounts:set', (_e, account) => {

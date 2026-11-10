@@ -104,9 +104,11 @@ const watchdog = setTimeout(() => {
   await win.locator('.pane .ProseMirror').first().click();
   await win.keyboard.press('Control+End');
   await win.keyboard.type(' Ultima frază înainte de închidere.');
-  // Wait for the window itself to go away (the app process may outlive it briefly).
+  // The app now protects unsaved edits with Save / Discard / Cancel; choose Save, then wait for
+  // the window itself to go away (the app process may outlive it briefly).
   const closed = win.waitForEvent('close', { timeout: 30000 });
   await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
+  await win.getByRole('button', { name: 'Salvează' }).click();
   await closed;
   await new Promise((r) => setTimeout(r, 500));
   const lastText = fs.readdirSync(docsDir).map((f) => fs.readFileSync(path.join(docsDir, f), 'utf8')).join('\n');

@@ -52,10 +52,12 @@ export function registerMenuSurface(engine, id, { close } = {}) {
  * that handled the command, or null when the fallback action ran.
  */
 export function runMenuItem(engine, item) {
+  if (!item || item.hidden || item.disabled) return null;
   if (engine && item?.id) {
-    const via = engine.dispatch(item.id);
+    const via = engine.dispatch(item.commandId || item.id, item.payload);
     if (via) return via;
   }
+  if (engine?.mayBubble && !engine.mayBubble(item.commandId || item.id)) return null;
   if (item && typeof item.action === 'function') item.action();
   return null;
 }
@@ -75,6 +77,7 @@ export function runNativeMenuItem(engine, id, fallback) {
     const via = engine.dispatch(id);
     if (via) return via;
   }
+  if (engine?.mayBubble && !engine.mayBubble(id)) return null;
   if (typeof fallback === 'function') fallback();
   return null;
 }

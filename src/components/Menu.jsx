@@ -1,3 +1,4 @@
+import { tidyMenuItems } from '../lib/commands.js';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { activeFocusEngine, registerMenuSurface, runMenuItem } from '../lib/focusMenus.js';
 
@@ -26,17 +27,17 @@ export default function Menu({ label, items, caret = true, className = '', title
   const surface = surfaceId
     || (typeof label === 'string' ? label : typeof title === 'string' ? title : 'menu').trim().toLowerCase().replace(/\s+/g, '-');
 
-  const shown = (list) => (list || []).filter((it) => it === '-' || !it.hidden);
+  const shown = (list) => tidyMenuItems(list);
   const rootPop = () => ref.current?.querySelector(':scope > .menu-pop');
-  const itemEls = () => [...(rootPop()?.querySelectorAll(':scope > [role="menuitem"]:not([disabled]), :scope > .menu-subwrap > [role="menuitem"]:not([disabled])') || [])];
-  const subEls = () => [...(ref.current?.querySelectorAll('.menu-sub [role="menuitem"]:not([disabled])') || [])];
+  const itemEls = () => [...(rootPop()?.querySelectorAll(':scope > [role^="menuitem"]:not([disabled]), :scope > .menu-subwrap > [role^="menuitem"]:not([disabled])') || [])];
+  const subEls = () => [...(ref.current?.querySelectorAll('.menu-sub [role^="menuitem"]:not([disabled])') || [])];
   const openSub = (i, focus) => {
     subFocus.current = focus;
     setSub(i);
     if (focus && subRef.current === i) subEls()[0]?.focus();
   };
   const closeSub = () => {
-    const btn = ref.current?.querySelector(`.menu-subwrap[data-i="${subRef.current}"] > [role="menuitem"]`);
+    const btn = ref.current?.querySelector(`.menu-subwrap[data-i="${subRef.current}"] > [role^="menuitem"]`);
     setSub(-1);
     btn?.focus();
   };
@@ -203,7 +204,7 @@ export default function Menu({ label, items, caret = true, className = '', title
   };
   const hasChecks = (list) => list.some((x) => x !== '-' && typeof x?.checked === 'boolean');
   const leaf = (it, key, onEnter, checks = false) => (
-    <button key={key} role="menuitem" tabIndex={-1} disabled={it.disabled} onMouseEnter={onEnter} onClick={() => run(it)} data-checked={it.checked ? 'true' : undefined}>
+    <button key={key} data-command-id={it.commandId || it.id} role={typeof it.checked === 'boolean' ? 'menuitemcheckbox' : 'menuitem'} aria-checked={typeof it.checked === 'boolean' ? it.checked : undefined} tabIndex={-1} disabled={it.disabled} onMouseEnter={onEnter} onClick={() => run(it)} data-checked={it.checked ? 'true' : undefined}>
       <span>{checks && <span className="menu-check">{it.checked ? '✓' : ''}</span>}{it.label}</span>
       {it.shortcut && <kbd>{it.shortcut}</kbd>}
     </button>
@@ -223,6 +224,7 @@ export default function Menu({ label, items, caret = true, className = '', title
         onKeyDown={onButtonKey}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={typeof label === 'string' ? label.replace(/\s+▾\s*$/, '').trim() : title}
       >
         {label}{caret ? ' ▾' : ''}
       </button>
@@ -235,7 +237,7 @@ export default function Menu({ label, items, caret = true, className = '', title
             return (
               <div className="menu-subwrap" data-i={i} key={it.id || it.label} onMouseEnter={() => !it.disabled && children.length && setSub(i)}>
                 <button
-                  role="menuitem"
+                  role={typeof it.checked === 'boolean' ? 'menuitemcheckbox' : 'menuitem'} aria-checked={typeof it.checked === 'boolean' ? it.checked : undefined}
                   tabIndex={-1}
                   aria-haspopup="menu"
                   aria-expanded={sub === i}
@@ -266,3 +268,4 @@ export default function Menu({ label, items, caret = true, className = '', title
     </div>
   );
 }
+

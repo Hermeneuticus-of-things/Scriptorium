@@ -108,3 +108,31 @@ export function conflicts(ids, settings) {
   }
   return out;
 }
+
+// A command keeps the same identity across toolbar, native menus and contextual menus.
+// scope/payload identify the object it acts on; the displayed label is not its identity.
+export function commandItem(id, options = {}) {
+  if (!id || typeof id !== 'string') throw new Error('Command needs a stable id.');
+  return { ...options, id, commandId: id };
+}
+
+export function tidyMenuItems(items = []) {
+  const out = [];
+  for (const item of items) {
+    if (!item || (item !== '-' && (item.hidden || (item.disabled && !item.unavailableReason && !item.checked)))) continue;
+    if (item === '-') {
+      if (out.length && out[out.length - 1] !== '-') out.push(item);
+      continue;
+    }
+    if (item.submenu) {
+      const submenu = tidyMenuItems(item.submenu);
+      if (submenu.length) out.push({ ...item, submenu });
+    } else out.push(item);
+  }
+  while (out[out.length - 1] === '-') out.pop();
+  return out;
+}
+
+export function commandGroup(id, label, items) {
+  return { id, groupId: id, label, submenu: tidyMenuItems(items) };
+}

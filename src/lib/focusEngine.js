@@ -3,6 +3,8 @@
 // dispatch and visual emphasis. Pure module: the app supplies capture/restore + native focus
 // per surface registration, so everything stays testable.
 
+const MODAL_BUBBLE_COMMANDS = new Set(['save', 'saveAs', 'print', 'compile', 'exportFiles', 'exportBundle', 'backup', 'settings', 'projectSettings']);
+
 const TRANSIENT_ORDER = ['dropdown', 'menu', 'popover', 'dialog', 'surface']; // innermost Escape order
 
 function kindOf(id) {
@@ -58,24 +60,16 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
   }
 
   function unregister(id) {
+    if (entryOf(id)) pop(id);
     registry.delete(id);
-    const st = stack();
-    const i = st.findIndex((e) => e.surfaceId === id);
-    if (i >= 0) st.splice(i);
     notify();
   }
 
   /** A surface dies (document closed, dialog unmounted): pop it and its children, restore parent. */
   function onSurfaceDestroyed(id) {
-    const st = stack();
-    const i = st.findIndex((e) => e.surfaceId === id);
-    if (i < 0) return null;
-    const [gone] = st.splice(i);
-    for (let j = st.length - 1; j >= i; j--) st.splice(j, 1); // children above it
-    const t = top();
-    if (t) nativeFocus(t.surfaceId);
-    notify();
-    return gone ? gone.surfaceId : null;
+    if (!entryOf(id)) return null;
+    pop(id);
+    return id;
   }
 
   /** Open: capture where the caller was (caret/scroll/selection), push, activate. */
@@ -91,7 +85,7 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
     }
     st.push({ surfaceId: id, level: r.level, triggerId, saved: {} });
     if (r.initialFocus) r.initialFocus();
-    nativeFocus(id);
+    else nativeFocus(id);
     notify();
     return id;
   }
@@ -119,6 +113,8 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
   function switchFocus(id) {
     const st = stack();
     const i = st.findIndex((e) => e.surfaceId === id);
+    const modalAt = st.findLastIndex((e) => reg(e.surfaceId)?.modal);
+    if (modalAt >= 0 && (i < 0 || i < modalAt)) return top()?.surfaceId || null;
     if (i < 0) return push(id);
     if (i === st.length - 1) return id; // already top — no change, no notification
     const [e] = st.splice(i, 1);
@@ -139,6 +135,7 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
         fn(args);
         return sid;
       }
+      if (r?.modal && !MODAL_BUBBLE_COMMANDS.has(cmd)) break;
     }
     return null; // unhandled → the caller may apply a window/app-level default
   }
@@ -163,6 +160,7 @@ export function createFocusEngine({ windowId = 'window.main', syncNativeFocus = 
     pop,
     switchFocus,
     dispatch,
+    mayBubble: (cmd) => !stack().some((e) => reg(e.surfaceId)?.modal) || MODAL_BUBBLE_COMMANDS.has(cmd),
     escape,
     top: () => (top() ? top().surfaceId : null),
     stack: () => stack().map((e) => e.surfaceId),

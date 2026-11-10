@@ -489,17 +489,25 @@ const flat = (nodes, out = []) => {
       check(`menu: "${label}" opens its dialog`, r === true && Boolean(await waitFor(() => win.locator(sel).count(), 3000)), String(r));
       await closeModal();
     }
+    // Configure only the isolated fixture, without a key or cloud call; unconfigured AI is hidden.
+    await win.evaluate(() => window.api.setSettings({aiProvider:'ollama',aiBaseUrl:'http://127.0.0.1:11434',aiModel:'qwopus-iq4xs:latest'}));
+    await sleep(350);
     // AI menu: native and in-app; "Conectează la Claude (MCP)…" opens its dialog.
     check('native menu has AI', menuLabels.includes('AI'), menuLabels.join(' | '));
     // AI isolation (2026-10-27): the desktop toolbar has no AI menu copy (the native menu has it;
     // the toolbar keeps only the AI on/off status). The browser build keeps the menubar.
     check('no AI menu duplicate on the desktop toolbar', (await win.locator('header.toolbar .menu > button', { hasText: /^AI/ }).count()) === 0);
-    check('native AI menu has the "AI pe selecție" submenu', await app.evaluate(({ Menu }) => {
+    const hasSelectionAi = () => app.evaluate(({ Menu }) => {
       const m = global.__lastMenu || Menu.getApplicationMenu();
       const ai = m && m.items.find((i) => i.label === 'AI');
-      const sub = ai && ai.submenu.items.find((i) => i.label === 'AI pe selecție');
-      return Boolean(sub && sub.submenu && sub.submenu.items.some((i) => i.label === 'AI: cercetare pe selecție'));
-    }));
+      return Boolean(ai?.submenu.items.find((i) => i.label === 'AI pe selecție')?.submenu?.items.some((i) => i.label === 'AI: cercetare pe selecție'));
+    });
+    check('native selection AI is absent without a text selection', !await hasSelectionAi());
+    await binderRow('Alfa').click();
+    await ed().click();
+    await win.keyboard.press('Control+a');
+    check('native selection AI appears with actual selected text', Boolean(await waitFor(hasSelectionAi, 3000)));
+
     const mcp = await menuClick('Conectează la Claude (MCP)…');
     check('menu: MCP dialog opens', mcp === true && Boolean(await waitFor(() => win.locator('.modal[aria-label="Conectează la Claude (MCP)"]').count(), 3000)), String(mcp));
     await closeModal();
@@ -559,6 +567,8 @@ const flat = (nodes, out = []) => {
   // ---------- 12. Tutorial project from the Home screen ----------
   await flow('tutorial', async () => {
     await cmd('closeProject');
+    const unsaved = win.getByRole('button', { name: 'Renunță' });
+    if (await unsaved.count()) await unsaved.click();
     await win.waitForSelector('text=Proiect nou', { timeout: 8000 });
     fs.mkdirSync(path.join(W, 'tut'), { recursive: true });
     await answer(path.join(W, 'tut'));
