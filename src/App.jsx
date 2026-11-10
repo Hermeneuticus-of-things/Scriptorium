@@ -1777,6 +1777,14 @@ export default function App({ api: apiProp }) {
   // Read aloud from the right-click menu (uses the local Mihai voice when installed, else system voices).
   // Motoarele online (directivă autor 2026-11-10): dictare cloud + voce Speechify, pentru
   // calculatoare slabe. Disponibile doar când serviciul e configurat (cheia în registry).
+  const [speechReady, setSpeechReady] = useState({ speechify: false, stt: false });
+  useEffect(() => {
+    let alive = true;
+    const check = () => api.servicesStatus?.().then((st) => { if (alive) setSpeechReady({ speechify: Boolean(st?.services?.speechify?.configured), stt: Boolean(st?.services?.stt?.configured) }); }).catch(() => {});
+    check();
+    const off = api.onServicesChanged?.(check);
+    return () => { alive = false; off?.(); };
+  }, [api]);
   const reader = useReader(api, { ttsEngine: settings?.ttsEngine || 'auto', speechifyReady: Boolean(speechReady.speechify), onMessage: (m) => setToast(m) });
   const wholeDocText = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.getText?.() || '';
   const textFromCursor = () => {
