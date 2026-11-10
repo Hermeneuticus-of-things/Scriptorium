@@ -3145,9 +3145,7 @@ export default function App({ api: apiProp }) {
       if (aiContainerScope && aiNode) {
         const ids = flatten(aiNode.children || []).filter((n) => n.type === 'text' && !n.locked).map((n) => n.id);
         if (aiNode.type === 'text') ids.unshift(aiNode.id);
-        return ids.map((id) => htmlToText(docsNow()[id] || '')).filter((t) => t.trim()).join('
-
-');
+        return ids.map((id) => htmlToText(docsNow()[id] || '')).filter((t) => t.trim()).join('\\n\\n');
       }
       return activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id] || '');
     },
