@@ -51,7 +51,8 @@ describe('templates', () => {
     const p2 = store.createProject(dir2, 'Povestire', 'shortStory');
     expect(store.readDoc(dir2, p2.tree[0].children[0].id)).toContain('cuvinte');
     const p3 = store.createProject(store.projectDirFor(tmp, 'Teza'), 'Teza', 'thesis');
-    expect(p3.tree[1].children.map((n) => n.title)).toContain('Front matter');
+    // Șablonul nou (directivă 2026-11-10): Cercetarea găzduiește FrontMatter / BackMatter.
+    expect(p3.tree[1].children.map((n) => n.title)).toEqual(expect.arrayContaining(['FrontMatter', 'BackMatter']));
   });
 
   it('saves, lists, instantiates and deletes user templates', () => {
