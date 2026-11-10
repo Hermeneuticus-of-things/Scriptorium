@@ -4,12 +4,72 @@ Governing UI rules for **every application** (general — not product-specific):
 
 # Roadmap Pneuma Sofer
 
-Starea reală la 2026-10-23. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
-Versiuni: **v0.2** în lucru · **v0.3** revizie și publicare · **v0.4** paritate avansată · **v1.0** paritate completă + extra.
+Referință actuală: **1.1.0, 10 noiembrie 2026**. Stările curente și limitele de verificare sunt în backlogul activ de mai jos.
+Numerotările v0.2–v1.0 de mai jos sunt istorice, nu versiuni aflate acum în lucru și nici certificare de paritate completă.
 
 Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATURES.md). Fișierul de față e planul de lucru, în ordinea în care construiesc.
 
 ---
+
+## Backlog activ după 1.1.0 — 10 noiembrie 2026
+
+Această secțiune este reperul de lucru curent și înlocuiește stările istorice contradictorii de mai jos. Versiunea 1.1.0 a fost publicată și instalată; aceasta nu înseamnă paritate integrală sau certificarea tuturor combinațiilor de funcții. Nu se reimplementează o funcție doar pentru că apare nebifată într-o sesiune veche.
+
+Stări: **NEIMPLEMENTAT** = lipsește capabilitatea cerută; **PARȚIAL** = există un nucleu, dar nu întregul comportament; **DE VALIDAT** = există cod, însă lipsesc dovezile funcționale cerute; **DE TRIAT** = constatare istorică ce trebuie reconfirmată, nu bug actual certificat. Prioritățile ordonează lucrul, nu exclud controale din testare.
+
+### Funcții existente: nu mai sunt goluri totale
+
+| Funcție | Dovezi în sursa 1.1.0 | Ce nu trebuie confundat |
+|---|---|---|
+| Manager global de snapshot-uri | `src/components/SnapshotManagerDialog.jsx`, `lib/store.cjs`, `lib/snapshotSearch.cjs`; `tests/snapshotManager.test.js` și `tests/snapshotManagerDialog.test.js` | Listare pe proiect, căutare nume/text/dată/regex, selecție și ștergere în masă, comparație și exportul unui snapshot există. Exportul este dezactivat pentru selecție multiplă; exportul în masă este o extensie distinctă, nu lipsa managerului. |
+| Selectare și navigare după stil | `src/lib/styleNavigation.js`, comenzi în App/FormatBar; `tests/styleNavigation.test.js` | Există interval, următor/anterior și selectarea intervalului primul–ultimul. Semantica pe stiluri intercalate și toate suprafețele rămân de validat; nu se promite selecție discontinuă. |
+| Tipărire fișe și outline | `lib/printFormats.cjs`, `lib/printSetup.cjs`, `PageSetupDialog.jsx`; `tests/printFormats.test.js` | Există grilă, culori de etichetă, cutting guides și outline indentat. Tipărirea fizică și toate combinațiile pagină/DPI nu sunt certificate. |
+| Cuprins și lista Compile | `src/lib/toc.js`, `lib/pageEstimate.cjs`, `src/components/CompileDialog.jsx`; `tests/toc.test.js` și `tests/compileFilters.test.js` | Nucleul există, dar acoperirea integrală este PARȚIALĂ, detaliată mai jos. |
+| Siguranță și ergonomie 1.1.0 | Dialog nesalvat, handshake Electron, model Binder contextual, ID-uri comune, filtrare servicii, selecție și focus ADL | Sunt livrate. Rămâne certificarea exhaustivă a efectelor, nu încă o implementare paralelă. |
+
+### P0 — închiderea golurilor de verificare
+
+| ID | Stare | Lucrare rămasă | Criteriu de închidere |
+|---|---|---|---|
+| QA-01 | DE VALIDAT | Executarea matricei celor 5.515 cazuri din opt domenii; completarea inventarului dacă un control nu are caz | Pentru fiecare fereastră, tab, submeniu, context, iconiță și comandă: condiție inițială, acțiune reală, postcondiție verificată și captură. Efectele pe fișiere se verifică pe disc. Deschiderea sau clicul fără efect verificat nu sunt PASS; cazurile omise/blocate/sărite rămân declarate. Controalele indisponibile au și caz cu precondiția care le face disponibile, când este aplicabil. |
+| QA-02 | DE VALIDAT | E2E și FLOWS distincte pe executabilul instalat/candidat, nu doar pe sursa lansată cu Electron | Artefact identificat prin versiune/hash; proiect și profil izolate; salvare/reopen/export/import/backup/conflict/Save–Discard–Cancel și reload cu verificarea conținutului după operație. Testele executate deja nu certifică automat fiecare control. |
+| QA-03 | DE VALIDAT | Snapshot manager, stiluri, cuprins și print: efecte în UI real și persistență | Snapshot-uri din mai multe documente, filtre/regex, anulare și ștergere exactă, export citibil; stiluri intercalate și revenire focus; pagini/culori/indentări/cutting guides verificate în output. Testele unitare existente nu sunt înlocuite și nu echivalează cu acest tur. |
+| QA-04 | DE VALIDAT | Conectivitate și efecte reale ale AI, traducerii, corecturii, vocii și integrărilor configurate | Fixture neutru, răspuns real, aplicare/anulare verificată, erori de rețea/cotă/credentiale și timeout; microfon, ASR, redare și decodare media. Configurație păstrată sau cheia prezentă nu înseamnă API testat. Fără afișarea cheilor, înlocuirea profilului real cu fixture sau folosirea cărții autorului drept material de test. |
+| QA-05 | DE VALIDAT | Performanță, resurse și concurență în sesiuni lungi/proiecte mari | Corpuri sintetice 100/1.000/5.000 documente; timpi, IPC/citiri, RSS/heap, cache/listeners/timers; anulări și rezultate async întârziate, scriere concurentă, pierdere/revenire folder. Limita concurenței notelor există; nu certifică toate căile de I/O și nu dovedește absența leak-urilor sau curselor. |
+| QA-06 | DE VALIDAT | Accesibilitate, contrast, densitate și geometrie pe toate suprafețele | Tastatură și cititor de ecran, nume/stări ARIA, contrast text/focus, tabulare și modale imbricate; RO/EN, teme, DPI, rezoluții și ferestre native/media. Conținutul mic folosește suprafețe proporționale, fără redimensionare arbitrară care ascunde controale. |
+
+Runner și evidență: `tests/e2e/full-app-runner.cjs`, `full-app-harness.cjs` și cataloagele pe domenii. `PNEUMA_FULL_QA_DIR` separă artefactele; `PNEUMA_QA_DOMAINS` și `PNEUMA_QA_CASE_IDS` permit reluarea fără a marca restul drept trecut. [Raportul release-ului](docs/RELEASE-1.1.0-VERIFICATION.md) declară limitele. Înregistrarea statică a unui caz nu înseamnă executarea lui.
+
+### P1 — completări funcționale prioritare
+
+| ID | Stare | Ce există / ce rămâne | Criteriu de acceptare |
+|---|---|---|---|
+| PAR-01 | PARȚIAL | ToC static și placeholder `<$p>` există; unele pagini sunt estimate. DOCX păstrează câmpuri PAGEREF reale. Rămâne paginare finală exactă pentru cuprins/placeholder în Compile și Print, nu încă un generator de ToC. | Cuprinsul și referințele coincid cu paginile outputului final după fonturi, imagini, page breaks, front/back matter și numerotare romană/araba; rezultatul estimat este etichetat până la rezolvare. |
+| PAR-02 | PARȚIAL | Lista Compile are bife pe element, tip/etichetă și excludere în cascadă. Filtrele actuale all/text/text+folders nu sunt Included/Excluded/All. Lipsesc filtrarea explicită după includere și operațiile în masă aferente. | Filtre după includerea efectivă, starea moștenită separată de bifa proprie; Include/Exclude pe selecție/toate rezultatele filtrate, domeniu explicit, persistență și output exact, fără schimbarea elementelor ascunse neincluse în operație. |
+| PAR-03 | NEIMPLEMENTAT | Adnotări PDF directe, editabile și persistente în Cercetare. Viewerul existent nu se declară absent. | Highlight/note/ancore pe pagină, salvare și redeschidere, export interoperabil unde este definit; test zoom/rotație/pagini și document read-only. |
+| PAR-04 | DE TRIAT / COMPLETAT | Linked research complet: referințe externe fără copiere, reparare țintă, monitorizare și portabilitate; importul media local și bookmarks există deja. | Confirmarea căilor existente înainte de implementare; referință vs copie vizibilă, mutare/lipsă fișier și relink controlat, fără pierdere sau copiere tăcută. |
+| PAR-05 | PARȚIAL / DE VALIDAT | Import/split există; nesting avansat și importul pe scene Fountain/FDX cu sinopsis trebuie reconfirmate și completate unde lipsesc. | Arbori și scene cu ordine/titluri/sinopsis corecte, separatori și niveluri explicite; delimitări în text, note/media/stiluri păstrate, raport de pierderi și round-trip pe fixture. |
+| PAR-06 | PARȚIAL | Formate de scenariu predefinite există în `src/lib/scriptFormats.js`; editarea/salvarea formatelor și regulilor de elemente de către utilizator rămâne. | Format propriu persistat, elemente/Tab/Enter/indentări/majusculă configurabile, preview și export Fountain/FDX fără alterarea presetelor sau a documentelor existente. |
+
+### P2 — rafinamente și extensii explicite
+
+| ID | Stare | Lucrare / criteriu |
+|---|---|---|
+| PAR-07 | DE TRIAT / COMPLETAT | Opțiuni fine Compile/Export și așezări avansate: mapare cerință–implementare–test pentru text tăiat/spații/linkuri/scalare imagini/backlinks, grupuri și front/back matter per output, numerotare/strip notes și ieșiri per document. Verifică stadiul pachetelor istorice înainte de a porta cod; nu declara toate aceste opțiuni absente sau închise. |
+| PAR-08 | NEIMPLEMENTAT (extensie) | Export în masă al snapshot-urilor selectate/proiectului, cu index document/titlu/dată și nume fără coliziuni. Managerul și exportul individual există deja. |
+| UX-01 | DE VALIDAT / RAFINAT | Workflow ergonomic: scriere/formatare și acțiuni locale aproape de conținut; operații proiect în meniuri de proiect; setări rare în Setări. Comenzile repetate pe suprafețe sunt acceptabile dacă au același ID/efect/context. Iconițe cu nume accesibile pentru gesturi recognoscibile; text pentru operații ambigue/distructive. 8–12 intrări top-level Binder este ghid, nu o interdicție a submeniurilor necesare. |
+| UX-02 | DE COMPLETAT / VALIDAT | Hint-urile rămase pentru Compile fără documente incluse, Coș read-only și microfon indisponibil: leagă cauza de control/restaurare/setare, cu mesaj accesibil și test de tastatură, fără erori tăcute. Vezi tabelul Tips ghidate de mai jos. |
+| PLAT-01 | NEIMPLEMENTAT / DE VALIDAT | Semnare Authenticode a installerului; matrice Windows/multi-monitor/DPI și mobil/sync. Installerul 1.1.0 este nesemnat. Instalarea și păstrarea profilului pe laptop au fost verificate; aceasta nu certifică toate mediile/platformele. |
+| TEAM-01 | NEIMPLEMENTAT | Etapa server colaborativ real-time: CRDT, roluri, cursoare, sugestii și coadă offline. Jurnal/prezență/lock/conflict și sync prin folder nu sunt editare simultană certificată. Detaliile istorice ale etapei de echipă se păstrează. |
+| HIST-01 | DE TRIAT | Reconcilierea celorlalte checklisturi/audituri istorice: bug confirmat azi, funcție existentă, alias, neaplicabil sau lipsă de dovadă. Istoricul nu este o listă automată de sute de defecte actuale; fiecare constatare păstrează legătura la sursă și test. |
+
+Ordinea de execuție este QA/siguranță, completări P1, rafinamente P2. Nu este promisă o versiune sau o dată pentru închidere. ADL rămâne fundația; nu se copiază implementări sau resurse ale altor produse.
+
+---
+
+## Istoric de dezvoltare și checklisturi anterioare
+
+Secțiunile de mai jos păstrează evoluția și cererile inițiale. Un checkbox istoric neactualizat nu dovedește că funcția lipsește în 1.1.0; backlogul activ de mai sus prevalează.
 
 ## Tips ghidate (help contextual) — ca un nou utilizator să înțeleagă
 
