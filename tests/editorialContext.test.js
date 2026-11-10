@@ -48,3 +48,56 @@ describe('buildEditorialContext (separare domeniu + tipul cărții)', () => {
     expect(c.documentTitle).toBe('Capitolul unu');
   });
 });
+
+describe('context pe niveluri (carte/manuscris/capitol — directivă autor 2026-11-10)', () => {
+  const book = {
+    title: 'Cartea mea', bookType: 'novel-historical',
+    tree: [
+      { id: 'draft', root: 'draft', title: 'Manuscris', children: [
+        { id: 'ch1', type: 'folder', title: 'Capitolul unu', children: [
+          { id: 'a', type: 'text', title: 'Scena A' },
+          { id: 'b', type: 'text', title: 'Scena B' },
+        ] },
+      ] },
+      { id: 'research', root: 'research', children: [] },
+    ],
+  };
+  const docs = { a: '<p>Ploaia a spălat orașul în scena A.</p>', b: '<p>Scena B continuă ploaia.</p>' };
+  it('nivelul capitol adună textele descendenților în ordinea binder', () => {
+    const c = buildEditorialContext(book, docs, { documentId: 'ch1' });
+    expect(c.container).toBe(true);
+    const iA = c.text.indexOf('Scena A'), iB = c.text.indexOf('Scena B');
+    expect(iA).toBeGreaterThan(-1); expect(iB).toBeGreaterThan(iA);
+    expect(c.text).toContain('## Text: Scena A');
+  });
+  it('nivelul manuscris/carte pornește de la rădăcina draft și include tot arborele', () => {
+    const c = buildEditorialContext(book, docs, { documentId: 'draft' });
+    expect(c.container).toBe(true);
+    expect(c.text).toContain('Scena A'); expect(c.text).toContain('Scena B');
+    expect(c.documentTitle).toBe('Manuscris');
+  });
+  it('documentul-cu-copii include textul părinte primul (text + subtext)', () => {
+    const p = { ...book, tree: [{ id: 'draft', root: 'draft', title: 'M', children: [{ id: 'parent', type: 'text', title: 'Introducere', children: [{ id: 's1', type: 'text', title: 'Subtext' }] }] }] };
+    const c = buildEditorialContext(p, { parent: '<p>Text părinte înainte de subtext.</p>', s1: '<p>Subtextul după.</p>' }, { documentId: 'parent' });
+    expect(c.text.indexOf('Text părinte')).toBeGreaterThan(-1);
+    expect(c.text.indexOf('Text părinte')).toBeLessThan(c.text.indexOf('Subtextul după'));
+  });
+  it('documentul simplu rămâne fără container (comportamentul existent)', () => {
+    const c = buildEditorialContext(book, docs, { documentId: 'a' });
+    expect(c.container).toBe(false);
+    expect(c.text).not.toContain('## Text: Scena B');
+  });
+  it('bugetul respectă nivelurile mari', () => {
+    const c = buildEditorialContext(book, docs, { documentId: 'draft', budget: 600 });
+    expect(c.text.length).toBeLessThanOrEqual(600);
+  });
+  it('nivelul carte include tot corpul de cercetare (diferența onestă de manuscris)', () => {
+    const p = { ...book, tree: [book.tree[0], { id: 'research', root: 'research', title: 'Cercetare', children: [{ id: 'r1', type: 'text', title: 'Sursă meteo' }, { id: 'r2', type: 'text', title: 'Sursă altă' }, { id: 'r3', type: 'text', title: 'Sursă istorie' }] }] };
+    const full = { ...docs, r1: '<p>Corp meteo complet.</p>', r2: '<p>Rețete diverse.</p>', r3: '<p>Istorie completă.</p>' };
+    const bookCtx = buildEditorialContext(p, full, { documentId: 'draft', wholeBook: true });
+    expect(bookCtx.text).toContain('Sursă meteo');
+    expect(bookCtx.text).toContain('Sursă istorie');
+    const ms = buildEditorialContext(p, full, { documentId: 'draft' });
+    expect(ms.text).not.toContain('Istorie completă');
+  });
+});

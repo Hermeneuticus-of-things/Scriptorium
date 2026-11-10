@@ -30,7 +30,7 @@ function stillThere(ed,range) {
  if(!ed||ed.isDestroyed||!range||range.to>ed.state.doc.content.size)return false;
  return ed.state.doc.textBetween(range.from,range.to,'\n\n')===range.before&&JSON.stringify(ed.state.doc.cut(range.from,range.to).toJSON())===range.beforeJson;
 }
-export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext,getHandle,onInsert,onReplace,onReplaceAll,onSynopsis,onOpenSettings,onOpenProjectSettings,onOpenFormatting,aiLabel='',aiModel='',translateTo='',request=null,onRequestHandled,projectDir=null,projectTitle='',bookType=''}) {
+export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext,getHandle,onInsert,onReplace,onReplaceAll,onSynopsis,onOpenSettings,onOpenProjectSettings,onOpenFormatting,aiLabel='',aiModel='',translateTo='',request=null,onRequestHandled,projectDir=null,projectTitle='',bookType='',containerScope=false,scopeLabel=''}) {
  const [task,setTask]=useState('proofread'),[scope,setScope]=useState('auto'),[instructions,setInstructions]=useState(''),[question,setQuestion]=useState('');
  const [busy,setBusy]=useState(null),[applying,setApplying]=useState(false),[live,setLive]=useState(''),[elapsed,setElapsed]=useState(0),[result,setResult]=useState(null),[error,setError]=useState(null),[usedBy,setUsedBy]=useState('');
  const [history,setHistory]=useState(()=>sessionHistory.list()),[contextInfo,setContextInfo]=useState(null);
@@ -46,7 +46,8 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
   if(!hasKey){setError({message:tr('ui.aiWorkspace.configure'),settings:true});return}
   if(action==='ask'&&!question.trim())return;
   const handle=basis?.handle||(getHandle?getHandle():null);
-  const range=basis?.range||captureRange(handle,scope);
+  // Container scope (carte/manuscris/capitol): textul de lucru vine din sub-documente, fără captură de selecție.
+  const range=basis?.range||(containerScope?null:captureRange(handle,scope));
   if(basis&&(basis.docId!==node.id||basis.projectDir!==projectDir||!stillThere(handle?.editor,range))){setError({message:tr('ui.aiWorkspace.stale')});return}
   if(scope==='selection'&&!range){setError({message:tr('ui.aiWorkspace.selectText')});return}
   const text=basis?.before??range?.before??getText();
@@ -89,14 +90,16 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
  };
  const onKeyDown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();run(e.target.dataset.aiQuestion?'ask':task)}else if(e.key==='Escape'&&(busy||result)){e.preventDefault();e.stopPropagation();if(busy)cancel();else setResult(null)}};
  const kind=result?actionKind(result.action):'',parts=result&&kind==='replace'?diffParts(result.before,result.text):null;
+ // Pe containere, acțiunile care nu se pot aplica (înlocuire/inserezare pe un editor) se ascund — regula ADL.
+ const available=ACTIONS().filter(([id])=>!containerScope||!['proofread','revise','continue','translate'].includes(id));
  const localHistory=history.filter(h=>h.projectDir===projectDir);
  return <aside className="ai-panel" onKeyDown={onKeyDown} aria-busy={Boolean(busy||applying)}>
-  <div className="ai-book-context"><strong>{tr('ui.aiWorkspace.book',{title:projectTitle})}</strong><span>{tr('ui.aiWorkspace.document',{title:node.title})}</span>{bookType&&<span>{tr('ui.aiWorkspace.bookTypeTag',{type:bookTypeLabel(bookType,uiLocale())})}</span>}</div>
+  <div className="ai-book-context"><strong>{tr('ui.aiWorkspace.book',{title:projectTitle})}</strong><span>{tr('ui.aiWorkspace.document',{title:node.title})}</span>{scopeLabel&&<span>{scopeLabel}</span>}{bookType&&<span>{tr('ui.aiWorkspace.bookTypeTag',{type:bookTypeLabel(bookType,uiLocale())})}</span>}</div>
   <p className="muted small ai-provider">{tr('ui.aiWorkspace.model')}: {usedBy||providerText(aiLabel,aiModel)}</p>
   <details className="ai-config"><summary>{tr('ui.aiWorkspace.configuration')}</summary><button type="button" onClick={()=>onOpenSettings('ai')}>{tr('ui.aiWorkspace.programSettings')}</button>{onOpenProjectSettings&&<button type="button" onClick={onOpenProjectSettings}>{tr('ui.aiWorkspace.bookRules')}</button>}{onOpenFormatting&&<button type="button" onClick={onOpenFormatting}>{tr('ui.aiWorkspace.formatting')}</button>}</details>
   {!hasKey&&<div className="ai-setup" role="note"><p>{tr('ui.aiWorkspace.configure')}</p><button type="button" onClick={()=>onOpenSettings('ai')}>{tr('ui.aiPanel.deschide_setari_ai')}</button></div>}
-  <div className="ai-taskbar"><label>{tr('ui.aiWorkspace.task')}<select aria-label={tr('ui.aiWorkspace.task')} value={task} disabled={Boolean(busy||applying)} onChange={e=>setTask(e.target.value)}>{ACTIONS().map(([id,title])=><option key={id} value={id}>{title}</option>)}</select></label><label>{tr('ui.aiWorkspace.scope')}<select aria-label={tr('ui.aiWorkspace.scope')} value={scope} disabled={Boolean(busy||applying)} onChange={e=>setScope(e.target.value)}><option value="auto">{tr('ui.aiWorkspace.autoScope')}</option><option value="selection" disabled={!hasSelection()}>{tr('ui.aiPanel.textul_selectat')}</option><option value="document">{tr('ui.aiWorkspace.wholeDocument')}</option></select></label></div>
-  <p className="muted small">{ACTIONS().find(x=>x[0]===task)?.[2]}</p>
+  <div className="ai-taskbar"><label>{tr('ui.aiWorkspace.task')}<select aria-label={tr('ui.aiWorkspace.task')} value={task} disabled={Boolean(busy||applying)} onChange={e=>setTask(e.target.value)}>{available.map(([id,title])=><option key={id} value={id}>{title}</option>)}</select></label>{!containerScope&&<label>{tr('ui.aiWorkspace.scope')}<select aria-label={tr('ui.aiWorkspace.scope')} value={scope} disabled={Boolean(busy||applying)} onChange={e=>setScope(e.target.value)}><option value="auto">{tr('ui.aiWorkspace.autoScope')}</option><option value="selection" disabled={!hasSelection()}>{tr('ui.aiPanel.textul_selectat')}</option><option value="document">{tr('ui.aiWorkspace.wholeDocument')}</option></select></label>}{containerScope&&<span className="muted small">{tr('ui.aiWorkspace.containerNote')}</span>}</div>
+  <p className="muted small">{available.find(x=>x[0]===task)?.[2]||available[0][2]}</p>
   <textarea rows={2} aria-label={tr('ui.aiWorkspace.instructions')} placeholder={tr('ui.aiWorkspace.instructions')} value={instructions} onChange={e=>setInstructions(e.target.value)}/>
   <button type="button" className="primary ai-run" disabled={Boolean(busy||applying)||!hasKey} onClick={()=>run(task)}>{tr('ui.aiWorkspace.generate')}</button>
   <p className="muted small">{tr('ui.aiWorkspace.target',{target:scope==='document'||!hasSelection()?node.title:tr('ui.aiPanel.textul_selectat')})} · Ctrl+Enter / Esc</p>

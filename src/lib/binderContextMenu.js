@@ -52,6 +52,24 @@ export function buildBinderContextMenu(options) {
     if (cb.newFromTemplate && templates.length) add.push(group('binder.templates', 'cmd.newFromTemplate', templates.map((t) => item('newFromTemplate', t.title || tr('ui.app.fara_titlu'), () => cb.newFromTemplate(t.id, node.children ? id : c.parent?.id), { payload: { templateId: t.id, targetId: node.children ? id : c.parent?.id } }))));
     out.push(group('binder.add', 'btn.add', add));
   }
+  // AI pe niveluri (directivă autor 2026-11-10): deschide asistentul cu domeniul obiectului din
+  // clic — secțiunea, capitolul, manuscrisul sau cartea. Nivelele care nu se aplică nu se oferă;
+  // Cercetarea și Coșul nu primesc grupul (au suprafețele lor).
+  if (cb.ai && node && c.root !== 'trash') {
+    // Cartea = TOT proiectul (manuscris + cercetare + note, directivă autor 2026-11-10); grupul
+    // apare peste tot, DOAR subarborele Coșului rămâne în afara lui (restaurarea, nu analiza).
+    // c.root este rădăcina proprietar a nodului din clic (moștenită prin indexul binder-ului).
+    const draft = project.tree.find((n) => n.root === 'draft');
+    const ai = [];
+    if (node.type === 'text') ai.push(item('aiSection', tr('ui.aiWorkspace.levelSection'), () => cb.ai({ nodeId: id, level: 'section' }), { payload: { scope: { nodeId: id, level: 'section' } } }));
+    if (node.type === 'folder' && !node.root) ai.push(item('aiChapter', tr('ui.aiWorkspace.levelChapter'), () => cb.ai({ nodeId: id, level: 'chapter' }), { payload: { scope: { nodeId: id, level: 'chapter' } } }));
+    if (node.type === 'text' && c.parent && c.parent.type === 'folder' && !c.parent.root) ai.push(item('aiChapter', tr('ui.aiWorkspace.levelChapter'), () => cb.ai({ nodeId: c.parent.id, level: 'chapter' }), { payload: { scope: { nodeId: c.parent.id, level: 'chapter' } } }));
+    if (draft) {
+      ai.push(item('aiManuscript', tr('ui.aiWorkspace.levelManuscript'), () => cb.ai({ nodeId: draft.id, level: 'manuscript' }), { payload: { scope: { nodeId: draft.id, level: 'manuscript' } } }));
+      ai.push(item('aiBook', tr('ui.aiWorkspace.levelBook'), () => cb.ai({ nodeId: draft.id, level: 'book' }), { payload: { scope: { nodeId: draft.id, level: 'book' } } }));
+    }
+    if (ai.length) out.push(group('binder.ai', 'ui.binder.ai', ai));
+  }
   if (editable && single && cb.rename) out.push(item('rename', tr('set.binderDbl.rename'), () => cb.rename(id), { shortcut: 'F2' }));
   if (editable && (cb.copy || cb.duplicate)) {
     const duplicate = () => cb.copy ? cb.copy(ids, ids[ids.length - 1], 'after') : cb.duplicate(id, true);

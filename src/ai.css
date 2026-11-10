@@ -52,3 +52,13 @@
 .ai-workspace .ai-run { align-self: flex-start; }
 .ai-workspace .ai-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .ai-workspace .ai-config button { display: block; margin-top: var(--sp-1); }
+
+/* AI docked in the side column: same assistant, stable placement (ADL §4.2 collapsible panels). */
+.side-ai { display: flex; flex-direction: column; min-height: 0; }
+.side-ai-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-1) var(--sp-2); border-bottom: 1px solid var(--line, #ddd4); }
+.side-ai-head strong { font-size: 13px; }
+.side-ai-actions { display: flex; gap: var(--sp-1); }
+.side-ai-actions button { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 1px solid transparent; border-radius: 6px; color: var(--muted); cursor: pointer; }
+.side-ai-actions button:hover { border-color: var(--line, #ddd4); color: var(--text); }
+.side-ai-actions svg { width: 16px; height: 16px; }
+.side-ai .ai-panel { flex: 1; min-height: 0; overflow: auto; }

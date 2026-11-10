@@ -367,6 +367,10 @@ export default function App({ api: apiProp }) {
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
+  // AI placement (ADL §4.2, directivă autor 2026-11-10): fereastră flotantă SAU panou lateral mare;
+  // modul persistat în starea UI. aiScope = nivelul de lucru ales din meniul contextual.
+  const [aiPanelMode, setAiPanelMode] = useState(false);
+  const [aiScope, setAiScope] = useState(null); // {nodeId, level: 'book'|'manuscript'|'chapter'|'section'|'selection'}
   // ADL §2: focus engine — per-window stacks, surface registration, Escape cascade.
   const focusEngine = useRef(createFocusEngine()).current;
   // ADL T5: captura/restaurarea reală a editorului citesc handle-ul LIVE la push/pop (panoul se
@@ -2145,7 +2149,7 @@ export default function App({ api: apiProp }) {
     let outlinerColumns;
     try { outlinerColumns = JSON.parse(localStorage.getItem(OUTLINER_COLUMNS_KEY) || 'null') || undefined; } catch { /* none */ }
     const board = selected && selected.children ? selected : selectedId ? findParent(project.tree, selectedId) : null;
-    return { view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
+    return { view, showInspector, showAi, showEditorial, aiPanelMode, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
   };
   const [layoutRev, setLayoutRev] = useState(0);
   const applyLayout = (l) => {
@@ -2161,6 +2165,7 @@ export default function App({ api: apiProp }) {
     setView(l.view || 'editor');
     setShowInspector(l.showInspector !== false);
     setShowAi(Boolean(l.showAi));
+    setAiPanelMode(Boolean(l.aiPanelMode));
     setShowEditorial(Boolean(l.showEditorial));
     setHideBinder(Boolean(l.hideBinder));
     if (l.widths) setWidths(l.widths);
@@ -3110,7 +3115,56 @@ export default function App({ api: apiProp }) {
     await api.exportScript(fmt, h.getHtml(), selected?.title || 'Scenariu');
   };
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
-  const aiNode = (activeId.current && findNode(project.tree, activeId.current)) || selected;
+  // Nivelul AI ales din meniul contextual are prioritate; altfel documentul activ.
+  const scopedAiNode = aiScope ? findNode(project.tree, aiScope.nodeId) : null;
+  const aiNode = scopedAiNode || (activeId.current && findNode(project.tree, activeId.current)) || selected;
+  const aiContainerScope = Boolean(aiScope && ['book', 'manuscript', 'chapter'].includes(aiScope.level));
+  const aiScopeLabel = !aiScope ? '' : aiScope.level === 'book' ? tr('ui.aiWorkspace.levelBook')
+    : aiScope.level === 'manuscript' ? tr('ui.aiWorkspace.levelManuscript')
+    : aiScope.level === 'chapter' ? tr('ui.aiWorkspace.levelChapter', { title: aiNode?.title || '' })
+    : aiScope.level === 'selection' ? tr('ui.aiWorkspace.levelSelection')
+    : tr('ui.aiWorkspace.levelSection', { title: aiNode?.title || '' });
+  const openAiFor = (scope) => { setAiScope(scope); setShowAi(true); };
+  // Props partajate: același asistent în fereastra flotantă ȘI în panoul lateral (un singur model).
+  const aiPanelProps = {
+    projectTitle: project.title,
+    bookType: project?.bookType || '',
+    containerScope: aiContainerScope,
+    scopeLabel: aiScopeLabel,
+    onOpenProjectSettings: () => setDialog('projectAi'),
+    onOpenFormatting: () => { setSelectedId(aiNode.id); openDocumentFormatting('document'); },
+    onRequestHandled: () => setAiRequest(null),
+    projectDir: dir,
+    api,
+    hasKey: settings.hasApiKey,
+    aiLabel: settings.aiLabel,
+    aiModel: settings.aiModel,
+    getHandle: activeHandle,
+    node: aiNode,
+    getText: () => {
+      if (aiContainerScope && aiNode) {
+        const ids = flatten(aiNode.children || []).filter((n) => n.type === 'text' && !n.locked).map((n) => n.id);
+        if (aiNode.type === 'text') ids.unshift(aiNode.id);
+        return ids.map((id) => htmlToText(docsNow()[id] || '')).filter((t) => t.trim()).join('
+
+');
+      }
+      return activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id] || '');
+    },
+    hasSelection: () => Boolean(activeHandle()?.getSelectionText()),
+    getContext: (args) => contextForAi({ ...args, wholeBook: aiScope?.level === 'book' }),
+    onInsert: (text) => activeHandle()?.insertText(text),
+    onReplace: (text) => activeHandle()?.replaceSelection(text),
+    onReplaceAll: (text) => {
+      const html = textToHtml(text);
+      setEditorHtml(aiNode.id, html);
+      writeDocNow(aiNode.id, html);
+    },
+    onSynopsis: (text) => patchNode(aiNode.id, { synopsis: text }),
+    onOpenSettings: openSettings,
+    translateTo: LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo,
+    request: aiRequest,
+  };
   const editorialNode = aiNode && aiNode.type === 'text' ? aiNode : scrivSections[0] || null;
   // Look of the selection in the active editor, for "Redefine style from selection".
   const currentLook = () => {
@@ -3579,6 +3633,16 @@ export default function App({ api: apiProp }) {
       items.push({ label: tr('ui.ctx.citeste'), submenu: r });
     }
 
+    // AI pe niveluri (directivă 2026-11-10): paragrafele selectate sau secțiunea curentă.
+    if (aiEnabled && api.runAi) {
+      const aiTarget = activeId.current || selectedId;
+      const a = [];
+      if (text) a.push({ label: tr('ui.aiWorkspace.levelSelection'), action: () => openAiFor({ nodeId: aiTarget, level: 'selection' }) });
+      a.push({ label: tr('ui.aiWorkspace.levelSection'), action: () => openAiFor({ nodeId: aiTarget, level: 'section' }) });
+      sep();
+      items.push({ label: tr('ui.binder.ai'), submenu: a });
+    }
+
     // Dictarea: de la cursor sau peste selecție, ca redarea audio.
     if (dict.available) {
       const d = [{ label: tr('cmd.dictateHere'), action: run('dictateHere') }];
@@ -3770,6 +3834,7 @@ export default function App({ api: apiProp }) {
           selectedIds={selectedIds}
           onSelect={onBinderSelect}
           onAdd={addItem}
+          onAi={openAiFor}
           onRename={(id, title) => patchNode(id, { title })}
           onMove={(id, targetId, pos) => setTreeU(dropMany(project.tree, [id], targetId, pos))}
           onMoveMany={(ids, targetId, pos) => setTreeU(dropMany(project.tree, [...ids], targetId, pos))}
@@ -4107,7 +4172,7 @@ export default function App({ api: apiProp }) {
         </section>
 
         {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
-        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir)) && selected && !composition && (
+        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir) || (showAi && aiEnabled && aiPanelMode && aiNode)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
             <div className="side" style={{ width: widths.side }}>
@@ -4251,6 +4316,22 @@ export default function App({ api: apiProp }) {
                   onOpenSettings={openSettings}
                   tabRequest={editorialTabReq}
                 />
+              )}
+              {showAi && aiEnabled && aiPanelMode && aiNode && (
+                <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
+                  <div className="side-ai-head">
+                    <strong>{tr('ui.aiWorkspace.title')}</strong>
+                    <div className="side-ai-actions">
+                      <button type="button" onClick={() => setAiPanelMode(false)} aria-label={tr('ui.aiWorkspace.undock')} title={tr('ui.aiWorkspace.undock')}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.6" /><rect x="13" y="5" width="8" height="14" rx="1" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
+                      </button>
+                      <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <AiPanel {...aiPanelProps} />
+                </section>
               )}
             </div>
           </>
@@ -4507,8 +4588,8 @@ export default function App({ api: apiProp }) {
           onClose={() => setDialog(null)}
         />
       )}
-      {showAi && aiEnabled && aiNode && (
-        <AiWorkspaceWindow focusEngine={focusEngine} onClose={() => { setShowAi(false); setAiRequest(null); }}>
+      {showAi && aiEnabled && aiNode && !aiPanelMode && (
+        <AiWorkspaceWindow focusEngine={focusEngine} onClose={() => { setShowAi(false); setAiRequest(null); }} onDock={() => setAiPanelMode(true)}>
           <AiPanel
             projectTitle={project.title}
             bookType={project?.bookType || ''}
