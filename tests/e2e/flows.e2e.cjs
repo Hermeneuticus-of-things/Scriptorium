@@ -131,6 +131,9 @@ const flat = (nodes, out = []) => {
   }, label);
   const cmd = (id) => app.evaluate(({ BrowserWindow }, id) => BrowserWindow.getAllWindows()[0].webContents.send('menu:command', id), id);
   const closeModal = async () => {
+    // Popover-urile ancorate (ADL 4.3) se închid cu Escape — fără backdrop/modal.
+    if (await win.locator('.anchored-popover').count()) await win.keyboard.press('Escape');
+    await win.waitForTimeout(120);
     for (let i = 0; i < 3 && (await win.locator('.modal').count()); i++) {
       const close = win.locator('.modal button', { hasText: /^(Închide|Anulează)$/ }).first();
       if (await close.count()) await close.click().catch(() => {});
@@ -484,7 +487,7 @@ const flat = (nodes, out = []) => {
     await menuClick('Editor');
     check('menu: editor view', Boolean(await waitFor(() => win.locator('.toolbar .seg button.on', { hasText: 'Editor' }).count(), 2000)));
     // Dialogs from the menu
-    for (const [label, sel] of [['Mergi la (dialog)…', '.modal'], ['Caută și înlocuiește în proiect…', '.modal[aria-label="Caută în proiect"]'], ['Compilează…', 'text=Compilează pentru'], ['Statistici…', '.modal']]) {
+    for (const [label, sel] of [['Mergi la (dialog)…', '.anchored-popover'], ['Caută și înlocuiește în proiect…', '.modal[aria-label="Caută în proiect"]'], ['Compilează…', 'text=Compilează pentru'], ['Statistici…', '.modal']]) {
       const r = await menuClick(label);
       check(`menu: "${label}" opens its dialog`, r === true && Boolean(await waitFor(() => win.locator(sel).count(), 3000)), String(r));
       await closeModal();
@@ -524,7 +527,7 @@ const flat = (nodes, out = []) => {
     await win.keyboard.press('Control+1');
     check('Ctrl+1: editor', Boolean(await waitFor(() => win.locator('.toolbar .seg button.on', { hasText: 'Editor' }).count(), 2000)));
     await win.keyboard.press('Control+j');
-    check('Ctrl+J: go to dialog', Boolean(await waitFor(() => win.locator('.modal').count(), 2000)));
+    check('Ctrl+J: go to popover', Boolean(await waitFor(() => win.locator('.anchored-popover').count(), 2000)));
     await closeModal();
     await binderRow('Alfa').click();
     const alfa = nodeBy('Alfa');
