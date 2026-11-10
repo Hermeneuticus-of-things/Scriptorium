@@ -222,8 +222,8 @@ export function editorMenus(ctx) {
       { label: L('alignCenter'), action: on((c) => c.setTextAlign('center').run()) },
       { label: L('alignRight'), action: on((c) => c.setTextAlign('right').run()) },
       { label: L('alignJustify'), action: on((c) => c.setTextAlign('justify').run()) },
-      '-',
-      ...LINE_SPACINGS.map((v) => ({ id: 'setLineSpacing', commandId: 'setLineSpacing', payload: { lineHeight: v }, label: t('ui.formatBar.lineSpacing', { v }), action: para({ lineHeight: v }) })),
+      // Spațierile rămân DOAR în butonul rapid de pe bară (audit UI P0-1, 2026-11-10): valorile
+      // duplicate în două locuri confundă; aici rămân alinierea și intrările avansate.
     ] },
     { label: L('style'), submenu: [
       ...styles.filter(isParaStyle).map((st) => ({ label: `¶ ${styleName(st)}`, shortcut: st.shortcut || undefined, action: on((c) => c.setParagraphStyle(st.id).run()) })),
