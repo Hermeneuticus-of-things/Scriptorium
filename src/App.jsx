@@ -1841,6 +1841,35 @@ export default function App({ api: apiProp }) {
   // about the selected expression, letting it ask follow-ups until it has a usable answer, then
   // show that answer (with its citations) and copy it to the clipboard. Optional: only wired when
   // a notebook is configured and the notebooklm-mcp server is available.
+  // NotebookLM pe tot documentul (directivă autor 2026-11-10): întreabă notebook-ul despre
+  // documentul activ; răspunsul cu citări se salvează ca document nou în Cercetare.
+  const askNotebookLmAboutDoc = async () => {
+    if (!aiEnabled) return setToast(tr('ui.app.ai_oprit'));
+    if (!api.nlmAsk) return undefined;
+    const doc = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+    const title = findNode(project.tree, activeId.current || selectedId)?.title || '';
+    const text = doc?.getText?.() || '';
+    if (!text.trim()) return setToast(tr('ui.aiPanel.documentul_e_gol_scrie_ceva'));
+    setToast(tr('ui.app.nlm_intreb'));
+    try {
+      const question = tr('ui.app.nlm_intrebare_document', { title });
+      const res = await api.nlmAsk(question);
+      const answer = String(res?.answer || '').trim();
+      if (!answer) return setToast(tr('ui.app.nlm_fara_raspuns'));
+      const cites = (res.references || []).map((r) => `- ${r.title || r.id || 'sursă'}`).join('\n');
+      const html = '<h1>' + title + ' — NotebookLM</h1><p><strong>Întrebare:</strong> ' + question.replace(/</g, '&lt;') + '</p>' + textToHtml(answer) + (cites ? '<p class="muted"><em>Citări:</em><br>' + cites.replace(/\n/g, '<br>') + '</p>' : '');
+      const ids = await addResearchDocs([{ title: title + ' — NotebookLM', html }], '', { toImportFolder: false });
+      if (ids[0]) { go(ids[0]); setToast(tr('ui.app.nlm_salvat_cercetare')); }
+    } catch (e) { report(e); }
+    return undefined;
+  };
+  // Studio NotebookLM: funcțiile cloud (Audio/Video/MindMap/Rapoarte/Slide/Live) rulează în
+  // fereastra NotebookLM logged-in — deschidem fereastra; automatizarea UI Google rămâne manuală.
+  const openNotebookStudio = (feature) => {
+    if (!api.nlmOpen) return undefined;
+    api.nlmOpen().then(() => setToast(tr('ui.app.nlm_studio', { feature }))).catch(report);
+    return undefined;
+  };
   const consultNotebookLm = async () => {
     if (!aiEnabled) return setToast(tr('ui.app.ai_oprit'));
     if (!api.nlmConsult) return undefined;
@@ -3532,6 +3561,9 @@ export default function App({ api: apiProp }) {
     ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
     ['ai', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['ai', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
+    ['ai', 'nlmAskDoc', tr('cmd.nlmAskDoc'), askNotebookLmAboutDoc, !aiEnabled || !api.nlmAsk],
+    ['ai', 'nlmStudio', tr('cmd.nlmStudio'), () => openNotebookStudio(tr('ui.app.nlm_studio_studio')), !api.nlmOpen],
+    ['ai', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];
