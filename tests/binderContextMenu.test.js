@@ -68,6 +68,7 @@ describe('AI pe niveluri din meniul contextual (directivă autor 2026-11-10)', (
     expect(grp(run('gone').f)).toBeUndefined();
     expect(grp(run('trash').f)).toBeUndefined();
     expect(grp(run('a', {}, true).f)).toBeUndefined();
+  });
 });
 describe('Adaugă în interior pe documente (Scrivener file-in-file)', () => {
   it('text fără copii are submenu-ul în interior în grupul Adaugă, cu Document și Dosar', () => {
