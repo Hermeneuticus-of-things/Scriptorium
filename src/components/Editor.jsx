@@ -722,7 +722,7 @@ const Editor = forwardRef(function Editor(
         {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={1} />}
         {view.lineNumbers && !compact && <LineNumbers editor={editor} mode={view.lineNumbers === 'paragraphs' ? 'paragraphs' : 'lines'} />}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}
-        <EditorContent editor={editor} className={`${scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'}${view.lineNumbers && !compact ? ' with-line-numbers' : ''}`} />
+        <EditorContent editor={editor} style={{ textAlign: scriptFormat ? undefined : (defaultFormatting?.align || undefined) }} className={`${scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'}${view.lineNumbers && !compact ? ' with-line-numbers' : ''}`} />
       </div>
     </div>
   );

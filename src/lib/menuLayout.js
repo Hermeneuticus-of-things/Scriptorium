@@ -41,7 +41,7 @@ export const SUBMENUS = {
     ['menu.find', ['findDoc', 'findNext', 'findPrev', 'findUseSel', 'findProject', 'findFormat', 'advSearch']],
   ],
   // Script modes: the ids are generated (script_<format>), matched by prefix.
-  format: [['menu.scriptMode', ['scriptOff'], (id) => id.startsWith('script_')], ['menu.styles', ['styles', 'stylesPanel']], ['menu.styleNav', ['selectStyleRange', 'nextInSameStyle', 'prevInSameStyle', 'selectAllWithStyle']]],
+  format: [['menu.documentFormatting', ['formatDocument', 'formatManuscript']], ['menu.scriptMode', ['scriptOff'], (id) => id.startsWith('script_')], ['menu.styles', ['styles', 'stylesPanel']], ['menu.styleNav', ['selectStyleRange', 'nextInSameStyle', 'prevInSameStyle', 'selectAllWithStyle']]],
   view: [
     ['menu.bookViews', ['viewTimeline', 'viewRelations', 'viewPacing']],
     // View > Reading (lenses: how the text is read), View > Page, View > Zoom (B2/B3 2026-10-31).
