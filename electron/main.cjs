@@ -973,6 +973,7 @@ function buildAppMenu(win, spec) {
         : it.role && NATIVE_ROLES.has(it.role)
         ? { label: it.label, role: it.role, enabled: !it.disabled, accelerator: it.key ? it.key.replace('Ctrl', 'CmdOrCtrl') : undefined, registerAccelerator: false }
         : {
+            id: typeof it.id === 'string' ? it.id : (it.id?.id || it.id?.commandId),
             label: it.label,
             ...(typeof it.checked === 'boolean' ? { type: 'checkbox', checked: it.checked } : {}),
             enabled: !it.disabled,
