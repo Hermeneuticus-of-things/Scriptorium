@@ -1138,8 +1138,8 @@ export default function App({ api: apiProp }) {
 
   // Remember UI state per project.
   useEffect(() => {
-    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder, paneLocks });
-  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder, paneLocks]);
+    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, aiPanelMode, splitId, copyholder, paneLocks });
+  }, [dir, selectedId, view, widths, showInspector, aiPanelMode, splitId, copyholder, paneLocks]);
 
   const saveProject = useCallback(
     (next) => {
@@ -1240,6 +1240,7 @@ export default function App({ api: apiProp }) {
       setView(ui.view || settingsRef.current?.defaultView || 'editor');
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
+      if (ui.aiPanelMode !== undefined) setAiPanelMode(Boolean(ui.aiPanelMode));
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
       setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split) } : {});
       setSplitNav({ stack: [], index: -1 });
