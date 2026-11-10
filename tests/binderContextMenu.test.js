@@ -68,5 +68,25 @@ describe('AI pe niveluri din meniul contextual (directivă autor 2026-11-10)', (
     expect(grp(run('gone').f)).toBeUndefined();
     expect(grp(run('trash').f)).toBeUndefined();
     expect(grp(run('a', {}, true).f)).toBeUndefined();
+describe('Adaugă în interior pe documente (Scrivener file-in-file)', () => {
+  it('text fără copii are submenu-ul în interior în grupul Adaugă, cu Document și Dosar', () => {
+    const f = fixture('a', { callbacks: { add: vi.fn(), addInside: vi.fn() } });
+    const addGroup = group(f.items, 'binder.add');
+    const nested = (addGroup.submenu || []).find((x) => x !== '-' && x.groupId === 'binder.addInside');
+    expect(nested).toBeTruthy();
+    expect(nested.submenu.map((x) => x.id)).toEqual(['newTextInside', 'newFolderInside']);
+    nested.submenu[0].action();
+    expect(f.callbacks.addInside).toHaveBeenCalledWith('text');
+  });
+  it('folder și text-cu-copii NU au submenu-ul (adăugarea implicită e deja în interior)', () => {
+    const withCb = { callbacks: { add: vi.fn(), addInside: vi.fn() } };
+    expect(group(fixture('folder', withCb).items, 'binder.add').submenu.find((x) => x !== '-' && x.groupId === 'binder.addInside')).toBeUndefined();
+    const p = project();
+    p.tree[0].children[0].children[0].children = [{ id: 'c', type: 'text' }];
+    expect(group(fixture('a', { project: p, ...withCb }).items, 'binder.add').submenu.find((x) => x !== '-' && x.groupId === 'binder.addInside')).toBeUndefined();
+  });
+  it('fără callback addInside grupul nu apare (variante imposibile ascunse)', () => {
+    const f = fixture('a');
+    expect((group(f.items, 'binder.add').submenu || []).find((x) => x !== '-' && x.groupId === 'binder.addInside')).toBeUndefined();
   });
 });
