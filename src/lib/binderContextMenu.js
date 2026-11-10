@@ -68,12 +68,12 @@ export function buildBinderContextMenu(options) {
     // c.root este rădăcina proprietar a nodului din clic (moștenită prin indexul binder-ului).
     const draft = project.tree.find((n) => n.root === 'draft');
     const ai = [];
-    if (node.type === 'text') ai.push(item('aiSection', tr('ui.aiWorkspace.levelSection'), () => cb.ai({ nodeId: id, level: 'section' }), { payload: { scope: { nodeId: id, level: 'section' } } }));
-    if (node.type === 'folder' && !node.root) ai.push(item('aiChapter', tr('ui.aiWorkspace.levelChapter'), () => cb.ai({ nodeId: id, level: 'chapter' }), { payload: { scope: { nodeId: id, level: 'chapter' } } }));
-    if (node.type === 'text' && c.parent && c.parent.type === 'folder' && !c.parent.root) ai.push(item('aiChapter', tr('ui.aiWorkspace.levelChapter'), () => cb.ai({ nodeId: c.parent.id, level: 'chapter' }), { payload: { scope: { nodeId: c.parent.id, level: 'chapter' } } }));
+    if (node.type === 'text') ai.push(item('aiSection', tr('ui.aiWorkspace.levelSection'), () => cb.ai({ nodeId: id, level: 'section' }, { panel: true }), { payload: { scope: { nodeId: id, level: 'section' } } }));
+    if (node.type === 'folder' && !node.root) ai.push(item('aiChapter', tr('ui.aiWorkspace.levelChapter'), () => cb.ai({ nodeId: id, level: 'chapter' }, { panel: true }), { payload: { scope: { nodeId: id, level: 'chapter' } } }));
+    if (node.type === 'text' && c.parent && c.parent.type === 'folder' && !c.parent.root) ai.push(item('aiChapter', tr('ui.aiWorkspace.levelChapter'), () => cb.ai({ nodeId: c.parent.id, level: 'chapter' }, { panel: true }), { payload: { scope: { nodeId: c.parent.id, level: 'chapter' } } }));
     if (draft) {
-      ai.push(item('aiManuscript', tr('ui.aiWorkspace.levelManuscript'), () => cb.ai({ nodeId: draft.id, level: 'manuscript' }), { payload: { scope: { nodeId: draft.id, level: 'manuscript' } } }));
-      ai.push(item('aiBook', tr('ui.aiWorkspace.levelBook'), () => cb.ai({ nodeId: draft.id, level: 'book' }), { payload: { scope: { nodeId: draft.id, level: 'book' } } }));
+      ai.push(item('aiManuscript', tr('ui.aiWorkspace.levelManuscript'), () => cb.ai({ nodeId: draft.id, level: 'manuscript' }, { panel: true }), { payload: { scope: { nodeId: draft.id, level: 'manuscript' } } }));
+      ai.push(item('aiBook', tr('ui.aiWorkspace.levelBook'), () => cb.ai({ nodeId: draft.id, level: 'book' }, { panel: true }), { payload: { scope: { nodeId: draft.id, level: 'book' } } }));
     }
     if (ai.length) out.push(group('binder.ai', 'ui.binder.ai', ai));
   }

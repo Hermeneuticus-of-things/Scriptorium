@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import AnchoredPopover from '../components/AnchoredPopover.jsx';
 import { t } from './i18n.js';
 
 // Electron disables the native window.prompt() ("prompt() is not supported."), so every
@@ -22,12 +23,12 @@ export function uiPrompt(message, defaultValue = '', opts = {}) {
       resolve(val);
     };
     root.render(
-      <PromptModal message={message} defaultValue={String(defaultValue ?? '')} opts={opts} onDone={finish} />,
+      <PromptPopover message={message} defaultValue={String(defaultValue ?? '')} opts={opts} onDone={finish} />,
     );
   });
 }
 
-function PromptModal({ message, defaultValue, opts, onDone }) {
+function PromptPopover({ message, defaultValue, opts, onDone }) {
   const [value, setValue] = useState(defaultValue);
   const inputRef = useRef(null);
   useEffect(() => {
@@ -38,9 +39,13 @@ function PromptModal({ message, defaultValue, opts, onDone }) {
     e?.preventDefault();
     onDone(value);
   };
+  // ADL §4.3 (directivă autor 2026-11-10): prompturile mici sunt popover-uri ancorate în pagină —
+  // suprafața de bază rămâne vizibilă; fără backdrop, click-afară/Escape rezolvă (null).
+  const ax = opts.anchor?.x ?? Math.max(12, Math.round((window.innerWidth || 1200) / 2 - 210));
+  const ay = opts.anchor?.y ?? 64;
   return (
-    <div className="modal-backdrop" onClick={() => onDone(null)}>
-      <form className="modal prompt-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
+    <AnchoredPopover x={ax} y={ay} onClose={() => onDone(null)} title={null} width={400}>
+      <form className="prompt-popover" onSubmit={submit}>
         <label>
           {message}
           <input
@@ -49,7 +54,6 @@ function PromptModal({ message, defaultValue, opts, onDone }) {
             value={value}
             placeholder={opts.placeholder || ''}
             onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); onDone(null); } }}
           />
         </label>
         <div className="actions-inline">
@@ -57,6 +61,6 @@ function PromptModal({ message, defaultValue, opts, onDone }) {
           <button type="button" onClick={() => onDone(null)}>{t('btn.cancel')}</button>
         </div>
       </form>
-    </div>
+    </AnchoredPopover>
   );
 }
