@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
+import AnchoredPopover from './AnchoredPopover.jsx';
 import { t } from '../lib/i18n.js';
 
 // Pick a binder item from a list [{id, title, depth}] (Move To, Append Selection to Document).
-export function PickNodeDialog({ title, items, onPick, onClose, emptyText = t('ui.batchADialogs.nimic_de_ales') }) {
+export function PickNodeDialog({ title, items, onPick, onClose, emptyText = t('ui.batchADialogs.nimic_de_ales'), variant = 'modal', anchor }) {
   const [q, setQ] = useState('');
   const list = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase('ro');
@@ -13,9 +14,8 @@ export function PickNodeDialog({ title, items, onPick, onClose, emptyText = t('u
     onPick(x.id);
     onClose();
   };
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal goto" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
+  const inner = (
+    <>
         <h3>{title}</h3>
         <input
           autoFocus
@@ -38,6 +38,15 @@ export function PickNodeDialog({ title, items, onPick, onClose, emptyText = t('u
         <div className="row-actions">
           <button onClick={onClose}>{t('ui.batchADialogs.renunta')}</button>
         </div>
+    </>
+  );
+  if (variant === 'popover') return (
+    <AnchoredPopover x={anchor?.x} y={anchor?.y} onClose={onClose} title={title} width={460}>{inner}</AnchoredPopover>
+  );
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal goto" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
+        {inner}
       </div>
     </div>
   );

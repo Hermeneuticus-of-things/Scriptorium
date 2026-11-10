@@ -3126,7 +3126,8 @@ export default function App({ api: apiProp }) {
     : aiScope.level === 'chapter' ? tr('ui.aiWorkspace.levelChapter', { title: aiNode?.title || '' })
     : aiScope.level === 'selection' ? tr('ui.aiWorkspace.levelSelection')
     : tr('ui.aiWorkspace.levelSection', { title: aiNode?.title || '' });
-  const openAiFor = (scope) => { setAiScope(scope); setShowAi(true); };
+  // AI din meniurile contextuale: panou andocat în pagină (nu fereastră) — ADL §4.3.
+  const openAiFor = (scope, opts = {}) => { if (opts.panel) setAiPanelMode(true); setAiScope(scope); setShowAi(true); };
   // Props partajate: același asistent în fereastra flotantă ȘI în panoul lateral (un singur model).
   const aiPanelProps = {
     projectTitle: project.title,
@@ -3637,8 +3638,8 @@ export default function App({ api: apiProp }) {
     if (aiEnabled && api.runAi) {
       const aiTarget = activeId.current || selectedId;
       const a = [];
-      if (text) a.push({ label: tr('ui.aiWorkspace.levelSelection'), action: () => openAiFor({ nodeId: aiTarget, level: 'selection' }) });
-      a.push({ label: tr('ui.aiWorkspace.levelSection'), action: () => openAiFor({ nodeId: aiTarget, level: 'section' }) });
+      if (text) a.push({ label: tr('ui.aiWorkspace.levelSelection'), action: () => openAiFor({ nodeId: aiTarget, level: 'selection' }, { panel: true }) });
+      a.push({ label: tr('ui.aiWorkspace.levelSection'), action: () => openAiFor({ nodeId: aiTarget, level: 'section' }, { panel: true }) });
       sep();
       items.push({ label: tr('ui.binder.ai'), submenu: a });
     }
@@ -4681,6 +4682,8 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'quicksearch' && (
         <QuickSearch
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 280)), y: 56 }}
           project={project}
           docs={docs}
           currentTitle={findNode(project.tree, selectedId)?.title || ''}
@@ -4724,6 +4727,8 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'goto' && (
         <GoToDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
           items={flatten(project.tree)
             .filter((n) => !n.root && !inTrash(n.id))
             .map((n) => {
@@ -4823,6 +4828,8 @@ export default function App({ api: apiProp }) {
       })}
       {dialog === 'moveTo' && (
         <PickNodeDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
           title={tr('ui.app.muta_selectia_in')}
           items={moveTargets(project.tree, selectionList())}
           onPick={moveSelectionTo}
@@ -4831,6 +4838,8 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'appendTo' && (
         <PickNodeDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
           title={tr('ui.app.adauga_selectia_la_sfarsitul_documentului')}
           items={flatten(project.tree)
             .filter((n) => n.type === 'text' && !inTrash(n.id) && !n.locked)

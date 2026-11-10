@@ -946,3 +946,13 @@ html body .backdrop .modal.document-formatting-dialog { width: min(var(--setting
 .document-formatting-field { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: var(--sp-2); }
 .document-formatting-field label { display: flex; gap: var(--sp-1); align-items: center; }
 .document-formatting-field input[type=number], .document-formatting-field select { width: 100%; min-width: 0; }
+
+/* Popover ancorat în pagină (ADL §4.3): detaliu temporar deasupra suprafeței de bază, fără backdrop. */
+.anchored-popover { position: fixed; z-index: 80; max-height: min(70vh, 560px); overflow: auto; box-shadow: 0 8px 28px rgba(0, 0, 0, .28); }
+.anchored-popover .prompt-popover label { display: grid; gap: var(--sp-1); font-size: var(--font-ui); }
+.anchored-popover .goto-list { max-height: 320px; overflow: auto; }
+
+/* Acordeon quiet în Setări (ADL §4.2): densitate colapsată, capabilitatea rămâne. */
+details.set-acc { border: 1px solid var(--line, #ddd4); border-radius: var(--radius); padding: var(--sp-1) var(--sp-2); margin: var(--sp-2) 0; }
+details.set-acc > summary { cursor: pointer; font-weight: 600; font-size: var(--font-ui); color: var(--muted); list-style-position: inside; }
+details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1); }

@@ -44,15 +44,15 @@ describe('AI pe niveluri din meniul contextual (directivă autor 2026-11-10)', (
     const g = grp(f);
     expect(g).toBeTruthy();
     expect(g.submenu.map((x) => x.id)).toEqual(['aiSection', 'aiChapter', 'aiManuscript', 'aiBook']);
-    g.submenu[0].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'a', level: 'section' });
-    g.submenu[1].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'folder', level: 'chapter' });
-    g.submenu[2].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'manuscript' });
-    g.submenu[3].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'book' });
+    g.submenu[0].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'a', level: 'section' }, { panel: true });
+    g.submenu[1].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'folder', level: 'chapter' }, { panel: true });
+    g.submenu[2].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'manuscript' }, { panel: true });
+    g.submenu[3].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'book' }, { panel: true });
   });
   it('dosar: capitolul + manuscrisul + cartea (fără secțiune)', () => {
     const { f, ai } = run('folder');
     expect(grp(f).submenu.map((x) => x.id)).toEqual(['aiChapter', 'aiManuscript', 'aiBook']);
-    grp(f).submenu[0].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'folder', level: 'chapter' });
+    grp(f).submenu[0].action(); expect(ai).toHaveBeenCalledWith({ nodeId: 'folder', level: 'chapter' }, { panel: true });
   });
   it('rădăcina Manuscris: manuscrisul + cartea (fără secțiune/capitol redundante)', () => {
     const { f, ai } = run('draft');
@@ -62,7 +62,7 @@ describe('AI pe niveluri din meniul contextual (directivă autor 2026-11-10)', (
     const { f, ai } = run('media');
     expect(grp(f).submenu.map((x) => x.id)).toEqual(['aiManuscript', 'aiBook']);
     grp(f).submenu[1].action();
-    expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'book' });
+    expect(ai).toHaveBeenCalledWith({ nodeId: 'draft', level: 'book' }, { panel: true });
   });
   it('subarborele Coșului rămâne în afara grupului; fără callback (AI off) grupul lipsește', () => {
     expect(grp(run('gone').f)).toBeUndefined();

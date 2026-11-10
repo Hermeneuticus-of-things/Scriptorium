@@ -571,8 +571,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </div>
           {aiTest && !aiTest.busy && <p className={aiTest.ok ? 'muted small' : 'warn'} role="status">{aiTest.text}</p>}
         </fieldset>
-        <fieldset>
-          <legend>NotebookLM</legend>
+        <details className="set-acc">
+          <summary>NotebookLM</summary>
           <label>
             {t('ui.settingsDialog.link_notebook_notebooklm_optional')}
             <input
@@ -602,7 +602,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             />
           </label>
           <p className="muted small">{t('ui.settingsDialog.notebooklm_intrebari_continuare')}</p>
-        </fieldset>
+        </details>
         <label>
           {t('set.aiTimeoutSec')}
           <input type="number" min="10" max="3600" step="10" value={s.aiTimeoutSec} onChange={set('aiTimeoutSec')} />
@@ -626,8 +626,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             ))}
           </fieldset>
         )}
-        <fieldset>
-          <legend>{t('set.aiFunctions')}</legend>
+        <details className="set-acc">
+          <summary>{t('set.aiFunctions')}</summary>
           <p className="muted small">{t('set.aiFunctionsInfo')}</p>
           {!PROJECT_AI_IN_PROGRAM_DIALOG ? null : project ? (
             <label>
@@ -637,10 +637,10 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           ) : (
             <p className="muted small">{t('set.aiRulesNoProject')}</p>
           )}
-        </fieldset>
+        </details>
         {PROJECT_AI_IN_PROGRAM_DIALOG && api.mcpInfo && dir && (
-          <fieldset>
-            <legend>{t('set.mcp')}</legend>
+          <details className="set-acc">
+            <summary>{t('set.mcp')}</summary>
             <p className="muted small">{t('set.mcpInfo')}</p>
             <button onClick={async () => setMcp(await api.mcpInfo(dir))}>{t('set.mcpShow')}</button>
             {mcp && (
@@ -655,7 +655,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
                 </label>
               </>
             )}
-          </fieldset>
+          </details>
         )}
       </>
     ),
@@ -672,8 +672,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <option value="generic">{t('set.edBase.generic')}</option>
           </select>
         </label>
-        <fieldset>
-          <legend>{t('ui.settingsDialog.editorial_liste_de_cuvinte_profil')} {edBase === 'generic' ? 'Generic' : t('ui.settingsDialog.romana')})</legend>
+        <details className="set-acc">
+          <summary>{t('ui.settingsDialog.editorial_liste_de_cuvinte_profil')} {edBase === 'generic' ? 'Generic' : t('ui.settingsDialog.romana')})</summary>
           <label>
             {t('ui.settingsDialog.cuvinte_interzise_cate_unul_pe')} <code>{t('ui.settingsDialog.cuvant_inlocuire_nota')}</code>
             <textarea rows={4} value={edL.forbidden} onChange={(e) => setEdL('forbidden', e.target.value)} placeholder={t('ui.settingsDialog.gest_fapta_urma_depunere_p3')} />
@@ -703,13 +703,13 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             {t('set.edCustom')} <code>{t('set.edCustomHint')}</code>
             <textarea rows={4} value={edL.custom} onChange={(e) => setEdL('custom', e.target.value)} placeholder={t('set.edCustomPlaceholder')} />
           </label>
-        </fieldset>
+        </details>
       </>
     ),
     sharing: (
       <>
-        <fieldset>
-          <legend>{t('ui.team.echipa')}</legend>
+        <details className="set-acc">
+          <summary>{t('ui.team.echipa')}</summary>
           <p className="muted small">{t('ui.team.setari_explicatie')}</p>
           <div className="row">
             <label>
@@ -726,9 +726,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <input value={init.team?.machine || ''} readOnly disabled placeholder={t('ui.team.id_calculator_lipsa')} />
           </label>
           <p className="muted small">{t('ui.team.id_calculator_explicatie')}</p>
-        </fieldset>
-        <fieldset>
-          <legend>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</legend>
+        </details>
+        <details className="set-acc">
+          <summary>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</summary>
           <div className="row">
             <label>
               {t('ui.settingsDialog.format_text')}
@@ -751,9 +751,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <label className="check"><input type="checkbox" checked={sharing.sync.includeNotes} onChange={(e) => setSync({ includeNotes: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_si_notele')}</label>
           <label className="check"><input type="checkbox" checked={sharing.sync.syncOnOpen} onChange={(e) => setSync({ syncOnOpen: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_la_deschiderea_proiectului')}</label>
           <label className="check"><input type="checkbox" checked={sharing.sync.syncOnClose} onChange={(e) => setSync({ syncOnClose: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_la_inchiderea_proiectului')}</label>
-        </fieldset>
-        <fieldset>
-          <legend>{t('ui.settingsDialog.export_fisiere_implicit')}</legend>
+        </details>
+        <details className="set-acc">
+          <summary>{t('ui.settingsDialog.export_fisiere_implicit')}</summary>
           <label>
             {t('ui.settingsDialog.format_export')}
             <select value={sharing.export.format} onChange={(e) => setExp({ format: e.target.value })}>
@@ -767,14 +767,14 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <label className="check"><input type="checkbox" checked={sharing.export.keepFolders} onChange={(e) => setExp({ keepFolders: e.target.checked })} /> {t('ui.settingsDialog.pastreaza_structura_de_dosare')}</label>
           <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> {t('ui.settingsDialog.include_notele')}</label>
           <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> {t('ui.settingsDialog.include_metadatele')}</label>
-        </fieldset>
+        </details>
       </>
     ),
     services: (
       <>
       {(api.dtedStatus || api.whisperStatus) && (
-        <fieldset>
-          <legend>{t('ui.dted.setari_titlu')}</legend>
+        <details className="set-acc">
+          <summary>{t('ui.dted.setari_titlu')}</summary>
           <p className="muted small">{t('ui.dted.setari_explicatie')}</p>
           {api.dictationStats && <EngineStatsLine api={api} />}
           {api.whisperStatus && (
@@ -847,7 +847,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
               {dtedUpd.phase === 'found' && <button onClick={() => installDtedUpdate(dtedUpd.info)}>{t('ui.dted.update_instaleaza')}</button>}
             </p>
           )}
-        </fieldset>
+        </details>
       )}
       <fieldset>
         <legend>{t('ui.settingsDialog.traducere_dictionare')}</legend>
