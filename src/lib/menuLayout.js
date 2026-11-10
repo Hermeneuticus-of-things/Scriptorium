@@ -1,6 +1,8 @@
 // Menu bar layout: which command goes in which menu and submenu.
 // Shared by the in-app menu bar (browser) and the native application menu (desktop).
 
+import { tidyMenuItems } from './commands.js';
+
 // Three tiers (menu reorg 2026-10-31), never mixed:
 //   APPLICATION: Program (program settings, shortcuts, toolbar), Window, Help - the program itself.
 //   PROJECT:     File, Project - the open book: files, import/export, project settings.
@@ -133,14 +135,15 @@ export function buildMenuLayout(commands, { item, label, extras = {}, after = {}
     let items = g === 'ai' ? groupItems('ai', AI_ORDER) : groupItems(g);
     if (extras[g]) {
       const seen = new Set(extras[g].filter((x) => x !== '-').map((x) => x.label));
-      items = [...extras[g], '-', ...items.filter((x) => x === '-' || !seen.has(x.label))];
+      const seenIds = new Set(extras[g].filter((x) => x !== '-' && x.id).map((x) => x.commandId || x.id));
+      items = [...extras[g], '-', ...items.filter((x) => x === '-' || (x && !seen.has(x.label) && !seenIds.has(x.commandId || x.id)))];
     }
     if (after[g]) items = [...items, '-', ...after[g]];
     if (g === 'nav' && goto) {
       const sub = gotoItems(goto.tree, goto);
       if (sub.length) items = [{ label: label('menu.goTo'), submenu: sub }, ...items];
     }
-    return { group: g, label: label(`group.${g}`), items: tidy(items) };
+    return { group: g, label: label(`group.${g}`), items: tidyMenuItems(tidy(items)) };
   }).filter((m) => m.items.length);
 }
 
@@ -148,17 +151,28 @@ export function buildMenuLayout(commands, { item, label, extras = {}, after = {}
 export function nativeMenuSpec(layout) {
   const actions = {};
   let n = 0;
+  const stablePayload = (value) => JSON.stringify(value, Object.keys(value || {}).sort());
+  const hash = (text) => {
+    let h = 2166136261;
+    for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+    return (h >>> 0).toString(16);
+  };
   const conv = (items) =>
-    items.filter((it) => it === '-' || !it.hidden).map((it) => {
+    tidyMenuItems(items).map((it) => {
       if (it === '-') return '-';
       if (it.submenu) return { label: it.label, items: conv(it.submenu) };
       let id = it.id;
+      const commandId = it.commandId || it.id;
+      if (commandId && it.payload) {
+        id = `scoped:${commandId}:${hash(stablePayload(it.payload))}`;
+        actions[id] = it.action;
+      }
       if (!id) {
         id = `menu:${n++}`;
         actions[id] = it.action;
       }
       // role: a native window/edit action (minimize, paste…) the desktop menu does itself.
-      return { id, label: it.label, key: it.shortcut, disabled: it.disabled, ...(typeof it.checked === 'boolean' ? { checked: it.checked } : {}), ...(it.role ? { role: it.role } : {}) };
+      return { id, ...(commandId ? { commandId } : {}), label: it.label, key: it.shortcut, disabled: it.disabled, ...(typeof it.checked === 'boolean' ? { checked: it.checked } : {}), ...(it.role ? { role: it.role } : {}) };
     });
   return { spec: layout.map((m) => ({ label: m.label, items: conv(m.items) })), actions };
 }

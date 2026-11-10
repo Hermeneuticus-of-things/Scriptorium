@@ -1,3 +1,4 @@
+import { tidyMenuItems } from '../lib/commands.js';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 // Right-click menu positioned at the cursor (fixed), flipped at the window edges.
@@ -21,15 +22,15 @@ function place(el, x, y, anchor) {
   el.style.visibility = 'visible';
 }
 
-function MenuList({ items, x, y, anchor, onClose, onBack, autoFocus = true, level = 0 }) {
+function MenuList({ items, x, y, anchor, onClose, onBack, autoFocus = true, level = 0, title }) {
   const ref = useRef(null);
   const [sub, setSub] = useState(null); // { index, rect, focus }
   useLayoutEffect(() => {
     place(ref.current, x, y, anchor);
-    if (autoFocus) ref.current.querySelector('[role="menuitem"]:not([aria-disabled="true"])')?.focus();
+    if (autoFocus) ref.current.querySelector('[role^="menuitem"]:not([aria-disabled="true"])')?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const buttons = () => [...ref.current.querySelectorAll(':scope > [role="menuitem"]')];
+  const buttons = () => [...ref.current.querySelectorAll(':scope > [role^="menuitem"]')];
   const openSub = (i, el, focus) => setSub({ index: i, rect: el.getBoundingClientRect(), focus });
   const run = (it, i, el) => {
     if (it.disabled) return;
@@ -70,7 +71,8 @@ function MenuList({ items, x, y, anchor, onClose, onBack, autoFocus = true, leve
     e.stopPropagation();
   };
   return (
-    <div ref={ref} className="ctx-menu" role="menu" style={{ position: 'fixed', left: x, top: y, visibility: 'hidden', zIndex: 1000 + level }} onKeyDown={onKeyDown} onContextMenu={(e) => e.preventDefault()}>
+    <div ref={ref} className="ctx-menu" role="menu" aria-label={title || undefined} style={{ position: 'fixed', left: x, top: y, visibility: 'hidden', zIndex: 1000 + level }} onKeyDown={onKeyDown} onContextMenu={(e) => e.preventDefault()}>
+      {title && <div className="ctx-caption" role="presentation" title={title}>{title}</div>}
       {items.map((it, i) =>
         it === '-' ? (
           <hr key={`sep${i}`} role="separator" />
@@ -78,8 +80,11 @@ function MenuList({ items, x, y, anchor, onClose, onBack, autoFocus = true, leve
           <button
             key={`${i}-${it.label}`}
             type="button"
-            role="menuitem"
+            role={typeof it.checked === 'boolean' ? 'menuitemcheckbox' : 'menuitem'} aria-checked={typeof it.checked === 'boolean' ? it.checked : undefined}
             data-i={i}
+            data-command-id={it.commandId || (it.submenu ? undefined : it.id)}
+            data-group-id={it.groupId}
+            data-command-scope={it.scope}
             tabIndex={-1}
             aria-disabled={it.disabled ? 'true' : undefined}
             aria-haspopup={it.submenu ? 'menu' : undefined}
@@ -120,7 +125,7 @@ function MenuList({ items, x, y, anchor, onClose, onBack, autoFocus = true, leve
   );
 }
 
-export default function ContextMenu({ x, y, items, onClose }) {
+export default function ContextMenu({ x, y, items, onClose, title }) {
   const rootRef = useRef(null);
   const restore = useRef(typeof document !== 'undefined' ? document.activeElement : null);
   useEffect(() => {
@@ -138,11 +143,16 @@ export default function ContextMenu({ x, y, items, onClose }) {
   const close = (activated) => {
     onClose();
     // keyboard users return to where they were (the binder), unless an action moved focus
-    if (!activated) setTimeout(() => restore.current?.focus?.(), 0);
+    setTimeout(() => {
+      const active = document.activeElement;
+      // Return after non-navigation actions too; never steal a deliberate focus transfer.
+      if (!activated || !active || active === document.body || active.closest?.('.ctx-menu')) restore.current?.focus?.({ preventScroll: true });
+    }, 0);
   };
   return (
     <div ref={rootRef} className="ctx-menu-root" onKeyDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
-      <MenuList items={items} x={x} y={y} onClose={close} />
+      <MenuList items={tidyMenuItems(items)} x={x} y={y} onClose={close} title={title} />
     </div>
   );
 }
+

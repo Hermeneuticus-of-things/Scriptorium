@@ -85,6 +85,12 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('menu:nativeOpen', listener);
     return () => ipcRenderer.removeListener('menu:nativeOpen', listener);
   },
+  onWindowCloseRequest: (fn) => {
+    const listener = () => fn();
+    ipcRenderer.on('window:close-request', listener);
+    return () => ipcRenderer.removeListener('window:close-request', listener);
+  },
+  windowCloseResponse: (choice) => call('window:close-response', choice),
   // Learned corrections: is a word misspelled for the active spell checker; a suggestion picked
   // from the native context menu ({ from, to }).
   isMisspelled: (word) => {
@@ -183,6 +189,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('ai:delta', listener);
     return () => ipcRenderer.removeListener('ai:delta', listener);
   },
+  onServicesChanged: (fn) => { const listener = () => fn(); ipcRenderer.on('services:changed', listener); return () => ipcRenderer.removeListener('services:changed', listener); },
   testAi: (override) => call('ai:test', override),
   nlmExport: (dir, options) => call('nlm:export', dir, options),
   nlmOpen: () => call('nlm:open'),

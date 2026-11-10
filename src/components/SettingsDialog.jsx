@@ -776,7 +776,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <fieldset>
           <legend>{t('ui.dted.setari_titlu')}</legend>
           <p className="muted small">{t('ui.dted.setari_explicatie')}</p>
-          {api.dictationStats && <EngineStatsLine />}
+          {api.dictationStats && <EngineStatsLine api={api} />}
           {api.whisperStatus && (
             <div role="radiogroup" aria-label={t('ui.dted.motor')}>
               <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine !== 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'local' }))} /> {t('ui.dted.motor_local')}</label>
@@ -895,12 +895,12 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <h2>{aiOnly ? t('cmd.aiSettings').replace(/…$/, '') : t('set.title')}</h2>
         <div className="tabs" role="tablist" hidden={aiOnly}>
           {visibleTabs.map((k) => (
-            <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} onClick={() => setTab(k)}>
+            <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} data-hint={k === 'accounts' ? 'services-tab' : undefined} onClick={() => setTab(k)}>
               {tabLabel(k)}
             </button>
           ))}
         </div>
-        <div role="tabpanel" style={{ minHeight: 260, marginTop: 8 }}>{panes[tab]}</div>
+        <div role="tabpanel" style={{ minHeight: 0, marginTop: 8 }}>{panes[tab]}</div>
         <div className="actions">
           <button onClick={cancel}>{t('btn.cancel')}</button>
           <button className="primary" onClick={save}>{t('btn.save')}</button>
@@ -923,7 +923,7 @@ function ProjectDoor({ onOpen }) {
 // The built-in recogniser: download (with progress), state, removal (docs/DTED.md §7).
 // ADL §12: live engine stats (CPU/RAM of DTED.exe & whisper-server.exe + GPU/VRAM from nvidia-smi),
 // polled only while Settings is open. Quiet line, no focus stealing.
-function EngineStatsLine() {
+function EngineStatsLine({ api }) {
   const [st, setSt] = useState(null);
   useEffect(() => {
     if (!api.dictationStats) return undefined;

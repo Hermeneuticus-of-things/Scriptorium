@@ -57,3 +57,6 @@ createRoot(document.getElementById('root')).render(
     {scratchWindow ? <Scratchpad api={api} standalone onClose={() => window.close()} /> : <App api={api} />}
   </ErrorBoundary>,
 );
+// The static splash covers the blank interval before React mounts. Removing it on the next frame
+// keeps the transition deterministic while the App-level skeleton handles slower settings loads.
+requestAnimationFrame(() => document.getElementById('boot-splash')?.remove());

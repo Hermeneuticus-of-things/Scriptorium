@@ -18,7 +18,7 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 | | Situație | Ce face |
 |---|---|---|
 | [x] | Click în binder, dar panoul e fixat pe loc (🔒) | Mesaj + **lacătul pulsează**, ca să vezi unde să-l deblochezi |
-| [ ] | Traducere/sinonime fără cheie / fără selecție | Glow pe butonul din Setări → Servicii, sau pe locul de selectat |
+| [x] | Traducere/sinonime fără cheie / fără selecție | Glow pe butonul din Setări → Servicii, sau pe locul de selectat |
 | [ ] | Compile fără documente în „Include în Compile" | Glow pe bifa de Include |
 | [ ] | Acțiune pe un document din Coș (read-only) | Arată de ce și unde se restaurează |
 | [ ] | Dictare/voce fără microfon pornit | Glow pe butonul de microfon |

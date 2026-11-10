@@ -29,6 +29,22 @@ const CSS = `
 
 const toggleIn = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
+// Note files are independent, but launching one read per document at once can exhaust file
+// handles and memory in large projects. Keep the result order while bounding active reads.
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (true) {
+      const index = next++;
+      if (index >= items.length) return;
+      out[index] = await fn(items[index], index);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
 export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen, onReplace, onSaveAsCollection, onClose, initialQuery = '', onResults, onLastSearch, selectionIds = [], api }) {
   const [query, setQuery] = useState(initialQuery);
   const [replacement, setReplacement] = useState('');
@@ -53,7 +69,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
       .map((n) => n.id);
     if (!ids.length) return undefined;
     setLoadingNotes(true);
-    Promise.all(ids.map((id) => Promise.resolve(readNotes(id)).then((h) => [id, h || ''], () => [id, ''])))
+    mapLimit(ids, 8, (id) => Promise.resolve(readNotes(id)).then((h) => [id, h || ''], () => [id, '']))
       .then((pairs) => {
         if (!cancelled) setNotesById((m) => ({ ...m, ...Object.fromEntries(pairs) }));
       })

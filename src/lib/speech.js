@@ -17,9 +17,10 @@ export function loadVoices(timeout = 1500) {
   const v = s.getVoices();
   if (v.length) return Promise.resolve(v);
   return new Promise((res) => {
-    const done = () => res(s.getVoices());
+    let timer;
+    const done = () => { clearTimeout(timer); s.removeEventListener?.('voiceschanged', done); res(s.getVoices()); };
     s.addEventListener?.('voiceschanged', done, { once: true });
-    setTimeout(done, timeout);
+    timer = setTimeout(done, timeout);
   });
 }
 

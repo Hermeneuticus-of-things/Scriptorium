@@ -10,7 +10,7 @@ import { POS_CLASSES } from '../lib/pos.js';
 import { readingLensItems } from '../lib/readingLenses.js';
 import { listBookmarks } from '../editor/formatting.js';
 import { allStyleRange, hasIdentifiableStyle, nextStyleBlock, prevStyleBlock, styleRangeAt } from '../lib/styleNavigation.js';
-import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS } from '../lib/editorMenus.js';
+import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS, LINE_SPACINGS } from '../lib/editorMenus.js';
 import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
 import { dropdownSurfaceId, registerDropdownField, registerDropdownSurface } from '../lib/focusDropdowns.js';
@@ -18,7 +18,6 @@ import { Icon } from './Icons.jsx';
 
 const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Verdana', 'Calibri', 'Courier New', 'Courier Prime'];
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
-const LINE_SPACINGS = [1, 1.2, 1.5, 2, 2.5, 3];
 const LIST_TYPES = [['1', '1. 2. 3.'], ['a', 'a. b. c.'], ['A', 'A. B. C.'], ['i', 'i. ii. iii.'], ['I', 'I. II. III.']];
 const ask = async (label, cur) => {
   const v = await uiPrompt(label, cur ?? '');
@@ -63,9 +62,10 @@ function Pop({ label, title, children, engine = null, surfaceId = null }) {
       },
     });
   }, [open, engine, surfaceId]);
+  const accessibleName = title || (typeof label === 'string' ? label.replace(/\s+▾\s*$/, '').trim() : undefined);
   return (
     <div className="menu" onMouseLeave={() => setOpen(false)}>
-      <button ref={btnRef} title={title} aria-label={title} aria-haspopup="true" aria-expanded={open} className={open ? 'on' : ''} onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((o) => !o)}>{label}</button>
+      <button ref={btnRef} title={title} aria-label={accessibleName} aria-haspopup="true" aria-expanded={open} className={open ? 'on' : ''} onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((o) => !o)}>{label}</button>
       {open && (
         <div className="menu-pop narrow" onClick={() => setOpen(false)}>
           {children}
@@ -550,15 +550,12 @@ export default function FormatBar({
   // Line spacing as in the classic paragraph bar: 1.0 / 1.2 / 1.5 / 2.0 / 2.5 / 3.0 / Other…
   const fmtSpacing = (v) => Number(v).toLocaleString(uiLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 2 });
   const spacingItems = [
-    ...LINE_SPACINGS.map((v) => ({ label: fmtSpacing(v), checked: Number(p.lineHeight) === v, action: () => setPara({ lineHeight: v }) })),
+    ...LINE_SPACINGS.map((v) => ({ label: fmtSpacing(v), checked: Number(p.lineHeight) === v, id: 'setLineSpacing', commandId: 'setLineSpacing', payload: { lineHeight: v }, action: () => setPara({ lineHeight: v }) })),
     '-',
     { label: p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight)) ? `${tr('ui.formatBar.lineSpacingOther')} (${fmtSpacing(p.lineHeight)})` : tr('ui.formatBar.lineSpacingOther'), checked: Boolean(p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight))), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
     { label: tr('ui.formatBar.lineSpacingDefault'), action: () => setPara({ lineHeight: null }), disabled: !p.lineHeight },
   ];
   const paraItems = [
-    ...LINE_SPACINGS.map((v) => ({ label: tr('ui.formatBar.lineSpacing', { v: fmtSpacing(v) }), checked: Number(p.lineHeight) === v, action: () => setPara({ lineHeight: v }) })),
-    { label: tr('ui.formatBar.lineSpacingCustom'), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
-    '-',
     { label: tr('ui.formatBar.spaceBefore', { v: p.spaceBefore ?? '–' }), action: () => num(tr('ui.formatBar.spaceBeforePrompt'), 'spaceBefore', p.spaceBefore) },
     { label: tr('ui.formatBar.spaceAfter', { v: p.spaceAfter ?? '–' }), action: () => num(tr('ui.formatBar.spaceAfterPrompt'), 'spaceAfter', p.spaceAfter) },
     { label: tr('ui.formatBar.firstIndent', { v: p.firstIndent ?? '–' }), action: () => num(tr('ui.formatBar.firstIndentPrompt'), 'firstIndent', p.firstIndent) },

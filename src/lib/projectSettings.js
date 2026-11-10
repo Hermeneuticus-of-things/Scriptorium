@@ -8,8 +8,8 @@ export const NONE = 'Fără';
 // English mode only their display is translated. User-created names show as stored.
 const BUILTIN_LABELS_EN = { Idee: 'Idea', Personaj: 'Character', Loc: 'Place' };
 const BUILTIN_STATUSES_EN = { 'De făcut': 'To Do', 'Prima ciornă': 'First Draft', Revizuit: 'Revised', Final: 'Final' };
-export const noneLabel = (name, t) => (name === NONE ? t('ui.corkboard.fara_eticheta') : (getLanguage() === 'en' && BUILTIN_LABELS_EN[name]) || name);
-export const noneStatus = (name, t) => (name === NONE ? t('ui.corkboard.fara_status') : (getLanguage() === 'en' && BUILTIN_STATUSES_EN[name]) || name);
+export const noneLabel = (name, t) => (name === NONE || !String(name ?? '').trim() ? t('ui.corkboard.fara_eticheta') : (getLanguage() === 'en' && BUILTIN_LABELS_EN[name]) || name);
+export const noneStatus = (name, t) => (name === NONE || !String(name ?? '').trim() ? t('ui.corkboard.fara_status') : (getLanguage() === 'en' && BUILTIN_STATUSES_EN[name]) || name);
 export const DEFAULT_LABEL_TITLE = 'Etichetă';
 export const DEFAULT_STATUS_TITLE = 'Status';
 // The names the writer gave the Label and Status fields (Project Settings); the defaults follow
@@ -514,3 +514,4 @@ export function cleanDefaultFormatting(f, useGlobal = false) {
   if (out.spaceAfter != null) out.spacing = out.spaceAfter; // older readers
   return Object.keys(out).length ? out : null;
 }
+

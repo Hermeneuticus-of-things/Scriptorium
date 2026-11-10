@@ -28,6 +28,18 @@
   --font-ui-sm: 12px;
   --font-ui: 13px;
   --font-ui-md: 14px;
+  /* Surface geometry: content-sized windows constrained by the viewport, not control scales. */
+  --window-gutter: calc(var(--sp-2) * 4);
+  --menu-min-width: 160px;
+  --context-min-width: 200px;
+  --settings-content-width: 520px;
+  --quickref-content-width: 420px;
+  --quickref-min-width: 320px;
+  --quickref-min-height: 180px;
+  --compile-content-width: 1100px; /* three working columns; collapses to viewport minus gutters */
+  --loading-placeholder-width: 280px;
+  --startup-mark-size: calc(var(--ctl-lg) + var(--sp-3));
+  --startup-title-size: calc(var(--font-ui-sm) * 2); /* display title, not control label */
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -65,7 +77,33 @@ textarea { resize: vertical; width: 100%; }
 .ok { color: var(--ok); word-break: break-all; }
 .hint { color: var(--muted); text-align: center; margin: 2em; }
 .loading { padding: 2em; }
+.loading-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-2); background: var(--paper); color: var(--text); }
+.loading-screen h1 { margin: 0; font-size: var(--startup-title-size); }
+.loading-brand, .boot-mark { display: grid; place-items: center; width: var(--startup-mark-size); height: var(--startup-mark-size); border-radius: var(--radius-lg); background: var(--accent); color: #fff; font: 700 24px/1 Georgia, serif; box-shadow: 0 5px 16px color-mix(in srgb, var(--accent) 28%, transparent); }
+.loading-skeleton { display: flex; flex-direction: column; gap: var(--sp-2); width: min(var(--loading-placeholder-width), 70vw); margin-top: 10px; }
+.loading-skeleton span { display: block; height: var(--sp-2); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--muted) 18%, transparent); animation: loading-pulse 1.2s ease-in-out infinite; }
+.loading-skeleton span:nth-child(2) { width: 82%; animation-delay: .12s; }
+.loading-skeleton span:nth-child(3) { width: 64%; animation-delay: .24s; }
+@keyframes loading-pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .loading-skeleton span { animation: none; opacity: .75; } }
+.unsaved-dialog { width: min(440px, 92vw); }
+.unsaved-dialog h2 { margin-top: 0; }
+.unsaved-dialog .actions { justify-content: flex-end; }
+.unsaved-dialog button.danger { color: var(--danger, #a33); }
+#boot-splash { position: fixed; inset: 0; z-index: 9999; display: grid; place-content: center; justify-items: center; gap: var(--sp-2); background: #f7f5f0; color: #25231f; font: 14px system-ui, sans-serif; }
+#boot-splash .boot-mark { width: var(--startup-mark-size); height: var(--startup-mark-size); }
+#boot-splash span { color: #716d65; }
+@media (prefers-color-scheme: dark) { #boot-splash { background: #202124; color: #f3f1ec; } #boot-splash span { color: #bbb7af; } }
 .spacer { flex: 1; }
+/* Guided hint: show the exact control that unblocks an action, without a dark pattern. */
+.hint-glow { animation: hint-glow 3.6s ease-out both; position: relative; z-index: 1; }
+@keyframes hint-glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+  18%, 48% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 38%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hint-glow { animation: none; outline: 3px solid var(--accent); outline-offset: 2px; }
+}
 
 /* Layout */
 .app { display: flex; flex-direction: column; height: 100%; }
@@ -875,3 +913,26 @@ legend { color: var(--muted); padding: 0 var(--sp-1); }
   display: inline-block; transform-origin: center; transition: transform 90ms linear, opacity 90ms linear;
 }
 .dictation-pulse[data-paused='true'] { opacity: 0.25; }
+
+/* ADL — content-sized controls, not smaller writing surfaces. */
+.menu-pop:not(.narrow) { width: max-content; min-width: min(var(--menu-min-width), calc(100vw - var(--sp-2))); max-width: min(480px, calc(100vw - var(--sp-2))); }
+.menu-pop button { min-height: var(--ctl-lg); flex-shrink: 0; }
+.menu-pop button > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.menu-pop kbd, .ctx-menu kbd { flex-shrink: 0; white-space: nowrap; }
+.ctx-menu { width: max-content; min-width: min(var(--context-min-width), calc(100vw - var(--sp-2))); max-width: min(420px, calc(100vw - var(--sp-2))); }
+.ctx-menu > button { min-height: var(--ctl-lg); flex-shrink: 0; white-space: normal; }
+.ctx-menu .ctx-label { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.ctx-caption { padding: var(--sp-1) var(--sp-2); border-bottom: 1px solid var(--line); color: var(--text); font-weight: 600; font-size: var(--font-ui-sm); overflow-wrap: anywhere; }
+.modal.settings-dialog { width: min(var(--settings-content-width), calc(100vw - var(--window-gutter))); max-height: min(720px, calc(100vh - var(--window-gutter))); overflow: hidden; }
+.settings-dialog > h2, .settings-dialog > .tabs, .settings-dialog > .actions { flex: 0 0 auto; }
+.settings-dialog > [role="tabpanel"] { flex: 0 1 auto; overflow-y: auto; min-height: 0; }
+.quickref { width: var(--quickref-content-width); min-width: min(var(--quickref-min-width), calc(100vw - var(--window-gutter))); max-width: min(560px, calc(100vw - var(--window-gutter))); height: auto; min-height: var(--quickref-min-height); max-height: min(600px, calc(100vh - var(--window-gutter))); }
+.quickref-body { min-height: 0; flex: 1 1 auto; }
+.quickref-head strong { min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; }
+.quickref-head button { flex-shrink: 0; }
+.modal.compile-dialog { width: min(var(--compile-content-width), calc(100vw - var(--window-gutter))); max-width: calc(100vw - var(--window-gutter)); max-height: calc(100vh - var(--window-gutter)); }
+
+/* Compact, explicit optional-service controls. Hidden AI does not occupy toolbar space. */
+.ai-status[hidden] { display: none; }
+.services-panel .row label.service-checkbox { display: inline-flex; flex-direction: row-reverse; align-items: center; justify-content: flex-end; gap: var(--space-2); flex: 0 1 auto; }
+.services-panel label.service-checkbox input[type="checkbox"] { width: auto; }

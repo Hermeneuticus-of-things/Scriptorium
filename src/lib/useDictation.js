@@ -9,6 +9,13 @@ const newId = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36)
 //   onMessage(text)        short notices for the writer (errors with what to do)
 export function useDictation({ api, getEditor, onTranscript, onMessage, replacements, switchedMessage }) {
   const [dictation, setDictation] = useState(null); // {id, paused, level, since, words}
+  const [available, setAvailable] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const check = () => api.dtedStatus?.({ check: false }).then((s) => { if (alive) setAvailable(s?.found === true); }).catch(() => { if (alive) setAvailable(false); });
+    check(); const off = api.onServicesChanged?.(check);
+    return () => { alive = false; off?.(); };
+  }, [api]);
   const [jobs, setJobs] = useState({}); // transcription id -> {title, p, phase}
   const session = useRef({});
   // The refs are the truth for the event handler (events can arrive before React re-renders);
@@ -161,5 +168,5 @@ export function useDictation({ api, getEditor, onTranscript, onMessage, replacem
   );
   const cancelJob = useCallback((id) => api.dtedCancel(id).catch(() => {}), [api]);
 
-  return { dictation, jobs, start, stop, cancel, togglePause, transcribe, cancelJob, levelRef, onLevel, available: Boolean(api.dtedDictateStart) };
+  return { dictation, jobs, start, stop, cancel, togglePause, transcribe, cancelJob, levelRef, onLevel, available };
 }

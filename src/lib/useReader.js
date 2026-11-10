@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { chunkText, loadVoices, pickVoice, speak, stop as stopSystem, ttsSupported } from './speech.js';
 
 // Read text aloud with the best available voice: the built-in Piper voice ("Mihai", local) when it
@@ -9,6 +9,13 @@ export default function useReader(api = {}) {
   const audio = useRef(null);
   const sysCtl = useRef(null);
   const [reading, setReading] = useState(false);
+  const [canRead, setCanRead] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const check = async () => { const [piper, voices] = await Promise.all([api.ttsStatus?.().catch(() => null), loadVoices()]); if (alive) setCanRead(piper?.installed === true || voices.length > 0); };
+    check(); const off = api.onServicesChanged?.(check);
+    return () => { alive = false; off?.(); };
+  }, [api]);
 
   const stop = () => {
     run.current += 1;
@@ -55,6 +62,5 @@ export default function useReader(api = {}) {
     return undefined;
   };
 
-  const canRead = Boolean(api.ttsSynth) || ttsSupported();
   return { read, stop, reading, canRead };
 }

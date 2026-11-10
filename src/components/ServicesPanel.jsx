@@ -15,6 +15,7 @@ export default function ServicesPanel({ api }) {
   const supported = Boolean(api.servicesStatus);
 
   const load = () => {
+    window.dispatchEvent(new Event('pneuma-services-changed'));
     api.servicesStatus().then(setData).catch((e) => setMsg(e.message));
     api.googleAuthStatus?.().then(setOauth).catch(() => {});
     api.nlmAuthStatus?.().then(setNlm).catch(() => {});
@@ -39,6 +40,7 @@ export default function ServicesPanel({ api }) {
       setTyped((x) => Object.fromEntries(Object.entries(x).filter(([k]) => !k.startsWith(`${id}.`))));
       setMsg(t('ui.services.salvat', { name: data.services[id].label }));
       load();
+      window.dispatchEvent(new Event('pneuma-services-changed'));
     } catch (e) {
       setMsg(e.message);
     }
@@ -48,6 +50,7 @@ export default function ServicesPanel({ api }) {
       await api.setService(id, Object.fromEntries(fields.map((f) => [f.id, ''])));
       setMsg(t('ui.services.sters', { name: data.services[id].label }));
       load();
+      window.dispatchEvent(new Event('pneuma-services-changed'));
     } catch (e) {
       setMsg(e.message);
     }
@@ -79,17 +82,19 @@ export default function ServicesPanel({ api }) {
             <strong>{s.label}</strong>
             <span className={s.configured ? 'ok small' : 'muted small'}>{s.configured ? t('ui.services.configurat') : t('ui.services.neconfigurat')}</span>
           </div>
-          {s.help && <p className="muted small">{s.help}{s.about && <> <a href={s.about} target="_blank" rel="noreferrer" onClick={(e) => { if (api.openLink) { e.preventDefault(); api.openLink(s.about); } }}>{t('ui.services.ce_este')}</a></>}{s.url && <> · <a href={s.url} target="_blank" rel="noreferrer" onClick={(e) => { if (api.openLink) { e.preventDefault(); api.openLink(s.url); } }}>{t('ui.services.unde_gasesc_cheia')}</a></>}</p>}
+          {s.help && <p className="muted small">{s.help}{s.about && <> <a href={s.about} target="_blank" rel="noreferrer" onClick={(e) => { if (api.openLink) { e.preventDefault(); api.openLink(s.about); } }}>{t('ui.services.ce_este')}</a></>}{s.url && <> · <a href={s.url} target="_blank" rel="noreferrer" onClick={(e) => { if (api.openLink) { e.preventDefault(); api.openLink(s.url); } }}>{t(s.fields.some((f) => f.secret) ? 'ui.services.unde_gasesc_cheia' : 'ui.services.deschide_site')}</a></>}</p>}
           <div className="row">
             {s.fields.map((f) => (
-              <label key={f.id}>
+              <label key={f.id} className={f.type === 'checkbox' ? 'service-checkbox' : undefined}>
                 {f.label}
                 <input
-                  type={f.secret ? 'password' : 'text'}
+                  type={f.type === 'checkbox' ? 'checkbox' : f.secret ? 'password' : 'text'}
                   autoComplete={f.secret ? 'new-password' : 'off'}
-                  value={typed[`${id}.${f.id}`] ?? (f.secret ? '' : f.value)}
+                  data-hint={`service-key-${id}`}
+                  checked={f.type === 'checkbox' ? (typed[`${id}.${f.id}`] ?? f.value) === 'enabled' : undefined}
+                  value={f.type === 'checkbox' ? undefined : typed[`${id}.${f.id}`] ?? (f.secret ? '' : f.value)}
                   placeholder={f.secret && f.set ? t('ui.services.salvata_scrie_alta') : ''}
-                  onChange={(e) => setTyped((x) => ({ ...x, [`${id}.${f.id}`]: e.target.value }))}
+                  onChange={(e) => setTyped((x) => ({ ...x, [`${id}.${f.id}`]: f.type === 'checkbox' ? (e.target.checked ? 'enabled' : '') : e.target.value }))}
                 />
               </label>
             ))}
