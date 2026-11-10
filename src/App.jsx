@@ -3422,8 +3422,8 @@ export default function App({ api: apiProp }) {
     ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
     ['format', 'convertDefaultAll', tr('cmd.convertDefaultAll'), () => convertFormattingAll().catch(report), !project],
     ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
-    ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
-    ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
+    ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => { setShowEditorial((v) => !v); setShowAi(true); }],
+    ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setShowAi(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
     ['ai', 'ai', tr('ui.aiWorkspace.title'), () => setShowAi((v) => !v), !aiEnabled],
     // Two separate AI doors (owner decision 2026-10-27): program AI (global) and project AI (open book).
@@ -3882,7 +3882,6 @@ export default function App({ api: apiProp }) {
           onAdd={addItem}
           onAi={openAiFor}
           onAddInside={(type, targetId) => addItem(type, null, null, targetId, { inside: true })}
-          onAddInside={(type, targetId) => addItem(type, null, null, targetId, { inside: true })}
           onRename={(id, title) => patchNode(id, { title })}
           onMove={(id, targetId, pos) => setTreeU(dropMany(project.tree, [id], targetId, pos))}
           onMoveMany={(ids, targetId, pos) => setTreeU(dropMany(project.tree, [...ids], targetId, pos))}
@@ -4304,67 +4303,7 @@ export default function App({ api: apiProp }) {
                   onImportWeb={api.importWebPage ? importWebSource : undefined}
                 />
               )}
-              {showEditorial && editorialNode && (
-                <EditorialPanel
-                  project={project}
-                  dir={dir}
-                  aiEnabled={aiEnabled}
-                  key={`ed-${editorialNode.id}`}
-                  api={api}
-                  hasKey={settings.hasApiKey}
-                  aiLabel={settings.aiLabel}
-                  aiModel={settings.aiModel}
-                  profile={profileFor(project)}
-                  node={editorialNode}
-                  html={docs[editorialNode.id] || ''}
-                  chapter={chapterDocs}
-                  onSelectionText={() => {
-                    const h = editorRefs.current.get(editorialNode.id);
-                    const ed = h?.editor;
-                    if (!ed || ed.state.selection.empty) return '';
-                    const { from, to } = ed.state.selection;
-                    const slice = ed.state.doc.cut(from, to);
-                    return htmlToManuscript(getHTMLFromFragment(slice.content, ed.schema));
-                  }}
-                  authorEvent={authorEvent}
-                  onJump={(issue) => {
-                    if (!mainIds.has(editorialNode.id)) go(editorialNode.id);
-                    setTimeout(() => editorRefs.current.get(editorialNode.id)?.findText(issue.match || issue.excerpt, { block: issue.paragraph, at: issue.at }), 50);
-                  }}
-                  onApply={async (p) => {
-                    await flush();
-                    // Hand edits made so far are the writer's (author text) before anything is written.
-                    commitAuthor(p.id);
-                    if (!p.selection && !p.safe) {
-                      // Re-check the bytes right before writing: a save of the author's at this
-                      // moment (or an agent's write) is never overwritten.
-                      const cur = docsNow()[p.id] || '';
-                      const disk = api.readDoc ? await api.readDoc(dir, p.id, 'docs').catch(() => null) : null;
-                      if (cur !== p.before || (disk && disk !== p.before)) throw new Error(tr('ui.app.document_schimbat_409', { title: p.title }));
-                    }
-                    const now = new Date();
-                    const pad = (x) => String(x).padStart(2, '0');
-                    if (p.authorEdit) await api.takeSnapshot(dir, p.id, `.bak-autor-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`);
-                    else if (!p.safe) await api.takeSnapshot(dir, p.id, tr('ui.app.inainte_de_x', { v0: p.rounds ? 'I-EDIT' : 'I-REP' })).catch(report);
-                    if (p.selection) {
-                      editorRefs.current.get(p.id)?.replaceSelectionHtml(p.after);
-                      return;
-                    }
-                    writeDocNow(p.id, p.after);
-                    setEditorHtml(p.id, p.after);
-                    const pj = projectRef.current;
-                    const n = findNode(pj.tree, p.id);
-                    const stamp = now.toISOString();
-                    const editorial = { ...(n?.editorial || {}), lastRep: stamp };
-                    if (p.rounds) editorial.rounds = { ...(editorial.rounds || {}), ...Object.fromEntries(p.rounds.map((r) => [r, stamp])) };
-                    saveProject({ ...pj, tree: updateNode(pj.tree, p.id, { editorial, authorHashes: updateAuthorHashes(n?.authorHashes, p.after) }) });
-                    // Edited in the preview: journal the save and mark the author's own words.
-                    if (p.authorEdit) commitAuthor(p.id, { [p.id]: { base: p.before, after: p.after, authorFrom: p.proposed } });
-                  }}
-                  onOpenSettings={openSettings}
-                  tabRequest={editorialTabReq}
-                />
-              )}
+              {false && null /* I-REP/I-EDIT mutat în fereastra AI (directivă autor): nu mai înghesuie Inspectorul */}
               {showAi && aiEnabled && aiPanelMode && aiNode && (
                 <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
                   <div className="side-ai-head">
@@ -4378,7 +4317,33 @@ export default function App({ api: apiProp }) {
                       </button>
                     </div>
                   </div>
+                  {(showEditorial && editorialNode) ? (
+                    <>
+                      <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
+                        <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
+                        <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
+                      </div>
+                      <EditorialPanel
+                        project={project}
+                        dir={dir}
+                        aiEnabled={aiEnabled}
+                        key={'ed-side-' + editorialNode.id}
+                        api={api}
+                        hasKey={settings.hasApiKey}
+                        aiLabel={settings.aiLabel}
+                        aiModel={settings.aiModel}
+                        profile={profileFor(project)}
+                        node={editorialNode}
+                        html={docs[editorialNode.id] || ''}
+                        chapter={chapterDocs}
+                        editorialTabReq={editorialTabReq}
+                        onError={report}
+                        onClose={() => { setShowEditorial(false); setEditorialTabReq(null); }}
+                      />
+                    </>
+                  ) : (
                   <AiPanel {...aiPanelProps} />
+                  )}
                 </section>
               )}
             </div>
@@ -4638,7 +4603,76 @@ export default function App({ api: apiProp }) {
         />
       )}
       {showAi && aiEnabled && aiNode && !aiPanelMode && (
-        <AiWorkspaceWindow focusEngine={focusEngine} onClose={() => { setShowAi(false); setAiRequest(null); }} onDock={() => setAiPanelMode(true)}>
+        <AiWorkspaceWindow focusEngine={focusEngine} onClose={() => { setShowAi(false); setAiRequest(null); setAiScope(null); }} onDock={() => setAiPanelMode(true)}>
+          {(showEditorial && editorialNode) ? (
+            <>
+              <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
+                <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
+                <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
+              </div>
+                {showEditorial && editorialNode && (
+                  <EditorialPanel
+                    project={project}
+                    dir={dir}
+                    aiEnabled={aiEnabled}
+                    key={`ed-${editorialNode.id}`}
+                    api={api}
+                    hasKey={settings.hasApiKey}
+                    aiLabel={settings.aiLabel}
+                    aiModel={settings.aiModel}
+                    profile={profileFor(project)}
+                    node={editorialNode}
+                    html={docs[editorialNode.id] || ''}
+                    chapter={chapterDocs}
+                    onSelectionText={() => {
+                      const h = editorRefs.current.get(editorialNode.id);
+                      const ed = h?.editor;
+                      if (!ed || ed.state.selection.empty) return '';
+                      const { from, to } = ed.state.selection;
+                      const slice = ed.state.doc.cut(from, to);
+                      return htmlToManuscript(getHTMLFromFragment(slice.content, ed.schema));
+                    }}
+                    authorEvent={authorEvent}
+                    onJump={(issue) => {
+                      if (!mainIds.has(editorialNode.id)) go(editorialNode.id);
+                      setTimeout(() => editorRefs.current.get(editorialNode.id)?.findText(issue.match || issue.excerpt, { block: issue.paragraph, at: issue.at }), 50);
+                    }}
+                    onApply={async (p) => {
+                      await flush();
+                      // Hand edits made so far are the writer's (author text) before anything is written.
+                      commitAuthor(p.id);
+                      if (!p.selection && !p.safe) {
+                        // Re-check the bytes right before writing: a save of the author's at this
+                        // moment (or an agent's write) is never overwritten.
+                        const cur = docsNow()[p.id] || '';
+                        const disk = api.readDoc ? await api.readDoc(dir, p.id, 'docs').catch(() => null) : null;
+                        if (cur !== p.before || (disk && disk !== p.before)) throw new Error(tr('ui.app.document_schimbat_409', { title: p.title }));
+                      }
+                      const now = new Date();
+                      const pad = (x) => String(x).padStart(2, '0');
+                      if (p.authorEdit) await api.takeSnapshot(dir, p.id, `.bak-autor-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`);
+                      else if (!p.safe) await api.takeSnapshot(dir, p.id, tr('ui.app.inainte_de_x', { v0: p.rounds ? 'I-EDIT' : 'I-REP' })).catch(report);
+                      if (p.selection) {
+                        editorRefs.current.get(p.id)?.replaceSelectionHtml(p.after);
+                        return;
+                      }
+                      writeDocNow(p.id, p.after);
+                      setEditorHtml(p.id, p.after);
+                      const pj = projectRef.current;
+                      const n = findNode(pj.tree, p.id);
+                      const stamp = now.toISOString();
+                      const editorial = { ...(n?.editorial || {}), lastRep: stamp };
+                      if (p.rounds) editorial.rounds = { ...(editorial.rounds || {}), ...Object.fromEntries(p.rounds.map((r) => [r, stamp])) };
+                      saveProject({ ...pj, tree: updateNode(pj.tree, p.id, { editorial, authorHashes: updateAuthorHashes(n?.authorHashes, p.after) }) });
+                      // Edited in the preview: journal the save and mark the author's own words.
+                      if (p.authorEdit) commitAuthor(p.id, { [p.id]: { base: p.before, after: p.after, authorFrom: p.proposed } });
+                    }}
+                    onOpenSettings={openSettings}
+                    tabRequest={editorialTabReq}
+                  />
+                )}
+            </>
+          ) : (
           <AiPanel
             projectTitle={project.title}
             bookType={project?.bookType || ''}
@@ -4667,6 +4701,7 @@ export default function App({ api: apiProp }) {
             translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
             request={aiRequest}
           />
+          )}
         </AiWorkspaceWindow>
       )}
       {dialog === 'documentFormatting' && (
