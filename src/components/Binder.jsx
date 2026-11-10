@@ -160,7 +160,6 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     project, id, selectedIds, tr, templates: templates || [], collections: collections || [], activeCollectionId, filterIds, icons: ICONS,
     callbacks: {
       add: onAdd, ai: onAi, addInside: onAddInside, newFromTemplate: onNewFromTemplate, rename: setEditing, copy: onCopy,
-      add: onAdd, addInside: onAddInside, newFromTemplate: onNewFromTemplate, rename: setEditing, copy: onCopy,
       drop: doDrop, trash: onTrash, restore: onRestore, patch: onPatchItems,
       addToCollection: onAddToCollection, newCollection: onNewCollection, removeFromCollection: onRemoveFromCollection,
       convert: onConvert, sortChildren: onSortChildren, group: onGroup, copyLink: onCopyLink,

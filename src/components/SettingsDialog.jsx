@@ -40,7 +40,7 @@ const tabLabel = (k) => {
 // (ProjectAiSettingsDialog). Their old code below is kept, hidden behind this flag (not deleted).
 const PROJECT_AI_IN_PROGRAM_DIALOG = false;
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, onCheckUpdates, onProjectSettings, onProjectAi, initialTab, aiOnly = false }) {
+export default function SettingsDialog({ api, speechReady = { speechify: false, stt: false }, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, onCheckUpdates, onProjectSettings, onProjectAi, initialTab, aiOnly = false }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
   const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
   const [tab, setTab] = useState(() => (aiOnly ? 'ai' : TABS.includes(initialTab) && initialTab !== 'ai' ? initialTab : 'general'));
@@ -781,7 +781,23 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <div role="radiogroup" aria-label={t('ui.dted.motor')}>
               <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine !== 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'local' }))} /> {t('ui.dted.motor_local')}</label>
               <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine === 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'dted' }))} /> {t('ui.dted.motor_dted')}</label>
+              <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine === 'online'} onChange={() => setS((p) => ({ ...p, speechEngine: 'online' }))} /> {t('ui.dted.motor_online')}</label>
             </div>
+          )}
+          {s.speechEngine === 'online' && (
+            <p className="muted small">
+              {t('ui.dted.motor_online_hint')}{' '}
+              <button type="button" className="link" onClick={() => setSettingsTab('services')}>{t('ui.dted.deschide_servicii')}</button>
+            </p>
+          )}
+          <div role="radiogroup" aria-label={t('ui.dted.motor_voce')}>
+            <label className="check"><input type="radio" name="ttsEngine" checked={(s.ttsEngine || 'auto') !== 'speechify'} onChange={() => setS((p) => ({ ...p, ttsEngine: 'auto' }))} /> {t('ui.dted.motor_voce_local')}</label>
+            <label className="check"><input type="radio" name="ttsEngine" checked={s.ttsEngine === 'speechify'} onChange={() => setS((p) => ({ ...p, ttsEngine: 'speechify' }))} /> {t('ui.dted.motor_voce_speechify')}</label>
+          </div>
+          {s.ttsEngine === 'speechify' && (
+            <p className="muted small">
+              {speechReady.speechify ? t('ui.dted.speechify_gata') : <>{t('ui.dted.speechify_hint')}{' '}<button type="button" className="link" onClick={() => setSettingsTab('services')}>{t('ui.dted.deschide_servicii')}</button></>}
+            </p>
           )}
           {api.whisperStatus && s.speechEngine !== 'dted' && <LocalEngine api={api} onError={onError} />}
           {api.whisperStatus && s.speechEngine !== 'dted' && check('speechAutoInstall', t('set.speechAutoInstall'))}

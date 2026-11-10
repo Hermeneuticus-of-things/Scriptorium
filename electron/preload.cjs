@@ -51,6 +51,9 @@ contextBridge.exposeInMainWorld('api', {
   dtedDictateStop: (id) => call('dted:dictateStop', id),
   dtedCancel: (id) => call('dted:cancel', id),
   dtedCheckUpdate: () => call('dted:checkUpdate'),
+  sttTranscribeOnline: (payload) => call('stt:transcribeOnline', payload),
+  speechifySpeak: (text) => call('speech:speechify', text),
+  sttConfigured: () => call('stt:configured'),
   dtedInstallUpdate: (info) => call('dted:installUpdate', info),
   onDtedEvent: (fn) => {
     const listener = (_e, ev) => fn(ev);
