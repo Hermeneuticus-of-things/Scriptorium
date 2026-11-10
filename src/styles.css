@@ -951,3 +951,8 @@ html body .backdrop .modal.document-formatting-dialog { width: min(var(--setting
 .anchored-popover { position: fixed; z-index: 80; max-height: min(70vh, 560px); overflow: auto; box-shadow: 0 8px 28px rgba(0, 0, 0, .28); }
 .anchored-popover .prompt-popover label { display: grid; gap: var(--sp-1); font-size: var(--font-ui); }
 .anchored-popover .goto-list { max-height: 320px; overflow: auto; }
+
+/* Acordeon quiet în Setări (ADL §4.2): densitate colapsată, capabilitatea rămâne. */
+details.set-acc { border: 1px solid var(--line, #ddd4); border-radius: 6px; padding: var(--sp-1) var(--sp-2); margin: var(--sp-2) 0; }
+details.set-acc > summary { cursor: pointer; font-weight: 600; font-size: var(--font-ui); color: var(--muted); list-style-position: inside; }
+details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1); }
