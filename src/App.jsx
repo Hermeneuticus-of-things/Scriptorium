@@ -14,6 +14,8 @@ import Outliner from './components/Outliner.jsx';
 import Inspector from './components/Inspector.jsx';
 import SnapshotManagerDialog from './components/SnapshotManagerDialog.jsx';
 import AiPanel from './components/AiPanel.jsx';
+import AiWorkspaceWindow from './components/AiWorkspaceWindow.jsx';
+import { buildEditorialContext } from './lib/editorialContext.js';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
@@ -2688,15 +2690,9 @@ export default function App({ api: apiProp }) {
     return [...set].sort((a, b) => a.localeCompare(b, 'ro'));
   }, [project]);
 
-  const contextForAi = () => {
-    const research = project.tree.find((n) => n.root === 'research');
-    const parts = [];
-    for (const n of flatten(research.children)) {
-      if (n.type !== 'text') continue;
-      const text = htmlToText(docsNow()[n.id]);
-      if (text.trim()) parts.push(`## ${n.title}\n${text.slice(0, 4000)}`);
-    }
-    return parts.join('\n\n').slice(0, 60000);
+  const contextForAi = (request = {}) => {
+    const context = buildEditorialContext(project, docsNow(), { ...request, documentId: request.documentId || activeId.current || selectedId });
+    return request.documentId ? context : context.text;
   };
 
   // --- keyboard shortcuts: driven by the command registry (configurable in Settings) ---
@@ -3332,7 +3328,7 @@ export default function App({ api: apiProp }) {
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
-    ['ai', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    ['ai', 'ai', tr('ui.aiWorkspace.title'), () => setShowAi((v) => !v), !aiEnabled],
     // Two separate AI doors (owner decision 2026-10-27): program AI (global) and project AI (open book).
     ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
     ['ai', 'aiProjectSettings', tr('cmd.aiProjectSettings'), () => setDialog('projectAi'), !project],
@@ -4111,7 +4107,7 @@ export default function App({ api: apiProp }) {
         </section>
 
         {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
-        {(showInspector || (showAi && aiEnabled) || (showEditorial && editorialNode) || (showResearch && dir)) && selected && !composition && (
+        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
             <div className="side" style={{ width: widths.side }}>
@@ -4193,31 +4189,6 @@ export default function App({ api: apiProp }) {
                     await addResearchDocs(list);
                   }}
                   onImportWeb={api.importWebPage ? importWebSource : undefined}
-                />
-              )}
-              {showAi && aiEnabled && (
-                <AiPanel
-                  projectDir={dir}
-                  api={api}
-                  hasKey={settings.hasApiKey}
-                  aiLabel={settings.aiLabel}
-                  aiModel={settings.aiModel}
-                  getHandle={activeHandle}
-                  node={aiNode}
-                  getText={() => activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id])}
-                  hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
-                  getContext={contextForAi}
-                  onInsert={(text) => activeHandle()?.insertText(text)}
-                  onReplace={(text) => activeHandle()?.replaceSelection(text)}
-                  onReplaceAll={(text) => {
-                    const html = textToHtml(text);
-                    setEditorHtml(aiNode.id, html);
-                    writeDocNow(aiNode.id, html);
-                  }}
-                  onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
-                  onOpenSettings={openSettings}
-                  translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
-                  request={aiRequest}
                 />
               )}
               {showEditorial && editorialNode && (
@@ -4535,6 +4506,38 @@ export default function App({ api: apiProp }) {
           onError={report}
           onClose={() => setDialog(null)}
         />
+      )}
+      {showAi && aiEnabled && aiNode && (
+        <AiWorkspaceWindow focusEngine={focusEngine} onClose={() => { setShowAi(false); setAiRequest(null); }}>
+          <AiPanel
+            projectTitle={project.title}
+            bookType={project?.bookType || ''}
+            onOpenProjectSettings={() => setDialog('projectAi')}
+            onOpenFormatting={() => { setSelectedId(aiNode.id); openDocumentFormatting('document'); }}
+            onRequestHandled={() => setAiRequest(null)}
+            projectDir={dir}
+            api={api}
+            hasKey={settings.hasApiKey}
+            aiLabel={settings.aiLabel}
+            aiModel={settings.aiModel}
+            getHandle={activeHandle}
+            node={aiNode}
+            getText={() => activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id])}
+            hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
+            getContext={contextForAi}
+            onInsert={(text) => activeHandle()?.insertText(text)}
+            onReplace={(text) => activeHandle()?.replaceSelection(text)}
+            onReplaceAll={(text) => {
+              const html = textToHtml(text);
+              setEditorHtml(aiNode.id, html);
+              writeDocNow(aiNode.id, html);
+            }}
+            onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
+            onOpenSettings={openSettings}
+            translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
+            request={aiRequest}
+          />
+        </AiWorkspaceWindow>
       )}
       {dialog === 'documentFormatting' && (
         <DocumentFormattingDialog
