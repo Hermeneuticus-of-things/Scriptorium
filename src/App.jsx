@@ -104,6 +104,7 @@ import {
   inOrder,
   dropMany,
   insertNear,
+  insertInside,
   keyMove,
   duplicateNode,
   convertNode,
@@ -1517,10 +1518,10 @@ export default function App({ api: apiProp }) {
     const resolve = (h) => resolveTemplatePlaceholders(h, ctx);
     return { fields, resolve };
   };
-  const addItem = (type, title, html, anchorId = selectedId) => {
+  const addItem = (type, title, html, anchorId = selectedId, opts = {}) => {
     const node = Object.assign(newNode(type, title), newNodeDefaults(project));
-    // A folder can name the template its new documents start from (Inspector).
-    const parent = parentForNew(anchorId);
+    // Nesting as in Scrivener 3: { inside: true } creates the item inside the target document.
+    const parent = opts.inside && anchorId ? (findNode(project.tree, anchorId) || parentForNew(anchorId)) : parentForNew(anchorId);
     const tpl = type === 'text' && html == null && !title ? defaultTemplateFor(project, parent) : null;
     let tplHtml = null;
     if (tpl) {
@@ -1537,7 +1538,7 @@ export default function App({ api: apiProp }) {
       }).catch(report);
       api.readDoc(dir, tpl.id, 'notes').then((n) => n && api.writeDoc(dir, node.id, 'notes', resolve(n))).catch(report);
     }
-    setTreeU(insertNear(project.tree, anchorId, node));
+    setTreeU(opts.inside && anchorId ? insertInside(project.tree, anchorId, node) : insertNear(project.tree, anchorId, node));
     if (!title && !tpl && !hideBinder) setRenameId(node.id);
     const content = html ?? tplHtml ?? (type === 'text' ? '<p></p>' : '');
     setDocs((d) => ({ ...d, [node.id]: content }));
@@ -3770,6 +3771,7 @@ export default function App({ api: apiProp }) {
           selectedIds={selectedIds}
           onSelect={onBinderSelect}
           onAdd={addItem}
+          onAddInside={(type, targetId) => addItem(type, null, null, targetId, { inside: true })}
           onRename={(id, title) => patchNode(id, { title })}
           onMove={(id, targetId, pos) => setTreeU(dropMany(project.tree, [id], targetId, pos))}
           onMoveMany={(ids, targetId, pos) => setTreeU(dropMany(project.tree, [...ids], targetId, pos))}

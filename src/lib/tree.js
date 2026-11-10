@@ -92,6 +92,17 @@ export function insertNear(tree, selectedId, node) {
   });
 }
 
+// Nesting as in Scrivener 3: any document can hold sub-documents ("file group"). Explicitly
+// creates the children list when the target document does not have one yet. Roots and missing
+// targets return the same tree reference (no mutation).
+export function insertInside(tree, parentId, node) {
+  const target = findNode(tree, parentId);
+  if (!target || target.root) return tree;
+  return produce(tree, (t) => {
+    (findNode(t, parentId).children ||= []).push(node);
+  });
+}
+
 export function updateNode(tree, id, patch) {
   return produce(tree, (t) => Object.assign(findNode(t, id), patch));
 }
@@ -159,10 +170,14 @@ export function moveTargets(tree, excludeIds = []) {
   const out = [];
   const visit = (nodes, depth) => {
     for (const n of nodes) {
+      // Skipped nodes take their whole subtree out of the list (targets inside the moved
+      // selection would be silently refused by moveNode).
       if (n.root === 'trash' || excludeIds.includes(n.id)) continue;
-      if (n.children) {
+      // Folders and plain documents are both valid "Move to" targets: moveNode nests
+      // inside a document even before it has children (Scrivener file-in-file).
+      if (n.children || n.type === 'text') {
         out.push({ id: n.id, title: n.title, depth });
-        visit(n.children, depth + 1);
+        visit(n.children || [], depth + 1);
       }
     }
   };
@@ -230,7 +245,8 @@ export function keyMove(tree, id, dir) {
   const idx = list.findIndex((n) => n.id === id);
   if (dir === 'up' && idx > 0) return moveNode(tree, id, list[idx - 1].id, 'before');
   if (dir === 'down' && idx < list.length - 1) return moveNode(tree, id, list[idx + 1].id, 'after');
-  if (dir === 'indent' && idx > 0 && list[idx - 1].children) return moveNode(tree, id, list[idx - 1].id, 'inside');
+  // A document without children becomes a container on indent (Scrivener file-in-file).
+  if (dir === 'indent' && idx > 0 && (list[idx - 1].children || list[idx - 1].type === 'text')) return moveNode(tree, id, list[idx - 1].id, 'inside');
   if (dir === 'outdent' && parent && !parent.root) return moveNode(tree, id, parent.id, 'after');
   return tree;
 }
