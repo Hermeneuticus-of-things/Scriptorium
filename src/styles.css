@@ -953,6 +953,6 @@ html body .backdrop .modal.document-formatting-dialog { width: min(var(--setting
 .anchored-popover .goto-list { max-height: 320px; overflow: auto; }
 
 /* Acordeon quiet în Setări (ADL §4.2): densitate colapsată, capabilitatea rămâne. */
-details.set-acc { border: 1px solid var(--line, #ddd4); border-radius: 6px; padding: var(--sp-1) var(--sp-2); margin: var(--sp-2) 0; }
+details.set-acc { border: 1px solid var(--line, #ddd4); border-radius: var(--radius); padding: var(--sp-1) var(--sp-2); margin: var(--sp-2) 0; }
 details.set-acc > summary { cursor: pointer; font-weight: 600; font-size: var(--font-ui); color: var(--muted); list-style-position: inside; }
 details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1); }
