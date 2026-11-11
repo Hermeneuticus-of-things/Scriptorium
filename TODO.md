@@ -1,5 +1,12 @@
 # TODO — Scriptorium
 
+## Release v1.1.0 — finalizat; următorul lot este separat
+- [x] Formatare selectivă document/manuscris și justificare verificată E2E 5/5.
+- [x] Workspace AI contextual, separat de setările aplicației, cu analiză → propunere → aplicare/respingere explicită.
+- [x] 2.014 teste unitare, build production și poarta E2E justificare trecute local.
+- [ ] Nu adăuga funcții noi în v1.1.0 după push; implementează următoarele numai într-un release ulterior și cu teste proprii.
+- [ ] Prioritatea următoare: Snapshots Manager global; apoi linked research/media avansate, Import/Split Fountain/FDX și opțiuni Compile/Export fine.
+
 ## Session 2026-10-23
 ### Request: program tip Scrivener + extensii
 - [x] Scaffold Electron + Vite + React

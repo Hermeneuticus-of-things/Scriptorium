@@ -14,6 +14,8 @@ import Outliner from './components/Outliner.jsx';
 import Inspector from './components/Inspector.jsx';
 import SnapshotManagerDialog from './components/SnapshotManagerDialog.jsx';
 import AiPanel from './components/AiPanel.jsx';
+import AiWorkspaceWindow from './components/AiWorkspaceWindow.jsx';
+import { buildEditorialContext } from './lib/editorialContext.js';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
@@ -156,6 +158,8 @@ import { setDefaultFocusEngine, activeFocusEngine, runNativeMenuItem } from './l
 import { registerSplitSurface, splitSurfaceId } from './lib/focusPanes.js';
 import { editorSurfaceRegistration } from './lib/focusEditorState.js';
 import { convertHtmlToDefault } from './lib/projectFormat.js';
+import { alignmentTargets, formatDocuments } from './lib/paragraphAlignment.js';
+import DocumentFormattingDialog from './components/DocumentFormattingDialog.jsx';
 import { buildTocText } from './lib/toc.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
@@ -689,6 +693,7 @@ export default function App({ api: apiProp }) {
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
+  const [formatScope, setFormatScope] = useState('document');
   // ADL §2: every dialog is a focus surface — push on open, pop on close; Escape cascade and
   // local 'close' commands go through the engine (innermost first, one per press).
   useEffect(() => {
@@ -2471,6 +2476,34 @@ export default function App({ api: apiProp }) {
     recordHistory();
     setToast(tr('ui.app.conversie_gata', { length: changed.length }));
   };
+  const formatContent = async ({patch, signal, onProgress}) => {
+    await flush();
+    if (pending.current.size) throw new Error(tr('ui.justify.save_first'));
+    const ids = alignmentTargets(projectRef.current.tree, formatScope, selectedId).map(n => n.id);
+    if (!ids.length) throw new Error(tr('ui.justify.no_documents'));
+    const result = await formatDocuments({
+      ids, patch, signal, onProgress,
+      read: id => api.readDoc(dir, id, 'docs'),
+      snapshot: id => api.takeSnapshot(dir, id, tr('ui.format.snapshot')),
+      write: (id, html) => api.writeDoc(dir, id, 'docs', html),
+      onSaved: (id, html) => {
+        setDocs(d => ({...d, [id]: html}));
+        for (const [key, handle] of editorRefs.current) {
+          if (key === id || key === 'split:' + id || key === 'copy:' + id) handle?.setHtml(html);
+        }
+      },
+    });
+    if (formatScope === 'draft' && !result.cancelled) {
+      const next = {...projectRef.current, defaultFormatting: {...(projectRef.current.defaultFormatting || {}), ...patch}};
+      try {await api.saveProject(dir, next);} catch (e) {e.alignmentResult = result; throw e;}
+      projectRef.current = next;
+      setProject(next);
+    }
+    refreshSnapCounts();
+    setToast(tr('ui.format.done', {count: result.changed}));
+    return result;
+  };
+  const openDocumentFormatting = scope => {setFormatScope(scope); setDialog('documentFormatting');};
   const convertFormattingDraft = () => convertFormatting('draft');
   const convertFormattingAll = () => convertFormatting('all');
   const stripNotationInProject = async () => {
@@ -2657,15 +2690,9 @@ export default function App({ api: apiProp }) {
     return [...set].sort((a, b) => a.localeCompare(b, 'ro'));
   }, [project]);
 
-  const contextForAi = () => {
-    const research = project.tree.find((n) => n.root === 'research');
-    const parts = [];
-    for (const n of flatten(research.children)) {
-      if (n.type !== 'text') continue;
-      const text = htmlToText(docsNow()[n.id]);
-      if (text.trim()) parts.push(`## ${n.title}\n${text.slice(0, 4000)}`);
-    }
-    return parts.join('\n\n').slice(0, 60000);
+  const contextForAi = (request = {}) => {
+    const context = buildEditorialContext(project, docsNow(), {...request, documentId: request.documentId || activeId.current || selectedId});
+    return request.documentId ? context : context.text;
   };
 
   // --- keyboard shortcuts: driven by the command registry (configurable in Settings) ---
@@ -3283,6 +3310,8 @@ export default function App({ api: apiProp }) {
       await takeSnapshotOf(selected.id, name.trim() || 'Snapshot');
     }],
     ['document', 'snapshotManager', tr('cmd.snapshotManager'), () => flush().then(() => { refreshSnapCounts(); setDialog('snapshotManager'); })],
+    ['format', 'formatDocument', tr('cmd.formatDocument'), () => openDocumentFormatting('document'), !alignmentTargets(project?.tree, 'document', selectedId).length],
+    ['format', 'formatManuscript', tr('cmd.formatManuscript'), () => openDocumentFormatting('draft'), !alignmentTargets(project?.tree, 'draft').length],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
     // Style navigation (Scrivener §17.4.1, P1 #27): the Editor handle re-reads the caret at
     // click time and returns false on an unstyled paragraph — the disabled flag below only
@@ -3299,7 +3328,7 @@ export default function App({ api: apiProp }) {
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
     ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
-    ['ai', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    ['ai', 'ai', tr('ui.aiWorkspace.title'), () => setShowAi((v) => !v), !aiEnabled],
     // Two separate AI doors (owner decision 2026-10-27): program AI (global) and project AI (open book).
     ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
     ['ai', 'aiProjectSettings', tr('cmd.aiProjectSettings'), () => setDialog('projectAi'), !project],
@@ -4078,7 +4107,7 @@ export default function App({ api: apiProp }) {
         </section>
 
         {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
-        {(showInspector || (showAi && aiEnabled) || (showEditorial && editorialNode) || (showResearch && dir)) && selected && !composition && (
+        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
             <div className="side" style={{ width: widths.side }}>
@@ -4160,31 +4189,6 @@ export default function App({ api: apiProp }) {
                     await addResearchDocs(list);
                   }}
                   onImportWeb={api.importWebPage ? importWebSource : undefined}
-                />
-              )}
-              {showAi && aiEnabled && (
-                <AiPanel
-                  projectDir={dir}
-                  api={api}
-                  hasKey={settings.hasApiKey}
-                  aiLabel={settings.aiLabel}
-                  aiModel={settings.aiModel}
-                  getHandle={activeHandle}
-                  node={aiNode}
-                  getText={() => activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id])}
-                  hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
-                  getContext={contextForAi}
-                  onInsert={(text) => activeHandle()?.insertText(text)}
-                  onReplace={(text) => activeHandle()?.replaceSelection(text)}
-                  onReplaceAll={(text) => {
-                    const html = textToHtml(text);
-                    setEditorHtml(aiNode.id, html);
-                    writeDocNow(aiNode.id, html);
-                  }}
-                  onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
-                  onOpenSettings={openSettings}
-                  translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
-                  request={aiRequest}
                 />
               )}
               {showEditorial && editorialNode && (
@@ -4624,6 +4628,36 @@ export default function App({ api: apiProp }) {
           onError={report}
         />
       )}
+      {showAi && aiEnabled && aiNode && (<AiWorkspaceWindow focusEngine={focusEngine} onClose={() => {setShowAi(false); setAiRequest(null);}}>
+          <AiPanel
+                  projectTitle={project.title}
+                  onOpenProjectSettings={() => setDialog('projectAi')}
+                  onOpenFormatting={() => {setSelectedId(aiNode.id); openDocumentFormatting('document');}}
+                  onRequestHandled={() => setAiRequest(null)}
+                  projectDir={dir}
+                  api={api}
+                  hasKey={settings.hasApiKey}
+                  aiLabel={settings.aiLabel}
+                  aiModel={settings.aiModel}
+                  getHandle={activeHandle}
+                  node={aiNode}
+                  getText={() => activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id])}
+                  hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
+                  getContext={contextForAi}
+                  onInsert={(text) => activeHandle()?.insertText(text)}
+                  onReplace={(text) => activeHandle()?.replaceSelection(text)}
+                  onReplaceAll={(text) => {
+                    const html = textToHtml(text);
+                    setEditorHtml(aiNode.id, html);
+                    writeDocNow(aiNode.id, html);
+                  }}
+                  onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
+                  onOpenSettings={openSettings}
+                  translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
+                  request={aiRequest}
+                />
+        </AiWorkspaceWindow>)}
+      {dialog === 'documentFormatting' && (<DocumentFormattingDialog defaults={project.defaultFormatting || {}} scope={formatScope} count={alignmentTargets(project.tree, formatScope, selectedId).length} onApply={formatContent} onClose={() => setDialog(null)} />)}
       {dialog === 'projectSettings' && (
         <ProjectSettingsDialog
           api={api}

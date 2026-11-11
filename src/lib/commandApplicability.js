@@ -1,6 +1,6 @@
 // Context applicability is distinct from a missing but fixable configuration.
 // Unknown commands keep their existing explicit capability/validation checks.
-const SINGLE_TEXT = new Set(['split','splitTitle','snapshot','snapshotTitled','preserveFormat']);
+const SINGLE_TEXT = new Set(['formatDocument','split','splitTitle','snapshot','snapshotTitled','preserveFormat']);
 const TEXT_SELECTION = new Set(['readSel','dictateSel','grammarSel','aiResearchSel','aiDefineSel','aiTranslateSel','aiProofreadSel','researchAskSel','nlmAskSel','nlmConsultSel']);
 const ELEMENT_SELECTION = new Set(['moveTo','toggleSeparator','autoSynopsis','snapshotSelection']);
 export const SERVICE_COMMANDS = { deeplInApp: 'deepl', googleInApp: 'googleTranslate', grammarSel: 'languagetool', synonymsInApp: 'datamuse', importZotero: 'zotero', nlmAskSel: 'notebookLm', nlmConsultSel: 'notebookLm', lookupDict: 'webResearch', lookupSyn: 'webResearch', lookupWiki: 'webResearch', lookupGoogle: 'webResearch', selDeepl: 'webResearch', selGoogleTranslate: 'webResearch', selLinguee: 'webResearch', selIate: 'webResearch', selWiktionary: 'webResearch', selScholar: 'webResearch' };

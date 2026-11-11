@@ -4,10 +4,30 @@ Governing UI rules for **every application** (general — not product-specific):
 
 # Roadmap Pneuma Sofer
 
-Starea reală la 2026-10-23. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
-Versiuni: **v0.2** în lucru · **v0.3** revizie și publicare · **v0.4** paritate avansată · **v1.0** paritate completă + extra.
+Starea reală la 2026-11-11. Legendă: `[x]` făcut și testat · `[~]` parțial (scris, netestat sau incomplet) · `[ ]` de făcut · `[-]` exclus intenționat.
+Versiunea publicată de bază este **v1.1.0**; lucrările următoare sunt planificate separat și nu fac parte din acest release.
 
 Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATURES.md). Fișierul de față e planul de lucru, în ordinea în care construiesc.
+
+## Stare release v1.1.0 — închisă înainte de următoarea etapă
+
+- [x] Formatare document/manuscris cu aplicare selectivă a proprietăților, inclusiv justificare, snapshot și detectarea conflictelor.
+- [x] Justificarea verificată E2E cu condiție inițială, acțiune, rezultat și captură: document, manuscris, paragraf nou după salvare/redeschidere și Escape — `tests/e2e/justification.e2e.cjs` 5/5.
+- [x] Fereastră AI separată, nemodală și mutabilă, cu domeniu explicit text selectat/document întreg, context din carte și separare față de setările programului.
+- [x] Flux AI controlat: analiză → propunere de remediere → aplicare sau respingere explicită, snapshot înainte de aplicare și refuz la țintă devenită veche.
+- [x] Poarta locală: 2.014 teste unitare, build production și E2E justificare trecute; un rerun izolat a eliminat închiderea tranzitorie a ferestrei din harness.
+
+## Funcții rămase — versiuni ulterioare (nu bloca v1.1.0)
+
+- [ ] **P1 — Snapshots Manager global:** listare, căutare după nume/text/datǎ/regex, ștergere în masă și export pentru întreg proiectul.
+- [ ] **P2 — Research și media avansate:** linked research fără copiere, viewer PDF cu adnotări/controale, Image Tools și Media Time Stamp.
+- [ ] **P2 — Import și scriptwriting:** nesting la Import and Split, scene Fountain/FDX cu sinopsis și formate de scenariu personalizabile.
+- [ ] **P2 — Compile și export fin:** opțiuni pentru text tăiat/spații/hyperlinkuri/scalare imagini/backlinks, compile groups/front-back matter și exporturi PDF/Fountain/FDX/MMD rafinate.
+- [ ] **P2 — Organizare:** Copyholders subordonate per split, Bookmarks cu preview/editare URL și comanda „Remove all styles”.
+- [ ] **P3 — Colaborare:** server CRDT/WebSocket, cursori, roluri, mod sugestie și coadă offline.
+- [ ] **P3 — Rafinamente:** sortare paragraf, scratchpad bidirecțional, monitoare multiple, import stiluri numite și post-processing extern.
+
+Sursele și detalierea fiecărui gol sunt consolidate în [`docs/PARITY-AUDIT-NEXT-CHAPTERS.md`](docs/PARITY-AUDIT-NEXT-CHAPTERS.md); nu se marchează aici ca implementate până când nu există test funcțional și verificare vizuală reală.
 
 ---
 
