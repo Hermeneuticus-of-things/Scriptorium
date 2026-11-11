@@ -15,7 +15,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATU
 - [x] Justificarea verificată E2E cu condiție inițială, acțiune, rezultat și captură: document, manuscris, paragraf nou după salvare/redeschidere și Escape — `tests/e2e/justification.e2e.cjs` 5/5.
 - [x] Fereastră AI separată, nemodală și mutabilă, cu domeniu explicit text selectat/document întreg, context din carte și separare față de setările programului.
 - [x] Flux AI controlat: analiză → propunere de remediere → aplicare sau respingere explicită, snapshot înainte de aplicare și refuz la țintă devenită veche.
-- [x] Poarta locală: 2.014 teste unitare, build production și E2E justificare trecute; un rerun izolat a eliminat închiderea tranzitorie a ferestrei din harness.
+- [x] Poarta locală: 2.009 teste unitare trecute și 4 omise explicit din 2.014, build production și E2E justificare 5/5; testele țintite după corecția structurală AI sunt 38/38.
 
 ## Funcții rămase — versiuni ulterioare (nu bloca v1.1.0)
 
