@@ -7,6 +7,13 @@
 - [ ] Nu adăuga funcții noi în v1.1.0 după push; implementează următoarele numai într-un release ulterior și cu teste proprii.
 - [ ] Prioritatea următoare: Snapshots Manager global; apoi linked research/media avansate, Import/Split Fountain/FDX și opțiuni Compile/Export fine.
 
+### Performanță pentru cărți mari — backlog obligatoriu
+- [ ] Profilează Karma și fixture-uri de 1.000/5.000/10.000 documente: deschidere, navigare, căutare, salvare, Compile și memorie.
+- [ ] Elimină blocarea rendererului prin încărcare incrementală/virtualizare, cozi async anulabile, debounce și actualizări pe loturi.
+- [ ] Elimină N+1, cache-uri fără limită, rerandări globale, scurgeri de resurse și operații duplicate între suprafețele UX.
+- [ ] Standardizează modulele comune pentru I/O, snapshot, i18n, selecție și comenzi; păstrează un singur registru de comportament.
+- [ ] Adaugă praguri p50/p95 și teste de regresie în CI; nu marca optimizarea făcută fără măsurători înainte/după pe Karma.
+
 ## Session 2026-10-23
 ### Request: program tip Scrivener + extensii
 - [x] Scaffold Electron + Vite + React

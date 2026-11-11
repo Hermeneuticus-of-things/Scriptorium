@@ -27,6 +27,17 @@ Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATU
 - [ ] **P3 — Colaborare:** server CRDT/WebSocket, cursori, roluri, mod sugestie și coadă offline.
 - [ ] **P3 — Rafinamente:** sortare paragraf, scratchpad bidirecțional, monitoare multiple, import stiluri numite și post-processing extern.
 
+## Performanță și robustețe pentru cărți mari — etapă dedicată
+
+- [ ] **P0 — Interfață agilă:** măsurare și reducere a timpului de deschidere a unui proiect mare, a schimbării documentului și a salvării; nicio operație de scanare completă sau I/O greu nu trebuie să blocheze rendererul.
+- [ ] **P0 — Scalare editor/binder:** încărcare incrementală, cache-uri cu limite și invalidare corectă, virtualizare pentru listele mari și actualizări pe loturi în loc de rerandări globale.
+- [ ] **P1 — I/O și AI:** eliminarea operațiilor N+1, cozi async cu anulare, debounce/throttle pentru căutare și autosave, limite explicite pentru memorie și contextul AI.
+- [ ] **P1 — Cod standardizat:** module comune pentru citire/scriere, selecție, snapshot, i18n și comenzi; eliminarea implementărilor duplicate și a logicii divergente între meniuri, toolbar și context-menu.
+- [ ] **P1 — Concurență sigură:** prevenirea race conditions, închiderea corectă a resurselor, tratarea erorilor fire-and-forget și protecția la închiderea proiectului în timpul operațiilor.
+- [ ] **P1 — Benchmark și regresie:** fixture Karma și proiecte sintetice de 1.000/5.000/10.000 documente, măsurători p50/p95 pentru deschidere, navigare, căutare, salvare, compile și memorie; praguri în CI și E2E cu capturi.
+
+Implementarea se începe numai după profilare pe Karma și se livrează în release separat; fiecare optimizare trebuie să păstreze rezultatul funcțional, istoricul, snapshot-urile și protecția modificărilor nesalvate.
+
 Sursele și detalierea fiecărui gol sunt consolidate în [`docs/PARITY-AUDIT-NEXT-CHAPTERS.md`](docs/PARITY-AUDIT-NEXT-CHAPTERS.md); nu se marchează aici ca implementate până când nu există test funcțional și verificare vizuală reală.
 
 ---
