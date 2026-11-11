@@ -27,6 +27,15 @@ Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATU
 - [ ] **P3 — Colaborare:** server CRDT/WebSocket, cursori, roluri, mod sugestie și coadă offline.
 - [ ] **P3 — Rafinamente:** sortare paragraf, scratchpad bidirecțional, monitoare multiple, import stiluri numite și post-processing extern.
 
+## Paritate I/O cu Scrivener 3 — import, export și backup
+
+- [x] **Import nativ Scrivener 3:** sursa `.scrivx` din Karma importată în `.scribner` în 3,12 s, cu 0 avertismente; binder, RTF, note, metadate, media, snapshot-uri și copia originalului sunt păstrate conform raportului de import.
+- [x] **Export nativ `.scriv`:** proiectul Karma exportat în 2,42 s; `.scrivx` valid, 274 elemente, 2 media, 175 snapshot-uri și 175 comentarii, cu 0 avertismente.
+- [x] **Backup și restaurare:** backup ZIP cu rotație și restaurare ca proiect separat; pe Karma backupul a durat 4,95 s, restaurarea 15,7 s și proiectul restaurat conține `project.json`, `docs` și `snapshots`.
+- [ ] **Paritate de produs:** fluxuri UI E2E pentru Import Scrivener 3, Export Scrivener 3, Backup acum, backup la închidere/interval și Restaurare; fiecare trebuie să verifice fișierele și conținutul rezultat, nu doar apariția dialogului.
+- [ ] **Compatibilitate avansată:** testare pe Scrivener 3 cu proiecte mari și cu styles.xml, compile.xml, comentarii, note, media, snapshot-uri și fișiere atașate; raport explicit pentru elementele convertite, păstrate doar în copia originală sau neconvertibile.
+- [ ] **Backup comparabil cu Scrivener:** backup incremental/diferențial și operații în worker pentru ca arhivarea/restaurarea să nu blocheze interfața; praguri p50/p95 și anulare sigură.
+
 ## Performanță și robustețe pentru cărți mari — etapă dedicată
 
 - [ ] **P0 — Interfață agilă:** măsurare și reducere a timpului de deschidere a unui proiect mare, a schimbării documentului și a salvării; nicio operație de scanare completă sau I/O greu nu trebuie să blocheze rendererul.

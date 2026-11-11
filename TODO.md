@@ -14,6 +14,14 @@
 - [ ] Standardizează modulele comune pentru I/O, snapshot, i18n, selecție și comenzi; păstrează un singur registru de comportament.
 - [ ] Adaugă praguri p50/p95 și teste de regresie în CI; nu marca optimizarea făcută fără măsurători înainte/după pe Karma.
 
+### Paritate Scrivener 3 — I/O și backup
+- [x] Import `.scrivx` real din Karma: 3,12 s, 0 avertismente.
+- [x] Export `.scriv` round-trip din Karma: 2,42 s, `.scrivx` valid, 274 elemente, 2 media, 175 snapshot-uri și 175 comentarii.
+- [x] Backup ZIP + rotație: 4,95 s; restaurare în proiect separat: 15,7 s, structură validă.
+- [ ] Teste Playwright cu precondiție/acțiune/rezultat/captură pentru Import Scrivener, Export Scrivener, Backup acum, backup la închidere, backup periodic și Restaurare.
+- [ ] Teste de fidelitate pentru styles.xml, compile.xml, RTF, note, comentarii, snapshot-uri, media, scriere history și elemente neconvertibile; raportul trebuie să distingă conversia de copia originală.
+- [ ] Backup incremental și worker pentru arhivare/restaurare; UI-ul trebuie să rămână utilizabil pe proiecte mari și să ofere progres/anulare.
+
 ## Session 2026-10-23
 ### Request: program tip Scrivener + extensii
 - [x] Scaffold Electron + Vite + React
