@@ -26,6 +26,7 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
   const [tab, setTab] = useState('docs');
   const [scope, setScope] = useState(selectionIds.length ? 'selection' : 'all');
   const [format, setFormat] = useState('docx');
+  const [projectFormat, setProjectFormat] = useState('scriv');
   const [withNotes, setWithNotes] = useState(true);
   const [withSynopsis, setWithSynopsis] = useState(true);
   const [withMeta, setWithMeta] = useState(false);
@@ -47,9 +48,15 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
       } else if (tab === 'opml') {
         const file = await api.exportOpml(dir, project, { includeText: opmlText });
         if (file) setDone(t('ui.exportDialog.schita_a_fost_salvata_in', { file: file }));
-      } else {
+      } else if (tab === 'csv') {
         const file = await api.exportCsv(dir, project);
         if (file) setDone(t('ui.exportDialog.metadatele_au_fost_salvate_in', { file: file }));
+      } else if (projectFormat === 'scriv') {
+        const result = await api.exportScriv(dir, project);
+        if (result) setDone(t('cmd.exportScriv') + ` ${result.dir}`);
+      } else {
+        const file = await api.exportBundle(dir);
+        if (file) setDone(t('cmd.exportBundle') + ` ${typeof file === 'string' ? file : (file.file || file.dir || '')}`);
       }
     } catch (e) {
       onError(e);
@@ -72,6 +79,7 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
           {tabBtn('docs', t('group.document'))}
           {tabBtn('opml', 'OPML')}
           {tabBtn('csv', 'Metadate CSV')}
+          {tabBtn('project', t('group.project'))}
         </div>
 
         {tab === 'docs' && (
@@ -121,6 +129,18 @@ export default function ExportDialog({ api, dir, project, selectionIds = [], onC
         )}
         {tab === 'csv' && (
           <p className="muted">{t('ui.exportDialog.exporta_un_tabel_cu_metadatele')}</p>
+        )}
+        {tab === 'project' && (
+          <div className="fields">
+            <p className="muted">Alege formatul proiectului. Exportul va deschide apoi selectorul de destinație.</p>
+            <label>
+              Format proiect
+              <select value={projectFormat} onChange={(e) => setProjectFormat(e.target.value)}>
+                <option value="scriv">{t('cmd.exportScriv')}</option>
+                <option value="bundle">{t('cmd.exportBundle')}</option>
+              </select>
+            </label>
+          </div>
         )}
 
         {done && <p className="muted" role="status">{done}</p>}
