@@ -1,5 +1,14 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.1 — 13 noiembrie 2026
+
+- Performanță pe cărți mari: Quick Search nu mai re-parsează HTML-ul întregii cărți la fiecare tastă (cache de text per document, invalidat pe conținut) (#83).
+- Titluri și sinopse foldate o dată per versiune de arbore, nu per interogare; index per arbore (WeakMap) (#83).
+- Corectare: contextul potrivirilor din Quick Search tăia greșit textul cu diacritice (pozițiile din varianta foldată nu se aliniau cu textul original) (#83).
+- Diagnostice de profilare env-gated `PNEUMA_PERF_DIAG` (inerte în producție) (#83).
+
+---
+
 ## 1.2.0 — 13 noiembrie 2026
 
 - Formatare document/manuscris din meniuri și toolbar (#70).
