@@ -1,5 +1,14 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.3 — 13 noiembrie 2026
+
+- Continuarea accelerării deschiderii cărților mari: numărătoarea de cuvinte per document se calculează pe idle, cu umplere progresivă în Binder/totale/tinte (#87).
+- O singură implementare HTML→text și numărare de cuvinte pentru procesul intern — eliminate clonele divergente din store și RAG (#87).
+- Corectare: cuvintele se separau greșit la limita de tag („patrucinci") în numărătoarea din procesul intern (#87).
+- Parcurgerea arborelui unificată între straturi (renderer + proces intern) (#87).
+
+---
+
 ## 1.2.2 — 13 noiembrie 2026
 
 - Deschiderea cărților mari cu ~⅓ mai rapidă (măsurat): ancorarea istoricului și indexul auto-complete se calculează pe idle, nu pe traseul critic al deschiderii (#85).
