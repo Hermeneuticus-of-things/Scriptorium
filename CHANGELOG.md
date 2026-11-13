@@ -1,5 +1,13 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.4 — 13 noiembrie 2026
+
+- Reparare critică: **actualizarea din aplicație funcționează din nou** — „Descarcă" din Ajutor → Caută actualizări eșua cu „Redirect was cancelled" la redirectul GitHub → CDN de fișiere (#89).
+- Fișierul nou este mereu salvat în același loc: `%TEMP%\pneuma-update\<versiune>\`, cu verificare SHA-256 înainte de instalare (#89).
+- Siguranța se păstrează: gazda finală a descărcării e verificată pe lista de host-uri GitHub, iar cheia salvată nu mai poate ajunge la CDN (#89).
+
+---
+
 ## 1.2.3 — 13 noiembrie 2026
 
 - Continuarea accelerării deschiderii cărților mari: numărătoarea de cuvinte per document se calculează pe idle, cu umplere progresivă în Binder/totale/tinte (#87).
