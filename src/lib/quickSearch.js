@@ -17,6 +17,25 @@ export function foldText(s) {
     .replace(/[\u2018\u2019\u02bc]/g, "'");
 }
 
+// Length-preserving fold (one code point in → one code point out): match positions in the
+// folded string are valid positions in the original. foldText() cannot be used for text
+// search — NFD decomposition + mark stripping changes string length, so offsets drift
+// (context slices landed off-target on diacritic-heavy text).
+const FOLD_MAP = new Map();
+function fold1to1(s) {
+  let out = '';
+  for (const ch of String(s || '')) {
+    let f = FOLD_MAP.get(ch);
+    if (f === undefined) {
+      const d = ch.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+      f = [...d].length === 1 ? d : ch; // one code point out, or the character unchanged
+      FOLD_MAP.set(ch, f);
+    }
+    out += f;
+  }
+  return out;
+}
+
 // Criteria handed to the full project search when the user clicks through
 // ("Full Project Search"): the typed phrase becomes an exact-phrase query.
 export function handoffCriteria(query) {
@@ -24,33 +43,79 @@ export function handoffCriteria(query) {
   return q ? { query: q, operator: 'exact' } : {};
 }
 
+// Plain-text cache keyed by document id, invalidated by content: on a big book the
+// search runs on every keystroke, and re-parsing the whole book's HTML per keystroke
+// (2358 DOM parses on Karma) stalls the renderer. Only changed documents are re-parsed.
+// The folded (case/diacritics-insensitive) form is cached too — folding a whole book
+// per keystroke costs as much as parsing it.
+const plainCache = new Map(); // id -> { src, plain, folded }
+const PLAIN_CACHE_MAX = 20000;
+function plainOf(id, html, toText) {
+  const cached = plainCache.get(id);
+  if (cached && cached.src === html) return cached;
+  const plain = toText(html || '');
+  const folded = fold1to1(plain);
+  if (plainCache.size >= PLAIN_CACHE_MAX) plainCache.clear();
+  const entry = { src: html, plain, folded };
+  plainCache.set(id, entry);
+  return entry;
+}
+
+// Per-tree index: flattened nodes + folded title/synopsis per node, invalidated by the
+// tree reference (any binder edit makes a new tree) and by title/synopsis content. Without
+// it every keystroke re-flattens the whole book and re-folds 2393 titles + synopses.
+const metaCache = new WeakMap(); // tree -> { flat, trashIds, meta: Map(id -> {t, s, tf, sf}) }
+function treeIndex(tree) {
+  let idx = metaCache.get(tree);
+  if (!idx) {
+    const trash = (tree || []).find((n) => n.root === 'trash');
+    idx = {
+      flat: flatten(tree || []),
+      trashIds: new Set(flatten(trash?.children || []).map((n) => n.id)),
+      meta: new Map(),
+    };
+    metaCache.set(tree, idx);
+  }
+  return idx;
+}
+function metaOf(idx, node, fold) {
+  let m = idx.meta.get(node.id);
+  if (!m || m.t !== node.title || m.s !== node.synopsis) {
+    m = { t: node.title, s: node.synopsis, tf: fold(node.title), sf: fold(node.synopsis) };
+    idx.meta.set(node.id, m);
+  }
+  return m;
+}
+
 export function quickSearchProject(project, docs, criteria = {}) {
   const q = foldText(criteria.query);
   const limit = criteria.limit ?? 8;
   const empty = { titles: [], synopses: [], texts: [] };
   if (!q || !project) return empty;
-  const trash = (project.tree || []).find((n) => n.root === 'trash');
-  const trashIds = new Set(flatten(trash?.children || []).map((n) => n.id));
+  const toText = criteria.htmlToText || htmlToText;
+  const fold = criteria.foldText || foldText;
+  const idx = treeIndex(project.tree);
+  const { flat, trashIds } = idx;
 
   const titles = [];
   const synopses = [];
   const texts = [];
-  for (const node of flatten(project.tree || [])) {
+  for (const node of flat) {
     if (node.root || trashIds.has(node.id)) continue;
-    const ft = foldText(node.title);
-    if (ft.includes(q)) titles.push({ node, beginsWith: ft.startsWith(q) });
-    if (foldText(node.synopsis).includes(q)) synopses.push({ node });
-    const plain = htmlToText(docs?.[node.id] || '');
-    if (plain) {
-      const at = foldText(plain).indexOf(q);
+    const m = metaOf(idx, node, fold);
+    if (m.tf.includes(q)) titles.push({ node, beginsWith: m.tf.startsWith(q) });
+    if (m.sf.includes(q)) synopses.push({ node });
+    const cached = plainOf(node.id, docs?.[node.id], toText);
+    if (cached && cached.plain) {
+      const at = cached.folded.indexOf(q);
       if (at !== -1) {
         const start = Math.max(0, at - 30);
         const end = at + q.length + 40;
         texts.push({
           node,
-          before: (start > 0 ? '…' : '') + plain.slice(start, at),
-          match: plain.slice(at, at + q.length),
-          after: plain.slice(at + q.length, end) + (end < plain.length ? '…' : ''),
+          before: (start > 0 ? '…' : '') + cached.plain.slice(start, at),
+          match: cached.plain.slice(at, at + q.length),
+          after: cached.plain.slice(at + q.length, end) + (end < cached.plain.length ? '…' : ''),
         });
       }
     }
