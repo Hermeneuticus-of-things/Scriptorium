@@ -1,5 +1,19 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.0 — 13 noiembrie 2026
+
+- Formatare document/manuscris din meniuri și toolbar (#70).
+- Fereastră AI dedicată cu 30 de tipuri de carte și mod persistat (#71).
+- Spațiere meniuri: separatoare logice și deduplicare comenzi (#72).
+- Binder: imbricare ca în Scrivener 3 — „Adaugă în interior" pe documente, Mută în… cu documente ca țintă (#73).
+- Panou AI andocat (dock/undock) + context AI pe niveluri: carte/manuscris/capitol/secțiune/paragrafe (#74).
+- Popover-uri in-page (GoTo, Mută în, Adaugă la final, Quick Search și toate prompturile mici) în loc de modale; acordeoane quiet în Setări; toolbar ADL regroupat (#75).
+- Dictare și voce ONLINE: serviciu STT compatibil OpenAI (cheie criptată) și Speechify ca motor de redare (#76).
+- Șablon de teză academică cu FrontMatter/Body/BackMatter și validare structurală (#77).
+- NotebookLM Studio: „Întreabă pe tot documentul" cu răspuns cu citări salvat în Cercetare + comenzi Studio (Audio/Video/MindMap); I-EDIT/I-REP mutate în asistentul AI (#78).
+
+---
+
 ## 1.1.0 — 10 noiembrie 2026
 
 - Fundație Ionuț ADL, focus modal sigur și revenire la selecția editorului; fără prompt ADL la pornire.
