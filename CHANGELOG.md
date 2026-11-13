@@ -1,5 +1,14 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.2 — 13 noiembrie 2026
+
+- Deschiderea cărților mari cu ~⅓ mai rapidă (măsurat): ancorarea istoricului și indexul auto-complete se calculează pe idle, nu pe traseul critic al deschiderii (#85).
+- Ancorarea istoricului reutilizează numărătoarea deja făcută (nu mai numără toate documentele de două ori la deschidere) (#85).
+- htmlToText fără parsarea DOM a markup-ului — echivalență dovedită pe toate documentele testelor cu corpus real (#85).
+- Dependența `zod` eliminată din aplicație (era cerută doar transitive de SDK-uri) (#85).
+
+---
+
 ## 1.2.1 — 13 noiembrie 2026
 
 - Performanță pe cărți mari: Quick Search nu mai re-parsează HTML-ul întregii cărți la fiecare tastă (cache de text per document, invalidat pe conținut) (#83).
