@@ -34,4 +34,19 @@ Un singur longtask la deschidere (prima randare Binder cu 2393 noduri + încărc
 
 ## Dubluri de cod (inventar confirmat)
 
-22 funcții exportate implementate dublu între `src/lib` (ESM, renderer) și `lib` (CJS, main): `htmlToText` (3 implementări: text.js, rag.cjs, store.cjs), `findNode`/`walk` (tree.js + store.cjs), `wordCount`, `newNode`, `escapeHtml`, `sanitizeHtml`, `chunkText`, `tokenize`, `fold`, `parseQuery`, `matchSnapshot`, `toSearchText` (+ perechi gemene de module `researchChat.js/.cjs`, `snapshotSearch.js/.cjs`). Consolidarea se face treptat, fiecare pereche cu teste de echivalență înainte de unire — fără regresii.
+Inventarul inițial a contat 22 de funcții exportate cu nume dublu între `src/lib` (ESM, renderer) și `lib` (CJS, main). **Verdictul final, pereche cu pereche (ciclul 4, 13 noiembrie):**
+
+**Consolidate efectiv (clone reale, cu teste de echivalență):**
+- `htmlToText` + `wordCount` main-side → `lib/textCore.cjs` (store.cjs + rag.cjs; bug „patrucinci" corectat — #87).
+- `walk` + `findNode` → `lib/treeCore.cjs` (store.cjs consumă; tree.js re-exportă) — #87.
+- `htmlToText` renderer → rescris pur, echivalență dovedită pe corpus Karma (#85) — rămâne distinct de varianta main (DOM decode vs string-only, medii diferite).
+
+**Distinct-by-design (verificate, NU se unesc — semantici diferite intenționat):**
+- `parseQuery` (projectSearch = parser de criterii complexe; snapshotSearch = matcher simplu) — doar numele comun.
+- `applyReplacements` (autoReplace = regex word-boundary general; dictation = normalizare cedille cu păstrarea capitalizării).
+- `htmlToPlain` (search = segment-parser cu BLOCK_END; stats = strip pentru statistici, cu script/style eliminate).
+- `sanitizeHtml` (importers = curățenie la import cu allowlist; sanitize.js = cealaltă parte, renderer) — straturi diferite.
+- Perechile gemene `researchChat.js` (93 l.) vs `.cjs` (314 l.) și `snapshotSearch.js` (44 l.) vs `.cjs` (78 l.) — implementări paralele cu evoluții separate, nu clone; unirea lor cere refactor cross-layer (ESM/CJS) cu raport risc/beneficiu slab.
+- `newNode`, `escapeHtml`, `chunkText`, `tokenize`, `fold`, `summarize`, `listTemplates`, `validateBundle`, `pdfPageCount`, `hasHiddenChars`, `stripAiWatermarks`, `textToHtml`, `matchSnapshot`/`toSearchText`, `applyReplacements` (compile.cjs) — la fel: straturi diferite cu dependențe incompatibile (fs/i18n/crypto), nu clone.
+
+**Concluzie:** clonele reale au fost eliminate în ciclurile 2–3. Restul numelor duble sunt implementări distincte cu motiv — consolidate doar dacă viitorul refactor cross-layer (module pure CJS re-exportate în renderer) le face ieftine și sigure.
