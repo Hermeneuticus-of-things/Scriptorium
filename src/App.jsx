@@ -145,6 +145,7 @@ import { replaceInHtml } from './lib/search.js';
 import { stripNotation, convertNotation } from './lib/notationOps.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
+import { sumWords } from './lib/openAnchor.js';
 import useReader from './lib/useReader.js';
 import { mergeProject } from './lib/projectMerge.js';
 import { pullExternalDocs } from './lib/syncGuard.js';
@@ -189,6 +190,9 @@ const TYPED_COMMIT_DELAY = 400;
 // so autosave never writes one row per keystroke.
 const AUTHOR_COMMIT_DELAY = 8000;
 const HISTORY_DELAY = 5000;
+// Lucrări care nu trebuie sincron pe traseul critic (deschiderea unei cărți mari):
+// pe idle, cu timeout ca să nu amâne la infinit când fereastra e ocupată.
+const deferIdle = (fn) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 250));
 
 // Per-machine UI state (open document, view, panel widths) kept in localStorage.
 function loadUi(dir) {
@@ -1248,18 +1252,26 @@ export default function App({ api: apiProp }) {
       setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split) } : {});
       setSplitNav({ stack: [], index: -1 });
       setCopyholder(ui.copyholder?.id && findNode(res.project.tree, ui.copyholder.id) ? { id: ui.copyholder.id, editable: Boolean(ui.copyholder.editable) } : null);
-      const openCounts = Object.fromEntries(entries.map(([id, h]) => [id, wordCount(h)]));
-      const draftAtOpen = sumWords(res.project.tree[0], openCounts);
       setSessionStart(null); // set from the first totals (sessionBaseline), by the project's reset rule
-      void draftAtOpen;
       const sOpen = settingsRef.current?.sharingSync || {};
       if (res.project.syncFolder && (res.project.syncAuto || sOpen.syncOnOpen) && api.syncAuto) {
         api.syncAuto(res.dir, { ...res.project, syncAuto: true, syncFormat: res.project.syncFormat || sOpen.format || 'rtf' }, 'open').then((r) => r?.action === 'in' && setToast(tr('ui.app.sincronizare_automata_x_actualizate_x', { length: r.updated.length, length1: r.created.length }))).catch(() => {});
       }
-      // Anchor today's history at the counts on open, so the first save of the day is measured from here.
-      const trashIds = new Set(flatten(res.project.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
-      const totalAtOpen = Object.entries(openCounts).reduce((s, [id, c]) => s + (trashIds.has(id) ? 0 : c), 0);
-      api.recordHistory?.(res.dir, { draft: draftAtOpen, total: totalAtOpen }).catch(() => {});
+      // Anchor today's history at the counts on open, so the first save of the day is measured
+      // from here. Deferred off the open's critical path: counting every document of a big book
+      // here dominated the open stall (profilat — CPU profiler). By idle time the counts memo
+      // has warmed countCache, so this reuses cached numbers instead of re-reading everything.
+      deferIdle(() => {
+        const countsAtOpen = {};
+        for (const [id, h] of entries) {
+          const hit = countCache.current.get(id);
+          countsAtOpen[id] = hit && hit.html === h ? hit.n : wordCount(h);
+        }
+        const draftAtOpen = sumWords(res.project.tree[0], countsAtOpen);
+        const trashIds = new Set(flatten(res.project.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
+        const totalAtOpen = Object.entries(countsAtOpen).reduce((s, [id, c]) => s + (trashIds.has(id) ? 0 : c), 0);
+        api.recordHistory?.(res.dir, { draft: draftAtOpen, total: totalAtOpen }).catch(() => {});
+      });
       setSettings(await api.getSettings());
     },
     [api],
@@ -2719,7 +2731,23 @@ export default function App({ api: apiProp }) {
     api.printDocument(`<h1>${(selected?.title || '').replace(/</g, '&lt;')}</h1>${html}`, selected?.title).catch(report);
   };
 
-  const words = useMemo(() => (project ? projectWords(project, docs) : []), [project, docs]);
+  // Auto-complete words (titles, keywords, capitalised words ≥3×): deferred on idle — at open
+  // the cold capsOf scan over every document of a big book sat on the open's critical path
+  // (profilat); after edits it is cheap per document (capsCache) and refreshed on idle.
+  const [words, setWords] = useState([]);
+  useEffect(() => {
+    if (!project) {
+      setWords([]);
+      return undefined;
+    }
+    let live = true;
+    deferIdle(() => {
+      if (live) setWords(projectWords(project, docs));
+    });
+    return () => {
+      live = false;
+    };
+  }, [project, docs]);
   // Character count for the status bar: htmlToText parses the whole document, so only redo it
   // when that document's text changes.
   const selectedHtml = selectedId ? docs[selectedId] || '' : '';
@@ -5083,12 +5111,6 @@ function compiledNodes(node, out = []) {
   return out;
 }
 
-function sumWords(node, counts) {
-  if (!node.includeInCompile && !node.root) return 0;
-  let total = counts[node.id] || 0;
-  for (const c of node.children || []) total += sumWords(c, counts);
-  return total;
-}
 
 // Binder view of the project, hoisted to one folder when focus is on.
 function binderProjectOf(project, hoistNode) {
