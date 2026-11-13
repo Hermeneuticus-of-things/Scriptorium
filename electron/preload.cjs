@@ -2,6 +2,9 @@
 const { contextBridge, ipcRenderer, webFrame } = require('electron');
 
 const call = async (channel, ...args) => {
+  if (process.env.PNEUMA_PERF_DIAG && (channel === 'project:save' || channel === 'doc:write')) {
+    console.log(`[probe-r] ${channel} la ${Math.round(performance.now())} ms; stack: ` + new Error().stack.split('\n').slice(2, 9).map((l) => l.trim().slice(0, 110)).join(' | '));
+  }
   const res = await ipcRenderer.invoke(channel, ...args);
   if (!res.ok) throw new Error(res.error);
   return res.value;

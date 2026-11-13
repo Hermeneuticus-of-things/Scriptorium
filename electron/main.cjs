@@ -524,6 +524,7 @@ function handle(channel, fn) {
     try {
       return { ok: true, value: await fn(event, ...args) };
     } catch (err) {
+      if (process.env.PNEUMA_PERF_DIAG) console.error('[perf-diag]', channel, err.stack || err);
       return { ok: false, error: channel.startsWith('ai:') || channel === 'rag:ask' || channel === 'rag:chat' ? ai.friendlyError(err, readSettings().language) : err.message || String(err) };
     }
   });
@@ -633,11 +634,16 @@ handle('project:new', async (e, title, templateId) => {
 
 handle('project:open', async (e, dirArg) => {
   let dir = dirArg;
+  if (process.env.PNEUMA_PERF_DIAG) console.error('[perf-diag:open] dirArg=', typeof dirArg, JSON.stringify(dirArg)?.slice(0, 80));
   if (!dir) {
     const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
       title: 'Deschide un proiect Pneuma Sofer (dosarul .scribner)',
       properties: ['openDirectory'],
     });
+    if (process.env.PNEUMA_PERF_DIAG) {
+      const util = require('util');
+      console.error('[perf-diag:open] res=', util.inspect(res, { depth: 2, breakLength: 200 }).slice(0, 400));
+    }
     if (res.canceled) return null;
     dir = res.filePaths[0];
   } else if (!(readSettings().recent || []).some((r) => r.dir === dir)) {
