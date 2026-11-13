@@ -146,6 +146,7 @@ import { stripNotation, convertNotation } from './lib/notationOps.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 import { sumWords } from './lib/openAnchor.js';
+import { countMap } from './lib/countMap.js';
 import useReader from './lib/useReader.js';
 import { mergeProject } from './lib/projectMerge.js';
 import { pullExternalDocs } from './lib/syncGuard.js';
@@ -801,17 +802,18 @@ export default function App({ api: apiProp }) {
 
   // Word counts per document; only documents whose HTML changed are counted again.
   const countCache = useRef(new Map());
-  const counts = useMemo(() => {
-    const map = {};
-    for (const [id, html] of Object.entries(docs)) {
-      const hit = countCache.current.get(id);
-      if (hit && hit.html === html) map[id] = hit.n;
-      else {
-        map[id] = wordCount(html);
-        countCache.current.set(id, { html, n: map[id] });
-      }
-    }
-    return map;
+  // Word counts per document: deferred on idle (state, not a synchronous memo) — at open the
+  // cold count over every document of a big book dominated the open stall (profilat, ciclu 2).
+  // Binder/totals/targets read `counts` as it fills in; countCache keeps later updates cheap.
+  const [counts, setCounts] = useState({});
+  useEffect(() => {
+    let live = true;
+    deferIdle(() => {
+      if (live) setCounts(countMap(docs, countCache.current));
+    });
+    return () => {
+      live = false;
+    };
   }, [docs]);
   // Character counts, cached the same way (character targets, history): never the whole book again.
   const charCache = useRef(new Map());
