@@ -1,20 +1,10 @@
 import { t as tr } from './i18n.js';
 // Pure helpers for the binder tree (array of nodes with optional children).
 
-export function walk(nodes, fn, depth = 0, parent = null) {
-  for (const n of nodes) {
-    fn(n, depth, parent);
-    if (n.children) walk(n.children, fn, depth + 1, n);
-  }
-}
-
-export function findNode(tree, id) {
-  let found = null;
-  walk(tree, (n) => {
-    if (n.id === id) found = n;
-  });
-  return found;
-}
+// walk/findNode: implementarea unică, partajată cu procesul main (lib/treeCore.cjs) —
+// înainte: două clone identice în tree.js și store.cjs. Re-export păstrează API-ul ESM.
+import { walk, findNode } from '../../lib/treeCore.cjs';
+export { walk, findNode };
 
 export function findParent(tree, id) {
   let found = null;
