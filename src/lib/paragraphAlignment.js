@@ -27,14 +27,22 @@ export function formatHtmlParagraphs(html, patch) {
     }
     // Font marks are stored on spans by the editor. A paragraph-only CSS font
     // would disappear on the next save and would not override existing span fonts.
+    // Valoarea EFECTIVĂ contează (moștenire pe lanțul de ancestor-i): re-aplicarea
+    // aceleiași formatari nu trebuie să rescrie nimic — înainte, învelirea textului din
+    // <em>/<strong> într-un span identic vizual era numărată ca „modificat" și fișierele
+    // erau rescrise la fiecare aplicare („apare că funcționează, dar nu face nimic").
     if ('font' in patch || 'size' in patch) {
       const walker=doc.createTreeWalker(p,4),texts=[];while(walker.nextNode())texts.push(walker.currentNode);
       for (const node of texts) {
         if (!node.textContent.trim() || node.parentElement.closest('pre,code')) continue;
+        const effective=(prop)=>{for(let el=node.parentElement;el&&el!==p.parentElement;el=el.parentElement){const v=el.style&&el.style.getPropertyValue(prop);if(v)return v;}return '';};
+        const needFont='font' in patch && effective('font-family')!==patch.font;
+        const needSize='size' in patch && effective('font-size')!==patch.size+'px';
+        if (!needFont && !needSize) continue;
         let span=node.parentElement;
         if (span.tagName!=='SPAN') {span=doc.createElement('span');node.replaceWith(span);span.appendChild(node);}
-        if ('font' in patch && span.style.fontFamily!==patch.font) span.style.fontFamily=patch.font;
-        if ('size' in patch && span.style.fontSize!==patch.size+'px') span.style.fontSize=patch.size+'px';
+        if (needFont && span.style.fontFamily!==patch.font) span.style.fontFamily=patch.font;
+        if (needSize && span.style.fontSize!==patch.size+'px') span.style.fontSize=patch.size+'px';
       }
     }
     if (p.outerHTML!==before) changedParagraphs++;
