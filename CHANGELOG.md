@@ -1,5 +1,16 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.6 — 14 noiembrie 2026
+
+- **AI în pagină (ciclul A)**: fereastra AI flotantă este înlocuită de panoul andocat unic; **micro-toolbar AI în editor** la selecție (Rescriere/Rezumat/Revizuire/Întreabă) cu **propunere aplicată în text și Accept/Respinge** (Respinge = undo simplu, snapshot automat înainte) (#96).
+- **Setări: claritate salvare** — indicator „Modificări nesalvate" lângă Salvează pe fiecare filă și confirmare „Setări salvate." după salvare; Setările AI ale proiectului afișează toast la salvare (#98).
+- **Lectura unificat** — View → Lectura are o singură poartă (panoul de focus); dialogul de replici se deschide din panou; dublura de comenzi eliminată (#98).
+- **Fix anti-churn formatare** — re-aplicarea aceleiași formatari nu mai rescrie fișierele și nu mai raportează „documente modificate" fără schimbare vizibilă; valoarea efectivă (moștenită pe span-uri) e comparată înainte de scriere (#98).
+- **Registrul cărții redenumit** în interfață (fără „Codex") (#98).
+- Continuare: verificat pe Karma copie (1.9M cuvinte) — sweep 196 comenzi curat, statistici corecte, formatare aplicată real pe disc și în editor (#93, #94, #98).
+
+---
+
 ## 1.2.5 — 14 noiembrie 2026
 
 - **Registrul cărții** (Proiect → Registrul cărții): personaje, locații, termeni și lore cu descriere și aliasuri; contextul AI le include **automat** când sunt menționate în textul lucrat (#94).
