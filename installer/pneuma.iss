@@ -1,4 +1,7 @@
 ﻿; Pneuma Sofer — installer wizard (Inno Setup 6).
+; Ales Inno Setup 6 (Jordan Russell) — standardul de piață pentru instalatoare desktop Windows:
+; detectare aplicație activă (AppMutex/[Code]), închidere grațioasă + restart, jurnal complet (/LOG),
+; limbă multiplă, per-user fără admin. Alternativa NSIS nu are PascalScript și nici jurnalul atât de detaliat.
 ; Input: release\win-unpacked from `npm run dist:win`. Built by installer\build-setup.cjs:
 ;   ISCC /DAppVersion=<version> installer\pneuma.iss
 #ifndef AppVersion
@@ -34,6 +37,8 @@ CloseApplications=yes
 RestartApplications=yes
 ; The optional PATH entry: running terminals are told about the change (install and uninstall).
 ChangesEnvironment=yes
+; Jurnal complet al instalării (diagnostice): rulare cu /LOG="cale\setup.log" — spune tot ce face.
+SetupLogging=yes
 
 [Languages]
 Name: "ro"; MessagesFile: "Romanian.isl"
@@ -41,8 +46,16 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
 ro.AddToPath=Comanda „pneuma” în terminal (adaugă folderul programului în PATH)
+ro.AppRunningQuestion=Pneuma Sofer rulează acum. Închizi programul ca să continue instalarea? (datele nesalvate sunt protejate de aplicație la închidere)
+ro.AppRunningAbort=Instalarea a fost oprită. Închide Pneuma Sofer și rulează din nou instalatorul.
+ro.DowngradeWarning=Versiunea instalată (%s) este mai NOUĂ decât cea pe care vrei să o instalezi. Instalezi totuși versiunea mai veche?
+ro.InstallingApp=Se închide Pneuma Sofer…
 ro.CommandLine=Linia de comandă:
 en.AddToPath=The "pneuma" command in a terminal (adds the program folder to PATH)
+en.AppRunningQuestion=Pneuma Sofer is running. Close the program so the installation can continue? (unsaved data is protected by the app on close)
+en.AppRunningAbort=Setup was stopped. Close Pneuma Sofer and run the installer again.
+en.DowngradeWarning=The installed version (%s) is NEWER than the one you are about to install. Install the older version anyway?
+en.InstallingApp=Closing Pneuma Sofer…
 en.CommandLine=Command line:
 
 [Tasks]
@@ -66,6 +79,133 @@ Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags
 ; Projects and settings stay on uninstall: they live in the user's folders and %APPDATA%\Pneuma Sofer.
 
 [Code]
+// Instalator inteligent (directivă 14 nov): detectează instanța Pneuma Sofer care rulează,
+// ÎNTREABĂ utilizatorul dacă să o închidă, închide grațios (WM_CLOSE — aplicația își salvează
+// starea prin fluxul propriu de închidere), cu forțare doar după 15 s de așteptare. În modul
+// silențios (/SILENT|/VERYSILENT cu /SUPPRESSMSGBOXES, folosit de actualizarea din aplicație)
+// răspunsul implicit este „Da" — aplicația și-a salvat deja datele înainte de update.
+// Jurnal complet: SetupLogging=yes + flag-ul /LOG.
+
+const
+  AppProcess = 'Pneuma Sofer.exe';
+
+// Compară versiuni „X.Y.Z": >0 când A e mai nouă decât B.
+function CompareSemverStr(A, B: string): Integer;
+var
+  PA, PB: array of string;
+  IA, IB: Integer;
+  NA, NB, I: Integer;
+begin
+  Result := 0;
+  IA := 1; NB := 0;
+  while Pos('.', A) > 0 do begin
+    SetArrayLength(PA, IA); PA[IA-1] := Copy(A, 1, Pos('.', A)-1); Delete(A, 1, Pos('.', A)); IA := IA + 1;
+  end;
+  SetArrayLength(PA, IA); PA[IA-1] := A;
+  IB := 1;
+  while Pos('.', B) > 0 do begin
+    SetArrayLength(PB, IB); PB[IB-1] := Copy(B, 1, Pos('.', B)-1); Delete(B, 1, Pos('.', B)); IB := IB + 1;
+  end;
+  SetArrayLength(PB, IB); PB[IB-1] := B;
+  for I := 1 to (IA + IB) do begin
+    if I <= IA then NA := StrToIntDef(PA[I-1], 0) else NA := 0;
+    if I <= IB then NB := StrToIntDef(PB[I-1], 0) else NB := 0;
+    if NA <> NB then begin
+      if NA > NB then Result := 1 else Result := -1;
+      exit;
+    end;
+  end;
+end;
+
+function IsAppRunning: Boolean;
+var
+  TmpFile: string;
+  ResultCode: Integer;
+  Content: AnsiString;
+begin
+  Result := False;
+  TmpFile := ExpandConstant('{tmp}\pneuma-running.txt');
+  Exec(ExpandConstant('{cmd}'), '/C tasklist /FI "IMAGENAME eq ' + AppProcess + '" /FO CSV /NH > "' + TmpFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if LoadStringFromFile(TmpFile, Content) then
+    Result := Pos(AppProcess, Content) > 0;
+  DeleteFile(TmpFile);
+end;
+
+procedure GracefulCloseApp;
+var
+  ResultCode: Integer;
+begin
+  Exec(ExpandConstant('{cmd}'), '/C taskkill /IM "' + AppProcess + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+procedure ForceCloseApp;
+var
+  ResultCode: Integer;
+begin
+  Exec(ExpandConstant('{cmd}'), '/C taskkill /F /IM "' + AppProcess + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+procedure WaitForAppExit(MaxSeconds: Integer);
+var
+  I: Integer;
+begin
+  for I := 1 to MaxSeconds do
+  begin
+    if not IsAppRunning then
+      exit;
+    Sleep(1000);
+  end;
+end;
+
+function InstalledVersion: string;
+var
+  Uninst: string;
+begin
+  Result := '';
+  if RegQueryStringValue(HKEY_CURRENT_USER, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#SetupSetting("AppId")}_is1', 'DisplayVersion', Uninst) then
+    Result := Uninst;
+end;
+
+function InitializeSetup: Boolean;
+var
+  Running: Boolean;
+  Answer: Integer;
+  Prev: string;
+begin
+  Result := True;
+  Prev := InstalledVersion;
+  // Avertizează la instalarea unei versiuni MAI VECHI peste una mai nouă (downgrade).
+  if (Prev <> '') and (CompareSemverStr(Prev, '{#AppVersion}') > 0) then
+  begin
+    if MsgBox('Versiunea instalată: ' + Prev + '. ' + CustomMessage('DowngradeWarning'), mbError, MB_YESNO) = IDNO then
+    begin
+      Result := False;
+      exit;
+    end;
+  end;
+  Running := IsAppRunning;
+  if Running then
+  begin
+    if WizardSilent then
+      Answer := IDYES
+    else
+      Answer := MsgBox(ExpandConstant('{cm:AppRunningQuestion}'), mbConfirmation, MB_YESNO);
+    if Answer = IDYES then
+    begin
+      GracefulCloseApp;
+      WaitForAppExit(15);
+      if IsAppRunning then
+        ForceCloseApp;
+      WaitForAppExit(5);
+    end
+    else
+    begin
+      MsgBox(ExpandConstant('{cm:AppRunningAbort}'), mbInformation, MB_OK);
+      Result := False;
+    end;
+  end;
+end;
+
 // Optional PATH entry (HKCU\Environment\Path), written here rather than in [Registry] so that:
 // an entry already there (also with a trailing backslash, other case or quotes) is not added
 // twice, an empty or ";"-ending PATH gets no empty entries, and uninstall removes it again.
