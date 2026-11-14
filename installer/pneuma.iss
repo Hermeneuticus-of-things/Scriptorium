@@ -177,7 +177,7 @@ begin
   // Avertizează la instalarea unei versiuni MAI VECHI peste una mai nouă (downgrade).
   if (Prev <> '') and (CompareSemverStr(Prev, '{#AppVersion}') > 0) then
   begin
-    if MsgBox(FmtMessage(CustomMessage('DowngradeWarning'), [Prev]), mbError, MB_YESNO, 0) = IDNO then
+    if MsgBox('Versiunea instalată: ' + Prev + '. ' + CustomMessage('DowngradeWarning'), mbError, MB_YESNO) = IDNO then
     begin
       Result := False;
       exit;
@@ -189,7 +189,7 @@ begin
     if WizardSilent then
       Answer := IDYES
     else
-      Answer := MsgBox(ExpandConstant('{cm:AppRunningQuestion}'), mbConfirmation, MB_YESNO, 0);
+      Answer := MsgBox(ExpandConstant('{cm:AppRunningQuestion}'), mbConfirmation, MB_YESNO);
     if Answer = IDYES then
     begin
       GracefulCloseApp;
@@ -200,7 +200,7 @@ begin
     end
     else
     begin
-      MsgBox(ExpandConstant('{cm:AppRunningAbort}'), mbInformation, MB_OK, 0);
+      MsgBox(ExpandConstant('{cm:AppRunningAbort}'), mbInformation, MB_OK);
       Result := False;
     end;
   end;
