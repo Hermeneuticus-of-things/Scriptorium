@@ -57,6 +57,7 @@ const NEW_WRITE_TOOLS = (ctx) => ({
   save_template: { name: 'Șablon parity' },
   sync_folder: { action: 'sync_out', folder: path.join(ctx.tmp, 'sync'), format: 'md' },
   strip_notation: {},
+  codex_manage: { action: 'add', name: 'Personajul X', type: 'Personaj', description: 'Descriere', aliases: ['X', 'Px'] },
 });
 const NEW_READ_TOOLS = (ctx) => ({
   list_templates: {},
@@ -86,6 +87,7 @@ const NEW_READ_TOOLS = (ctx) => ({
   editorial_round: {},
   author_journal: {},
   team_activity: {},
+  codex_list: {},
 });
 
 // Every renderer API (electron/preload.cjs) is either reachable over MCP (tool name) or GUI-only
