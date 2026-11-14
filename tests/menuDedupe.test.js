@@ -5,7 +5,7 @@ import { readingLensItems } from '../src/lib/readingLenses.js';
 describe('menu dedupe Soft UI', () => {
   it('menu.reading SUBMENUS no longer lists posNouns/posVerbs/posOff', () => {
     const reading = SUBMENUS.view.find((d) => d[0] === 'menu.reading');
-    expect(reading[1]).toEqual(['dialogueFocus', 'linguisticFocus']);
+    expect(reading[1]).toEqual(['linguisticFocus']); // o singură poartă: dialogul de replici e din panoul LF
     expect(reading[1]).not.toContain('posNouns');
   });
 
