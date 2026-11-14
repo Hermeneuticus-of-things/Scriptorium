@@ -3,6 +3,9 @@ import { t } from '../lib/i18n.js';
 
 const ZOOMS = ['page-fit', 'page-width', 50, 75, 100, 125, 150, 200];
 
+// The Page Setup format being previewed (P1 #30): manuscript, index cards or outline.
+const FORMAT_KEYS = { manuscript: 'ui.pageSetupDialog.format_manuscris', indexCards: 'ui.pageSetupDialog.format_fise_index', outline: 'ui.pageSetupDialog.format_schita' };
+
 // File > Print Preview: the current document / selected binder documents rendered by the main
 // process with the Page Setup (printToPDF), shown in Chromium's PDF viewer, with page navigation,
 // zoom, page count and the Print / Save PDF buttons.
@@ -59,6 +62,9 @@ export default function PrintPreviewDialog({ api, dir, project, options, onClose
             </select>
           </label>
           {sizeLabel && <span className="muted">{sizeLabel}</span>}
+          {res?.setup?.format && FORMAT_KEYS[res.setup.format] && (
+            <span className="muted" data-testid="print-preview-format">{t('ui.pageSetupDialog.format')}: {t(FORMAT_KEYS[res.setup.format])}</span>
+          )}
         </div>
         <div style={{ height: '70vh', marginTop: 8, background: 'var(--panel, #ddd)' }}>
           {busy && <p>{t('ui.printPreview.se_genereaza')}</p>}

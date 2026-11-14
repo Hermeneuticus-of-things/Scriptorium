@@ -1,0 +1,28 @@
+import { describe, it, expect, vi } from 'vitest';
+import { createFocusEngine } from '../src/lib/focusEngine.js';
+import { runMenuItem } from '../src/lib/focusMenus.js';
+import { isCommandApplicable } from '../src/lib/commandApplicability.js';
+import { noneLabel, noneStatus } from '../src/lib/projectSettings.js';
+import { nativeMenuSpec } from '../src/lib/menuLayout.js';
+import { commandItem } from '../src/lib/commands.js';
+function engine() { const e=createFocusEngine();e.registerFocusableSurface({id:'editor.core'});e.push('editor.core');return e; }
+describe('ADL modal boundary and restoration',()=>{
+  it('a modal blocks a background focus promotion',()=>{const e=engine();e.registerFocusableSurface({id:'dialog.settings',modal:true});e.push('dialog.settings');expect(e.switchFocus('editor.core')).toBe('dialog.settings');expect(e.top()).toBe('dialog.settings')});
+  it('a modal blocks command fallthrough to the editor',()=>{const edit=vi.fn(),e=createFocusEngine();e.registerFocusableSurface({id:'editor.core',commands:{bold:edit}});e.push('editor.core');e.registerFocusableSurface({id:'dialog.settings',modal:true});e.push('dialog.settings');expect(e.dispatch('bold')).toBeNull();expect(e.mayBubble('bold')).toBe(false);expect(edit).not.toHaveBeenCalled()});
+  it('a local field handler wins over the global command',()=>{const local=vi.fn(),global=vi.fn(),e=createFocusEngine();e.registerFocusableSurface({id:'editor.core',commands:{selectAll:global}});e.push('editor.core');e.registerFocusableSurface({id:'dialog.settings',modal:true,commands:{selectAll:local}});e.push('dialog.settings');expect(e.dispatch('selectAll')).toBe('dialog.settings');expect(local).toHaveBeenCalledOnce();expect(global).not.toHaveBeenCalled()});
+  it('explicit global Save remains allowed while a modal is active',()=>{const save=vi.fn(),e=createFocusEngine();e.registerFocusableSurface({id:'editor.core',commands:{save}});e.push('editor.core');e.registerFocusableSurface({id:'dialog.settings',modal:true});e.push('dialog.settings');expect(e.dispatch('save')).toBe('editor.core');expect(save).toHaveBeenCalledOnce();expect(e.mayBubble('save')).toBe(true)});
+  for(const operation of ['onSurfaceDestroyed','unregister'])it(operation+' restores the surviving parent once',()=>{const restore=vi.fn(),e=createFocusEngine();e.registerFocusableSurface({id:'editor.core',capture:()=>({from:8,to:14,scrollTop:240}),restore});e.push('editor.core');e.registerFocusableSurface({id:'dialog.settings',modal:true});e.push('dialog.settings');e[operation]('dialog.settings');expect(restore).toHaveBeenCalledExactlyOnceWith({from:8,to:14,scrollTop:240});expect(e.top()).toBe('editor.core')});
+  it('safe initial focus is not overwritten by a generic focus callback',()=>{const safe=vi.fn(),generic=vi.fn(),e=engine();e.registerFocusableSurface({id:'dialog.settings',modal:true,initialFocus:safe,focus:generic});e.push('dialog.settings');expect(safe).toHaveBeenCalledOnce();expect(generic).not.toHaveBeenCalled()});
+  it('a scoped menu payload reaches its command, not a second action',()=>{const run=vi.fn(),fallback=vi.fn(),e=createFocusEngine();e.registerFocusableSurface({id:'editor.core',commands:{duplicate:run}});e.push('editor.core');runMenuItem(e,commandItem('duplicate',{payload:{includeChildren:false},action:fallback}));expect(run).toHaveBeenCalledWith({includeChildren:false});expect(fallback).not.toHaveBeenCalled()});
+  it('an unowned menu item cannot bypass the modal boundary',()=>{const fallback=vi.fn(),e=engine();e.registerFocusableSurface({id:'dialog.settings',modal:true});e.push('dialog.settings');runMenuItem(e,commandItem('bold',{action:fallback}));expect(fallback).not.toHaveBeenCalled()});
+  it('a disabled menu command never dispatches',()=>{const fallback=vi.fn();runMenuItem(engine(),commandItem('save',{disabled:true,action:fallback}));expect(fallback).not.toHaveBeenCalled()});
+});
+describe('all-surface applicability and accessible metadata names',()=>{
+  it('roots and trashed items cannot be duplicated',()=>{for(const n of [{root:'draft'},{type:'text',inTrash:true}])expect(isCommandApplicable('duplicate',{nodes:[n]})).toBe(false)});
+  it('only a genuine multi-text selection supports merge',()=>{expect(isCommandApplicable('merge',{nodes:[{type:'text'}]})).toBe(false);expect(isCommandApplicable('merge',{nodes:[{type:'text'},{type:'text'}]})).toBe(true)});
+  it('text-selection actions disappear without a text selection',()=>{for(const id of ['readSel','dictateSel','grammarSel','aiResearchSel']){expect(isCommandApplicable(id,{textSelection:''})).toBe(false);expect(isCommandApplicable(id,{textSelection:'Cuvânt',services:{languagetool:{configured:true}}})).toBe(true)}});
+  it('unconfigured integrations do not replace core writing commands',()=>{for(const id of ['deeplInApp','googleInApp','grammarSel','synonymsInApp','importZotero','nlmAskSel'])expect(isCommandApplicable(id,{textSelection:'text'})).toBe(false);for(const id of ['save','compile','bold','newText'])expect(isCommandApplicable(id,{})).toBe(true)});
+  it('stop reading requires active playback',()=>{expect(isCommandApplicable('stopRead',{reading:false})).toBe(false);expect(isCommandApplicable('stopRead',{reading:true})).toBe(true)});
+  it('an empty label/status still has an explicit accessible name',()=>{const t=k=>k;expect(noneLabel('',t)).toBe('ui.corkboard.fara_eticheta');expect(noneStatus(undefined,t)).toBe('ui.corkboard.fara_status')});
+  it('native scoped ids are stable across payload key ordering',()=>{const mk=payload=>nativeMenuSpec([{label:'Format',items:[commandItem('setLineSpacing',{label:'1.5',payload,action:()=>{}})]}]).spec[0].items[0].id;expect(mk({lineHeight:1.5,targetId:'a'})).toBe(mk({targetId:'a',lineHeight:1.5}))});
+});

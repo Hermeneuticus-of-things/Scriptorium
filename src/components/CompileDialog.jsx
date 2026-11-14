@@ -10,6 +10,7 @@ import { noneLabel, noneStatus } from '../lib/projectSettings.js';
 import { collectionNodes, listKeywords } from '../lib/collections.js';
 import { exportFormatFile, formatFileName, importFormatFile, FORMAT_FILE_EXT } from '../lib/compileFormatFile.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
+import { registerDialogSurface, closeTopModal } from '../lib/focusDialogs.js';
 import { Icon } from './Icons.jsx';
 
 function readPresets() {
@@ -120,7 +121,7 @@ function newCustomId(prefix = 'custom') {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-export default function CompileDialog({ api, dir, project, selectionIds = [], onProjectChange, onClose, onError }) {
+export default function CompileDialog({ api, dir, project, selectionIds = [], onProjectChange, onClose, onError, focusEngine }) {
   const pc = project.compile || {};
   const [formats, setFormats] = useState(() => (Array.isArray(pc.formats) ? clone(pc.formats) : []));
   // Global formats (userData/compile-formats.json), shared by all projects.
@@ -161,6 +162,9 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [statuses, setStatuses] = useState(pc.statuses || []);
   const [keywords, setKeywords] = useState(pc.keywords || []);
   const [filterInvert, setFilterInvert] = useState(Boolean(pc.filterInvert));
+  // View filter of the Contents list (Scrivener §23.4.1, P1 #29): by item type and by label.
+  const [contentFilter, setContentFilter] = useState(pc.contentFilter || 'all');
+  const [contentLabel, setContentLabel] = useState(pc.contentLabel || '');
   // Front/back matter per output: {pdf: id | '-'}; missing = the general choice above.
   const [frontByOut, setFrontByOut] = useState(pc.frontMatterByOutput || {});
   const [backByOut, setBackByOut] = useState(pc.backMatterByOutput || {});
@@ -174,9 +178,27 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [coverId, setCoverId] = useState(pc.coverId || '');
   const [tab, setTab] = useState('continut');
   const [editing, setEditing] = useState(false); // "Edit format…" sub-dialog
+  // ADL §2: each sub-dialog drawn over this window is its own focus layer — Esc closes only the
+  // top layer (engine cascade), then the Compile window itself, then back to the core function.
+  useEffect(() => {
+    if (!editing || !focusEngine) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.compile.editing', {
+      close: () => closeTopModal(document),
+      fallback: () => setEditing(false),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, focusEngine]);
   const [editLayout, setEditLayout] = useState(null); // section type whose layout detail is open
   const [fmtTab, setFmtTab] = useState('separatoare');
   const [assigning, setAssigning] = useState(false); // "Assign layouts…" sub-dialog
+  useEffect(() => {
+    if (!assigning || !focusEngine) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.compile.assigning', {
+      close: () => closeTopModal(document),
+      fallback: () => setAssigning(false),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assigning, focusEngine]);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState('');
   const [preview, setPreview] = useState(null);
@@ -314,6 +336,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     statuses,
     keywords,
     filterInvert,
+    contentFilter,
+    contentLabel,
     frontMatterByOutput: frontByOut,
     backMatterByOutput: backByOut,
     tocSettings,
@@ -516,10 +540,29 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
     return (project.tree[0] && project.tree[0].children) || [];
   };
   const contentItems = [];
-  walk(contentRoots(), (n, depth) => {
-    if (scope === 'selection' && !selectionIds.includes(n.id)) return;
-    contentItems.push({ n, depth });
-  });
+  // View filter (P1 #29): by type (toate / doar text / text+foldere) and by label. The rows
+  // hidden here are only hidden from the list — the compile itself follows the Include checkbox.
+  const typeAllowed = (n) =>
+    contentFilter === 'all' ||
+    (contentFilter === 'text' ? n.type === 'text' : n.type === 'text' || n.type === 'folder');
+  // In the default scope (whole manuscript) the compile skips an excluded folder together with
+  // all its children (buildDocument); the list shows that cascade. An explicit scope (folder or
+  // selection) compiles exactly what it was given, so nothing is dimmed there.
+  const collectRows = (nodes, depth, parentExcluded) => {
+    for (const n of nodes || []) {
+      const own = n.includeInCompile !== false;
+      const belowExcluded = scope === 'draft' && (parentExcluded || !own);
+      if (
+        (scope !== 'selection' || selectionIds.includes(n.id)) &&
+        typeAllowed(n) &&
+        (!contentLabel || (n.label || 'Fără') === contentLabel)
+      ) {
+        contentItems.push({ n, depth, cascade: scope === 'draft' && parentExcluded });
+      }
+      collectRows(n.children, depth + 1, belowExcluded);
+    }
+  };
+  collectRows(contentRoots(), 0, false);
   // A field of one binder item, changed from the Contents list (undefined removes it).
   const setNodeField = (id, patch) => {
     const apply = (n) => {
@@ -752,6 +795,26 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     </label>
                   </fieldset>
                   <p className="muted small">{tr('ui.compileDialog.p1.continut_coloane')}</p>
+                  <div className="cd-content-filter">
+                    <span className="muted small">{tr('ui.compileDialog.p29.arata')}</span>
+                    <div className="seg" role="group" aria-label={tr('ui.compileDialog.p29.arata')}>
+                      {[
+                        ['all', tr('ui.compileDialog.p29.toate')],
+                        ['text', tr('ui.compileDialog.p29.doar_text')],
+                        ['text-folders', tr('ui.compileDialog.p29.text_foldere')],
+                      ].map(([v, l]) => (
+                        <button key={v} type="button" className={contentFilter === v ? 'on' : ''} aria-pressed={contentFilter === v} onClick={() => setContentFilter(v)}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                    <select value={contentLabel} onChange={(e) => setContentLabel(e.target.value)} aria-label={tr('ui.compileDialog.p29.eticheta')}>
+                      <option value="">{tr('ui.compileDialog.p29.toate_etichetele')}</option>
+                      {labelNames.map((l) => (
+                        <option key={l} value={l}>{l}</option>
+                      ))}
+                    </select>
+                  </div>
                   <table className="cd-table cd-contents" aria-label={tr('ui.compileDialog.elemente_incluse')}>
                     <thead>
                       <tr>
@@ -762,10 +825,17 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                       </tr>
                     </thead>
                     <tbody>
-                      {contentItems.map(({ n, depth }) => (
-                        <tr key={n.id} className={n.includeInCompile === false ? 'cd-excluded' : ''}>
+                      {contentItems.map(({ n, depth, cascade }) => (
+                        <tr key={n.id} className={n.includeInCompile === false || cascade ? 'cd-excluded' : ''}>
                           <td>
-                            <input type="checkbox" aria-label={`${tr('ui.compileDialog.p1.include')}: ${n.title}`} checked={n.includeInCompile !== false} onChange={(e) => setIncluded(n.id, e.target.checked)} />
+                            <input
+                              type="checkbox"
+                              aria-label={`${tr('ui.compileDialog.p1.include')}: ${n.title}`}
+                              title={cascade ? tr('ui.compileDialog.p29.dosar_exclus') : undefined}
+                              checked={!cascade && n.includeInCompile !== false}
+                              disabled={cascade}
+                              onChange={(e) => setIncluded(n.id, e.target.checked)}
+                            />
                           </td>
                           <td style={{ paddingLeft: `${0.3 + depth * 1.1}em` }}>
                             <span className="cd-item-icon" aria-hidden="true"><Icon name={n.type === 'folder' ? 'folderLine' : 'docLine'} size={13} /></span> {n.title}
@@ -1494,6 +1564,9 @@ const CSS = `
 .compile-dialog .cd-contents td,.compile-dialog .cd-contents th{padding:.15em .4em;text-align:left}
 .compile-dialog .cd-contents select{font-size:.9em}
 .compile-dialog .cd-contents tr.cd-excluded td:nth-child(2){opacity:.55;text-decoration:line-through}
+.compile-dialog .cd-content-filter{display:flex;gap:.6em;align-items:center;margin:.1em 0 .5em}
+.compile-dialog .cd-content-filter .seg button{font-size:.85em;padding:.15em .5em}
+.compile-dialog .cd-content-filter select{font-size:.9em;max-width:12em}
 .compile-dialog .cd-file-btn{position:relative;display:inline-block;cursor:pointer;border:1px solid var(--line,#ccc);border-radius:4px;padding:.15em .6em}
 .compile-dialog .cd-file-btn input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
 .compile-dialog .cd-font-list{list-style:none;padding:0;margin:.3em 0}

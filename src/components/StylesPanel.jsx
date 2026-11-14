@@ -3,18 +3,26 @@ import { useEditorState } from '@tiptap/react';
 import { deleteStyle, isCharStyle, isParaStyle, renameStyle, styleFromLook } from '../lib/styles.js';
 import { builtinName, t as tr } from '../lib/i18n.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
+import { allStyleRange, hasIdentifiableStyle, nextStyleBlock, prevStyleBlock, styleRangeAt } from '../lib/styleNavigation.js';
 
 // Styles side panel (Format › Styles › Panel): the project's paragraph and character styles;
-// a click applies, the style under the cursor is marked, + makes one from the selection.
+// a click applies, the style under the cursor is marked, + makes one from the selection,
+// ⮃/⮁ jump to the previous/next paragraph with the caret's style (Scrivener §17.2.3/§17.4.1).
 export default function StylesPanel({ editor, styles = [], onStylesChange, onManage, onClose, readOnly }) {
   const cur = useEditorState({
     editor,
     selector: ({ editor: ed }) => {
-      if (!ed || ed.isDestroyed) return { para: null, char: null, empty: true };
+      if (!ed || ed.isDestroyed) return { para: null, char: null, empty: true, styledPara: false };
       const { $from, empty } = ed.state.selection;
-      return { para: $from.parent.attrs.styleName || null, char: ed.getAttributes('charStyle').name || null, empty };
+      return { para: $from.parent.attrs.styleName || null, char: ed.getAttributes('charStyle').name || null, empty, styledPara: hasIdentifiableStyle(ed.state.doc, ed.state.selection.from) };
     },
-  }) || { para: null, char: null, empty: true };
+  }) || { para: null, char: null, empty: true, styledPara: false };
+  // Same ranges as the Format › style navigation commands, computed at click time.
+  const styleNav = (nav) => {
+    if (!editor || editor.isDestroyed) return;
+    const r = nav(editor.state.doc, editor.state.selection.from);
+    if (r) editor.chain().focus().setTextSelection({ from: r.from, to: r.to }).scrollIntoView().run();
+  };
   const apply = (st) => {
     if (readOnly) return;
     const c = editor.chain().focus();
@@ -76,6 +84,10 @@ export default function StylesPanel({ editor, styles = [], onStylesChange, onMan
       <h4>{tr('ui.g5.stiluriCaractere')}</h4>
       <ul className="styles-panel-list">{styles.filter(isCharStyle).map(row)}</ul>
       <div className="styles-panel-actions">
+        <button className="link" title={tr('cmd.prevInSameStyle')} aria-label={tr('cmd.prevInSameStyle')} disabled={!cur.styledPara} onClick={() => styleNav(prevStyleBlock)}>⮃</button>
+        <button className="link" title={tr('cmd.nextInSameStyle')} aria-label={tr('cmd.nextInSameStyle')} disabled={!cur.styledPara} onClick={() => styleNav(nextStyleBlock)}>⮁</button>
+        <button className="link" title={tr('cmd.selectStyleRange')} disabled={!cur.styledPara} onClick={() => styleNav(styleRangeAt)}>{tr('cmd.selectStyleRange')}</button>
+        <button className="link" title={tr('cmd.selectAllWithStyle')} disabled={!cur.styledPara} onClick={() => styleNav(allStyleRange)}>{tr('ui.stylesPanel.selectTot')}</button>
         <button className="style-add-para" disabled={readOnly} onClick={() => add('para')}>+ {tr('ui.g5.dinSelectieParagraf')}</button>
         <button className="style-add-char" disabled={readOnly} onClick={() => add('char')}>+ {tr('ui.g5.dinSelectieCaractere')}</button>
         {onManage && <button className="link" onClick={onManage}>{tr('ui.formatBar.manageStyles')}</button>}

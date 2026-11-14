@@ -35,3 +35,30 @@
 .research-chat .research-followups { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .research-chat .research-followup { text-align: left; border-radius: 10px; padding: 2px 8px; font-size: 12px; }
 .research-chat .research-ask textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+
+/* Actual in-app work surface; non-modal, opaque, movable and resizable. */
+.ai-workspace { position: fixed; z-index: 55; top: var(--window-gutter); right: var(--window-gutter); width: min(calc(var(--settings-content-width) + var(--ctl-lg) * 3), calc(100vw - var(--window-gutter))); min-width: min(var(--quickref-min-width), calc(100vw - var(--window-gutter))); max-width: calc(100vw - var(--window-gutter)); max-height: calc(100vh - var(--window-gutter)); resize: both; overflow: hidden; background: var(--paper); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-lg); display: flex; flex-direction: column; }
+.ai-workspace-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-1) var(--sp-2); background: var(--panel); cursor: move; touch-action: none; }
+.ai-workspace-head h2 { margin: 0; font-size: var(--font-ui-md); }
+.ai-workspace-head button { width: var(--ctl-lg); height: var(--ctl-lg); padding: var(--sp-1); flex: none; }
+.ai-workspace-head svg { width: var(--icon-sm); height: var(--icon-sm); }
+.ai-workspace-body { overflow: auto; min-height: 0; max-height: 78vh; padding: var(--sp-3); }
+.ai-workspace .ai-panel { padding: 0; border: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.ai-workspace .ai-panel p { margin: 0; }
+.ai-workspace .ai-book-context { display: flex; flex-direction: column; gap: var(--sp-1); overflow-wrap: anywhere; }
+.ai-workspace .ai-taskbar { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: var(--sp-2); }
+.ai-workspace .ai-taskbar label { display: flex; flex-direction: column; gap: var(--sp-1); }
+.ai-workspace select { max-width: 100%; min-width: 0; }
+.ai-workspace .ai-run { align-self: flex-start; }
+.ai-workspace .ai-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.ai-workspace .ai-config button { display: block; margin-top: var(--sp-1); }
+
+/* AI docked in the side column: same assistant, stable placement (ADL §4.2 collapsible panels). */
+.side-ai { display: flex; flex-direction: column; min-height: 0; }
+.side-ai-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-1) var(--sp-2); border-bottom: 1px solid var(--line, #ddd4); }
+.side-ai-head strong { font-size: 13px; }
+.side-ai-actions { display: flex; gap: var(--sp-1); }
+.side-ai-actions button { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 1px solid transparent; border-radius: var(--radius); color: var(--muted); cursor: pointer; }
+.side-ai-actions button:hover { border-color: var(--line, #ddd4); color: var(--text); }
+.side-ai-actions svg { width: 16px; height: 16px; }
+.side-ai .ai-panel { flex: 1; min-height: 0; overflow: auto; }

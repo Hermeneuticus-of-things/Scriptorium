@@ -51,80 +51,127 @@ export function ensureCloseX(modal) {
   modal.appendChild(btn);
 }
 
+// Explicit safe target > editable field > first non-destructive action > container.
+export function safeInitialDialogTarget(modal) {
+  const safe = (el) => !el.matches('.modal-x, .danger, [data-destructive="true"]') && el.textContent?.trim() !== '×';
+  const list = focusables(modal).filter(safe);
+  return list.find((el) => el.hasAttribute('data-initial-focus')) || list.find((el) => el.matches('input, textarea, select, [contenteditable="true"]')) || list[0] || modal;
+}
+
 export default function DialogA11y() {
   useEffect(() => {
-    const open = new Map(); // modal element -> element focused before it opened
+    const open = new Map();
+    const inertBefore = new Map();
+    const frames = new Set();
     let lastFocus = document.activeElement;
-    // Remember what had focus before a dialog opened. Menu items are skipped: the menu closes
-    // when the dialog opens, so focus goes back to the menu button (or what was focused before).
-    const onFocusIn = (e) => {
-      if (!e.target.closest?.('.modal, .help-window, [role=menu], .context-menu, [aria-haspopup=menu], .menubar')) lastFocus = e.target; // menu-bar buttons too: focus goes back to the work
+    const capture = (opener) => {
+      const scroll = [];
+      for (let p = opener; p; p = p.parentElement) scroll.push([p, p.scrollTop, p.scrollLeft]);
+      const sel = window.getSelection();
+      const range = sel?.rangeCount && opener?.contains?.(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
+      return { opener, scroll, range, start: opener?.selectionStart, end: opener?.selectionEnd };
     };
+    let lastSaved = capture(lastFocus);
     const top = () => [...open.keys()].filter((m) => m.isConnected).pop();
-
+    const restoreInert = () => {
+      for (const [el, value] of inertBefore) if (el.isConnected) el.inert = value;
+      inertBefore.clear();
+    };
+    const isolate = (modal) => {
+      if (!modal) return;
+      for (let branch = modal; branch?.parentElement; branch = branch.parentElement) {
+        for (const sibling of branch.parentElement.children) {
+          if (sibling === branch || sibling.tagName === 'SCRIPT' || sibling.tagName === 'STYLE') continue;
+          if (!inertBefore.has(sibling)) inertBefore.set(sibling, sibling.inert);
+          sibling.inert = true;
+        }
+        if (branch.parentElement === document.body) break;
+      }
+    };
+    const focusSafely = (modal) => {
+      const target = safeInitialDialogTarget(modal);
+      if (target === modal) modal.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+    };
+    const onFocusIn = (e) => {
+      const owner = e.target.closest?.('.modal, .help-window');
+      const activeModal = top();
+      if (activeModal && !activeModal.contains(e.target) && (!owner || open.has(owner))) {
+        focusSafely(activeModal);
+        return;
+      }
+      // Existing parent-dialog fields are valid openers; an autoFocus from a NEW child is not.
+      if ((!owner || open.has(owner)) && !e.target.closest?.('[role=menu], .ctx-menu, [aria-haspopup=menu], .menubar')) {
+        lastFocus = e.target;
+        lastSaved = capture(lastFocus);
+      }
+    };
+    const onSelection = () => {
+      if (lastFocus === document.activeElement && !lastFocus?.closest?.('.modal, .help-window')) lastSaved = capture(lastFocus);
+    };
     const scan = () => {
-      // Keep the close "×" present on every open modal (re-added if a re-render dropped it).
+      restoreInert();
+      const added = [];
       for (const modal of document.querySelectorAll('.modal-backdrop > .modal')) ensureCloseX(modal);
       for (const modal of document.querySelectorAll('.modal-backdrop > .modal, .help-backdrop > .help-window')) {
         if (open.has(modal)) continue;
         decorateDialog(modal);
-        open.set(modal, lastFocus);
-        // let autoFocus / effects run first, then make sure focus is inside
-        requestAnimationFrame(() => {
-          if (!modal.isConnected || modal.contains(document.activeElement)) return;
-          const first = focusables(modal)[0];
-          if (first) first.focus();
-          else {
-            modal.setAttribute('tabindex', '-1');
-            modal.focus();
-          }
-        });
+        open.set(modal, lastSaved);
+        added.push(modal);
       }
-      for (const [modal, opener] of [...open]) {
+      for (const [modal, saved] of [...open]) {
         if (modal.isConnected) continue;
         open.delete(modal);
         const active = document.activeElement;
-        if ((!active || active === document.body || !active.isConnected) && opener?.isConnected) opener.focus?.();
+        const parentModal = top();
+        if ((!active || active === document.body || !active.isConnected) && saved.opener?.isConnected && (!parentModal || parentModal.contains(saved.opener))) {
+          saved.opener.focus?.({ preventScroll: true });
+          if (typeof saved.start === 'number') saved.opener.setSelectionRange?.(saved.start, saved.end);
+          if (saved.range?.startContainer.isConnected && saved.range?.endContainer.isConnected) {
+            const selection = window.getSelection();
+            selection.removeAllRanges(); selection.addRange(saved.range);
+          }
+          for (const [el, y, x] of saved.scroll) if (el.isConnected) { el.scrollTop = y; el.scrollLeft = x; }
+        }
+      }
+      const activeModal = top();
+      isolate(activeModal);
+      for (const modal of added) {
+        const frame = requestAnimationFrame(() => {
+          frames.delete(frame);
+          if (!modal.isConnected || modal !== top()) return;
+          const active = document.activeElement;
+          const unsafe = active?.matches?.('.modal-x, .danger, [data-destructive="true"]') || active?.textContent?.trim() === '×';
+          if (!modal.contains(active) || unsafe) focusSafely(modal);
+        });
+        frames.add(frame);
       }
     };
-
     const onKey = (e) => {
       const modal = top();
-      if (!modal) return;
+      if (!modal || e.defaultPrevented) return;
       if (e.key === 'Tab') {
         const list = focusables(modal);
-        if (!list.length) {
-          e.preventDefault();
-          return;
-        }
-        const first = list[0];
-        const last = list[list.length - 1];
+        if (!list.length) { e.preventDefault(); return; }
+        const first = list[0], last = list[list.length - 1];
         const inside = modal.contains(document.activeElement);
-        if (e.shiftKey && (document.activeElement === first || !inside)) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && (document.activeElement === last || !inside)) {
-          e.preventDefault();
-          first.focus();
-        }
-      } else if (e.key === 'Escape' && !e.defaultPrevented) {
-        // a field that handles Esc itself (shortcut capture, inline rename) stops propagation
-        const backdrop = modal.parentElement;
-        e.preventDefault();
-        backdrop.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-        backdrop.click();
-      }
+        if (e.shiftKey && (document.activeElement === first || !inside)) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !inside)) { e.preventDefault(); first.focus(); }
+      } else if (e.key === 'Escape') { e.preventDefault(); closeDialog(modal); }
     };
-
     const mo = new MutationObserver(scan);
     mo.observe(document.body, { childList: true, subtree: true });
     document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('selectionchange', onSelection);
     document.addEventListener('keydown', onKey);
     scan();
     return () => {
-      mo.disconnect();
+      mo.disconnect(); restoreInert();
+      for (const frame of frames) cancelAnimationFrame(frame);
       document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('selectionchange', onSelection);
       document.removeEventListener('keydown', onKey);
+      open.clear();
     };
   }, []);
   return null;

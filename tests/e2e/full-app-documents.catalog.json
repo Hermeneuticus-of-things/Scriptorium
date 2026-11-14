@@ -1,0 +1,4016 @@
+{
+  "domain": "Compile, import, export, backup și sync",
+  "source_workspace": "D:\\Cloude Code\\PROJECTS\\Pneuma Sofer  APP\\.work\\release-1.1.0",
+  "script_path": "D:\\Cloude Code\\PROJECTS\\Pneuma Sofer  APP\\.work\\release-1.1.0\\tests\\e2e\\full-app-documents.cjs",
+  "cases_count": 1119,
+  "control_groups_count": 91,
+  "case_id_rule": "group.id + optional .targetIndex + .optionIndex; indices zero-based",
+  "validation": {
+    "node_check": "passed",
+    "electron_executed": false,
+    "npm_executed": false,
+    "git_executed": false,
+    "business_logic_mocked": false,
+    "status": "Numai verificare statică; părintele va executa serial aplicația reală"
+  },
+  "method": "Fixture separată per caz, acțiune prin UI/nativ, verify cu H.assert/H.wait, capturi înainte/după și subdialog înainte de close; PDF text CMap și ZIP inspectate independent",
+  "surfaces": [
+    {
+      "id": "compile.output",
+      "surface": "CompileDialog",
+      "control": "Compilează pentru / Compilează",
+      "factory": "output",
+      "options": [
+        "docx",
+        "pdf",
+        "epub",
+        "html",
+        "rtf",
+        "odt",
+        "md",
+        "mmd",
+        "txt",
+        "fountain",
+        "fdx",
+        "tex",
+        "print"
+      ],
+      "targets": "",
+      "expanded_count": 13,
+      "case_ids": [
+        "compile.output.0",
+        "compile.output.1",
+        "compile.output.2",
+        "compile.output.3",
+        "compile.output.4",
+        "compile.output.5",
+        "compile.output.6",
+        "compile.output.7",
+        "compile.output.8",
+        "compile.output.9",
+        "compile.output.10",
+        "compile.output.11",
+        "compile.output.12"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.preset",
+      "surface": "CompileDialog/Formate",
+      "control": "selectare, setări, previzualizare",
+      "factory": "preset",
+      "options": [
+        "manuscris",
+        "paperback",
+        "ebook",
+        "modern",
+        "pdf-a5",
+        "implicit",
+        "times",
+        "courier",
+        "roman-parti",
+        "nonfictiune",
+        "povestire",
+        "scenariu-film",
+        "piesa-teatru",
+        "scenariu-bd",
+        "scenariu-radio",
+        "poezie",
+        "ebook-fictiune",
+        "corectura"
+      ],
+      "targets": "",
+      "expanded_count": 18,
+      "case_ids": [
+        "compile.preset.0",
+        "compile.preset.1",
+        "compile.preset.2",
+        "compile.preset.3",
+        "compile.preset.4",
+        "compile.preset.5",
+        "compile.preset.6",
+        "compile.preset.7",
+        "compile.preset.8",
+        "compile.preset.9",
+        "compile.preset.10",
+        "compile.preset.11",
+        "compile.preset.12",
+        "compile.preset.13",
+        "compile.preset.14",
+        "compile.preset.15",
+        "compile.preset.16",
+        "compile.preset.17"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.readonly",
+      "surface": "CompileDialog/Edit format",
+      "control": "toate taburile builtin, controale disabled și întoarcere",
+      "factory": "readonly",
+      "options": [
+        "separatoare",
+        "inlocuiri",
+        "note",
+        "stiluri",
+        "pagina"
+      ],
+      "targets": [
+        "manuscris",
+        "paperback",
+        "ebook",
+        "modern",
+        "pdf-a5",
+        "implicit",
+        "times",
+        "courier",
+        "roman-parti",
+        "nonfictiune",
+        "povestire",
+        "scenariu-film",
+        "piesa-teatru",
+        "scenariu-bd",
+        "scenariu-radio",
+        "poezie",
+        "ebook-fictiune",
+        "corectura"
+      ],
+      "expanded_count": 90,
+      "case_ids": [
+        "compile.readonly.0.0",
+        "compile.readonly.0.1",
+        "compile.readonly.0.2",
+        "compile.readonly.0.3",
+        "compile.readonly.0.4",
+        "compile.readonly.1.0",
+        "compile.readonly.1.1",
+        "compile.readonly.1.2",
+        "compile.readonly.1.3",
+        "compile.readonly.1.4",
+        "compile.readonly.2.0",
+        "compile.readonly.2.1",
+        "compile.readonly.2.2",
+        "compile.readonly.2.3",
+        "compile.readonly.2.4",
+        "compile.readonly.3.0",
+        "compile.readonly.3.1",
+        "compile.readonly.3.2",
+        "compile.readonly.3.3",
+        "compile.readonly.3.4",
+        "compile.readonly.4.0",
+        "compile.readonly.4.1",
+        "compile.readonly.4.2",
+        "compile.readonly.4.3",
+        "compile.readonly.4.4",
+        "compile.readonly.5.0",
+        "compile.readonly.5.1",
+        "compile.readonly.5.2",
+        "compile.readonly.5.3",
+        "compile.readonly.5.4",
+        "compile.readonly.6.0",
+        "compile.readonly.6.1",
+        "compile.readonly.6.2",
+        "compile.readonly.6.3",
+        "compile.readonly.6.4",
+        "compile.readonly.7.0",
+        "compile.readonly.7.1",
+        "compile.readonly.7.2",
+        "compile.readonly.7.3",
+        "compile.readonly.7.4",
+        "compile.readonly.8.0",
+        "compile.readonly.8.1",
+        "compile.readonly.8.2",
+        "compile.readonly.8.3",
+        "compile.readonly.8.4",
+        "compile.readonly.9.0",
+        "compile.readonly.9.1",
+        "compile.readonly.9.2",
+        "compile.readonly.9.3",
+        "compile.readonly.9.4",
+        "compile.readonly.10.0",
+        "compile.readonly.10.1",
+        "compile.readonly.10.2",
+        "compile.readonly.10.3",
+        "compile.readonly.10.4",
+        "compile.readonly.11.0",
+        "compile.readonly.11.1",
+        "compile.readonly.11.2",
+        "compile.readonly.11.3",
+        "compile.readonly.11.4",
+        "compile.readonly.12.0",
+        "compile.readonly.12.1",
+        "compile.readonly.12.2",
+        "compile.readonly.12.3",
+        "compile.readonly.12.4",
+        "compile.readonly.13.0",
+        "compile.readonly.13.1",
+        "compile.readonly.13.2",
+        "compile.readonly.13.3",
+        "compile.readonly.13.4",
+        "compile.readonly.14.0",
+        "compile.readonly.14.1",
+        "compile.readonly.14.2",
+        "compile.readonly.14.3",
+        "compile.readonly.14.4",
+        "compile.readonly.15.0",
+        "compile.readonly.15.1",
+        "compile.readonly.15.2",
+        "compile.readonly.15.3",
+        "compile.readonly.15.4",
+        "compile.readonly.16.0",
+        "compile.readonly.16.1",
+        "compile.readonly.16.2",
+        "compile.readonly.16.3",
+        "compile.readonly.16.4",
+        "compile.readonly.17.0",
+        "compile.readonly.17.1",
+        "compile.readonly.17.2",
+        "compile.readonly.17.3",
+        "compile.readonly.17.4"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.scope",
+      "surface": "CompileDialog/Conținut",
+      "control": "tot manuscrisul / dosar / selecție",
+      "factory": "scope",
+      "options": [
+        "draft",
+        "folder",
+        "selection"
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.scope.0",
+        "compile.scope.1",
+        "compile.scope.2"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.folder",
+      "surface": "CompileDialog/Conținut",
+      "control": "dosar de compilat",
+      "factory": "compileField",
+      "options": [
+        "@draft",
+        "folder-a",
+        "template-folder"
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.folder.0",
+        "compile.folder.1",
+        "compile.folder.2"
+      ],
+      "store": "compile.rootId",
+      "area": "main:continut",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 0
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.contentFilter",
+      "surface": "CompileDialog/Conținut",
+      "control": "Arată: toate/doar text/text+foldere",
+      "factory": "contentFilter",
+      "options": [
+        "all",
+        "text",
+        "text-folders"
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.contentFilter.0",
+        "compile.contentFilter.1",
+        "compile.contentFilter.2"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.contentLabel",
+      "surface": "CompileDialog/Conținut",
+      "control": "filtrul etichetei în lista de conținut",
+      "factory": "compileField",
+      "options": [
+        "",
+        "Fără",
+        "Roșu QA",
+        "Albastru QA"
+      ],
+      "targets": "",
+      "expanded_count": 4,
+      "case_ids": [
+        "compile.contentLabel.0",
+        "compile.contentLabel.1",
+        "compile.contentLabel.2",
+        "compile.contentLabel.3"
+      ],
+      "store": "compile.contentLabel",
+      "area": "main:continut",
+      "selector": {
+        "css": ".cd-content-filter select",
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.include",
+      "surface": "CompileDialog/Conținut",
+      "control": "Include și excludere în cascadă",
+      "factory": "nodeField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": [
+        "folder-a",
+        "doc-a",
+        "doc-b"
+      ],
+      "expanded_count": 6,
+      "case_ids": [
+        "compile.include.0.0",
+        "compile.include.0.1",
+        "compile.include.1.0",
+        "compile.include.1.1",
+        "compile.include.2.0",
+        "compile.include.2.1"
+      ],
+      "store": "includeInCompile",
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.pageBreak",
+      "surface": "CompileDialog/Conținut",
+      "control": "Pagină nouă pe rând",
+      "factory": "nodeField",
+      "options": [
+        "",
+        "true",
+        "false"
+      ],
+      "targets": [
+        "folder-a",
+        "doc-a",
+        "doc-b"
+      ],
+      "expanded_count": 9,
+      "case_ids": [
+        "compile.pageBreak.0.0",
+        "compile.pageBreak.0.1",
+        "compile.pageBreak.0.2",
+        "compile.pageBreak.1.0",
+        "compile.pageBreak.1.1",
+        "compile.pageBreak.1.2",
+        "compile.pageBreak.2.0",
+        "compile.pageBreak.2.1",
+        "compile.pageBreak.2.2"
+      ],
+      "store": "compilePageBreak",
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.sectionType",
+      "surface": "CompileDialog/Conținut",
+      "control": "Tip secțiune pe rând",
+      "factory": "nodeField",
+      "options": [
+        "",
+        "Parte",
+        "Capitol",
+        "Capitol cu text",
+        "Secțiune",
+        "Scenă",
+        "Pagină de titlu",
+        "qa-type"
+      ],
+      "targets": [
+        "folder-a",
+        "doc-a",
+        "doc-b"
+      ],
+      "expanded_count": 24,
+      "case_ids": [
+        "compile.sectionType.0.0",
+        "compile.sectionType.0.1",
+        "compile.sectionType.0.2",
+        "compile.sectionType.0.3",
+        "compile.sectionType.0.4",
+        "compile.sectionType.0.5",
+        "compile.sectionType.0.6",
+        "compile.sectionType.0.7",
+        "compile.sectionType.1.0",
+        "compile.sectionType.1.1",
+        "compile.sectionType.1.2",
+        "compile.sectionType.1.3",
+        "compile.sectionType.1.4",
+        "compile.sectionType.1.5",
+        "compile.sectionType.1.6",
+        "compile.sectionType.1.7",
+        "compile.sectionType.2.0",
+        "compile.sectionType.2.1",
+        "compile.sectionType.2.2",
+        "compile.sectionType.2.3",
+        "compile.sectionType.2.4",
+        "compile.sectionType.2.5",
+        "compile.sectionType.2.6",
+        "compile.sectionType.2.7"
+      ],
+      "store": "sectionType",
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.front",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "materie de început generală",
+      "factory": "compileField",
+      "options": [
+        "",
+        "@draft",
+        "folder-a",
+        "@research",
+        "template-folder"
+      ],
+      "targets": "",
+      "expanded_count": 5,
+      "case_ids": [
+        "compile.front.0",
+        "compile.front.1",
+        "compile.front.2",
+        "compile.front.3",
+        "compile.front.4"
+      ],
+      "store": "compile.frontMatterId",
+      "area": "main:optiuni",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 0
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.back",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "materie de final generală",
+      "factory": "compileField",
+      "options": [
+        "",
+        "@draft",
+        "folder-a",
+        "@research",
+        "template-folder"
+      ],
+      "targets": "",
+      "expanded_count": 5,
+      "case_ids": [
+        "compile.back.0",
+        "compile.back.1",
+        "compile.back.2",
+        "compile.back.3",
+        "compile.back.4"
+      ],
+      "store": "compile.backMatterId",
+      "area": "main:optiuni",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 1
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.frontOutput",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "materie început pentru ieșire",
+      "factory": "compileField",
+      "options": [
+        "",
+        "-",
+        "@draft",
+        "folder-a",
+        "@research",
+        "template-folder"
+      ],
+      "targets": "",
+      "expanded_count": 6,
+      "case_ids": [
+        "compile.frontOutput.0",
+        "compile.frontOutput.1",
+        "compile.frontOutput.2",
+        "compile.frontOutput.3",
+        "compile.frontOutput.4",
+        "compile.frontOutput.5"
+      ],
+      "store": "compile.frontMatterByOutput.html",
+      "area": "main:optiuni",
+      "selector": {
+        "css": ".cd-per-output select",
+        "label_key": null,
+        "index": 0
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.backOutput",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "materie final pentru ieșire",
+      "factory": "compileField",
+      "options": [
+        "",
+        "-",
+        "@draft",
+        "folder-a",
+        "@research",
+        "template-folder"
+      ],
+      "targets": "",
+      "expanded_count": 6,
+      "case_ids": [
+        "compile.backOutput.0",
+        "compile.backOutput.1",
+        "compile.backOutput.2",
+        "compile.backOutput.3",
+        "compile.backOutput.4",
+        "compile.backOutput.5"
+      ],
+      "store": "compile.backMatterByOutput.html",
+      "area": "main:optiuni",
+      "selector": {
+        "css": ".cd-per-output select",
+        "label_key": null,
+        "index": 1
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.titlePage",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "pagină de titlu automată",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.titlePage.0",
+        "compile.titlePage.1"
+      ],
+      "store": "compile.titlePage",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.pagina_de_titlu_automata_titlu",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.toc",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "cuprins activ/inactiv",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.toc.0",
+        "compile.toc.1"
+      ],
+      "store": "compile.toc",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.cuprins",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.tocTitle",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "titlu cuprins",
+      "factory": "compileField",
+      "options": [
+        "Cuprins QA"
+      ],
+      "targets": "",
+      "expanded_count": 1,
+      "case_ids": [
+        "compile.tocTitle.0"
+      ],
+      "store": "compile.tocSettings.title",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.cuprins_titlu",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.tocDepth",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "adâncime cuprins",
+      "factory": "compileField",
+      "options": [
+        1,
+        2,
+        3
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.tocDepth.0",
+        "compile.tocDepth.1",
+        "compile.tocDepth.2"
+      ],
+      "store": "compile.tocSettings.depth",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.cuprins_adancime",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.tocPages",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "numere pagini cuprins și dependența punctelor",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.tocPages.0",
+        "compile.tocPages.1"
+      ],
+      "store": "compile.tocSettings.pageNumbers",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.cuprins_pagini",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.tocLeaders",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "puncte de ghidare cuprins",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.tocLeaders.0",
+        "compile.tocLeaders.1"
+      ],
+      "store": "compile.tocSettings.leaders",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.cuprins_puncte",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.frontRoman",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "numere romane front matter",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.frontRoman.0",
+        "compile.frontRoman.1"
+      ],
+      "store": "compile.frontRoman",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.cifre_romane",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.widows",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "văduve (limite numerice)",
+      "factory": "compileField",
+      "options": [
+        1,
+        3,
+        9
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.widows.0",
+        "compile.widows.1",
+        "compile.widows.2"
+      ],
+      "store": "compile.flow.widows",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.vaduve",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.orphans",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "orfane (limite numerice)",
+      "factory": "compileField",
+      "options": [
+        1,
+        3,
+        9
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.orphans.0",
+        "compile.orphans.1",
+        "compile.orphans.2"
+      ],
+      "store": "compile.flow.orphans",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.orfane",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.keepNext",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "titlu cu textul",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.keepNext.0",
+        "compile.keepNext.1"
+      ],
+      "store": "compile.flow.keepWithNext",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.titlu_cu_textul",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.openAfter",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "deschide după compile (shell capturat)",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.openAfter.0",
+        "compile.openAfter.1"
+      ],
+      "store": "compile.openAfter",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.deschide_dupa",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.track",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "revizii ca modificări urmărite",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.track.0",
+        "compile.track.1"
+      ],
+      "store": "compile.trackChanges",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.reviziile_ca_modificari_urmarite_word",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.label",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "filtre etichete",
+      "factory": "chip",
+      "options": [
+        true,
+        false
+      ],
+      "targets": [
+        "Fără",
+        "Roșu QA",
+        "Albastru QA"
+      ],
+      "expanded_count": 6,
+      "case_ids": [
+        "compile.label.0.0",
+        "compile.label.0.1",
+        "compile.label.1.0",
+        "compile.label.1.1",
+        "compile.label.2.0",
+        "compile.label.2.1"
+      ],
+      "store": "compile.labels",
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.status",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "filtre stări",
+      "factory": "chip",
+      "options": [
+        true,
+        false
+      ],
+      "targets": [
+        "Fără",
+        "Ciornă QA",
+        "Final QA"
+      ],
+      "expanded_count": 6,
+      "case_ids": [
+        "compile.status.0.0",
+        "compile.status.0.1",
+        "compile.status.1.0",
+        "compile.status.1.1",
+        "compile.status.2.0",
+        "compile.status.2.1"
+      ],
+      "store": "compile.statuses",
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.keyword",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "filtre cuvinte cheie",
+      "factory": "chip",
+      "options": [
+        true,
+        false
+      ],
+      "targets": [
+        "Cheie QA",
+        "Alta QA"
+      ],
+      "expanded_count": 4,
+      "case_ids": [
+        "compile.keyword.0.0",
+        "compile.keyword.0.1",
+        "compile.keyword.1.0",
+        "compile.keyword.1.1"
+      ],
+      "store": "compile.keywords",
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.invert",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "exclude potrivirile",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.invert.0",
+        "compile.invert.1"
+      ],
+      "store": "compile.filterInvert",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.p1.exclude_potrivite",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.collection",
+      "surface": "CompileDialog/Opțiuni",
+      "control": "colecție manuală/căutare salvată/toate",
+      "factory": "compileField",
+      "options": [
+        "",
+        "collection-a",
+        "search-qa",
+        "search-results"
+      ],
+      "targets": "",
+      "expanded_count": 4,
+      "case_ids": [
+        "compile.collection.0",
+        "compile.collection.1",
+        "compile.collection.2",
+        "compile.collection.3"
+      ],
+      "store": "compile.collectionId",
+      "area": "main:optiuni",
+      "selector": {
+        "css": null,
+        "label_key": "ui.compileDialog.colectie",
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.metadata",
+      "surface": "CompileDialog/Metadate",
+      "control": "titlu, autor, limbă, editură, ISBN, identificator, descriere, subiecte",
+      "factory": "metadata",
+      "options": [
+        "all-fields"
+      ],
+      "targets": "",
+      "expanded_count": 1,
+      "case_ids": [
+        "compile.metadata.0"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.cover",
+      "surface": "CompileDialog/Metadate",
+      "control": "copertă din cercetare",
+      "factory": "compileField",
+      "options": [
+        "",
+        "cover-qa"
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.cover.0",
+        "compile.cover.1"
+      ],
+      "store": "compile.coverId",
+      "area": "main:metadate",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.replacements",
+      "surface": "CompileDialog/Înlocuiri proiect",
+      "control": "adaugă/caută/înlocuiește/activ/regex/cuvânt/case/up/down/șterge",
+      "factory": "replacements",
+      "options": [
+        "literal",
+        "regex",
+        "wholeWord",
+        "caseSensitive",
+        "disabled",
+        "move-up",
+        "move-down",
+        "delete",
+        "delete-all"
+      ],
+      "targets": "",
+      "expanded_count": 9,
+      "case_ids": [
+        "compile.replacements.0",
+        "compile.replacements.1",
+        "compile.replacements.2",
+        "compile.replacements.3",
+        "compile.replacements.4",
+        "compile.replacements.5",
+        "compile.replacements.6",
+        "compile.replacements.7",
+        "compile.replacements.8"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.formatActions",
+      "surface": "CompileDialog/Formate",
+      "control": "duplică/redenumește/șterge/global/export/import",
+      "factory": "formatActions",
+      "options": [
+        "duplicate",
+        "rename",
+        "rename-cancel",
+        "delete",
+        "delete-cancel",
+        "global",
+        "global-delete",
+        "global-edit",
+        "global-rename",
+        "global-duplicate",
+        "double-click",
+        "export",
+        "export-cancel",
+        "import",
+        "import-bare",
+        "import-invalid"
+      ],
+      "targets": "",
+      "expanded_count": 16,
+      "case_ids": [
+        "compile.formatActions.0",
+        "compile.formatActions.1",
+        "compile.formatActions.2",
+        "compile.formatActions.3",
+        "compile.formatActions.4",
+        "compile.formatActions.5",
+        "compile.formatActions.6",
+        "compile.formatActions.7",
+        "compile.formatActions.8",
+        "compile.formatActions.9",
+        "compile.formatActions.10",
+        "compile.formatActions.11",
+        "compile.formatActions.12",
+        "compile.formatActions.13",
+        "compile.formatActions.14",
+        "compile.formatActions.15"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.separatorKind",
+      "surface": "CompileDialog/Edit format/Separatoare",
+      "control": "între același tip / tipuri diferite",
+      "factory": "compileField",
+      "options": [
+        "text",
+        "decorative",
+        "page",
+        "space",
+        "none"
+      ],
+      "targets": [
+        "sameType",
+        "differentType"
+      ],
+      "expanded_count": 10,
+      "case_ids": [
+        "compile.separatorKind.0.0",
+        "compile.separatorKind.0.1",
+        "compile.separatorKind.0.2",
+        "compile.separatorKind.0.3",
+        "compile.separatorKind.0.4",
+        "compile.separatorKind.1.0",
+        "compile.separatorKind.1.1",
+        "compile.separatorKind.1.2",
+        "compile.separatorKind.1.3",
+        "compile.separatorKind.1.4"
+      ],
+      "store": null,
+      "area": "format:separatoare",
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.separatorDecor",
+      "surface": "CompileDialog/Edit format/Separatoare",
+      "control": "toate simbolurile decorative",
+      "factory": "compileField",
+      "options": [
+        "stars",
+        "star",
+        "asterism",
+        "dinkus",
+        "fleuron",
+        "tilde",
+        "hash",
+        "line"
+      ],
+      "targets": [
+        "sameType",
+        "differentType"
+      ],
+      "expanded_count": 16,
+      "case_ids": [
+        "compile.separatorDecor.0.0",
+        "compile.separatorDecor.0.1",
+        "compile.separatorDecor.0.2",
+        "compile.separatorDecor.0.3",
+        "compile.separatorDecor.0.4",
+        "compile.separatorDecor.0.5",
+        "compile.separatorDecor.0.6",
+        "compile.separatorDecor.0.7",
+        "compile.separatorDecor.1.0",
+        "compile.separatorDecor.1.1",
+        "compile.separatorDecor.1.2",
+        "compile.separatorDecor.1.3",
+        "compile.separatorDecor.1.4",
+        "compile.separatorDecor.1.5",
+        "compile.separatorDecor.1.6",
+        "compile.separatorDecor.1.7"
+      ],
+      "store": null,
+      "area": "format:separatoare",
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.separatorText",
+      "surface": "CompileDialog/Edit format/Separatoare",
+      "control": "text separator",
+      "factory": "compileField",
+      "options": [
+        "SEP_QA"
+      ],
+      "targets": [
+        "sameType",
+        "differentType"
+      ],
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.separatorText.0.0",
+        "compile.separatorText.1.0"
+      ],
+      "store": null,
+      "area": "format:separatoare",
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.transforms",
+      "surface": "CompileDialog/Edit format/Înlocuiri",
+      "control": "ghilimele/dashes/highlights/colors/internal links",
+      "factory": "transform",
+      "options": [
+        true,
+        false
+      ],
+      "targets": [
+        "smartQuotes",
+        "dashes",
+        "removeHighlights",
+        "removeColors",
+        "linksToText"
+      ],
+      "expanded_count": 10,
+      "case_ids": [
+        "compile.transforms.0.0",
+        "compile.transforms.0.1",
+        "compile.transforms.1.0",
+        "compile.transforms.1.1",
+        "compile.transforms.2.0",
+        "compile.transforms.2.1",
+        "compile.transforms.3.0",
+        "compile.transforms.3.1",
+        "compile.transforms.4.0",
+        "compile.transforms.4.1"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.formatReplacements",
+      "surface": "CompileDialog/Edit format/Înlocuiri",
+      "control": "adaugă/caută/înlocuiește/regex/wholeWord/case/șterge",
+      "factory": "formatReplacements",
+      "options": [
+        "literal",
+        "regex",
+        "wholeWord",
+        "caseSensitive",
+        "delete"
+      ],
+      "targets": "",
+      "expanded_count": 5,
+      "case_ids": [
+        "compile.formatReplacements.0",
+        "compile.formatReplacements.1",
+        "compile.formatReplacements.2",
+        "compile.formatReplacements.3",
+        "compile.formatReplacements.4"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.notes",
+      "surface": "CompileDialog/Edit format/Note",
+      "control": "destinație note",
+      "factory": "compileField",
+      "options": [
+        "footnotes",
+        "endnotes-chapter",
+        "endnotes-book"
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.notes.0",
+        "compile.notes.1",
+        "compile.notes.2"
+      ],
+      "store": "transforms.notes",
+      "area": "format:note",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 0
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.noteNumbering",
+      "surface": "CompileDialog/Edit format/Note",
+      "control": "numerotare note",
+      "factory": "compileField",
+      "options": [
+        "arabic",
+        "roman",
+        "alpha",
+        "symbols"
+      ],
+      "targets": "",
+      "expanded_count": 4,
+      "case_ids": [
+        "compile.noteNumbering.0",
+        "compile.noteNumbering.1",
+        "compile.noteNumbering.2",
+        "compile.noteNumbering.3"
+      ],
+      "store": "transforms.noteNumbering",
+      "area": "format:note",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 1
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.noteRestart",
+      "surface": "CompileDialog/Edit format/Note",
+      "control": "restart note",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.noteRestart.0",
+        "compile.noteRestart.1"
+      ],
+      "store": "transforms.noteRestart",
+      "area": "format:note",
+      "selector": {
+        "css": "input[type=checkbox]",
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.comments",
+      "surface": "CompileDialog/Edit format/Note",
+      "control": "comentarii strip/export/footnotes/inline",
+      "factory": "compileField",
+      "options": [
+        "strip",
+        "export",
+        "footnotes",
+        "inline"
+      ],
+      "targets": "",
+      "expanded_count": 4,
+      "case_ids": [
+        "compile.comments.0",
+        "compile.comments.1",
+        "compile.comments.2",
+        "compile.comments.3"
+      ],
+      "store": "transforms.comments",
+      "area": "format:note",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 2
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.style",
+      "surface": "CompileDialog/Edit format/Stiluri",
+      "control": "fiecare stil: elimină, %, bold, italic, culoare și disabled",
+      "factory": "style",
+      "options": [
+        "remove-on",
+        "remove-off",
+        "size-min",
+        "size-value",
+        "size-max",
+        "bold-on",
+        "bold-off",
+        "italic-on",
+        "italic-off",
+        "color"
+      ],
+      "targets": [
+        "ilustratie",
+        "accent",
+        "sanscrit",
+        "citat-bloc",
+        "motto",
+        "scrisoare",
+        "centrat",
+        "separator"
+      ],
+      "expanded_count": 80,
+      "case_ids": [
+        "compile.style.0.0",
+        "compile.style.0.1",
+        "compile.style.0.2",
+        "compile.style.0.3",
+        "compile.style.0.4",
+        "compile.style.0.5",
+        "compile.style.0.6",
+        "compile.style.0.7",
+        "compile.style.0.8",
+        "compile.style.0.9",
+        "compile.style.1.0",
+        "compile.style.1.1",
+        "compile.style.1.2",
+        "compile.style.1.3",
+        "compile.style.1.4",
+        "compile.style.1.5",
+        "compile.style.1.6",
+        "compile.style.1.7",
+        "compile.style.1.8",
+        "compile.style.1.9",
+        "compile.style.2.0",
+        "compile.style.2.1",
+        "compile.style.2.2",
+        "compile.style.2.3",
+        "compile.style.2.4",
+        "compile.style.2.5",
+        "compile.style.2.6",
+        "compile.style.2.7",
+        "compile.style.2.8",
+        "compile.style.2.9",
+        "compile.style.3.0",
+        "compile.style.3.1",
+        "compile.style.3.2",
+        "compile.style.3.3",
+        "compile.style.3.4",
+        "compile.style.3.5",
+        "compile.style.3.6",
+        "compile.style.3.7",
+        "compile.style.3.8",
+        "compile.style.3.9",
+        "compile.style.4.0",
+        "compile.style.4.1",
+        "compile.style.4.2",
+        "compile.style.4.3",
+        "compile.style.4.4",
+        "compile.style.4.5",
+        "compile.style.4.6",
+        "compile.style.4.7",
+        "compile.style.4.8",
+        "compile.style.4.9",
+        "compile.style.5.0",
+        "compile.style.5.1",
+        "compile.style.5.2",
+        "compile.style.5.3",
+        "compile.style.5.4",
+        "compile.style.5.5",
+        "compile.style.5.6",
+        "compile.style.5.7",
+        "compile.style.5.8",
+        "compile.style.5.9",
+        "compile.style.6.0",
+        "compile.style.6.1",
+        "compile.style.6.2",
+        "compile.style.6.3",
+        "compile.style.6.4",
+        "compile.style.6.5",
+        "compile.style.6.6",
+        "compile.style.6.7",
+        "compile.style.6.8",
+        "compile.style.6.9",
+        "compile.style.7.0",
+        "compile.style.7.1",
+        "compile.style.7.2",
+        "compile.style.7.3",
+        "compile.style.7.4",
+        "compile.style.7.5",
+        "compile.style.7.6",
+        "compile.style.7.7",
+        "compile.style.7.8",
+        "compile.style.7.9"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.fontFamily",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "font text",
+      "factory": "compileField",
+      "options": [
+        "Times New Roman",
+        "Georgia",
+        "Garamond",
+        "Palatino Linotype",
+        "Book Antiqua",
+        "Cambria",
+        "Arial",
+        "Helvetica",
+        "Calibri"
+      ],
+      "targets": "",
+      "expanded_count": 9,
+      "case_ids": [
+        "compile.fontFamily.0",
+        "compile.fontFamily.1",
+        "compile.fontFamily.2",
+        "compile.fontFamily.3",
+        "compile.fontFamily.4",
+        "compile.fontFamily.5",
+        "compile.fontFamily.6",
+        "compile.fontFamily.7",
+        "compile.fontFamily.8"
+      ],
+      "store": "typography.fontFamily",
+      "area": "format:pagina",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 0
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.headingFont",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "font titluri",
+      "factory": "compileField",
+      "options": [
+        "",
+        "Times New Roman",
+        "Georgia",
+        "Garamond",
+        "Palatino Linotype",
+        "Book Antiqua",
+        "Cambria",
+        "Arial",
+        "Helvetica",
+        "Calibri"
+      ],
+      "targets": "",
+      "expanded_count": 10,
+      "case_ids": [
+        "compile.headingFont.0",
+        "compile.headingFont.1",
+        "compile.headingFont.2",
+        "compile.headingFont.3",
+        "compile.headingFont.4",
+        "compile.headingFont.5",
+        "compile.headingFont.6",
+        "compile.headingFont.7",
+        "compile.headingFont.8",
+        "compile.headingFont.9"
+      ],
+      "store": "typography.headingFont",
+      "area": "format:pagina",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 1
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.spacing",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "spațiere rânduri",
+      "factory": "compileField",
+      "options": [
+        1,
+        1.15,
+        1.2,
+        1.4,
+        1.5,
+        2
+      ],
+      "targets": "",
+      "expanded_count": 6,
+      "case_ids": [
+        "compile.spacing.0",
+        "compile.spacing.1",
+        "compile.spacing.2",
+        "compile.spacing.3",
+        "compile.spacing.4",
+        "compile.spacing.5"
+      ],
+      "store": "typography.lineSpacing",
+      "area": "format:pagina",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 2
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.fontSize",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "mărime font",
+      "factory": "compileField",
+      "options": [
+        7,
+        13,
+        24
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.fontSize.0",
+        "compile.fontSize.1",
+        "compile.fontSize.2"
+      ],
+      "store": "typography.fontSizePt",
+      "area": "format:pagina",
+      "selector": {
+        "css": "input[type=number]",
+        "label_key": null,
+        "index": 0
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.indent",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "alineat in",
+      "factory": "compileField",
+      "options": [
+        0,
+        0.4,
+        2
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.indent.0",
+        "compile.indent.1",
+        "compile.indent.2"
+      ],
+      "store": "typography.firstLineIndentIn",
+      "area": "format:pagina",
+      "selector": {
+        "css": "input[type=number]",
+        "label_key": null,
+        "index": 1
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.paragraphSpace",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "spațiu după paragraf",
+      "factory": "compileField",
+      "options": [
+        0,
+        8,
+        24
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "compile.paragraphSpace.0",
+        "compile.paragraphSpace.1",
+        "compile.paragraphSpace.2"
+      ],
+      "store": "typography.paragraphSpacingPt",
+      "area": "format:pagina",
+      "selector": {
+        "css": "input[type=number]",
+        "label_key": null,
+        "index": 2
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.noIndent",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "fără alineat după titluri",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.noIndent.0",
+        "compile.noIndent.1"
+      ],
+      "store": "typography.noIndentAfterHeading",
+      "area": "format:pagina",
+      "selector": {
+        "css": "input[type=checkbox]",
+        "label_key": null,
+        "index": 0
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.pageSize",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "dimensiune pagină",
+      "factory": "compileField",
+      "options": [
+        "A4",
+        "A5",
+        "Letter",
+        "6x9",
+        "5x8",
+        "5.5x8.5",
+        "custom"
+      ],
+      "targets": "",
+      "expanded_count": 7,
+      "case_ids": [
+        "compile.pageSize.0",
+        "compile.pageSize.1",
+        "compile.pageSize.2",
+        "compile.pageSize.3",
+        "compile.pageSize.4",
+        "compile.pageSize.5",
+        "compile.pageSize.6"
+      ],
+      "store": "page.size",
+      "area": "format:pagina",
+      "selector": {
+        "css": "select",
+        "label_key": null,
+        "index": 3
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.pageGeometry",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "lățime/înălțime custom, 4 margini, antet/subsol 6 poziții, CSS",
+      "factory": "pageGeometry",
+      "options": [
+        "all-fields"
+      ],
+      "targets": "",
+      "expanded_count": 1,
+      "case_ids": [
+        "compile.pageGeometry.0"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.mirrored",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "margini în oglindă",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.mirrored.0",
+        "compile.mirrored.1"
+      ],
+      "store": "page.mirrored",
+      "area": "format:pagina",
+      "selector": {
+        "css": "input[type=checkbox]",
+        "label_key": null,
+        "index": 1
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.firstPage",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "prima pagină fără antet/subsol",
+      "factory": "compileField",
+      "options": [
+        true,
+        false
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.firstPage.0",
+        "compile.firstPage.1"
+      ],
+      "store": "page.differentFirstPage",
+      "area": "format:pagina",
+      "selector": {
+        "css": "input[type=checkbox]",
+        "label_key": null,
+        "index": 2
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.pagePresence",
+      "surface": "CompileDialog/Edit format/Pagină",
+      "control": "fără setări / adaugă setări",
+      "factory": "pagePresence",
+      "options": [
+        "remove",
+        "add"
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "compile.pagePresence.0",
+        "compile.pagePresence.1"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.assignDefault",
+      "surface": "CompileDialog/Atribuie așezări",
+      "control": "default pentru dosare/container/document",
+      "factory": "assignDefault",
+      "options": [
+        "Tip QA",
+        "Parte",
+        "Capitol",
+        "Capitol cu text",
+        "Secțiune",
+        "Scenă",
+        "Pagină de titlu"
+      ],
+      "targets": [
+        "folder",
+        "container",
+        "file"
+      ],
+      "expanded_count": 21,
+      "case_ids": [
+        "compile.assignDefault.0.0",
+        "compile.assignDefault.0.1",
+        "compile.assignDefault.0.2",
+        "compile.assignDefault.0.3",
+        "compile.assignDefault.0.4",
+        "compile.assignDefault.0.5",
+        "compile.assignDefault.0.6",
+        "compile.assignDefault.1.0",
+        "compile.assignDefault.1.1",
+        "compile.assignDefault.1.2",
+        "compile.assignDefault.1.3",
+        "compile.assignDefault.1.4",
+        "compile.assignDefault.1.5",
+        "compile.assignDefault.1.6",
+        "compile.assignDefault.2.0",
+        "compile.assignDefault.2.1",
+        "compile.assignDefault.2.2",
+        "compile.assignDefault.2.3",
+        "compile.assignDefault.2.4",
+        "compile.assignDefault.2.5",
+        "compile.assignDefault.2.6"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.layout",
+      "surface": "CompileDialog/Atribuie așezări",
+      "control": "fiecare tip: title/prefix/suffix/case/align/break/text/separator/dropCap/leadCaps/columns/indent/synopsis/notes",
+      "factory": "layout",
+      "options": [
+        "showTitle-on",
+        "showTitle-off",
+        "prefix",
+        "suffix",
+        "case-normal",
+        "case-upper",
+        "case-smallcaps",
+        "align-center",
+        "align-left",
+        "align-right",
+        "break-on",
+        "break-off",
+        "showText-on",
+        "showText-off",
+        "separator-auto",
+        "separator-none",
+        "separator-text",
+        "separator-page",
+        "dropCap-on",
+        "dropCap-off",
+        "leadCaps-min",
+        "leadCaps-value",
+        "leadCaps-max",
+        "columns-1",
+        "columns-2",
+        "columns-3",
+        "indent-inherit",
+        "indent-none",
+        "indent-indent",
+        "synopsis-none",
+        "synopsis-before",
+        "synopsis-after",
+        "notes-none",
+        "notes-before",
+        "notes-after"
+      ],
+      "targets": [
+        "Tip QA",
+        "Parte",
+        "Capitol",
+        "Capitol cu text",
+        "Secțiune",
+        "Scenă",
+        "Pagină de titlu"
+      ],
+      "expanded_count": 245,
+      "case_ids": [
+        "compile.layout.0.0",
+        "compile.layout.0.1",
+        "compile.layout.0.2",
+        "compile.layout.0.3",
+        "compile.layout.0.4",
+        "compile.layout.0.5",
+        "compile.layout.0.6",
+        "compile.layout.0.7",
+        "compile.layout.0.8",
+        "compile.layout.0.9",
+        "compile.layout.0.10",
+        "compile.layout.0.11",
+        "compile.layout.0.12",
+        "compile.layout.0.13",
+        "compile.layout.0.14",
+        "compile.layout.0.15",
+        "compile.layout.0.16",
+        "compile.layout.0.17",
+        "compile.layout.0.18",
+        "compile.layout.0.19",
+        "compile.layout.0.20",
+        "compile.layout.0.21",
+        "compile.layout.0.22",
+        "compile.layout.0.23",
+        "compile.layout.0.24",
+        "compile.layout.0.25",
+        "compile.layout.0.26",
+        "compile.layout.0.27",
+        "compile.layout.0.28",
+        "compile.layout.0.29",
+        "compile.layout.0.30",
+        "compile.layout.0.31",
+        "compile.layout.0.32",
+        "compile.layout.0.33",
+        "compile.layout.0.34",
+        "compile.layout.1.0",
+        "compile.layout.1.1",
+        "compile.layout.1.2",
+        "compile.layout.1.3",
+        "compile.layout.1.4",
+        "compile.layout.1.5",
+        "compile.layout.1.6",
+        "compile.layout.1.7",
+        "compile.layout.1.8",
+        "compile.layout.1.9",
+        "compile.layout.1.10",
+        "compile.layout.1.11",
+        "compile.layout.1.12",
+        "compile.layout.1.13",
+        "compile.layout.1.14",
+        "compile.layout.1.15",
+        "compile.layout.1.16",
+        "compile.layout.1.17",
+        "compile.layout.1.18",
+        "compile.layout.1.19",
+        "compile.layout.1.20",
+        "compile.layout.1.21",
+        "compile.layout.1.22",
+        "compile.layout.1.23",
+        "compile.layout.1.24",
+        "compile.layout.1.25",
+        "compile.layout.1.26",
+        "compile.layout.1.27",
+        "compile.layout.1.28",
+        "compile.layout.1.29",
+        "compile.layout.1.30",
+        "compile.layout.1.31",
+        "compile.layout.1.32",
+        "compile.layout.1.33",
+        "compile.layout.1.34",
+        "compile.layout.2.0",
+        "compile.layout.2.1",
+        "compile.layout.2.2",
+        "compile.layout.2.3",
+        "compile.layout.2.4",
+        "compile.layout.2.5",
+        "compile.layout.2.6",
+        "compile.layout.2.7",
+        "compile.layout.2.8",
+        "compile.layout.2.9",
+        "compile.layout.2.10",
+        "compile.layout.2.11",
+        "compile.layout.2.12",
+        "compile.layout.2.13",
+        "compile.layout.2.14",
+        "compile.layout.2.15",
+        "compile.layout.2.16",
+        "compile.layout.2.17",
+        "compile.layout.2.18",
+        "compile.layout.2.19",
+        "compile.layout.2.20",
+        "compile.layout.2.21",
+        "compile.layout.2.22",
+        "compile.layout.2.23",
+        "compile.layout.2.24",
+        "compile.layout.2.25",
+        "compile.layout.2.26",
+        "compile.layout.2.27",
+        "compile.layout.2.28",
+        "compile.layout.2.29",
+        "compile.layout.2.30",
+        "compile.layout.2.31",
+        "compile.layout.2.32",
+        "compile.layout.2.33",
+        "compile.layout.2.34",
+        "compile.layout.3.0",
+        "compile.layout.3.1",
+        "compile.layout.3.2",
+        "compile.layout.3.3",
+        "compile.layout.3.4",
+        "compile.layout.3.5",
+        "compile.layout.3.6",
+        "compile.layout.3.7",
+        "compile.layout.3.8",
+        "compile.layout.3.9",
+        "compile.layout.3.10",
+        "compile.layout.3.11",
+        "compile.layout.3.12",
+        "compile.layout.3.13",
+        "compile.layout.3.14",
+        "compile.layout.3.15",
+        "compile.layout.3.16",
+        "compile.layout.3.17",
+        "compile.layout.3.18",
+        "compile.layout.3.19",
+        "compile.layout.3.20",
+        "compile.layout.3.21",
+        "compile.layout.3.22",
+        "compile.layout.3.23",
+        "compile.layout.3.24",
+        "compile.layout.3.25",
+        "compile.layout.3.26",
+        "compile.layout.3.27",
+        "compile.layout.3.28",
+        "compile.layout.3.29",
+        "compile.layout.3.30",
+        "compile.layout.3.31",
+        "compile.layout.3.32",
+        "compile.layout.3.33",
+        "compile.layout.3.34",
+        "compile.layout.4.0",
+        "compile.layout.4.1",
+        "compile.layout.4.2",
+        "compile.layout.4.3",
+        "compile.layout.4.4",
+        "compile.layout.4.5",
+        "compile.layout.4.6",
+        "compile.layout.4.7",
+        "compile.layout.4.8",
+        "compile.layout.4.9",
+        "compile.layout.4.10",
+        "compile.layout.4.11",
+        "compile.layout.4.12",
+        "compile.layout.4.13",
+        "compile.layout.4.14",
+        "compile.layout.4.15",
+        "compile.layout.4.16",
+        "compile.layout.4.17",
+        "compile.layout.4.18",
+        "compile.layout.4.19",
+        "compile.layout.4.20",
+        "compile.layout.4.21",
+        "compile.layout.4.22",
+        "compile.layout.4.23",
+        "compile.layout.4.24",
+        "compile.layout.4.25",
+        "compile.layout.4.26",
+        "compile.layout.4.27",
+        "compile.layout.4.28",
+        "compile.layout.4.29",
+        "compile.layout.4.30",
+        "compile.layout.4.31",
+        "compile.layout.4.32",
+        "compile.layout.4.33",
+        "compile.layout.4.34",
+        "compile.layout.5.0",
+        "compile.layout.5.1",
+        "compile.layout.5.2",
+        "compile.layout.5.3",
+        "compile.layout.5.4",
+        "compile.layout.5.5",
+        "compile.layout.5.6",
+        "compile.layout.5.7",
+        "compile.layout.5.8",
+        "compile.layout.5.9",
+        "compile.layout.5.10",
+        "compile.layout.5.11",
+        "compile.layout.5.12",
+        "compile.layout.5.13",
+        "compile.layout.5.14",
+        "compile.layout.5.15",
+        "compile.layout.5.16",
+        "compile.layout.5.17",
+        "compile.layout.5.18",
+        "compile.layout.5.19",
+        "compile.layout.5.20",
+        "compile.layout.5.21",
+        "compile.layout.5.22",
+        "compile.layout.5.23",
+        "compile.layout.5.24",
+        "compile.layout.5.25",
+        "compile.layout.5.26",
+        "compile.layout.5.27",
+        "compile.layout.5.28",
+        "compile.layout.5.29",
+        "compile.layout.5.30",
+        "compile.layout.5.31",
+        "compile.layout.5.32",
+        "compile.layout.5.33",
+        "compile.layout.5.34",
+        "compile.layout.6.0",
+        "compile.layout.6.1",
+        "compile.layout.6.2",
+        "compile.layout.6.3",
+        "compile.layout.6.4",
+        "compile.layout.6.5",
+        "compile.layout.6.6",
+        "compile.layout.6.7",
+        "compile.layout.6.8",
+        "compile.layout.6.9",
+        "compile.layout.6.10",
+        "compile.layout.6.11",
+        "compile.layout.6.12",
+        "compile.layout.6.13",
+        "compile.layout.6.14",
+        "compile.layout.6.15",
+        "compile.layout.6.16",
+        "compile.layout.6.17",
+        "compile.layout.6.18",
+        "compile.layout.6.19",
+        "compile.layout.6.20",
+        "compile.layout.6.21",
+        "compile.layout.6.22",
+        "compile.layout.6.23",
+        "compile.layout.6.24",
+        "compile.layout.6.25",
+        "compile.layout.6.26",
+        "compile.layout.6.27",
+        "compile.layout.6.28",
+        "compile.layout.6.29",
+        "compile.layout.6.30",
+        "compile.layout.6.31",
+        "compile.layout.6.32",
+        "compile.layout.6.33",
+        "compile.layout.6.34"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.layoutDetail",
+      "surface": "CompileDialog/Așezare detaliată",
+      "control": "fiecare tip: font/size/bold/italic/prefixCase/prefixAlign/recto/breakAfter/meta/închide",
+      "factory": "layoutDetail",
+      "options": [
+        "font",
+        "size",
+        "bold-default",
+        "bold-bold",
+        "bold-normal",
+        "italic-on",
+        "italic-off",
+        "prefixCase-normal",
+        "prefixCase-upper",
+        "prefixCase-smallcaps",
+        "prefixAlign-default",
+        "prefixAlign-left",
+        "prefixAlign-center",
+        "prefixAlign-right",
+        "recto-on",
+        "recto-off",
+        "after-on",
+        "after-off",
+        "label-on",
+        "label-off",
+        "status-on",
+        "status-off",
+        "keywords-on",
+        "keywords-off"
+      ],
+      "targets": [
+        "Tip QA",
+        "Parte",
+        "Capitol",
+        "Capitol cu text",
+        "Secțiune",
+        "Scenă",
+        "Pagină de titlu"
+      ],
+      "expanded_count": 168,
+      "case_ids": [
+        "compile.layoutDetail.0.0",
+        "compile.layoutDetail.0.1",
+        "compile.layoutDetail.0.2",
+        "compile.layoutDetail.0.3",
+        "compile.layoutDetail.0.4",
+        "compile.layoutDetail.0.5",
+        "compile.layoutDetail.0.6",
+        "compile.layoutDetail.0.7",
+        "compile.layoutDetail.0.8",
+        "compile.layoutDetail.0.9",
+        "compile.layoutDetail.0.10",
+        "compile.layoutDetail.0.11",
+        "compile.layoutDetail.0.12",
+        "compile.layoutDetail.0.13",
+        "compile.layoutDetail.0.14",
+        "compile.layoutDetail.0.15",
+        "compile.layoutDetail.0.16",
+        "compile.layoutDetail.0.17",
+        "compile.layoutDetail.0.18",
+        "compile.layoutDetail.0.19",
+        "compile.layoutDetail.0.20",
+        "compile.layoutDetail.0.21",
+        "compile.layoutDetail.0.22",
+        "compile.layoutDetail.0.23",
+        "compile.layoutDetail.1.0",
+        "compile.layoutDetail.1.1",
+        "compile.layoutDetail.1.2",
+        "compile.layoutDetail.1.3",
+        "compile.layoutDetail.1.4",
+        "compile.layoutDetail.1.5",
+        "compile.layoutDetail.1.6",
+        "compile.layoutDetail.1.7",
+        "compile.layoutDetail.1.8",
+        "compile.layoutDetail.1.9",
+        "compile.layoutDetail.1.10",
+        "compile.layoutDetail.1.11",
+        "compile.layoutDetail.1.12",
+        "compile.layoutDetail.1.13",
+        "compile.layoutDetail.1.14",
+        "compile.layoutDetail.1.15",
+        "compile.layoutDetail.1.16",
+        "compile.layoutDetail.1.17",
+        "compile.layoutDetail.1.18",
+        "compile.layoutDetail.1.19",
+        "compile.layoutDetail.1.20",
+        "compile.layoutDetail.1.21",
+        "compile.layoutDetail.1.22",
+        "compile.layoutDetail.1.23",
+        "compile.layoutDetail.2.0",
+        "compile.layoutDetail.2.1",
+        "compile.layoutDetail.2.2",
+        "compile.layoutDetail.2.3",
+        "compile.layoutDetail.2.4",
+        "compile.layoutDetail.2.5",
+        "compile.layoutDetail.2.6",
+        "compile.layoutDetail.2.7",
+        "compile.layoutDetail.2.8",
+        "compile.layoutDetail.2.9",
+        "compile.layoutDetail.2.10",
+        "compile.layoutDetail.2.11",
+        "compile.layoutDetail.2.12",
+        "compile.layoutDetail.2.13",
+        "compile.layoutDetail.2.14",
+        "compile.layoutDetail.2.15",
+        "compile.layoutDetail.2.16",
+        "compile.layoutDetail.2.17",
+        "compile.layoutDetail.2.18",
+        "compile.layoutDetail.2.19",
+        "compile.layoutDetail.2.20",
+        "compile.layoutDetail.2.21",
+        "compile.layoutDetail.2.22",
+        "compile.layoutDetail.2.23",
+        "compile.layoutDetail.3.0",
+        "compile.layoutDetail.3.1",
+        "compile.layoutDetail.3.2",
+        "compile.layoutDetail.3.3",
+        "compile.layoutDetail.3.4",
+        "compile.layoutDetail.3.5",
+        "compile.layoutDetail.3.6",
+        "compile.layoutDetail.3.7",
+        "compile.layoutDetail.3.8",
+        "compile.layoutDetail.3.9",
+        "compile.layoutDetail.3.10",
+        "compile.layoutDetail.3.11",
+        "compile.layoutDetail.3.12",
+        "compile.layoutDetail.3.13",
+        "compile.layoutDetail.3.14",
+        "compile.layoutDetail.3.15",
+        "compile.layoutDetail.3.16",
+        "compile.layoutDetail.3.17",
+        "compile.layoutDetail.3.18",
+        "compile.layoutDetail.3.19",
+        "compile.layoutDetail.3.20",
+        "compile.layoutDetail.3.21",
+        "compile.layoutDetail.3.22",
+        "compile.layoutDetail.3.23",
+        "compile.layoutDetail.4.0",
+        "compile.layoutDetail.4.1",
+        "compile.layoutDetail.4.2",
+        "compile.layoutDetail.4.3",
+        "compile.layoutDetail.4.4",
+        "compile.layoutDetail.4.5",
+        "compile.layoutDetail.4.6",
+        "compile.layoutDetail.4.7",
+        "compile.layoutDetail.4.8",
+        "compile.layoutDetail.4.9",
+        "compile.layoutDetail.4.10",
+        "compile.layoutDetail.4.11",
+        "compile.layoutDetail.4.12",
+        "compile.layoutDetail.4.13",
+        "compile.layoutDetail.4.14",
+        "compile.layoutDetail.4.15",
+        "compile.layoutDetail.4.16",
+        "compile.layoutDetail.4.17",
+        "compile.layoutDetail.4.18",
+        "compile.layoutDetail.4.19",
+        "compile.layoutDetail.4.20",
+        "compile.layoutDetail.4.21",
+        "compile.layoutDetail.4.22",
+        "compile.layoutDetail.4.23",
+        "compile.layoutDetail.5.0",
+        "compile.layoutDetail.5.1",
+        "compile.layoutDetail.5.2",
+        "compile.layoutDetail.5.3",
+        "compile.layoutDetail.5.4",
+        "compile.layoutDetail.5.5",
+        "compile.layoutDetail.5.6",
+        "compile.layoutDetail.5.7",
+        "compile.layoutDetail.5.8",
+        "compile.layoutDetail.5.9",
+        "compile.layoutDetail.5.10",
+        "compile.layoutDetail.5.11",
+        "compile.layoutDetail.5.12",
+        "compile.layoutDetail.5.13",
+        "compile.layoutDetail.5.14",
+        "compile.layoutDetail.5.15",
+        "compile.layoutDetail.5.16",
+        "compile.layoutDetail.5.17",
+        "compile.layoutDetail.5.18",
+        "compile.layoutDetail.5.19",
+        "compile.layoutDetail.5.20",
+        "compile.layoutDetail.5.21",
+        "compile.layoutDetail.5.22",
+        "compile.layoutDetail.5.23",
+        "compile.layoutDetail.6.0",
+        "compile.layoutDetail.6.1",
+        "compile.layoutDetail.6.2",
+        "compile.layoutDetail.6.3",
+        "compile.layoutDetail.6.4",
+        "compile.layoutDetail.6.5",
+        "compile.layoutDetail.6.6",
+        "compile.layoutDetail.6.7",
+        "compile.layoutDetail.6.8",
+        "compile.layoutDetail.6.9",
+        "compile.layoutDetail.6.10",
+        "compile.layoutDetail.6.11",
+        "compile.layoutDetail.6.12",
+        "compile.layoutDetail.6.13",
+        "compile.layoutDetail.6.14",
+        "compile.layoutDetail.6.15",
+        "compile.layoutDetail.6.16",
+        "compile.layoutDetail.6.17",
+        "compile.layoutDetail.6.18",
+        "compile.layoutDetail.6.19",
+        "compile.layoutDetail.6.20",
+        "compile.layoutDetail.6.21",
+        "compile.layoutDetail.6.22",
+        "compile.layoutDetail.6.23"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.fontEmbed",
+      "surface": "CompileDialog/Opțiuni/Fonturi",
+      "control": "upload toate extensiile, familie, elimină, eroare >8MB",
+      "factory": "fontEmbed",
+      "options": [
+        "ttf",
+        "otf",
+        "woff",
+        "woff2",
+        "rename",
+        "remove",
+        "oversize"
+      ],
+      "targets": "",
+      "expanded_count": 7,
+      "case_ids": [
+        "compile.fontEmbed.0",
+        "compile.fontEmbed.1",
+        "compile.fontEmbed.2",
+        "compile.fontEmbed.3",
+        "compile.fontEmbed.4",
+        "compile.fontEmbed.5",
+        "compile.fontEmbed.6"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.navigation",
+      "surface": "CompileDialog",
+      "control": "4 taburi / 5 subtaburi / asignare / preview / close și întoarcere focus",
+      "factory": "navigation",
+      "options": [
+        "tabs",
+        "subtabs",
+        "assign-close",
+        "preview-close",
+        "close",
+        "backdrop",
+        "escape",
+        "sub-escape"
+      ],
+      "targets": "",
+      "expanded_count": 8,
+      "case_ids": [
+        "compile.navigation.0",
+        "compile.navigation.1",
+        "compile.navigation.2",
+        "compile.navigation.3",
+        "compile.navigation.4",
+        "compile.navigation.5",
+        "compile.navigation.6",
+        "compile.navigation.7"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "compile.cancel",
+      "surface": "CompileDialog",
+      "control": "cancel save-dialog fără output; persist nu export",
+      "factory": "cancel",
+      "options": [
+        "compile-cancel"
+      ],
+      "targets": "",
+      "expanded_count": 1,
+      "case_ids": [
+        "compile.cancel.0"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "export.documents",
+      "surface": "ExportDialog/Documente",
+      "control": "toate formatele per document",
+      "factory": "exportDocs",
+      "options": [
+        "docx",
+        "odt",
+        "rtf",
+        "md",
+        "txt",
+        "html"
+      ],
+      "targets": "",
+      "expanded_count": 6,
+      "case_ids": [
+        "export.documents.0",
+        "export.documents.1",
+        "export.documents.2",
+        "export.documents.3",
+        "export.documents.4",
+        "export.documents.5"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "export.scope",
+      "surface": "ExportDialog/Documente",
+      "control": "selecție/dosarul curent/tot proiectul/inclusiv Coș explicit",
+      "factory": "exportScope",
+      "options": [
+        "selection",
+        "folder",
+        "all",
+        "trash"
+      ],
+      "targets": "",
+      "expanded_count": 4,
+      "case_ids": [
+        "export.scope.0",
+        "export.scope.1",
+        "export.scope.2",
+        "export.scope.3"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "export.sidecars",
+      "surface": "ExportDialog/Documente",
+      "control": "note/sinopsis/metadate/track changes",
+      "factory": "exportSidecars",
+      "options": [
+        "notes-on",
+        "notes-off",
+        "synopsis-on",
+        "synopsis-off",
+        "meta-on",
+        "meta-off",
+        "track-on",
+        "track-off"
+      ],
+      "targets": "",
+      "expanded_count": 8,
+      "case_ids": [
+        "export.sidecars.0",
+        "export.sidecars.1",
+        "export.sidecars.2",
+        "export.sidecars.3",
+        "export.sidecars.4",
+        "export.sidecars.5",
+        "export.sidecars.6",
+        "export.sidecars.7"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "export.outline",
+      "surface": "ExportDialog/OPML și CSV",
+      "control": "OPML note on/off și CSV",
+      "factory": "exportOutline",
+      "options": [
+        "opml-off",
+        "opml-on",
+        "csv"
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "export.outline.0",
+        "export.outline.1",
+        "export.outline.2"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "export.cancel",
+      "surface": "ExportDialog",
+      "control": "închide/backdrop/escape/cancel file chooser fiecare tab",
+      "factory": "cancel",
+      "options": [
+        "export-close",
+        "export-backdrop",
+        "export-escape",
+        "export-docs-cancel",
+        "export-opml-cancel",
+        "export-csv-cancel"
+      ],
+      "targets": "",
+      "expanded_count": 6,
+      "case_ids": [
+        "export.cancel.0",
+        "export.cancel.1",
+        "export.cancel.2",
+        "export.cancel.3",
+        "export.cancel.4",
+        "export.cancel.5"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "export.native",
+      "surface": "Fișier/Exportă",
+      "control": "scriv/LaTeX/Pandoc/MultiMarkdown/FDX/Fountain/bundle/editor package",
+      "factory": "nativeExport",
+      "options": [
+        "exportScriv",
+        "exportLatex",
+        "exportPandoc",
+        "exportMmd",
+        "exportFdx",
+        "exportFountain",
+        "exportBundle",
+        "editorPackage"
+      ],
+      "targets": "",
+      "expanded_count": 8,
+      "case_ids": [
+        "export.native.0",
+        "export.native.1",
+        "export.native.2",
+        "export.native.3",
+        "export.native.4",
+        "export.native.5",
+        "export.native.6",
+        "export.native.7"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "export.nativeCancel",
+      "surface": "Fișier/Exportă",
+      "control": "cancel fiecare destinație nativă",
+      "factory": "nativeExportCancel",
+      "options": [
+        "exportScriv",
+        "exportLatex",
+        "exportPandoc",
+        "exportMmd",
+        "exportFdx",
+        "exportFountain",
+        "exportBundle",
+        "editorPackage"
+      ],
+      "targets": "",
+      "expanded_count": 8,
+      "case_ids": [
+        "export.nativeCancel.0",
+        "export.nativeCancel.1",
+        "export.nativeCancel.2",
+        "export.nativeCancel.3",
+        "export.nativeCancel.4",
+        "export.nativeCancel.5",
+        "export.nativeCancel.6",
+        "export.nativeCancel.7"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "import.formats",
+      "surface": "ImportDialog",
+      "control": "fiecare extensie text acceptată",
+      "factory": "importFormat",
+      "options": [
+        "docx",
+        "txt",
+        "md",
+        "markdown",
+        "rtf",
+        "odt",
+        "html",
+        "htm",
+        "fdx",
+        "fountain"
+      ],
+      "targets": "",
+      "expanded_count": 10,
+      "case_ids": [
+        "import.formats.0",
+        "import.formats.1",
+        "import.formats.2",
+        "import.formats.3",
+        "import.formats.4",
+        "import.formats.5",
+        "import.formats.6",
+        "import.formats.7",
+        "import.formats.8",
+        "import.formats.9"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "import.filesFormats",
+      "surface": "ImportSplitDialog",
+      "control": "importFiles fiecare extensie text și PNG media",
+      "factory": "importFormat",
+      "options": [
+        "docx",
+        "txt",
+        "md",
+        "markdown",
+        "rtf",
+        "odt",
+        "html",
+        "htm",
+        "fdx",
+        "fountain",
+        "png"
+      ],
+      "targets": "",
+      "expanded_count": 11,
+      "case_ids": [
+        "import.filesFormats.0",
+        "import.filesFormats.1",
+        "import.filesFormats.2",
+        "import.filesFormats.3",
+        "import.filesFormats.4",
+        "import.filesFormats.5",
+        "import.filesFormats.6",
+        "import.filesFormats.7",
+        "import.filesFormats.8",
+        "import.filesFormats.9",
+        "import.filesFormats.10"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "import.split",
+      "surface": "ImportDialog și ImportSplitDialog",
+      "control": "none/h1/h2/separator plus custom separator și firstLineTitle",
+      "factory": "importSplit",
+      "options": [
+        "none",
+        "h1",
+        "h2",
+        "separator",
+        "separator-empty",
+        "firstLineTitle-on",
+        "firstLineTitle-off",
+        "multiple"
+      ],
+      "targets": [
+        "import",
+        "importFiles"
+      ],
+      "expanded_count": 16,
+      "case_ids": [
+        "import.split.0.0",
+        "import.split.0.1",
+        "import.split.0.2",
+        "import.split.0.3",
+        "import.split.0.4",
+        "import.split.0.5",
+        "import.split.0.6",
+        "import.split.0.7",
+        "import.split.1.0",
+        "import.split.1.1",
+        "import.split.1.2",
+        "import.split.1.3",
+        "import.split.1.4",
+        "import.split.1.5",
+        "import.split.1.6",
+        "import.split.1.7"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "import.cancel",
+      "surface": "ImportDialog și ImportSplitDialog",
+      "control": "cancel/escape/backdrop/chooser cancel/invalid",
+      "factory": "importCancel",
+      "options": [
+        "close",
+        "escape",
+        "backdrop",
+        "chooser",
+        "invalid"
+      ],
+      "targets": [
+        "import",
+        "importFiles"
+      ],
+      "expanded_count": 10,
+      "case_ids": [
+        "import.cancel.0.0",
+        "import.cancel.0.1",
+        "import.cancel.0.2",
+        "import.cancel.0.3",
+        "import.cancel.0.4",
+        "import.cancel.1.0",
+        "import.cancel.1.1",
+        "import.cancel.1.2",
+        "import.cancel.1.3",
+        "import.cancel.1.4"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "import.opml",
+      "surface": "Fișier/Importă/OPML",
+      "control": "arbore/note, cancel și malformed",
+      "factory": "importOpml",
+      "options": [
+        "valid",
+        "cancel",
+        "invalid"
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "import.opml.0",
+        "import.opml.1",
+        "import.opml.2"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "import.web",
+      "surface": "WebImportDialog",
+      "control": "URL/titlu/page/plain/Enter/invalid/cancel",
+      "factory": "importWeb",
+      "options": [
+        "page",
+        "text",
+        "enter",
+        "invalid",
+        "cancel",
+        "backdrop",
+        "escape"
+      ],
+      "targets": "",
+      "expanded_count": 7,
+      "case_ids": [
+        "import.web.0",
+        "import.web.1",
+        "import.web.2",
+        "import.web.3",
+        "import.web.4",
+        "import.web.5",
+        "import.web.6"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "import.bundle",
+      "surface": "Fișier/Importă/pachet",
+      "control": "restore proiect/docs/notes/snapshots și cancel/invalid",
+      "factory": "importBundle",
+      "options": [
+        "valid",
+        "source-cancel",
+        "dest-cancel",
+        "invalid"
+      ],
+      "targets": "",
+      "expanded_count": 4,
+      "case_ids": [
+        "import.bundle.0",
+        "import.bundle.1",
+        "import.bundle.2",
+        "import.bundle.3"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "import.report",
+      "surface": "ImportReport / import .scriv",
+      "control": "toate 16 contoare, projectNotes, originalCopy, warnings, close",
+      "factory": "importReport",
+      "options": [
+        "full",
+        "close",
+        "escape",
+        "backdrop",
+        "source-cancel",
+        "dest-cancel",
+        "invalid"
+      ],
+      "targets": "",
+      "expanded_count": 7,
+      "case_ids": [
+        "import.report.0",
+        "import.report.1",
+        "import.report.2",
+        "import.report.3",
+        "import.report.4",
+        "import.report.5",
+        "import.report.6"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "backup",
+      "surface": "BackupDialog și Fișier",
+      "control": "listă/backup acum/backup în/restore, zip/folder și cancel",
+      "factory": "backup",
+      "options": [
+        "empty",
+        "now",
+        "native-now",
+        "backupTo",
+        "backupTo-cancel",
+        "restore",
+        "restore-cancel",
+        "folder",
+        "close",
+        "backdrop",
+        "escape",
+        "rotation"
+      ],
+      "targets": "",
+      "expanded_count": 12,
+      "case_ids": [
+        "backup.0",
+        "backup.1",
+        "backup.2",
+        "backup.3",
+        "backup.4",
+        "backup.5",
+        "backup.6",
+        "backup.7",
+        "backup.8",
+        "backup.9",
+        "backup.10",
+        "backup.11"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "template.category",
+      "surface": "SaveTemplateDialog",
+      "control": "toate categoriile, title/descriere/include content",
+      "factory": "template",
+      "options": [
+        "Ficțiune",
+        "Non-ficțiune",
+        "Scenariu",
+        "Poezie",
+        "Diverse",
+        "Ale mele"
+      ],
+      "targets": "",
+      "expanded_count": 6,
+      "case_ids": [
+        "template.category.0",
+        "template.category.1",
+        "template.category.2",
+        "template.category.3",
+        "template.category.4",
+        "template.category.5"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "template.icon",
+      "surface": "SaveTemplateDialog",
+      "control": "toate icoanele radio",
+      "factory": "templateIcon",
+      "options": [
+        "📄",
+        "📘",
+        "📖",
+        "📚",
+        "✒️",
+        "🖋️",
+        "🎬",
+        "🎭",
+        "📝",
+        "📜",
+        "🎓",
+        "🔬",
+        "🗺️",
+        "🧭",
+        "💡",
+        "❤️",
+        "🌙",
+        "🍲"
+      ],
+      "targets": "",
+      "expanded_count": 18,
+      "case_ids": [
+        "template.icon.0",
+        "template.icon.1",
+        "template.icon.2",
+        "template.icon.3",
+        "template.icon.4",
+        "template.icon.5",
+        "template.icon.6",
+        "template.icon.7",
+        "template.icon.8",
+        "template.icon.9",
+        "template.icon.10",
+        "template.icon.11",
+        "template.icon.12",
+        "template.icon.13",
+        "template.icon.14",
+        "template.icon.15",
+        "template.icon.16",
+        "template.icon.17"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "template.other",
+      "surface": "SaveTemplateDialog",
+      "control": "include off/empty title/cancel/backdrop/escape",
+      "factory": "templateOther",
+      "options": [
+        "include-off",
+        "empty",
+        "cancel",
+        "backdrop",
+        "escape"
+      ],
+      "targets": "",
+      "expanded_count": 5,
+      "case_ids": [
+        "template.other.0",
+        "template.other.1",
+        "template.other.2",
+        "template.other.3",
+        "template.other.4"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "pageSetup.size",
+      "surface": "PageSetupDialog",
+      "control": "toate hârtiile inclusiv custom",
+      "factory": "pageSetup",
+      "options": [
+        "A4",
+        "A5",
+        "Letter",
+        "Legal",
+        "6x9",
+        "custom"
+      ],
+      "targets": "",
+      "expanded_count": 6,
+      "case_ids": [
+        "pageSetup.size.0",
+        "pageSetup.size.1",
+        "pageSetup.size.2",
+        "pageSetup.size.3",
+        "pageSetup.size.4",
+        "pageSetup.size.5"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "pageSetup.orientation",
+      "surface": "PageSetupDialog",
+      "control": "portret/peisaj",
+      "factory": "pageSetup",
+      "options": [
+        "portrait",
+        "landscape"
+      ],
+      "targets": "",
+      "expanded_count": 2,
+      "case_ids": [
+        "pageSetup.orientation.0",
+        "pageSetup.orientation.1"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "pageSetup.format",
+      "surface": "PageSetupDialog",
+      "control": "manuscris/fișe index/schiță și PDF",
+      "factory": "pageSetup",
+      "options": [
+        "manuscript",
+        "indexCards",
+        "outline"
+      ],
+      "targets": "",
+      "expanded_count": 3,
+      "case_ids": [
+        "pageSetup.format.0",
+        "pageSetup.format.1",
+        "pageSetup.format.2"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "pageSetup.geometry",
+      "surface": "PageSetupDialog",
+      "control": "toate inputurile geometry/margini/antet/subsol/font/size/spacing/differentFirst",
+      "factory": "pageSetupGeometry",
+      "options": [
+        "all-fields",
+        "differentFirst-on",
+        "differentFirst-off",
+        "numeric-min",
+        "numeric-max",
+        "close-unsaved",
+        "preview"
+      ],
+      "targets": "",
+      "expanded_count": 7,
+      "case_ids": [
+        "pageSetup.geometry.0",
+        "pageSetup.geometry.1",
+        "pageSetup.geometry.2",
+        "pageSetup.geometry.3",
+        "pageSetup.geometry.4",
+        "pageSetup.geometry.5",
+        "pageSetup.geometry.6"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "printPreview.zoom",
+      "surface": "PrintPreviewDialog",
+      "control": "toate zoom-urile și src viewer",
+      "factory": "printPreview",
+      "options": [
+        "page-fit",
+        "page-width",
+        50,
+        75,
+        100,
+        125,
+        150,
+        200
+      ],
+      "targets": "",
+      "expanded_count": 8,
+      "case_ids": [
+        "printPreview.zoom.0",
+        "printPreview.zoom.1",
+        "printPreview.zoom.2",
+        "printPreview.zoom.3",
+        "printPreview.zoom.4",
+        "printPreview.zoom.5",
+        "printPreview.zoom.6",
+        "printPreview.zoom.7"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "printPreview.other",
+      "surface": "PrintPreviewDialog",
+      "control": "pagina clamp/savePDF/cancel/close/backdrop/escape",
+      "factory": "printPreviewOther",
+      "options": [
+        "page-min",
+        "page-max",
+        "page-next",
+        "save",
+        "save-cancel",
+        "close",
+        "backdrop",
+        "escape"
+      ],
+      "targets": "",
+      "expanded_count": 8,
+      "case_ids": [
+        "printPreview.other.0",
+        "printPreview.other.1",
+        "printPreview.other.2",
+        "printPreview.other.3",
+        "printPreview.other.4",
+        "printPreview.other.5",
+        "printPreview.other.6",
+        "printPreview.other.7"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "sync.out",
+      "surface": "Fișier/Sincronizare",
+      "control": "toate formatele draft/notes, include notes",
+      "factory": "syncOut",
+      "options": [
+        "rtf",
+        "txt",
+        "md",
+        "fdx",
+        "fountain"
+      ],
+      "targets": [
+        "draft",
+        "notes"
+      ],
+      "expanded_count": 10,
+      "case_ids": [
+        "sync.out.0.0",
+        "sync.out.0.1",
+        "sync.out.0.2",
+        "sync.out.0.3",
+        "sync.out.0.4",
+        "sync.out.1.0",
+        "sync.out.1.1",
+        "sync.out.1.2",
+        "sync.out.1.3",
+        "sync.out.1.4"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "sync.other",
+      "surface": "Fișier/Sincronizare",
+      "control": "read/update/new/missing/conflict snapshot/cancel/no notes/error",
+      "factory": "syncOther",
+      "options": [
+        "update",
+        "new-draft",
+        "new-notes",
+        "missing",
+        "conflict",
+        "cancel",
+        "no-notes",
+        "missing-manifest",
+        "copies-warning"
+      ],
+      "targets": "",
+      "expanded_count": 9,
+      "case_ids": [
+        "sync.other.0",
+        "sync.other.1",
+        "sync.other.2",
+        "sync.other.3",
+        "sync.other.4",
+        "sync.other.5",
+        "sync.other.6",
+        "sync.other.7",
+        "sync.other.8"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    },
+    {
+      "id": "conflict",
+      "surface": "ConflictDialog / StatusBar",
+      "control": "mine/theirs/both, independent choices, apply/keep/close/backdrop/escape",
+      "factory": "conflict",
+      "options": [
+        "mine",
+        "theirs",
+        "both",
+        "mixed",
+        "keep",
+        "escape",
+        "backdrop"
+      ],
+      "targets": "",
+      "expanded_count": 7,
+      "case_ids": [
+        "conflict.0",
+        "conflict.1",
+        "conflict.2",
+        "conflict.3",
+        "conflict.4",
+        "conflict.5",
+        "conflict.6"
+      ],
+      "store": null,
+      "area": null,
+      "selector": {
+        "css": null,
+        "label_key": null,
+        "index": null
+      },
+      "expected": "Aserțiuni în verify: project/settings/files/bytes/preview/cancel, conform factory",
+      "status": "planned-not-executed"
+    }
+  ],
+  "native_routes": [
+    {
+      "command": "compile",
+      "route": [
+        "Fișier",
+        "Compilează…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "save",
+      "route": [
+        "Fișier",
+        "Salvează acum"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "exportFiles",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Exportă documente / OPML / CSV…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "exportScriv",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Exportă ca proiect .scriv…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "exportLatex",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Exportă LaTeX…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "exportPandoc",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Exportă Pandoc Markdown…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "exportMmd",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Exportă MultiMarkdown…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "exportFdx",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Exportă scenariu .fdx…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "exportFountain",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Exportă scenariu Fountain…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "exportBundle",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Exportă pachet pentru web / mobil…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "editorPackage",
+      "route": [
+        "Fișier",
+        "Exportă",
+        "Pachet pentru editor…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "import",
+      "route": [
+        "Fișier",
+        "Importă",
+        "Importă Word / text / Markdown…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "importFiles",
+      "route": [
+        "Fișier",
+        "Importă",
+        "Importă fișiere (RTF, ODT, HTML, Fountain, media)…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "importOpml",
+      "route": [
+        "Fișier",
+        "Importă",
+        "Importă OPML…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "importWeb",
+      "route": [
+        "Fișier",
+        "Importă",
+        "Importă pagină web…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "importBundle",
+      "route": [
+        "Fișier",
+        "Importă",
+        "Importă pachet de proiect…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "backups",
+      "route": [
+        "Fișier",
+        "Backup-uri…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "backupNow",
+      "route": [
+        "Fișier",
+        "Backup acum"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "backupTo",
+      "route": [
+        "Fișier",
+        "Backup în…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "saveTemplate",
+      "route": [
+        "Fișier",
+        "Salvează ca șablon…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "pageSetup",
+      "route": [
+        "Fișier",
+        "Tipărire",
+        "Configurare pagină…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "printPreview",
+      "route": [
+        "Fișier",
+        "Tipărire",
+        "Previzualizare tipărire"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "syncOut",
+      "route": [
+        "Fișier",
+        "Sincronizare",
+        "Sincronizează cu folder extern: scrie…"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "syncIn",
+      "route": [
+        "Fișier",
+        "Sincronizare",
+        "Sincronizează cu folder extern: citește modificările"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    },
+    {
+      "command": "closeProject",
+      "route": [
+        "Fișier",
+        "Închide proiectul"
+      ],
+      "runtime": "H.menu lookup commandId followed by exact H.native route callback"
+    }
+  ],
+  "additional_ui_routes": [
+    {
+      "surface": "Home",
+      "route": [
+        "Opțiuni",
+        "Importă proiect .scriv"
+      ],
+      "case_groups": [
+        "import.report"
+      ],
+      "canonical_command": null,
+      "reason": "Nu există command ID .scriv în registry; intrare Home reală, după closeProject"
+    }
+  ],
+  "uncovered": [
+    {
+      "name": "physical-print",
+      "reason": "Fișier > Tipărire > Tipărește și PrintPreview > Tipărește invocă webContents.print și pot porni o imprimantă reală; harness nu adaptează acest dialog OS. Nu sunt apăsate fără destinație test sigură."
+    },
+    {
+      "name": "shell-live",
+      "reason": "openPath/showItemInFolder sunt capturate de harness. Se verifică fișierul și efectul adapterului, nu lansarea aplicației asociate sau Explorer live."
+    },
+    {
+      "name": "pdf-viewer-chrome",
+      "reason": "Se verifică PDF magic/content, iframe blob și fragmente page/zoom; meniul/contextul/toolbar-ul intern Chromium PDF este o suprafață plugin/OS separată fără selector portabil în harness."
+    },
+    {
+      "name": "native-dialog-chrome",
+      "reason": "File chooser are răspunsuri către fixture paths; filtrele/chrome/butoanele native OS nu sunt traverse vizual live. Cancel și efectele callbackurilor sunt testate."
+    },
+    {
+      "name": "media-import-aliases",
+      "reason": "ImportFiles PNG este verificat byte-for-byte. Extensiile jpg/jpeg/gif/webp/svg/bmp/tif/tiff/heic/pdf/mp3/m4a/wav/ogg/aac/mp4/mov/m4v/webm nu sunt toate fixture-uri valide în acest modul; MIME/player/codec sunt neacoperite aici."
+    },
+    {
+      "name": "adjacent-connected-imports",
+      "reason": "Import Zotero live și Transcrie audio sunt servicii/date externe, nu sunt acționate cu chei/date/audio reale. Import bibliografie și configurarea serviciilor aparțin domeniilor alăturate."
+    },
+    {
+      "name": "continuous-values",
+      "reason": "Inputurile de text/număr/culoare au domeniu continuu; se verifică valorile nominale și limitele numerice declarate, nu toate stringurile/numerele. Font upload folosește font de fixture local, fără validarea vizuală a fiecărei familii instalate."
+    },
+    {
+      "name": "combinatorial-matrix",
+      "reason": "Fiecare opțiune enumerată are caz propriu; produsul cartezian al tuturor setărilor Compile/output/layout nu este executat. Per-output front/back overrides sunt exercitate pe HTML; persistența hărții pentru celelalte 11 formate non-print nu are caz separat."
+    },
+    {
+      "name": "global-format-across-projects",
+      "reason": "Se verifică compile-formats.json, edit/delete prin UI în proiectul fixture; reutilizarea efectivă într-un al doilea proiect nu este testată separat."
+    },
+    {
+      "name": "sync-auto-project-settings",
+      "reason": "syncAuto la open/close și controalele ProjectSettings/Sharing pentru sync se află în modulul setări; aici se verifică comenzile explicite out/in și ConflictDialog real."
+    },
+    {
+      "name": "compile-format-context",
+      "reason": "CompileDialog nu definește meniu contextual/submeniu pentru formate; select/double-click/actions sunt acoperite. Toolbar/native entry sunt verificate numai prin comenzile/rutele prezente."
+    },
+    {
+      "name": "cover-secondary-surfaces",
+      "reason": "Coperta metadatelor este exportată/verificată în EPUB; selectorul duplicat de copertă din Opțiuni pentru DOCX/PDF și efectul de imagine în aceste două ieșiri nu au caz distinct."
+    },
+    {
+      "name": "font-codec-validation",
+      "reason": "Uploadurile otf/woff/woff2 exercită filtrele UI/extensia/persistența cu bytes de font TTF fixture redenumiți. Nu certifică decodarea/randarea fontului OTF/WOFF/WOFF2; acest efect este neacoperit explicit."
+    },
+    {
+      "name": "conflict-stale-apply",
+      "reason": "Mine/theirs/both și alegerile independente folosesc watcher-ul și snapshots reale. Ramura de refuz dacă autorul schimbă textul în timp ce dialogul e deschis nu este construită separat."
+    }
+  ],
+  "fixtures": {
+    "documents": [
+      "doc-a",
+      "doc-b",
+      "template-a",
+      "trashed-a"
+    ],
+    "folders": [
+      "folder-a",
+      "template-folder"
+    ],
+    "section_types": [
+      "Tip QA",
+      "Parte",
+      "Capitol",
+      "Capitol cu text",
+      "Secțiune",
+      "Scenă",
+      "Pagină de titlu"
+    ],
+    "styles": [
+      "ilustratie",
+      "accent",
+      "sanscrit",
+      "citat-bloc",
+      "motto",
+      "scrisoare",
+      "centrat",
+      "separator"
+    ],
+    "collections": [
+      "collection-a",
+      "search-qa",
+      "search-results"
+    ],
+    "labels": [
+      "Fără",
+      "Roșu QA",
+      "Albastru QA"
+    ],
+    "statuses": [
+      "Fără",
+      "Ciornă QA",
+      "Final QA"
+    ],
+    "keywords": [
+      "Cheie QA",
+      "Alta QA"
+    ],
+    "cover": "PNG local 1x1, fără date reale",
+    "web": "HTTP fixture 127.0.0.1, durată limitată",
+    "conflict": "Actor fixture disc armat în setup, după typing UI real, watcher/snapshots reale"
+  },
+  "known_test_risks": [
+    "Nu s-a executat Electron: selectorii, timpii, PDF CMap și fixture-ul .scriv trebuie validați de părinte; un eșec este raportat, nu transformat în pass.",
+    "Fonturile alias OTF/WOFF/WOFF2 nu sunt decodări valide; testele lor verifică upload/bytes/setări numai.",
+    "Fereastra PDF Compile este închisă prin Alt+F4 UI; renderer/harness trebuie să confirme gestul Windows.",
+    "Matricea include fiecare opțiune statică enumerată și rândurile fixture; nu reprezintă produsul cartezian al tuturor combinațiilor.",
+    "Imprimarea fizică este explicit neacoperită; butonul nu este apăsat pe o imprimantă reală."
+  ]
+}

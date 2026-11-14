@@ -25,6 +25,7 @@ const { listTemplates } = require('../lib/templates.cjs');
 const { fileToHtml, splitHtml } = require('../lib/docxImport.cjs');
 const bundle = require('../lib/bundle.cjs');
 const projectWatch = require('../lib/projectWatch.cjs');
+const snapshotSearch = require('../lib/snapshotSearch.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
 // The data folder name stays "Scribner" after the rename to "Pneuma Sofer" so existing users keep
@@ -302,7 +303,7 @@ function setupSpelling(win) {
       const st = readSettings();
       const g = lookupGroups(text, { from: st.translateFrom || 'auto', to: st.translateTo || 'ro', lang: st.language || 'ro' });
       const links = (list) => list.map((l) => ({ label: l.label, click: () => lookup(l.url) }));
-      const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
+      const cmd = (id) => Object.assign(() => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); }, { commandId: id });
       const sv = services.serviceStatus(st, safeStorage);
       const inApp = [
         ...(sv.deepl.configured ? [{ label: L.inAppDeepl, click: cmd('deeplInApp') }] : []),
@@ -310,9 +311,9 @@ function setupSpelling(win) {
       ];
       // Decizia autorului: traducerea in-app (API), fără trimitere la site-uri externe.
       if (inApp.length) items.push({ label: L.translate, submenu: inApp });
-      items.push({ label: L.grammar, click: cmd('grammarSel') });
-      if (g.dict.length) items.push({ label: L.dictionaries, submenu: links(g.dict) });
-      items.push({ label: L.research, submenu: links(g.research) });
+      if (sv.languagetool.configured) items.push({ label: L.grammar, click: cmd('grammarSel') });
+      if (sv.webResearch.configured && g.dict.length) items.push({ label: L.dictionaries, submenu: links(g.dict) });
+      if (sv.webResearch.configured) items.push({ label: L.research, submenu: links(g.research) });
       // AI isolation (2026-10-27): AI on selection, „Întreabă AI-ul”, NotebookLM (ask/consult) are
       // reachable only from the top-level AI menu; the right-click menu carries no AI entries.
       items.push({
@@ -326,7 +327,7 @@ function setupSpelling(win) {
       items.push({ type: 'separator' });
     }
     if (params.isEditable) {
-      const cmd = (id) => () => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); };
+      const cmd = (id) => Object.assign(() => { if (!win.isDestroyed()) win.webContents.send('menu:command', id); }, { commandId: id });
       // Read aloud with the built-in voice (Mihai): selection / from the cursor / the whole document.
       items.push({
         label: L.readAloud,
@@ -374,7 +375,12 @@ function setupSpelling(win) {
     } else if (params.selectionText) {
       items.push({ label: L.copy, role: 'copy' });
     }
-    if (items.length) Menu.buildFromTemplate(items).popup({ window: win });
+    const ids = []; const collect = (list) => list.forEach((item) => { if (item.click?.commandId) ids.push(item.click.commandId); if (item.submenu) collect(item.submenu); }); collect(items);
+    const allowed = await win.webContents.executeJavaScript('window.__commandAvailability ? Object.fromEntries('+JSON.stringify(ids)+'.map(id => [id, window.__commandAvailability(id)])) : {}').catch(() => ({}));
+    if (win.isDestroyed()) return;
+    const prune = (list) => { const out = []; for (const item of list) { if (item.click?.commandId && allowed[item.click.commandId] !== true) continue; if (item.submenu) { const sub = prune(item.submenu); if (!sub.length) continue; item.submenu = sub; } if (item.type === 'separator' && (!out.length || out[out.length-1].type === 'separator')) continue; out.push(item); } while (out[out.length-1]?.type === 'separator') out.pop(); return out; };
+    const visibleItems = prune(items);
+    if (visibleItems.length) Menu.buildFromTemplate(visibleItems).popup({ window: win });
   });
 }
 
@@ -416,6 +422,15 @@ function createWindow() {
   win.setMenuBarVisibility(false);
   setupSpelling(win);
   const wcId = win.webContents.id;
+  win.__allowClose = false;
+  win.__closePromptPending = false;
+  win.on('close', (event) => {
+    if (win.__allowClose || quitting) return;
+    event.preventDefault();
+    if (win.__closePromptPending) return;
+    win.__closePromptPending = true;
+    win.webContents.send('window:close-request');
+  });
   win.on('closed', () => releaseWindow(wcId));
   // A crashed or reloaded renderer has lost its project: free it for other windows.
   win.webContents.on('render-process-gone', () => releaseWindow(wcId));
@@ -443,6 +458,17 @@ function createWindow() {
   else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   return win;
 }
+
+handle('window:close-response', (e, choice) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (!win) return false;
+  win.__closePromptPending = false;
+  if (choice === 'close') {
+    win.__allowClose = true;
+    win.close();
+  }
+  return true;
+});
 
 // The window closed its project (back to the start screen): free it for other windows.
 handle('project:release', (e) => {
@@ -498,6 +524,7 @@ function handle(channel, fn) {
     try {
       return { ok: true, value: await fn(event, ...args) };
     } catch (err) {
+      if (process.env.PNEUMA_PERF_DIAG) console.error('[perf-diag]', channel, err.stack || err);
       return { ok: false, error: channel.startsWith('ai:') || channel === 'rag:ask' || channel === 'rag:chat' ? ai.friendlyError(err, readSettings().language) : err.message || String(err) };
     }
   });
@@ -569,6 +596,7 @@ handle('settings:set', (_e, patch) => {
   }
   if (apiKey !== undefined) setApiKey(apiKey, rest.aiProvider);
   scheduleBackups();
+  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send('services:changed');
   return true;
 });
 handle('settings:chooseBackupDir', async (e) => {
@@ -606,11 +634,16 @@ handle('project:new', async (e, title, templateId) => {
 
 handle('project:open', async (e, dirArg) => {
   let dir = dirArg;
+  if (process.env.PNEUMA_PERF_DIAG) console.error('[perf-diag:open] dirArg=', typeof dirArg, JSON.stringify(dirArg)?.slice(0, 80));
   if (!dir) {
     const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
       title: 'Deschide un proiect Pneuma Sofer (dosarul .scribner)',
       properties: ['openDirectory'],
     });
+    if (process.env.PNEUMA_PERF_DIAG) {
+      const util = require('util');
+      console.error('[perf-diag:open] res=', util.inspect(res, { depth: 2, breakLength: 200 }).slice(0, 400));
+    }
     if (res.canceled) return null;
     dir = res.filePaths[0];
   } else if (!(readSettings().recent || []).some((r) => r.dir === dir)) {
@@ -700,13 +733,32 @@ handle('project:save', (e, dir, project) => {
 
 handle('doc:read', (_e, dir, id, kind) => {
   assertOpened(dir);
-  return store.readDoc(dir, id, kind === 'notes' ? 'notes' : 'docs');
+  kind = kind === 'notes' ? 'notes' : 'docs';
+  const html = store.readDoc(dir, id, kind);
+  // The version the window was given counts as known: a later autosave that overwrites exactly
+  // this text must not be mistaken for the destruction of an outside edit (doc:write below).
+  noteSelfWrite(path.join(dir, kind, `${id}.html`), html);
+  return html;
 });
 handle('doc:write', (e, dir, id, kind, html) => {
   assertOpened(dir);
   assertOwner(e.sender, dir);
-  noteSelfWrite(path.join(dir, kind === 'notes' ? 'notes' : 'docs', `${id}.html`), html);
-  store.writeDoc(dir, id, kind === 'notes' ? 'notes' : 'docs', html);
+  kind = kind === 'notes' ? 'notes' : 'docs';
+  const file = path.join(dir, kind, `${id}.html`);
+  // An outside version (agent via MCP, sync client) may have landed since the window last wrote
+  // or read this document, inside the race window where the watcher cannot report it: this save
+  // would destroy it silently. Keep a copy first — the autosave itself then proceeds untouched.
+  const lost = projectWatch.lostExternalContent(trackerFor(dir), file, html);
+  if (lost !== null) {
+    try {
+      store.backupFile(dir, `${id}.html`, lost);
+      console.warn(`[pneuma] ${kind}/${id}.html: o versiune externă era pe disc și a fost păstrată în snapshots/_backup înainte de salvare.`);
+    } catch {
+      /* best effort: the save must not be blocked by the backup */
+    }
+  }
+  noteSelfWrite(file, html);
+  store.writeDoc(dir, id, kind, html);
   dirtyDirs.add(path.resolve(dir));
   return true;
 });
@@ -910,6 +962,7 @@ require('./v10Handlers.cjs')({ handle, getSettings: readSettings, getApiKey, get
 require('./updateHandlers.cjs')({ handle, app, net, shell, BrowserWindow, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }), githubToken: () => services.getService(readSettings(), 'github', safeStorage).token || process.env.SCRIBNER_GITHUB_TOKEN || '' });
 require('./smallWindowHandlers.cjs')({ handle, app, BrowserWindow, globalShortcut: require('electron').globalShortcut, dialog, shell, claims, assertOpened, isAppUrl, preload: path.join(__dirname, 'preload.cjs'), appPage: { url: process.env.VITE_DEV_SERVER_URL || '', file: path.join(__dirname, '..', 'dist', 'index.html') }, getSettings: readSettings, setSettings: (patch) => writeSettings({ ...readSettings(), ...patch }) });
 require('./notebookHandlers.cjs')({ handle, getSettings: readSettings, assertOpened, app });
+require('./speechHandlers.cjs')({ handle, getSettings: readSettings, net, safeStorage, app });
 
 // Native application menu built from the renderer's command registry. Accelerators
 // are shown but not registered: the renderer handles keys, so a shortcut never fires twice.
@@ -927,6 +980,7 @@ function buildAppMenu(win, spec) {
         : it.role && NATIVE_ROLES.has(it.role)
         ? { label: it.label, role: it.role, enabled: !it.disabled, accelerator: it.key ? it.key.replace('Ctrl', 'CmdOrCtrl') : undefined, registerAccelerator: false }
         : {
+            id: typeof it.id === 'string' ? it.id : (it.id?.id || it.id?.commandId),
             label: it.label,
             ...(typeof it.checked === 'boolean' ? { type: 'checkbox', checked: it.checked } : {}),
             enabled: !it.disabled,
@@ -1303,6 +1357,41 @@ handle('snap:updateHtml', (_e, dir, id, file, html) => {
   return store.updateSnapshotHtml(dir, id, file, html);
 });
 
+// Snapshots Manager (the whole project): list without html, search in titles/dates/text,
+// mass delete of chosen pairs, export of one snapshot through the native save dialog.
+handle('snap:listAll', (_e, dir) => {
+  assertOpened(dir);
+  return store.listAllSnapshots(dir);
+});
+handle('snap:search', (_e, dir, query, opts) => {
+  assertOpened(dir);
+  return snapshotSearch.searchSnapshots(dir, String(query || ''), opts || {});
+});
+handle('snap:deleteMany', (e, dir, items) => {
+  assertOpened(dir);
+  assertOwner(e.sender, dir);
+  return store.deleteSnapshots(dir, items);
+});
+handle('snap:export', async (e, dir, id, file, docTitle) => {
+  assertOpened(dir);
+  const data = JSON.parse(fs.readFileSync(snapPath(dir, id, file), 'utf8')); // snapPath validates both
+  const safe = (v) => String(v || '').replace(/[\\/:*?"<>|\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Snapshot';
+  const res = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Exportă snapshot-ul',
+    defaultPath: `${safe(docTitle)} - ${safe(data.name)}.html`,
+    filters: [{ name: 'Pagină HTML', extensions: ['html'] }, { name: 'Text simplu', extensions: ['txt'] }],
+  });
+  if (res.canceled || !res.filePath) return null;
+  // The content follows the chosen extension: .txt gets plain text, anything else gets a
+  // minimal HTML page (snapshot html is sanitized when the snapshot is taken).
+  const body = /\.txt$/i.test(res.filePath)
+    ? snapshotSearch.toSearchText(data.html)
+    : `<!doctype html>\n<html lang="ro">\n<head>\n<meta charset="utf-8">\n<title>${safe(data.name)}</title>\n</head>\n<body>\n${String(data.html ?? '')}\n</body>\n</html>\n`;
+  fs.writeFileSync(res.filePath, body, 'utf8');
+  shell.showItemInFolder(res.filePath);
+  return res.filePath;
+});
+
 // Personal spelling dictionary (Options → Corrections).
 handle('spell:listWords', (e) => e.sender.session.listWordsInSpellCheckerDictionary());
 handle('spell:removeWord', (e, word) => e.sender.session.removeWordFromSpellCheckerDictionary(String(word)));
@@ -1383,6 +1472,7 @@ handle('services:test', async (_e, id) => {
 });
 handle('services:set', (_e, id, values) => {
   writeSettings(services.setService(readSettings(), id, values || {}, safeStorage));
+  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send('services:changed');
   return services.serviceStatus(readSettings(), safeStorage)[id];
 });
 handle('accounts:set', (_e, account) => {
@@ -1466,7 +1556,53 @@ handle('googleAuth:status', async () => {
 });
 
 // Synonyms read in-app from sinonimul.ro (no key needed); only the one HTTP request leaves the app.
-handle('synonyms:fetch', (_e, word) => synonyms.fetchSynonyms({ word }));
+// Live dictation-engine stats (ADL §12): CPU%/RAM of DTED.exe & whisper-server.exe + GPU/VRAM
+// from nvidia-smi (present only on NVIDIA machines). CPU% is differential between polls.
+const dictationStats = require('../lib/dictationStats.cjs');
+const ENGINE_IMAGES = ['DTED.exe', 'whisper-server.exe'];
+let lastSample = null; // pid -> { cpuSec, at }
+handle('dictation:stats', async () => {
+  const exec = (cmd, opts = {}) => new Promise((resolve) => {
+    try {
+      require('child_process').exec(cmd, { timeout: 4000, windowsHide: true, ...opts }, (err, stdout) => resolve(err ? '' : String(stdout || '')));
+    } catch { resolve(''); }
+  });
+  const csv = await exec(`tasklist /FI "IMAGENAME eq DTED.exe" /FO CSV /NH & tasklist /FI "IMAGENAME eq whisper-server.exe" /FO CSV /NH`);
+  const enginesRaw = dictationStats.aggregateTasklist(csv, ENGINE_IMAGES);
+  // CPU%: sample TotalProcessorTime per PID twice across polls (state kept in main).
+  const ps = await exec(`powershell -NoProfile -Command "Get-Process DTED,whisper-server -ErrorAction SilentlyContinue | Select-Object Id,@{n='cpu';e={$_.TotalProcessorTime.TotalSeconds}} | ConvertTo-Json -Compress"`);
+  let cpuNow = {};
+  try {
+    const arr = JSON.parse(ps || '[]');
+    for (const p of (Array.isArray(arr) ? arr : [arr])) if (p && p.Id) cpuNow[p.Id] = Number(p.cpu) || 0;
+  } catch { /* PowerShell absent/fail: CPU% rămâne n/d */ }
+  const now = Date.now();
+  const engines = enginesRaw.map((en) => {
+    let cpuPct = null;
+    const deltas = en.pids.map((pid) => {
+      const prev = lastSample && lastSample.pids ? lastSample.pids[pid] : null;
+      const cur = cpuNow[pid];
+      if (prev && isFinite(cur) && cur >= prev.cpuSec) {
+        const wall = (now - prev.at) / 1000;
+        return dictationStats.computeCpuPct(prev.cpuSec, cur, wall);
+      }
+      return null;
+    }).filter((x) => x !== null);
+    if (deltas.length) cpuPct = Math.round(deltas.reduce((a, b) => a + b, 0) / deltas.length);
+    return { ...en, cpuPct };
+  });
+  lastSample = { at: now, pids: cpuNow };
+  // GPU/VRAM via nvidia-smi (doar NVIDIA); eșuează silențios altfel.
+  let gpu = { present: false };
+  try {
+    const g = await exec('nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits');
+    const parsed = dictationStats.parseNvidiaSmi(g);
+    if (parsed) gpu = { present: true, ...parsed };
+  } catch { /* fără NVIDIA */ }
+  return { engines, gpu };
+});
+
+handle('synonyms:fetch', (_e, word) => synonyms.fetchSynonyms({ word, signal: AbortSignal.timeout(10000) }));
 handle('zotero:import', async (_e, { collection } = {}) => {
   const zt = services.getService(readSettings(), 'zotero', safeStorage);
   return { entries: await require('../lib/zotero.cjs').fetchZoteroLibrary({ userId: zt.userId, apiKey: zt.apiKey, collection }) };

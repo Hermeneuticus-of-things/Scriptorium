@@ -8,9 +8,10 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const u = require('../lib/updater.cjs');
 
-const res = (status, { json, text, body, headers = {} } = {}) => ({
+const res = (status, { json, text, body, headers = {}, url = '' } = {}) => ({
   status,
   ok: status >= 200 && status < 300,
+  url,
   headers: { get: (k) => headers[k.toLowerCase()] ?? null },
   json: async () => json,
   text: async () => text ?? '',
@@ -62,18 +63,42 @@ describe('isAllowedUrl', () => {
     expect(u.isAllowedUrl('https://user:pw@github.com/x')).toBe(false);
     expect(u.isAllowedUrl('not a url')).toBe(false);
   });
-  it('refuses a redirect to another host', async () => {
-    const f = vi.fn(async () => res(302, { headers: { location: 'https://evil.example/x.exe' } }));
+  it('follows redirects (redirect: follow) and refuses an EVIL FINAL host', async () => {
+    // De ce 'follow': net.fetch din Electron cu 'manual' anulează cererea („Redirect was
+    // cancelled") la redirectul api.github.com → CDN. Gazda finală rămâne verificată.
+    const f = async (url, opts) => {
+      expect(opts.redirect).toBe('follow');
+      return res(200, { url: 'https://evil.example/x.exe', body: 'x' });
+    };
     await expect(u.safeFetch(f, 'https://github.com/x')).rejects.toThrow(/nepermis/);
   });
-  it('sends the token only to api.github.com', async () => {
+  it('accepts the real GitHub CDN as the final host after redirects', async () => {
+    const f = async () => res(200, { url: 'https://release-assets.githubusercontent.com/signed/x.exe', body: 'x' });
+    const r = await u.safeFetch(f, 'https://github.com/x');
+    expect(r.status).toBe(200);
+  });
+  it('sends the token only when the requested host is api.github.com', async () => {
     const seen = [];
     const f = async (url, opts) => {
-      seen.push([url, opts.headers.Authorization]);
-      return url.includes('api.github') ? res(302, { headers: { location: 'https://objects.githubusercontent.com/f' } }) : res(200);
+      seen.push([url, opts.headers.Authorization, opts.redirect]);
+      return res(200, { url });
     };
     await u.safeFetch(f, 'https://api.github.com/a/1', { token: 'T' });
-    expect(seen).toEqual([['https://api.github.com/a/1', 'Bearer T'], ['https://objects.githubusercontent.com/f', undefined]]);
+    await u.safeFetch(f, 'https://github.com/x', { token: 'T' });
+    expect(seen).toEqual([
+      ['https://api.github.com/a/1', 'Bearer T', 'follow'],
+      ['https://github.com/x', undefined, 'follow'],
+    ]);
+  });
+  it('reproduces the Electron bug it fixes: a fetch that cancels manual redirects now works', async () => {
+    // Înainte de fix, safeFetch cerea redirect:'manual' → net.fetch anula cererea cu exact
+    // acest mesaj pe redirectul api.github.com → CDN (descărcarea de update pică la user).
+    const electronLikeFetch = async (url, opts = {}) => {
+      if ((opts.redirect || 'follow') === 'manual') throw new Error('Redirect was cancelled');
+      return res(200, { url: 'https://release-assets.githubusercontent.com/f.exe', body: Buffer.from('abc') });
+    };
+    const r = await u.safeFetch(electronLikeFetch, 'https://api.github.com/a/1', { headers: { Accept: 'application/octet-stream' } });
+    expect(r.status).toBe(200);
   });
 });
 

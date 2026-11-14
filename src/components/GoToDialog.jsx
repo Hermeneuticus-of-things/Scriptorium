@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
+import AnchoredPopover from './AnchoredPopover.jsx';
 import { t } from '../lib/i18n.js';
 
 // Quick jump to any document by title (Scrivener: Navigate > Go To, Ctrl+G).
-export default function GoToDialog({ items, onGo, onClose }) {
+export default function GoToDialog({ items, onGo, onClose, variant = 'modal', anchor }) {
   const [q, setQ] = useState('');
   const [i, setI] = useState(0);
   const list = useMemo(() => {
@@ -15,9 +16,8 @@ export default function GoToDialog({ items, onGo, onClose }) {
     onGo(x.id);
     onClose();
   };
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal goto" role="dialog" aria-label={t('ui.goToDialog.mergi_la_document')} onClick={(e) => e.stopPropagation()}>
+  const inner = (
+    <>
         <input
           autoFocus
           aria-label={t('ui.goToDialog.mergi_la_titlu_sau_dosar')}
@@ -47,6 +47,15 @@ export default function GoToDialog({ items, onGo, onClose }) {
           ))}
           {list.length === 0 && <li className="muted">{t('ui.app.niciun_document')}</li>}
         </ul>
+    </>
+  );
+  if (variant === 'popover') return (
+    <AnchoredPopover x={anchor?.x} y={anchor?.y} onClose={onClose} title={t('ui.goToDialog.mergi_la_document')} width={460}>{inner}</AnchoredPopover>
+  );
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal goto" role="dialog" aria-label={t('ui.goToDialog.mergi_la_document')} onClick={(e) => e.stopPropagation()}>
+        {inner}
       </div>
     </div>
   );

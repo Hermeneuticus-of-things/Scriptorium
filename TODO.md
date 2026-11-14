@@ -1,4 +1,50 @@
-# TODO — Scriptorium
+# TODO — Pneuma Sofer
+
+## Backlog activ — versiunea de referință 1.1.0 (2026-11-10)
+
+Lista de execuție curentă este mai jos; criteriile și dovezile sunt în [backlogul activ din ROADMAP](ROADMAP.md#backlog-activ-după-110--10-noiembrie-2026). Secțiunile de sesiune de după această listă sunt ISTORIC, nu dovada că toate checkboxurile lor sunt încă neînchise azi. Funcție implementată, funcție parțială și test neexecutat sunt stări diferite.
+
+### P0 — verificare, nu reimplementare
+
+- [ ] **QA-01 — DE VALIDAT:** rulează matricea de 5.515 cazuri și reconciliază inventarul tuturor controalelor. Fiecare caz are precondiție, acțiune, postcondiție și captură; deschidere/clic/înregistrare statică nu sunt efecte certificate.
+- [ ] **QA-02 — DE VALIDAT:** E2E și FLOWS separat pe artefactul instalabil, cu hash/versiune, profil și proiect izolate, conținut verificat după salvare/reopen/export/import/backup/conflict/close/reload. Nu folosi profilul cu chei sau cartea autorului ca fixture.
+- [ ] **QA-03 — DE VALIDAT:** snapshot manager/stiluri/ToC/Print cu operații reale și persistență în Electron, inclusiv anulări și negative; toate combinațiile neexecutate rămân declarate.
+- [ ] **QA-04 — DE VALIDAT:** conectivitate reală și efectele serviciilor/AI/ASR/voce/media pe fixture neutru, inclusiv timeout, cotă, offline și credentiale incomplete. Cheia prezentă/configurată nu înseamnă răspuns API validat.
+- [ ] **QA-05 — DE VALIDAT:** profilare 100/1.000/5.000 documente și sesiuni lungi; citiri/IPC, RSS/heap, cache/listeners/timers, rezultate async întârziate, scrieri concurente, folder dispărut/revenit.
+- [ ] **QA-06 — DE VALIDAT:** fiecare suprafață prin tastatură/cititor de ecran, contrast text/focus, ARIA, tabulare și modal nested; RO/EN, teme, DPI/rezoluții și ferestre native; geometrie proporțională cu informația.
+
+### P1 — completări ale nucleului existent
+
+- [ ] **PAR-01 — PARȚIAL:** paginare finală exactă pentru ToC și placeholder-ele Compile/Print; păstrează ToC existent și PAGEREF DOCX, diferențiază explicit estimarea de numărul final.
+- [ ] **PAR-02 — PARȚIAL:** filtre Included/Excluded/All după includerea efectivă, plus Include/Exclude în masă cu domeniu explicit. Nu confunda all/text/text+folders cu filtrarea includerii; respectă cascada folderelor și verifică outputul.
+- [ ] **PAR-03 — NEIMPLEMENTAT:** adnotări PDF directe și persistente, cu salvare/reopen și export definit. Viewerul simplu există.
+- [ ] **PAR-04 — DE TRIAT/COMPLETAT:** linked research fără copiere, relink și referințe lipsă/mutate; confirmă întâi implementările existente, apoi completează, fără import/copiere tăcută.
+- [ ] **PAR-05 — PARȚIAL/DE VALIDAT:** reconfirmă nesting/import-split Fountain/FDX pe scene/sinopsis; completează cazurile lipsă cu arbori și round-trip verificate, fără a recrea importul existent.
+- [ ] **PAR-06 — PARȚIAL:** formate de scenariu editabile/salvabile și reguli de elemente configurabile; păstrează preset-ele existente și exporturile.
+
+### P2 — rafinamente, extensii și platformă
+
+- [ ] **PAR-07 — DE TRIAT/COMPLETAT:** reconciliază opțiunile fine Compile/Export și așezările avansate cu cod/test și pachetele istorice; implementează numai golurile confirmate.
+- [ ] **PAR-08 — NEIMPLEMENTAT, extensie:** export în masă al snapshot-urilor selectate/proiectului, index și nume fără coliziuni; managerul global, mass delete și exportul individual există.
+- [ ] **UX-01 — DE VALIDAT/RAFINAT:** distribuție ergonomică după sarcina/contextul utilizatorului, ID-uri unice comune, iconiță vs text cu accesibilitate și suprafețe proporționale; nu elimina accesul legitim repetat în toolbar/meniu/context.
+- [ ] **UX-02 — DE COMPLETAT/VALIDAT:** hint-uri ghidate pentru Compile gol, document în Coș și microfon indisponibil; mesaj + ținta reparării + test de tastatură.
+- [ ] **PLAT-01 — NEIMPLEMENTAT/DE VALIDAT:** semnare Authenticode și matrice platformă/multi-monitor/DPI/mobil/sync; upgrade-ul 1.1.0 pe laptop și profilul păstrat sunt deja verificate, nu se relistează ca neefectuate.
+- [ ] **TEAM-01 — NEIMPLEMENTAT:** server real-time CRDT, roluri, cursoare, sugestii/coadă offline; nu confunda funcțiile de folder/jurnal/lock cu această etapă.
+- [ ] **HIST-01 — DE TRIAT:** reconciliază checkboxurile vechi cu starea curentă; păstrează dovezi pentru fiecare mutare în rezolvat/parțial/de validat/neaplicabil, fără a bifa masiv prin simplu grep.
+
+### Rezolvate/implementate: nu mai sunt lipsuri totale
+
+- [x] Manager global snapshot: UI și backend, listare, căutare nume/text/dată/regex, ștergere în masă, comparație și export individual; testele sunt în snapshotManager*.test.js. Turul complet al efectelor rămâne QA-03.
+- [x] Navigare/selectare după stil implementată, cu teste unitare; semantica intervalului primul–ultimul și toate contextele rămân QA-03.
+- [x] Fișe index cu culori/cutting guides și outline indentat implementate; outputul fizic și matricea completă rămân QA-03.
+- [x] Protecția modificărilor nesalvate și ergonomia ADL/Binder/ID-uri/servicii livrate în 1.1.0; QA-01/02/06 nu înseamnă lipsa acestor funcții.
+- [x] Release 1.1.0 pe main prin PR #68, CI trecut, installer/portabil publicate, instalare pe laptop și credentiale păstrate; Karma lăsată deschisă. Nu s-au testat traduceri live pe carte.
+
+Dovezi deja executate: 1.988 teste unitare trecute, 3 sărite; E2E/FLOWS separate trecute; 324 acțiuni Binder cu cazul eșuat remediat și retestat. Aceste numere nu certifică cele 5.515 cazuri din matrice. Vezi [raportul de verificare](docs/RELEASE-1.1.0-VERIFICATION.md).
+
+---
+
+## Istoric de sesiuni — checklisturi anterioare
 
 ## Session 2026-10-23
 ### Request: program tip Scrivener + extensii

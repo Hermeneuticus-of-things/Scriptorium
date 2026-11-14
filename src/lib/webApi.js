@@ -3,6 +3,7 @@
 // sync with the desktop app through a single-file bundle (same shape as lib/bundle.cjs).
 import { newNode } from './text.js';
 import { mergeProject } from './projectMerge.js';
+import { parseQuery, matchSnapshot } from './snapshotSearch.js';
 import { createRoutingKv, createFolderStore, folderSupported, isFolderDir, projectText, folderTeamFiles, folderTeamWrite } from './folderKv.js';
 import { findConflictCopies, treeIds } from './syncGuard.js';
 
@@ -582,6 +583,48 @@ export function createWebApi({ kv: baseKv = createIdbKv(), channel = defaultChan
       if (!list.some((x) => sameSnap(x.file, file))) throw new Error(`Snapshot inexistent: ${file}`);
       await kv.put(K.snaps(dir, id), list.map((x) => (sameSnap(x.file, file) ? { ...x, html: String(html ?? '') } : x)));
       return true;
+    },
+    // Snapshots Manager (the whole project): list without html, search in titles/dates/text,
+    // mass delete, export as a browser download (the desktop uses the native save dialog).
+    async listAllSnapshots(dir) {
+      const out = [];
+      for (const k of await kv.keys(K.snapPrefix(dir))) {
+        const list = (await kv.get(k)) || [];
+        if (list.length) out.push({ id: k.slice(K.snapPrefix(dir).length), snaps: list.map(({ file, name, date }) => ({ file, name, date })) });
+      }
+      return out;
+    },
+    async searchSnapshots(dir, query, { regex = false } = {}) {
+      const m = parseQuery(query, regex);
+      const out = [];
+      for (const k of await kv.keys(K.snapPrefix(dir))) {
+        const id = k.slice(K.snapPrefix(dir).length);
+        for (const s of (await kv.get(k)) || []) {
+          const where = matchSnapshot(s, m);
+          if (where.length) out.push({ id, file: s.file, name: s.name, date: s.date, where });
+        }
+      }
+      return out;
+    },
+    async deleteSnapshots(dir, items) {
+      const byId = new Map();
+      for (const it of items || []) if (it && it.id) byId.set(it.id, [...(byId.get(it.id) || []), String(it.file || '')]);
+      let n = 0;
+      for (const [id, files] of byId) {
+        const list = (await kv.get(K.snaps(dir, id))) || [];
+        const rest = list.filter((x) => !files.some((f) => sameSnap(x.file, f)));
+        if (rest.length !== list.length) {
+          await kv.put(K.snaps(dir, id), rest);
+          n += list.length - rest.length;
+        }
+      }
+      return n;
+    },
+    async exportSnapshot(dir, id, file, docTitle) {
+      const s = ((await kv.get(K.snaps(dir, id))) || []).find((x) => sameSnap(x.file, file));
+      if (!s) throw new Error(`Snapshot inexistent: ${file}`);
+      const safe = (v) => String(v || 'Snapshot').replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'Snapshot';
+      return download(`${safe(docTitle)} - ${safe(s.name)}.html`, String(s.html || ''), 'text/html');
     },
     async recordHistory(dir, counts) {
       await kv.put(K.history(dir), recordDay(await kv.get(K.history(dir)), counts));

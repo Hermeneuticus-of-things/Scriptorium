@@ -9,14 +9,15 @@ import { isParaStyle } from '../lib/styles.js';
 import { POS_CLASSES } from '../lib/pos.js';
 import { readingLensItems } from '../lib/readingLenses.js';
 import { listBookmarks } from '../editor/formatting.js';
-import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS } from '../lib/editorMenus.js';
+import { allStyleRange, hasIdentifiableStyle, nextStyleBlock, prevStyleBlock, styleRangeAt } from '../lib/styleNavigation.js';
+import { TEXT_COLORS, HIGHLIGHTS, TIME_FORMATS, PLACEHOLDERS, LINE_SPACINGS } from '../lib/editorMenus.js';
 import { FORMAT_ITEMS, getFormatLayout, onFormatLayout, SEP, SPACE } from '../lib/toolbars.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
+import { dropdownSurfaceId, registerDropdownField, registerDropdownSurface } from '../lib/focusDropdowns.js';
 import { Icon } from './Icons.jsx';
 
 const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Arial', 'Helvetica', 'Verdana', 'Calibri', 'Courier New', 'Courier Prime'];
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 32, 36, 48];
-const LINE_SPACINGS = [1, 1.2, 1.5, 2, 2.5, 3];
 const LIST_TYPES = [['1', '1. 2. 3.'], ['a', 'a. b. c.'], ['A', 'A. B. C.'], ['i', 'i. ii. iii.'], ['I', 'I. II. III.']];
 const ask = async (label, cur) => {
   const v = await uiPrompt(label, cur ?? '');
@@ -45,11 +46,26 @@ function CustomColor({ onPick, label }) {
   );
 }
 
-function Pop({ label, title, children }) {
+function Pop({ label, title, children, engine = null, surfaceId = null }) {
   const [open, setOpen] = useState(false);
+  const btnRef = useRef(null);
+  // ADL §2/§5: with a focus engine the open pop is the active surface `dropdown.<id>`; Escape
+  // reaches it through the engine cascade (a dialog underneath stays put) and closes just the
+  // pop, with focus back on its trigger.
+  useEffect(() => {
+    if (!open || !engine || !surfaceId) return undefined;
+    return registerDropdownSurface(engine, surfaceId, {
+      close: () => {
+        setOpen(false);
+        btnRef.current?.focus();
+        return true;
+      },
+    });
+  }, [open, engine, surfaceId]);
+  const accessibleName = title || (typeof label === 'string' ? label.replace(/\s+▾\s*$/, '').trim() : undefined);
   return (
     <div className="menu" onMouseLeave={() => setOpen(false)}>
-      <button title={title} aria-label={title} aria-haspopup="true" aria-expanded={open} className={open ? 'on' : ''} onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((o) => !o)}>{label}</button>
+      <button ref={btnRef} title={title} aria-label={accessibleName} aria-haspopup="true" aria-expanded={open} className={open ? 'on' : ''} onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen((o) => !o)}>{label}</button>
       {open && (
         <div className="menu-pop narrow" onClick={() => setOpen(false)}>
           {children}
@@ -73,7 +89,7 @@ const triggerOf = (pop) => pop.parentElement?.querySelector(':scope > button');
 // their position, and visible groups stay in bar order. Group widths are measured while
 // they sit in the bar and cached, so hidden groups can come back when the pane grows.
 const MORE_WIDTH = 30;
-function OverflowBar({ groups }) {
+function OverflowBar({ groups, focusEngine = null }) {
   const items = groups;
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -218,7 +234,12 @@ function OverflowBar({ groups }) {
       else if (e.key === 'ArrowUp' || (e.key === 'ArrowLeft' && menuPop.classList.contains('narrow'))) move(list, -1);
       else if (e.key === 'Home') move(list, 'first');
       else if (e.key === 'End') move(list, 'last');
-      else if (e.key === 'Escape' || e.key === 'Tab') {
+      else if (e.key === 'Escape' && focusEngine) {
+        // ADL §2: the engine cascade owns Escape — the innermost surface closes (a sub-dialog
+        // above this dropdown, an open submenu inside it, then the dropdown itself), and the
+        // dialog underneath stays put. Let the event reach the document-level engine decision.
+        return;
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
         const trig = triggerOf(menuPop);
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); }
         trig?.click(); // Menu/Pop toggle closed on their own button
@@ -247,6 +268,7 @@ function OverflowBar({ groups }) {
       // the dropdown renders on the next commit
       requestAnimationFrame(() => { const pop = t.parentElement.querySelector(':scope > .menu-pop'); if (pop) popItems(pop)[0]?.focus(); });
     } else if (e.key === 'Escape' && t.getAttribute('aria-expanded') === 'true' && !t.parentElement.classList.contains('fb-more')) {
+      if (focusEngine) return; // ADL §2: the open dropdown is an engine surface — cascade decides
       // dropdown open but focus still on its button (opened by mouse): close just the dropdown
       e.preventDefault();
       e.stopPropagation();
@@ -307,6 +329,7 @@ export default function FormatBar({
   defaultFormatting = null,
   showInvisibles = false,
   onToggleInvisibles = null,
+  focusEngine = null,
 }) {
   const [layout, setLayout] = useState(getFormatLayout);
   useEffect(() => onFormatLayout(setLayout), []);
@@ -346,9 +369,45 @@ export default function FormatBar({
       para: { ...ed.state.selection.$from.parent.attrs },
       bookmarks: [...new Set(listBookmarks(ed.state.doc).map((b) => b.name))],
       inBookmark: ed.isActive('bookmark') ? ed.getAttributes('bookmark').name : null,
+      styledPara: hasIdentifiableStyle(ed.state.doc, ed.state.selection.from),
     }),
   });
   const chain = () => editor.chain().focus();
+  // ADL §2/§5: every dropdown of the bar is an active surface on the focus engine while open —
+  // menus and color/highlight pops push `dropdown.<id>` themselves (Menu/Pop engine props);
+  // the three native <select> fields register here, because their popup state lives outside the
+  // DOM: open intent (mousedown / Enter / ↓) pushes, blur pops, and Escape through the engine
+  // closes the field back into the editor (never the dialog underneath, if one is open).
+  const blockSelRef = useRef(null);
+  const fontSelRef = useRef(null);
+  const sizeSelRef = useRef(null);
+  const selFields = useRef({});
+  useEffect(() => {
+    if (!focusEngine) return undefined;
+    const defs = [['block', blockSelRef], ['font', fontSelRef], ['size', sizeSelRef]];
+    const fields = defs.map(([key, ref]) => {
+      const field = registerDropdownField(focusEngine, dropdownSurfaceId(key), {
+        close: () => {
+          selFields.current[key]?.shut(); // off the stack before the blur round-trip
+          ref.current?.blur();
+          editor?.commands?.focus?.(); // Escape closes the field back into the writing surface
+          return true;
+        },
+      });
+      selFields.current[key] = field;
+      return field;
+    });
+    return () => {
+      defs.forEach(([key]) => { delete selFields.current[key]; });
+      fields.forEach((field) => field.unregister());
+    };
+  }, [focusEngine, editor]);
+  const selSurface = (key) => ({
+    ref: key === 'block' ? blockSelRef : key === 'font' ? fontSelRef : sizeSelRef,
+    onMouseDown: () => selFields.current[key]?.open(),
+    onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') selFields.current[key]?.open(); },
+    onBlur: () => selFields.current[key]?.shut(),
+  });
   // `on` is a boolean for toggles (exposed as aria-pressed), null for plain commands.
   const btn = (label, on, action, title, disabled = false) => (
     <button className={on ? 'on' : ''} aria-pressed={on == null ? undefined : Boolean(on)} disabled={disabled} onMouseDown={(e) => e.preventDefault()} onClick={action} title={title} aria-label={title}>
@@ -444,9 +503,20 @@ export default function FormatBar({
     setTimeout(() => editor.commands.focus(), 0);
   };
 
+  // Style navigation (Scrivener §17.4.1): same ranges as the registry commands — the pure
+  // module computes at click time, disabled while the caret is on an unstyled paragraph.
+  const styleNav = (nav) => {
+    const r = nav(editor.state.doc, editor.state.selection.from);
+    if (r) chain().setTextSelection({ from: r.from, to: r.to }).scrollIntoView().run();
+  };
   const styleItems = [
     ...styles.filter(isParaStyle).map((st) => ({ label: `${st.type === 'both' ? '¶a' : '¶'} ${builtinName('style', st)}`, shortcut: st.shortcut || undefined, action: () => chain().setParagraphStyle(st.id).run() })),
     ...styles.filter((st) => st.type === 'char').map((st) => ({ label: `a ${builtinName('style', st)}`, shortcut: st.shortcut || undefined, action: () => chain().setCharStyle(st.id).run(), disabled: !s.hasSelection })),
+    '-',
+    { label: tr('cmd.selectStyleRange'), action: () => styleNav(styleRangeAt), disabled: !s.styledPara },
+    { label: tr('cmd.nextInSameStyle'), action: () => styleNav(nextStyleBlock), disabled: !s.styledPara },
+    { label: tr('cmd.prevInSameStyle'), action: () => styleNav(prevStyleBlock), disabled: !s.styledPara },
+    { label: tr('cmd.selectAllWithStyle'), action: () => styleNav(allStyleRange), disabled: !s.styledPara },
     '-',
     { label: tr('ui.formatBar.noParaStyle'), action: () => chain().setParagraphStyle(null).run() },
     { label: tr('ui.formatBar.noCharStyle'), action: () => chain().setCharStyle(null).run() },
@@ -480,15 +550,12 @@ export default function FormatBar({
   // Line spacing as in the classic paragraph bar: 1.0 / 1.2 / 1.5 / 2.0 / 2.5 / 3.0 / Other…
   const fmtSpacing = (v) => Number(v).toLocaleString(uiLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 2 });
   const spacingItems = [
-    ...LINE_SPACINGS.map((v) => ({ label: fmtSpacing(v), checked: Number(p.lineHeight) === v, action: () => setPara({ lineHeight: v }) })),
+    ...LINE_SPACINGS.map((v) => ({ label: fmtSpacing(v), checked: Number(p.lineHeight) === v, id: 'setLineSpacing', commandId: 'setLineSpacing', payload: { lineHeight: v }, action: () => setPara({ lineHeight: v }) })),
     '-',
     { label: p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight)) ? `${tr('ui.formatBar.lineSpacingOther')} (${fmtSpacing(p.lineHeight)})` : tr('ui.formatBar.lineSpacingOther'), checked: Boolean(p.lineHeight && !LINE_SPACINGS.includes(Number(p.lineHeight))), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
     { label: tr('ui.formatBar.lineSpacingDefault'), action: () => setPara({ lineHeight: null }), disabled: !p.lineHeight },
   ];
   const paraItems = [
-    ...LINE_SPACINGS.map((v) => ({ label: tr('ui.formatBar.lineSpacing', { v: fmtSpacing(v) }), checked: Number(p.lineHeight) === v, action: () => setPara({ lineHeight: v }) })),
-    { label: tr('ui.formatBar.lineSpacingCustom'), action: () => num(tr('ui.formatBar.lineSpacingPrompt'), 'lineHeight', p.lineHeight) },
-    '-',
     { label: tr('ui.formatBar.spaceBefore', { v: p.spaceBefore ?? '–' }), action: () => num(tr('ui.formatBar.spaceBeforePrompt'), 'spaceBefore', p.spaceBefore) },
     { label: tr('ui.formatBar.spaceAfter', { v: p.spaceAfter ?? '–' }), action: () => num(tr('ui.formatBar.spaceAfterPrompt'), 'spaceAfter', p.spaceAfter) },
     { label: tr('ui.formatBar.firstIndent', { v: p.firstIndent ?? '–' }), action: () => num(tr('ui.formatBar.firstIndentPrompt'), 'firstIndent', p.firstIndent) },
@@ -559,7 +626,7 @@ export default function FormatBar({
   // pri: overflow order (higher goes into » first); 0 = frequent, kept visible.
   const g = (pri, el, sep = true, label) => ({ pri, el, sep, label });
   const groups = [
-    g(0, <select className="block-select" value={s.block} onChange={(e) => setBlock(e.target.value)} title={tr('ui.fb.block')} aria-label={tr('ui.fb.block')}>
+    g(0, <select {...selSurface('block')} className="block-select" value={s.block} onChange={(e) => setBlock(e.target.value)} title={tr('ui.fb.block')} aria-label={tr('ui.fb.block')}>
           <option value="p">{tr('ui.formatBar.normal')}</option>
           <option value="h1">{tr('ui.formatBar.h', { n: 1 })}</option>
           <option value="h2">{tr('ui.formatBar.h', { n: 2 })}</option>
@@ -568,12 +635,12 @@ export default function FormatBar({
           <option value="code">{tr('ui.formatBar.code')}</option>
         </select>),
     g(3, <>
-        <select className="font-select" value={s.fontFamily} onChange={(e) => (e.target.value ? chain().setFontFamily(e.target.value).run() : chain().unsetFontFamily().run())} title={tr('ui.formatBar.font')} aria-label={tr('ui.formatBar.font')}>
+        <select {...selSurface('font')} className="font-select" value={s.fontFamily} onChange={(e) => (e.target.value ? chain().setFontFamily(e.target.value).run() : chain().unsetFontFamily().run())} title={tr('ui.formatBar.font')} aria-label={tr('ui.formatBar.font')}>
           <option value="">{tr('ui.formatBar.defaultFont')}</option>
           {s.fontFamily && !FONTS.includes(s.fontFamily) && <option value={s.fontFamily}>{s.fontFamily}</option>}
           {FONTS.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
         </select>
-        <select className="size-select" value={s.fontSize} onChange={(e) => (e.target.value ? chain().setFontSize(e.target.value).run() : chain().unsetFontSize().run())} title={tr('ui.formatBar.size')} aria-label={tr('ui.formatBar.size')}>
+        <select {...selSurface('size')} className="size-select" value={s.fontSize} onChange={(e) => (e.target.value ? chain().setFontSize(e.target.value).run() : chain().unsetFontSize().run())} title={tr('ui.formatBar.size')} aria-label={tr('ui.formatBar.size')}>
           <option value="">–</option>
           {s.fontSize && !SIZES.includes(parseFloat(s.fontSize)) && <option value={s.fontSize}>{s.fontSize}</option>}
           {SIZES.map((z) => <option key={z} value={`${z}pt`}>{z}</option>)}
@@ -591,11 +658,11 @@ export default function FormatBar({
         {btn(<span style={{ fontVariant: 'small-caps' }}>Aa</span>, s.smallCaps, () => chain().toggleSmallCaps().run(), tr('ui.formatBar.smallCaps'))}
         {btn('AA', s.allCaps, () => chain().toggleAllCaps().run(), tr('ui.formatBar.allCaps'))}
     </>, false),
-    g(1, <Pop label={<span className="color-a">A</span>} title={tr('ui.fb.color')}>
+    g(1, <Pop engine={focusEngine} surfaceId={dropdownSurfaceId('color')} label={<span className="color-a">A</span>} title={tr('ui.fb.color')}>
           <Swatches colors={TEXT_COLORS} onPick={(c) => chain().setColor(c).run()} onClear={() => chain().unsetColor().run()} clearLabel={tr('ui.formatBar.auto')} />
           <CustomColor label={tr('ui.formatBar.otherColor')} onPick={(c) => chain().setColor(c).run()} />
         </Pop>, false),
-    g(0, <Pop label={<span className="hl-a">H</span>} title={tr('ui.fb.highlight')}>
+    g(0, <Pop engine={focusEngine} surfaceId={dropdownSurfaceId('highlight')} label={<span className="hl-a">H</span>} title={tr('ui.fb.highlight')}>
           <Swatches colors={HIGHLIGHTS} onPick={(c) => chain().toggleHighlight({ color: c }).run()} onClear={() => chain().unsetHighlight().run()} clearLabel={tr('ui.formatBar.none')} />
           <CustomColor label={tr('ui.formatBar.otherColor')} onPick={(c) => chain().setHighlight({ color: c }).run()} />
         </Pop>, false),
@@ -605,7 +672,7 @@ export default function FormatBar({
         {btn(<Icon name="alignRight" />, s.align === 'right', () => chain().setTextAlign('right').run(), tr('ui.formatBar.right'))}
         {btn(<Icon name="alignJustify" />, s.align === 'justify', () => chain().setTextAlign('justify').run(), tr('ui.formatBar.justify'))}
     </>),
-    g(4, <span className="fb-spacing" data-label={tr('ui.formatBar.lineSpacingMenu')} style={{ display: 'contents' }}><Menu label={<><Icon name="lineSpacing" /> {fmtSpacing(p.lineHeight || 1)}</>} items={spacingItems} /></span>, false, tr('ui.formatBar.lineSpacingMenu')),
+    g(4, <span className="fb-spacing" data-label={tr('ui.formatBar.lineSpacingMenu')} style={{ display: 'contents' }}><Menu engine={focusEngine} surfaceId={dropdownSurfaceId('spacing')} label={<><Icon name="lineSpacing" /> {fmtSpacing(p.lineHeight || 1)}</>} items={spacingItems} /></span>, false, tr('ui.formatBar.lineSpacingMenu')),
     g(4, <span className="fb-space" data-label={tr('ui.formatBar.spaceButtons')} style={{ display: 'contents' }}>
         {btn(<><Icon name="spaceBefore" />−</>, null, () => bumpSpace('spaceBefore', -1), tr('ui.formatBar.spaceBeforeLess', { v: p.spaceBefore ?? '–' }), !(Number(p.spaceBefore) > 0))}
         {btn(<><Icon name="spaceBefore" />+</>, null, () => bumpSpace('spaceBefore', 1), tr('ui.formatBar.spaceBeforeMore', { v: p.spaceBefore ?? '–' }))}
@@ -615,7 +682,7 @@ export default function FormatBar({
     g(5, <>
         {btn(<Icon name="listBullet" />, s.bullet, () => chain().toggleBulletList().run(), tr('ui.formatBar.bullets'))}
         {btn('1.', s.ordered, () => chain().toggleOrderedList().run(), tr('ui.formatBar.ordered'))}
-        <span data-label={tr('ui.formatBar.listType')} style={{ display: 'contents' }}><Menu label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} /></span>
+        <span data-label={tr('ui.formatBar.listType')} style={{ display: 'contents' }}><Menu engine={focusEngine} surfaceId={dropdownSurfaceId('lists')} label="a/i" items={LIST_TYPES.map(([t, label]) => ({ label, action: () => chain().setOrderedListType(t).run() }))} /></span>
         {btn(<Icon name="indent" />, null, () => chain().sinkListItem('listItem').run(), tr('ui.formatBar.sink'), !s.inList)}
         {btn(<Icon name="outdent" />, null, () => chain().liftListItem('listItem').run(), tr('ui.formatBar.lift'), !s.inList)}
     </>),
@@ -629,20 +696,22 @@ export default function FormatBar({
         {btn(<Icon name="link" />, s.link, insertLinkExternal, tr('ui.formatBar.linkBtn'))}
     </>),
     g(3, <Menu
+          engine={focusEngine}
+          surfaceId={dropdownSurfaceId('internalLink')}
           label="[[ ]]"
           items={linkTargets.length ? linkTargets.slice(0, 60).map((t) => ({ label: t.title, action: () => insertLinkInternal(t) })) : [{ label: tr('ui.formatBar.noDocument'), action: () => {}, disabled: true }]}
         />, false, tr('ui.formatBar.internalLink')),
-    g(2, <Menu label={tr('ui.formatBar.menuInsert')} items={insertItems} />),
-    g(4, <Menu label={tr('ui.formatBar.menuParagraph')} items={paraItems} />, false),
-    g(7, <Menu label={tr('ui.fb.bookmarks')} items={bookmarkItems} />, false),
-    g(2, s.image ? <Menu label={tr('ui.formatBar.menuImage')} items={imageItems} /> : null, false),
-    g(7, <Menu label={tr('ui.formatBar.menuTable')} items={tableItems} />, false),
-    g(6, <Menu label={tr('ui.formatBar.menuChars')} items={SPECIAL.map((c) => ({ label: c, action: () => chain().insertContent(c).run() }))} />, false),
-    g(6, <Menu label={tr('ui.fb.transform')} items={transformItems} />, false),
-    g(3, <Menu label={tr('ui.formatBar.menuStyle')} items={styleItems} />, false),
-    g(5, <Menu label={view.revision ? `${tr('ui.fb.revision')} ${view.revision}` : tr('ui.fb.revision')} items={revisionItems} />, false),
-    g(5, <Menu label={tr('ui.formatBar.menuView')} items={viewItems} />, false),
-    g(8, <Menu label={tr('ui.fb.copySpecial')} items={copyItems} />, false),
+    g(2, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('insert')} label={tr('ui.formatBar.menuInsert')} items={insertItems} />),
+    g(4, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('paragraph')} label={tr('ui.formatBar.menuParagraph')} items={paraItems} />, false),
+    g(7, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('bookmarks')} label={tr('ui.fb.bookmarks')} items={bookmarkItems} />, false),
+    g(2, s.image ? <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('image')} label={tr('ui.formatBar.menuImage')} items={imageItems} /> : null, false),
+    g(7, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('table')} label={tr('ui.formatBar.menuTable')} items={tableItems} />, false),
+    g(6, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('chars')} label={tr('ui.formatBar.menuChars')} items={SPECIAL.map((c) => ({ label: c, action: () => chain().insertContent(c).run() }))} />, false),
+    g(6, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('transform')} label={tr('ui.fb.transform')} items={transformItems} />, false),
+    g(3, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('style')} label={tr('ui.formatBar.menuStyle')} items={styleItems} />, false),
+    g(5, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('revision')} label={view.revision ? `${tr('ui.fb.revision')} ${view.revision}` : tr('ui.fb.revision')} items={revisionItems} />, false),
+    g(5, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('view')} label={tr('ui.formatBar.menuView')} items={viewItems} />, false),
+    g(8, <Menu engine={focusEngine} surfaceId={dropdownSurfaceId('copySpecial')} label={tr('ui.fb.copySpecial')} items={copyItems} />, false),
     g(1, <>
         {btn(<Icon name="undo" />, null, () => chain().undo().run(), tr('ui.formatBar.undo'))}
         {btn(<Icon name="redo" />, null, () => chain().redo().run(), tr('ui.formatBar.redo'))}
@@ -664,5 +733,5 @@ export default function FormatBar({
     }
   }
 
-  return <OverflowBar groups={laid} />;
+  return <OverflowBar groups={laid} focusEngine={focusEngine} />;
 }

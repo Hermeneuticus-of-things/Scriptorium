@@ -1,4 +1,5 @@
 // Snapshot list helpers for the Inspector pane and the Snapshots Manager (pure, unit-tested).
+import { findNode, ancestorIds } from './tree.js';
 
 // Sorts snapshots by 'date' or 'name'; newest first is the default.
 export function sortSnapshots(list, key = 'date', dir = 'desc') {
@@ -56,4 +57,44 @@ export function documentsWithSnapshots(nodes, counts) {
   };
   walk(nodes);
   return out.sort((a, b) => (Date.parse(b.last) || 0) - (Date.parse(a.last) || 0));
+}
+
+// Manager groups, binder order first: one group per document that has snapshots, each with the
+// full binder path (ancestors' titles). Snapshots of a deleted document stay visible at the end,
+// with title null — they are still on disk, so deleting or exporting them must remain possible.
+export function documentGroups(tree, byId) {
+  const groups = [];
+  const seen = new Set();
+  const walk = (list) => {
+    for (const n of list || []) {
+      const snaps = byId[n.id];
+      if (snaps && snaps.length) {
+        seen.add(n.id);
+        groups.push({ id: n.id, title: n.title, path: ancestorIds(tree, n.id).map((a) => findNode(tree, a)?.title || '').filter(Boolean).join(' › '), snaps });
+      }
+      if (n.children) walk(n.children);
+    }
+  };
+  walk(tree);
+  for (const id of Object.keys(byId)) {
+    if (!seen.has(id) && byId[id].length) groups.push({ id, title: null, path: '', snaps: byId[id] });
+  }
+  return groups;
+}
+
+// Manager selection: plain click → one row; ctrl/meta → toggle in place; shift → range from the
+// anchor over the visible rows. The anchor is returned so the caller keeps it for the next range.
+export function selectMany(selected, anchor, key, mode, rows) {
+  if (mode === 'toggle') {
+    return { selected: selected.includes(key) ? selected.filter((k) => k !== key) : [...selected, key], anchor: key };
+  }
+  if (mode === 'range') {
+    const from = rows.indexOf(anchor);
+    if (from < 0) return { selected: [key], anchor: key };
+    const to = rows.indexOf(key);
+    if (to < 0) return { selected: [key], anchor: key };
+    const [a, b] = from <= to ? [from, to] : [to, from];
+    return { selected: rows.slice(a, b + 1), anchor };
+  }
+  return { selected: [key], anchor: key };
 }
