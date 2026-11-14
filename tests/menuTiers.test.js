@@ -51,7 +51,7 @@ describe('View > Reading / Page / Zoom', () => {
   it('Reading, Page and Zoom are submenus of View', () => {
     expect(SUBMENUS.view.map((d) => d[0])).toEqual(expect.arrayContaining(['menu.reading', 'menu.page', 'menu.zoom']));
     const reading = view.items.find((x) => x.label === 'menu.reading');
-    expect(reading.submenu.map((x) => x.id || x.label)).toEqual(expect.arrayContaining(['dialogueFocus', 'linguisticFocus', 'ui.formatBar.focus_paragraph']));
+    expect(reading.submenu.map((x) => x.id || x.label)).toEqual(expect.arrayContaining(['linguisticFocus', 'ui.formatBar.focus_paragraph'])); // o singură poartă: dialogueFocus nu mai e în meniu (din panoul LF)
     expect(reading.submenu.map((x) => x.id || x.label)).not.toContain('posNouns');
     expect(view.items.find((x) => x.label === 'menu.zoom').submenu.some((x) => x.label === 'Zoom 100%' && x.checked === true)).toBe(true);
     expect(layout[0].group).toBe('app');

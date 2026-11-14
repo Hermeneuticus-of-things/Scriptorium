@@ -129,7 +129,7 @@ const ro = {
   'btn.save': 'Salvează', 'btn.cancel': 'Anulează', 'btn.ok': 'OK', 'btn.close': 'Închide', 'btn.choose': 'Alege…',
   'btn.default': 'Implicit', 'btn.add': 'Adaugă', 'btn.remove': 'Șterge', 'btn.delete': 'Șterge', 'btn.apply': 'Aplică',
   // settings
-  'set.title': 'Setări',
+  'set.title': 'Setări', 'ui.set.savedToast': 'Setări salvate.',
   'set.tab.general': 'General', 'set.tab.appearance': 'Aspect', 'set.tab.behaviors': 'Comportament', 'set.tab.corrections': 'Corecturi',
   'set.tab.editing': 'Editare', 'set.tab.editorial': 'Editorial (I-REP)', 'set.tab.sharing': 'Partajare', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Tastatură', 'set.tab.ai': 'Chei și conturi', 'set.tab.services': 'Voce și traducere', 'set.tab.language': 'Limbă',
   'set.reopenLast': 'La pornire, redeschide ultimul proiect', 'set.autosave': 'Salvare automată după (secunde de inactivitate)',
@@ -362,7 +362,7 @@ const en = {
   'cmd.shortcuts': 'Keyboard shortcuts…', 'cmd.layouts': 'Saved layouts…', 'cmd.layout': 'Layout: {name}',
   'btn.save': 'Save', 'btn.cancel': 'Cancel', 'btn.ok': 'OK', 'btn.close': 'Close', 'btn.choose': 'Choose…',
   'btn.default': 'Default', 'btn.add': 'Add', 'btn.remove': 'Remove', 'btn.delete': 'Delete', 'btn.apply': 'Apply',
-  'set.title': 'Settings',
+  'set.title': 'Settings', 'ui.set.savedToast': 'Settings saved.',
   'set.tab.general': 'General', 'set.tab.appearance': 'Appearance', 'set.tab.behaviors': 'Behaviors', 'set.tab.corrections': 'Corrections',
   'set.tab.editing': 'Editing', 'set.tab.editorial': 'Editorial (I-REP)', 'set.tab.sharing': 'Sharing', 'set.tab.backup': 'Backup', 'set.tab.keyboard': 'Keyboard', 'set.tab.ai': 'Keys and accounts', 'set.tab.services': 'Voice and translation', 'set.tab.language': 'Language',
   'set.reopenLast': 'On startup, reopen last project', 'set.autosave': 'Autosave after (seconds of inactivity)',

@@ -46,7 +46,7 @@ export const SUBMENUS = {
     ['menu.bookViews', ['viewTimeline', 'viewRelations', 'viewPacing']],
     // View > Reading (lenses: how the text is read), View > Page, View > Zoom (B2/B3 2026-10-31).
     // The FormatBar "Lectură" menu shows the same lenses (src/lib/readingLenses.js) and nothing else.
-    ['menu.reading', ['dialogueFocus', 'linguisticFocus']], // pos* come only from readingLensItems (append) — avoid duplicate Focus lingvistic labels
+    ['menu.reading', ['linguisticFocus']], // poarta unică a lecturii (panoul LF; dialogul de replici e accesibil din panou când dialogue e activ) — pos* come only from readingLensItems
     ['menu.page', ['pageViewSetup', 'pageFull']],
     ['menu.zoom', ['zoomIn', 'zoomOut', 'zoomReset']],
     ['menu.scrivenings', ['scrivSelection', 'scrivCollection', 'scrivTitles', 'scrivSeparators']],

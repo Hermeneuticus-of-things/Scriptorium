@@ -42,7 +42,7 @@ const POS = ['noun', 'verb', 'adj', 'adv', 'pron', 'prep', 'conj'];
  * View > Linguistic Focus: one part of speech stays clear (or is coloured), the rest fades.
  * "Dialogue" uses the editor's dialogue focus (view.focus = 'dialogue').
  */
-export function LinguisticFocusPanel({ view, setView, onClose }) {
+export function LinguisticFocusPanel({ view, setView, onDialogueList, onClose }) {
   const dialogue = view.focus === 'dialogue';
   const cur = dialogue ? 'dialogue' : view.posFocus || '';
   const pick = (id) => {
@@ -50,6 +50,7 @@ export function LinguisticFocusPanel({ view, setView, onClose }) {
     else setView({ posFocus: id, ...(dialogue ? { focus: 'off' } : {}) });
   };
   const style = view.posStyle || 'fade';
+  // Dialogul de replici (dovada cine-spune-ce) se deschide DIN panoul de focus — o singură poartă în meniuri.
   return (
     <FloatingPanel title={t('ui.mw.lf_title')} className="linguistic-focus-panel" onClose={() => { setView({ posFocus: '', ...(dialogue ? { focus: 'off' } : {}) }); onClose(); }}>
       {['', ...POS, 'dialogue'].map((id) => (
@@ -84,6 +85,9 @@ export function LinguisticFocusPanel({ view, setView, onClose }) {
           <input type="range" min="0.05" max="0.8" step="0.05" value={view.fadeOpacity ?? 0.28} onChange={(e) => setView({ fadeOpacity: Number(e.target.value) })} aria-label={t('ui.mw.lf_fade')} style={{ width: '100%' }} />
         </label>
       )}
+    {dialogue && onDialogueList && (
+      <button type="button" className="lf-dialogue-list" onClick={onDialogueList}>{t('ui.mw.lf_dialogueList')}</button>
+    )}
     </FloatingPanel>
   );
 }

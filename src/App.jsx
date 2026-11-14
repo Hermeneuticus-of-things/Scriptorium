@@ -2991,6 +2991,7 @@ export default function App({ api: apiProp }) {
         )}
         {dialog === 'settings' && (
           <SettingsDialog
+            onSaved={() => setToast(tr('ui.set.savedToast'))}
             speechReady={speechReady}
             initialTab={settingsTab}
             aiOnly={settingsTab === 'ai'}
@@ -4610,6 +4611,7 @@ export default function App({ api: apiProp }) {
       {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} focusEngine={focusEngine} />}
       {dialog === 'settings' && (
         <SettingsDialog
+          onSaved={() => setToast(tr('ui.set.savedToast'))}
           speechReady={speechReady}
             initialTab={settingsTab}
             aiOnly={settingsTab === 'ai'}
@@ -4792,7 +4794,7 @@ export default function App({ api: apiProp }) {
           api={api}
           dir={dir}
           project={project}
-          onSave={(next) => { saveProject(next); setDialog(null); }}
+          onSave={(next) => { saveProject(next); setDialog(null); setToast(tr('ui.set.savedToast')); }}
           onClose={() => setDialog(null)}
           onError={report}
         />
@@ -4896,7 +4898,7 @@ export default function App({ api: apiProp }) {
           onClose={() => setFloats((f) => ({ ...f, ts: false }))}
         />
       )}
-      {floats.lf && <LinguisticFocusPanel view={editorView} setView={(patch) => setEditorView({ ...editorView, ...patch })} onClose={() => setFloats((f) => ({ ...f, lf: false }))} />}
+      {floats.lf && <LinguisticFocusPanel view={editorView} setView={(patch) => setEditorView({ ...editorView, ...patch })} onDialogueList={() => setDialog('dialoguefocus')} onClose={() => setFloats((f) => ({ ...f, lf: false }))} />}
       {floats.kh && project && (
         <KeywordsHud
           project={project}
