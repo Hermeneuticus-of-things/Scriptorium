@@ -37,6 +37,7 @@ import {
 } from '../src/lib/collections.js';
 import { addNoteTab, moveNoteTab, projectNoteTabs, removeNoteTab, renameNoteTab } from '../src/lib/projectNotes.js';
 import { stripNotation } from '../src/lib/notationOps.js';
+import { codexEntity, codexFromProject } from '../src/lib/codex.js';
 import {
   deleteCustomField,
   deleteLabel,
@@ -915,6 +916,46 @@ export function registerFullTools(ctx) {
         }
       }
       return { project: true, changed };
+    },
+    W,
+  );
+
+  tool(
+    'codex_list',
+    'Registrul cărții (entitățile de lore): nume, tip (Personaj/Locație/Termen/Obiect/Altfel), descriere și aliasuri. Contextul AI le include automat când sunt menționate.',
+    { project },
+    (dir) => ({ codex: codexFromProject(load(dir)) }),
+  );
+
+  tool(
+    'codex_manage',
+    'Administrează registrul cărții: add (nume, tip, descriere, aliasuri), rename, set_type, set_description, set_aliases, delete.',
+    {
+      project,
+      action: z.enum(['add', 'rename', 'set_type', 'set_description', 'set_aliases', 'delete']),
+      id: z.string().optional().describe('Necesar pentru toate acțiunile în afară de add'),
+      name: z.string().optional(),
+      type: z.enum(['Personaj', 'Locație', 'Termen', 'Obiect', 'Altfel']).optional(),
+      description: z.string().optional(),
+      aliases: z.array(z.string()).optional(),
+    },
+    (dir, input) => {
+      const out = mutate(dir, (pj) => {
+        const list = pj.codex || (pj.codex = []);
+        if (input.action === 'add') {
+          if (!input.name) throw new Error('Numele entității lipsește.');
+          list.push(codexEntity({ id: store.newId(), name: input.name, type: input.type, description: input.description, aliases: input.aliases }));
+          return;
+        }
+        const e = list.find((x) => x.id === input.id);
+        if (!e) throw new Error('Entitate inexistentă: ' + input.id);
+        if (input.action === 'rename') { if (!input.name) throw new Error('Numele lipsește.'); e.name = input.name; }
+        else if (input.action === 'set_type') { e.type = input.type || 'Altfel'; }
+        else if (input.action === 'set_description') { e.description = input.description || ''; }
+        else if (input.action === 'set_aliases') { e.aliases = (input.aliases || []).filter(Boolean).map(String); }
+        else if (input.action === 'delete') { pj.codex = list.filter((x) => x.id !== input.id); }
+      });
+      return { codex: codexFromProject(out) };
     },
     W,
   );

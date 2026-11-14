@@ -1,6 +1,7 @@
 import {htmlToText} from './text.js';
 import {bookTypeById} from './bookTypes.js';
 import {projectNoteTabs} from './projectNotes.js';
+import {codexFromProject, codexMatches, codexContextSection} from './codex.js';
 const STOP=new Set('este sunt pentru dintre această acest care când dacă fără doar sau din prin lui ei unui unei cele mai aici acolo despre the and for this that with from your into has have not are was were'.split(' '));
 const tokens=s=>new Set((String(s||'').toLocaleLowerCase('ro').match(/[\p{L}\p{N}]{3,}/gu)||[]).filter(x=>!STOP.has(x)).slice(0,120));
 const flat=ns=>ns.flatMap(n=>[n,...flat(n.children||[])]);
@@ -37,6 +38,12 @@ export function buildEditorialContext(project,docs,{documentId,text='',question=
  const own=node&&node.type==='text'&&node.children?[{id:node.id,title:node.title}]:[];
  const containerDocs=[...own,...flat(node?.children||[]).filter(n=>n.type==='text')];
  for(const d of containerDocs){const part='\n## Text: '+d.title+'\n'+htmlToText(docs[d.id]||'').slice(0,4000);if(context.length+part.length>budget)break;context+=part;}
+ // Codex (directivă 14 nov, direcția B): entitățile cărții menționate în textul lucrat intră
+ // în context ÎNAINTE de cercetare — modelul Lorebook/Codex, cu buget propriu limitat.
+ const workingText=containerDocs.map(d=>htmlToText(docs[d.id]||'')).join('\n')||htmlToText(text||'');
+ const codexBudget=Math.min(2500,Math.max(0,Math.floor((budget-context.length)/3)));
+ const codexHit=codexContextSection(codexMatches(workingText,codexFromProject(project)),codexBudget);
+ if(codexHit.section)context+=codexHit.section;
  const sources=[];for(const source of candidates){const part='\n## Cercetare: '+source.title+(source.score?'':' (context general, relevanță neconfirmată)')+'\n'+source.content;if(context.length+part.length>budget)break;context+=part;sources.push({id:source.id,title:source.title,score:source.score});}
- return {text:context.slice(0,budget),sources,documentId,projectTitle:project?.title||'',documentTitle:node?.title||'',bookType:project?.bookType||'',container:Boolean(node?.children?.length),fallback:matched.length===0};
+ return {text:context.slice(0,budget),sources,documentId,projectTitle:project?.title||'',documentTitle:node?.title||'',bookType:project?.bookType||'',container:Boolean(node?.children?.length),fallback:matched.length===0,codex:codexHit.entities};
 }

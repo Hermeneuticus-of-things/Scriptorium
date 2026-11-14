@@ -146,6 +146,7 @@ import { stripNotation, convertNotation } from './lib/notationOps.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
 import { sumWords } from './lib/openAnchor.js';
+import CodexPanel from './components/CodexPanel.jsx';
 import { countMap } from './lib/countMap.js';
 import useReader from './lib/useReader.js';
 import { mergeProject } from './lib/projectMerge.js';
@@ -3523,6 +3524,7 @@ export default function App({ api: apiProp }) {
     ['view', 'pageViewSetup', tr('cmd.pageViewSetup'), () => setEditorView({ ...editorView, pageView: !(editorView.pageView && editorView.pageSize === 'setup'), pageSize: 'setup' })],
     ['view', 'linguisticFocus', tr('cmd.linguisticFocus'), () => toggleFloat('lf')],
     ['project', 'keywordsHud', tr('cmd.keywordsHud'), () => toggleFloat('kh')],
+    ['project', 'codex', tr('cmd.codex'), () => setDialog('codex'), !project],
     ['format', 'specialChars', tr('cmd.specialChars'), () => toggleFloat('sc')],
     ['project', 'autoCompleteList', tr('cmd.autoCompleteList'), () => setDialog('autoComplete')],
     ['edit', 'autoComplete', tr('cmd.autoComplete'), () => autoCompleteWord()],
@@ -4436,6 +4438,17 @@ export default function App({ api: apiProp }) {
           onNotesChange={(h) => queueWrite(selected.id, 'notes', h)}
           onClose={() => setShowFloatInspector(false)}
         />
+      )}
+      {dialog === 'codex' && (
+        <div className="modal-backdrop" onClick={() => setDialog(null)}>
+          <div className="modal wide" onClick={(e) => e.stopPropagation()}>
+            <CodexPanel
+              codex={project.codex || []}
+              onChange={(next) => saveProject({ ...project, codex: next })}
+              onClose={() => setDialog(null)}
+            />
+          </div>
+        </div>
       )}
       {dialog === 'bookmarks' && (
         <div className="modal-backdrop" onClick={() => setDialog(null)}>
