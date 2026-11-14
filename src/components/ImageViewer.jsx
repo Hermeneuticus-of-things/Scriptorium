@@ -1,9 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { t } from '../lib/i18n.js';
 import { stepZoom, fitScale } from '../lib/researchMedia.js';
 
 // Image in the editor pane: fit / actual size / zoom steps, Ctrl+wheel zoom, drag to pan.
-export default function ImageViewer({ url, title, media, onPatch }) {
+// ADL §2 (T8): the imperative handle exposes the viewer's local zoom steps (zoomIn / zoomOut) —
+// MediaView wires them as the focus surface's `zoomIn`/`zoomOut` commands (engine.dispatch);
+// without the engine the handle simply stays unused and the toolbar works exactly as before.
+const ImageViewer = forwardRef(function ImageViewer({ url, title, media, onPatch }, ref) {
   const box = useRef(null);
   const [nat, setNat] = useState(null); // {w, h}
   const [mode, setMode] = useState(media.zoom && media.zoom !== 'fit' ? Number(media.zoom) : 'fit');
@@ -26,6 +29,11 @@ export default function ImageViewer({ url, title, media, onPatch }) {
     setMode(m);
     onPatch?.({ zoom: m });
   };
+  // Fresh every render: the commands must see the live zoom (including the fit scale just computed).
+  useImperativeHandle(ref, () => ({
+    zoomIn: () => set(stepZoom(pct, 1)),
+    zoomOut: () => set(stepZoom(pct, -1)),
+  }));
 
   const onWheel = (e) => {
     if (!e.ctrlKey) return;
@@ -74,4 +82,6 @@ export default function ImageViewer({ url, title, media, onPatch }) {
       </div>
     </div>
   );
-}
+});
+
+export default ImageViewer;

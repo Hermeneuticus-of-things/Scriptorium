@@ -1,8 +1,10 @@
+import { isCommandApplicable } from './lib/commandApplicability.js';
+import { commandItem, commandGroup } from './lib/commands.js';
 import { addBacklinks, addedLinks, insertLinkedDoc } from './lib/backlinks.js';
 import { uiPrompt } from './lib/uiPrompt.jsx';
 import { getHTMLFromFragment } from '@tiptap/core';
 import { keyFromEvent, shortcutFor } from './lib/commands.js';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Home from './components/Home.jsx';
 import Binder from './components/Binder.jsx';
 import Editor from './components/Editor.jsx';
@@ -12,6 +14,8 @@ import Outliner from './components/Outliner.jsx';
 import Inspector from './components/Inspector.jsx';
 import SnapshotManagerDialog from './components/SnapshotManagerDialog.jsx';
 import AiPanel from './components/AiPanel.jsx';
+import AiWorkspaceWindow from './components/AiWorkspaceWindow.jsx';
+import { buildEditorialContext } from './lib/editorialContext.js';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
@@ -100,6 +104,7 @@ import {
   inOrder,
   dropMany,
   insertNear,
+  insertInside,
   keyMove,
   duplicateNode,
   convertNode,
@@ -140,6 +145,8 @@ import { replaceInHtml } from './lib/search.js';
 import { stripNotation, convertNotation } from './lib/notationOps.js';
 import { learnCorrection } from './lib/learnCorrections.js';
 import { htmlToText, newNode, textToHtml, wordCount } from './lib/text.js';
+import { sumWords } from './lib/openAnchor.js';
+import { countMap } from './lib/countMap.js';
 import useReader from './lib/useReader.js';
 import { mergeProject } from './lib/projectMerge.js';
 import { pullExternalDocs } from './lib/syncGuard.js';
@@ -147,6 +154,16 @@ import { mergeDoc, resolveMerge } from './lib/team.js';
 import { useTeam } from './lib/useTeam.js';
 import { useDictation } from './lib/useDictation.js';
 import { createLocalSpeech } from './lib/localSpeech.js';
+import { createFocusEngine } from './lib/focusEngine.js';
+import { registerDialogSurface, closeTopModal, escapeThroughEngine, dialogSurfaceId } from './lib/focusDialogs.js';
+import { VIEW_SURFACES, surfaceForView, registerViewSurfaces, syncViewSurface } from './lib/focusViews.js';
+import { setDefaultFocusEngine, activeFocusEngine, runNativeMenuItem } from './lib/focusMenus.js';
+import { registerSplitSurface, splitSurfaceId } from './lib/focusPanes.js';
+import { editorSurfaceRegistration } from './lib/focusEditorState.js';
+import { convertHtmlToDefault } from './lib/projectFormat.js';
+import { alignmentTargets, formatDocuments } from './lib/paragraphAlignment.js';
+import DocumentFormattingDialog from './components/DocumentFormattingDialog.jsx';
+import { buildTocText } from './lib/toc.js';
 import { AUDIO_EXT, transcriptHtml } from './lib/dictation.js';
 import DictationBar from './components/DictationBar.jsx';
 import TeamDialog from './components/TeamDialog.jsx';
@@ -174,6 +191,9 @@ const TYPED_COMMIT_DELAY = 400;
 // so autosave never writes one row per keystroke.
 const AUTHOR_COMMIT_DELAY = 8000;
 const HISTORY_DELAY = 5000;
+// Lucrări care nu trebuie sincron pe traseul critic (deschiderea unei cărți mari):
+// pe idle, cu timeout ca să nu amâne la infinit când fereastra e ocupată.
+const deferIdle = (fn) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 250));
 
 // Per-machine UI state (open document, view, panel widths) kept in localStorage.
 function loadUi(dir) {
@@ -234,6 +254,19 @@ export default function App({ api: apiProp }) {
     });
   }, [apiProp]);
   const [settings, setSettings] = useState(null);
+  const [serviceAvailability, setServiceAvailability] = useState({});
+  useEffect(() => {
+    let alive = true, timer;
+    const refresh = async () => {
+      const [data, auth, flags] = await Promise.all([api.servicesStatus?.().catch(() => null), api.nlmAuthStatus?.().catch(() => null), api.getSettings?.().catch(() => null)]);
+      if (alive) { setServiceAvailability({ ...(data?.services || {}), notebookLm: { configured: auth?.loggedIn === true } }); if (flags) setSettings((s) => s ? { ...s, hasApiKey: flags.hasApiKey, hasKeys: flags.hasKeys } : s); }
+    };
+    const changed = () => { clearTimeout(timer); timer = setTimeout(refresh, 100); };
+    refresh();
+    window.addEventListener('pneuma-services-changed', changed);
+    const off = api.onServicesChanged?.(changed);
+    return () => { alive = false; clearTimeout(timer); off?.(); window.removeEventListener('pneuma-services-changed', changed); };
+  }, []);
   const settingsRef = useRef(null);
   settingsRef.current = settings;
   const openResultRef = useRef(null);
@@ -298,6 +331,8 @@ export default function App({ api: apiProp }) {
   useEffect(() => () => speechApi.dispose?.(), [speechApi]);
   const dict = useDictation({
     api: speechApi,
+    engine: settings?.speechEngine === 'online' ? 'online' : 'local',
+    onlineNotConfigured: tr('ui.dted.online_not_configured'),
     getEditor: () => activeHandle()?.editor,
     replacements: settings?.autoReplacements,
     switchedMessage: tr('ui.dted.oprita_la_schimbare'),
@@ -340,11 +375,115 @@ export default function App({ api: apiProp }) {
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
+  // AI placement (ADL §4.2, directivă autor 2026-11-10): fereastră flotantă SAU panou lateral mare;
+  // modul persistat în starea UI. aiScope = nivelul de lucru ales din meniul contextual.
+  const [aiPanelMode, setAiPanelMode] = useState(false);
+  const [aiScope, setAiScope] = useState(null); // {nodeId, level: 'book'|'manuscript'|'chapter'|'section'|'selection'}
+  // ADL §2: focus engine — per-window stacks, surface registration, Escape cascade.
+  const focusEngine = useRef(createFocusEngine()).current;
+  // ADL T5: captura/restaurarea reală a editorului citesc handle-ul LIVE la push/pop (panoul se
+  // poate remonta sub același id); ref-ul se umple la fiecare randare, ca commandsRef mai jos.
+  const editorHandleRef = useRef(null);
+  useEffect(() => {
+    const eng = focusEngine;
+    const serviceClose = () => closeTopModal(document) || setServiceResult(null);
+    // ADL §10: the core surface answers the command registry, so a command chosen from any
+    // menu (engine.dispatch) reaches the active surface first and lands here when no transient
+    // layer owns it. commandsRef fills after this effect runs — read through a lazy lookup.
+    const coreCommands = new Proxy({}, { get: (_, cmd) => commandsRef.current?.[String(cmd)]?.run });
+    // ADL T5: suprafața funcției de bază captează starea reală a editorului (caret, selecție,
+    // scroll) la push-ul oricărui strat translucid peste ea și o restaurează la pop; handle-ul
+    // se citește prin ref la momentul apelului, nu la mount.
+    const un1 = eng.registerFocusableSurface({ id: 'editor.document.core', ...editorSurfaceRegistration(() => editorHandleRef.current?.(), coreCommands) });
+    const un2 = eng.registerFocusableSurface({ id: 'settings.app', commands: {} });
+    const un3 = eng.registerFocusableSurface({ id: 'popover.service', commands: { close: serviceClose, escape: serviceClose } });
+    // ADL T7: the three main views (and the floating panels) are engine surfaces too. The row
+    // delete action is read through a ref, so the command never captures stale selection state.
+    const un4 = registerViewSurfaces(eng, { onDeleteRow: () => trashRef.current?.() });
+    const un5 = eng.registerFocusableSurface({ id: 'panel.inspector', commands: {} });
+    // ADL T4: Quick Reference panels register their own surfaces (quickref.<id>, in QuickRef.jsx);
+    // the split editor pane registers in the effect below, on splitNode.
+    eng.push('editor.document.core'); // the core function sits at the bottom of the stack
+    setDefaultFocusEngine(eng); // menus anywhere in the tree (FormatBar) find the engine
+    return () => {
+      if (activeFocusEngine() === eng) setDefaultFocusEngine(null);
+      eng.pop('editor.document.core');
+      un4(); un5(); un1(); un2(); un3();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusEngine]);
+  // ADL §2 focus ≠ selection: the ACTIVE surface is reactive, so a selection can be drawn in the
+  // inactive colour while another surface (settings, inspector, quick-ref) owns the focus.
+  const activeSurface = useSyncExternalStore(focusEngine.subscribe, focusEngine.top);
+  // ADL T7: the visible view owns the active surface — Ctrl+1/2/3 (viewEditor / viewCorkboard /
+  // viewOutline) switch it. Only the ACTIVE view is ever on the stack, so row commands can never
+  // bubble to a hidden board while the user works (types) somewhere else.
+  const viewSurfaceRef = useRef(VIEW_SURFACES.scrivenings);
+  useEffect(() => {
+    const id = surfaceForView(view);
+    viewSurfaceRef.current = id;
+    syncViewSurface(focusEngine, id);
+  }, [view, focusEngine]);
+  useEffect(() => () => {
+    // unmount: take the view surface off the stack (whatever was pushed over it goes with it)
+    const st = focusEngine.stack();
+    const i = st.findIndex((s) => String(s).startsWith('view.'));
+    if (i >= 0) focusEngine.pop(st[i]);
+  }, [focusEngine]);
+  // ADL §2: the Inspector is an intermediate surface too (§2 names it) — while the user works in
+  // it, it owns the focus (the view underneath renders its selection inactive); leaving it hands
+  // the active surface back to the visible view. mousedown heals the unmount-with-focus case
+  // (the inspector disappearing fires no focusin), so the very next interaction re-syncs.
+  useEffect(() => {
+    const eng = focusEngine;
+    const onAct = (e) => {
+      if (e.target?.closest?.('.inspector')) eng.switchFocus('panel.inspector');
+      else if (eng.top() === 'panel.inspector') eng.switchFocus(viewSurfaceRef.current);
+    };
+    document.addEventListener('focusin', onAct);
+    document.addEventListener('mousedown', onAct);
+    return () => {
+      document.removeEventListener('focusin', onAct);
+      document.removeEventListener('mousedown', onAct);
+    };
+  }, [focusEngine]);
+  // ADL T4 §2: the same sibling model for the split editor pane and the Quick Reference panels —
+  // the pane the user works in owns the focus. A click inside the split pane makes it the active
+  // surface; a click anywhere else hands the active surface back to the visible view. The Quick
+  // Reference panels switch themselves (QuickRef.jsx); the inspector has its own handler above.
+  const splitSurfaceRef = useRef(null); // the split surface id while the pane exists (set below, on splitNode)
+  useEffect(() => {
+    const eng = focusEngine;
+    const onAct = (e) => {
+      const t = e.target;
+      if (!t?.closest) return;
+      if (t.closest('.inspector')) return; // the inspector's own switch (above)
+      if (t.closest('.quickref')) return; // the panels switch themselves (QuickRef.jsx)
+      if (t.closest('.media-view')) return; // ADL T8: the media viewer switches itself (MediaView.jsx)
+      const sid = splitSurfaceRef.current;
+      if (t.closest('.workspace .pane.second') && sid) { eng.switchFocus(sid); return; }
+      const top = eng.top();
+      // ADL T8: the media viewer (image.viewer.*, either pane) hands the focus back too — same
+      // sibling model as the split pane and the Quick Reference panels.
+      if ((sid && top === sid) || String(top).startsWith('quickref.') || String(top).startsWith('image.viewer.')) eng.switchFocus(viewSurfaceRef.current);
+    };
+    document.addEventListener('focusin', onAct);
+    document.addEventListener('mousedown', onAct);
+    return () => {
+      document.removeEventListener('focusin', onAct);
+      document.removeEventListener('mousedown', onAct);
+    };
+  }, [focusEngine]);
   const [editorCtx, setEditorCtx] = useState(null); // { x, y } in-app editor menu (browser build)
   const [aiRequest, setAiRequest] = useState(null);
   const [researchRequest, setResearchRequest] = useState(null); // { q, mode, n } run by ResearchPanel
   const [findSeed, setFindSeed] = useState('');
   const [serviceResult, setServiceResult] = useState(null); // { source, result, handle } from DeepL / Google / LanguageTool // { action, n } run by AiPanel
+  useEffect(() => {
+    if (serviceResult) focusEngine.push('popover.service');
+    else if (focusEngine.top() === 'popover.service') focusEngine.pop('popover.service');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceResult]);
   const [showEditorial, setShowEditorial] = useState(false);
   const [editorialTabReq, setEditorialTabReq] = useState(null); // {tab, n}: AI › I-EDIT opens the panel on that tab
   const [importStats, setImportStats] = useState(null);
@@ -367,8 +506,26 @@ export default function App({ api: apiProp }) {
   }, []);
   // Help → Report a problem, and the discreet "send a report?" toast for a newly captured error.
   const [reportOpen, setReportOpen] = useState(false);
+  // ADL §2: the report modal can open over any dialog (onError from inside it) — its own layer.
+  useEffect(() => {
+    if (!reportOpen) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.report', {
+      close: () => closeTopModal(document),
+      fallback: () => setReportOpen(false),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportOpen, focusEngine]);
   // Help → Check for updates, and the "new version" banner (once per new version; remembered in settings).
   const [updateOpen, setUpdateOpen] = useState(null); // null | { initial }
+  // ADL §2: same for the update dialog (it can pop up over whatever is open).
+  useEffect(() => {
+    if (!updateOpen) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.update', {
+      close: () => closeTopModal(document),
+      fallback: () => setUpdateOpen(null),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateOpen, focusEngine]);
   const [aboutOpen, setAboutOpen] = useState(false); // Help → About Pneuma Sofer
   const [updateBanner, setUpdateBanner] = useState(null);
   const bannerShown = useRef('');
@@ -385,6 +542,34 @@ export default function App({ api: apiProp }) {
   }, [api]);
   const [errorPrompt, setErrorPrompt] = useState(false);
   const seenErrors = useRef(new Set());
+  const [unsavedPrompt, setUnsavedPrompt] = useState(null);
+  const unsavedDecision = useRef(null);
+  const unsavedPromise = useRef(null);
+  const hasUnsavedChanges = () => Boolean(pending.current.size || typed.current.size || authorBase.current.size || queuedRef.current);
+  const askUnsavedDecision = () => {
+    if (unsavedPromise.current) return unsavedPromise.current;
+    if (!hasUnsavedChanges()) return Promise.resolve('discard');
+    unsavedPromise.current = new Promise((resolve) => {
+      unsavedDecision.current = resolve;
+      setUnsavedPrompt({});
+    });
+    return unsavedPromise.current;
+  };
+  const resolveUnsavedDecision = useCallback((choice) => {
+    const resolve = unsavedDecision.current;
+    unsavedDecision.current = null;
+    unsavedPromise.current = null;
+    setUnsavedPrompt(null);
+    resolve?.(choice);
+  }, []);
+  // The unsaved confirmation is a real top layer, including when opened over another dialog.
+  useEffect(() => {
+    if (!unsavedPrompt) return undefined;
+    return registerDialogSurface(focusEngine, 'dialog.unsaved', {
+      close: () => { resolveUnsavedDecision('cancel'); return true; },
+    });
+  }, [unsavedPrompt, focusEngine, resolveUnsavedDecision]);
+
   useEffect(() => {
     const onErr = (e) => {
       const k = errorKey(e || {});
@@ -451,6 +636,14 @@ export default function App({ api: apiProp }) {
   }, [activeCollectionId, project?.collections, project?.tree, dir, api]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hideBinder, setHideBinder] = useState(false);
   const [quickRefs, setQuickRefs] = useState([]); // [{id, x, y}]
+  // ADL T4 §2: every Quick Reference panel is its own engine surface — `quickref.<docId>`,
+  // registered and pushed by the panel itself (QuickRef.jsx) and popped when it closes. What
+  // stays here is the hand-back: while a panel owned the top, syncViewSurface refused view
+  // switches, so when the last panel closes the visible view takes the active surface back.
+  useEffect(() => {
+    if (!quickRefs.length) syncViewSurface(focusEngine, surfaceForView(view));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickRefs.length, view, focusEngine]);
   // Copyholder: a reference pane beside the editor (and the split), read-only unless toggled.
   const [copyholder, setCopyholder] = useState(null); // {id, editable} | null
   const copyScroll = useRef(new Map()); // doc id -> scrollTop of the copyholder pane
@@ -499,10 +692,39 @@ export default function App({ api: apiProp }) {
       });
     });
   };
+  const showSelectionHint = () => {
+    setToast(tr('ui.app.selecteaza_un_cuvant'));
+    showHint('editor-selection');
+  };
+  const showServiceHint = (service) => {
+    openSettings('accounts');
+    // Settings mounts after the command returns; wait one frame before glowing its input.
+    window.setTimeout(() => showHint(`service-key-${service}`), 120);
+  };
   const [splitNav, setSplitNav] = useState({ stack: [], index: -1 });
   const [hoistId, setHoistId] = useState(null); // binder focused on one folder
   const [scrivList, setScrivList] = useState(null); // {title, ids}: Scrivenings over an arbitrary list
   const [dialog, setDialog] = useState(null);
+  const [formatScope, setFormatScope] = useState('document'); // Formatare document / manuscris: domeniul ales în dialog
+  // ADL §2: every dialog is a focus surface — push on open, pop on close; Escape cascade and
+  // local 'close' commands go through the engine (innermost first, one per press).
+  useEffect(() => {
+    if (!dialog) return undefined;
+    return registerDialogSurface(focusEngine, dialogSurfaceId(dialog), {
+      close: () => closeTopModal(document),
+      fallback: () => setDialog(null),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialog, focusEngine]);
+  // ADL §2: the engine answers Escape BEFORE the old document-level handler (DialogA11y): it
+  // decides which layer closes; when no surface handles it, the old behavior stands untouched.
+  useEffect(() => {
+    const host = document.getElementById('root') || document;
+    const onKey = (e) => { escapeThroughEngine(focusEngine, e); };
+    host.addEventListener('keydown', onKey);
+    return () => host.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusEngine]);
   const [floats, setFloats] = useState({ lf: false, kh: false, sc: false }); // audit 2 floating windows
   const toggleFloat = (k) => setFloats((f) => ({ ...f, [k]: !f[k] }));
   const [printOpts, setPrintOpts] = useState(null); // File > Print Preview: { ids, pageSetup? }
@@ -580,17 +802,18 @@ export default function App({ api: apiProp }) {
 
   // Word counts per document; only documents whose HTML changed are counted again.
   const countCache = useRef(new Map());
-  const counts = useMemo(() => {
-    const map = {};
-    for (const [id, html] of Object.entries(docs)) {
-      const hit = countCache.current.get(id);
-      if (hit && hit.html === html) map[id] = hit.n;
-      else {
-        map[id] = wordCount(html);
-        countCache.current.set(id, { html, n: map[id] });
-      }
-    }
-    return map;
+  // Word counts per document: deferred on idle (state, not a synchronous memo) — at open the
+  // cold count over every document of a big book dominated the open stall (profilat, ciclu 2).
+  // Binder/totals/targets read `counts` as it fills in; countCache keeps later updates cheap.
+  const [counts, setCounts] = useState({});
+  useEffect(() => {
+    let live = true;
+    deferIdle(() => {
+      if (live) setCounts(countMap(docs, countCache.current));
+    });
+    return () => {
+      live = false;
+    };
   }, [docs]);
   // Character counts, cached the same way (character targets, history): never the whole book again.
   const charCache = useRef(new Map());
@@ -794,10 +1017,37 @@ export default function App({ api: apiProp }) {
   );
 
   useEffect(() => {
-    const onUnload = () => flush();
+    const onUnload = (event) => {
+      // Electron intercepts the native close in main.cjs and asks the renderer through the
+      // three-button dialog below. Blocking beforeunload here would prevent that handshake.
+      if (hasUnsavedChanges() && !api.windowCloseResponse) {
+        event.preventDefault();
+        event.returnValue = '';
+        return;
+      }
+      flush();
+    };
     window.addEventListener('beforeunload', onUnload);
     return () => window.removeEventListener('beforeunload', onUnload);
   }, [flush]);
+
+  useEffect(() => {
+    if (!api.onWindowCloseRequest || !api.windowCloseResponse) return undefined;
+    return api.onWindowCloseRequest(async () => {
+      const choice = await askUnsavedDecision();
+      if (choice === 'save') {
+        await flush();
+        return api.windowCloseResponse('close');
+      }
+      if (choice === 'discard') {
+        pending.current.clear();
+        dropTyped();
+        changedSinceSave.current.clear();
+        authorBase.current.clear();
+      }
+      return api.windowCloseResponse(choice === 'cancel' ? 'cancel' : 'close');
+    });
+  }, [api, flush]);
 
   // Reload documents changed outside the app (AI agents via MCP, sync clients, the same folder
   // open on another computer). A document with unsaved local edits keeps the local text; the
@@ -897,8 +1147,8 @@ export default function App({ api: apiProp }) {
 
   // Remember UI state per project.
   useEffect(() => {
-    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder, paneLocks });
-  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder, paneLocks]);
+    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, aiPanelMode, splitId, copyholder, paneLocks });
+  }, [dir, selectedId, view, widths, showInspector, aiPanelMode, splitId, copyholder, paneLocks]);
 
   const saveProject = useCallback(
     (next) => {
@@ -945,6 +1195,7 @@ export default function App({ api: apiProp }) {
   const openResult = useCallback(
     async (res) => {
       if (!res) return;
+      setRenameId(null);
       if (res.stats) {
         setImportStats({ ...res.stats, source: res.project.importReport?.source });
         setDialog('importReport');
@@ -998,22 +1249,31 @@ export default function App({ api: apiProp }) {
       setView(ui.view || settingsRef.current?.defaultView || 'editor');
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
+      if (ui.aiPanelMode !== undefined) setAiPanelMode(Boolean(ui.aiPanelMode));
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
       setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split) } : {});
       setSplitNav({ stack: [], index: -1 });
       setCopyholder(ui.copyholder?.id && findNode(res.project.tree, ui.copyholder.id) ? { id: ui.copyholder.id, editable: Boolean(ui.copyholder.editable) } : null);
-      const openCounts = Object.fromEntries(entries.map(([id, h]) => [id, wordCount(h)]));
-      const draftAtOpen = sumWords(res.project.tree[0], openCounts);
       setSessionStart(null); // set from the first totals (sessionBaseline), by the project's reset rule
-      void draftAtOpen;
       const sOpen = settingsRef.current?.sharingSync || {};
       if (res.project.syncFolder && (res.project.syncAuto || sOpen.syncOnOpen) && api.syncAuto) {
         api.syncAuto(res.dir, { ...res.project, syncAuto: true, syncFormat: res.project.syncFormat || sOpen.format || 'rtf' }, 'open').then((r) => r?.action === 'in' && setToast(tr('ui.app.sincronizare_automata_x_actualizate_x', { length: r.updated.length, length1: r.created.length }))).catch(() => {});
       }
-      // Anchor today's history at the counts on open, so the first save of the day is measured from here.
-      const trashIds = new Set(flatten(res.project.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
-      const totalAtOpen = Object.entries(openCounts).reduce((s, [id, c]) => s + (trashIds.has(id) ? 0 : c), 0);
-      api.recordHistory?.(res.dir, { draft: draftAtOpen, total: totalAtOpen }).catch(() => {});
+      // Anchor today's history at the counts on open, so the first save of the day is measured
+      // from here. Deferred off the open's critical path: counting every document of a big book
+      // here dominated the open stall (profilat — CPU profiler). By idle time the counts memo
+      // has warmed countCache, so this reuses cached numbers instead of re-reading everything.
+      deferIdle(() => {
+        const countsAtOpen = {};
+        for (const [id, h] of entries) {
+          const hit = countCache.current.get(id);
+          countsAtOpen[id] = hit && hit.html === h ? hit.n : wordCount(h);
+        }
+        const draftAtOpen = sumWords(res.project.tree[0], countsAtOpen);
+        const trashIds = new Set(flatten(res.project.tree.find((n) => n.root === 'trash').children).map((n) => n.id));
+        const totalAtOpen = Object.entries(countsAtOpen).reduce((s, [id, c]) => s + (trashIds.has(id) ? 0 : c), 0);
+        api.recordHistory?.(res.dir, { draft: draftAtOpen, total: totalAtOpen }).catch(() => {});
+      });
       setSettings(await api.getSettings());
     },
     [api],
@@ -1021,10 +1281,20 @@ export default function App({ api: apiProp }) {
   openResultRef.current = openResult;
 
   const closeProject = async () => {
-    await flush();
+    const choice = await askUnsavedDecision();
+    if (choice === 'cancel') return;
+    if (choice === 'save') await flush();
+    if (choice === 'discard') {
+      pending.current.clear();
+      dropTyped();
+      changedSinceSave.current.clear();
+      authorBase.current.clear();
+    }
     parkQueue(dir);
     if (project?.syncFolder && (project.syncAuto || settings?.sharingSync?.syncOnClose)) await api.syncAuto?.(dir, { ...withSyncDefaults(project), syncAuto: true }, 'close').catch(() => {});
     api.releaseProject?.().catch(() => {});
+    setRenameId(null);
+    setActiveCollectionId(null);
     setProject(null);
     setDir(null);
     dropTyped();
@@ -1106,6 +1376,9 @@ export default function App({ api: apiProp }) {
   const go = async (id, { push = true } = {}) => {
     await flush();
     setScrivList(null);
+    // ADL T8: a user navigation to a media document opens the media viewer — arm its real focus.
+    const target = findNode(project.tree, id);
+    if (target && target.type === 'file' && target.media) mediaFocusArmed.current = true;
     setSelectedId(id);
     setSelectedIds(new Set([id]));
     if (push) {
@@ -1137,7 +1410,7 @@ export default function App({ api: apiProp }) {
     }
     if (alt) {
       const node = findNode(project.tree, id);
-      if (node && !node.root) setSplitId(id);
+      if (node && !node.root) openSplit(id);
       return;
     }
     if (ctrl) {
@@ -1163,7 +1436,7 @@ export default function App({ api: apiProp }) {
     if (!target) { setToast(tr('ui.app.panou_blocat')); showHint('paneLock'); return; }
     if (target === 'split') {
       const node = findNode(project.tree, id);
-      if (node && !node.root) flush().then(() => setSplitId(id));
+      if (node && !node.root) flush().then(() => openSplit(id));
       return;
     }
     go(id);
@@ -1266,10 +1539,10 @@ export default function App({ api: apiProp }) {
     const resolve = (h) => resolveTemplatePlaceholders(h, ctx);
     return { fields, resolve };
   };
-  const addItem = (type, title, html, anchorId = selectedId) => {
+  const addItem = (type, title, html, anchorId = selectedId, opts = {}) => {
     const node = Object.assign(newNode(type, title), newNodeDefaults(project));
-    // A folder can name the template its new documents start from (Inspector).
-    const parent = parentForNew(anchorId);
+    // Nesting as in Scrivener 3: { inside: true } creates the item inside the target document.
+    const parent = opts.inside && anchorId ? (findNode(project.tree, anchorId) || parentForNew(anchorId)) : parentForNew(anchorId);
     const tpl = type === 'text' && html == null && !title ? defaultTemplateFor(project, parent) : null;
     let tplHtml = null;
     if (tpl) {
@@ -1286,7 +1559,7 @@ export default function App({ api: apiProp }) {
       }).catch(report);
       api.readDoc(dir, tpl.id, 'notes').then((n) => n && api.writeDoc(dir, node.id, 'notes', resolve(n))).catch(report);
     }
-    setTreeU(insertNear(project.tree, anchorId, node));
+    setTreeU(opts.inside && anchorId ? insertInside(project.tree, anchorId, node) : insertNear(project.tree, anchorId, node));
     if (!title && !tpl && !hideBinder) setRenameId(node.id);
     const content = html ?? tplHtml ?? (type === 'text' ? '<p></p>' : '');
     setDocs((d) => ({ ...d, [node.id]: content }));
@@ -1341,7 +1614,8 @@ export default function App({ api: apiProp }) {
   // Shows a research file next to the text: the file goes to the split pane, the text stays in the main one.
   const openBeside = (mediaId) => {
     if (splitId === mediaId) return;
-    setSplitId(mediaId);
+    openSplit(mediaId);
+    mediaFocusArmed.current = true; // ADL T8: a user open — the split viewer takes the real focus
   };
   // Files dropped from the system on the binder are copied into the project and added to Research.
   const MAX_DROP_MB = 200;
@@ -1387,9 +1661,9 @@ export default function App({ api: apiProp }) {
     }
   };
 
-  const trashSelection = () => {
+  const trashSelection = (requestedIds) => {
     let tree = project.tree;
-    const ids = [...(selectedIds.size ? selectedIds : [selectedId])].filter((id) => {
+    const ids = [...(Array.isArray(requestedIds) ? requestedIds : selectedIds.size ? selectedIds : [selectedId])].filter((id) => {
       const n = findNode(tree, id);
       return n && !n.root && !inTrash(id);
     });
@@ -1405,14 +1679,18 @@ export default function App({ api: apiProp }) {
     setSelectedId(sel);
     setSelectedIds(new Set([sel]));
   };
+  // ADL T7: the engine surfaces read the row-delete action through this ref, so the `delete`
+  // command registered once at mount always runs with the current selection (no stale capture).
+  const trashRef = useRef(null);
+  trashRef.current = trashSelection;
 
   // --- Batch A: binder and document commands ---
   const selectionList = () => (selectedIds.size ? [...selectedIds] : selectedId ? [selectedId] : []).filter((id) => {
     const n = findNode(project.tree, id);
     return n && !n.root;
   });
-  const restoreSelection = () => {
-    const tree = restoreManyFromTrash(project.tree, selectionList());
+  const restoreSelection = (requestedIds) => {
+    const tree = restoreManyFromTrash(project.tree, Array.isArray(requestedIds) ? requestedIds : selectionList());
     if (tree !== project.tree) setTreeU(tree);
     else setToast(tr('ui.app.selectia_nu_e_in_cos'));
   };
@@ -1511,7 +1789,17 @@ export default function App({ api: apiProp }) {
   };
   const selectedText = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.getSelectionText() || '';
   // Read aloud from the right-click menu (uses the local Mihai voice when installed, else system voices).
-  const reader = useReader(api);
+  // Motoarele online (directivă autor 2026-11-10): dictare cloud + voce Speechify, pentru
+  // calculatoare slabe. Disponibile doar când serviciul e configurat (cheia în registry).
+  const [speechReady, setSpeechReady] = useState({ speechify: false, stt: false });
+  useEffect(() => {
+    let alive = true;
+    const check = () => api.servicesStatus?.().then((st) => { if (alive) setSpeechReady({ speechify: Boolean(st?.services?.speechify?.configured), stt: Boolean(st?.services?.stt?.configured) }); }).catch(() => {});
+    check();
+    const off = api.onServicesChanged?.(check);
+    return () => { alive = false; off?.(); };
+  }, [api]);
+  const reader = useReader(api, { ttsEngine: settings?.ttsEngine || 'auto', speechifyReady: Boolean(speechReady.speechify), onMessage: (m) => setToast(m) });
   const wholeDocText = () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.getText?.() || '';
   const textFromCursor = () => {
     const ed = (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.editor;
@@ -1539,7 +1827,7 @@ export default function App({ api: apiProp }) {
   // Word or phrase lookups; translation takes the whole selection, dictionaries a short phrase.
   const lookupWord = (kind) => {
     const text = selectedText().trim();
-    if (!text) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (!text) return showSelectionHint();
     const url = lookupUrl(kind, text, { from: settings.translateFrom || 'auto', to: settings.translateTo || 'ro' });
     if (!url) return setToast(tr('ui.app.selectie_prea_lunga'));
     return openWeb(url);
@@ -1567,6 +1855,35 @@ export default function App({ api: apiProp }) {
   // about the selected expression, letting it ask follow-ups until it has a usable answer, then
   // show that answer (with its citations) and copy it to the clipboard. Optional: only wired when
   // a notebook is configured and the notebooklm-mcp server is available.
+  // NotebookLM pe tot documentul (directivă autor 2026-11-10): întreabă notebook-ul despre
+  // documentul activ; răspunsul cu citări se salvează ca document nou în Cercetare.
+  const askNotebookLmAboutDoc = async () => {
+    if (!aiEnabled) return setToast(tr('ui.app.ai_oprit'));
+    if (!api.nlmAsk) return undefined;
+    const doc = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+    const title = findNode(project.tree, activeId.current || selectedId)?.title || '';
+    const text = doc?.getText?.() || '';
+    if (!text.trim()) return setToast(tr('ui.aiPanel.documentul_e_gol_scrie_ceva'));
+    setToast(tr('ui.app.nlm_intreb'));
+    try {
+      const question = tr('ui.app.nlm_intrebare_document', { title });
+      const res = await api.nlmAsk(question);
+      const answer = String(res?.answer || '').trim();
+      if (!answer) return setToast(tr('ui.app.nlm_fara_raspuns'));
+      const cites = (res.references || []).map((r) => `- ${r.title || r.id || 'sursă'}`).join('\n');
+      const html = '<h1>' + title + ' — NotebookLM</h1><p><strong>Întrebare:</strong> ' + question.replace(/</g, '&lt;') + '</p>' + textToHtml(answer) + (cites ? '<p class="muted"><em>Citări:</em><br>' + cites.replace(/\n/g, '<br>') + '</p>' : '');
+      const ids = await addResearchDocs([{ title: title + ' — NotebookLM', html }], '', { toImportFolder: false });
+      if (ids[0]) { go(ids[0]); setToast(tr('ui.app.nlm_salvat_cercetare')); }
+    } catch (e) { report(e); }
+    return undefined;
+  };
+  // Studio NotebookLM: funcțiile cloud (Audio/Video/MindMap/Rapoarte/Slide/Live) rulează în
+  // fereastra NotebookLM logged-in — deschidem fereastra; automatizarea UI Google rămâne manuală.
+  const openNotebookStudio = (feature) => {
+    if (!api.nlmOpen) return undefined;
+    api.nlmOpen().then(() => setToast(tr('ui.app.nlm_studio', { feature }))).catch(report);
+    return undefined;
+  };
   const consultNotebookLm = async () => {
     if (!aiEnabled) return setToast(tr('ui.app.ai_oprit'));
     if (!api.nlmConsult) return undefined;
@@ -1651,7 +1968,7 @@ export default function App({ api: apiProp }) {
   const runService = async (kind, service) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
     const source = (handle?.getSelectionText() || '').trim();
-    if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    if (!source) return showSelectionHint();
     const range = serviceRange(handle.editor, source);
     const label = kind === 'grammar' ? 'LanguageTool' : service === 'google' ? 'Google Translate' : 'DeepL';
     setToast(tr('ui.services.lucrez', { service: label }));
@@ -1680,16 +1997,33 @@ export default function App({ api: apiProp }) {
       }
     } catch (e) {
       setToast('');
-      report(e);
+      const msg = String(e?.message || '');
+      if (/Pune cheia|cheia nu e acceptată|Setări.*Servicii|conectat cu Google/i.test(msg)) {
+        setToast(msg);
+        showServiceHint(service === 'google' ? 'googleTranslate' : kind === 'grammar' ? 'languagetool' : 'deepl');
+      } else report(e);
     }
     return undefined;
   };
   // In-app synonyms (sinonimul.ro): fetch the word's synonyms and show them as chips; clicking one
   // replaces the selected word in place (same mechanism as the in-app translation).
-  const synonymsInApp = async () => {
+  const synonymsInApp = async (word = null) => {
     const handle = editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
-    const source = (handle?.getSelectionText() || '').trim();
-    if (!source) return setToast(tr('ui.app.selecteaza_un_cuvant'));
+    const source = String(word || (handle?.getSelectionText() || '')).trim();
+    if (!source) return showSelectionHint();
+    if (word) {
+      // Cuvinte apropiate din popover: re-căutare directă, fără selecție în editor.
+      setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
+      try {
+        const res = await api.fetchSynonyms(source);
+        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 } });
+        setToast('');
+      } catch (e) {
+        setServiceResult({ source, result: { kind: 'error', message: e.message }, handle, anchored: true, pos: serviceResult?.pos || { x: 140, y: 160 }, retry: () => synonymsInApp(source) });
+        setToast('');
+      }
+      return undefined;
+    }
     const range = serviceRange(handle.editor, source);
     setToast(tr('ui.services.lucrez', { service: 'sinonimul.ro' }));
     try {
@@ -1701,11 +2035,19 @@ export default function App({ api: apiProp }) {
           const r = el.getBoundingClientRect();
           pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
         } catch { pos = { x: 120, y: 140 }; }
-        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms }, handle, range, anchored: true, pos });
+        setServiceResult({ source, result: { kind: 'synonyms', word: res.word, synonyms: res.synonyms, related: res.related || [] }, handle, range, anchored: true, pos });
       setToast('');
     } catch (e) {
+      // ADL §12: eroarea LA CAUZĂ — popover ancorat cu mesaj și Reîncearcă.
+      let pos = { x: 120, y: 140 };
+      try {
+        const dom = handle.editor.view.domAtPos(range.to);
+        const el = dom.node.nodeType === 1 ? dom.node : dom.node.parentElement;
+        const r = el.getBoundingClientRect();
+        pos = { x: Math.min(r.left + 24, window.innerWidth - 420), y: Math.min(r.bottom + 8, window.innerHeight - 260) };
+      } catch { pos = { x: 120, y: 140 }; }
+      setServiceResult({ source, result: { kind: 'error', message: e.message }, handle, range, anchored: true, pos, retry: () => synonymsInApp() });
       setToast('');
-      report(e);
     }
     return undefined;
   };
@@ -1769,10 +2111,10 @@ export default function App({ api: apiProp }) {
     setTree(tree);
     setToast(tr('ui.app.sinopsis_generat_pentru_x_documente', { n: n }));
   };
-  const snapshotSelection = async () => {
+  const snapshotSelection = async (requestedIds) => {
     await flush();
     const stamp = `Snapshot ${new Date().toLocaleString(uiLocale())}`;
-    const ids = selectionList().filter((id) => findNode(project.tree, id).type === 'text');
+    const ids = (Array.isArray(requestedIds) ? requestedIds : selectionList()).filter((id) => findNode(project.tree, id)?.type === 'text' && !inTrash(id));
     for (const id of ids) await api.takeSnapshot(dir, id, stamp);
     setToast(tr('ui.app.snapshot_salvat_pentru_x_documente', { length: ids.length }));
     refreshSnapCounts();
@@ -1864,7 +2206,7 @@ export default function App({ api: apiProp }) {
     let outlinerColumns;
     try { outlinerColumns = JSON.parse(localStorage.getItem(OUTLINER_COLUMNS_KEY) || 'null') || undefined; } catch { /* none */ }
     const board = selected && selected.children ? selected : selectedId ? findParent(project.tree, selectedId) : null;
-    return { view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
+    return { view, showInspector, showAi, showEditorial, aiPanelMode, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
   };
   const [layoutRev, setLayoutRev] = useState(0);
   const applyLayout = (l) => {
@@ -1880,6 +2222,7 @@ export default function App({ api: apiProp }) {
     setView(l.view || 'editor');
     setShowInspector(l.showInspector !== false);
     setShowAi(Boolean(l.showAi));
+    setAiPanelMode(Boolean(l.aiPanelMode));
     setShowEditorial(Boolean(l.showEditorial));
     setHideBinder(Boolean(l.hideBinder));
     if (l.widths) setWidths(l.widths);
@@ -1967,8 +2310,8 @@ export default function App({ api: apiProp }) {
   };
 
   // Duplicates the selected item (with its notes, synopsis and, optionally, children).
-  const duplicateSelection = async (withChildren) => {
-    const node = selectedId && findNode(project.tree, selectedId);
+  const duplicateSelection = async (withChildren, targetId = selectedId) => {
+    const node = targetId && findNode(project.tree, targetId);
     if (!node || node.root) return;
     await flush();
     const { tree, pairs, id } = duplicateNode(projectRef.current.tree, node.id, { withChildren });
@@ -2162,6 +2505,69 @@ export default function App({ api: apiProp }) {
     setToast(tr('ui.app.eliminate_x', { parts: parts }));
   };
 
+  // ROADMAP #40: „Convertește documentele existente la formatarea implicită" pe tot proiectul —
+  // același reset ca din bara de format, rulat headless pe fiecare document, cu snapshot înainte.
+  const convertFormatting = async (scope) => {
+    await flush();
+    const docs = docsNow();
+    const trash = project.tree.find((n) => n.root === 'trash');
+    const trashIds = new Set(flatten(trash ? trash.children : []).map((n) => n.id));
+    const inScope = (n) => {
+      if (n.root || trashIds.has(n.id) || n.type !== 'text') return false;
+      if (scope === 'draft') {
+        const draft = project.tree.find((r) => r.root === 'draft');
+        return Boolean(draft && findNode([draft], n.id));
+      }
+      return true;
+    };
+    const defaults = project.defaultFormatting || {};
+    const changed = [];
+    for (const n of flatten(project.tree)) {
+      if (!inScope(n)) continue;
+      const { html, changed: did } = convertHtmlToDefault(docs[n.id] || '', buildExtensions, defaults);
+      if (did) changed.push([n.id, html]);
+    }
+    if (!changed.length) return setToast(tr('ui.app.deja_implicit'));
+    if (!window.confirm(tr('ui.app.conversie_confirma', { length: changed.length }))) return;
+    for (const [id, html] of changed) {
+      await api.takeSnapshot(dir, id, tr('ui.app.automat_inainte_de_conversie')).catch(report);
+      await api.writeDoc(dir, id, 'docs', html);
+    }
+    setDocs((d) => ({ ...d, ...Object.fromEntries(changed) }));
+    for (const [id, html] of changed) editorRefs.current.get(id)?.setHtml(html);
+    recordHistory();
+    setToast(tr('ui.app.conversie_gata', { length: changed.length }));
+  };
+  const convertFormattingDraft = () => convertFormatting('draft');
+  const convertFormattingAll = () => convertFormatting('all');
+  // Formatare document / manuscris (directivă autor 2026-11-10): se aplică doar proprietățile
+  // bifate, cu snapshot înainte de fiecare document modificat, vizibil imediat în editor și citire.
+  const formatContent = async ({ patch, signal, onProgress }) => {
+    await flush();
+    if (pending.current.size) throw new Error(tr('ui.justify.save_first'));
+    const ids = alignmentTargets(projectRef.current.tree, formatScope, selectedId).map((n) => n.id);
+    if (!ids.length) throw new Error(tr('ui.justify.no_documents'));
+    const result = await formatDocuments({
+      ids, patch, signal, onProgress,
+      read: (id) => api.readDoc(dir, id, 'docs'),
+      snapshot: (id) => api.takeSnapshot(dir, id, tr('ui.format.snapshot')),
+      write: (id, html) => api.writeDoc(dir, id, 'docs', html),
+      onSaved: (id, html) => {
+        setDocs((d) => ({ ...d, [id]: html }));
+        setEditorHtml(id, html);
+      },
+    });
+    if (formatScope === 'draft' && !result.cancelled) {
+      const next = { ...projectRef.current, defaultFormatting: { ...(projectRef.current.defaultFormatting || {}), ...patch } };
+      try { await api.saveProject(dir, next); } catch (e) { e.alignmentResult = result; throw e; }
+      projectRef.current = next;
+      setProject(next);
+    }
+    refreshSnapCounts();
+    setToast(tr('ui.format.done', { count: result.changed }));
+    return result;
+  };
+  const openDocumentFormatting = (scope) => { setFormatScope(scope); setDialog('documentFormatting'); };
   const stripNotationInProject = async () => {
     await flush();
     const docs = docsNow();
@@ -2327,13 +2733,32 @@ export default function App({ api: apiProp }) {
     api.printDocument(`<h1>${(selected?.title || '').replace(/</g, '&lt;')}</h1>${html}`, selected?.title).catch(report);
   };
 
-  const words = useMemo(() => (project ? projectWords(project, docs) : []), [project, docs]);
+  // Auto-complete words (titles, keywords, capitalised words ≥3×): deferred on idle — at open
+  // the cold capsOf scan over every document of a big book sat on the open's critical path
+  // (profilat); after edits it is cheap per document (capsCache) and refreshed on idle.
+  const [words, setWords] = useState([]);
+  useEffect(() => {
+    if (!project) {
+      setWords([]);
+      return undefined;
+    }
+    let live = true;
+    deferIdle(() => {
+      if (live) setWords(projectWords(project, docs));
+    });
+    return () => {
+      live = false;
+    };
+  }, [project, docs]);
   // Character count for the status bar: htmlToText parses the whole document, so only redo it
   // when that document's text changes.
   const selectedHtml = selectedId ? docs[selectedId] || '' : '';
   // Words in the main editor's selection (footer "Words: 37 of 1,234"); reset with the document.
   const [selWords, setSelWords] = useState(0);
   useEffect(() => setSelWords(0), [selectedId]);
+  // Caret on a paragraph with an identifiable style (named style or bare heading): enables the
+  // Format › style navigation commands (Scrivener §17.4.1). Reported on transitions by Editor.
+  const [stylePara, setStylePara] = useState(false);
   const statusChars = useMemo(() => htmlToText(selectedHtml).replace(/\s+/g, ' ').trim().length, [selectedHtml]);
   const projectStyles = stylesOf(project);
 
@@ -2343,27 +2768,37 @@ export default function App({ api: apiProp }) {
     return [...set].sort((a, b) => a.localeCompare(b, 'ro'));
   }, [project]);
 
-  const contextForAi = () => {
-    const research = project.tree.find((n) => n.root === 'research');
-    const parts = [];
-    for (const n of flatten(research.children)) {
-      if (n.type !== 'text') continue;
-      const text = htmlToText(docsNow()[n.id]);
-      if (text.trim()) parts.push(`## ${n.title}\n${text.slice(0, 4000)}`);
-    }
-    return parts.join('\n\n').slice(0, 60000);
+  const contextForAi = (request = {}) => {
+    const context = buildEditorialContext(project, docsNow(), { ...request, documentId: request.documentId || activeId.current || selectedId });
+    return request.documentId ? context : context.text;
   };
 
   // --- keyboard shortcuts: driven by the command registry (configurable in Settings) ---
   const commandsRef = useRef({});
   useEffect(() => {
     const onKey = (e) => {
-      if (!project) return;
+      if (!project || e.defaultPrevented || e.isComposing) return;
       if (e.key === 'Escape' && composition) {
         // Esc closes only the top-most layer: a dialog, menu or find bar handles its own Esc
         // (the target may already be detached when the layer closed, closest() still works).
         const layer = e.target?.closest?.('.modal-backdrop, .modal, .menu-pop, .ctx-menu, .find-bar, .help-window, input, textarea, select');
         if (!layer) setComposition(false);
+        return;
+      }
+      const reload = e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r');
+      if (reload && hasUnsavedChanges()) {
+        e.preventDefault();
+        askUnsavedDecision().then(async (choice) => {
+          if (choice === 'cancel') return;
+          if (choice === 'save') await flush();
+          if (choice === 'discard') {
+            pending.current.clear();
+            dropTyped();
+            changedSinceSave.current.clear();
+            authorBase.current.clear();
+          }
+          window.location.reload();
+        });
         return;
       }
       let combo = keyFromEvent(e);
@@ -2379,7 +2814,7 @@ export default function App({ api: apiProp }) {
         if ((inDialog && id !== 'save') || inField) continue;
         if (cmd.key && cmd.key === combo && !cmd.disabled) {
           e.preventDefault();
-          cmd.run();
+          if (!focusEngine.dispatch(id) && focusEngine.mayBubble(id)) cmd.run();
           return;
         }
       }
@@ -2400,7 +2835,7 @@ export default function App({ api: apiProp }) {
       if (!cmd) return;
       e.preventDefault();
       e.stopPropagation();
-      cmd.run();
+      if (!focusEngine.dispatch(cmd.id) && focusEngine.mayBubble(cmd.id)) cmd.run();
     };
     window.addEventListener('keydown', onEditorKey, true);
     window.addEventListener('keydown', onKey);
@@ -2421,12 +2856,16 @@ export default function App({ api: apiProp }) {
   useEffect(() => {
     if (!api.onMenuCommand) return undefined;
     const offOpen = api.onNativeMenuOpen?.(() => window.dispatchEvent(new Event('pneuma:closeMenus')));
-    const offCmd = api.onMenuCommand((id) => (commandsRef.current[id] ? commandsRef.current[id].run() : menuActionsRef.current[id]?.()));
+    const offCmd = api.onMenuCommand((id) => {
+      const command = commandsRef.current[id];
+      if (command?.disabled || command?.hidden) return;
+      return runNativeMenuItem(focusEngine, id, () => command ? command.run() : menuActionsRef.current[id]?.());
+    });
     return () => {
       offCmd?.();
       offOpen?.();
     };
-  }, [api]);
+  }, [api, focusEngine]);
 
   // --- resizable panels ---
   const startResize = (which) => (e) => {
@@ -2446,7 +2885,67 @@ export default function App({ api: apiProp }) {
     window.addEventListener('mouseup', up);
   };
 
-  if (!settings) return <div className="loading">{tr('ui.app.se_incarca')}</div>;
+  // ADL T4 §2: the split editor pane is a surface of the core function at document level —
+  // `editor.document.<id>:split` registered and pushed for as long as the pane exists
+  // (view === 'editor'), popped + unregistered on every close path (button, command, Escape
+  // through the engine, unmount). Opening it by hand takes the real focus into the pane (the
+  // armed flag below, set by openSplit); when it comes back with the project (splitId persisted
+  // in the UI state) or after a view switch, the focus stays where the user has it.
+  // These hooks MUST stay above the `!settings` / `!project` early returns: a hook that only runs
+  // once the project exists makes the home-screen render run fewer hooks than the next one —
+  // React #310, „Rendered more hooks than during the previous render", right when a project is
+  // created (39796d9 regression, fixed here).
+  const splitNode = splitId && project ? findNode(project.tree, splitId) : null;
+  const splitFocusArmed = useRef(false);
+  // ADL T8: the media viewer's real focus is armed the same way — by a user open (go() to a media
+  // document, „deschide alături"), never by the project restore (the persisted selection may be a
+  // media file, and the viewer must not steal the focus at boot).
+  const mediaFocusArmed = useRef(false);
+  const openSplit = (id) => {
+    if (id) splitFocusArmed.current = true; // a user open, not a restore
+    setSplitId(id);
+  };
+  // Real focus into the split pane's editor: the handle may still be mounting (TipTap), so the
+  // same retry pattern as focusEditor, preferring the `split:` key the pane registers under.
+  const focusSplitEditor = (id, tries = 10) => {
+    const h = editorRefs.current.get(`split:${id}`) || editorRefs.current.get(id);
+    if (h?.editor && !h.editor.isDestroyed) { h.focus(); return; }
+    if (tries > 0) setTimeout(() => focusSplitEditor(id, tries - 1), 50);
+  };
+  const splitSurface = splitNode && view === 'editor' ? splitSurfaceId(splitNode.id) : null;
+  useEffect(() => {
+    splitSurfaceRef.current = splitSurface;
+    if (!splitSurface) {
+      // The pane went away (closed, view switched, document deleted): the view may have changed
+      // under it — re-sync the view surface (syncViewSurface refused while the pane owned the top).
+      syncViewSurface(focusEngine, surfaceForView(view));
+      return undefined;
+    }
+    return registerSplitSurface(focusEngine, splitNode.id, {
+      close: () => setSplitId(null),
+      focus: () => {
+        if (!splitFocusArmed.current) return;
+        splitFocusArmed.current = false;
+        focusSplitEditor(splitNode.id);
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [splitSurface, focusEngine]);
+
+  if (!settings) {
+    return (
+      <main className="loading loading-screen" role="status" aria-live="polite">
+        <div className="loading-brand" aria-hidden="true">P</div>
+        <h1>Pneuma Sofer</h1>
+        <p className="muted">{tr('ui.app.se_incarca')}</p>
+        <div className="loading-skeleton" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+      </main>
+    );
+  }
 
   if (!project) {
     return (
@@ -2476,6 +2975,7 @@ export default function App({ api: apiProp }) {
         )}
         {dialog === 'settings' && (
           <SettingsDialog
+            speechReady={speechReady}
             initialTab={settingsTab}
             aiOnly={settingsTab === 'ai'}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
@@ -2528,7 +3028,6 @@ export default function App({ api: apiProp }) {
     setRenameId(folder.id);
   };
   const mainIds = new Set(isFolderView ? scrivSections.map((n) => n.id) : selected ? [selected.id] : []);
-  const splitNode = splitId ? findNode(project.tree, splitId) : null;
   const copyNode = copyholder ? findNode(project.tree, copyholder.id) : null;
   const registerRef = (id, r) => {
     if (r) editorRefs.current.set(id, r);
@@ -2547,7 +3046,7 @@ export default function App({ api: apiProp }) {
   const corrKey = JSON.stringify(corrections);
   const toolbars = toolbarPrefs(settings.toolbars);
   // AI is optional: with it off, every feature that needs Claude is hidden and nothing else changes.
-  const aiEnabled = settings.aiEnabled !== false;
+  const aiEnabled = settings.aiEnabled !== false && settings.hasApiKey === true;
   // Loads every text document of the project into memory (views and AI jobs over the whole book).
   const loadAllDocs = async () => {
     const loaded = {};
@@ -2690,7 +3189,55 @@ export default function App({ api: apiProp }) {
     await api.exportScript(fmt, h.getHtml(), selected?.title || 'Scenariu');
   };
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
-  const aiNode = (activeId.current && findNode(project.tree, activeId.current)) || selected;
+  // Nivelul AI ales din meniul contextual are prioritate; altfel documentul activ.
+  const scopedAiNode = aiScope ? findNode(project.tree, aiScope.nodeId) : null;
+  const aiNode = scopedAiNode || (activeId.current && findNode(project.tree, activeId.current)) || selected;
+  const aiContainerScope = Boolean(aiScope && ['book', 'manuscript', 'chapter'].includes(aiScope.level));
+  const aiScopeLabel = !aiScope ? '' : aiScope.level === 'book' ? tr('ui.aiWorkspace.levelBook')
+    : aiScope.level === 'manuscript' ? tr('ui.aiWorkspace.levelManuscript')
+    : aiScope.level === 'chapter' ? tr('ui.aiWorkspace.levelChapter', { title: aiNode?.title || '' })
+    : aiScope.level === 'selection' ? tr('ui.aiWorkspace.levelSelection')
+    : tr('ui.aiWorkspace.levelSection', { title: aiNode?.title || '' });
+  // AI din meniurile contextuale: panou andocat în pagină (nu fereastră) — ADL §4.3.
+  const openAiFor = (scope, opts = {}) => { if (opts.panel) setAiPanelMode(true); setAiScope(scope); setShowAi(true); };
+  // Props partajate: același asistent în fereastra flotantă ȘI în panoul lateral (un singur model).
+  const aiPanelProps = {
+    projectTitle: project.title,
+    bookType: project?.bookType || '',
+    containerScope: aiContainerScope,
+    scopeLabel: aiScopeLabel,
+    onOpenProjectSettings: () => setDialog('projectAi'),
+    onOpenFormatting: () => { setSelectedId(aiNode.id); openDocumentFormatting('document'); },
+    onRequestHandled: () => setAiRequest(null),
+    projectDir: dir,
+    api,
+    hasKey: settings.hasApiKey,
+    aiLabel: settings.aiLabel,
+    aiModel: settings.aiModel,
+    getHandle: activeHandle,
+    node: aiNode,
+    getText: () => {
+      if (aiContainerScope && aiNode) {
+        const ids = flatten(aiNode.children || []).filter((n) => n.type === 'text' && !n.locked).map((n) => n.id);
+        if (aiNode.type === 'text') ids.unshift(aiNode.id);
+        return ids.map((id) => htmlToText(docsNow()[id] || '')).filter((t) => t.trim()).join('\\n\\n');
+      }
+      return activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id] || '');
+    },
+    hasSelection: () => Boolean(activeHandle()?.getSelectionText()),
+    getContext: (args) => contextForAi({ ...args, wholeBook: aiScope?.level === 'book' }),
+    onInsert: (text) => activeHandle()?.insertText(text),
+    onReplace: (text) => activeHandle()?.replaceSelection(text),
+    onReplaceAll: (text) => {
+      const html = textToHtml(text);
+      setEditorHtml(aiNode.id, html);
+      writeDocNow(aiNode.id, html);
+    },
+    onSynopsis: (text) => patchNode(aiNode.id, { synopsis: text }),
+    onOpenSettings: openSettings,
+    translateTo: LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo,
+    request: aiRequest,
+  };
   const editorialNode = aiNode && aiNode.type === 'text' ? aiNode : scrivSections[0] || null;
   // Look of the selection in the active editor, for "Redefine style from selection".
   const currentLook = () => {
@@ -2733,12 +3280,22 @@ export default function App({ api: apiProp }) {
   const favorites = flatten(project.tree).filter((n) => n.favorite && !inTrash(n.id));
   const canContain = selected && !selected.root && selected.type !== 'file';
 
+  // „Copy Documents as ToC" (Scrivener §22.2, P1 #28): selecția din binder ca cuprins static
+  // cu tab-uri, gata de lipit în draft — dosar selectat aduce întregul subarbore, document
+  // text doar pe el; titlurile documentelor text poartă `<$p>`, completat la compilare.
+  const copyAsToCCommand = async () => {
+    const ids = selectionList();
+    if (!ids.length) return;
+    const text = buildTocText(project.tree, { ids });
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    setToast(tr('ui.app.toc_copiat', { n: text.split('\n').length }));
+  };
+
   const documentMenu = [
     { label: tr('cmd.findDoc'), shortcut: 'Ctrl+F', action: () => (editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId))?.openFind() },
     { label: tr('cmd.splitTitle'), shortcut: 'Ctrl+Shift+K', action: () => splitDocument(true) },
     { label: tr('cmd.merge'), shortcut: 'Ctrl+Shift+M', action: mergeSelection },
-    { label: tr('ui.app.duplica_cu_sub_documente'), shortcut: 'Ctrl+D', action: () => duplicateSelection(true) },
-    { label: tr('ui.app.duplica_doar_elementul'), action: () => duplicateSelection(false) },
     '-',
     { label: tr('cmd.stripNotationDoc'), action: () => stripNotationInDoc().catch(report), disabled: !selected || selected.root },
     { label: tr('cmd.stripNotationProject'), action: () => stripNotationInProject().catch(report) },
@@ -2797,6 +3354,7 @@ export default function App({ api: apiProp }) {
   // Command registry: every command has an id, a label, a menu group and a
   // configurable shortcut. Used by the keyboard handler, the native menu and Settings.
   const editorHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+  editorHandleRef.current = editorHandle; // ADL T5: captura/restaurarea citesc handle-ul curent, nu cel de la mount
   const commandList = [
     ['file', 'save', tr('cmd.save'), () => saveCommand().then(() => dir && api.backupOnSave?.(dir)).catch(report)],
     ['file', 'compile', tr('cmd.compile'), () => flush().then(() => setDialog('compile'))],
@@ -2866,7 +3424,8 @@ export default function App({ api: apiProp }) {
     ['project', 'team', tr('cmd.team'), () => setDialog('team'), !api.teamFiles],
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],
-    ['document', 'duplicate', tr('cmd.duplicate'), () => duplicateSelection(true)],
+    ['document', 'copyAsToC', tr('cmd.copyAsToC'), () => copyAsToCCommand().catch(report), !selectedId],
+    ['document', 'duplicate', tr('cmd.duplicate'), (payload) => selectedIds.size > 1 ? copyItems(selectionList(), selectionList().at(-1), 'after').catch(report) : duplicateSelection(payload?.includeChildren !== false)],
     ['document', 'snapshot', tr('cmd.snapshot'), async () => {
       if (!selected || selected.root) return;
       await takeSnapshotOf(selected.id, `Snapshot ${new Date().toLocaleString(uiLocale())}`);
@@ -2878,14 +3437,25 @@ export default function App({ api: apiProp }) {
       await takeSnapshotOf(selected.id, name.trim() || 'Snapshot');
     }],
     ['document', 'snapshotManager', tr('cmd.snapshotManager'), () => flush().then(() => { refreshSnapCounts(); setDialog('snapshotManager'); })],
+    ['format', 'formatDocument', tr('cmd.formatDocument'), () => openDocumentFormatting('document'), !alignmentTargets(project?.tree, 'document', selectedId).length],
+    ['format', 'formatManuscript', tr('cmd.formatManuscript'), () => openDocumentFormatting('draft'), !alignmentTargets(project?.tree, 'draft').length],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
+    // Style navigation (Scrivener §17.4.1, P1 #27): the Editor handle re-reads the caret at
+    // click time and returns false on an unstyled paragraph — the disabled flag below only
+    // mirrors that state for the menus (reported on transitions via onSelectionStyle).
+    ['format', 'selectStyleRange', tr('cmd.selectStyleRange'), () => activeHandle()?.selectStyleRange(), !stylePara],
+    ['format', 'nextInSameStyle', tr('cmd.nextInSameStyle'), () => activeHandle()?.nextInSameStyle(), !stylePara],
+    ['format', 'prevInSameStyle', tr('cmd.prevInSameStyle'), () => activeHandle()?.prevInSameStyle(), !stylePara],
+    ['format', 'selectAllWithStyle', tr('cmd.selectAllWithStyle'), () => activeHandle()?.selectAllWithStyle(), !stylePara],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
+    ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
+    ['format', 'convertDefaultAll', tr('cmd.convertDefaultAll'), () => convertFormattingAll().catch(report), !project],
     ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
-    ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => setShowEditorial((v) => !v)],
-    ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
+    ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => { setShowEditorial((v) => !v); setShowAi(true); }],
+    ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setShowAi(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
-    ['ai', 'ai', 'Asistent AI', () => setShowAi((v) => !v), !aiEnabled],
+    ['ai', 'ai', tr('ui.aiWorkspace.title'), () => setShowAi((v) => !v), !aiEnabled],
     // Two separate AI doors (owner decision 2026-10-27): program AI (global) and project AI (open book).
     ['ai', 'aiSettings', tr('cmd.aiSettings'), () => openSettings('ai')],
     ['ai', 'aiProjectSettings', tr('cmd.aiProjectSettings'), () => setDialog('projectAi'), !project],
@@ -2893,7 +3463,7 @@ export default function App({ api: apiProp }) {
     ['app', 'customizeToolbar', tr('cmd.customizeToolbar'), () => setDialog('toolbars')],
     ['view', 'copyholder', tr('cmd.copyholder'), () => openCopyholder(selected?.id), !selected || Boolean(selected.root) || Boolean(selected.children)],
     ['view', 'copyholderClose', tr('cmd.copyholderClose'), () => setCopyholder(null), !copyholder],
-    ['view', 'splitEditor', tr('cmd.splitEditor'), () => setSplitId(splitId ? null : selected && !selected.root ? selected.id : null)],
+    ['view', 'splitEditor', tr('cmd.splitEditor'), () => openSplit(splitId ? null : selected && !selected.root ? selected.id : null)],
     ['view', 'floatInspector', tr('cmd.floatInspector'), () => setShowFloatInspector((v) => !v), !composition],
     ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
     ['view', 'viewRelations', tr('cmd.viewRelations'), () => showWholeBook('relations')],
@@ -3021,20 +3591,37 @@ export default function App({ api: apiProp }) {
     ['tools', 'grammarSel', tr('cmd.grammarSel'), () => runService('grammar'), !api.checkGrammar],
     ['ai', 'nlmAskSel', tr('cmd.nlmAskSel'), askNotebookLm, !api.nlmOpen],
     ['ai', 'nlmConsultSel', tr('cmd.nlmConsultSel'), consultNotebookLm, !aiEnabled || !api.nlmConsult],
+    ['ai', 'nlmAskDoc', tr('cmd.nlmAskDoc'), askNotebookLmAboutDoc, !aiEnabled || !api.nlmAsk],
+    ['ai', 'nlmStudio', tr('cmd.nlmStudio'), () => openNotebookStudio(tr('ui.app.nlm_studio_studio')), !api.nlmOpen],
+    ['ai', 'nlmExport', tr('cmd.nlmExport'), () => flush().then(() => api.nlmExport(dir)).then((r) => r && setToast(tr('ui.app.notebooklm_x_surse_in_x', { length: r.files.length, dir: r.dir, v2: r.warnings.length ? ` ${r.warnings.join(' ')}` : '' }))).catch(report), !dir || !api.nlmExport],
     ['tools', 'checkSpelling', tr('cmd.checkSpelling'), () => api.recheckSpelling().catch(report), !api.recheckSpelling],
     ...(settings.layouts || []).map((l, i) => ['window', `layout:${i}`, `Layout: ${l.name}`, () => applyLayout(l)]),
   ];
   // AI off: every command that needs Claude is left out (menus, shortcuts, native menu); I-REP stays.
   // MCP needs the desktop app (browser mode has no api.mcpConnectInfo).
   const activeCommands = commandList.filter(([, id]) => (aiEnabled || !AI_ONLY_COMMANDS.has(id)) && (id !== 'mcpConnect' || api.mcpConnectInfo));
+  const applicability = {
+    node: selected && { ...selected, inTrash: inTrash(selected.id) },
+    nodes: selectionList().map((id) => ({ ...findNode(project.tree, id), inTrash: inTrash(id) })),
+    textSelection: selectedText().trim(), reading: reader.reading,
+    services: serviceAvailability, canRead: reader.canRead, canDictate: dict.available, dictating: dict.dictation,
+  };
   const commands = Object.fromEntries(
-    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run: (...a) => (noteAction(id), run(...a)), disabled: Boolean(disabled), key: shortcutFor(id, settings) }]),
+    activeCommands.map(([group, id, label, run, disabled]) => [id, { group, id, label: id === 'irep' ? label : cmdLabel(id, label), run: (...a) => { if (commandsRef.current[id]?.disabled) return; noteAction(id); return run(...a); }, disabled: Boolean(disabled) || !isCommandApplicable(id, applicability), hidden: !isCommandApplicable(id, applicability), key: shortcutFor(id, settings) }]),
   );
   commandsRef.current = commands;
+  // The native context menu uses the same capability decisions, not its own guesses.
+  window.__commandAvailability = (id) => Boolean(document.querySelector('.binder') && commandsRef.current[id] && !commandsRef.current[id].hidden && !commandsRef.current[id].disabled);
   // Menu bar (in-app menus and the native application menu share this layout).
   const menuItem = (id) => {
     const c = commands[id];
-    return c && { id, label: c.label, action: c.run, disabled: c.disabled, shortcut: c.key };
+    if (id === 'duplicate' && selected?.children?.length && selectedIds.size <= 1 && !selected.root && !inTrash(selected.id)) {
+      return commandGroup('document.duplicate', c.label, [
+        commandItem('duplicate', { label: tr('ui.binder.duplicateWithChildren'), payload: { includeChildren: true }, action: () => duplicateSelection(true), shortcut: c.key }),
+        commandItem('duplicate', { label: tr('ui.binder.duplicateOnlyItem'), payload: { includeChildren: false }, action: () => duplicateSelection(false) }),
+      ]);
+    }
+    return c && commandItem(id, { label: c.label, action: c.run, disabled: c.disabled, hidden: c.hidden, shortcut: c.key });
   };
   const edMenus = editorMenus({
     t: tr,
@@ -3074,7 +3661,7 @@ export default function App({ api: apiProp }) {
       return (
         <div key={id} className="seg" role="group" aria-label={tr('ui.tb.views')}>
           {[['editor', 'Editor', ScriveningsIcon, 'Editor / Scrivenings (Ctrl+1)'], ['corkboard', 'Corkboard', CorkboardIcon, 'Corkboard (Ctrl+2)'], ['outline', 'Outline', OutlineIcon, 'Outline (Ctrl+3)']].map(([v, l, Ic, t]) => (
-            <button key={v} className={view === v ? 'on' : ''} onClick={() => setView(v)} title={t} aria-label={l}>
+            <button key={v} data-command-id={{ editor: 'viewEditor', corkboard: 'viewCorkboard', outline: 'viewOutline' }[v]} aria-pressed={view === v} className={view === v ? 'on' : ''} onClick={() => setView(v)} title={t} aria-label={l}>
               <span className="sc-ico">{toolbars.display !== 'text' && <Ic />}{toolbars.display !== 'icon' && <span className="tb-label">{l}</span>}</span>
             </button>
           ))}
@@ -3082,13 +3669,13 @@ export default function App({ api: apiProp }) {
       );
     }
     const cmd = commands[it.command];
-    if (!cmd) return null;
+    if (!cmd || cmd.hidden || cmd.disabled) return null;
     const Ic = it.icon && TB_ICONS[it.icon];
     const icon = Ic ? <Ic /> : it.icon && iconNames.includes(it.icon) ? <Icon name={it.icon} /> : it.glyph ? <span className="tb-glyph" aria-hidden="true">{it.glyph}</span> : null;
     const text = it.text ? (it.text.includes('.') ? tr(it.text) : it.text) : '';
     const showText = toolbars.display === 'text' || (toolbars.display === 'iconText' && text) || !icon;
     return (
-      <button key={id} data-tb={id} className={tbOn[id] ? 'on' : ''} disabled={tbDisabled[id] || cmd.disabled} onClick={cmd.run} title={cmd.key ? `${cmd.label} (${cmd.key})` : cmd.label} aria-label={cmd.label}>
+      <button key={id} data-tb={id} data-command-id={it.command} className={tbOn[id] ? 'on' : ''} disabled={tbDisabled[id] || cmd.disabled} onClick={cmd.run} title={cmd.key ? `${cmd.label} (${cmd.key})` : cmd.label} aria-label={cmd.label}>
         <span className="sc-ico">
           {toolbars.display !== 'text' && icon}
           {showText && <span className="tb-label">{text || cmd.label}</span>}
@@ -3120,6 +3707,16 @@ export default function App({ api: apiProp }) {
       r.push({ label: tr('ui.ctx.citeste_cartea'), action: () => bookText().then((t) => reader.read(t)).catch(report) });
       if (reader.reading) r.push('-', { label: tr('ui.ctx.opreste_citirea'), action: reader.stop });
       items.push({ label: tr('ui.ctx.citeste'), submenu: r });
+    }
+
+    // AI pe niveluri (directivă 2026-11-10): paragrafele selectate sau secțiunea curentă.
+    if (aiEnabled && api.runAi) {
+      const aiTarget = activeId.current || selectedId;
+      const a = [];
+      if (text) a.push({ label: tr('ui.aiWorkspace.levelSelection'), action: () => openAiFor({ nodeId: aiTarget, level: 'selection' }, { panel: true }) });
+      a.push({ label: tr('ui.aiWorkspace.levelSection'), action: () => openAiFor({ nodeId: aiTarget, level: 'section' }, { panel: true }) });
+      sep();
+      items.push({ label: tr('ui.binder.ai'), submenu: a });
     }
 
     // Dictarea: de la cursor sau peste selecție, ca redarea audio.
@@ -3208,12 +3805,13 @@ export default function App({ api: apiProp }) {
         {/* Browser: the full menu bar lives here; desktop: the native menu has it (AI can stay in-app via the toolbar). */}
         {!api.setAppMenu && (
           <nav className="menubar" aria-label={tr('ui.tb.menubar')}>
-            {menuLayout.map((m) => <Menu key={m.group} label={m.label} items={m.items} caret={false} className={m.group === 'ai' ? 'menu-ai' : ''} />)}
+            {/* ADL §2/§10: each menu bar menu registers as menu.<group> on the focus engine while open. */}
+            {menuLayout.map((m) => <Menu key={m.group} label={m.label} items={m.items} caret={false} className={m.group === 'ai' ? 'menu-ai' : ''} engine={focusEngine} surfaceId={m.group} />)}
           </nav>
         )}
         {toolbars.top.map((id, i) => renderTopItem(id, i))}
         {/* AI status on the bar: green when AI is on with a working key, red otherwise; the box turns it on/off. */}
-        <label
+        <label hidden={settings.hasApiKey !== true}
           className={`ai-status ${aiEnabled && settings.hasApiKey ? 'on' : 'off'}`}
           data-hint="aiToggle"
           title={aiEnabled ? (settings.hasApiKey ? tr('ui.app.ai_activ') : tr('ui.app.ai_fara_cheie')) : tr('ui.app.ai_oprit')}
@@ -3303,8 +3901,8 @@ export default function App({ api: apiProp }) {
           onSortChildren={(id, desc) => setTreeU(sortChildren(project.tree, id, 'title', desc))}
           onGroup={groupItems}
           onCopyLink={(id) => navigator.clipboard?.writeText(docLink(id)).catch(report)}
-          onSnapshot={() => snapshotSelection().catch(report)}
-          onDuplicate={(id, withChildren) => duplicateSelection(withChildren).catch(report)}
+          onSnapshot={(ids) => snapshotSelection(ids).catch(report)}
+          onDuplicate={(id, withChildren) => duplicateSelection(withChildren, id).catch(report)}
           onDropKeyword={dropKeyword}
           docs={docs}
           width={widths.binder}
@@ -3312,6 +3910,8 @@ export default function App({ api: apiProp }) {
           selectedIds={selectedIds}
           onSelect={onBinderSelect}
           onAdd={addItem}
+          onAi={aiEnabled ? openAiFor : undefined}
+          onAddInside={(type, targetId) => addItem(type, null, null, targetId, { inside: true })}
           onRename={(id, title) => patchNode(id, { title })}
           onMove={(id, targetId, pos) => setTreeU(dropMany(project.tree, [id], targetId, pos))}
           onMoveMany={(ids, targetId, pos) => setTreeU(dropMany(project.tree, [...ids], targetId, pos))}
@@ -3328,6 +3928,7 @@ export default function App({ api: apiProp }) {
             if (id) setSelectedId(id);
           }}
           onTrash={trashSelection}
+          onRestore={restoreSelection}
           onEmptyTrash={() => {
             const trash = project.tree.find((n) => n.root === 'trash');
             if (!trash || !(trash.children || []).length) return;
@@ -3373,7 +3974,7 @@ export default function App({ api: apiProp }) {
                 <button className="hdr-arrow" onClick={() => goSibling(-1)} title={tr('cmd.prevDoc')} aria-label={tr('cmd.prevDoc')}>▲</button>
                 <button className="hdr-arrow" onClick={() => goSibling(1)} title={tr('cmd.nextDoc')} aria-label={tr('cmd.nextDoc')}>▼</button>
                 <button data-hint="paneLock" className={`pane-lock ${paneLocks.main ? 'on' : ''}`} onClick={() => toggleLockPane('main')} aria-pressed={Boolean(paneLocks.main)} title={paneLocks.main ? tr('ui.g5.deblocheazaPanou') : tr('ui.g5.fixeazaPeLoc')} aria-label={tr('ui.g5.fixeazaPeLoc')}>{paneLocks.main ? <LockIcon /> : <UnlockIcon />}</button>
-                <button className="split-btn" onClick={() => setSplitId(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
+                <button className="split-btn" onClick={() => openSplit(splitId ? null : !selected.root ? selected.id : null)} title={tr('ui.common.split_editor')} aria-label={tr('ui.common.split_editor')}><SplitIcon /></button>
               </div>
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type === 'file' && !selected.children && (
@@ -3386,6 +3987,7 @@ export default function App({ api: apiProp }) {
                 onInsertTimestamp={(sec) => insertTimestamp(selected.id, sec)}
                 onAppendNotes={(html) => appendNotes(selected.id, html).catch(report)}
                 onOpenBeside={splitId === selected.id ? null : () => openBeside(selected.id)}
+                focusArmed={mediaFocusArmed}
               />
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type !== 'file' && !selected.children && (
@@ -3425,6 +4027,8 @@ export default function App({ api: apiProp }) {
                 commentColor={settings.commentColor || ''}
                 authorName={settings.authorName || project.author || ''}
                 onSelectionWords={setSelWords}
+                onSelectionStyle={setStylePara}
+                focusEngine={focusEngine}
               />
             )}
             {view === 'editor' && selected && !isFolderView && selected.type !== 'file' && !composition && !editorView.hideFooterBar && (
@@ -3510,6 +4114,7 @@ export default function App({ api: apiProp }) {
                 labelColorIn={colorIn}
                 selectedIds={selectedIds}
                 onDropKeyword={dropKeyword}
+                surfaceActive={activeSurface === VIEW_SURFACES.corkboard}
               />
             )}
             {view === 'outline' && (
@@ -3528,6 +4133,7 @@ export default function App({ api: apiProp }) {
                 onPatch={patchNode}
                 onMove={(id, targetId, pos) => setTreeU(moveNode(project.tree, id, targetId, pos))}
                 labelColorIn={colorIn}
+                surfaceActive={activeSurface === VIEW_SURFACES.outliner}
               />
             )}
           </div>
@@ -3554,6 +4160,9 @@ export default function App({ api: apiProp }) {
                   onPatch={(p) => patchMedia(splitNode.id, p)}
                   onInsertTimestamp={(sec) => insertTimestamp(splitNode.id, sec)}
                   onAppendNotes={(html) => appendNotes(splitNode.id, html).catch(report)}
+                  onClose={() => setSplitId(null)}
+                  pane="split"
+                  focusArmed={mediaFocusArmed}
                 />
               ) : (
                 <Editor
@@ -3583,6 +4192,8 @@ export default function App({ api: apiProp }) {
                   view={{ ...editorView, zoom: paneZoom(editorView, 'split') }}
                   onViewChange={(v) => setEditorView({ ...v, zoom: editorViewRef.current.zoom, zoom2: v.zoom })}
                   onManageStyles={() => setDialog('styles')}
+                  onSelectionStyle={setStylePara}
+                  focusEngine={focusEngine}
                 />
               )}
               {!splitNode.children && !editorView.hideFooterBar && (
@@ -3631,13 +4242,14 @@ export default function App({ api: apiProp }) {
                 onOpenLink={openLink}
                 words={words}
                 styles={projectStyles}
+                focusEngine={focusEngine}
               />
             </div>
           )}
         </section>
 
         {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
-        {(showInspector || (showAi && aiEnabled) || (showEditorial && editorialNode) || (showResearch && dir)) && selected && !composition && (
+        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir) || (showAi && aiEnabled && aiPanelMode && aiNode)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
             <div className="side" style={{ width: widths.side }}>
@@ -3721,91 +4333,48 @@ export default function App({ api: apiProp }) {
                   onImportWeb={api.importWebPage ? importWebSource : undefined}
                 />
               )}
-              {showAi && aiEnabled && (
-                <AiPanel
-                  projectDir={dir}
-                  api={api}
-                  hasKey={settings.hasApiKey}
-                  aiLabel={settings.aiLabel}
-                  aiModel={settings.aiModel}
-                  getHandle={activeHandle}
-                  node={aiNode}
-                  getText={() => activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id])}
-                  hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
-                  getContext={contextForAi}
-                  onInsert={(text) => activeHandle()?.insertText(text)}
-                  onReplace={(text) => activeHandle()?.replaceSelection(text)}
-                  onReplaceAll={(text) => {
-                    const html = textToHtml(text);
-                    setEditorHtml(aiNode.id, html);
-                    writeDocNow(aiNode.id, html);
-                  }}
-                  onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
-                  onOpenSettings={openSettings}
-                  translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
-                  request={aiRequest}
-                />
-              )}
-              {showEditorial && editorialNode && (
-                <EditorialPanel
-                  project={project}
-                  dir={dir}
-                  aiEnabled={aiEnabled}
-                  key={`ed-${editorialNode.id}`}
-                  api={api}
-                  hasKey={settings.hasApiKey}
-                  aiLabel={settings.aiLabel}
-                  aiModel={settings.aiModel}
-                  profile={profileFor(project)}
-                  node={editorialNode}
-                  html={docs[editorialNode.id] || ''}
-                  chapter={chapterDocs}
-                  onSelectionText={() => {
-                    const h = editorRefs.current.get(editorialNode.id);
-                    const ed = h?.editor;
-                    if (!ed || ed.state.selection.empty) return '';
-                    const { from, to } = ed.state.selection;
-                    const slice = ed.state.doc.cut(from, to);
-                    return htmlToManuscript(getHTMLFromFragment(slice.content, ed.schema));
-                  }}
-                  authorEvent={authorEvent}
-                  onJump={(issue) => {
-                    if (!mainIds.has(editorialNode.id)) go(editorialNode.id);
-                    setTimeout(() => editorRefs.current.get(editorialNode.id)?.findText(issue.match || issue.excerpt, { block: issue.paragraph, at: issue.at }), 50);
-                  }}
-                  onApply={async (p) => {
-                    await flush();
-                    // Hand edits made so far are the writer's (author text) before anything is written.
-                    commitAuthor(p.id);
-                    if (!p.selection && !p.safe) {
-                      // Re-check the bytes right before writing: a save of the author's at this
-                      // moment (or an agent's write) is never overwritten.
-                      const cur = docsNow()[p.id] || '';
-                      const disk = api.readDoc ? await api.readDoc(dir, p.id, 'docs').catch(() => null) : null;
-                      if (cur !== p.before || (disk && disk !== p.before)) throw new Error(tr('ui.app.document_schimbat_409', { title: p.title }));
-                    }
-                    const now = new Date();
-                    const pad = (x) => String(x).padStart(2, '0');
-                    if (p.authorEdit) await api.takeSnapshot(dir, p.id, `.bak-autor-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`);
-                    else if (!p.safe) await api.takeSnapshot(dir, p.id, tr('ui.app.inainte_de_x', { v0: p.rounds ? 'I-EDIT' : 'I-REP' })).catch(report);
-                    if (p.selection) {
-                      editorRefs.current.get(p.id)?.replaceSelectionHtml(p.after);
-                      return;
-                    }
-                    writeDocNow(p.id, p.after);
-                    setEditorHtml(p.id, p.after);
-                    const pj = projectRef.current;
-                    const n = findNode(pj.tree, p.id);
-                    const stamp = now.toISOString();
-                    const editorial = { ...(n?.editorial || {}), lastRep: stamp };
-                    if (p.rounds) editorial.rounds = { ...(editorial.rounds || {}), ...Object.fromEntries(p.rounds.map((r) => [r, stamp])) };
-                    saveProject({ ...pj, tree: updateNode(pj.tree, p.id, { editorial, authorHashes: updateAuthorHashes(n?.authorHashes, p.after) }) });
-                    // Edited in the preview: journal the save and mark the author's own words.
-                    if (p.authorEdit) commitAuthor(p.id, { [p.id]: { base: p.before, after: p.after, authorFrom: p.proposed } });
-                  }}
-                  onOpenSettings={openSettings}
-                  tabRequest={editorialTabReq}
-                />
+              {false && null /* I-REP/I-EDIT mutat în fereastra AI (directivă autor): nu mai înghesuie Inspectorul */}
+              {showAi && aiEnabled && aiPanelMode && aiNode && (
+                <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
+                  <div className="side-ai-head">
+                    <strong>{tr('ui.aiWorkspace.title')}</strong>
+                    <div className="side-ai-actions">
+                      <button type="button" onClick={() => setAiPanelMode(false)} aria-label={tr('ui.aiWorkspace.undock')} title={tr('ui.aiWorkspace.undock')}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.6" /><rect x="13" y="5" width="8" height="14" rx="1" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
+                      </button>
+                      <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                  {(showEditorial && editorialNode) ? (
+                    <>
+                      <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
+                        <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
+                        <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
+                      </div>
+                      <EditorialPanel
+                        project={project}
+                        dir={dir}
+                        aiEnabled={aiEnabled}
+                        key={'ed-side-' + editorialNode.id}
+                        api={api}
+                        hasKey={settings.hasApiKey}
+                        aiLabel={settings.aiLabel}
+                        aiModel={settings.aiModel}
+                        profile={profileFor(project)}
+                        node={editorialNode}
+                        html={docs[editorialNode.id] || ''}
+                        chapter={chapterDocs}
+                        editorialTabReq={editorialTabReq}
+                        onError={report}
+                        onClose={() => { setShowEditorial(false); setEditorialTabReq(null); }}
+                      />
+                    </>
+                  ) : (
+                  <AiPanel {...aiPanelProps} />
+                  )}
+                </section>
               )}
             </div>
           </>
@@ -3997,6 +4566,8 @@ export default function App({ api: apiProp }) {
           onReplace={(text, edits) => { applyServiceText(serviceResult, text, false, edits); setServiceResult(null); }}
           onInsertAfter={(text) => { applyServiceText(serviceResult, text, true); setServiceResult(null); }}
           onOpenUrl={(u) => openWeb(u)}
+          onSearch={(w) => synonymsInApp(w)}
+          onRetry={serviceResult.retry}
           anchored={Boolean(serviceResult.anchored)}
           pos={serviceResult.pos}
           onClose={() => setServiceResult(null)}
@@ -4005,9 +4576,10 @@ export default function App({ api: apiProp }) {
       {editorCtx && <ContextMenu x={editorCtx.x} y={editorCtx.y} items={editorCtxItems()} onClose={() => setEditorCtx(null)} />}
       {showSpeech && <MiniPlayer api={api} dict={dict} getText={speechText} onClose={() => setShowSpeech(false)} />}
       {dialog === 'export' && <ExportDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onClose={() => setDialog(null)} onError={report} />}
-      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} />}
+      {dialog === 'compile' && <CompileDialog api={api} dir={dir} project={project} selectionIds={[...selectedIds]} onProjectChange={saveProject} onClose={() => setDialog(null)} onError={report} focusEngine={focusEngine} />}
       {dialog === 'settings' && (
         <SettingsDialog
+          speechReady={speechReady}
             initialTab={settingsTab}
             aiOnly={settingsTab === 'ai'}
             onShortcuts={project ? () => setDialog('shortcuts') : undefined}
@@ -4046,14 +4618,6 @@ export default function App({ api: apiProp }) {
           api={api}
           dir={dir}
           project={project}
-          counts={snapCounts}
-          docs={docs}
-          canRestore={(id) => !findNode(project.tree, id)?.locked && !team.lockOf(id)}
-          flush={flush}
-          onRestore={(id, html) => {
-            writeDocNow(id, html);
-            setEditorHtml(id, html);
-          }}
           onChanged={refreshSnapCounts}
           onOpen={(id) => go(id)}
           onReveal={(id) => {
@@ -4065,6 +4629,117 @@ export default function App({ api: apiProp }) {
             setTimeout(() => setRevealId(id), 0);
           }}
           onError={report}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {showAi && aiEnabled && aiNode && !aiPanelMode && (
+        <AiWorkspaceWindow focusEngine={focusEngine} onClose={() => { setShowAi(false); setAiRequest(null); setAiScope(null); }} onDock={() => setAiPanelMode(true)}>
+          {(showEditorial && editorialNode) ? (
+            <>
+              <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
+                <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
+                <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
+              </div>
+                {showEditorial && editorialNode && (
+                  <EditorialPanel
+                    project={project}
+                    dir={dir}
+                    aiEnabled={aiEnabled}
+                    key={`ed-${editorialNode.id}`}
+                    api={api}
+                    hasKey={settings.hasApiKey}
+                    aiLabel={settings.aiLabel}
+                    aiModel={settings.aiModel}
+                    profile={profileFor(project)}
+                    node={editorialNode}
+                    html={docs[editorialNode.id] || ''}
+                    chapter={chapterDocs}
+                    onSelectionText={() => {
+                      const h = editorRefs.current.get(editorialNode.id);
+                      const ed = h?.editor;
+                      if (!ed || ed.state.selection.empty) return '';
+                      const { from, to } = ed.state.selection;
+                      const slice = ed.state.doc.cut(from, to);
+                      return htmlToManuscript(getHTMLFromFragment(slice.content, ed.schema));
+                    }}
+                    authorEvent={authorEvent}
+                    onJump={(issue) => {
+                      if (!mainIds.has(editorialNode.id)) go(editorialNode.id);
+                      setTimeout(() => editorRefs.current.get(editorialNode.id)?.findText(issue.match || issue.excerpt, { block: issue.paragraph, at: issue.at }), 50);
+                    }}
+                    onApply={async (p) => {
+                      await flush();
+                      // Hand edits made so far are the writer's (author text) before anything is written.
+                      commitAuthor(p.id);
+                      if (!p.selection && !p.safe) {
+                        // Re-check the bytes right before writing: a save of the author's at this
+                        // moment (or an agent's write) is never overwritten.
+                        const cur = docsNow()[p.id] || '';
+                        const disk = api.readDoc ? await api.readDoc(dir, p.id, 'docs').catch(() => null) : null;
+                        if (cur !== p.before || (disk && disk !== p.before)) throw new Error(tr('ui.app.document_schimbat_409', { title: p.title }));
+                      }
+                      const now = new Date();
+                      const pad = (x) => String(x).padStart(2, '0');
+                      if (p.authorEdit) await api.takeSnapshot(dir, p.id, `.bak-autor-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`);
+                      else if (!p.safe) await api.takeSnapshot(dir, p.id, tr('ui.app.inainte_de_x', { v0: p.rounds ? 'I-EDIT' : 'I-REP' })).catch(report);
+                      if (p.selection) {
+                        editorRefs.current.get(p.id)?.replaceSelectionHtml(p.after);
+                        return;
+                      }
+                      writeDocNow(p.id, p.after);
+                      setEditorHtml(p.id, p.after);
+                      const pj = projectRef.current;
+                      const n = findNode(pj.tree, p.id);
+                      const stamp = now.toISOString();
+                      const editorial = { ...(n?.editorial || {}), lastRep: stamp };
+                      if (p.rounds) editorial.rounds = { ...(editorial.rounds || {}), ...Object.fromEntries(p.rounds.map((r) => [r, stamp])) };
+                      saveProject({ ...pj, tree: updateNode(pj.tree, p.id, { editorial, authorHashes: updateAuthorHashes(n?.authorHashes, p.after) }) });
+                      // Edited in the preview: journal the save and mark the author's own words.
+                      if (p.authorEdit) commitAuthor(p.id, { [p.id]: { base: p.before, after: p.after, authorFrom: p.proposed } });
+                    }}
+                    onOpenSettings={openSettings}
+                    tabRequest={editorialTabReq}
+                  />
+                )}
+            </>
+          ) : (
+          <AiPanel
+            projectTitle={project.title}
+            bookType={project?.bookType || ''}
+            onOpenProjectSettings={() => setDialog('projectAi')}
+            onOpenFormatting={() => { setSelectedId(aiNode.id); openDocumentFormatting('document'); }}
+            onRequestHandled={() => setAiRequest(null)}
+            projectDir={dir}
+            api={api}
+            hasKey={settings.hasApiKey}
+            aiLabel={settings.aiLabel}
+            aiModel={settings.aiModel}
+            getHandle={activeHandle}
+            node={aiNode}
+            getText={() => activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id])}
+            hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
+            getContext={contextForAi}
+            onInsert={(text) => activeHandle()?.insertText(text)}
+            onReplace={(text) => activeHandle()?.replaceSelection(text)}
+            onReplaceAll={(text) => {
+              const html = textToHtml(text);
+              setEditorHtml(aiNode.id, html);
+              writeDocNow(aiNode.id, html);
+            }}
+            onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
+            onOpenSettings={openSettings}
+            translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
+            request={aiRequest}
+          />
+          )}
+        </AiWorkspaceWindow>
+      )}
+      {dialog === 'documentFormatting' && (
+        <DocumentFormattingDialog
+          defaults={project.defaultFormatting || {}}
+          scope={formatScope}
+          count={alignmentTargets(project.tree, formatScope, selectedId).length}
+          onApply={formatContent}
           onClose={() => setDialog(null)}
         />
       )}
@@ -4118,19 +4793,21 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'quicksearch' && (
         <QuickSearch
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 280)), y: 56 }}
           project={project}
           docs={docs}
           currentTitle={findNode(project.tree, selectedId)?.title || ''}
           onOpen={(id, q, { mode = 'normal', reveal = null } = {}) => {
             // Modifier opens (manual §11.5, p. 235): Shift = Quick Reference panel
             // (same floating panels as the quickRef command), Alt = the other editor
-            // split (same setSplitId as Alt+click in the binder).
+            // split (same openSplit as Alt+click in the binder).
             if (mode === 'quickRef') {
               openQuickRef(id);
               return;
             }
             if (mode === 'split') {
-              setSplitId(id);
+              openSplit(id);
               setView('editor');
               return;
             }
@@ -4161,6 +4838,8 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'goto' && (
         <GoToDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
           items={flatten(project.tree)
             .filter((n) => !n.root && !inTrash(n.id))
             .map((n) => {
@@ -4260,6 +4939,8 @@ export default function App({ api: apiProp }) {
       })}
       {dialog === 'moveTo' && (
         <PickNodeDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
           title={tr('ui.app.muta_selectia_in')}
           items={moveTargets(project.tree, selectionList())}
           onPick={moveSelectionTo}
@@ -4268,6 +4949,8 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'appendTo' && (
         <PickNodeDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
           title={tr('ui.app.adauga_selectia_la_sfarsitul_documentului')}
           items={flatten(project.tree)
             .filter((n) => n.type === 'text' && !inTrash(n.id) && !n.locked)
@@ -4315,6 +4998,13 @@ export default function App({ api: apiProp }) {
       <ReportUi api={api} open={reportOpen} setOpen={setReportOpen} prompt={errorPrompt} setPrompt={setErrorPrompt} onDone={setToast} />
       <UpdateUi api={api} open={updateOpen} setOpen={setUpdateOpen} banner={updateBanner} setBanner={setUpdateBanner} beforeInstall={() => flush()} />
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
+      {unsavedPrompt && (
+        <UnsavedChangesDialog
+          onSave={() => resolveUnsavedDecision('save')}
+          onDiscard={() => resolveUnsavedDecision('discard')}
+          onCancel={() => resolveUnsavedDecision('cancel')}
+        />
+      )}
       <Toasts error={error} onCloseError={() => setError('')} toast={toast} onCloseToast={() => setToast('')} />
     </div>
   );
@@ -4374,6 +5064,22 @@ function ReportUi({ api, open, setOpen, prompt, setPrompt, onDone }) {
   );
 }
 
+function UnsavedChangesDialog({ onSave, onDiscard, onCancel }) {
+  return (
+    <div className="modal-backdrop unsaved-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="modal unsaved-dialog" role="alertdialog" aria-modal="true" aria-labelledby="unsaved-title" aria-describedby="unsaved-description">
+        <h2 id="unsaved-title">{tr('ui.unsaved.title')}</h2>
+        <p id="unsaved-description">{tr('ui.unsaved.question')}</p>
+        <div className="actions">
+          <button data-initial-focus onClick={onCancel}>{tr('btn.cancel')}</button>
+          <button className="danger" onClick={onDiscard}>{tr('ui.unsaved.discard')}</button>
+          <button className="primary" onClick={onSave}>{tr('btn.save')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Toasts({ error, onCloseError, toast, onCloseToast }) {
   return (
     <>
@@ -4407,12 +5113,6 @@ function compiledNodes(node, out = []) {
   return out;
 }
 
-function sumWords(node, counts) {
-  if (!node.includeInCompile && !node.root) return 0;
-  let total = counts[node.id] || 0;
-  for (const c of node.children || []) total += sumWords(c, counts);
-  return total;
-}
 
 // Binder view of the project, hoisted to one folder when focus is on.
 function binderProjectOf(project, hoistNode) {

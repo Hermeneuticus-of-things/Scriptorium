@@ -1,8 +1,32 @@
 import { t as tr } from './i18n.js';
+// Text simplu din HTML, echivalent cu varianta DOM (textContent), dar fără parsarea
+// întregului markup: pe cărți mari htmlToText era apelat per document la deschidere și
+// în căutări — profilat, parsarea DOM domina. Stripping pe string + decodarea entităților
+// pe textul rămas (textarea decodează exact ca textContent, fără markup de parsat).
+// Echivalența cu implementarea DOM e probată pe corpus real în tests/htmlToTextEquiv.test.js.
 export function htmlToText(html) {
-  const el = document.createElement('div');
-  el.innerHTML = (html || '').replace(/<\/(p|h[1-6]|li|blockquote|div|td|th|tr|pre|dt|dd|figcaption)>/gi, '$&\n').replace(/<br\s*\/?>/gi, '\n');
-  return el.textContent || '';
+  // 1) aceleași înlocuiri de newline ca implementarea DOM, pe string-ul brut
+  let s = String(html || '')
+    .replace(/<\/(p|h[1-6]|li|blockquote|div|td|th|tr|pre|dt|dd|figcaption)>/gi, '$&\n')
+    .replace(/<br\s*\/?>/gi, '\n');
+  // 2) conținutul script/style rămâne în text CA TEXT BRUT (textContent nu decodează
+  //    entitățile în elementele raw-text) — scos pe placeholder și pus la loc la final
+  const raws = [];
+  s = s.replace(/<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/gi, (m, tag, body) => {
+    raws.push(body);
+    return `\uE000${raws.length - 1}\uE001`;
+  });
+  // 3) comentariile nu apar în textContent
+  s = s.replace(/<!--[\s\S]*?-->/g, '');
+  // 4) stripping quote-aware: `>` din valori de atribute nu termină tag-ul
+  s = s.replace(/<\/?[a-zA-Z](?:[^>"']|"[^"]*"|'[^']*')*>/g, '');
+  // 5) decodarea entităților pe textul rămas (textarea decodează exact ca textContent)
+  const ta = document.createElement('textarea');
+  ta.innerHTML = s;
+  s = ta.value;
+  // 6) conținutul brut script/style la loc (ne-decodat, ca în textContent)
+  s = s.replace(/\uE000(\d+)\uE001/g, (m, i) => raws[Number(i)] || '');
+  return s;
 }
 
 export function countWords(text) {

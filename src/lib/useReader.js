@@ -1,14 +1,21 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { chunkText, loadVoices, pickVoice, speak, stop as stopSystem, ttsSupported } from './speech.js';
 
 // Read text aloud with the best available voice: the built-in Piper voice ("Mihai", local) when it
 // is installed, otherwise the operating-system voices. Lets the editor's right-click menu read the
 // selection / from the cursor / the whole document without opening the voice mini-player.
-export default function useReader(api = {}) {
+export default function useReader(api = {}, { ttsEngine = 'auto', speechifyReady = false, onMessage } = {}) {
   const run = useRef(0);
   const audio = useRef(null);
   const sysCtl = useRef(null);
   const [reading, setReading] = useState(false);
+  const [canRead, setCanRead] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const check = async () => { const [piper, voices] = await Promise.all([api.ttsStatus?.().catch(() => null), loadVoices()]); if (alive) setCanRead(piper?.installed === true || voices.length > 0 || (ttsEngine === 'speechify' && speechifyReady)); };
+    check(); const off = api.onServicesChanged?.(check);
+    return () => { alive = false; off?.(); };
+  }, [api, ttsEngine, speechifyReady]);
 
   const stop = () => {
     run.current += 1;
@@ -37,12 +44,35 @@ export default function useReader(api = {}) {
     if (my === run.current) setReading(false);
   };
 
+  // Voce online Speechify (directivă autor 2026-11-10): chunkuri mp3 secvențiate prin clientul existent.
+  const playSpeechify = async (text, my) => {
+    const parts = chunkText(text, 400);
+    for (const part of parts) {
+      let res;
+      try { res = await api.speechifySpeak(part); } catch (e) { if (my === run.current) { setReading(false); onMessage?.(e.message); } return; }
+      if (my !== run.current) return;
+      for (const b64 of res.chunks || []) {
+        const url = URL.createObjectURL(new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type: 'audio/mpeg' }));
+        const el = new Audio(url);
+        audio.current = el;
+        await new Promise((resolve) => { el.onended = resolve; el.onerror = resolve; el.play().catch(resolve); });
+        URL.revokeObjectURL(url);
+        if (my !== run.current) return;
+      }
+    }
+    if (my === run.current) setReading(false);
+  };
+
   const read = async (text) => {
     const t = String(text || '').trim();
     stop();
     if (!t) return;
     const my = ++run.current;
     setReading(true);
+    if (ttsEngine === 'speechify') {
+      if (!speechifyReady) { setReading(false); onMessage?.('Vocea online Speechify nu e configurată.'); return; }
+      return playSpeechify(t, my);
+    }
     let piper = false;
     if (api.ttsSynth && api.ttsStatus) { try { piper = Boolean((await api.ttsStatus())?.installed); } catch { /* fall back to system voices */ } }
     if (my !== run.current) return;
@@ -55,6 +85,5 @@ export default function useReader(api = {}) {
     return undefined;
   };
 
-  const canRead = Boolean(api.ttsSynth) || ttsSupported();
   return { read, stop, reading, canRead };
 }

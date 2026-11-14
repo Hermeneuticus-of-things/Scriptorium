@@ -20,6 +20,9 @@ export const DEFAULT_PAGE_SETUP = {
   fontFamily: 'Georgia',
   fontSizePt: 12,
   lineSpacing: 1.5,
+  format: 'manuscript',
+  cardWidthCm: 10,
+  cardHeightCm: 15,
 };
 const withDefaults = (v) => ({
   ...DEFAULT_PAGE_SETUP,
@@ -32,7 +35,9 @@ const withDefaults = (v) => ({
 // File > Page Setup (Scrivener: File > Page Setup…): paper, orientation, margins and the running
 // header/footer used by Print and Print Preview. Saved in the project (project.pageSetup) through
 // onSave; Compile keeps its own page settings.
-// onPreview(setup): opens Print Preview with the edited setup.
+// format (P1 #30, Scrivener §26): what Print prints — manuscript (the Compile pipeline),
+// index cards (the binder as cards) or outline (hierarchical list with synopses); the card size
+// applies to the index cards. onPreview(setup): opens Print Preview with the edited setup.
 export default function PageSetupDialog({ api, project, onSave, onPreview, onClose, onError }) {
   const [s, setS] = useState(() => withDefaults(project?.pageSetup));
   const [busy, setBusy] = useState(false);
@@ -63,6 +68,28 @@ export default function PageSetupDialog({ api, project, onSave, onPreview, onClo
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" role="dialog" aria-label={t('ui.pageSetupDialog.configurare_pagina')} onClick={(e) => e.stopPropagation()}>
         <h2>{t('ui.pageSetupDialog.configurare_pagina')}</h2>
+        <div className="row">
+          <label>
+            {t('ui.pageSetupDialog.format')}
+            <select data-testid="print-format" value={s.format} onChange={(e) => setS({ ...s, format: e.target.value })}>
+              <option value="manuscript">{t('ui.pageSetupDialog.format_manuscris')}</option>
+              <option value="indexCards">{t('ui.pageSetupDialog.format_fise_index')}</option>
+              <option value="outline">{t('ui.pageSetupDialog.format_schita')}</option>
+            </select>
+          </label>
+          {s.format === 'indexCards' && (
+            <>
+              <label>
+                {t('ui.pageSetupDialog.card_latime')}
+                <input data-testid="card-width" type="number" min="5" max="30" step="0.5" value={s.cardWidthCm} onChange={(e) => setS({ ...s, cardWidthCm: Number(e.target.value) })} />
+              </label>
+              <label>
+                {t('ui.pageSetupDialog.card_inaltime')}
+                <input data-testid="card-height" type="number" min="5" max="30" step="0.5" value={s.cardHeightCm} onChange={(e) => setS({ ...s, cardHeightCm: Number(e.target.value) })} />
+              </label>
+            </>
+          )}
+        </div>
         <div className="row">
           <label>
             {t('ui.pageSetupDialog.hartie')}

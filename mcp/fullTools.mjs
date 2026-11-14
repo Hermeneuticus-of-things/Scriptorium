@@ -36,6 +36,7 @@ import {
   setKeywordParent,
 } from '../src/lib/collections.js';
 import { addNoteTab, moveNoteTab, projectNoteTabs, removeNoteTab, renameNoteTab } from '../src/lib/projectNotes.js';
+import { stripNotation } from '../src/lib/notationOps.js';
 import {
   deleteCustomField,
   deleteLabel,
@@ -73,6 +74,8 @@ const editorPackage = require('../lib/editorPackage.cjs');
 const bundle = require('../lib/bundle.cjs');
 const backup = require('../lib/backup.cjs');
 const rag = require('../lib/rag.cjs');
+const folderSyncMod = require('../lib/folderSync.cjs');
+const printSetupMod = require('../lib/printSetup.cjs');
 const compileFormats = require('../lib/compileFormats.cjs');
 const { parseBibliography } = require('../lib/bibliography.cjs');
 
@@ -824,6 +827,94 @@ export function registerFullTools(ctx) {
         pr.targets = t;
       });
       return p.targets;
+    },
+    W,
+  );
+
+  // ------------------------------------------------------------------ paritate lot 1 (directivă 2026-11-14)
+  tool(
+    'page_setup',
+    'Pagina de tipar a proiectului (dimensiune, margini, livețuri, antet/subsol). action=get o citește (normalizată), action=set o normalizează și o salvează în proiect.',
+    {
+      project,
+      action: z.enum(['get', 'set']).default('get'),
+      setup: z.record(z.any()).optional().describe('Doar la action=set: câmpurile de schimbat (ex. format, width, height, margins…)'),
+    },
+    (dir, { action, setup }) => {
+      const p = load(dir);
+      if (action === 'get') return printSetupMod.normalizePageSetup(p.pageSetup || {});
+      const next = printSetupMod.normalizePageSetup(setup || {});
+      return mutate(dir, (pr) => { pr.pageSetup = next; }).pageSetup;
+    },
+    W,
+  );
+
+  tool(
+    'save_template',
+    'Salvează proiectul ca șablon de utilizator, reutilizabil la Proiect nou (pagina de start → şabloane).',
+    { project, name: z.string().min(1).describe('Numele şablonului') },
+    (dir, { name }) => {
+      const r = templates.saveUserTemplate(dir, templatesDir(), { name });
+      return { ...r, saved: true };
+    },
+    W,
+  );
+
+  tool(
+    'sync_folder',
+    'Sincronizarea cu dosar extern: sync_out scrie manuscrisul și notele în dosar (rtf/txt/md/fdx/fountain, manifest .scribner-sync.json); sync_in importă înapoi modificările din dosar — conflictele (editate în ambele părți) sunt semnalate, nu suprascrise.',
+    {
+      project,
+      action: z.enum(['sync_out', 'sync_in']).default('sync_out'),
+      folder: z.string().min(1).describe('Dosarul de sincronizare (creată dacă lipsește)'),
+      format: z.enum(['rtf', 'txt', 'md', 'fdx', 'fountain']).default('rtf'),
+      include_notes: z.boolean().default(true),
+    },
+    (dir, { action, folder, format, include_notes }) => {
+      const p = load(dir);
+      const readDoc = (id) => readDocSafe(dir, id);
+      if (action === 'sync_out') {
+        const r = folderSyncMod.syncOut(p, folder, readDoc, { format, includeNotes: include_notes });
+        return { action: 'out', folder, ...r };
+      }
+      const r = folderSyncMod.syncIn(p, folder, readDoc, (id, html) => store.writeDoc(dir, id, 'docs', html));
+      return { action: 'in', folder, ...r };
+    },
+    W,
+  );
+
+  tool(
+    'strip_notation',
+    'Elimină notațiile din text: adnotări [[...]], comentarii {{...}}, note de subsol, revizuiri — dintr-un document (id) sau din tot proiectul (fără Coș). Salvează un snapshot înainte cu take_snapshot dacă vrei originalul.',
+    {
+      project,
+      id: z.string().optional().describe('Fără id: tot proiectul'),
+      annotations: z.boolean().default(true),
+      comments: z.boolean().default(true),
+      footnotes: z.boolean().default(true),
+      revisions: z.boolean().default(false),
+    },
+    (dir, { id, annotations, comments, footnotes, revisions }) => {
+      const opts = { annotations, comments, footnotes, revisions };
+      const strip = (html) => stripNotation(html, opts);
+      if (id) {
+        const before = readDocSafe(dir, id);
+        const after = strip(before);
+        if (after !== before) store.writeDoc(dir, id, 'docs', after);
+        return { id, changed: after !== before };
+      }
+      const p = load(dir);
+      const trashed = trashIds(p.tree);
+      const changed = [];
+      for (const n of flatten(p.tree).filter((x) => x.type === 'text' && !trashed.has(x.id))) {
+        const before = readDocSafe(dir, n.id);
+        const after = strip(before);
+        if (after !== before) {
+          store.writeDoc(dir, n.id, 'docs', after);
+          changed.push(n.id);
+        }
+      }
+      return { project: true, changed };
     },
     W,
   );

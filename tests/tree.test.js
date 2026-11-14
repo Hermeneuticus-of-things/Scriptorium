@@ -109,3 +109,39 @@ describe('containers, convert, sort, navigation', () => {
     expect(siblingInOrder(t, 'f', -1)).toBe(null);
   });
 });
+
+import { insertInside, keyMove, moveTargets } from '../src/lib/tree.js';
+describe('file-in-file nesting as in Scrivener 3 (directivă autor 2026-11-10)', () => {
+  const base = () => [{ id: 'draft', root: 'draft', children: [
+    { id: 'parent', type: 'text', title: 'Document părinte' },
+    { id: 'child', type: 'text', title: 'Copil' },
+    { id: 'fold', type: 'folder', children: [{ id: 'inner', type: 'text' }] },
+  ] }];
+  it('insertInside creates children on a document without any', () => {
+    const r = insertInside(base(), 'parent', { id: 'new', type: 'text' });
+    expect(findNode(r, 'parent').children.map((n) => n.id)).toEqual(['new']);
+    expect(findNode(r, 'fold').children[0].id).toBe('inner');
+  });
+  it('insertInside refuses roots and missing targets with the same reference', () => {
+    const t = base();
+    expect(insertInside(t, 'draft', { id: 'x', type: 'text' })).toBe(t);
+    expect(insertInside(t, 'missing', { id: 'x', type: 'text' })).toBe(t);
+  });
+  it('keyboard indent nests into a previous document without children', () => {
+    const r = keyMove(base(), 'child', 'indent');
+    expect(findNode(r, 'parent').children.map((n) => n.id)).toEqual(['child']);
+    expect(findNode(r, 'fold').children.map((n) => n.id)).toEqual(['inner']);
+  });
+  it('moveTargets offers plain documents as targets', () => {
+    const ids = moveTargets(base(), ['child']).map((t) => t.id);
+    expect(ids).toContain('draft');
+    expect(ids).toContain('parent');
+    expect(ids).toContain('fold');
+    expect(ids).toContain('inner');
+    expect(ids).not.toContain('child');
+  });
+  it('moveTargets excludes the whole subtree of the moved selection', () => {
+    const t = [{ id: 'draft', root: 'draft', children: [{ id: 'f', type: 'folder', children: [{ id: 'in', type: 'text' }] }] }];
+    expect(moveTargets(t, ['f']).map((x) => x.id)).toEqual(['draft']);
+  });
+});

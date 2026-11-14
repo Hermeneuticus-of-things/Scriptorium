@@ -2,6 +2,9 @@
 const { contextBridge, ipcRenderer, webFrame } = require('electron');
 
 const call = async (channel, ...args) => {
+  if (process.env.PNEUMA_PERF_DIAG && (channel === 'project:save' || channel === 'doc:write')) {
+    console.log(`[probe-r] ${channel} la ${Math.round(performance.now())} ms; stack: ` + new Error().stack.split('\n').slice(2, 9).map((l) => l.trim().slice(0, 110)).join(' | '));
+  }
   const res = await ipcRenderer.invoke(channel, ...args);
   if (!res.ok) throw new Error(res.error);
   return res.value;
@@ -22,6 +25,7 @@ contextBridge.exposeInMainWorld('api', {
   listSnapshots: (dir, id) => call('snap:list', dir, id),
   appendAuthorJournal: (dir, rows) => call('editorial:appendAuthorJournal', dir, rows),
   teamFiles: (dir) => call('team:files', dir),
+  dictationStats: () => call('dictation:stats'),
   googleAuthConnect: () => call('googleAuth:connect'),
   googleAuthDisconnect: () => call('googleAuth:disconnect'),
   googleAuthStatus: () => call('googleAuth:status'),
@@ -50,6 +54,9 @@ contextBridge.exposeInMainWorld('api', {
   dtedDictateStop: (id) => call('dted:dictateStop', id),
   dtedCancel: (id) => call('dted:cancel', id),
   dtedCheckUpdate: () => call('dted:checkUpdate'),
+  sttTranscribeOnline: (payload) => call('stt:transcribeOnline', payload),
+  speechifySpeak: (text) => call('speech:speechify', text),
+  sttConfigured: () => call('stt:configured'),
   dtedInstallUpdate: (info) => call('dted:installUpdate', info),
   onDtedEvent: (fn) => {
     const listener = (_e, ev) => fn(ev);
@@ -84,6 +91,12 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('menu:nativeOpen', listener);
     return () => ipcRenderer.removeListener('menu:nativeOpen', listener);
   },
+  onWindowCloseRequest: (fn) => {
+    const listener = () => fn();
+    ipcRenderer.on('window:close-request', listener);
+    return () => ipcRenderer.removeListener('window:close-request', listener);
+  },
+  windowCloseResponse: (choice) => call('window:close-response', choice),
   // Learned corrections: is a word misspelled for the active spell checker; a suggestion picked
   // from the native context menu ({ from, to }).
   isMisspelled: (word) => {
@@ -151,6 +164,11 @@ contextBridge.exposeInMainWorld('api', {
   renameSnapshot: (dir, id, file, name) => call('snap:rename', dir, id, file, name),
   snapshotCounts: (dir) => call('snap:counts', dir),
   updateSnapshotHtml: (dir, id, file, html) => call('snap:updateHtml', dir, id, file, html),
+  // Snapshots Manager (the whole project): list / search / mass delete / export.
+  listAllSnapshots: (dir) => call('snap:listAll', dir),
+  searchSnapshots: (dir, query, opts) => call('snap:search', dir, query, opts),
+  deleteSnapshots: (dir, items) => call('snap:deleteMany', dir, items),
+  exportSnapshot: (dir, id, file, docTitle) => call('snap:export', dir, id, file, docTitle),
   listAllTemplates: () => call('io:listTemplates'),
   saveAsTemplate: (dir, meta) => call('io:saveAsTemplate', dir, meta),
   deleteTemplate: (id) => call('io:deleteTemplate', id),
@@ -177,6 +195,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('ai:delta', listener);
     return () => ipcRenderer.removeListener('ai:delta', listener);
   },
+  onServicesChanged: (fn) => { const listener = () => fn(); ipcRenderer.on('services:changed', listener); return () => ipcRenderer.removeListener('services:changed', listener); },
   testAi: (override) => call('ai:test', override),
   nlmExport: (dir, options) => call('nlm:export', dir, options),
   nlmOpen: () => call('nlm:open'),

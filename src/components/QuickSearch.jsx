@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { quickSearchProject, quickSearchRows, quickNav, quickOpenMode, quickRevealPhrase, handoffCriteria } from '../lib/quickSearch.js';
 import { findNode } from '../lib/tree.js';
 import { t } from '../lib/i18n.js';
+import AnchoredPopover from './AnchoredPopover.jsx';
 
 // Quick Search (Scrivener 3 §11.5): an omnibox-style popup that jumps to a
 // document by title, synopsis or text. Results come in three labelled
@@ -9,7 +10,7 @@ import { t } from '../lib/i18n.js';
 // phrase, as in Scrivener); the handoff button continues into the full
 // Project Search dialog with the same phrase. Modifier opens (manual p. 235):
 // Shift = Quick Reference panel, Alt = the other editor split.
-export default function QuickSearch({ project, docs, currentTitle = '', onOpen, onFullSearch, onClose }) {
+export default function QuickSearch({ project, docs, currentTitle = '', onOpen, onFullSearch, onClose, variant = 'modal', anchor }) {
   const [query, setQuery] = useState('');
   const [selectedKey, setSelectedKey] = useState(null);
   const inputRef = useRef(null);
@@ -77,9 +78,8 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
   );
 
   const anyResults = rows.length > 0;
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal quick-search" role="dialog" aria-label={t('ui.quickSearch.aria')} onClick={(e) => e.stopPropagation()}>
+  const inner = (
+    <>
         <input
           ref={inputRef}
           value={query}
@@ -117,6 +117,15 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
           <small className="muted">{t('ui.quickSearch.modificatori')}</small>
           <small className="muted">Esc</small>
         </div>
+    </>
+  );
+  if (variant === 'popover') return (
+    <AnchoredPopover x={anchor?.x} y={anchor?.y} onClose={onClose} title={null} width={560}>{inner}</AnchoredPopover>
+  );
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal quick-search" role="dialog" aria-label={t('ui.quickSearch.aria')} onClick={(e) => e.stopPropagation()}>
+        {inner}
       </div>
     </div>
   );

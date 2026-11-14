@@ -1,3 +1,4 @@
+export const LINE_SPACINGS = Object.freeze([1, 1.15, 1.2, 1.5, 2, 2.5, 3]);
 // Menu bar entries that act on the active editor (Edit, Insert, Format, View, Window).
 // Pure builder: App passes accessors; every action reads the editor at click time.
 import { getHTMLFromFragment } from '@tiptap/core';
@@ -221,8 +222,8 @@ export function editorMenus(ctx) {
       { label: L('alignCenter'), action: on((c) => c.setTextAlign('center').run()) },
       { label: L('alignRight'), action: on((c) => c.setTextAlign('right').run()) },
       { label: L('alignJustify'), action: on((c) => c.setTextAlign('justify').run()) },
-      '-',
-      ...[1, 1.15, 1.5, 2].map((v) => ({ label: t('ui.formatBar.lineSpacing', { v }), action: para({ lineHeight: v }) })),
+      // Spațierile rămân DOAR în butonul rapid de pe bară (audit UI P0-1, 2026-11-10): valorile
+      // duplicate în două locuri confundă; aici rămân alinierea și intrările avansate.
     ] },
     { label: L('style'), submenu: [
       ...styles.filter(isParaStyle).map((st) => ({ label: `¶ ${styleName(st)}`, shortcut: st.shortcut || undefined, action: on((c) => c.setParagraphStyle(st.id).run()) })),
@@ -248,7 +249,7 @@ export function editorMenus(ctx) {
     { label: t('ui.formatBar.pasteFormat'), shortcut: 'Ctrl+Alt+V', action: on((c) => c.pasteFormat().run()) },
     '-',
     { ...check(!view.hideFormatBar, L('showFormatBar')), action: () => setView({ ...view, hideFormatBar: !view.hideFormatBar }) },
-    { ...check(view.ruler, t('ui.formatBar.ruler')), action: () => setView({ ...view, ruler: !view.ruler }) },
+    { id: 'toggleRuler', commandId: 'toggleRuler', ...check(view.ruler, t('ui.formatBar.ruler')), action: () => setView({ ...view, ruler: !view.ruler }) },
   ];
 
   const lc = { ...DEFAULT_LABEL_COLOR_IN, ...(settings.labelColorIn || {}) };

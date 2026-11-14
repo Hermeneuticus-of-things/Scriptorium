@@ -38,6 +38,7 @@ const splitOpts = (o) => ({ firstLineTitle: Boolean(o && o.firstLineTitle) });
 const exporters = require('../lib/exporters.cjs');
 const templates = require('../lib/templates.cjs');
 const printSetup = require('../lib/printSetup.cjs');
+const printFormats = require('../lib/printFormats.cjs');
 const compile = require('../lib/compile.cjs');
 const compileFormats = require('../lib/compileFormats.cjs');
 
@@ -202,10 +203,15 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
       return '';
     }
   };
-  // Current document / selection (options.ids) or the whole Draft, through the Compile HTML
-  // pipeline, with the Page Setup's page box and running header/footer (compile.pageCss).
+  // Current document / selection (options.ids) or the whole Draft. The Page Setup's format
+  // (P1 #30) picks the renderer: 'manuscript' compiles through the Compile HTML pipeline,
+  // 'indexCards' / 'outline' come from lib/printFormats.cjs. All three then get the Page
+  // Setup's page box and running header/footer (printSetup.applyToHtml → compile.pageCss),
+  // so preview and print render identically.
   const printHtml = (dir, project, options, setup) => {
     const ids = Array.isArray(options.ids) && options.ids.length ? options.ids : null;
+    const fmt = printFormats.formatHtml(setup, project, readerFor(dir), { ids });
+    if (fmt) return printSetup.applyToHtml(fmt, setup, project);
     const html = compile.compileHtml(project, readerFor(dir), { ids, documentTitles: true, folderHeadings: true, titlePage: false, separator: '', projectDir: dir, target: 'pdf' });
     return printSetup.applyToHtml(html, setup, project);
   };

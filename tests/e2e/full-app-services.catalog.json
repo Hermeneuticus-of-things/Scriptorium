@@ -1,0 +1,2681 @@
+{
+  "domain": "AI, servicii și voce — condiții și rezultate",
+  "script": "D:/Cloude Code/PROJECTS/Pneuma Sofer  APP/.work/release-1.1.0/tests/e2e/full-app-services.cjs",
+  "source_workspace": "D:/Cloude Code/PROJECTS/Pneuma Sofer  APP/.work/release-1.1.0",
+  "validation": {
+    "method": "Audit static al componentelor, commands/menuLayout, integrare App și backend; node --check. Părintele execută serial aplicația reală și capturează înainte/după fiecare caz.",
+    "live_execution_performed": false,
+    "cases_executed_by_author": 0,
+    "passes_claimed": 0,
+    "no_personal_credentials": true,
+    "no_real_microphone": true,
+    "no_product_or_harness_changes": true,
+    "register_contract": "async function(H); H.test(id,{surface,control,commands,routes,initial,expected,setup,act,verify}); fiecare verify conține H.assert sau H.wait direct sau prin helper cu aserțiune.",
+    "isolated_runtime": "H.reset este învelit în memorie pentru restaurarea adaptoarelor după cazuri eșuate și ștergerea exclusivă a research-chats/cache/preferințelor domeniului în fixture. HOME/APPDATA MCP sunt redirecționate în H.W; nu se citesc configurații personale. Cheile AI moștenite din mediu sunt eliminate în procesul testat și restaurate la dispose fără logare. net.fetch blochează descărcările de modele. ChildProcess.prototype.spawn este blocat global în suite pentru procese reale; simulatorul exact de fixture este singura excepție. Niciun motor instalat nu poate fi pornit pentru microfon.",
+    "expanded_cases_count": 357,
+    "count_rule": "Fiecare combinație de dimensions din case_families produce o înregistrare H.test. Bucla de 12 rezultate din ai.history.all-entries este o singură înregistrare cu 10 verificări de clipboard, nu 12 cazuri. expanded_case_ids este inventarul exact de înregistrări, nu număr de assert-uri.",
+    "runner_notes": [
+      "Nu rula acest modul prin npm/Electron în paralel cu alte domenii; părintele controlează execuția serială.",
+      "Înainte de launch, baseline-ul harness ar trebui să conțină speechAutoInstall:false și dtedAutoUpdate:false. Modulul le setează în fiecare setup și blochează net.fetch după reset, dar nu poate exclude un download pornit anterior primului reset.",
+      "Cazurile de adaptoare nu substituie window.api, IPC handlers, parsers, React state sau logică de business. Electron main fetch, ChildProcess.prototype.spawn pentru calea exactă de fixture, SpeechSynthesis și Menu.popup sunt granițele instrumentate.",
+      "Defectele produsului sunt lăsate să producă fail; nu există expected-failure/skip/pass generic pentru ele. În special selecția după synonyms related-search, nivelul MiniPlayer și Undo la înlocuirea documentului sunt verificate explicit.",
+      "Barieră suplimentară: ChildProcess.prototype.spawn este refuzat pentru TOATE procesele reale în suite. Doar synthetic-DTED.exe primește protocolul fake. Astfel fallback la un D&TED instalat nu poate porni microfonul în cazul de precondiție missing; se acceptă fie lipsa motorului, fie mesajul explicit QA refuses real subprocess. Bariera se restaurează la dispose."
+    ]
+  },
+  "case_families": [
+    {
+      "template": "ai.no-key.{action}",
+      "dimensions": {
+        "action": [
+          "proofread",
+          "summarize",
+          "continue",
+          "feedback",
+          "consistency",
+          "research",
+          "define",
+          "translate"
+        ]
+      }
+    },
+    {
+      "template": "ai.empty.{action}",
+      "dimensions": {
+        "action": [
+          "proofread",
+          "summarize",
+          "continue",
+          "feedback",
+          "consistency",
+          "research",
+          "define",
+          "translate"
+        ]
+      }
+    },
+    {
+      "template": "ai.result.{action}",
+      "dimensions": {
+        "action": [
+          "proofread",
+          "summarize",
+          "continue",
+          "feedback",
+          "consistency",
+          "research",
+          "define",
+          "translate"
+        ]
+      }
+    },
+    {
+      "template": "ai.configure.remedy"
+    },
+    {
+      "template": "ai.selection.{id}.{mode}",
+      "dimensions": {
+        "id": [
+          "aiResearchSel",
+          "aiDefineSel",
+          "aiProofreadSel",
+          "aiTranslateSel"
+        ],
+        "mode": [
+          "ipc",
+          "native"
+        ]
+      }
+    },
+    {
+      "template": "ai.selection.missing.{id}",
+      "dimensions": {
+        "id": [
+          "aiResearchSel",
+          "aiDefineSel",
+          "aiProofreadSel",
+          "aiTranslateSel"
+        ]
+      }
+    },
+    {
+      "template": "ai.ask.{control}",
+      "dimensions": {
+        "control": [
+          "ask-button",
+          "ask-ctrl-enter"
+        ]
+      }
+    },
+    {
+      "template": "ai.cancel.{mode}",
+      "dimensions": {
+        "mode": [
+          "button",
+          "escape"
+        ]
+      }
+    },
+    {
+      "template": "ai.retry.{failure}",
+      "dimensions": {
+        "failure": [
+          "failOnce",
+          "refusal"
+        ]
+      }
+    },
+    {
+      "template": "ai.reject.{mode}",
+      "dimensions": {
+        "mode": [
+          "button",
+          "escape"
+        ]
+      }
+    },
+    {
+      "template": "ai.no-change"
+    },
+    {
+      "template": "ai.stale-range"
+    },
+    {
+      "template": "ai.accept.undo"
+    },
+    {
+      "template": "ai.history.{operation}",
+      "dimensions": {
+        "operation": [
+          "expand",
+          "copy",
+          "reinsert",
+          "clear"
+        ]
+      }
+    },
+    {
+      "template": "ai.toggle.off-on"
+    },
+    {
+      "template": "ai.config.provider.{provider}",
+      "dimensions": {
+        "provider": [
+          "anthropic",
+          "openai",
+          "openrouter",
+          "deepseek",
+          "gemini",
+          "mistral",
+          "groq",
+          "xai",
+          "nvidia",
+          "ollama",
+          "lmstudio",
+          "custom"
+        ]
+      }
+    },
+    {
+      "template": "ai.config.missing.{field}",
+      "dimensions": {
+        "field": [
+          "model",
+          "url"
+        ]
+      }
+    },
+    {
+      "template": "ai.config.cancel"
+    },
+    {
+      "template": "ai.project.scope.{kind}",
+      "dimensions": {
+        "kind": [
+          "docs",
+          "research",
+          "notes"
+        ]
+      }
+    },
+    {
+      "template": "ai.project.cancel"
+    },
+    {
+      "template": "ai.project.mcp-info"
+    },
+    {
+      "template": "research.search.{mode}",
+      "dimensions": {
+        "mode": [
+          "button",
+          "enter"
+        ]
+      }
+    },
+    {
+      "template": "research.query.empty"
+    },
+    {
+      "template": "research.no-results"
+    },
+    {
+      "template": "research.scope.{id}",
+      "dimensions": {
+        "id": [
+          "folder-a",
+          "doc-a",
+          "doc-b",
+          "template-folder",
+          "template-a"
+        ]
+      }
+    },
+    {
+      "template": "research.reindex.{where}",
+      "dimensions": {
+        "where": [
+          "bottom",
+          "sources"
+        ]
+      }
+    },
+    {
+      "template": "research.open-return"
+    },
+    {
+      "template": "research.ask.{mode}",
+      "dimensions": {
+        "mode": [
+          "button",
+          "enter"
+        ]
+      }
+    },
+    {
+      "template": "research.turn.{operation}",
+      "dimensions": {
+        "operation": [
+          "copy",
+          "note",
+          "insert-footnotes",
+          "insert-links",
+          "cite",
+          "sources",
+          "followup-0",
+          "followup-1",
+          "followup-2",
+          "new",
+          "choose",
+          "delete"
+        ]
+      }
+    },
+    {
+      "template": "research.ask.no-key"
+    },
+    {
+      "template": "research.cancel.{mode}",
+      "dimensions": {
+        "mode": [
+          "button",
+          "escape"
+        ]
+      }
+    },
+    {
+      "template": "research.paste.{mode}",
+      "dimensions": {
+        "mode": [
+          "text",
+          "empty",
+          "cancel"
+        ]
+      }
+    },
+    {
+      "template": "research.import.{ext}",
+      "dimensions": {
+        "ext": [
+          "txt",
+          "md",
+          "markdown",
+          "html",
+          "htm",
+          "rtf",
+          "pdf",
+          "docx",
+          "odt",
+          "cancel",
+          "empty-file"
+        ]
+      }
+    },
+    {
+      "template": "research.close"
+    },
+    {
+      "template": "editorial.level.{level}",
+      "dimensions": {
+        "level": [
+          "micro",
+          "mezzo",
+          "macro"
+        ]
+      }
+    },
+    {
+      "template": "editorial.loops.{n}",
+      "dimensions": {
+        "n": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          0,
+          9
+        ]
+      }
+    },
+    {
+      "template": "editorial.strict"
+    },
+    {
+      "template": "editorial.filter.{sev}",
+      "dimensions": {
+        "sev": [
+          "grave",
+          "medium",
+          "minor"
+        ]
+      }
+    },
+    {
+      "template": "editorial.safe-repair"
+    },
+    {
+      "template": "editorial.jump"
+    },
+    {
+      "template": "editorial.round.{id}",
+      "dimensions": {
+        "id": [
+          "R0",
+          "R1",
+          "R1b",
+          "R1c",
+          "R2",
+          "R3",
+          "R4",
+          "R4b",
+          "R5",
+          "R6",
+          "R7",
+          "R8",
+          "R8b",
+          "R9",
+          "R10",
+          "R11"
+        ]
+      }
+    },
+    {
+      "template": "editorial.rounds.all-none"
+    },
+    {
+      "template": "editorial.micro.no-selection"
+    },
+    {
+      "template": "editorial.proposal.{operation}",
+      "dimensions": {
+        "operation": [
+          "accept",
+          "reject",
+          "edit-cancel",
+          "edit-save",
+          "edit-short",
+          "edit-force",
+          "stale"
+        ]
+      }
+    },
+    {
+      "template": "editorial.macro.{operation}",
+      "dimensions": {
+        "operation": [
+          "choose-reject",
+          "reject-all"
+        ]
+      }
+    },
+    {
+      "template": "editorial.cancel.{mode}",
+      "dimensions": {
+        "mode": [
+          "button",
+          "escape"
+        ]
+      }
+    },
+    {
+      "template": "editorial.near-repetitions"
+    },
+    {
+      "template": "services.lookup.{kind}",
+      "dimensions": {
+        "kind": [
+          "dictionary",
+          "synonyms",
+          "sinonimul",
+          "wiktionary",
+          "cambridge",
+          "merriam",
+          "linguee",
+          "iate",
+          "wikipedia",
+          "scholar",
+          "google"
+        ]
+      }
+    },
+    {
+      "template": "services.no-selection.{id}",
+      "dimensions": {
+        "id": [
+          "deeplInApp",
+          "googleInApp",
+          "synonymsInApp"
+        ]
+      }
+    },
+    {
+      "template": "services.deepl.configure"
+    },
+    {
+      "template": "services.google.{mode}",
+      "dimensions": {
+        "mode": [
+          "replace",
+          "undo",
+          "caret-moved",
+          "stale"
+        ]
+      }
+    },
+    {
+      "template": "services.grammar.{option}",
+      "dimensions": {
+        "option": [
+          "default",
+          "alternative",
+          "delete",
+          "leave",
+          "no-match",
+          "close",
+          "stale"
+        ]
+      }
+    },
+    {
+      "template": "services.synonym.{choice}",
+      "dimensions": {
+        "choice": [
+          "atrăgător",
+          "minunat",
+          "agreabil",
+          "încântător"
+        ]
+      }
+    },
+    {
+      "template": "services.synonyms.{mode}",
+      "dimensions": {
+        "mode": [
+          "retry",
+          "related-search",
+          "multiword",
+          "not-found",
+          "close"
+        ]
+      }
+    },
+    {
+      "template": "dictation.start.{mode}",
+      "dimensions": {
+        "mode": [
+          "dictate",
+          "dictateHere",
+          "dictateSel",
+          "native",
+          "mini",
+          "context"
+        ]
+      }
+    },
+    {
+      "template": "dictation.{surface}.{operation}",
+      "dimensions": {
+        "surface": [
+          "bar",
+          "mini"
+        ],
+        "operation": [
+          "pause-resume",
+          "stop",
+          "cancel"
+        ]
+      }
+    },
+    {
+      "template": "dictation.switch-document"
+    },
+    {
+      "template": "dictation.error"
+    },
+    {
+      "template": "dictation.missing"
+    },
+    {
+      "template": "dictation.transcribe.{mode}",
+      "dimensions": {
+        "mode": [
+          "result",
+          "cancel",
+          "dialog-cancel"
+        ]
+      }
+    },
+    {
+      "template": "speech.scope.{id}.{mode}",
+      "dimensions": {
+        "id": [
+          "readSel",
+          "readHere",
+          "readSentence",
+          "readParagraph",
+          "readAll",
+          "readBook"
+        ],
+        "mode": [
+          "ipc",
+          "context"
+        ]
+      }
+    },
+    {
+      "template": "mini.rate.{rate}",
+      "dimensions": {
+        "rate": [
+          "0.6",
+          "0.7",
+          "0.8",
+          "0.9",
+          "1.0",
+          "1.1",
+          "1.2",
+          "1.3",
+          "1.4",
+          "1.5",
+          "1.6",
+          "1.7",
+          "1.8"
+        ]
+      }
+    },
+    {
+      "template": "mini.voice.{voice}",
+      "dimensions": {
+        "voice": [
+          "QA Română",
+          "QA English"
+        ]
+      }
+    },
+    {
+      "template": "mini.{operation}",
+      "dimensions": {
+        "operation": [
+          "pause-resume",
+          "stop",
+          "close",
+          "empty",
+          "drag"
+        ]
+      }
+    },
+    {
+      "template": "mcp.{id}.{operation}",
+      "dimensions": {
+        "id": [
+          "claudeDesktop",
+          "claudeCode",
+          "cursor",
+          "gemini",
+          "opencode",
+          "windsurf",
+          "vscode",
+          "codex"
+        ],
+        "operation": [
+          "preview-copy",
+          "read-only"
+        ]
+      }
+    },
+    {
+      "template": "mcp.{id}.add",
+      "dimensions": {
+        "id": [
+          "claudeDesktop",
+          "cursor",
+          "gemini",
+          "opencode",
+          "windsurf",
+          "vscode",
+          "codex"
+        ]
+      }
+    },
+    {
+      "template": "mcp.{id}.invalid-json",
+      "dimensions": {
+        "id": [
+          "claudeDesktop",
+          "cursor",
+          "gemini",
+          "opencode",
+          "windsurf",
+          "vscode"
+        ]
+      }
+    },
+    {
+      "template": "mcp.close"
+    },
+    {
+      "template": "job.{job}.{mode}",
+      "dimensions": {
+        "job": [
+          "aiBulkSynopsis",
+          "aiConsistency",
+          "aiZoomReview"
+        ],
+        "mode": [
+          "complete",
+          "cancel"
+        ]
+      }
+    },
+    {
+      "template": "job.synopsis.existing"
+    },
+    {
+      "template": "job.no-key.{job}",
+      "dimensions": {
+        "job": [
+          "aiBulkSynopsis",
+          "aiConsistency",
+          "aiZoomReview"
+        ]
+      }
+    },
+    {
+      "template": "notebooklm.{mode}",
+      "dimensions": {
+        "mode": [
+          "open",
+          "ask-selection"
+        ]
+      }
+    },
+    {
+      "template": "notebooklm.export.{mode}",
+      "dimensions": {
+        "mode": [
+          "files",
+          "cancel"
+        ]
+      }
+    },
+    {
+      "template": "ai.rerun.keyboard"
+    },
+    {
+      "template": "ai.capture.document-switch"
+    },
+    {
+      "template": "selection.hidden.{id}",
+      "dimensions": {
+        "id": [
+          "grammarSel",
+          "readSel",
+          "dictateSel",
+          "researchAskSel",
+          "nlmAskSel",
+          "nlmConsultSel"
+        ]
+      }
+    },
+    {
+      "template": "research.kind-chip.{kind}",
+      "dimensions": {
+        "kind": [
+          "docs",
+          "research",
+          "notes"
+        ]
+      }
+    },
+    {
+      "template": "research.web.{mode}",
+      "dimensions": {
+        "mode": [
+          "success",
+          "invalid",
+          "cancel",
+          "escape"
+        ]
+      }
+    },
+    {
+      "template": "research.selection.{mode}",
+      "dimensions": {
+        "mode": [
+          "search",
+          "ask"
+        ]
+      }
+    },
+    {
+      "template": "services.grammar.second-leave"
+    },
+    {
+      "template": "services.synonyms.related-apply"
+    },
+    {
+      "template": "services.grammar.context"
+    },
+    {
+      "template": "services.external-translate.{id}",
+      "dimensions": {
+        "id": [
+          "selDeepl",
+          "selGoogleTranslate"
+        ]
+      }
+    },
+    {
+      "template": "services.lookup.long-word"
+    },
+    {
+      "template": "dictation.level-and-clip"
+    },
+    {
+      "template": "dictation.cancel-after-author-edit"
+    },
+    {
+      "template": "job.report.open-return"
+    },
+    {
+      "template": "job.progress.error-and-expiry"
+    },
+    {
+      "template": "mcp.detected-order"
+    },
+    {
+      "template": "ai.error.settings-link"
+    },
+    {
+      "template": "ai.history.all-entries"
+    },
+    {
+      "template": "editorial.tabs"
+    },
+    {
+      "template": "editorial.strict-loop.{strict}",
+      "dimensions": {
+        "strict": [
+          false,
+          true
+        ]
+      }
+    },
+    {
+      "template": "editorial.author.{mode}",
+      "dimensions": {
+        "mode": [
+          "safe",
+          "gate"
+        ]
+      }
+    },
+    {
+      "template": "editorial.canon-details"
+    },
+    {
+      "template": "editorial.edit.409"
+    },
+    {
+      "template": "ai.result.shortcut.{action}",
+      "dimensions": {
+        "action": [
+          "proofread",
+          "continue"
+        ]
+      }
+    },
+    {
+      "template": "research.retry-remediated",
+      "dimensions": null
+    },
+    {
+      "template": "editorial.retry.completed",
+      "dimensions": null
+    },
+    {
+      "template": "editorial.macro.edit.{id}",
+      "dimensions": {
+        "id": [
+          "doc-a",
+          "doc-b"
+        ]
+      }
+    },
+    {
+      "template": "dictation.context.{operation}",
+      "dimensions": {
+        "operation": [
+          "cursor",
+          "stop"
+        ]
+      }
+    },
+    {
+      "template": "native.context.no-ai",
+      "dimensions": null
+    },
+    {
+      "template": "dictation.format.{ext}",
+      "dimensions": {
+        "ext": [
+          "mp3",
+          "m4a",
+          "ogg",
+          "flac",
+          "aac",
+          "wma",
+          "opus",
+          "webm"
+        ]
+      }
+    },
+    {
+      "template": "mcp.{id}.re-add-readonly",
+      "dimensions": {
+        "id": [
+          "claudeDesktop",
+          "cursor",
+          "gemini",
+          "opencode",
+          "windsurf",
+          "vscode",
+          "codex"
+        ]
+      }
+    },
+    {
+      "template": "mini.no-voices",
+      "dimensions": null
+    }
+  ],
+  "surfaces": [
+    {
+      "surface": "AiPanel",
+      "entry_commands": [
+        "ai",
+        "aiResearchSel",
+        "aiDefineSel",
+        "aiProofreadSel",
+        "aiTranslateSel"
+      ],
+      "native_routes": [
+        [
+          "AI",
+          "Asistent AI"
+        ],
+        [
+          "AI",
+          "AI pe selecție",
+          "AI: cercetare pe selecție"
+        ],
+        [
+          "AI",
+          "AI pe selecție",
+          "AI: explică termenul selectat"
+        ],
+        [
+          "AI",
+          "AI pe selecție",
+          "AI: corectează selecția"
+        ],
+        [
+          "AI",
+          "AI pe selecție",
+          "AI: tradu selecția"
+        ]
+      ],
+      "controls": [
+        {
+          "name": "Acțiune",
+          "options": [
+            "Corectură",
+            "Sinopsis",
+            "Continuă",
+            "Critică",
+            "Consistență",
+            "Cercetare",
+            "Explică",
+            "Tradu"
+          ],
+          "cases": [
+            "ai.no-key.*",
+            "ai.empty.*",
+            "ai.result.*",
+            "ai.selection.*"
+          ]
+        },
+        {
+          "name": "Întrebare textbox / Întreabă / Ctrl+Enter",
+          "cases": [
+            "ai.ask.*",
+            "ai.rerun.keyboard",
+            "ai.no-key.*"
+          ]
+        },
+        {
+          "name": "Deschide AI → Setări AI / eroare AI → Setări AI",
+          "cases": [
+            "ai.configure.remedy",
+            "ai.error.settings-link"
+          ]
+        },
+        {
+          "name": "Streaming, aria-busy, progres, Anulează (Esc), Esc",
+          "cases": [
+            "ai.cancel.*"
+          ]
+        },
+        {
+          "name": "Eroare și Reîncearcă",
+          "cases": [
+            "ai.retry.*",
+            "ai.stale-range",
+            "ai.capture.document-switch"
+          ]
+        },
+        {
+          "name": "Diff before/after / fără schimbări / titlu și selecție capturate",
+          "cases": [
+            "ai.result.proofread",
+            "ai.result.translate",
+            "ai.no-change",
+            "ai.selection.*",
+            "ai.stale-range",
+            "ai.capture.document-switch"
+          ]
+        },
+        {
+          "name": "Acceptă (înlocuiește documentul/selecția) / Ctrl+Enter / Respinge (Esc)",
+          "cases": [
+            "ai.result.proofread",
+            "ai.result.translate",
+            "ai.reject.*",
+            "ai.accept.undo",
+            "ai.stale-range"
+          ]
+        },
+        {
+          "name": "Inserează / Pune ca sinopsis în Inspector / Inserează la cursor / Copiază / Închide rezultatul",
+          "cases": [
+            "ai.result.*",
+            "ai.ask.*"
+          ]
+        },
+        {
+          "name": "Rezultate recente summary / fiecare item / Copiază / Reinserează la cursor / Golește istoricul",
+          "cases": [
+            "ai.history.*",
+            "ai.history.all-entries"
+          ]
+        },
+        {
+          "name": "AI status toggle și vizibilitatea comenzilor",
+          "cases": [
+            "ai.toggle.off-on",
+            "ai.selection.missing.*",
+            "selection.hidden.*"
+          ]
+        },
+        {
+          "name": "Ctrl+Enter acceptare/inserare rezultat",
+          "cases": [
+            "ai.result.shortcut.proofread",
+            "ai.result.shortcut.continue"
+          ]
+        }
+      ],
+      "uncovered_refs": [
+        "AI-live"
+      ]
+    },
+    {
+      "surface": "Setări AI program și Setări AI proiect — remediere din domeniu",
+      "entry_commands": [
+        "aiSettings",
+        "aiProjectSettings"
+      ],
+      "controls": [
+        {
+          "name": "Furnizor",
+          "options": [
+            "anthropic",
+            "openai",
+            "openrouter",
+            "deepseek",
+            "gemini",
+            "mistral",
+            "groq",
+            "xai",
+            "nvidia",
+            "ollama",
+            "lmstudio",
+            "custom"
+          ],
+          "cases": [
+            "ai.config.provider.*"
+          ]
+        },
+        {
+          "name": "Model / URL editable sau fix / Testează conexiunea / Salvează / Anulează",
+          "cases": [
+            "ai.config.provider.*",
+            "ai.config.missing.*",
+            "ai.config.cancel",
+            "ai.configure.remedy"
+          ]
+        },
+        {
+          "name": "Cheie API: parolă și nedivulgare",
+          "cases": [
+            "ai.config.provider.*"
+          ],
+          "uncovered_refs": [
+            "AI-key-controls"
+          ]
+        },
+        {
+          "name": "Reguli AI proiect / kinds docs research notes / Salvează / Anulează",
+          "cases": [
+            "ai.project.scope.*",
+            "ai.project.cancel",
+            "research.kind-chip.*"
+          ]
+        },
+        {
+          "name": "Arată comanda de conectare / focus-select al textarea readonly MCP",
+          "cases": [
+            "ai.project.mcp-info"
+          ]
+        },
+        {
+          "name": "AI enabled, timeout, NotebookLM URL/notebook/server, link-cheie, Șterge cheia, ușa Setări AI proiect",
+          "cases": [
+            "ai.toggle.off-on",
+            "ai.config.provider.*"
+          ],
+          "uncovered_refs": [
+            "AI-key-controls",
+            "AI-remediation-extra-fields",
+            "NotebookLM-live"
+          ]
+        }
+      ]
+    },
+    {
+      "surface": "AiJobBar / rapoarte AI pe carte",
+      "entry_commands": [
+        "aiBulkSynopsis",
+        "aiConsistency",
+        "aiZoomReview",
+        "aiCancelJob"
+      ],
+      "controls": [
+        {
+          "name": "Sinopsis în masă / Consistență / Revizie zoom",
+          "cases": [
+            "job.aiBulkSynopsis.*",
+            "job.aiConsistency.*",
+            "job.aiZoomReview.*",
+            "job.no-key.*",
+            "job.synopsis.existing"
+          ]
+        },
+        {
+          "name": "Text de progres, element progress, titlu eroare per-document, stare completă, expirare",
+          "cases": [
+            "job.*.complete",
+            "job.progress.error-and-expiry"
+          ]
+        },
+        {
+          "name": "Anulează job din meniu AI",
+          "cases": [
+            "job.*.cancel"
+          ]
+        },
+        {
+          "name": "Raport constatări, severitate/citat/sugestie, Deschide, Închide, înapoi",
+          "cases": [
+            "job.*.complete",
+            "job.report.open-return"
+          ]
+        },
+        {
+          "name": "Nivel zoom",
+          "options": [
+            "Maha",
+            "Macro",
+            "Mezzo",
+            "Micro",
+            "Nano"
+          ],
+          "cases": [
+            "job.aiZoomReview.complete"
+          ]
+        }
+      ],
+      "uncovered_refs": [
+        "AI-live",
+        "JobBar-error-expiry"
+      ]
+    },
+    {
+      "surface": "ResearchPanel",
+      "entry_commands": [
+        "research",
+        "researchSel",
+        "researchAskSel"
+      ],
+      "controls": [
+        {
+          "name": "Închide / căutare locală textbox / Caută / Enter / zero rezultate",
+          "cases": [
+            "research.close",
+            "research.search.*",
+            "research.query.empty",
+            "research.no-results",
+            "research.selection.search"
+          ]
+        },
+        {
+          "name": "Pasaje locale, buton sursă, titlu și kind, click document, Înapoi",
+          "cases": [
+            "research.search.*",
+            "research.open-return"
+          ]
+        },
+        {
+          "name": "Alege sursele / Ascunde sursele / Doar anumite documente summary",
+          "cases": [
+            "research.scope.*",
+            "research.reindex.sources"
+          ]
+        },
+        {
+          "name": "Checkbox folder/document",
+          "options": [
+            "folder-a",
+            "doc-a",
+            "doc-b",
+            "template-folder",
+            "template-a"
+          ],
+          "cases": [
+            "research.scope.*"
+          ],
+          "excluded": "trashed-a: verificat că nu apare în arbore sau index"
+        },
+        {
+          "name": "Chip kinds și ids / × eliminare",
+          "options": [
+            "docs",
+            "research",
+            "notes",
+            "folder-a",
+            "doc-a",
+            "doc-b",
+            "template-folder",
+            "template-a"
+          ],
+          "cases": [
+            "research.kind-chip.*",
+            "research.scope.*"
+          ]
+        },
+        {
+          "name": "Preferință inserare",
+          "options": [
+            "footnotes",
+            "links"
+          ],
+          "cases": [
+            "research.turn.insert-footnotes",
+            "research.turn.insert-links"
+          ]
+        },
+        {
+          "name": "Reindexează din surse / Reindexează din footer",
+          "cases": [
+            "research.reindex.sources",
+            "research.reindex.bottom"
+          ]
+        },
+        {
+          "name": "Lipește text / Titlul sursei / textarea / Adaugă sursa / ascundere",
+          "cases": [
+            "research.paste.*"
+          ]
+        },
+        {
+          "name": "Din fișiere (PDF, DOCX, ODT, RTF, TXT, MD, HTML)…",
+          "options": [
+            ".pdf",
+            ".docx",
+            ".txt",
+            ".md",
+            ".markdown",
+            ".html",
+            ".htm",
+            ".rtf",
+            ".odt"
+          ],
+          "cases": [
+            "research.import.*"
+          ],
+          "uncovered_refs": [
+            "PDF-scans"
+          ]
+        },
+        {
+          "name": "Pagină web… / prompt URL / OK / Anulează / Esc / validare",
+          "cases": [
+            "research.web.*"
+          ]
+        },
+        {
+          "name": "Conversație nouă / chat select / Șterge conversația",
+          "cases": [
+            "research.turn.new",
+            "research.turn.choose",
+            "research.turn.delete"
+          ]
+        },
+        {
+          "name": "Întreabă AI-ul / Enter / textbox / Anulează (Esc) / Reîncearcă",
+          "cases": [
+            "research.ask.*",
+            "research.cancel.*",
+            "research.selection.ask"
+          ],
+          "uncovered_refs": []
+        },
+        {
+          "name": "Conversație turn / citation [1] / sources summary / sursă click",
+          "cases": [
+            "research.ask.*",
+            "research.turn.cite",
+            "research.turn.sources"
+          ],
+          "uncovered_refs": [
+            "Citation-passage-focus"
+          ]
+        },
+        {
+          "name": "Copiază / Salvează ca notă / Inserează în document",
+          "cases": [
+            "research.turn.copy",
+            "research.turn.note",
+            "research.turn.insert-footnotes",
+            "research.turn.insert-links"
+          ]
+        },
+        {
+          "name": "Întrebări de continuare",
+          "options": [
+            0,
+            1,
+            2
+          ],
+          "cases": [
+            "research.turn.followup-0",
+            "research.turn.followup-1",
+            "research.turn.followup-2"
+          ]
+        },
+        {
+          "name": "Reîncearcă după configurarea furnizorului în dialog AI",
+          "cases": [
+            "research.retry-remediated"
+          ]
+        }
+      ],
+      "uncovered_refs": [
+        "AI-live",
+        "Research-disabled-insert"
+      ]
+    },
+    {
+      "surface": "EditorialPanel",
+      "entry_commands": [
+        "irep",
+        "iedit"
+      ],
+      "controls": [
+        {
+          "name": "Tabs I-REP / I-EDIT",
+          "cases": [
+            "editorial.tabs",
+            "editorial.rounds.all-none",
+            "ai.toggle.off-on"
+          ]
+        },
+        {
+          "name": "Nivel",
+          "options": [
+            "micro",
+            "mezzo",
+            "macro"
+          ],
+          "cases": [
+            "editorial.level.*",
+            "editorial.micro.no-selection",
+            "editorial.macro.*"
+          ]
+        },
+        {
+          "name": "Bucle maxime",
+          "options": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "invalid_options": [
+            0,
+            9
+          ],
+          "cases": [
+            "editorial.loops.*",
+            "editorial.strict-loop.*"
+          ]
+        },
+        {
+          "name": "Și problemele medii blochează",
+          "options": [
+            false,
+            true
+          ],
+          "cases": [
+            "editorial.strict",
+            "editorial.strict-loop.*"
+          ]
+        },
+        {
+          "name": "I-REP: repară + reverifică / Reparații sigure (fără AI)",
+          "cases": [
+            "editorial.proposal.*",
+            "editorial.safe-repair",
+            "editorial.author.safe"
+          ]
+        },
+        {
+          "name": "Checkbox I-EDIT runde",
+          "options": [
+            "R0",
+            "R1",
+            "R1b",
+            "R1c",
+            "R2",
+            "R3",
+            "R4",
+            "R4b",
+            "R5",
+            "R6",
+            "R7",
+            "R8",
+            "R8b",
+            "R9",
+            "R10",
+            "R11"
+          ],
+          "cases": [
+            "editorial.round.*"
+          ]
+        },
+        {
+          "name": "Toate / Niciuna / I-EDIT: rulează rundele",
+          "cases": [
+            "editorial.rounds.all-none",
+            "editorial.round.*",
+            "editorial.author.gate"
+          ]
+        },
+        {
+          "name": "Anulează (Esc) / Esc / streaming / Reîncearcă",
+          "cases": [
+            "editorial.cancel.*",
+            "editorial.micro.no-selection"
+          ],
+          "uncovered_refs": []
+        },
+        {
+          "name": "Severity filters",
+          "options": [
+            "GRAVE",
+            "MEDIU",
+            "MINOR"
+          ],
+          "cases": [
+            "editorial.filter.*"
+          ]
+        },
+        {
+          "name": "Problemă click → selecție în editor / summary mesaje și estimare",
+          "cases": [
+            "editorial.jump",
+            "editorial.level.*",
+            "editorial.strict-loop.*"
+          ]
+        },
+        {
+          "name": "Index_de_Lucru details / probleme parsing/validare",
+          "cases": [
+            "editorial.canon-details"
+          ]
+        },
+        {
+          "name": "COADA_AUTOR summary / semnal click / paragrafe protejate",
+          "cases": [
+            "editorial.author.safe",
+            "editorial.author.gate"
+          ]
+        },
+        {
+          "name": "Repetiții apropiate (S70) details / SEMNAL click",
+          "cases": [
+            "editorial.near-repetitions"
+          ]
+        },
+        {
+          "name": "Propunere individuală: Acceptă și aplică / Respinge / diff / gates / log",
+          "cases": [
+            "editorial.proposal.accept",
+            "editorial.proposal.reject",
+            "editorial.proposal.stale",
+            "editorial.author.gate"
+          ]
+        },
+        {
+          "name": "Editează / textarea / Salvează / Anulează / avertizare -20% / Salvează oricum / 409",
+          "cases": [
+            "editorial.proposal.edit-cancel",
+            "editorial.proposal.edit-save",
+            "editorial.proposal.edit-short",
+            "editorial.proposal.edit-force",
+            "editorial.edit.409"
+          ]
+        },
+        {
+          "name": "Macro: checkbox document / Editează per-document / Acceptă N din M / Respinge tot",
+          "cases": [
+            "editorial.macro.choose-reject",
+            "editorial.macro.reject-all"
+          ],
+          "uncovered_refs": [
+            "Editorial-macro-per-document-edit"
+          ]
+        },
+        {
+          "name": "Reîncearcă și rezultat nou; Editează fiecare doc macro",
+          "cases": [
+            "editorial.retry.completed",
+            "editorial.macro.edit.doc-a",
+            "editorial.macro.edit.doc-b"
+          ]
+        }
+      ],
+      "uncovered_refs": [
+        "AI-live"
+      ]
+    },
+    {
+      "surface": "ServiceResultDialog / servicii în selecție",
+      "entry_commands": [
+        "deeplInApp",
+        "googleInApp",
+        "grammarSel",
+        "synonymsInApp"
+      ],
+      "controls": [
+        {
+          "name": "DeepL fără cheie → configurare / selecție goală",
+          "cases": [
+            "services.deepl.configure",
+            "services.no-selection.deeplInApp"
+          ],
+          "uncovered_refs": [
+            "DeepL-live"
+          ]
+        },
+        {
+          "name": "Google în program: înlocuire directă / Undo / cursor schimbat / stale",
+          "cases": [
+            "services.google.*",
+            "services.no-selection.googleInApp"
+          ]
+        },
+        {
+          "name": "Titlu card ancorat / eroare / Reîncearcă / Închide",
+          "cases": [
+            "services.synonyms.*",
+            "services.grammar.close",
+            "services.grammar.context"
+          ]
+        },
+        {
+          "name": "LanguageTool match0 radio",
+          "options": [
+            "frumos",
+            "minunat",
+            "(șterge)",
+            "Lasă cum e"
+          ],
+          "cases": [
+            "services.grammar.default",
+            "services.grammar.alternative",
+            "services.grammar.delete",
+            "services.grammar.leave"
+          ]
+        },
+        {
+          "name": "LanguageTool match1 radio",
+          "options": [
+            "este",
+            "Lasă cum e"
+          ],
+          "cases": [
+            "services.grammar.default",
+            "services.grammar.second-leave"
+          ]
+        },
+        {
+          "name": "LanguageTool match fără sugestii / Aplică corecturile / nicio problemă",
+          "cases": [
+            "services.grammar.second-leave",
+            "services.grammar.no-match",
+            "services.grammar.stale"
+          ]
+        },
+        {
+          "name": "Sinonime exact și aproximativ",
+          "options": [
+            "atrăgător",
+            "minunat",
+            "agreabil",
+            "încântător"
+          ],
+          "cases": [
+            "services.synonym.*",
+            "services.no-selection.synonymsInApp"
+          ]
+        },
+        {
+          "name": "Cuvânt apropiat plăcut → căutare nouă → înlocuire",
+          "cases": [
+            "services.synonyms.related-search",
+            "services.synonyms.related-apply"
+          ]
+        },
+        {
+          "name": "Sinonime: multiword, HTTP404, retry HTTP503",
+          "cases": [
+            "services.synonyms.multiword",
+            "services.synonyms.not-found",
+            "services.synonyms.retry"
+          ]
+        },
+        {
+          "name": "Traducere-card: text, Înlocuiește selecția, Inserează la cursor, Copiază, Închide",
+          "cases": [],
+          "uncovered_refs": [
+            "ServiceResult-dormant"
+          ]
+        },
+        {
+          "name": "Dicționar-card: listă de destinații onOpenUrl / fallback modal",
+          "cases": [],
+          "uncovered_refs": [
+            "ServiceResult-dormant"
+          ]
+        }
+      ],
+      "uncovered_refs": [
+        "HTTP-live"
+      ]
+    },
+    {
+      "surface": "Meniu contextual nativ / căutări și voce",
+      "controls": [
+        {
+          "name": "Dicționare",
+          "options": [
+            "Dicționar (dexonline)",
+            "Sinonime (dexonline)",
+            "Sinonime",
+            "Wiktionary",
+            "Cambridge Dictionary (EN)",
+            "Merriam-Webster (EN)",
+            "Linguee (exemple traduse)",
+            "IATE (terminologie UE)"
+          ],
+          "cases": [
+            "services.lookup.dictionary",
+            "services.lookup.synonyms",
+            "services.lookup.sinonimul",
+            "services.lookup.wiktionary",
+            "services.lookup.cambridge",
+            "services.lookup.merriam",
+            "services.lookup.linguee",
+            "services.lookup.iate",
+            "services.lookup.long-word"
+          ]
+        },
+        {
+          "name": "Cercetare pe web",
+          "options": [
+            "Wikipedia",
+            "Google Scholar",
+            "Google"
+          ],
+          "cases": [
+            "services.lookup.wikipedia",
+            "services.lookup.scholar",
+            "services.lookup.google"
+          ]
+        },
+        {
+          "name": "Verifică gramatica (LanguageTool)",
+          "cases": [
+            "services.grammar.context"
+          ]
+        },
+        {
+          "name": "Redă audio",
+          "options": [
+            "Redă selecția",
+            "Redă de aici",
+            "Redă fraza",
+            "Redă paragraful",
+            "Redă tot documentul",
+            "Redă toată cartea",
+            "Oprește redarea"
+          ],
+          "cases": [
+            "speech.scope.*"
+          ]
+        },
+        {
+          "name": "Dictare",
+          "options": [
+            "Dictează de la cursor",
+            "Dictează (înlocuiește selecția)",
+            "Oprește dictarea"
+          ],
+          "cases": [
+            "dictation.start.context",
+            "dictation.start.dictateHere",
+            "dictation.bar.stop"
+          ],
+          "uncovered_refs": []
+        },
+        {
+          "name": "Tradu > În program: DeepL/Google, vizibile numai cu serviciu configured",
+          "cases": [
+            "services.deepl.configure",
+            "services.google.replace"
+          ],
+          "uncovered_refs": [
+            "Native-translation-configured"
+          ]
+        },
+        {
+          "name": "Unelte > Tradu selecția: DeepL / Google Translate",
+          "cases": [
+            "services.external-translate.selDeepl",
+            "services.external-translate.selGoogleTranslate"
+          ]
+        },
+        {
+          "name": "AI selection commands sunt doar în meniul AI, nu în context",
+          "cases": [
+            "ai.selection.*",
+            "selection.hidden.*"
+          ],
+          "uncovered_refs": []
+        },
+        {
+          "name": "Callback contextual de cursor/stop dictare; absență AI și NotebookLM",
+          "cases": [
+            "dictation.context.cursor",
+            "dictation.context.stop",
+            "native.context.no-ai"
+          ]
+        }
+      ],
+      "uncovered_refs": [
+        "Shell-live",
+        "Native-visual"
+      ]
+    },
+    {
+      "surface": "DictationBar / Dictation hook / transcriere",
+      "entry_commands": [
+        "dictate",
+        "dictateHere",
+        "dictateSel",
+        "dictateStop",
+        "transcribeAudio",
+        "transcribeMedia"
+      ],
+      "controls": [
+        {
+          "name": "Start din comandă/nativ/mini/context; selecție vs cursor; limba ro; normalizare ș/ț",
+          "cases": [
+            "dictation.start.*"
+          ]
+        },
+        {
+          "name": "Nivel meter / clipping / text engine / contor de cuvinte",
+          "cases": [
+            "dictation.level-and-clip",
+            "dictation.start.*"
+          ]
+        },
+        {
+          "name": "Pauză / Continuă / Stop / Anulează",
+          "cases": [
+            "dictation.bar.*",
+            "dictation.mini.*",
+            "dictation.cancel-after-author-edit"
+          ]
+        },
+        {
+          "name": "Schimbare document / eroare motor și remediu / motor absent",
+          "cases": [
+            "dictation.switch-document",
+            "dictation.error",
+            "dictation.missing"
+          ]
+        },
+        {
+          "name": "Fișier audio… / progres fază și p / Anulează job / rezultat HTML în import folder / cancel dialog",
+          "cases": [
+            "dictation.transcribe.*"
+          ],
+          "uncovered_refs": [
+            "Audio-format-variants",
+            "Transcribe-media"
+          ]
+        },
+        {
+          "name": "În paralel job transcriere + dictare / × respingere eroare motor din bar",
+          "cases": [],
+          "uncovered_refs": [
+            "Dictation-overlap",
+            "Dictation-error-bar"
+          ]
+        },
+        {
+          "name": "Fiecare extensie audio acceptată și transmisă protocolului sintetic",
+          "options": [
+            ".wav",
+            ".mp3",
+            ".m4a",
+            ".ogg",
+            ".flac",
+            ".aac",
+            ".wma",
+            ".opus",
+            ".webm"
+          ],
+          "cases": [
+            "dictation.transcribe.result",
+            "dictation.format.*"
+          ],
+          "note": "Enumerarea și IPC sunt testate; fișierele sunt sintetice, decodarea codec reală rămâne ASR-live."
+        }
+      ],
+      "uncovered_refs": [
+        "ASR-live",
+        "ASR-local-Whisper",
+        "Model-downloads"
+      ]
+    },
+    {
+      "surface": "MiniPlayer",
+      "entry_commands": [
+        "speech"
+      ],
+      "controls": [
+        {
+          "name": "Titlu drag / poziție localStorage / clamping / Închide",
+          "cases": [
+            "mini.drag",
+            "mini.close"
+          ]
+        },
+        {
+          "name": "Voce selector",
+          "options": [
+            "QA Română",
+            "QA English"
+          ],
+          "cases": [
+            "mini.voice.*"
+          ],
+          "uncovered_refs": [
+            "TTS-live",
+            "Mini-other-engines"
+          ]
+        },
+        {
+          "name": "Viteza range min0.6 max1.8 step0.1",
+          "tested_values": [
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+            1.0,
+            1.1,
+            1.2,
+            1.3,
+            1.4,
+            1.5,
+            1.6,
+            1.7,
+            1.8
+          ],
+          "untested_values": [],
+          "cases": [
+            "mini.rate.*"
+          ],
+          "uncovered_refs": []
+        },
+        {
+          "name": "Citește / Pauză / Citește(continuă) / Oprește / text gol",
+          "cases": [
+            "mini.pause-resume",
+            "mini.stop",
+            "mini.empty"
+          ]
+        },
+        {
+          "name": "Dictare (D&TED) / Pauză / Continuă / Stop / Anulează / meter / mini-clip",
+          "cases": [
+            "dictation.start.mini",
+            "dictation.mini.*",
+            "dictation.level-and-clip"
+          ]
+        },
+        {
+          "name": "Voce încorporată Mihai/Piper / Speechify cloud / descărcare TTS/Whisper / stop on engine change",
+          "cases": [
+            "mini.voice.*"
+          ],
+          "uncovered_refs": [
+            "Mini-other-engines",
+            "Model-downloads"
+          ]
+        },
+        {
+          "name": "Nicio voce OS disponibilă, fără dispatch de sunet",
+          "cases": [
+            "mini.no-voices"
+          ]
+        }
+      ]
+    },
+    {
+      "surface": "SpeechBar.jsx (nemontat în src)",
+      "controls": [
+        {
+          "name": "Engine system / Speechify selector, fiecare voce OS, rate min0.5 max2 step0.1, Citește/Continuă, Pauză, Oprește, Dictează/Stop dictare, Închide",
+          "cases": [],
+          "uncovered_refs": [
+            "SpeechBar-orphan"
+          ]
+        }
+      ]
+    },
+    {
+      "surface": "McpConnectDialog",
+      "entry_commands": [
+        "mcpConnect"
+      ],
+      "controls": [
+        {
+          "name": "Read-only checkbox",
+          "options": [
+            false,
+            true
+          ],
+          "cases": [
+            "mcp.*.preview-copy",
+            "mcp.*.read-only"
+          ]
+        },
+        {
+          "name": "Clienți / detectat / nu am găsit / sortare",
+          "options": [
+            "Claude Desktop",
+            "Claude Code",
+            "Cursor",
+            "Gemini CLI",
+            "OpenCode",
+            "Windsurf",
+            "VS Code",
+            "Codex"
+          ],
+          "cases": [
+            "mcp.detected-order",
+            "mcp.*.preview-copy"
+          ]
+        },
+        {
+          "name": "Claude Code: comandă / Copiază comanda / instrucțiune manuală",
+          "cases": [
+            "mcp.claudeCode.preview-copy",
+            "mcp.claudeCode.read-only"
+          ]
+        },
+        {
+          "name": "Ce se adaugă summary / Copiază / Adaugă în… / cale / backup / eroare",
+          "cases": [
+            "mcp.*.preview-copy",
+            "mcp.*.add",
+            "mcp.*.invalid-json"
+          ]
+        },
+        {
+          "name": "JSON-schema mcpServers (Desktop/Cursor/Gemini/Windsurf), servers (VSCode), mcp.local (OpenCode), TOML (Codex)",
+          "cases": [
+            "mcp.*.add"
+          ]
+        },
+        {
+          "name": "Închide",
+          "cases": [
+            "mcp.close"
+          ]
+        },
+        {
+          "name": "Re-adăugare cu read-only: idempotency/overwrite fără pierderea cheilor externe",
+          "cases": [
+            "mcp.*.re-add-readonly"
+          ]
+        }
+      ],
+      "uncovered_refs": [
+        "MCP-live",
+        "MCP-read-only-live",
+        "MCP-TOML-validation"
+      ]
+    },
+    {
+      "surface": "AI > NotebookLM",
+      "entry_commands": [
+        "nlmOpen",
+        "nlmAskSel",
+        "nlmConsultSel",
+        "nlmExport"
+      ],
+      "controls": [
+        {
+          "name": "Deschide / Întreabă selecția → clipboard și Shell",
+          "cases": [
+            "notebooklm.open",
+            "notebooklm.ask-selection"
+          ]
+        },
+        {
+          "name": "Exportă pentru NotebookLM… / selecție destinație / Anulează",
+          "cases": [
+            "notebooklm.export.*"
+          ]
+        },
+        {
+          "name": "Consultă pe surse cu continuare via MCP",
+          "cases": [
+            "selection.hidden.nlmConsultSel"
+          ],
+          "uncovered_refs": [
+            "NotebookLM-live"
+          ]
+        }
+      ]
+    }
+  ],
+  "live_limitations": [
+    {
+      "id": "AI-live",
+      "kind": "adapter/precondition",
+      "reason": "Zero chei/conturi personale. Nouă preseturi cloud: doar precondiția lipsei cheii; trei preseturi locale/custom: transport OpenAI-compatible sintetic. Modelul, costul, rate limits, auth, reachability, provider-specific Anthropic/Gemini responses nu sunt validate live."
+    },
+    {
+      "id": "HTTP-live",
+      "kind": "adapter",
+      "reason": "Google gratuit, LanguageTool, sinonimul.ro și pagina web de fixture sunt răspunsuri fetch sintetice. Parsarea, IPC, selectarea intervalului și scrierea HTML sunt reale; serviciul extern nu este validat live."
+    },
+    {
+      "id": "DeepL-live",
+      "kind": "precondition",
+      "reason": "DeepL nu este configurat cu o cheie. Se verifică numai selecția și ușa de remediere; traducerea DeepL cu autentificare reală nu este executată."
+    },
+    {
+      "id": "Shell-live",
+      "kind": "adapter",
+      "reason": "Dispatch Shell NU este destinație externă validată. Se verifică numai URL/cale și clipboard în H.effects; browserul extern, logarea, rezultatul căutării, pagina destinație și NotebookLM nu sunt testate live."
+    },
+    {
+      "id": "Native-visual",
+      "kind": "adapter",
+      "reason": "Native context Menu.popup este instrumentat, apelul original păstrat, callback-ul real exact invocat. Screenshot Playwright nu include stratul OS; aspectul vizual nativ/submeniurilor Windows nu poate fi revendicat din aceste capturi."
+    },
+    {
+      "id": "ASR-live",
+      "kind": "adapter",
+      "reason": "D&TED este proces protocol-1 sintetic interceptat doar pentru synthetic-DTED.exe de fixture. Niciun microfon real nu este accesat; getUserMedia este refuzat în fixture audio. Acuratețe ASR, latență, devices, GPU și audio real nu sunt validate."
+    },
+    {
+      "id": "ASR-local-Whisper",
+      "kind": "precondition",
+      "reason": "Motorul Whisper încorporat nu este instalat/rulat. Nu se descarcă modelul, nu se face warmup/transcriere reală, CPU/CUDA nu sunt validate."
+    },
+    {
+      "id": "TTS-live",
+      "kind": "adapter",
+      "reason": "SpeechSynthesis și utterance sunt sintetice, cu două voci enumerate. Nu se produce sunet. Voce Windows reală, timbru, pronunție, Piper/Mihai și Speechify nu sunt validate."
+    },
+    {
+      "id": "Model-downloads",
+      "kind": "precondition",
+      "reason": "Descărcările modelelor Whisper/Piper/CUDA și update D&TED sunt blocate; progresul/recuperarea instalării și funcționarea variantelor nu sunt validate. Părintele trebuie să evite autoInstall și autoUpdate încă înainte de primul launch."
+    },
+    {
+      "id": "MCP-live",
+      "kind": "adapter",
+      "reason": "Fișierele MCP sunt citite/scrise numai sub H.W cu HOME/APPDATA redirect. Merge și backup sunt reale; clientul extern, instalarea, handshake, server tools, restart și conexiunea reală nu sunt validate."
+    },
+    {
+      "id": "MCP-read-only-live",
+      "kind": "adapter",
+      "reason": "Flag-ul read-only din comanda/config preview este verificat; aplicarea permisiunilor de către server/client extern nu este validată live."
+    },
+    {
+      "id": "NotebookLM-live",
+      "kind": "precondition/adapter",
+      "reason": "Contul NotebookLM și serverul MCP NotebookLM nu sunt configurate. Exportul fixture este real/local, open/ask sunt doar clipboard/Shell adapter; consultarea pe surse, autorizarea, răspunsul și întrebările bridge nu sunt validate."
+    }
+  ],
+  "uncovered": [
+    {
+      "id": "SpeechBar-orphan",
+      "surface": "SpeechBar",
+      "controls": [
+        "engine system/Speechify",
+        "voices OS",
+        "rate 0.5–2 fiecare pas",
+        "Citește/Continuă",
+        "Pauză",
+        "Oprește",
+        "Dictează/Stop",
+        "Închide"
+      ],
+      "reason": "Nicio integrare src nu montează SpeechBar.jsx. Nu se inventează UI și nu se schimbă produsul pentru a-l monta."
+    },
+    {
+      "id": "ServiceResult-dormant",
+      "surface": "ServiceResultDialog",
+      "controls": [
+        "translate-card înlocuire/inserează/copie",
+        "dictionary-card onOpenUrl",
+        "fallback modal"
+      ],
+      "reason": "Fluxul desktop actual aplică traducerea direct, dicționarele sunt meniu contextual nativ; toate apelurile desktop de result card folosesc ancoră. Ramurile nemontate nu sunt declarate pass."
+    },
+    {
+      "id": "AI-key-controls",
+      "surface": "Setări AI program",
+      "controls": [
+        "input cheie API → salvare encrypted",
+        "Șterge cheia pentru fiecare provider",
+        "link Unde găsesc cheia"
+      ],
+      "reason": "Nu se creează chei/conturi reale. Readonly/blank password e verificat pentru toate preseturi; inserarea/ștergerea unei chei sintetice și dispatch-ul linkului de cheie nu sunt acoperite aici."
+    },
+    {
+      "id": "AI-remediation-extra-fields",
+      "surface": "Setări AI program",
+      "controls": [
+        "timeout 10–3600",
+        "NotebookLM URL/notebook/server input",
+        "ușa Setări AI proiect din program settings"
+      ],
+      "reason": "Domeniul acoperă provider/model/URL/test/save/cancel și proiect rules/scope. Celelalte câmpuri ale ferestrei remediere nu au execuție individuală în acest script; trebuie incluse în domeniul Settings sau completate explicit."
+    },
+    {
+      "id": "JobBar-error-expiry",
+      "surface": "AiJobBar",
+      "controls": [
+        "expirare eroare la 120000ms"
+      ],
+      "reason": "Expirarea succesului este verificată; nu se așteaptă 120sec pentru ramura de eroare persistentă."
+    },
+    {
+      "id": "Citation-passage-focus",
+      "surface": "ResearchPanel",
+      "controls": [
+        "focus/scroll la pasaj specific",
+        "surse notes vs docs"
+      ],
+      "reason": "Se verifică deplasarea la docId și păstrarea Research; onOpen din App face doar go(docId). Pasajul exact și deschiderea notes pe kind nu sunt garantate de produs, deci nu sunt declarate verificate."
+    },
+    {
+      "id": "Research-disabled-insert",
+      "surface": "ResearchPanel",
+      "controls": [
+        "Inserează în document fără editor activ/readonly",
+        "Shift+Enter în întrebare"
+      ],
+      "reason": "Inserarea în editor normal și Enter sunt testate; variantele editor absent/readonly și Shift+Enter nu sunt configurate în acest domeniu."
+    },
+    {
+      "id": "PDF-scans",
+      "surface": "Research imports",
+      "controls": [
+        "PDF scanat sau cu encoding/filter neacceptat"
+      ],
+      "reason": "Toate extensiile enumerabile sunt testate cu surse text sintetice; OCR-ul PDF scanat nu este suportat de pdfText.cjs și nu este validat."
+    },
+    {
+      "id": "Editorial-macro-per-document-edit",
+      "surface": "EditorialPanel > macro proposal",
+      "controls": [
+        "macro accept după editare concurentă pe document secundar"
+      ],
+      "reason": "Editează pe doc-a și doc-b sunt acoperite; acceptarea întregii cozi după o editare concurentă doar pe document secundar nu are caz distinct."
+    },
+    {
+      "id": "Native-translation-configured",
+      "surface": "Meniu contextual > Tradu",
+      "controls": [
+        "În program: DeepL",
+        "În program: Google"
+      ],
+      "reason": "Serviciile sunt testate via IPC/precondiții. Ramura context-menu configurată cere stored service key; nu se configurează chei reale sau sintetice pentru a expune aceste două leaf-uri."
+    },
+    {
+      "id": "Audio-format-variants",
+      "surface": "Dictation > transcriere",
+      "controls": [
+        "decodare reală .mp3/.m4a/.ogg/.flac/.aac/.wma/.opus/.webm"
+      ],
+      "reason": "Fiecare extensie enumerată este acceptată și transmisă motorului sintetic. Decodarea reală a codec-ului nu este validată fără engine live; niciun rezultat live nu este revendicat."
+    },
+    {
+      "id": "Transcribe-media",
+      "surface": "Dictation > transcribeMedia",
+      "controls": [
+        "transcrie fișier selectat în binder"
+      ],
+      "reason": "Nu există fișier audio în fixture de bază. Comanda de dialog este acoperită; integrarea media selectată, structura selected.media și filePath nu au fixture/caz."
+    },
+    {
+      "id": "Dictation-overlap",
+      "surface": "DictationBar",
+      "controls": [
+        "dictare activă împreună cu job transcriere",
+        "mai multe joburi și cancel individual"
+      ],
+      "reason": "Dictare și transcriere sunt traversate separat; combinația simultană nu are caz propriu."
+    },
+    {
+      "id": "Dictation-error-bar",
+      "surface": "DictationBar",
+      "controls": [
+        "× dismiss d.error în bar"
+      ],
+      "reason": "Eroarea D&TED duce la oprirea barei și mesaj; ramura d.error rămas în bar este specifică altor motoare/stări și nu este atinsă de fixture-ul protocol-1."
+    },
+    {
+      "id": "Mini-other-engines",
+      "surface": "MiniPlayer",
+      "controls": [
+        "Mihai/Piper când installed",
+        "Speechify când configured",
+        "Nicio voce când toate lipsesc",
+        "mini-whisper missing-engine hint",
+        "loading Synth stop/engine switch"
+      ],
+      "reason": "Profilul izolat nu are modele/chei. Sunt testate două voci SpeechSynthesis sintetice și stop la voice switch; celelalte stări nu sunt simulate ca logică de business."
+    },
+    {
+      "id": "MCP-TOML-validation",
+      "surface": "McpConnect > Codex",
+      "controls": [
+        "TOML existent cu sintaxă invalidă/arbitrară"
+      ],
+      "reason": "Merge simplu, backup și re-adăugare idempotentă read-only sunt acoperite. Validarea TOML existent invalid/arbitrar nu este suportată de merge-ul textual și nu este verificată."
+    },
+    {
+      "id": "AI-live",
+      "surface": "toate AI",
+      "controls": [
+        "răspunsuri provider autentificate și calitate model"
+      ],
+      "reason": "Vezi live_limitations.AI-live; testele precondition/adapter nu sunt validare cloud live."
+    },
+    {
+      "id": "HTTP-live",
+      "surface": "servicii HTTP",
+      "controls": [
+        "autentificare/reachability/răspuns extern real"
+      ],
+      "reason": "Vezi live_limitations.HTTP-live și DeepL-live."
+    },
+    {
+      "id": "Shell-live",
+      "surface": "destinații externe",
+      "controls": [
+        "pagina/browser/client extern"
+      ],
+      "reason": "Dispatch Shell nu este destinație externă validată; vezi live_limitations.Shell-live."
+    },
+    {
+      "id": "Native-visual",
+      "surface": "meniuri native Windows",
+      "controls": [
+        "aspect vizual OS și submeniuri"
+      ],
+      "reason": "Captura Playwright nu include stratul OS; vezi live_limitations.Native-visual."
+    },
+    {
+      "id": "ASR-live",
+      "surface": "Dictation/Transcription",
+      "controls": [
+        "microfon/model/hardware/codec real"
+      ],
+      "reason": "Microfon exclusiv fake/sintetic, fără înregistrare utilizator; vezi live_limitations.ASR-live și ASR-local-Whisper."
+    },
+    {
+      "id": "TTS-live",
+      "surface": "Speech/MiniPlayer",
+      "controls": [
+        "sunet, Windows voices, Piper, Speechify real"
+      ],
+      "reason": "Doar utterances sintetice; vezi live_limitations.TTS-live."
+    },
+    {
+      "id": "MCP-live",
+      "surface": "McpConnect/NotebookLM",
+      "controls": [
+        "handshake/client/server permissions live"
+      ],
+      "reason": "Fișiere fixture reale, fără conturi/clienți reali; vezi live_limitations.MCP-live, MCP-read-only-live și NotebookLM-live."
+    },
+    {
+      "id": "Model-downloads",
+      "surface": "Speech/Dictation/MiniPlayer",
+      "controls": [
+        "download/progress/install/update/CPU/CUDA"
+      ],
+      "reason": "Descărcările nu sunt permise în aceste cazuri; vezi live_limitations.Model-downloads."
+    }
+  ],
+  "expanded_case_ids": [
+    "ai.no-key.proofread",
+    "ai.no-key.summarize",
+    "ai.no-key.continue",
+    "ai.no-key.feedback",
+    "ai.no-key.consistency",
+    "ai.no-key.research",
+    "ai.no-key.define",
+    "ai.no-key.translate",
+    "ai.empty.proofread",
+    "ai.empty.summarize",
+    "ai.empty.continue",
+    "ai.empty.feedback",
+    "ai.empty.consistency",
+    "ai.empty.research",
+    "ai.empty.define",
+    "ai.empty.translate",
+    "ai.result.proofread",
+    "ai.result.summarize",
+    "ai.result.continue",
+    "ai.result.feedback",
+    "ai.result.consistency",
+    "ai.result.research",
+    "ai.result.define",
+    "ai.result.translate",
+    "ai.configure.remedy",
+    "ai.selection.aiResearchSel.ipc",
+    "ai.selection.aiResearchSel.native",
+    "ai.selection.aiDefineSel.ipc",
+    "ai.selection.aiDefineSel.native",
+    "ai.selection.aiProofreadSel.ipc",
+    "ai.selection.aiProofreadSel.native",
+    "ai.selection.aiTranslateSel.ipc",
+    "ai.selection.aiTranslateSel.native",
+    "ai.selection.missing.aiResearchSel",
+    "ai.selection.missing.aiDefineSel",
+    "ai.selection.missing.aiProofreadSel",
+    "ai.selection.missing.aiTranslateSel",
+    "ai.ask.ask-button",
+    "ai.ask.ask-ctrl-enter",
+    "ai.cancel.button",
+    "ai.cancel.escape",
+    "ai.retry.failOnce",
+    "ai.retry.refusal",
+    "ai.reject.button",
+    "ai.reject.escape",
+    "ai.no-change",
+    "ai.stale-range",
+    "ai.accept.undo",
+    "ai.history.expand",
+    "ai.history.copy",
+    "ai.history.reinsert",
+    "ai.history.clear",
+    "ai.toggle.off-on",
+    "ai.config.provider.anthropic",
+    "ai.config.provider.openai",
+    "ai.config.provider.openrouter",
+    "ai.config.provider.deepseek",
+    "ai.config.provider.gemini",
+    "ai.config.provider.mistral",
+    "ai.config.provider.groq",
+    "ai.config.provider.xai",
+    "ai.config.provider.nvidia",
+    "ai.config.provider.ollama",
+    "ai.config.provider.lmstudio",
+    "ai.config.provider.custom",
+    "ai.config.missing.model",
+    "ai.config.missing.url",
+    "ai.config.cancel",
+    "ai.project.scope.docs",
+    "ai.project.scope.research",
+    "ai.project.scope.notes",
+    "ai.project.cancel",
+    "ai.project.mcp-info",
+    "research.search.button",
+    "research.search.enter",
+    "research.query.empty",
+    "research.no-results",
+    "research.scope.folder-a",
+    "research.scope.doc-a",
+    "research.scope.doc-b",
+    "research.scope.template-folder",
+    "research.scope.template-a",
+    "research.reindex.bottom",
+    "research.reindex.sources",
+    "research.open-return",
+    "research.ask.button",
+    "research.ask.enter",
+    "research.turn.copy",
+    "research.turn.note",
+    "research.turn.insert-footnotes",
+    "research.turn.insert-links",
+    "research.turn.cite",
+    "research.turn.sources",
+    "research.turn.followup-0",
+    "research.turn.followup-1",
+    "research.turn.followup-2",
+    "research.turn.new",
+    "research.turn.choose",
+    "research.turn.delete",
+    "research.ask.no-key",
+    "research.cancel.button",
+    "research.cancel.escape",
+    "research.paste.text",
+    "research.paste.empty",
+    "research.paste.cancel",
+    "research.import.txt",
+    "research.import.md",
+    "research.import.markdown",
+    "research.import.html",
+    "research.import.htm",
+    "research.import.rtf",
+    "research.import.pdf",
+    "research.import.docx",
+    "research.import.odt",
+    "research.import.cancel",
+    "research.import.empty-file",
+    "research.close",
+    "editorial.level.micro",
+    "editorial.level.mezzo",
+    "editorial.level.macro",
+    "editorial.loops.1",
+    "editorial.loops.2",
+    "editorial.loops.3",
+    "editorial.loops.4",
+    "editorial.loops.5",
+    "editorial.loops.6",
+    "editorial.loops.7",
+    "editorial.loops.8",
+    "editorial.loops.0",
+    "editorial.loops.9",
+    "editorial.strict",
+    "editorial.filter.grave",
+    "editorial.filter.medium",
+    "editorial.filter.minor",
+    "editorial.safe-repair",
+    "editorial.jump",
+    "editorial.round.R0",
+    "editorial.round.R1",
+    "editorial.round.R1b",
+    "editorial.round.R1c",
+    "editorial.round.R2",
+    "editorial.round.R3",
+    "editorial.round.R4",
+    "editorial.round.R4b",
+    "editorial.round.R5",
+    "editorial.round.R6",
+    "editorial.round.R7",
+    "editorial.round.R8",
+    "editorial.round.R8b",
+    "editorial.round.R9",
+    "editorial.round.R10",
+    "editorial.round.R11",
+    "editorial.rounds.all-none",
+    "editorial.micro.no-selection",
+    "editorial.proposal.accept",
+    "editorial.proposal.reject",
+    "editorial.proposal.edit-cancel",
+    "editorial.proposal.edit-save",
+    "editorial.proposal.edit-short",
+    "editorial.proposal.edit-force",
+    "editorial.proposal.stale",
+    "editorial.macro.choose-reject",
+    "editorial.macro.reject-all",
+    "editorial.cancel.button",
+    "editorial.cancel.escape",
+    "editorial.near-repetitions",
+    "services.lookup.dictionary",
+    "services.lookup.synonyms",
+    "services.lookup.sinonimul",
+    "services.lookup.wiktionary",
+    "services.lookup.cambridge",
+    "services.lookup.merriam",
+    "services.lookup.linguee",
+    "services.lookup.iate",
+    "services.lookup.wikipedia",
+    "services.lookup.scholar",
+    "services.lookup.google",
+    "services.no-selection.deeplInApp",
+    "services.no-selection.googleInApp",
+    "services.no-selection.synonymsInApp",
+    "services.deepl.configure",
+    "services.google.replace",
+    "services.google.undo",
+    "services.google.caret-moved",
+    "services.google.stale",
+    "services.grammar.default",
+    "services.grammar.alternative",
+    "services.grammar.delete",
+    "services.grammar.leave",
+    "services.grammar.no-match",
+    "services.grammar.close",
+    "services.grammar.stale",
+    "services.synonym.atrăgător",
+    "services.synonym.minunat",
+    "services.synonym.agreabil",
+    "services.synonym.încântător",
+    "services.synonyms.retry",
+    "services.synonyms.related-search",
+    "services.synonyms.multiword",
+    "services.synonyms.not-found",
+    "services.synonyms.close",
+    "dictation.start.dictate",
+    "dictation.start.dictateHere",
+    "dictation.start.dictateSel",
+    "dictation.start.native",
+    "dictation.start.mini",
+    "dictation.start.context",
+    "dictation.bar.pause-resume",
+    "dictation.bar.stop",
+    "dictation.bar.cancel",
+    "dictation.mini.pause-resume",
+    "dictation.mini.stop",
+    "dictation.mini.cancel",
+    "dictation.switch-document",
+    "dictation.error",
+    "dictation.missing",
+    "dictation.transcribe.result",
+    "dictation.transcribe.cancel",
+    "dictation.transcribe.dialog-cancel",
+    "speech.scope.readSel.ipc",
+    "speech.scope.readSel.context",
+    "speech.scope.readHere.ipc",
+    "speech.scope.readHere.context",
+    "speech.scope.readSentence.ipc",
+    "speech.scope.readSentence.context",
+    "speech.scope.readParagraph.ipc",
+    "speech.scope.readParagraph.context",
+    "speech.scope.readAll.ipc",
+    "speech.scope.readAll.context",
+    "speech.scope.readBook.ipc",
+    "speech.scope.readBook.context",
+    "mini.rate.0.6",
+    "mini.rate.0.7",
+    "mini.rate.0.8",
+    "mini.rate.0.9",
+    "mini.rate.1.0",
+    "mini.rate.1.1",
+    "mini.rate.1.2",
+    "mini.rate.1.3",
+    "mini.rate.1.4",
+    "mini.rate.1.5",
+    "mini.rate.1.6",
+    "mini.rate.1.7",
+    "mini.rate.1.8",
+    "mini.voice.QA Română",
+    "mini.voice.QA English",
+    "mini.pause-resume",
+    "mini.stop",
+    "mini.close",
+    "mini.empty",
+    "mini.drag",
+    "mcp.claudeDesktop.preview-copy",
+    "mcp.claudeDesktop.read-only",
+    "mcp.claudeCode.preview-copy",
+    "mcp.claudeCode.read-only",
+    "mcp.cursor.preview-copy",
+    "mcp.cursor.read-only",
+    "mcp.gemini.preview-copy",
+    "mcp.gemini.read-only",
+    "mcp.opencode.preview-copy",
+    "mcp.opencode.read-only",
+    "mcp.windsurf.preview-copy",
+    "mcp.windsurf.read-only",
+    "mcp.vscode.preview-copy",
+    "mcp.vscode.read-only",
+    "mcp.codex.preview-copy",
+    "mcp.codex.read-only",
+    "mcp.claudeDesktop.add",
+    "mcp.cursor.add",
+    "mcp.gemini.add",
+    "mcp.opencode.add",
+    "mcp.windsurf.add",
+    "mcp.vscode.add",
+    "mcp.codex.add",
+    "mcp.claudeDesktop.invalid-json",
+    "mcp.cursor.invalid-json",
+    "mcp.gemini.invalid-json",
+    "mcp.opencode.invalid-json",
+    "mcp.windsurf.invalid-json",
+    "mcp.vscode.invalid-json",
+    "mcp.close",
+    "job.aiBulkSynopsis.complete",
+    "job.aiBulkSynopsis.cancel",
+    "job.aiConsistency.complete",
+    "job.aiConsistency.cancel",
+    "job.aiZoomReview.complete",
+    "job.aiZoomReview.cancel",
+    "job.synopsis.existing",
+    "job.no-key.aiBulkSynopsis",
+    "job.no-key.aiConsistency",
+    "job.no-key.aiZoomReview",
+    "notebooklm.open",
+    "notebooklm.ask-selection",
+    "notebooklm.export.files",
+    "notebooklm.export.cancel",
+    "ai.rerun.keyboard",
+    "ai.capture.document-switch",
+    "selection.hidden.grammarSel",
+    "selection.hidden.readSel",
+    "selection.hidden.dictateSel",
+    "selection.hidden.researchAskSel",
+    "selection.hidden.nlmAskSel",
+    "selection.hidden.nlmConsultSel",
+    "research.kind-chip.docs",
+    "research.kind-chip.research",
+    "research.kind-chip.notes",
+    "research.web.success",
+    "research.web.invalid",
+    "research.web.cancel",
+    "research.web.escape",
+    "research.selection.search",
+    "research.selection.ask",
+    "services.grammar.second-leave",
+    "services.synonyms.related-apply",
+    "services.grammar.context",
+    "services.external-translate.selDeepl",
+    "services.external-translate.selGoogleTranslate",
+    "services.lookup.long-word",
+    "dictation.level-and-clip",
+    "dictation.cancel-after-author-edit",
+    "job.report.open-return",
+    "job.progress.error-and-expiry",
+    "mcp.detected-order",
+    "ai.error.settings-link",
+    "ai.history.all-entries",
+    "editorial.tabs",
+    "editorial.strict-loop.false",
+    "editorial.strict-loop.true",
+    "editorial.author.safe",
+    "editorial.author.gate",
+    "editorial.canon-details",
+    "editorial.edit.409",
+    "ai.result.shortcut.proofread",
+    "ai.result.shortcut.continue",
+    "research.retry-remediated",
+    "editorial.retry.completed",
+    "editorial.macro.edit.doc-a",
+    "editorial.macro.edit.doc-b",
+    "dictation.context.cursor",
+    "dictation.context.stop",
+    "native.context.no-ai",
+    "dictation.format.mp3",
+    "dictation.format.m4a",
+    "dictation.format.ogg",
+    "dictation.format.flac",
+    "dictation.format.aac",
+    "dictation.format.wma",
+    "dictation.format.opus",
+    "dictation.format.webm",
+    "mcp.claudeDesktop.re-add-readonly",
+    "mcp.cursor.re-add-readonly",
+    "mcp.gemini.re-add-readonly",
+    "mcp.opencode.re-add-readonly",
+    "mcp.windsurf.re-add-readonly",
+    "mcp.vscode.re-add-readonly",
+    "mcp.codex.re-add-readonly",
+    "mini.no-voices"
+  ]
+}

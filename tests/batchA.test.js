@@ -40,8 +40,10 @@ describe('move to', () => {
     expect(ids(t, 'g')).toEqual(['f', 'c']);
     expect(ids(t, 'f')).toEqual(['a', 'b']);
   });
-  it('lists folder targets without the selection or the trash', () => {
-    expect(moveTargets(make(), ['f']).map((x) => x.id)).toEqual(['draft', 'g', 'research']);
+  it('lists folder AND document targets without the selection or the trash (Scrivener file-in-file)', () => {
+    // 'c' is a plain document: moveTargets offers it as a nesting target since moveNode
+    // nests inside documents (directivă autor 2026-11-10, Binder ca în Scrivener 3).
+    expect(moveTargets(make(), ['f']).map((x) => x.id)).toEqual(['draft', 'c', 'g', 'research']);
   });
   it('ancestor ids', () => {
     expect(ancestorIds(make(), 'a')).toEqual(['draft', 'f']);

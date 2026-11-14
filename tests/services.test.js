@@ -14,6 +14,10 @@ const safe = {
 };
 
 describe('service accounts', () => {
+  it('incomplete accounts and free services stay unavailable until configured', () => {
+    for (const [id, values] of [['speechify',{voiceId:'voice'}],['speechify',{apiKey:'key'}],['zotero',{userId:'123'}],['languagetool',{username:'u@x.test'}]]) expect(svc.serviceStatus(svc.setService({},id,values,safe),safe)[id].configured).toBe(false);
+    for (const id of ['googleTranslate','languagetool','datamuse','webResearch']) { expect(svc.serviceStatus({},safe)[id].configured).toBe(false); const st=svc.setService({},id,{enabled:'enabled'},safe); expect(svc.serviceStatus(st,safe)[id].configured).toBe(true); expect(svc.serviceStatus(svc.setService(st,id,{enabled:''},safe),safe)[id].configured).toBe(false); }
+  });
   it('stores secrets encrypted, keeps non-secret fields readable, reports status without secrets', () => {
     let s = svc.setService({}, 'languagetool', { username: 'ana@ex.ro', apiKey: 'lt-secret' }, safe);
     s = svc.setService(s, 'deepl', { apiKey: 'abc:fx' }, safe);
@@ -24,6 +28,7 @@ describe('service accounts', () => {
     expect(st.deepl.configured).toBe(true);
     expect(st.googleTranslate.configured).toBe(false);
     expect(st.languagetool.fields).toEqual([
+      { id: 'enabled', label: 'Activează verificarea gratuită, fără cont', secret: false, type: 'checkbox', set: false, value: '' },
       { id: 'username', label: 'E-mail cont (Premium)', secret: false, set: true, value: 'ana@ex.ro' },
       { id: 'apiKey', label: 'Cheie API (Premium)', secret: true, set: true, value: '' },
     ]);
@@ -32,7 +37,7 @@ describe('service accounts', () => {
   it('services keep only the credentials that drive them — no email/password fields', () => {
     // Only the key (and a user/voice id where needed); nothing that doesn't make the feature work.
     expect(svc.serviceStatus({}, safe).deepl.fields.map((f) => f.id)).toEqual(['apiKey']);
-    expect(svc.serviceStatus({}, safe).googleTranslate.fields.map((f) => f.id)).toEqual(['apiKey', 'refreshToken']);
+    expect(svc.serviceStatus({}, safe).googleTranslate.fields.map((f) => f.id)).toEqual(['enabled', 'apiKey', 'refreshToken']);
     expect(svc.serviceStatus({}, safe).speechify.fields.map((f) => f.id)).toEqual(['apiKey', 'voiceId']);
     expect(svc.serviceStatus({}, safe).zotero.fields.map((f) => f.id)).toEqual(['userId', 'apiKey']);
     for (const id of ['deepl', 'googleTranslate', 'speechify', 'zotero', 'languagetool', 'github']) {

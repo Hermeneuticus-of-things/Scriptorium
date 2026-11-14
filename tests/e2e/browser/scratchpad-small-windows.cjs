@@ -165,9 +165,9 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
 
   // ---------- Name generator: starting letter
   await menuCmd(page, 'Generator de nume');
-  const ng = page.locator('.modal', { has: page.locator('input.ng-starts') });
+  const ng = page.locator('.modal', { has: page.locator('input#ng-starts') });
   check('name generator opens', (await ng.count()) === 1);
-  await ng.locator('input.ng-starts').fill('M');
+  await ng.locator('input#ng-starts').fill('M'); // id, nu clasa: trei input-uri partajează .ng-starts
   await page.waitForTimeout(150);
   const names = await ng.locator('ul li > span:first-child').allInnerTexts();
   check('names start with the letter', names.length > 0 && names.every((n) => n.startsWith('M')), names.slice(0, 3).join(', '));
@@ -186,6 +186,9 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   const pane = page.locator('.inspector .snapshots');
   await pane.locator('button.snap-add').click();
   await page.waitForTimeout(300);
+  // The take prompt (uiPrompt) is prefilled: confirm it with Enter.
+  await page.locator('.prompt-modal input').press('Enter');
+  await page.waitForTimeout(400);
   await pane.locator('li').first().click();
   await page.waitForTimeout(150);
   await caretEnd(page);
@@ -207,15 +210,17 @@ const { open, ed, caretEnd, check, done, menuCmd } = require('./_helpers.cjs');
   check('snapshot part copied into the document', (await ed(page).innerText()).length > before.length);
   await menuCmd(page, 'Managerul de snapshot-uri');
   const sm = page.locator('.modal.snap-manager');
-  check('manager sort buttons', (await sm.locator('button.sm-sort-count').count()) === 1);
-  await sm.locator('button.sm-sort-count').click();
-  check('manager sorted', (await sm.locator('.snap-manager-docs [aria-sort="descending"]').count()) === 1);
+  check('manager sort buttons', (await sm.locator('button.sm-sort-date').count()) === 1);
+  await sm.locator('button.sm-sort-date').click();
+  check('manager sorted', (await sm.locator('[aria-sort="ascending"]').count()) === 1);
   await sm.locator('button.sm-reveal').click();
   await page.waitForTimeout(300);
   check('reveal in binder closes the manager', (await sm.count()) === 0);
 
   // ---------- Layouts: save, export, import, thumbnail
   await menuCmd(page, 'Salvează layout-ul curent');
+  await page.locator('.prompt-modal input').press('Enter'); // confirmă prompt-ul de nume al layout-ului
+  await page.waitForTimeout(300);
   await menuCmd(page, 'Gestionează layout-urile');
   const ly = page.locator('.layouts-dialog');
   check('layout thumbnail', (await ly.locator('svg.layout-thumb rect').count()) >= 2);

@@ -40,7 +40,7 @@ const tabLabel = (k) => {
 // (ProjectAiSettingsDialog). Their old code below is kept, hidden behind this flag (not deleted).
 const PROJECT_AI_IN_PROGRAM_DIALOG = false;
 
-export default function SettingsDialog({ api, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, onCheckUpdates, onProjectSettings, onProjectAi, initialTab, aiOnly = false }) {
+export default function SettingsDialog({ api, speechReady = { speechify: false, stt: false }, settings, project, dir, onProjectChange, onClose, onError, onShortcuts, onCheckUpdates, onProjectSettings, onProjectAi, initialTab, aiOnly = false }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
   const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
   const [tab, setTab] = useState(() => (aiOnly ? 'ai' : TABS.includes(initialTab) && initialTab !== 'ai' ? initialTab : 'general'));
@@ -571,8 +571,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           </div>
           {aiTest && !aiTest.busy && <p className={aiTest.ok ? 'muted small' : 'warn'} role="status">{aiTest.text}</p>}
         </fieldset>
-        <fieldset>
-          <legend>NotebookLM</legend>
+        <details className="set-acc">
+          <summary>NotebookLM</summary>
           <label>
             {t('ui.settingsDialog.link_notebook_notebooklm_optional')}
             <input
@@ -602,7 +602,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             />
           </label>
           <p className="muted small">{t('ui.settingsDialog.notebooklm_intrebari_continuare')}</p>
-        </fieldset>
+        </details>
         <label>
           {t('set.aiTimeoutSec')}
           <input type="number" min="10" max="3600" step="10" value={s.aiTimeoutSec} onChange={set('aiTimeoutSec')} />
@@ -626,8 +626,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             ))}
           </fieldset>
         )}
-        <fieldset>
-          <legend>{t('set.aiFunctions')}</legend>
+        <details className="set-acc">
+          <summary>{t('set.aiFunctions')}</summary>
           <p className="muted small">{t('set.aiFunctionsInfo')}</p>
           {!PROJECT_AI_IN_PROGRAM_DIALOG ? null : project ? (
             <label>
@@ -637,10 +637,10 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           ) : (
             <p className="muted small">{t('set.aiRulesNoProject')}</p>
           )}
-        </fieldset>
+        </details>
         {PROJECT_AI_IN_PROGRAM_DIALOG && api.mcpInfo && dir && (
-          <fieldset>
-            <legend>{t('set.mcp')}</legend>
+          <details className="set-acc">
+            <summary>{t('set.mcp')}</summary>
             <p className="muted small">{t('set.mcpInfo')}</p>
             <button onClick={async () => setMcp(await api.mcpInfo(dir))}>{t('set.mcpShow')}</button>
             {mcp && (
@@ -655,7 +655,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
                 </label>
               </>
             )}
-          </fieldset>
+          </details>
         )}
       </>
     ),
@@ -672,8 +672,8 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <option value="generic">{t('set.edBase.generic')}</option>
           </select>
         </label>
-        <fieldset>
-          <legend>{t('ui.settingsDialog.editorial_liste_de_cuvinte_profil')} {edBase === 'generic' ? 'Generic' : t('ui.settingsDialog.romana')})</legend>
+        <details className="set-acc">
+          <summary>{t('ui.settingsDialog.editorial_liste_de_cuvinte_profil')} {edBase === 'generic' ? 'Generic' : t('ui.settingsDialog.romana')})</summary>
           <label>
             {t('ui.settingsDialog.cuvinte_interzise_cate_unul_pe')} <code>{t('ui.settingsDialog.cuvant_inlocuire_nota')}</code>
             <textarea rows={4} value={edL.forbidden} onChange={(e) => setEdL('forbidden', e.target.value)} placeholder={t('ui.settingsDialog.gest_fapta_urma_depunere_p3')} />
@@ -703,13 +703,13 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             {t('set.edCustom')} <code>{t('set.edCustomHint')}</code>
             <textarea rows={4} value={edL.custom} onChange={(e) => setEdL('custom', e.target.value)} placeholder={t('set.edCustomPlaceholder')} />
           </label>
-        </fieldset>
+        </details>
       </>
     ),
     sharing: (
       <>
-        <fieldset>
-          <legend>{t('ui.team.echipa')}</legend>
+        <details className="set-acc">
+          <summary>{t('ui.team.echipa')}</summary>
           <p className="muted small">{t('ui.team.setari_explicatie')}</p>
           <div className="row">
             <label>
@@ -726,9 +726,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
             <input value={init.team?.machine || ''} readOnly disabled placeholder={t('ui.team.id_calculator_lipsa')} />
           </label>
           <p className="muted small">{t('ui.team.id_calculator_explicatie')}</p>
-        </fieldset>
-        <fieldset>
-          <legend>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</legend>
+        </details>
+        <details className="set-acc">
+          <summary>{t('ui.settingsDialog.sincronizare_cu_folder_extern_implicit')}</summary>
           <div className="row">
             <label>
               {t('ui.settingsDialog.format_text')}
@@ -751,9 +751,9 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <label className="check"><input type="checkbox" checked={sharing.sync.includeNotes} onChange={(e) => setSync({ includeNotes: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_si_notele')}</label>
           <label className="check"><input type="checkbox" checked={sharing.sync.syncOnOpen} onChange={(e) => setSync({ syncOnOpen: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_la_deschiderea_proiectului')}</label>
           <label className="check"><input type="checkbox" checked={sharing.sync.syncOnClose} onChange={(e) => setSync({ syncOnClose: e.target.checked })} /> {t('ui.settingsDialog.sincronizeaza_la_inchiderea_proiectului')}</label>
-        </fieldset>
-        <fieldset>
-          <legend>{t('ui.settingsDialog.export_fisiere_implicit')}</legend>
+        </details>
+        <details className="set-acc">
+          <summary>{t('ui.settingsDialog.export_fisiere_implicit')}</summary>
           <label>
             {t('ui.settingsDialog.format_export')}
             <select value={sharing.export.format} onChange={(e) => setExp({ format: e.target.value })}>
@@ -767,20 +767,37 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
           <label className="check"><input type="checkbox" checked={sharing.export.keepFolders} onChange={(e) => setExp({ keepFolders: e.target.checked })} /> {t('ui.settingsDialog.pastreaza_structura_de_dosare')}</label>
           <label className="check"><input type="checkbox" checked={sharing.export.includeNotes} onChange={(e) => setExp({ includeNotes: e.target.checked })} /> {t('ui.settingsDialog.include_notele')}</label>
           <label className="check"><input type="checkbox" checked={sharing.export.includeMeta} onChange={(e) => setExp({ includeMeta: e.target.checked })} /> {t('ui.settingsDialog.include_metadatele')}</label>
-        </fieldset>
+        </details>
       </>
     ),
     services: (
       <>
       {(api.dtedStatus || api.whisperStatus) && (
-        <fieldset>
-          <legend>{t('ui.dted.setari_titlu')}</legend>
+        <details className="set-acc">
+          <summary>{t('ui.dted.setari_titlu')}</summary>
           <p className="muted small">{t('ui.dted.setari_explicatie')}</p>
+          {api.dictationStats && <EngineStatsLine api={api} />}
           {api.whisperStatus && (
             <div role="radiogroup" aria-label={t('ui.dted.motor')}>
               <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine !== 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'local' }))} /> {t('ui.dted.motor_local')}</label>
               <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine === 'dted'} onChange={() => setS((p) => ({ ...p, speechEngine: 'dted' }))} /> {t('ui.dted.motor_dted')}</label>
+              <label className="check"><input type="radio" name="speechEngine" checked={s.speechEngine === 'online'} onChange={() => setS((p) => ({ ...p, speechEngine: 'online' }))} /> {t('ui.dted.motor_online')}</label>
             </div>
+          )}
+          {s.speechEngine === 'online' && (
+            <p className="muted small">
+              {t('ui.dted.motor_online_hint')}{' '}
+              <button type="button" className="link" onClick={() => setSettingsTab('services')}>{t('ui.dted.deschide_servicii')}</button>
+            </p>
+          )}
+          <div role="radiogroup" aria-label={t('ui.dted.motor_voce')}>
+            <label className="check"><input type="radio" name="ttsEngine" checked={(s.ttsEngine || 'auto') !== 'speechify'} onChange={() => setS((p) => ({ ...p, ttsEngine: 'auto' }))} /> {t('ui.dted.motor_voce_local')}</label>
+            <label className="check"><input type="radio" name="ttsEngine" checked={s.ttsEngine === 'speechify'} onChange={() => setS((p) => ({ ...p, ttsEngine: 'speechify' }))} /> {t('ui.dted.motor_voce_speechify')}</label>
+          </div>
+          {s.ttsEngine === 'speechify' && (
+            <p className="muted small">
+              {speechReady.speechify ? t('ui.dted.speechify_gata') : <>{t('ui.dted.speechify_hint')}{' '}<button type="button" className="link" onClick={() => setSettingsTab('services')}>{t('ui.dted.deschide_servicii')}</button></>}
+            </p>
           )}
           {api.whisperStatus && s.speechEngine !== 'dted' && <LocalEngine api={api} onError={onError} />}
           {api.whisperStatus && s.speechEngine !== 'dted' && check('speechAutoInstall', t('set.speechAutoInstall'))}
@@ -846,7 +863,7 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
               {dtedUpd.phase === 'found' && <button onClick={() => installDtedUpdate(dtedUpd.info)}>{t('ui.dted.update_instaleaza')}</button>}
             </p>
           )}
-        </fieldset>
+        </details>
       )}
       <fieldset>
         <legend>{t('ui.settingsDialog.traducere_dictionare')}</legend>
@@ -894,12 +911,12 @@ export default function SettingsDialog({ api, settings, project, dir, onProjectC
         <h2>{aiOnly ? t('cmd.aiSettings').replace(/…$/, '') : t('set.title')}</h2>
         <div className="tabs" role="tablist" hidden={aiOnly}>
           {visibleTabs.map((k) => (
-            <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} onClick={() => setTab(k)}>
+            <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} data-hint={k === 'accounts' ? 'services-tab' : undefined} onClick={() => setTab(k)}>
               {tabLabel(k)}
             </button>
           ))}
         </div>
-        <div role="tabpanel" style={{ minHeight: 260, marginTop: 8 }}>{panes[tab]}</div>
+        <div role="tabpanel" style={{ minHeight: 0, marginTop: 8 }}>{panes[tab]}</div>
         <div className="actions">
           <button onClick={cancel}>{t('btn.cancel')}</button>
           <button className="primary" onClick={save}>{t('btn.save')}</button>
@@ -920,6 +937,34 @@ function ProjectDoor({ onOpen }) {
 }
 
 // The built-in recogniser: download (with progress), state, removal (docs/DTED.md §7).
+// ADL §12: live engine stats (CPU/RAM of DTED.exe & whisper-server.exe + GPU/VRAM from nvidia-smi),
+// polled only while Settings is open. Quiet line, no focus stealing.
+function EngineStatsLine({ api }) {
+  const [st, setSt] = useState(null);
+  useEffect(() => {
+    if (!api.dictationStats) return undefined;
+    let alive = true;
+    const poll = () => api.dictationStats().then((x) => { if (alive) setSt(x); }).catch(() => {});
+    poll();
+    const iv = setInterval(poll, 2000);
+    return () => { alive = false; clearInterval(iv); };
+  }, [api]);
+  if (!st || !st.engines || !st.engines.length) return null;
+  const fmt = (x) => {
+    const cpu = x.cpuPct != null ? `CPU ${x.cpuPct}%` : '';
+    const ram = x.ramMB ? `RAM ${x.ramMB >= 1024 ? `${(x.ramMB / 1024).toFixed(1)} GB` : `${x.ramMB} MB`}` : '';
+    return [cpu, ram].filter(Boolean).join(' · ');
+  };
+  const gpu = st.gpu && st.gpu.present
+    ? `GPU (VRAM): ${st.gpu.vramUsedGB}/${st.gpu.vramTotalGB} GB${st.gpu.gpuUtilPct != null ? ` · GPU ${st.gpu.gpuUtilPct}%` : ''}`
+    : '';
+  return (
+    <p className="muted small dictation-stats" role="status" aria-live="off">
+      {st.engines.map((x) => `${x.name}: ${fmt(x)}`).join(' · ')}{gpu ? ` · ${gpu}` : ''}
+    </p>
+  );
+}
+
 function LocalEngine({ api, onError }) {
   const [st, setSt] = React.useState(null);
   const [prog, setProg] = React.useState(null);
@@ -943,6 +988,24 @@ function LocalEngine({ api, onError }) {
       setProg(null);
     }
   };
+  // ADL §6: alegerea explicită a variantei — CPU sau GPU CUDA, cu stare per variantă.
+  const variantRows = [
+    { id: 'cpu', label: t('ui.dted.var_cpu'), installed: st.installed },
+    { id: 'cuda', label: t('ui.dted.var_cuda'), installed: st.variants.includes('cuda') },
+  ];
+  const variantChooser = st.supported && (
+    <>
+      <p className="muted small">{t('ui.dted.alege_varianta')}</p>
+      <div role="radiogroup" aria-label={t('ui.dted.alege_varianta')}>
+        {variantRows.map((v) => (
+          <label key={v.id} className="check">
+            <input type="radio" name="whisperVariant" checked={cuda === (v.id === 'cuda')} onChange={() => setCuda(v.id === 'cuda')} />
+            <span>{v.label} — <em className="muted">{v.installed ? t('ui.dted.var_instalata') : t('ui.dted.var_lipsa')}</em>{st.variants.includes(v.id) ? ` · ${t('ui.dted.var_activa')}` : ''}</span>
+          </label>
+        ))}
+      </div>
+    </>
+  );
   const remove = async () => {
     if (!window.confirm(t('ui.dted.sterge_confirma'))) return;
     try {
@@ -957,9 +1020,7 @@ function LocalEngine({ api, onError }) {
         {st.installed ? t('ui.dted.motor_gata', { varianta: st.variants.includes('cuda') ? 'NVIDIA (CUDA)' : t('ui.dted.procesor') }) : t('ui.dted.motor_lipsa', { mb: st.sizes.model + (cuda ? st.sizes.cuda : st.sizes.cpu) })}
       </p>
       {!st.supported && <p className="muted small">{t('ui.dted.doar_windows')}</p>}
-      {st.supported && !st.installed && (
-        <label className="check"><input type="checkbox" checked={cuda} onChange={(e) => setCuda(e.target.checked)} /> {t('ui.dted.am_nvidia', { mb: st.sizes.cuda })}</label>
-      )}
+      {variantChooser}
       {prog && (
         <div className="row">
           <progress max={prog.totalMb || 1} value={prog.mb || 0} />
@@ -967,7 +1028,7 @@ function LocalEngine({ api, onError }) {
         </div>
       )}
       <div className="row">
-        {st.supported && !st.installed && <button className="primary" onClick={() => install()} disabled={Boolean(prog)}>{t('ui.dted.descarca')}</button>}
+        {st.supported && !st.installed && <button className="primary" onClick={() => install(cuda ? 'cuda' : 'cpu')} disabled={Boolean(prog)}>{t('ui.dted.descarca')} ({cuda ? 'CUDA' : 'CPU'})</button>}
         {st.supported && st.installed && !st.variants.includes('cuda') && <button onClick={() => install('cuda')} disabled={Boolean(prog)}>{t('ui.dted.adauga_cuda')}</button>}
         {(st.installed || st.model) && <button onClick={remove} disabled={Boolean(prog)}>{t('ui.dted.sterge_motor')}</button>}
       </div>
