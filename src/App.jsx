@@ -14,7 +14,6 @@ import Outliner from './components/Outliner.jsx';
 import Inspector from './components/Inspector.jsx';
 import SnapshotManagerDialog from './components/SnapshotManagerDialog.jsx';
 import AiPanel from './components/AiPanel.jsx';
-import AiWorkspaceWindow from './components/AiWorkspaceWindow.jsx';
 import { buildEditorialContext } from './lib/editorialContext.js';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
@@ -378,7 +377,6 @@ export default function App({ api: apiProp }) {
   const [showAi, setShowAi] = useState(false);
   // AI placement (ADL §4.2, directivă autor 2026-11-10): fereastră flotantă SAU panou lateral mare;
   // modul persistat în starea UI. aiScope = nivelul de lucru ales din meniul contextual.
-  const [aiPanelMode, setAiPanelMode] = useState(false);
   const [aiScope, setAiScope] = useState(null); // {nodeId, level: 'book'|'manuscript'|'chapter'|'section'|'selection'}
   // ADL §2: focus engine — per-window stacks, surface registration, Escape cascade.
   const focusEngine = useRef(createFocusEngine()).current;
@@ -1148,8 +1146,8 @@ export default function App({ api: apiProp }) {
 
   // Remember UI state per project.
   useEffect(() => {
-    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, aiPanelMode, splitId, copyholder, paneLocks });
-  }, [dir, selectedId, view, widths, showInspector, aiPanelMode, splitId, copyholder, paneLocks]);
+    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder, paneLocks });
+  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder, paneLocks]);
 
   const saveProject = useCallback(
     (next) => {
@@ -1250,7 +1248,6 @@ export default function App({ api: apiProp }) {
       setView(ui.view || settingsRef.current?.defaultView || 'editor');
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
-      if (ui.aiPanelMode !== undefined) setAiPanelMode(Boolean(ui.aiPanelMode));
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
       setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split) } : {});
       setSplitNav({ stack: [], index: -1 });
@@ -2207,7 +2204,7 @@ export default function App({ api: apiProp }) {
     let outlinerColumns;
     try { outlinerColumns = JSON.parse(localStorage.getItem(OUTLINER_COLUMNS_KEY) || 'null') || undefined; } catch { /* none */ }
     const board = selected && selected.children ? selected : selectedId ? findParent(project.tree, selectedId) : null;
-    return { view, showInspector, showAi, showEditorial, aiPanelMode, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
+    return { view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
   };
   const [layoutRev, setLayoutRev] = useState(0);
   const applyLayout = (l) => {
@@ -2223,7 +2220,6 @@ export default function App({ api: apiProp }) {
     setView(l.view || 'editor');
     setShowInspector(l.showInspector !== false);
     setShowAi(Boolean(l.showAi));
-    setAiPanelMode(Boolean(l.aiPanelMode));
     setShowEditorial(Boolean(l.showEditorial));
     setHideBinder(Boolean(l.hideBinder));
     if (l.widths) setWidths(l.widths);
@@ -2774,6 +2770,25 @@ export default function App({ api: apiProp }) {
     return request.documentId ? context : context.text;
   };
 
+  // Propunerea AI inline (ciclul A): snapshot înainte, contextul editorial al documentului,
+  // rezultatul (text) este randat în editor cu Accept/Respinge (undo simplu).
+  const runInlineAi = async (action, selectedText) => {
+    if (!api.runAi || !project) throw new Error('AI indisponibil.');
+    const docId = activeId.current || selectedId;
+    await api.takeSnapshot(dir, docId, 'Înainte de propunerea AI').catch(() => null);
+    const ctx = contextForAi({ text: selectedText, documentId: docId });
+    const res = await api.runAi({
+      action,
+      text: selectedText || '',
+      runId: 'inline' + Date.now().toString(36),
+      context: typeof ctx === 'string' ? ctx : ctx.text,
+      dir,
+      projectTitle: project.title,
+      documentTitle: findNode(project.tree, docId)?.title || '',
+      textScope: selectedText ? 'selection' : 'document',
+    });
+    return res.text;
+  };
   // --- keyboard shortcuts: driven by the command registry (configurable in Settings) ---
   const commandsRef = useRef({});
   useEffect(() => {
@@ -3200,7 +3215,7 @@ export default function App({ api: apiProp }) {
     : aiScope.level === 'selection' ? tr('ui.aiWorkspace.levelSelection')
     : tr('ui.aiWorkspace.levelSection', { title: aiNode?.title || '' });
   // AI din meniurile contextuale: panou andocat în pagină (nu fereastră) — ADL §4.3.
-  const openAiFor = (scope, opts = {}) => { if (opts.panel) setAiPanelMode(true); setAiScope(scope); setShowAi(true); };
+  const openAiFor = (scope) => { setAiScope(scope); setShowAi(true); };
   // Props partajate: același asistent în fereastra flotantă ȘI în panoul lateral (un singur model).
   const aiPanelProps = {
     projectTitle: project.title,
@@ -3994,6 +4009,9 @@ export default function App({ api: apiProp }) {
             )}
             {view === 'editor' && !scrivListNodes && selected && selected.type !== 'file' && !selected.children && (
               <Editor
+                aiEnabled={aiEnabled}
+                onAiPropose={runInlineAi}
+                onAiError={report}
                 scriptFormat={scriptFormat}
                 key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
                 historyKey={selected.id}
@@ -4168,6 +4186,9 @@ export default function App({ api: apiProp }) {
                 />
               ) : (
                 <Editor
+                aiEnabled={aiEnabled}
+                onAiPropose={runInlineAi}
+                onAiError={report}
                   scriptFormat={scriptFormat}
                   key={`split-${splitNode.id}-${smartQuotes}-${Boolean(team.lockOf(splitNode.id))}-${corrKey}`}
                   corrections={corrections}
@@ -4251,7 +4272,7 @@ export default function App({ api: apiProp }) {
         </section>
 
         {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
-        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir) || (showAi && aiEnabled && aiPanelMode && aiNode)) && selected && !composition && (
+        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir) || (showAi && aiEnabled && aiNode)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
             <div className="side" style={{ width: widths.side }}>
@@ -4336,14 +4357,11 @@ export default function App({ api: apiProp }) {
                 />
               )}
               {false && null /* I-REP/I-EDIT mutat în fereastra AI (directivă autor): nu mai înghesuie Inspectorul */}
-              {showAi && aiEnabled && aiPanelMode && aiNode && (
+              {showAi && aiEnabled && aiNode && (
                 <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
                   <div className="side-ai-head">
                     <strong>{tr('ui.aiWorkspace.title')}</strong>
                     <div className="side-ai-actions">
-                      <button type="button" onClick={() => setAiPanelMode(false)} aria-label={tr('ui.aiWorkspace.undock')} title={tr('ui.aiWorkspace.undock')}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.6" /><rect x="13" y="5" width="8" height="14" rx="1" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
-                      </button>
                       <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
                       </button>
@@ -4644,108 +4662,6 @@ export default function App({ api: apiProp }) {
           onError={report}
           onClose={() => setDialog(null)}
         />
-      )}
-      {showAi && aiEnabled && aiNode && !aiPanelMode && (
-        <AiWorkspaceWindow focusEngine={focusEngine} onClose={() => { setShowAi(false); setAiRequest(null); setAiScope(null); }} onDock={() => setAiPanelMode(true)}>
-          {(showEditorial && editorialNode) ? (
-            <>
-              <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
-                <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
-                <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
-              </div>
-                {showEditorial && editorialNode && (
-                  <EditorialPanel
-                    project={project}
-                    dir={dir}
-                    aiEnabled={aiEnabled}
-                    key={`ed-${editorialNode.id}`}
-                    api={api}
-                    hasKey={settings.hasApiKey}
-                    aiLabel={settings.aiLabel}
-                    aiModel={settings.aiModel}
-                    profile={profileFor(project)}
-                    node={editorialNode}
-                    html={docs[editorialNode.id] || ''}
-                    chapter={chapterDocs}
-                    onSelectionText={() => {
-                      const h = editorRefs.current.get(editorialNode.id);
-                      const ed = h?.editor;
-                      if (!ed || ed.state.selection.empty) return '';
-                      const { from, to } = ed.state.selection;
-                      const slice = ed.state.doc.cut(from, to);
-                      return htmlToManuscript(getHTMLFromFragment(slice.content, ed.schema));
-                    }}
-                    authorEvent={authorEvent}
-                    onJump={(issue) => {
-                      if (!mainIds.has(editorialNode.id)) go(editorialNode.id);
-                      setTimeout(() => editorRefs.current.get(editorialNode.id)?.findText(issue.match || issue.excerpt, { block: issue.paragraph, at: issue.at }), 50);
-                    }}
-                    onApply={async (p) => {
-                      await flush();
-                      // Hand edits made so far are the writer's (author text) before anything is written.
-                      commitAuthor(p.id);
-                      if (!p.selection && !p.safe) {
-                        // Re-check the bytes right before writing: a save of the author's at this
-                        // moment (or an agent's write) is never overwritten.
-                        const cur = docsNow()[p.id] || '';
-                        const disk = api.readDoc ? await api.readDoc(dir, p.id, 'docs').catch(() => null) : null;
-                        if (cur !== p.before || (disk && disk !== p.before)) throw new Error(tr('ui.app.document_schimbat_409', { title: p.title }));
-                      }
-                      const now = new Date();
-                      const pad = (x) => String(x).padStart(2, '0');
-                      if (p.authorEdit) await api.takeSnapshot(dir, p.id, `.bak-autor-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`);
-                      else if (!p.safe) await api.takeSnapshot(dir, p.id, tr('ui.app.inainte_de_x', { v0: p.rounds ? 'I-EDIT' : 'I-REP' })).catch(report);
-                      if (p.selection) {
-                        editorRefs.current.get(p.id)?.replaceSelectionHtml(p.after);
-                        return;
-                      }
-                      writeDocNow(p.id, p.after);
-                      setEditorHtml(p.id, p.after);
-                      const pj = projectRef.current;
-                      const n = findNode(pj.tree, p.id);
-                      const stamp = now.toISOString();
-                      const editorial = { ...(n?.editorial || {}), lastRep: stamp };
-                      if (p.rounds) editorial.rounds = { ...(editorial.rounds || {}), ...Object.fromEntries(p.rounds.map((r) => [r, stamp])) };
-                      saveProject({ ...pj, tree: updateNode(pj.tree, p.id, { editorial, authorHashes: updateAuthorHashes(n?.authorHashes, p.after) }) });
-                      // Edited in the preview: journal the save and mark the author's own words.
-                      if (p.authorEdit) commitAuthor(p.id, { [p.id]: { base: p.before, after: p.after, authorFrom: p.proposed } });
-                    }}
-                    onOpenSettings={openSettings}
-                    tabRequest={editorialTabReq}
-                  />
-                )}
-            </>
-          ) : (
-          <AiPanel
-            projectTitle={project.title}
-            bookType={project?.bookType || ''}
-            onOpenProjectSettings={() => setDialog('projectAi')}
-            onOpenFormatting={() => { setSelectedId(aiNode.id); openDocumentFormatting('document'); }}
-            onRequestHandled={() => setAiRequest(null)}
-            projectDir={dir}
-            api={api}
-            hasKey={settings.hasApiKey}
-            aiLabel={settings.aiLabel}
-            aiModel={settings.aiModel}
-            getHandle={activeHandle}
-            node={aiNode}
-            getText={() => activeHandle()?.getSelectionText() || htmlToText(docsNow()[aiNode.id])}
-            hasSelection={() => Boolean(activeHandle()?.getSelectionText())}
-            getContext={contextForAi}
-            onInsert={(text) => activeHandle()?.insertText(text)}
-            onReplace={(text) => activeHandle()?.replaceSelection(text)}
-            onReplaceAll={(text) => {
-              const html = textToHtml(text);
-              setEditorHtml(aiNode.id, html);
-              writeDocNow(aiNode.id, html);
-            }}
-            onSynopsis={(text) => patchNode(aiNode.id, { synopsis: text })}
-            onOpenSettings={openSettings}
-            translateTo={LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo}
-            request={aiRequest}
-          />
-          )}
-        </AiWorkspaceWindow>
       )}
       {dialog === 'documentFormatting' && (
         <DocumentFormattingDialog

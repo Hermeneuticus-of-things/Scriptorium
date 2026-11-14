@@ -49,6 +49,9 @@ const Editor = forwardRef(function Editor(
     linkTargets = [],
     words = [],
     styles = [],
+    aiEnabled = false,
+    onAiPropose = null,
+    onAiError = null,
     view = {},
     onViewChange,
     onToggleInvisibles,
@@ -117,6 +120,10 @@ const Editor = forwardRef(function Editor(
   const scriptRef = useRef(scriptFormat);
   scriptRef.current = scriptFormat;
   const charsRef = useRef([]);
+  // Propunerea AI inline (directiva 14 nov, ciclul A): bară la selecție + Accept/Respinge cu undo.
+  const [aiBarBusy, setAiBarBusy] = useState('');
+  const [aiProposal, setAiProposal] = useState(false);
+  const [aiSelText, setAiSelText] = useState('');
   const plainPaste = useRef(false);
   const imageInput = useRef(null);
   const onChangeRef = useRef(onChange);
@@ -174,6 +181,8 @@ const Editor = forwardRef(function Editor(
             selWordsRef.current(n);
           }
         }
+        const { from: aiFrom, to: aiTo, empty: aiEmpty } = ed.state.selection;
+        setAiSelText(aiEmpty ? '' : ed.state.doc.textBetween(aiFrom, aiTo, ' ', ' '));
         // Caret on a styled paragraph (style navigation commands): report transitions so the
         // menus can disable them while the caret is on an unstyled paragraph.
         reportSelStyle(ed);
@@ -592,7 +601,24 @@ const Editor = forwardRef(function Editor(
     const text = await uiPrompt(i18nT('ui.editor.footnotePrompt'));
     if (text) chain().setLinkedFootnote(text).run();
   };
-  actionsRef.current = { addComment, addFootnote, addLinkedFootnote, addAnnotation, insertImage };
+  const runAiAction = async (action) => {
+    if (!onAiPropose || aiBarBusy || readOnly || editor.isDestroyed) return;
+    const sel = editor.state.selection;
+    const at = sel.empty ? { from: sel.from } : { from: sel.from, to: sel.to };
+    const text = sel.empty ? '' : editor.state.doc.textBetween(sel.from, sel.to, ' ', ' ');
+    setAiBarBusy(action);
+    try {
+      const proposal = await onAiPropose(action, text);
+      if (editor.isDestroyed || !proposal) return;
+      editor.chain().focus().insertContentAt(at, textToHtml(proposal)).run();
+      setAiProposal(true);
+    } catch (e) {
+      onAiError?.(e);
+    } finally {
+      setAiBarBusy('');
+    }
+  };
+  actionsRef.current = { addComment, addFootnote, addLinkedFootnote, addAnnotation, insertImage, aiPropose: runAiAction };
   const onImageFile = (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
@@ -722,6 +748,22 @@ const Editor = forwardRef(function Editor(
         {view.ruler && !readOnly && !compact && <Ruler editor={editor} zoom={1} />}
         {view.lineNumbers && !compact && <LineNumbers editor={editor} mode={view.lineNumbers === 'paragraphs' ? 'paragraphs' : 'lines'} />}
         {showFind && <FindBar editor={editor} onClose={() => { setShowFind(false); editor.commands.focus(); }} />}
+        {aiEnabled && onAiPropose && !readOnly && !compact && (
+          <div className="ai-mini-toolbar" role="toolbar" aria-label={i18nT('ui.editor.aiToolbar')}>
+            <button type="button" disabled={Boolean(aiBarBusy)} onClick={() => runAiAction('revise')}>{i18nT('ui.aiInline.rewrite')}</button>
+            <button type="button" disabled={Boolean(aiBarBusy)} onClick={() => runAiAction('summarize')}>{i18nT('ui.aiInline.summarize')}</button>
+            <button type="button" disabled={Boolean(aiBarBusy)} onClick={() => runAiAction('proofread')}>{i18nT('ui.aiInline.proofread')}</button>
+            <button type="button" disabled={Boolean(aiBarBusy)} onClick={() => runAiAction('ask')}>{i18nT('ui.aiInline.ask')}</button>
+            {aiBarBusy && <span role="status" className="muted">{i18nT('ui.aiInline.working')}</span>}
+          </div>
+        )}
+        {aiProposal && (
+          <div className="ai-proposal-bar" role="status">
+            <span>{i18nT('ui.aiInline.proposal')}</span>
+            <button type="button" className="primary" onClick={() => setAiProposal(false)}>{i18nT('ui.aiInline.accept')}</button>
+            <button type="button" onClick={() => { editor.commands.undo(); setAiProposal(false); }}>{i18nT('ui.aiInline.reject')}</button>
+          </div>
+        )}
         <EditorContent editor={editor} style={{ textAlign: scriptFormat ? undefined : (defaultFormatting?.align || undefined) }} className={`${scriptFormat ? `prose script-mode script-${scriptFormat}` : 'prose'}${view.lineNumbers && !compact ? ' with-line-numbers' : ''}`} />
       </div>
     </div>
