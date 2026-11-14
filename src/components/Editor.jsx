@@ -181,7 +181,8 @@ const Editor = forwardRef(function Editor(
             selWordsRef.current(n);
           }
         }
-        setAiSelText(empty ? '' : ed.state.doc.textBetween(from, to, ' ', ' '));
+        const { from: aiFrom, to: aiTo, empty: aiEmpty } = ed.state.selection;
+        setAiSelText(aiEmpty ? '' : ed.state.doc.textBetween(aiFrom, aiTo, ' ', ' '));
         // Caret on a styled paragraph (style navigation commands): report transitions so the
         // menus can disable them while the caret is on an unstyled paragraph.
         reportSelStyle(ed);
