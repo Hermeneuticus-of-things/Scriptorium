@@ -3910,7 +3910,7 @@ export default function App({ api: apiProp }) {
           selectedIds={selectedIds}
           onSelect={onBinderSelect}
           onAdd={addItem}
-          onAi={openAiFor}
+          onAi={aiEnabled ? openAiFor : undefined}
           onAddInside={(type, targetId) => addItem(type, null, null, targetId, { inside: true })}
           onRename={(id, title) => patchNode(id, { title })}
           onMove={(id, targetId, pos) => setTreeU(dropMany(project.tree, [id], targetId, pos))}

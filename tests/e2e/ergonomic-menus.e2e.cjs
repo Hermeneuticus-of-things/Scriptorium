@@ -26,8 +26,9 @@ async function collect(context){const found=[];async function walk(depth,prefix)
 async function clickPath(context,d){await open(context);for(let depth=0;depth<d.path.length;depth++){const x=d.path[depth],menu=p.locator('.ctx-menu').nth(depth),b=menu.locator(':scope > button[data-i="'+x.i+'"]');assert((await b.locator('.ctx-label').innerText()).trim()===x.label,'Deterministic menu row mismatch');if(x.submenu){await b.hover();await p.locator('.ctx-menu').nth(depth+1).waitFor()}else await b.click()}}
 async function diskWait(fn){for(let i=0;i<40;i++){const pj=read();if(fn(pj))return pj;await delay(80)}throw Error('Expected persisted outcome not observed')}
 async function outcome(context,d,before){const id=d.commandId,label=d.label,selected=context.multi?['p2-a','p2-b']:[context.id];if(id==='rename'){const input=p.locator('.binder .tree input');await input.fill('Redenumit verificat');await input.press('Enter')}
- if(id==='newText'||id==='newFolder'||id==='newFromTemplate'||id==='groupDocuments'){const rename=p.locator('.binder .tree input');if(await rename.count())await rename.press('Enter')}
- if(id==='newCollection'){const modal=p.locator('.prompt-modal');await modal.waitFor();await modal.locator('input').fill('Colecție verificată');await modal.locator('button.primary').click()}
+ if(id==='newText'||id==='newFolder'||id==='newFromTemplate'||id==='groupDocuments'||id==='newTextInside'||id==='newFolderInside'){const rename=p.locator('.binder .tree input');if(await rename.count())await rename.press('Enter')}
+ if(id==='newCollection'){const modal=p.locator('.anchored-popover');await modal.waitFor();await modal.locator('input').fill('Colecție verificată');await modal.locator('button.primary').click()}
+ if(id==='aiSection'||id==='aiChapter'||id==='aiManuscript'||id==='aiBook'){const ai=p.locator('.side .side-ai, .ai-workspace').first();await ai.waitFor({timeout:8000});const t=await ai.innerText();const want=label.split('{')[0].trim();assert(t.includes(want),'AI scope label missing: '+label);const inchide=ai.getByRole('button',{name:'Închide'});if(await inchide.count())await inchide.first().click();else await p.keyboard.press('Escape');return}
  if(id==='quickRef'){assert(await p.locator('.quickref').count(),'QuickRef missing');assert((await p.locator('.quickref').innerText()).includes(node(before,context.id).title),'QuickRef wrong target');return}
  if(id==='openInOtherPane'){assert(await p.locator('.workspace.split .pane').count()>=2,'Other pane did not open');return}
  if(id==='copyDocumentLink'){const text=await app.evaluate(({clipboard})=>clipboard.readText());assert(text.includes(context.id),'Clipboard points to wrong document');return}
@@ -37,6 +38,7 @@ async function outcome(context,d,before){const id=d.commandId,label=d.label,sele
  await command('save');
  await diskWait(pj=>{const n=node(pj,context.id);switch(id){
  case 'newText':case 'newFolder':case 'newFromTemplate':return flat(pj.tree).length>flat(before.tree).length;
+ case 'newTextInside':case 'newFolderInside':{const copies=flat(pj.tree).filter(x=>!flat(before.tree).some(y=>y.id===x.id));return copies.length===1&&parent(pj.tree,copies[0].id)?.id===context.id&&copies[0].type===(id==='newTextInside'?'text':'folder')}
  case 'rename':return n.title==='Redenumit verificat';
  case 'duplicate':{const copies=flat(pj.tree).filter(x=>!flat(before.tree).some(y=>y.id===x.id));if(!copies.length)return false;if(context.id==='p2-folder'){const copy=copies.find(x=>x.type==='folder');return copy&&(copy.children||[]).length===(d.path.some(x=>x.label==='Doar elementul')?0:2)}return selected.every(x=>copies.some(y=>y.type===node(before,x).type))}
  case 'trash':return selected.every(x=>owner(pj.tree,x)==='trash');
