@@ -1,5 +1,14 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.5 — 14 noiembrie 2026
+
+- **Registrul cărții** (Proiect → Registrul cărții): personaje, locații, termeni și lore cu descriere și aliasuri; contextul AI le include **automat** când sunt menționate în textul lucrat (#94).
+- E2E-urile scrise dar niciodată rulate au fost rulate și reparate: ai-workspace 5/5, ergonomic-menus 280/0, document-formatting 5/5 (#93).
+- 2 corecturi găsite de e2e: meniul contextual Binder nu mai oferă „Asistent AI" când AI e dezactivat; etichetele cu placeholder nerezolvat („Documentul: {title}") din binderContextMenu sunt interpolate (#93).
+- Guard-ul de paritate MCP actualizat pentru noile tool-uri (#94) — vezi și 1.2.4.
+
+---
+
 ## 1.2.4 — 13 noiembrie 2026
 
 - Reparare critică: **actualizarea din aplicație funcționează din nou** — „Descarcă" din Ajutor → Caută actualizări eșua cu „Redirect was cancelled" la redirectul GitHub → CDN de fișiere (#89).
