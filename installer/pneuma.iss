@@ -177,7 +177,7 @@ begin
   // Avertizează la instalarea unei versiuni MAI VECHI peste una mai nouă (downgrade).
   if (Prev <> '') and (CompareSemverStr(Prev, '{#AppVersion}') > 0) then
   begin
-    if MsgBox(FmtMessage(CustomMessage('DowngradeWarning'), [Prev]), mbWarning, MB_YESNO, 0) = IDNO then
+    if MsgBox(FmtMessage(CustomMessage('DowngradeWarning'), [Prev]), mbError, MB_YESNO, 0) = IDNO then
     begin
       Result := False;
       exit;
