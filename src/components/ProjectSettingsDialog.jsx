@@ -141,10 +141,15 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
   const [errors, setErrors] = useState([]);
   const [x, setX] = useState(() => makeExtras(project));
   const [iconErr, setIconErr] = useState('');
+  const [dirty, setDirty] = useState(false);
   const setBk = (p) => setX((o) => ({ ...o, backup: { ...o.backup, ...p } }));
   const setTg = (p) => setX((o) => ({ ...o, targets: { ...o.targets, ...p } }));
   const setEd = (p) => setX((o) => ({ ...o, editorial: { ...o.editorial, ...p } }));
   const setSy = (p) => setX((o) => ({ ...o, sync: { ...o.sync, ...p } }));
+  const markClickDirty = (e) => {
+    if (e.target.closest('[role="tab"], .actions')) return;
+    setDirty(true);
+  };
 
   const tabKeys = (e) => {
     const ids = TABS().map(([id]) => id);
@@ -178,6 +183,11 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
       importFolder: x.importFolder,
       inboxFolder: x.inboxFolder,
     }, x.sync));
+    setDirty(false);
+  };
+  const close = () => {
+    if (dirty && !window.confirm(tr('ui.settingsDialog.renunti'))) return;
+    onClose();
   };
 
   const fullFromParts = () => set({ author: [d.authorFirst, d.authorLast].filter(Boolean).join(' ') });
@@ -270,10 +280,13 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
     });
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide ps-dialog" role="dialog" aria-label={tr('ui.projectSettingsDialog.setarile_proiectului')} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={close}>
+      <div className="modal wide ps-dialog" role="dialog" aria-label={tr('ui.projectSettingsDialog.setarile_proiectului')} aria-describedby="project-settings-scope" onClick={(e) => e.stopPropagation()} onClickCapture={markClickDirty} onChangeCapture={() => setDirty(true)}>
         <style>{CSS}</style>
         <h2>{tr('ui.projectSettingsDialog.setarile_proiectului')}</h2>
+        <p id="project-settings-scope" className="surface-scope" role="note">
+          {tr('ui.projectSettingsDialog.scopeProject', { title: project?.title || tr('group.project') })}
+        </p>
         <div className="ps-tabs" role="tablist" aria-orientation="vertical" aria-label={tr('ui.projectSettingsDialog.sectiuni_setari')} onKeyDown={tabKeys}>
           {TABS().map(([id, label]) => (
             <button
@@ -728,8 +741,9 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         )}
 
         <div className="actions">
-          <button type="button" onClick={onClose}>{tr('btn.cancel')}</button>
-          <button type="button" className="primary" onClick={save}>{tr('btn.save')}</button>
+          {dirty && <span className="muted settings-dirty" role="status">{tr('ui.settingsDialog.unsaved')}</span>}
+          <button type="button" onClick={close}>{tr('btn.cancel')}</button>
+          <button type="button" className="primary" onClick={save}>{tr('ui.projectSettingsDialog.saveProject')}</button>
         </div>
       </div>
     </div>

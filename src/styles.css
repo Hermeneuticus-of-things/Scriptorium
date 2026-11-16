@@ -258,6 +258,8 @@ label.check { flex-direction: row; align-items: center; gap: var(--sp-1); color:
 .modal-x { position: absolute; top: 8px; right: 10px; width: var(--ctl-lg); height: var(--ctl-lg); display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--muted); font-size: var(--icon-md); line-height: 1; border-radius: var(--radius); cursor: pointer; z-index: 6; }
 .modal-x:hover, .modal-x:focus-visible { background: var(--panel); color: inherit; }
 .modal h2 { margin: 0; }
+.surface-scope { margin: -6px 0 0; padding: 6px 8px; border-left: 3px solid var(--accent, #4a6fa5); background: var(--panel); color: var(--muted); font-size: var(--font-ui-sm); }
+.settings-dirty { margin-right: auto; }
 /* AI status on the toolbar: a green dot when AI is on with a key, red otherwise, and a box to toggle it. */
 /* flex-direction: row — the generic `label` rule stacks it in a column, which drew a ~55px
    tall pill over the Inspector button and pushed the toolbar past the 32–40 strip (T9). */
