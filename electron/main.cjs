@@ -1,5 +1,6 @@
 'use strict';
 const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell, clipboard, net } = require('electron');
+const { Worker } = require('worker_threads');
 const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
@@ -62,6 +63,55 @@ function projectBackupSettings(dir, s = backupSettings()) {
 }
 
 let backupRunning = null;
+let backupWorker = null;
+let backupJobSeq = 0;
+const backupJobs = new Map();
+
+function ensureBackupWorker() {
+  if (backupWorker) return backupWorker;
+  backupWorker = new Worker(path.join(__dirname, 'backupWorker.cjs'));
+  backupWorker.on('message', (message) => {
+    const job = backupJobs.get(message.id);
+    if (!job) return;
+    backupJobs.delete(message.id);
+    if (message.ok) job.resolve(message.value);
+    else {
+      const error = new Error(message.error?.message || 'Operația de backup a eșuat.');
+      if (message.error?.code) error.code = message.error.code;
+      job.reject(error);
+    }
+  });
+  backupWorker.on('error', (error) => {
+    for (const job of backupJobs.values()) job.reject(error);
+    backupJobs.clear();
+    backupWorker = null;
+  });
+  backupWorker.on('exit', (code) => {
+    if (code !== 0 && backupJobs.size) {
+      const error = new Error(`Workerul de backup s-a oprit (${code}).`);
+      for (const job of backupJobs.values()) job.reject(error);
+      backupJobs.clear();
+    }
+    backupWorker = null;
+  });
+  return backupWorker;
+}
+
+function runBackupJob(operation, ...args) {
+  const worker = ensureBackupWorker();
+  return new Promise((resolve, reject) => {
+    const id = ++backupJobSeq;
+    backupJobs.set(id, { resolve, reject });
+    worker.postMessage({ id, operation, args });
+  });
+}
+
+function stopBackupWorker() {
+  if (!backupWorker) return;
+  const worker = backupWorker;
+  backupWorker = null;
+  worker.terminate().catch(() => {});
+}
 // Backs up the touched projects `want(dir, resolvedSettings)` accepts (default: all not excluded).
 async function backupAll(want = (_dir, ps) => !ps.backupExcluded) {
   const s = backupSettings();
@@ -77,7 +127,7 @@ async function backupAll(want = (_dir, ps) => !ps.backupExcluded) {
   backupRunning = (async () => {
     for (const [dir, ps] of list) {
       try {
-        await backup.backupProject(dir, ps.backupDir || undefined, ps.backupKeep, backup.backupOptions(ps));
+        await runBackupJob('backupProject', dir, ps.backupDir || undefined, ps.backupKeep, backup.backupOptions(ps));
       } catch (err) {
         console.error('Backup eșuat pentru', dir, err);
         dirtyDirs.add(path.resolve(dir));
@@ -669,7 +719,7 @@ handle('project:open', async (e, dirArg) => {
   if (!reopening) releaseWindow(e.sender.id);
   if (!claimDir(e.sender, dir)) return null;
   rememberRecent(dir, project.title);
-  if (!reopening) backup.backupOnOpen(dir, projectBackupSettings(dir));
+  if (!reopening) runBackupJob('backupOnOpen', dir, projectBackupSettings(dir)).catch((err) => console.error('Backup la deschidere eșuat', err));
   return { dir, project };
 });
 
@@ -1149,7 +1199,7 @@ handle('bookmark:openFile', async (_e, dir, file) => {
 handle('backup:now', async (_e, dir) => {
   assertOpened(dir);
   const s = projectBackupSettings(dir); // manual: works even when excluded; keep from the project override
-  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
+  return runBackupJob('backupProject', dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 // File > Back Up To…: one backup in a folder chosen in a dialog (remembered as the next default).
 handle('backup:to', async (e, dir) => {
@@ -1162,14 +1212,14 @@ handle('backup:to', async (e, dir) => {
   });
   if (res.canceled || !res.filePaths[0]) return null;
   writeSettings({ ...readSettings(), backupToDir: res.filePaths[0] });
-  return backup.backupProject(dir, res.filePaths[0], s.backupKeep, backup.backupOptions(s));
+  return runBackupJob('backupProject', dir, res.filePaths[0], s.backupKeep, backup.backupOptions(s));
 });
 // Manual save: a backup when "back up on each manual save" is on, throttled to once a minute.
 handle('backup:onSave', async (_e, dir) => {
   assertOpened(dir);
   const s = projectBackupSettings(dir);
   if (!s.backupOnSave || s.backupExcluded || !saveBackupDue(dir)) return null;
-  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
+  return runBackupJob('backupProject', dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 handle('backup:list', (_e, dir) => {
   assertOpened(dir);
@@ -1179,7 +1229,7 @@ handle('backup:restore', async (_e, dir, file) => {
   assertOpened(dir);
   const allowed = backup.listBackups(dir, backupSettings().backupDir || undefined).some((b) => b.file === file);
   if (!allowed) throw new Error('Backup necunoscut.');
-  const target = await backup.restoreBackup(file, path.dirname(dir));
+  const target = await runBackupJob('restoreBackup', file, path.dirname(dir));
   const project = store.loadProject(target);
   releaseWindow(_e.sender.id);
   if (!claimDir(_e.sender, target)) throw new Error('Proiectul restaurat este deschis în altă fereastră.');
@@ -1651,6 +1701,7 @@ app.on('before-quit', (event) => {
   quitting = true;
   backupAll(onClose).finally(() => app.quit());
 });
+app.on('will-quit', () => stopBackupWorker());
 
 // Single instance: a second launch focuses the existing app instead of starting
 // another process (several windows live inside the one instance).

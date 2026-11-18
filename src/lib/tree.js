@@ -1,9 +1,8 @@
 import { t as tr } from './i18n.js';
 // Pure helpers for the binder tree (array of nodes with optional children).
 
-// walk/findNode: implementarea unică, partajată cu procesul main (lib/treeCore.cjs) —
-// înainte: două clone identice în tree.js și store.cjs. Re-export păstrează API-ul ESM.
-import { walk, findNode } from '../../lib/treeCore.cjs';
+// walk/findNode: aceeași interfață pură pentru browser și main; Vite folosește adaptorul ESM.
+import { walk, findNode } from './treeCore.js';
 export { walk, findNode };
 
 export function findParent(tree, id) {
