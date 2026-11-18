@@ -2,7 +2,7 @@
 # user-writable tessdata dir and copies Tesseract's config files there (needed for the tsv output).
 # The models (~24 MB) are not committed. Run once; ocr.ps1 reads OCR_TESSDATA or this default dir.
 # Usage: pwsh get-tessdata.ps1 [-Dir <path>]
-param([string]$Dir = 'C:\Users\Ionut\AppData\Local\ui-audit-tessdata')
+param([string]$Dir = (Join-Path $env:LOCALAPPDATA 'ui-audit-tessdata'))
 $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force $Dir | Out-Null
 $base = 'https://github.com/tesseract-ocr/tessdata_best/raw/main'
@@ -19,3 +19,5 @@ foreach ($sub in 'configs', 'tessconfigs') {
   if ((Test-Path "$pf\$sub") -and -not (Test-Path "$Dir\$sub")) { Copy-Item "$pf\$sub" "$Dir\$sub" -Recurse -Force; Write-Host "copiat $sub" }
 }
 Write-Host "Gata. Setează OCR_TESSDATA=$Dir dacă folosești alt folder."
+
+
