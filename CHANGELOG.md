@@ -1,6 +1,6 @@
 # Jurnal de lansare — Pneuma Sofer
 
-## 1.2.7 — 18 noiembrie 2026
+## 1.2.8 — 19 noiembrie 2026
 
 - Curățare de publicare: repository-ul, installerul și asseturile release nu includ proiecte de test, corpusuri private, rapoarte locale sau căi personale.
 - Testele pentru corpus mare acceptă acum calea numai prin `PNEUMA_CORPUS_DIR`, fără fixture inclus în codul public.
