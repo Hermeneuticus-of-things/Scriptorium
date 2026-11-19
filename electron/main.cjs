@@ -27,6 +27,8 @@ const { fileToHtml, splitHtml } = require('../lib/docxImport.cjs');
 const bundle = require('../lib/bundle.cjs');
 const projectWatch = require('../lib/projectWatch.cjs');
 const snapshotSearch = require('../lib/snapshotSearch.cjs');
+const projectInstanceLock = require('../lib/projectInstanceLock.cjs');
+const installationInfo = require('../lib/installationInfo.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
 // The data folder name stays "Scribner" after the rename to "Pneuma Sofer" so existing users keep
@@ -260,6 +262,22 @@ function rememberRecent(dir, title) {
 // is open in at most one window (lib/projectWatch.cjs createClaimRegistry).
 const liveWindow = (wcId) => BrowserWindow.getAllWindows().find((w) => !w.isDestroyed() && w.webContents.id === wcId && !w.webContents.isCrashed());
 const claims = projectWatch.createClaimRegistry({ isAlive: (wcId) => Boolean(liveWindow(wcId)) });
+const processClaims = projectInstanceLock.createProjectInstanceLock({
+  root: path.join(app.getPath('appData'), 'Pneuma Sofer', 'project-locks'),
+  version: require('../package.json').version,
+  execPath: process.execPath,
+});
+
+function sendProjectConflict(sender, owner) {
+  if (!sender || sender.isDestroyed()) return;
+  sender.send('project:instance-conflict', {
+    projectDir: owner?.projectDir || '',
+    pid: owner?.pid || null,
+    version: owner?.version || '',
+    execPath: owner?.execPath || '',
+    startedAt: owner?.startedAt || '',
+  });
+}
 
 // Returns false (and focuses the other window) when the project is open elsewhere.
 function claimDir(sender, dir) {
@@ -272,12 +290,19 @@ function claimDir(sender, dir) {
     }
     return false;
   }
+  const processResult = processClaims.claim(dir);
+  if (!processResult.ok) {
+    claims.release(sender.id);
+    sendProjectConflict(sender, processResult.owner);
+    return false;
+  }
   return true;
 }
 
 // Frees the window's project (closed, crashed, reloaded, back to start screen).
 function releaseWindow(wcId) {
   const dir = claims.release(wcId);
+  if (dir) processClaims.release(dir);
   closeWatchers(wcId);
   if (dir && !claims.ownerOf(dir)) {
     bases.delete(dir);
@@ -525,6 +550,14 @@ handle('project:release', (e) => {
   releaseWindow(e.sender.id);
   return true;
 });
+handle('app:instanceInfo', () => {
+  const current = installationInfo.currentInstallation({ app, packageVersion: require('../package.json').version });
+  const installations = installationInfo.describeInstallations({
+    current,
+    installations: installationInfo.listKnownInstallations({ currentExe: process.execPath }),
+  });
+  return { current, installations, projectLockDir: path.join(app.getPath('appData'), 'Pneuma Sofer', 'project-locks') };
+});
 handle('window:fullScreen', (e, on) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   if (!win) return false;
@@ -705,6 +738,11 @@ handle('project:open', async (e, dirArg) => {
     dir = fs.realpathSync.native(dir);
   } catch {
     /* missing: the open below reports it */
+  }
+  const processOwner = processClaims.ownerOf(dir);
+  if (processOwner && processOwner.pid !== process.pid) {
+    sendProjectConflict(e.sender, processOwner);
+    return null;
   }
   // Already open in another window: focus it and leave this one as it is.
   const owner = claims.ownerOf(dir);
@@ -1701,12 +1739,23 @@ app.on('before-quit', (event) => {
   quitting = true;
   backupAll(onClose).finally(() => app.quit());
 });
-app.on('will-quit', () => stopBackupWorker());
+app.on('will-quit', () => {
+  processClaims.releaseAll();
+  stopBackupWorker();
+});
 
 // Single instance: a second launch focuses the existing app instead of starting
 // another process (several windows live inside the one instance).
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
+  try {
+    dialog.showMessageBoxSync({
+      type: 'info',
+      title: 'Pneuma Sofer este deja deschis',
+      message: `Această lansare Pneuma Sofer v${app.getVersion()} nu a fost deschisă.`,
+      detail: 'Rulează deja o altă instanță. Folosește fereastra existentă pentru a evita versiuni sau proiecte concurente.',
+    });
+  } catch { /* the first instance may have closed while this notice was shown */ }
   app.quit();
 } else {
   app.on('second-instance', () => {

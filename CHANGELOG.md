@@ -6,6 +6,7 @@
 - Testele pentru corpus mare acceptă acum calea numai prin `PNEUMA_CORPUS_DIR`, fără fixture inclus în codul public.
 - Textele și documentația folosesc căi portabile și formulări generice pentru mediul local.
 - Updaterul păstrează descărcarea verificată prin SHA-256 și selectează numai installerul sau portabilul Windows din release.
+- Instanțele duplicate sunt explicate și refuzate clar; aceeași carte primește un lock inter-proces, iar Despre afișează versiunea și executabilul activ.
 
 ---
 

@@ -800,6 +800,14 @@ export default function App({ api: apiProp }) {
   }, [settings]);
 
   const report = useCallback((e) => setError(e?.message || String(e)), []);
+  useEffect(() => {
+    if (!api.onProjectInstanceConflict) return undefined;
+    return api.onProjectInstanceConflict((info = {}) => {
+      const version = info.version ? ` versiunea ${info.version}` : '';
+      const pathText = info.execPath ? ` Executabil: ${info.execPath}` : '';
+      setError(`Proiectul este deja deschis de altă instanță${version}.${pathText} Nu îl deschid din nou pentru a evita conflicte.`);
+    });
+  }, [api]);
   const prevTargetCounts = useRef({});
   useEffect(() => {
     if (!showFloatInspector || !selectedId || !dir) return;

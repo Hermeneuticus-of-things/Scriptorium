@@ -864,6 +864,13 @@ legend { color: var(--muted); padding: 0 var(--sp-1); }
 .about-licenses th, .about-licenses td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .about-licenses .about-group th { padding-top: 12px; color: var(--muted); font-weight: 600; }
 .about-licenses .about-flag { color: var(--danger); white-space: nowrap; }
+.about-instance { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 12px 0; background: var(--panel-subtle, rgba(127, 127, 127, .06)); }
+.about-instance h4 { margin: 0 0 4px; }
+.about-instance dl { display: grid; grid-template-columns: minmax(150px, auto) 1fr; gap: 4px 10px; margin: 8px 0 0; font-size: var(--font-ui-sm); }
+.about-instance dt { color: var(--muted); }
+.about-instance dd { margin: 0; }
+.about-path { overflow-wrap: anywhere; word-break: break-word; }
+.about-installations { margin: 8px 0 0; padding-left: 18px; font-size: var(--font-ui-sm); }
 
 /* Quick Search (Scrivener 3 §11.5): omnibox popup, top-aligned like a URL bar. */
 .modal.quick-search { position: fixed; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, 94vw); padding: 10px 12px; gap: var(--sp-2); }
