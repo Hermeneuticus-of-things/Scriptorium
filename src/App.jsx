@@ -317,17 +317,19 @@ export default function App({ api: apiProp }) {
     const node = findNode(project.tree, selectedId);
     if (!node || node.type !== 'text' || node.children) return undefined;
     if (loadingDocs.current.has(selectedId)) return undefined;
-    let alive = true;
+    // The read outlives re-renders of this effect: dropping its result on cleanup left the
+    // document empty until it was selected again (no one restarted the read). Only a read
+    // that belongs to another project is discarded.
     const read = Promise.resolve(api.readDoc(dir, selectedId, 'docs'))
       .then((html) => {
-        if (!alive) return;
+        if (dirNowRef.current !== dir) return;
         diskDocs.current.set(selectedId, String(html ?? ''));
         setDocs((d) => (d[selectedId] === undefined ? { ...d, [selectedId]: String(html ?? '') } : d));
       })
       .catch((error) => console.error('[pneuma] document lazy-load failed:', error));
     loadingDocs.current.set(selectedId, read);
     read.finally(() => loadingDocs.current.delete(selectedId));
-    return () => { alive = false; };
+    return undefined;
   }, [api, dir, project, selectedId, docsState]);
   const [conflict, setConflict] = useState(null); // { id, title, pieces, html } (ConflictDialog)
   const team = useTeam({ api, dir, settings, docId: selectedId });
@@ -4049,7 +4051,7 @@ export default function App({ api: apiProp }) {
                 onAiPropose={runInlineAi}
                 onAiError={report}
                 scriptFormat={scriptFormat}
-                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
+                key={`${selected.id}-${docsState[selected.id] === undefined ? 'loading' : 'ready'}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
                 historyKey={selected.id}
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
