@@ -12,8 +12,21 @@ describe('lib/aiRules', () => {
   it('reads the rules from the project', () => {
     expect(aiRules.projectRules(project)).toBe('Păstrează tonul cald.');
     expect(aiRules.projectRules({})).toBe('');
-    expect(aiRules.readRules({ loadProject: () => project }, 'D')).toBe('Păstrează tonul cald.');
+    // readRules întoarce blocuri pre-formatate (reguli + pachetul cărții), nu text gol.
+    expect(aiRules.readRules({ loadProject: () => project }, 'D')).toContain('Păstrează tonul cald.');
+    expect(aiRules.readRules({ loadProject: () => project }, 'D')).toContain('<reguli_proiect>');
     expect(aiRules.readRules({ loadProject: () => { throw new Error('x'); } }, 'D')).toBe('');
+  });
+  it('carries the book package (fixed phrases, banned formulas) above the rules', () => {
+    const p = { editorialProfile: { aiRules: 'R.', fixedPhrases: 'Fraza fixată\n', bannedFormulas: 'nu X, ci Y' } };
+    const out = aiRules.readRules({ loadProject: () => p }, 'D');
+    expect(out).toContain('Fraza fixată');
+    expect(out).toContain('nu X, ci Y');
+    expect(out.indexOf('<pachet_carte>')).toBeGreaterThan(out.indexOf('<reguli_proiect>'));
+    // blocul pre-formatat trece prin withRules fără dublare
+    const s = aiRules.withRules('SYS', out);
+    expect(s.match(/<reguli_proiect>/g)).toHaveLength(1);
+    expect(s.match(/<pachet_carte>/g)).toHaveLength(1);
   });
   it('appends a fenced block to the system prompt, nothing when empty', () => {
     expect(aiRules.withRules('SYS', '')).toBe('SYS');
@@ -40,7 +53,7 @@ describe('every AI path reads the project rules', () => {
     expect(m).toContain('aiRules.readRules(store, dir)');
     expect(m).toContain('rules, signal, onDelta');
     expect(src('src/components/AiPanel.jsx')).toContain('dir: projectDir || undefined');
-    expect(src('lib/ai.cjs')).toContain('aiRules.withRules(SYSTEM, rules)');
+    expect(src('lib/ai.cjs')).toContain('aiRules.withRules(writingEngine.withEngine(SYSTEM), rules)');
   });
   it('bulk jobs and research wrap their runs', () => {
     const v = src('electron/v10Handlers.cjs');
