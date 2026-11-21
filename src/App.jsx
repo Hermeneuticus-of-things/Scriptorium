@@ -133,6 +133,7 @@ import {
   historyRedo,
 } from './lib/tree.js';
 import { listFixedPhrases } from './lib/fixedPhrases.js';
+import { nextTarget, applyFocus } from './lib/focusNav.js';
 import { importDestination } from './lib/importFolder.js';
 import { listTemplates, cloneFromTemplate, templateTargetParent } from './lib/documentTemplates.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
@@ -3209,6 +3210,21 @@ export default function App({ api: apiProp }) {
     await api.exportScript(fmt, h.getHtml(), selected?.title || 'Scenariu');
   };
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+  // T1 — navigarea din tastatură între panouri (docs/audit/scrivener3, Anexa A.6): ultima țintă
+  // e ținută într-un ref; ciclarea F6/Shift+F6 urmează ordinea vizuală stânga→dreapta.
+  const focusTargetRef = useRef('editor');
+  const focusState = () => ({ hideBinder, splitOpen: Boolean(splitId), showInspector: showInspector || (showResearch && dir), showAi: showAi && aiEnabled });
+  const focusPane = (target) => {
+    if (target === 'binder' && hideBinder) setHideBinder(false);
+    if (target === 'inspector' && !showInspector && !(showResearch && dir)) setShowInspector(true);
+    if (target === 'ai' && !showAi) setShowAi(true);
+    if (target === 'split' && !splitId) return; // split inexistent → fără efect (nu-l inventăm)
+    focusTargetRef.current = target;
+    applyFocus(target, {
+      root: document,
+      focusEditor: () => (target === 'split' ? editorRefs.current.get(`split:${splitId}`) : activeHandle())?.editor?.commands?.focus?.(),
+    });
+  };
   // Nivelul AI ales din meniul contextual are prioritate; altfel documentul activ.
   const scopedAiNode = aiScope ? findNode(project.tree, aiScope.nodeId) : null;
   const aiNode = scopedAiNode || (activeId.current && findNode(project.tree, activeId.current)) || selected;
@@ -3425,6 +3441,13 @@ export default function App({ api: apiProp }) {
     ['document', 'split', tr('cmd.split'), () => splitDocument(false)],
     ['view', 'quickRef', tr('cmd.quickRef'), () => selected && !selected.root && openQuickRef(selected.id)],
     ['nav', 'goto', tr('cmd.goto'), () => setDialog('goto')],
+    // T1 (Anexa A — Move Focus To): navigarea panourilor din tastatură; panoul închis se deschide.
+    ['nav', 'focusCycle', tr('cmd.focusCycle'), () => focusPane(nextTarget(focusTargetRef.current, focusState(), 1))],
+    ['nav', 'focusCycleBack', tr('cmd.focusCycleBack'), () => focusPane(nextTarget(focusTargetRef.current, focusState(), -1))],
+    ['nav', 'focusEditor', tr('cmd.focusEditor'), () => focusPane('editor'), !selected],
+    ['nav', 'focusBinder', tr('cmd.focusBinder'), () => focusPane('binder')],
+    ['nav', 'focusInspector', tr('cmd.focusInspector'), () => focusPane('inspector'), !selected],
+    ['nav', 'focusAi', tr('cmd.focusAi'), () => focusPane('ai'), !aiEnabled],
     ['nav', 'searchResults', tr('cmd.searchResults'), () => {
       if (!(project.collections || []).some((c) => c.id === SEARCH_RESULTS_ID)) saveProject(ensureSearchResults(project));
       setActiveCollectionId(SEARCH_RESULTS_ID);
@@ -3860,6 +3883,7 @@ export default function App({ api: apiProp }) {
         {!hideBinder && !composition && (<>
         <div
           className={`binder-col ${fileDrop ? 'file-drop' : ''}`}
+          data-focus-pane="binder" tabIndex={-1}
           style={{ width: widths.binder }}
           onDragOver={(e) => {
             if (!dragHasFiles(e.dataTransfer) || !api.addMediaData) return;
@@ -4288,7 +4312,7 @@ export default function App({ api: apiProp }) {
         {(showInspector || (showResearch && dir)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
-            <div className="side" style={{ width: widths.side }}>
+            <div className="side" data-focus-pane="inspector" tabIndex={-1} style={{ width: widths.side }}>
               {showInspector && (
                 <Inspector
                   key={`insp-${selected.id}-${notesRev}`}
@@ -4378,7 +4402,7 @@ export default function App({ api: apiProp }) {
         {(showAi && aiEnabled && aiNode) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('ai')} role="separator" aria-label={tr('ui.app.latime_fereastra_ai')} />
-            <div className="ai-window" style={{ width: widths.ai || 380 }}>
+            <div className="ai-window" data-focus-pane="ai" tabIndex={-1} style={{ width: widths.ai || 380 }}>
               <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
                 <div className="side-ai-head">
                   <strong>{tr('ui.aiWorkspace.title')}</strong>

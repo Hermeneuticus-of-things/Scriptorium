@@ -58,6 +58,7 @@ export const SUBMENUS = {
     ['menu.inProject', ['findSel', 'researchSel', 'glossaryAdd']],
     // NotebookLM moved to the AI menu (AI isolation 2026-10-27).
   ],
+  nav: [['menu.focus', ['focusCycle', 'focusCycleBack', 'focusEditor', 'focusBinder', 'focusInspector', 'focusAi']]],
   ai: [
     ['menu.aiSelection', ['aiResearchSel', 'aiDefineSel', 'aiProofreadSel', 'aiTranslateSel', 'researchAskSel']],
     ['menu.aiBook', ['aiBulkSynopsis', 'aiConsistency', 'aiZoomReview']],
