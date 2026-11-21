@@ -204,6 +204,7 @@ const PRELOAD_COVERAGE = {
   removeDictionaryWord: 'gui: dicționarul ortografic al lui Chromium',
   cancelAi: 'gui: AI',
   runAi: 'gui: AI (clientul MCP este AI-ul; editorial_round dă promptul rundei)',
+  aiAudit: 'gui: registru de decizii și provenance al AI (în proiect, nu prin MCP)',
   onAiDelta: 'gui: AI',
   testAi: 'gui: AI',
   nlmExport: 'export_notebooklm',

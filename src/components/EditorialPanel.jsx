@@ -405,9 +405,8 @@ export default function EditorialPanel({ api, hasKey, aiEnabled = true, profile:
           {level !== 'micro' && <p className="muted small">{t('ui.editorialPanel.estimare', { n: level === 'macro' ? chapter.length : 1, bucle: maxLoops, total: (level === 'macro' ? chapter.length : 1) * maxLoops })}</p>}
           <div className="ai-actions">
             {busy && api.cancelAi && <button onClick={() => api.cancelAi()}>{t('btn.cancel')}</button>}
-            <button onClick={() => Promise.resolve(onApply({ id: node.id, title: node.title, before: html, after: fixFor(ownHashes)(html), safe: true })).catch((e) => setError(e.message))} disabled={busy}>
-              {t('ui.editorialPanel.reparatii_sigure_fara_ai')}
-            </button>
+            {/* Directiva autor: reparațiile sigure (deterministe, fără AI) nu stau în fereastra AI —
+                au propriul dialog în Unelte › Reparații simple…. Aici rămâne doar AI. */}
             {aiEnabled && (
               <button className="primary" onClick={runRep} disabled={busy || !hasKey}>
                 {busy ? t('ui.editorialPanel.lucrez') : t('ui.editorialPanel.i_rep_repara_reverifica')}
