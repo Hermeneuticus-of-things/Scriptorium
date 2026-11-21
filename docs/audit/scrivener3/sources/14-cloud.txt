@@ -1,0 +1,987 @@
+Cloud Integration
+and Sharing
+
+
+
+
+14
+In This Section…
+        14.1       Scrivener Everywhere . . . . . . . . . . . . . . . . .      294
+        14.2       Working with Scrivener for iOS . . . . . . . . . . .        296
+               14.2.1    Basic Usage . . . . . . . . . . . . . . . . . . .     296
+               14.2.2    Sync with Dropbox . . . . . . . . . . . . . . .       297
+               14.2.3    Managing Projects Directly . . . . . . . . . .        299
+               14.2.4    Updating Projects with Mobile Changes . . .           301
+               14.2.5    Working with Fonts . . . . . . . . . . . . . . .      302
+               14.2.6    Options . . . . . . . . . . . . . . . . . . . . .     303
+        14.3       Synchronised Folders . . . . . . . . . . . . . . . . .      303
+               14.3.1    Setting Up Folder Sync . . . . . . . . . . . . .      304
+               14.3.2    Usage . . . . . . . . . . . . . . . . . . . . . . .   308
+               14.3.3    Tips for Working with Synced Folders . . . .          311
+               14.3.4    Folder Sync Settings . . . . . . . . . . . . . .      314
+
+
+   It has become commonplace to make your work instantly available every-
+where you go, no matter what device you might currently be using. Sharing files
+through the “cloud” among a circle of colleagues, proofers, and editors has also
+become part of how we work. While Scrivener for iOS addresses many of those
+scenarios, there may be situations where you need to use other technology or
+methods, particularly when working with others. This chapter will cover the op-
+tions available, and provide advice for how best to use general purpose systems
+like Dropbox.
+   Synchronisation should always be done with care, no matter what method you
+use. Computers will do exactly what we tell them to do, even if the outcome is
+not what our original intention was. Whenever using automated syncing tools,
+be sure to double-check your settings, and back up frequently.
+
+
+14.1 Scrivener Everywhere
+Placing your Scrivener project into a cloud folder, so that it is available to every
+computer you own, is today a natural concept that by and large works well with
+Scrivener. Without going into great technical detail: a Scrivener project is re-
+ally a whole mass of files and folders, and since most cloud services are designed
+around the concept of keeping folders and files together, there isn’t anything you
+need to do other than designating that project as being synced in whatever man-
+ner your service recommends (often as simple as saving it into the right folder).
+                                                       14.1. Scrivener Everywhere
+
+
+
+   Test Before Trust
+   There are a few cloud services you should be wary of, in terms of how
+   well they handle a complex format like Scrivener’s. Visit our knowledge
+   base for up-to-date information on specific services, before settling on
+   one to use with your important work. It is always a good idea to test the
+   integrity of your system with sample content (such as the tutorial), before
+   fully committing to its use.
+
+  To avoid conflicts with synced projects:
+
+   1. Always make sure your syncing software is done syncing before you open
+      a project. Research how your cloud software informs you of when it is
+      working and pay heed to it. Good syncing software will let you know when
+      it is moving data to or from the central server on the Internet. In the case
+      of Dropbox, a small icon will be placed into the task tray, in the lower-right
+      portion of your screen near the clock (which you might need to adjust so
+      that it is always visible). Keep an eye on this indicator and wait for the “all
+      done” checkmark to appear before you open the project.
+   2. Never open a project more than once. If all goes well, Scrivener will warn
+      you if you try to do this, but in some scenarios this warning might fail, so
+      try to always remember to close your project when you are done with it.
+      Ignoring this rule is a surefire way to cause major headaches.
+   3. Always wait for your syncing software to finish syncing before you shut
+      down your computer. This is of course a corollary to the first rule. Just as
+      you should wait for your computer to be updated before opening a project,
+      you need to make sure that all of your changes made to the project have
+      finished syncing back to the server (and thus made available to your other
+      computers), before you put it to sleep or shut it down.
+
+   If you follow these three simple rules, you will dramatically decrease the
+chance of any strange conflicts arising due to working in a live syncing folder
+with Scrivener. As with all synchronisation technology, it is inherently “less safe”
+than working local and saving remote. It is possible to work safely for years in
+this fashion, but extra vigilance will be required of you and everyone participat-
+ing in the shared project.
+   If you do run into problems, refer to the guidance in our knowledge base for
+tips on how to fix conflicted projects.
+
+
+
+
+                                                                                 295
+                                             14.2. Working with Scrivener for iOS
+
+
+
+   Can This Be Used for Collaboration?
+   While it is possible for multiple parties to work off of a single .scriv file
+   hosted on a shared network folder, extra caution will need to be exercised
+   in order to keep the project data safe. At the very least, this section of
+   the manual should be distributed to all parties concerned, and good lines
+   of communication should be established so that everyone knows when
+   a person is actively working in a project. Guideline #2 above deserves
+   to be reiterated: never open a project for editing if another person is
+   currently editing the project.
+
+
+                                                              Return to chapter ⤴
+
+
+14.2 Working with Scrivener for iOS
+This section will not go into how to use the iOS version of Scrivener, save for
+where its usage intersects with the macOS or Windows versions. We’ve prepared
+a tutorial/reference for you, built right into the iOS app. If you’d like to learn how
+to use it, that’s the place to go!
+   Here we will dig into how to make use of the mobile version, from the per-
+spective of using your computer, whether you wish to use the mobile version to
+edit your own projects, or if you intend to work with others who use it.
+
+
+14.2.1 Basic Usage
+The Scrivener project format has been designed to support seamless mobile us-
+age between device and computer. The iOS app comes with Dropbox integration
+built-in, for single-tap cloud sync, but the project format itself was specifically
+designed to work with all forms of file transfer, including transfer through other
+sync services. You can package the project up by exporting it from the app, send
+it to yourself via email or even copy the project to a thumb drive and send it to a
+colleague through the post (yes, the one with envelopes involved).
+
+   Upgrading from Scrivener 1
+   If you’ve just been faced with the question of updating your existing
+   Scrivener project to 3.0, and are wondering if the new format is supported
+   by your version of Scrivener for iOS: yes! It supports the new styles and
+   stylesheets (chapter 17) system as well as project bookmarks (section 10.3).
+
+  Secondly, the mobile version edits its own copy of the project internally, which
+by design allows you to leave your main copy open, back in the office. When
+mobile changes are detected (typically by using cloud sync) the desktop version
+will alert you to their presence and ask for confirmation to begin updating the
+
+                                                                                   296
+                                                   14.2. Working with Scrivener for iOS
+
+
+project. We’ll get more into that later, but for now the important take-away is
+that you do not have to remember to close things off before picking up your
+phone with an idea.
+  Since both iPhone and iPad share the same data, the same does not hold true
+for these devices when used together. If you edit the same project from two
+mobile devices at once, or overlap editing sessions without syncing intermediate
+changes, you will most likely need to resolve some conflicts (section 14.2.4).
+
+Mobile Feature Limitations
+Scrivener for iOS contains a much smaller feature set than is available in the
+macOS and Windows versions. This is mainly on account of the limitations of
+the operating system that runs on iPhones and iPads. The good news is that even
+though you may not be able to see and work with some of the more advanced
+aspects of Scrivener, they will be preserved. For example, if a binder item has
+keywords assigned to it, you won’t be able to view or manage them, but if you
+edit that item, upon syncing the changes back to your computer, the original
+keywords will not be lost.
+
+
+14.2.2 Sync with Dropbox
+The mobile version of Scrivener has an embedded Dropbox sync client built-in,
+allowing for single-tap syncing of any projects you host in your Dropbox account
+and share with Scrivener. For many, this will represent the most convenient op-
+tion for using Scrivener on the go, as such syncing will update your main com-
+puter as you work. If you cannot use Dropbox, or would prefer another option,
+then skip to the following section, Managing Projects Directly (subsection 14.2.3).
+   There are two basic ingredients you’ll need to get this all working:
+
+    — First thing you will want to do is set up Scrivener for iOS so that it is hooked
+      up to your Dropbox account. If you are unsure of how to do that, please
+      consult the built-in tutorial on your device, or tap on the circular arrow
+      icon in the main project screen and walk through the setup screens.1
+    — On your computer, you’ll need Dropbox installed and running in the back-
+      ground.
+
+  In the process of setting up sync in mobile Scrivener you will be asked
+where you wish to locate your sync folder. By default this will use the
+Dropbox\Apps\Scrivener folder (one will be created for you if it does not already
+exist). Make note of this location, as this is where you will need to access your
+
+1
+ You do not need the official Dropbox app installed on your device. Scrivener will register itself
+as its own sync client, and this action will also not count against any device limitations Dropbox
+may impose on your account tier.
+
+
+
+                                                                                             297
+                                            14.2. Working with Scrivener for iOS
+
+
+shared projects from from the main computer. For example, you could make a
+project on iOS, sync it, and then open it normally (subsection 5.1.3) from Scriv-
+ener. You can also drag existing projects on your computer into this folder and
+then sync them to your device once they have finished uploading to Dropbox.
+   While on your computer, you can organise your projects into subfolders within
+this chosen sync folder. This will change nothing on the mobile side, there are no
+“folders” in the project management screen, but if you’d like to keep your projects
+organised you can safely do so.
+
+   The sync folder isn’t for general storage
+   Try to limit the files you put into this sync folder to the special settings
+   files listed in this chapter, and Scrivener projects. Although putting other
+   types of files into this folder will not harm anything, given how Drop-
+   box syncing works, everything will be downloaded to your mobile device,
+   even if it does not show up in the project list. If many files are placed here,
+   it could significantly slow down sync, or even eat up your device’s storage
+   space or bandwidth allocation.
+
+  The basic ideas to employ here are:
+
+  — Projects you create and sync to Dropbox, from your devices, will appear
+    in the designated folder on your computer where they can be opened and
+    worked with like any other project.
+  — Projects you place into that folder can be synced and edited on mobile,
+    even if you leave it open on your computer.
+
+   If that’s all you want to do, you could probably stop reading this chapter right
+now! But before doing so, I’d urge you read up on Avoiding and Resolving Con-
+flicts (section 14.2.4).
+
+Using Multiple Sync Folders
+Although we do not recommend switching sync folders frequently (you will need
+to download everything all over again every time you switch), it is possible to do
+so. This may be useful if you’re collaborating with another person over Dropbox,
+or if you use your device for personal writings as well as using a shared work
+folder, and wish to keep the two separate.
+
+   1. On your iOS device, return to the main project screen.
+   2. Tap the Edit button at the top of the project list (in the sidebar on an iPad).
+   3. Tap the • • • button at the bottom of the list.
+   4. Select “Dropbox Settings”. At this point you would select your preferred
+      sync folder.
+
+                                                                                     298
+                                             14.2. Working with Scrivener for iOS
+
+
+  At the conclusion of this process, you can choose to keep the projects you’ve
+been syncing (they will be moved to the device-only area of the project list), or
+to remove the local copies. Neither option will touch Dropbox. If you keep
+local copies and later switch back to the first sync folder you may end up with
+duplicate copies of the projects, those stored on your device and those in the
+sync area. It will be up to you to sort out which to keep.
+
+Storing Settings and Fonts on Dropbox
+You can store iOS compile appearance settings and custom fonts in your Drop-
+box folder, making them automatically available to every device hooked up to
+this sync folder. Whenever changing or adding files, you should sync your de-
+vices with the server, and to play it safe, restart Scrivener for iOS.
+
+  — Fonts: instead of having to install your favourite writing fonts on each de-
+    vice, you can place them within a “Fonts” subfolder (create one if neces-
+    sary) of your main Dropbox sync folder. E.g. if you are using the default
+    sync folder location, you would place your fonts into:
+      C:\Users\AccountName\Dropbox\Apps\Scrivener\Fonts
+      Scrivener can read TrueType (TTF) and OpenType (OTF) font formats. For
+      alternative methods of installing fonts that do not require a computer, re-
+      fer to the iOS Scrivener tutorial, or install fonts globally in iOS.
+  — Compile Appearance: or “Scomp” files, are used to style your document
+    when compiling from iOS. You can save custom Scomp files directly to
+    Dropbox from within the app, and of course you can write and save your
+    own Scomp files from a computer using a plain-text editor. These files
+    should be placed in a subfolder called “Compile” (if you save them from
+    within the app, it will create this folder for you). For more information on
+    Scomp files, refer to the in-app help, from the Appearance Editor screen.
+
+
+14.2.3 Managing Projects Directly
+Dropbox may not work for all of your projects, or you might be unable or un-
+willing to use it at all. No fear! You still get all of the goodies, but you’ll need to
+handle copying projects to and fro. These alternative methods have grown more
+mature and well-supported over the years, with some techniques now being so
+seamless that you may even find them to be preferable to the above.
+
+Apple Utilities and File Managers
+The most straight-forward option will be with the integration Apple provides for
+managing files on your device directly, using its “File Sharing” feature to access
+documents stored by the various apps on your device. With Scrivener’s docu-
+ment list loaded, you can copy projects directly onto the device over WiFi (if
+
+
+                                                                                  299
+                                               14.2. Working with Scrivener for iOS
+
+
+enabled in your device options) or USB cable, and copy updated projects down
+to your computer in the same way, with drag and drop to or from File Explorer.
+   For precise instructions on how to use Apple’s file management utilities, refer
+to their latest online documentation.
+   Third-party iOS device managers may provide more features as well as better
+ways of working with files. If you don’t like how Apple’s tools work, there are
+plenty of choices on both platforms.
+
+    Do not merge project folders
+    Some file management tools may merge a project folder when copying
+    a project into a location where a project by that same name already ex-
+    ists. Merging should never be done! If necessary, delete or rename the
+    older version of the project first, and then copy the updated version of
+    the project so that it creates the project from scratch.
+
+
+Using Files App to Manage Projects
+Other cloud services can be used, rather than managing the files of your device
+directly, albeit still in a manual fashion (more like copying than syncing), as a
+way of transferring projects on or off the device. Most sync services these days
+fully support Apple’s Files app, right on the device, which means you can freely
+copy projects from their sync areas into Scrivener’s document folder, and vice
+versa, even while away from your computer. This includes the use of mainstream
+providers such as OneDrive and iCloud Drive, all of which can be connected to
+your Mac or PC as well.
+  Some sync services support drag and drop of full folders into Scrivener’s stor-
+age area in the Files app, and so it is a simple matter of opening two Files views
+and dragging projects to or from the cloud into Scrivener’s storage folder on the
+device. If you find your provider does not support drag and drop transfer,2 then
+using Files to create and copy .zip files around and to decompress them, will al-
+ways work safely.
+
+Export as Zip
+As for getting projects off of the device, you can export them as Zip files:
+
+    1. On the device, from Scrivener’s main project screen, tap the Edit button.
+    2. Select the project you wish to send.
+    3. Tap the Share icon at the bottom of the project list.
+
+2
+ Projects that refuse to open after you copy them is the most common symptom, meaning the
+contents of the project folder were not copied.
+
+
+
+                                                                                    300
+                                            14.2. Working with Scrivener for iOS
+
+
+   At this point a number of services are available to you, depending upon what
+you have installed on your device. At a basic level you’ll be able to email a copy
+of the project, or copy the zip to Files. Other programs may allow you to store
+the .zip file locally, as a backup, or sync it to another cloud service.
+
+
+14.2.4 Updating Projects with Mobile Changes
+When you open a project that either originated from iOS or has been modified
+by it, loading the project may take a little longer than it ordinarily would. This is
+because Scrivener is going through all of the changes that have been made in both
+directions, and doing its best to build a cohesive merged copy out of the two. At
+that point, all necessary changes will be made to the project, potentially building
+out dozens of binder items and populating them with thousands of words of text,
+if you’ve been on the road for a while.
+   Changed documents will be listed in a yellow Collection (section 10.2) called
+“Synced Documents”. The previous contents of this collection (in subsequent
+syncs) will be replaced with the listed items from the latest sync, so if you plan
+to review them, do so before the next sync, or change the name of this collection
+so that Scrivener will create a new one instead of replacing it.
+   If the project was already open on your computer, when you switch back to the
+window, Scrivener will check for mobile changes and alert you if it needs to sync
+before you can safely continue. Use this opportunity to double-check and make
+sure your cloud service isn’t actively still downloading your changes. Once it
+has stopped working, click the button to update your project. It will need to
+reload in order to do so, and by default a backup will be created before syncing.
+   Scrivener won’t constantly check the disk to see if there are mobile changes
+available, it only does so when loading or activating the project window. To force
+it to check from an active project window you can add the mobile sync button
+to your main application toolbar and click it, or use the File ▸ Sync ▸ with Mobile
+Devices menu command. You can also try using this if for any reason you think
+sync should be happening but isn’t. If no mobile changes are found, nothing will
+be done, so it is safe to try.
+
+Avoiding and Resolving Conflicts
+Although we’d like to say that sync is magic and never gets anything wrong (and
+that we as humans never misuse it!), reality often sticks a wrench in the works.
+  The good news is that a conflict is typically nothing to be too concerned with.
+All it means is that particular aspects of the project were edited in two or more
+locations without keeping them in sync, and in such a way that neither your
+sync provider nor Scrivener can figure out which is best. For example if you step
+away from your computer, sync properly to your iPhone and make a change to a
+particular binder item, but forget to save your changes from the phone back to
+Dropbox, then editing that same text file on the computer later on would mean
+
+
+
+                                                                                 301
+                                               14.2. Working with Scrivener for iOS
+
+
+both machines might now have valuable work you wouldn’t want to lose, once
+they finally do sync—and that is by definition a conflict.
+   If any significant conflicts were found, a second copy of each item that is con-
+flicted will be created in the binder, organised into a folder called “Conflicts”.
+The original binder title of the conflicted item will be used for each, with “(Con-
+flicted Copy)” appended to their titles. Additionally a document bookmark (sec-
+tion 10.3) will be added to the conflicted copy pointing back to the original ver-
+sion in the binder. To view the two copies side-by-side for comparison, right-
+click on the bookmark to the original and select “Open in Other Editor”, or “View
+on Current Editor’s Copyholder”.3
+   Of course the best way to handle conflicts is to avoid getting into the situation
+in the first place! These simple rules should help you stay out of trouble:
+
+    — Remember to sync your device when you’re done using it. Think of it like
+      saving, the more you do it, the safer you’ll be.
+    — Consider setting the iOS version to automatically sync when opening and
+      closing projects.
+    — Pay attention to the Dropbox status on your computer, and never open
+      the project or confirm updating it (if it is already open on the desktop), on
+      any device, unless your computer has finished uploading or downloading
+      all changes to Dropbox.
+
+   For additional protection against conflicts, consider enabling the “Take snap-
+shots of updated documents” checkbox, in the Sharing: Sync option tab. Be
+aware this option will, over a long period of time, generate quite a number
+of snapshots, which can slow down sync—the Snapshots Manager (subsec-
+tion 15.8.4) can help in clearing out old unwanted sync snapshots.
+   If for whatever reason you find you cannot eliminate conflicts and it is getting
+in the way of your productivity, consider switching to using one of the alternative
+methods (subsection 14.2.3) instead, which are generally much safer and more
+difficult to make mistakes with.
+
+
+14.2.5 Working with Fonts
+When working across multiple platforms, fonts can sometimes be a problem (yes,
+even between iOS and macOS), resulting in the font assignment being lost, and
+typically dropping to an editor default, such as Helvetica or Arial. The prob-
+lem originates with how each platform refers to fonts differently, and small vari-
+ances such as these can cause one platform to not understand how another has
+assigned fonts to your text, even if the exact same font is installed everywhere.
+
+3
+  More options for quickly loading bookmarks are referenced in Opening and Using Bookmarks
+(subsection 13.4.2).
+
+
+                                                                                      302
+                                                        14.3. Synchronised Folders
+
+
+  In short it’s not a serious problem, you can select the text and apply the font
+again subsection 15.7.4, but avoidance is a better solution. You may find using
+another font for writing is more efficient, even if it isn’t your first choice. Fortu-
+nately the world is full of very similar looking fonts.
+  Keep in mind that Scrivener can compile using a different font than what you
+write with. The font you use while writing with can be treated more as a personal
+preference in many cases.
+
+   Linux Support
+   Since the Linux version was discontinued prior to the iOS version being
+   released, it will be unable to sync projects that have been edited on the
+   go. If you wish to continue using it, we recommend running Scrivener 1.x
+   for Windows under something like WINE or a virtual machine, to sync
+   the changes in. Once the changes have been synced, the project can be
+   edited with the Linux version.
+
+
+14.2.6 Options
+There are a few options pertaining to how syncing is handled. You can read more
+about them in their respective appendix entries:
+
+  — Sharing: Sync: Mobile Sync (subsection B.8.3): settings to enable extra in-
+    formation and record-keeping when syncing.
+  — Backup (section B.9): whether a backup should be created directly prior to
+    merging mobile edits into the main project.
+
+                                                              Return to chapter ⤴
+
+
+14.3 Synchronised Folders
+You may at times need to share bits of text from your document in such a way
+that other people can edit them using traditional text editors or word processors,
+or even as a way of making your text available while on the go.
+
+   Upgrading from Scrivener 1
+   If you’ve been using the File ▸ Sync ▸ with External Folder… feature in prior
+   versions of Scrivener, you should be aware that necessary internal
+   changes have made it so that an existing sync folder will need to be re-
+   built from scratch with the new version. The best result will be to sync
+   the project one last time to this folder so that it is fully up to date, before
+   upgrading, and then delete the folder and create a new one after you’ve
+   upgraded the project in the new version of Scrivener.
+
+
+                                                                                     303
+                                                       14.3. Synchronised Folders
+
+
+  This technique uses simple files and folders on your disk, making the system
+well-suited for a wide variety of uses, such as the following common examples:
+
+  — Integrating with various cloud sharing services such as Dropbox, Spi-
+    derOak, OneDrive, and so forth. It will be easy to share your work with
+    collaborators, agents, or editors, and later read back any changes they have
+    made directly into your project.
+  — Similarly, you could access these files from cloud folders using mobile de-
+    vices and later automatically merge those edits with your main project
+    when you get home.
+  — Any method of sharing the folder with someone, such as zipping and
+    emailing/FTP/file, sharing will work as the system is based on modifica-
+    tion dates.
+
+   The folder sync feature will create, maintain and synchronise a special folder
+on your disk. This will be used to keep select text of a project up to date if (but
+not when) changes are made to the contents of this folder. If you have ever used
+software that featured a “watch folder” or inbox, where you could edit and cre-
+ate documents in a special folder and have the software import or update itself
+accordingly at a later time, then you’ll be at home with this feature.
+   Since this type of feature is somewhat unique, we have found some assump-
+tions are made of it that are worth correcting right at the top. This feature is not
+meant to be used, under any circumstances, for the following purposes:
+
+  — To sync with the iOS version of Scrivener: there is no need to use this fea-
+    ture with our iOS app. It can open and edit full projects on its own. Refer
+    to Working with Scrivener for iOS (section 14.2) for further information.
+    This feature merely generates some text files in a folder for you, a Scrivener
+    project consists of much more than a few text files; the iOS version needs
+    all of that to successfully edit your work on the go.
+  — Keeping two versions of the same project in sync: do not try to sync two
+    different projects with the same folder. Bad things could happen, and all
+    of Scrivener’s warnings when you attempt to do should be heeded. This is
+    a broad statement; a good rule of thumb is that if you have more than one
+    copy of the project (such as a cloud synced copy, which exists on multiple
+    devices independently) then it is a different version of the same project.
+    For safest results, only sync with your external folder using one master
+    copy of the project.
+
+
+14.3.1 Setting Up Folder Sync
+To set up a new sync folder for your project, use the File ▸ Sync ▸ with External
+Folder… menu command.
+
+
+                                                                                304
+                                                         14.3. Synchronised Folders
+
+
+
+
+                Figure 14.1   Sync Folder panel with default settings.
+
+
+Preparing the Folder
+The first thing you will need to do is select a new, empty folder on your disk.
+Scrivener will manage all aspects of this folder from this point forward; it should
+be used for no other purpose than to edit the files within it, or to create your own
+files into the existing folder structure. Click the Choose… button, and point the
+file browser at the location where you would like to host the sync folder. Keep in
+mind that the folder you create will need to be dedicated to this Scrivener project,
+and so must be initially empty. Never select a folder which has already been
+used to synchronise another Scrivener project! In this case, “another project”
+can very well mean the same exact same project you copied to another computer
+but haven’t kept in sync using some other mechanism such as a cloud service or
+mirroring tool.
+
+Options
+Sync the contents of the Draft folder Enabled by default, the contents of the
+      “Draft” folder will be kept in sync with the folder when this is on.
+
+Sync all other text documents in the project Keep the rest of the project’s text
+
+                                                                                305
+                                                      14.3. Synchronised Folders
+
+
+      files (only) up-to-date with this option. This also activates the settings in
+      the “Import” section, below.
+
+Sync only documents in collection The project must have at least one collec-
+      tion (other than Search Results or automatically created collections) in or-
+      der to enable the option. When enabled, only documents that are con-
+      tained in the collection specified to the right will be kept in sync with the
+      folder.
+      This acts as a filter for the two sync source options above. For instance, if
+      “Sync the contents of the Draft folder” is selected but “Sync all other text
+      documents” is not, then with this option selected, only documents that are
+      contained in the draft folder and in the specified collection will be synced,
+      but if documents within the collection are not in the draft folder they will
+      not be synced.
+
+Prefix file names with numbers Enabled by default. Causes the names of the
+      files in the sync folder to be prefixed with a numeral corresponding to its
+      position in the binder. Disabling this will remove the number and the con-
+      tents of the folder will be subject to ordinary alphanumeric sorting based
+      on the names of your binder items.
+
+Take snapshots of affected documents before updating Enabled by default.
+      Automatically generate snapshots for all documents requiring an update.
+      If you prefer to handle snapshots manually, you may want to turn this off.
+      However be aware that leaving it on is the safest option, particularly when
+      both items have been inadvertently edited separately. Since Scrivener can-
+      not determine which is meant to be the most up-to-date other than by the
+      file modification date, having snapshots make it a simple matter to review
+      the specific changes and decide how to manage conflicts should they oc-
+      cur.
+      For more information, refer to Working with Updated Documents (sec-
+      tion 14.3.2), below.
+
+Check external folder on project open and automatically sync on close
+     Enabled by default. When the project is opened, it will briefly scan the con-
+     tents of the external sync folder and alert you if there are any changes de-
+     tected, offering you the ability to update your project immediately. When
+     closing, the same check will be performed. This option will ensure that
+     the sync folder and the project remain up to date, although they will differ
+     while editing, until you run sync again.
+
+Import
+This section will be disabled unless the Sync all other text documents in the
+project option is enabled, above. The setting determines where new files you’ve
+
+
+                                                                               306
+                                                       14.3. Synchronised Folders
+
+
+created within the “Notes” subfolder will be imported into the binder (the “Re-
+search” folder by default).
+  The dropdown will only display eligible folders and file groups, unless you dis-
+able the Only show containers in destination list option, below the dropdown.
+
+Format
+In the final section of the sync folder window, we can set up how the files them-
+selves will be created and read from the sync subfolders. You could set the draft
+folder to use Fountain format for screenplays, but leave your research and notes
+as RTF files, for example.
+   There are four file formats available, and depending on your intended purpose,
+selecting the right option will be important:
+  — Plain text (TXT): The resulting files will be standard, plain-text files in the
+    UTF-8 encoding. If they are edited outside of Scrivener, then all custom
+    formatting in paragraphs that have been edited will be lost upon syncing.
+    If formatting is as important to your workflow as synchronising, then you
+    will either need to find a solution that can take advantage of RTF files, or
+    save formatting for the final stages in your writing project.
+      When plain text is selected, a second field will appear where you can mod-
+      ify the file extension used (with “txt” being the default). This can be handy
+      if you write using a system like Markdown and wish to have the sync files
+      recognised as such by other editors.
+  — Rich Text (RTF): This provides the cleanest transfer of information for rich
+    text users. Most formatting will be retained, especially when used in con-
+    junction with a word processor that handles all of Scrivener’s RTF features,
+    such as Word or LibreOffice. This is the best option for collaborating with
+    other individuals who do not have access to Scrivener, or for working in a
+    multi-platform setting yourself.
+  — Final Draft (FDX): Those working with Final Draft, version 8 or greater, and
+    scriptwriting mode should use this setting, as it will retain all special script
+    formatting.
+  — Fountain (.fountain): For use with screenplays, this popular plain-text
+    markup format can be edited anywhere plain-text files can be edited, and
+    so has a similar appeal to Markdown for its portability. For details on how
+    Fountain works, read more about Working with Fountain (section 19.5).
+Automatically convert plain text paragraph spacing Only applicable to plain-
+    text file types. Empty lines will be added between paragraphs to set them
+    apart from one another visually. These lines will be removed when you
+    sync the changes back in.
+      Keep this setting turned off if you require a certain standard, one way or
+      the other, and do not want Scrivener to change them. In particular, those
+
+                                                                                307
+                                                      14.3. Synchronised Folders
+
+
+      working with plain-text formats such as Markdown will require double-
+      spaced paragraphs even in Scrivener, and so will not want them to be re-
+      moved or altered in any fashion.
+
+
+   Saving changes without syncing
+   If you merely want to adjust your sync settings click the Save button. This
+   will store your settings without syncing and dismiss the dialogue box.
+
+   Additional settings that impact export and import can be found in the Sharing
+options tab, under the “Sync” tab (subsection B.8.3). If you prefer to work with
+inline annotations and footnotes, make sure the default settings in the “Import”
+tab have been changed, otherwise your RTF comments will all become inspector
+notes after a sync cycle.
+
+
+14.3.2 Usage
+With the initial settings now established you will need to sync once to have the
+software set up the necessary subfolder structure, and then populate these fold-
+ers with the text content of the files from the binder.
+
+First Run
+Once the “Sync” button is clicked, Scrivener will export a file for every item set
+to be synced. The feature will create one or more of the following three subdi-
+rectories within the folder to store the synced files:
+
+   1. Draft: stores documents contained inside the project’s Draft folder. New
+      files placed into this folder will be imported into the very bottom of the
+      draft folder in the binder when syncing them in.
+   2. Notes: stores text documents contained elsewhere throughout the project.
+      New files placed into this folder will be imported into the project using the
+      settings in the Import section of the pane.
+   3. Trashed Files: stores documents that had been synced but have since been
+      removed from Scrivener, or which had some sort of conflict. You should
+      occasionally review these files and trash them if they are no longer re-
+      quired.
+
+
+   Folders will appear as files
+   Since folders in Scrivener are capable of having text content, files will be
+   created for them in the sync folder. You can simply ignore these folder
+   files if you do not intend to put any text into them.
+
+
+                                                                                  308
+                                                        14.3. Synchronised Folders
+
+
+   If you intend to start editing these files immediately, it would be a good idea to
+close your Scrivener project at this point. While Scrivener will make scrupulous
+copies of everything it changes (unless you’ve disabled snapshots), it is best to
+work in an alternating pattern to reduce confusion between which file is the
+most up to date.
+   In a collaboration environment, it may not be possible to wait until the other
+person is finished. It is safe to work in both the project and the exported copies
+at once, so long as changed files are looked over after syncing. In most cases
+Scrivener will select the best option for you, but in cases where both you and
+your colleague have changed the same content in between syncs, you might need
+to resolve the differences yourself.
+
+Working with the Sync Folder
+This is the most open-ended part of the process, given that we’re working with
+regular old files and folders at this point. They can be edited using other soft-
+ware, shared with colleagues or your editor, posted to a cloud share, or even
+zipped up into an archive and sent via email. The important ingredients are the
+modification dates on the files, the file names themselves and their organisation
+into folders.
+
+   Can I change the names of the files?
+   It is very important to never change or remove the number enclosed in
+   brackets at the end of the file name. This number is what Scrivener uses
+   to link the file back to a specific item in the binder. That caveat aside,
+   changes made to the names of files on the disk will update respective
+   binder titles if possible. The prefix number, if applicable, will be ignored.
+
+  New files can be created into the sync folder if needed. They should be named
+on the disk however you would like them to be called in the binder, and placed
+into the “Draft” or “Notes” subfolders. Once synced, binder files will be created
+for each new file found in these folders, and on the disk the corresponding files
+will be renamed to fit in with the rest.
+
+Bringing Changes Back to the Project
+The default setting, Check external folder on project open and automatically
+sync on close, will keep the project and the disk up to date with each other auto-
+matically whenever you open the project or close it. Beyond this, there are three
+ways to ask the project to sync with its external folder immediately:
+
+  — The File ▸ Sync ▸ with External Folder Now menu command.
+  — Click on the optional “Folder Sync” button in the main toolbar (Fig-
+    ure 14.2).
+
+                                                                                   309
+                                                          14.3. Synchronised Folders
+
+
+
+
+    Figure 14.2   Add the “Folder Sync” button to the toolbar for one-click syncing.
+
+
+  — Bring up the folder sync settings (File ▸ Sync ▸ with External Folder) and click
+    the Sync button.
+
+   The menu command and toolbar button will be disabled until you first set
+up sync settings and run sync at least once, or if Scrivener detects that the sync
+folder has become damaged or moved.
+
+Using an external folder as an inbox
+In addition to working with files that already exist in your binder, you can use
+this feature to collect notes while you are away from Scrivener, and for some that
+might be all they wish to use this feature for. If you intend to use this feature only
+as an inbox, the following setup should work well:
+
+   1. First, create a collection in your project, which will by and large be kept
+      empty (subsection 10.2.2). You may also wish to create a folder in the
+      binder that will serve as an inbox. We even provide a custom icon for such
+      a purpose.
+   2. Open File ▸ Sync ▸ with External Folder…, and set sync to work with “all other
+      text documents” rather than the draft folder.
+   3. Enable the Sync only documents in collection… setting, and select the
+      collection you created in step 1.
+   4. If you created an “inbox” folder, designate it with the Import new non-
+      Draft items into… setting.
+
+  The rest of the settings are up to you. When the project runs sync, it will
+import the new files you’ve created, and it will add them to the collection you
+set up in step 3. Thus they will continue syncing until you remove them from
+the collection.
+
+Working with Updated Documents
+The contents of the “Updated Documents” collection list will stick around un-
+til sync updates it in the future. So if you don’t wish to go through everything
+immediately, it is safe to close this list and return to it at a later time with the
+Navigate ▸ Collections ▸ Updated Documents menu command. Here are a few ways
+to preserve that list indefinitely:
+
+
+
+                                                                                       310
+                                                         14.3. Synchronised Folders
+
+
+   1. Change the name of the collection: Scrivener will only refresh the list on
+      sync for the collection named “Updated Documents”. If you’ve changed
+      the name to something else it will create a new collection for the next sync.
+      (To rename a collection, use the View ▸ Collections menu command if nec-
+      essary, and then double-click on the “Updated Documents” title in the col-
+      lection tab list, revise the text and press Enter to confirm the changes.)
+   2. Copy the list to another collection: to duplicate the current list, select all of
+      the entries within it and then use the Documents ▸ Add to Collection ▸ New
+      Collection menu command. You can also drag items from one collection to
+      another when the collection tabs are shown, appending them to the end
+      of the list in the tab you dropped them on.
+   3. Bookmark the items: if you keep revision notes as a separate file for each
+      major revision, you could bookmark the listed items for future use; for
+      details on how to do so, refer to Cloning and Backing Up Collections (sec-
+      tion 10.2.2).
+
+Disabling Synchronisation
+To sever the connection between a project and its sync folder, click the Clear
+button in the setup screen, alongside the area where you would choose where
+the sync folder resides.
+  The settings panel for syncing will be converted to a Save button. Click this to
+confirm your changes and dismiss the dialogue.
+  Additionally, removing the sync folder from your drive, moving it to another
+location, or changing its name will automatically cancel synchronisation the
+next time synchronisation is attempted.
+
+   Using a sync folder with a project on the cloud
+   If you intend to use a sync folder while also keeping the project synced be-
+   tween multiple machines, you may note that whenever you switch com-
+   puters the sync folder will be cleared and you will have to manually link
+   it back up. This can be avoided by keeping the path to the sync folder
+   identical on all machines (which is generally not possible between Mac
+   and PC).
+
+
+14.3.3 Tips for Working with Synced Folders
+Here are a few guidelines that should be followed to prevent problems in ev-
+eryday use. If you are using this feature in conjunction with another author or
+editor, make sure to communicate these ground rules with them where relevant:
+
+  — Alternate between external files and the project. This is a rule of thumb, not a
+    strict rule. Scrivener reads the modification date of each file, and uses the
+
+                                                                                   311
+                                                       14.3. Synchronised Folders
+
+
+     latest one to determine which should be the binder copy. So by extension,
+     if each person is careful to work in different areas of the project, conflicts
+     can be avoided. Use of the collection filter to only provide parts of the
+     project they should work on, could help.
+  — Never try to sync one project’s folder with another. Even if those two
+    projects originally came from the same identical project, over time there
+    will be differences in each project that you cannot see, and these differ-
+    ences will lead to confusing results at best, and a loss of data at worst. A
+    sync folder is meant to allow you to work without Scrivener for a while,
+    and then come back later and update your project with those changes.
+  — Disable automatic sync on open and close before duplicating the project in
+    Finder. If you create a duplicate from within Scrivener (using the backup
+    features, or File ▸ Save As…), you do not need to worry about this as Scriv-
+    ener will clean up any automated settings for you. However if you intend
+    to duplicate the project outside of Scrivener using File Explorer, make sure
+    to disable this option first, otherwise they will both end up using the same
+    folder automatically, and this can lead to damaging your project if you con-
+    tinue working in both projects. Once you’ve created the duplicate, it is safe
+    to turn it back on in the original project, provided you either leave auto-
+    matic syncing off in the new project, or point it at another folder.
+  — When working from multiple computers sharing the same sync folder, always
+    make sure your project file is the most current. It is perfectly safe to use the
+    same project to sync to a shared folder from multiple computers provided
+    you are always using the most recent version of the project and are not
+    trying to bend the feature to sync two different versions of the project (see
+    above).
+  — Session target goals will include synced changes. When updating project files
+    with external edits, the session target will be incremented by the amount
+    of text that has been added. If you wish to keep track of your session target
+    separately, you might wish to reset the counter after updating your project.
+
+Managing Automatic Snapshots
+When Scrivener creates snapshots it will use standard naming conventions. If
+Scrivener makes a mistake and syncs text in the wrong direction these snapshots
+can be used to restore that text where needed:
+
+  — “Pre-Sync External File Version”: when the copy on the disk is scheduled
+    to be updated by revisions from the project, this snapshot will contain the
+    contents on the disk prior to doing so.
+  — “Pre-External File Sync Overwrite”: this snapshot records the state of the
+    text from the binder item before the disk was used to update that text.
+
+
+                                                                                312
+                                                      14.3. Synchronised Folders
+
+
+Getting Rid of Old Snapshots
+You can use the Snapshots Manager (subsection 15.8.4) to periodically purge
+these automatically generated snapshots out of the project once you are done
+with them:
+
+   1. Use the Documents ▸ Snapshots ▸ Show Snapshots Manager menu command.
+   2. Search for “Pre-Sync” or “Pre-External” in the upper left hand corner of the
+      snapshot manager.
+   3. Follow the provided instructions for deleting snapshots with the manager
+      (section 15.8.4).
+
+Limitations
+There are a few general limitations that you should be aware of:
+
+  — This is a content based tool. It exports files with the text content of the
+    binder items you select for syncing. Only the main text area will be ex-
+    ported, no metadata such as notes, synopsis, keywords and so forth will be
+    included.
+  — In extension of that concept, this is not a tool for implementing binder-
+    level changes. The sync folder creates a flat list of files containing the con-
+    tent of those items, from wherever they may be located within the project.
+    Creating folders in the sync folder area or moving files around within it
+    will at best have no effect, and at worst break the sync.
+  — Since the system uses file modification dates to determine which copies
+    need to be updated in the project binder, any tools that you use that change
+    those dates without actually editing the file, might produce unintended re-
+    sults. This will rarely happen, as most tools respect file modification dates
+    and will not change them unless the file itself has changed.
+
+Rich Text Limitations
+When using the RTF sync format, you can expect zero to minimal loss of for-
+matting when used in conjunction with a good word processor. There are a few
+features in Scrivener that have no comparison in RTF and will be lost when edit-
+ing the file:
+
+  — Inline annotation and comment colour cannot be restored from external
+    files. If you use sequential annotations separated only by colour, it would
+    be a good idea to move them so that they have a word or two in between
+    them, or separate them by putting them on different lines.
+  — Expect the loss of some features when using RTF editors that do not fully
+    support the RTF specifications, such as WordPad and similar. Footnotes,
+
+                                                                                313
+                                                      14.3. Synchronised Folders
+
+
+      comments, lists, images, and tables are the most common items which
+      have limited to no support. Using fully-featured word processors with
+      good RTF support, such as Word or LibreOffice will help you avoid this,
+      and even be quite useful as comments can be used to aid in the collabora-
+      tion process.
+  — Linked images and MathType equations will become embedded graphics
+    on export, which in the latter case means the equations will no longer be
+    editable.
+  — If the only changes made to a file were formatting, they will not be included
+    in the sync. This is down to a technical limitation of how these files must
+    be scanned and processed by their text content. If you have pure format-
+    ting changes you’d like to make to a file, just add a temporary word at the
+    top of the file that you can remove later.
+
+Plain Text Limitations
+Since it is impossible to convey formatting in plain-text without some sort of
+visible mark-up, Scrivener takes steps to protect as much of your formatting as
+it possibly can by only swapping in edited paragraphs rather than the entire file.
+
+  — To avoid having inline notation become confused with standard text,
+    Scrivener will export inline annotations by wrapping them in double-
+    parentheses “((” and ”))”. Inline footnotes will be similarly wrapped in curly
+    braces “{{” and ”}}”. These work in both directions. If you type them into a
+    paragraph using your text editor, they will be converted to their respective
+    type of notation upon syncing.
+  — Inspector comments and footnotes will not be exported. If the retention
+    of this information is important to you, it is recommended you use inline
+    notation with plain-text. You can easily convert your notes to inline with
+    tools found in the Edit ▸ Transformations submenu.
+  — Embedded images will be stripped from documents that have been edited
+    outside of Scrivener.
+
+
+14.3.4 Folder Sync Settings
+Most of the settings pertinent to this feature are project-specific, and thus lo-
+cated within the panel brought up by the File ▸ Sync ▸ with External Folder… menu
+command.
+   There are also global options available that impact the basic functioning of
+this tool. They are found within the Sharing options tab, under the “Sync” tab
+(subsection B.8.3). Whether to import comments and inline or inspector notes
+is governed by the settings in the “Import” tab.
+
+                                                           Return to chapter ⤴
+
+                                                                              314
+
