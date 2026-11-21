@@ -965,3 +965,35 @@ html body .backdrop .modal.document-formatting-dialog { width: min(var(--setting
 details.set-acc { border: 1px solid var(--line, #ddd4); border-radius: var(--radius); padding: var(--sp-1) var(--sp-2); margin: var(--sp-2) 0; }
 details.set-acc > summary { cursor: pointer; font-weight: 600; font-size: var(--font-ui); color: var(--muted); list-style-position: inside; }
 details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1); }
+
+/* Simple Repairs: deterministic/local surface, intentionally separate from AI and Inspector. */
+.simple-repairs-window { width: min(760px, calc(100vw - 32px)); max-height: min(720px, calc(100vh - 32px)); display: flex; flex-direction: column; gap: var(--sp-3); overflow: hidden; }
+.simple-repairs-window > h2 { margin: 0; }
+.simple-repairs-subtitle { margin: -8px 0 0; color: var(--muted); font-size: var(--font-ui); }
+.simple-repairs-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); padding: var(--sp-2); background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--radius); }
+.simple-repairs-summary strong { color: var(--text); }
+.simple-repairs-summary .severity { color: var(--muted); }
+.simple-repairs-list { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: var(--sp-2); }
+.simple-repair-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-2); align-items: start; padding: var(--sp-2); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+.simple-repair-card input[type=checkbox] { margin-top: 3px; }
+.simple-repair-card .repair-message { font-weight: 600; }
+.simple-repair-card .repair-detail { color: var(--muted); font-size: var(--font-ui); margin-top: 2px; }
+.simple-repair-card .repair-badge { display: inline-block; margin-left: var(--sp-2); padding: 1px 5px; border-radius: 999px; font-size: var(--font-ui-sm); background: var(--panel); color: var(--muted); }
+.simple-repairs-empty { padding: var(--sp-3); border: 1px dashed var(--line); border-radius: var(--radius); color: var(--muted); text-align: center; }
+.simple-repairs-window .actions { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-2); }
+.simple-repairs-window .actions .action-group { display: flex; gap: var(--sp-2); margin-left: auto; }
+@media (max-width: 640px) { .simple-repairs-window { width: calc(100vw - 16px); max-height: calc(100vh - 16px); } .simple-repairs-window .actions .action-group { margin-left: 0; width: 100%; } }
+.simple-repairs-backdrop { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: var(--window-gutter); background: rgba(30, 27, 23, .28); }
+.simple-repairs-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
+.simple-repairs-header h2 { margin: 0; }
+.surface-kicker { margin: 0 0 var(--sp-1); color: var(--accent); font-size: var(--font-ui-sm); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.simple-repairs-body { min-height: 0; overflow: auto; }
+.simple-repair-item { padding: var(--sp-2); border-bottom: 1px solid var(--line); }
+.simple-repair-item p { margin: var(--sp-1) 0; }
+.simple-repair-item code { display: block; white-space: pre-wrap; color: var(--muted); font-size: var(--font-ui-sm); }
+.simple-repair-meta { display: flex; gap: var(--sp-2); align-items: baseline; }
+.simple-repair-meta span { color: var(--muted); }
+.simple-repair-badge { display: inline-block; padding: 1px 5px; border-radius: 999px; font-size: var(--font-ui-sm); background: var(--accent-soft); color: var(--muted); }
+.simple-repairs-status { margin: 0; color: var(--ok); }
+.simple-repairs-actions { display: flex; align-items: center; gap: var(--sp-2); border-top: 1px solid var(--line); padding-top: var(--sp-2); }
+.empty-state { padding: var(--sp-3); border: 1px dashed var(--line); border-radius: var(--radius); color: var(--muted); text-align: center; }

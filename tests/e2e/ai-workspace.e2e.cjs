@@ -10,18 +10,13 @@ const createHarness = require('./full-app-harness.cjs');
   const H = await createHarness('ai-workspace');
   const enableAi = async () => H.settingsFixture({ aiEnabled: true, aiProvider: 'ollama' });
   const openWindow = async () => {
-    await H.command('irep');
-    await H.p.waitForSelector('.ai-workspace, .side-ai', { timeout: 10000 });
-    // aiPanelMode persistă în starea UI salvată: dacă asistentul a apărut andocat, îl desandochiem.
-    if (await sideUp().count()) {
-      await sideUp().getByRole('button', { name: 'Deschide ca fereastră' }).click();
-      await H.p.waitForSelector('.ai-workspace', { timeout: 8000 });
-    }
+    if (await H.p.locator('.ai-workspace').isVisible().catch(() => false)) return;
+    await H.command('ai');
+    await H.p.waitForSelector('.ai-workspace', { timeout: 10000 });
     // I-REP deschide pe tab-ul Editorial: trecem pe „Asistent" pentru contextul cărții.
     await H.p.getByRole('tab', { name: 'Asistent', exact: true }).click().catch(() => {});
   };
   const windowUp = () => H.p.locator('.ai-workspace');
-  const sideUp = () => H.p.locator('.side .side-ai');
   const openContextFor = async (id) => {
     await H.row(id).click({ button: 'right' });
     // Meniul vizibil e .ctx-menu (position:fixed); wrapper-ul .ctx-menu-root are înălțime 0.
@@ -44,21 +39,18 @@ const createHarness = require('./full-app-harness.cjs');
     },
   });
 
-  H.test('ai-dock-undock', {
-    surface: 'AI window header → side panel',
-    control: 'dock / undock buttons',
+  H.test('ai-independent-from-inspector', {
+    surface: 'AI window independent surface',
+    control: 'separate window with no side-ai mount',
     initial: 'Floating AI window open',
     setup: async () => { await enableAi(); await openWindow(); },
-    expected: 'Dock moves the assistant into the right column; undock returns the floating window; never both',
+    expected: 'The AI window remains separate and Inspector is not used as its host',
     act: async () => {
-      await windowUp().getByRole('button', { name: 'Fixează în panoul lateral' }).click();
-      await H.wait(() => sideUp().isVisible(), 8000);
-      await sideUp().getByRole('button', { name: 'Deschide ca fereastră' }).click();
       await H.wait(() => windowUp().isVisible(), 8000);
     },
     verify: async () => {
       H.assert(await windowUp().isVisible(), 'Window did not return after undock');
-      H.assert(!(await sideUp().count()), 'Side panel still mounted while the window is open');
+      H.assert(!(await H.p.locator('.side-ai').count()), 'AI must not mount inside the side column');
     },
   });
 
@@ -71,10 +63,10 @@ const createHarness = require('./full-app-harness.cjs');
     act: async () => {
       await openContextFor('doc-a');
       await H.p.getByText('Capitolul: ', { exact: false }).first().click();
-      await H.p.waitForSelector('.side .side-ai', { timeout: 10000 });
+      await H.p.waitForSelector('.ai-workspace', { timeout: 10000 });
     },
     verify: async () => {
-      const s = sideUp();
+      const s = windowUp();
       const text = await s.textContent();
       H.assert(text.includes('Capitolul:'), 'Chapter scope label missing');
       H.assert(text.includes('sub-documentele'), 'Container note missing');
@@ -104,19 +96,19 @@ const createHarness = require('./full-app-harness.cjs');
     surface: 'project UI state',
     control: 'docked placement reload',
     initial: 'Assistant docked in the side panel',
-    setup: async () => { await enableAi(); await openWindow(); await windowUp().getByRole('button', { name: 'Fixează în panoul lateral' }).click(); await H.wait(() => sideUp().isVisible(), 8000); },
-    expected: 'After a reload the assistant opens docked again (same entry point, state remembered)',
+    setup: async () => { await enableAi(); await openWindow(); },
+    expected: 'After a reload the assistant remains a separate window surface',
     act: async () => {
       await H.p.reload();
       await H.p.waitForSelector('text=Proiect nou', { timeout: 15000 });
       await H.answer(H.dir);
       await H.p.getByRole('button', { name: /^Deschide un proiect/ }).first().click();
       await H.p.waitForSelector('.binder', { timeout: 10000 });
-      await H.command('irep');
+      await enableAi();
     },
     verify: async () => {
-      await H.wait(() => sideUp().isVisible(), 10000);
-      H.assert(!(await windowUp().count()), 'Window mounted although the docked mode was saved');
+      await H.wait(() => windowUp().isVisible(), 10000);
+      H.assert(!(await H.p.locator('.side-ai').count()), 'AI must not mount in the side column after reload');
     },
   });
 

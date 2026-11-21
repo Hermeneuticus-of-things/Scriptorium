@@ -14,8 +14,9 @@ import Outliner from './components/Outliner.jsx';
 import Inspector from './components/Inspector.jsx';
 import SnapshotManagerDialog from './components/SnapshotManagerDialog.jsx';
 import AiPanel from './components/AiPanel.jsx';
+import AiWorkspaceWindow from './components/AiWorkspaceWindow.jsx';
 import { buildEditorialContext } from './lib/editorialContext.js';
-import EditorialPanel from './components/EditorialPanel.jsx';
+import SimpleRepairsPanel from './components/SimpleRepairsPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
 import QuickRef from './components/QuickRef.jsx';
@@ -393,8 +394,8 @@ export default function App({ api: apiProp }) {
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
-  // AI placement (ADL §4.2, directivă autor 2026-11-10): fereastră flotantă SAU panou lateral mare;
-  // modul persistat în starea UI. aiScope = nivelul de lucru ales din meniul contextual.
+  // AI este o suprafață independentă de Inspector și de coloana laterală.
+  // aiScope = nivelul de lucru ales din meniul contextual.
   const [aiScope, setAiScope] = useState(null); // {nodeId, level: 'book'|'manuscript'|'chapter'|'section'|'selection'}
   // ADL §2: focus engine — per-window stacks, surface registration, Escape cascade.
   const focusEngine = useRef(createFocusEngine()).current;
@@ -501,8 +502,7 @@ export default function App({ api: apiProp }) {
     else if (focusEngine.top() === 'popover.service') focusEngine.pop('popover.service');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceResult]);
-  const [showEditorial, setShowEditorial] = useState(false);
-  const [editorialTabReq, setEditorialTabReq] = useState(null); // {tab, n}: AI › I-EDIT opens the panel on that tab
+  const [showSimpleRepairs, setShowSimpleRepairs] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [toast, setToast] = useState('');
   // Split / reference panes: the pane last clicked or typed in is marked active (green border, see
@@ -1172,8 +1172,8 @@ export default function App({ api: apiProp }) {
 
   // Remember UI state per project.
   useEffect(() => {
-    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder, paneLocks });
-  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder, paneLocks]);
+    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, showAi, splitId, copyholder, paneLocks });
+  }, [dir, selectedId, view, widths, showInspector, showAi, splitId, copyholder, paneLocks]);
 
   const saveProject = useCallback(
     (next) => {
@@ -1283,6 +1283,7 @@ export default function App({ api: apiProp }) {
       setView(ui.view || settingsRef.current?.defaultView || 'editor');
       if (ui.widths) setWidths(ui.widths);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
+      if (ui.showAi !== undefined) setShowAi(Boolean(ui.showAi));
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
       setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split) } : {});
       setSplitNav({ stack: [], index: -1 });
@@ -2239,7 +2240,7 @@ export default function App({ api: apiProp }) {
     let outlinerColumns;
     try { outlinerColumns = JSON.parse(localStorage.getItem(OUTLINER_COLUMNS_KEY) || 'null') || undefined; } catch { /* none */ }
     const board = selected && selected.children ? selected : selectedId ? findParent(project.tree, selectedId) : null;
-    return { view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
+    return { view, showInspector, showAi, showSimpleRepairs, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
   };
   const [layoutRev, setLayoutRev] = useState(0);
   const applyLayout = (l) => {
@@ -2255,7 +2256,7 @@ export default function App({ api: apiProp }) {
     setView(l.view || 'editor');
     setShowInspector(l.showInspector !== false);
     setShowAi(Boolean(l.showAi));
-    setShowEditorial(Boolean(l.showEditorial));
+    setShowSimpleRepairs(Boolean(l.showSimpleRepairs));
     setHideBinder(Boolean(l.hideBinder));
     if (l.widths) setWidths(l.widths);
     if (l.editorView) setEditorView(l.editorView);
@@ -3504,8 +3505,8 @@ export default function App({ api: apiProp }) {
     ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
     ['format', 'convertDefaultAll', tr('cmd.convertDefaultAll'), () => convertFormattingAll().catch(report), !project],
     ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
-    ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => { setShowEditorial((v) => !v); setShowAi(true); }],
-    ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setShowAi(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
+    ['tools', 'simpleRepairs', tr('cmd.simpleRepairs'), () => setShowSimpleRepairs((v) => !v)],
+    ['ai', 'iedit', tr('cmd.iedit'), () => openAiFor({ nodeId: activeId.current || selectedId, level: activeHandle()?.getSelectionText?.() ? 'selection' : 'section' }), !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
     ['ai', 'ai', tr('ui.aiWorkspace.title'), () => setShowAi((v) => !v), !aiEnabled],
     // Two separate AI doors (owner decision 2026-10-27): program AI (global) and project AI (open book).
@@ -4308,7 +4309,7 @@ export default function App({ api: apiProp }) {
         </section>
 
         {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
-        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir) || (showAi && aiEnabled && aiNode)) && selected && !composition && (
+        {(showInspector || (showResearch && dir)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
             <div className="side" style={{ width: widths.side }}>
@@ -4392,50 +4393,31 @@ export default function App({ api: apiProp }) {
                   onImportWeb={api.importWebPage ? importWebSource : undefined}
                 />
               )}
-              {false && null /* I-REP/I-EDIT mutat în fereastra AI (directivă autor): nu mai înghesuie Inspectorul */}
-              {showAi && aiEnabled && aiNode && (
-                <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
-                  <div className="side-ai-head">
-                    <strong>{tr('ui.aiWorkspace.title')}</strong>
-                    <div className="side-ai-actions">
-                      <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                  {(showEditorial && editorialNode) ? (
-                    <>
-                      <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
-                        <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
-                        <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
-                      </div>
-                      <EditorialPanel
-                        project={project}
-                        dir={dir}
-                        aiEnabled={aiEnabled}
-                        key={'ed-side-' + editorialNode.id}
-                        api={api}
-                        hasKey={settings.hasApiKey}
-                        aiLabel={settings.aiLabel}
-                        aiModel={settings.aiModel}
-                        profile={profileFor(project)}
-                        node={editorialNode}
-                        html={docs[editorialNode.id] || ''}
-                        chapter={chapterDocs}
-                        editorialTabReq={editorialTabReq}
-                        onError={report}
-                        onClose={() => { setShowEditorial(false); setEditorialTabReq(null); }}
-                      />
-                    </>
-                  ) : (
-                  <AiPanel {...aiPanelProps} />
-                  )}
-                </section>
-              )}
             </div>
           </>
         )}
       </div>
+
+      {showAi && aiEnabled && aiNode && (
+        <AiWorkspaceWindow
+          focusEngine={focusEngine}
+          onClose={() => setShowAi(false)}
+        >
+          <AiPanel {...aiPanelProps} />
+        </AiWorkspaceWindow>
+      )}
+      {showSimpleRepairs && editorialNode && (
+        <SimpleRepairsPanel
+          node={editorialNode}
+          html={docs[editorialNode.id] || ''}
+          profile={profileFor(project, settings)}
+          onApply={async (nextHtml) => {
+            setEditorHtml(editorialNode.id, nextHtml);
+            await writeDocNow(editorialNode.id, nextHtml);
+          }}
+          onClose={() => setShowSimpleRepairs(false)}
+        />
+      )}
 
       <DictationBar dict={dict} />
       <StatusBar

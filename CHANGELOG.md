@@ -1,5 +1,15 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.9 — 21 noiembrie 2026
+
+- Suprafață AI independentă, mare și mobilă, separată complet de Inspector.
+- Reparațiile deterministe au fost mutate într-o fereastră separată „Reparații simple”, fără AI.
+- Fluxurile AI folosesc aplicare și respingere explicite, cu contextul cărții vizibil.
+- Stiluri și traduceri română/engleză adăugate pentru noua suprafață.
+- E2E AI workspace: 5/5; regresii relevante: 40/40; build Vite validat.
+
+---
+
 ## 1.2.8 — 19 noiembrie 2026
 
 - Curățare de publicare: repository-ul, installerul și asseturile release nu includ proiecte de test, corpusuri private, rapoarte locale sau căi personale.
