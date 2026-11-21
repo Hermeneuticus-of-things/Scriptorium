@@ -203,6 +203,8 @@ const PRELOAD_COVERAGE = {
   listDictionaryWords: 'gui: dicționarul ortografic al lui Chromium',
   removeDictionaryWord: 'gui: dicționarul ortografic al lui Chromium',
   cancelAi: 'gui: AI',
+  instanceInfo: 'gui: identificarea instanței în Despre (local, nu prin MCP)',
+  onProjectInstanceConflict: 'gui: garda anti-instânțe dublă (IPC intern, nu prin MCP)',
   runAi: 'gui: AI (clientul MCP este AI-ul; editorial_round dă promptul rundei)',
   onAiDelta: 'gui: AI',
   testAi: 'gui: AI',
