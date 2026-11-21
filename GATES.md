@@ -34,13 +34,13 @@ Decizii de încadrare (audit complet în tests/adlTokens.test.js — allowlist c
   find-bar, comp-bar) primesc 24/28 — excepție documentată (context dens, țintă vecină).
 
 - [x] G1: Token-ele ADL există în `:root` (src/styles.css): --ctl-sm/md/lg, --icon-sm/md,
-  EVIDENCE: automatic-evidence=v1; definition-sha256=0dff0d85d88bc2285390619b587b9ad99331df0dddfc49b1c339b1eddb5687e6; exit=0; EXPECT=matched; output-sha256=8fe875b66cff3e8f27d72af25617e80db09042365dc93d3f0428bec54060a88e; output-bytes=10; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=0dff0d85d88bc2285390619b587b9ad99331df0dddfc49b1c339b1eddb5687e6; exit=0; EXPECT=matched; output-sha256=8fe875b66cff3e8f27d72af25617e80db09042365dc93d3f0428bec54060a88e; output-bytes=10; shell=C:\windows\system32\cmd.exe; cwd=<USER_HOME>\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
   --sp-1/2/3, --radius, --radius-lg, --font-ui-sm/--font-ui/--font-ui-md cu valorile scalei.
   CHECK: node -e "const s=require('fs').readFileSync('src/styles.css','utf8');const t=['--ctl-sm: 24px','--ctl-md: 28px','--ctl-lg: 32px','--icon-sm: 16px','--icon-md: 20px','--sp-1: 4px','--sp-2: 8px','--sp-3: 12px','--radius: 6px','--radius-lg: 8px','--font-ui-sm: 12px','--font-ui: 13px','--font-ui-md: 14px'];const miss=t.filter(x=>!s.includes(x));if(miss.length){console.error('MISSING '+miss.join(', '));process.exit(1)}console.log('TOKENS OK')"
   EXPECT: /TOKENS OK/
 
 - [x] G2: Testul de conformitate executabil (tests/adlTokens.test.js) codifică auditul: fără
-  EVIDENCE: automatic-evidence=v1; definition-sha256=ea47fabf2b386c026ffbece8f12027683f2ec84782b2da17cf28bfc61c432c52; exit=0; EXPECT=matched; output-sha256=d40927a91cc2b8e665156ca35058c314439f5f6cecae756f622fc10b1988cfaf; output-bytes=8806; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=ea47fabf2b386c026ffbece8f12027683f2ec84782b2da17cf28bfc61c432c52; exit=0; EXPECT=matched; output-sha256=d40927a91cc2b8e665156ca35058c314439f5f6cecae756f622fc10b1988cfaf; output-bytes=8806; shell=C:\windows\system32\cmd.exe; cwd=<USER_HOME>\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
   valori off-scale în styles.css în afara allowlist-ului documentat (heights/widths de
   control, gap, radius, font-size UI, iconițe) și fără `transition: all`.
   CHECK: npx vitest run tests/adlTokens.test.js --reporter=json
@@ -49,30 +49,31 @@ Decizii de încadrare (audit complet în tests/adlTokens.test.js — allowlist c
 - [x] G3: Fără regresii — întreaga suită vitest verde (4 skip preexistente rămân singurele pending).
   CHECK: npx vitest run --reporter=json
   EXPECT: /"numFailedTests":0,"numPendingTests":4/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=444d343f04e84f4242df4e5dec428820e0ed92c3adde6d13f329308b243f59d3; exit=0; EXPECT=matched; output-sha256=9e44d677882e809580f78b609d5a84911b6be75a71e4cc9ae645b727813c21c2; output-bytes=630997; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=444d343f04e84f4242df4e5dec428820e0ed92c3adde6d13f329308b243f59d3; exit=0; EXPECT=matched; output-sha256=9e44d677882e809580f78b609d5a84911b6be75a71e4cc9ae645b727813c21c2; output-bytes=630997; shell=C:\windows\system32\cmd.exe; cwd=<USER_HOME>\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
 
 - [x] G4: Build-ul de producție trece.
   CHECK: npx vite build
   EXPECT: /built in/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=202b6423274a1e776d6ddcc8d133917c5c706a45d1cd69c285f24b4a854abbd3; exit=0; EXPECT=matched; output-sha256=88a62467dd2ed44e175d9f4d57c556a67c70dc82c54f2367e409f9683e0c5fa2; output-bytes=868; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=202b6423274a1e776d6ddcc8d133917c5c706a45d1cd69c285f24b4a854abbd3; exit=0; EXPECT=matched; output-sha256=88a62467dd2ed44e175d9f4d57c556a67c70dc82c54f2367e409f9683e0c5fa2; output-bytes=868; shell=C:\windows\system32\cmd.exe; cwd=<USER_HOME>\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
 
 - [x] G5: E2E Electron rămâne verde.
-  CHECK: node -e "process.env.PLAYWRIGHT_PATH='C:/Users/Ionut/Documents/Scriptorium/node_modules/playwright/index.js'; require('./tests/e2e/electron.e2e.cjs');"
+  CHECK: node -e "process.env.PLAYWRIGHT_PATH='<USER_HOME>/Documents/Scriptorium/node_modules/playwright/index.js'; require('./tests/e2e/electron.e2e.cjs');"
   EXPECT: /E2E OK/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=e82f851dcf926cad47bf29548d46338ae00eb5cd68890f78d9ff4637ca3af995; exit=0; EXPECT=matched; output-sha256=8e9c6930dd9ffbc50f521f61c5778640a37461dec23b4ee8c6a2c04fa0a39273; output-bytes=802; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=e82f851dcf926cad47bf29548d46338ae00eb5cd68890f78d9ff4637ca3af995; exit=0; EXPECT=matched; output-sha256=8e9c6930dd9ffbc50f521f61c5778640a37461dec23b4ee8c6a2c04fa0a39273; output-bytes=802; shell=C:\windows\system32\cmd.exe; cwd=<USER_HOME>\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
 
 - [x] G6: Suita de flows (Electron) rămâne verde.
-  CHECK: node -e "process.env.PLAYWRIGHT_PATH='C:/Users/Ionut/Documents/Scriptorium/node_modules/playwright/index.js'; require('./tests/e2e/flows.e2e.cjs');"
+  CHECK: node -e "process.env.PLAYWRIGHT_PATH='<USER_HOME>/Documents/Scriptorium/node_modules/playwright/index.js'; require('./tests/e2e/flows.e2e.cjs');"
   EXPECT: /FLOWS OK/
-  EVIDENCE: automatic-evidence=v1; definition-sha256=b770413524aa15cf7fc568584eba8f1ba19b257a3df4e463793be1d0383edcb9; exit=0; EXPECT=matched; output-sha256=babcbb2cdbc6b4a5a51746879b23f8d6b051d08d5f52024c72bc7dc161cb9f8b; output-bytes=5992; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=b770413524aa15cf7fc568584eba8f1ba19b257a3df4e463793be1d0383edcb9; exit=0; EXPECT=matched; output-sha256=babcbb2cdbc6b4a5a51746879b23f8d6b051d08d5f52024c72bc7dc161cb9f8b; output-bytes=5992; shell=C:\windows\system32\cmd.exe; cwd=<USER_HOME>\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
 
 - [x] G7: Flows-urile browser sensibile la dimensiuni rămân verzi (topbar-layout: toolbar <58px
-  EVIDENCE: automatic-evidence=v1; definition-sha256=d84957158c65662ff8c51f08d67e557a8aa9a090878d0ca33725829306561929; exit=0; EXPECT=matched; output-sha256=abc2fb70522f32d709ba2219773e8ff889e64a28bdeb0a8cdb94a52f224ba3f9; output-bytes=136; shell=C:\windows\system32\cmd.exe; cwd=C:\Users\Ionut\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=d84957158c65662ff8c51f08d67e557a8aa9a090878d0ca33725829306561929; exit=0; EXPECT=matched; output-sha256=abc2fb70522f32d709ba2219773e8ff889e64a28bdeb0a8cdb94a52f224ba3f9; output-bytes=136; shell=C:\windows\system32\cmd.exe; cwd=<USER_HOME>\Documents\Scriptorium-wt-t9; path=a68386b800d3/59 entries
   + un rând + nimic tăiat; formatbar-binder-ui; dialogs-electron; keyboard-only: ținte vizibile;
   menu-viewport) pe `vite preview :4183`. Excepții documentate (PRE-EXISTENTE, măsurate la
   baseline cu git stash: „light-900" ȘI „dark-900 top bar is one row — 86.1875px" — tema
   classic își permite prin design bara pe 2 rânduri la ≤960px, scrivener-theme.css
   `[data-ui='classic'] .toolbar { flex-wrap: wrap }`; cu T9 măsoară 67px — îmbunătățit,
   tot pe 2 rânduri). Orice ALT FAIL = poarta căzută.
-  CHECK: bash "C:/Users/Ionut/AppData/Local/Temp/adl-t9-audit/run-browser-flows.sh"
+  CHECK: bash "<USER_HOME>/AppData/Local/Temp/adl-t9-audit/run-browser-flows.sh"
   EXPECT: /BROWSER FLOWS OK/
+

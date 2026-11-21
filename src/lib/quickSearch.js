@@ -45,7 +45,7 @@ export function handoffCriteria(query) {
 
 // Plain-text cache keyed by document id, invalidated by content: on a big book the
 // search runs on every keystroke, and re-parsing the whole book's HTML per keystroke
-// (2358 DOM parses on Karma) stalls the renderer. Only changed documents are re-parsed.
+// (thousands of DOM parses on a large book) stalls the renderer. Only changed documents are re-parsed.
 // The folded (case/diacritics-insensitive) form is cached too — folding a whole book
 // per keystroke costs as much as parsing it.
 const plainCache = new Map(); // id -> { src, plain, folded }
