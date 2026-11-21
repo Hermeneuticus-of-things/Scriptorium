@@ -1,0 +1,845 @@
+What’s New
+
+
+
+
+        E
+In This Section…
+        E.1        Compile Overhauled . . . . . . . . . . . . . . . . .          747
+               E.1.1      Separators by Type . . . . . . . . . . . . . . .       747
+               E.1.2      Front and Back Matter Locking . . . . . . . .          748
+               E.1.3      Preserve Formatting in Markdown Compile .              748
+               E.1.4      Print with Footnotes . . . . . . . . . . . . . .       749
+               E.1.5      Markdown to RTF Conversion . . . . . . . . .           749
+               E.1.6      Importing Legacy Compile Presets . . . . . .           749
+               E.1.7      Post-Processing Scripts . . . . . . . . . . . . .      749
+        E.2        Section Types, Page Breaks and As-Is . . . . . . . .          750
+        E.3        Stylesheets . . . . . . . . . . . . . . . . . . . . . . .     750
+               E.3.1      Converting Formatting Presets to Styles . . .          751
+               E.3.2      Preserve Formatting is Deprecated . . . . . .          751
+        E.4        Project Bookmarks . . . . . . . . . . . . . . . . . .         752
+        E.5        Writing History . . . . . . . . . . . . . . . . . . . .       753
+        E.6        Custom Metadata Overhauled . . . . . . . . . . . .            753
+        E.7        Snapshot Manager . . . . . . . . . . . . . . . . . . .        753
+        E.8        Enhanced Outlining . . . . . . . . . . . . . . . . . .        754
+        E.9        Dark Mode and Themes . . . . . . . . . . . . . . .            754
+        E.10       The Devil in the Details . . . . . . . . . . . . . . . .      755
+        E.11       Menu Reorganisation . . . . . . . . . . . . . . . . .         759
+        E.12       Updates to Version 3 . . . . . . . . . . . . . . . . . .      760
+               Version 3.1.5 . . . . . . . . . . . . . . . . . . . . . . . . .   760
+               Version 3.1.4.1 . . . . . . . . . . . . . . . . . . . . . . . .   762
+               Version 3.1.3 . . . . . . . . . . . . . . . . . . . . . . . . .   762
+               Version 3.1.2 . . . . . . . . . . . . . . . . . . . . . . . . .   762
+
+
+   If you are currently a Scrivener 1 user and are looking into whether you’d like
+to upgrade, this is the guide you want to read. We will discuss the major changes
+that have been made, and when necessary, cross-reference them to more detailed
+documentation elsewhere in this manual. Keep in mind we offer a free 30-day
+demo. It is safe to run this demo in parallel with Scrivener 1. You can play with
+the new version and learn it while continuing to work without interruption.
+   Scrivener 3 is a significant release of the software, one that has been in the
+making for nearly five years. Core aspects of the software have been thought
+through with the intention of streamlining how we work without sacrificing
+                                                               E.1. Compile Overhauled
+
+
+flexibility—indeed we wanted to make Scrivener even more flexible while also
+striving to make routine tasks easier to accomplish. Above and beyond, we
+wanted it to feel just like what you’ve become used to. Even though some of
+the changes have been sweeping (watch out for compile!), we hope you find the
+new landscape not only improved, but familiar as well.
+
+    Can’t Find a Feature from the Old Version?
+    If you’re looking for a particular feature by name that appears to have
+    been moved or maybe even removed, searching for its name in this sec-
+    tion may help you find it. Menu commands can also be searched for by
+    name, from the Help menu.
+
+
+
+E.1 Compile Overhauled
+The second version of Scrivener represented a complete overhaul of the compile
+interface from version one, and we are pleased to present a third iteration of
+the compile concept to you.1 Based on years of feedback with the system you’ve
+grown accustomed to, we’ve designed a replacement which draws heavily upon
+the strengths of the old system while using it as a skeleton to develop a more
+intuitive and easy to use “front end”.
+   Given the scope of changes made to the compile system, it is not possible for
+your existing projects to be upgraded automatically to the new system. For this
+reason, if you have projects that depend upon complex compile settings, we en-
+courage you to retain the backed up version that was created for you upon up-
+dating, as well as an older copy of Scrivener 1, should you need to reference them.
+It is possible to import and ugprade your old compile settings and presets (sub-
+section E.1.6).
+   If you’d like to read a blog article on this topic, head on over to our site.
+
+
+E.1.1 Separators by Type
+Inserting separators into your document used to be a matter of ticking boxes
+in the inspector, or trying to shoehorn your outline into a layout that worked
+with the Separator’s compile option pane. If you wanted an empty line be-
+tween scenes in a novel you could have Scrivener insert empty lines between
+text chunks—but then you could only ever cut to a new chunk of text for the
+purposes of creating a formal scene.
+   In Scrivener 3 you can still assign separators to broad categories (such as all
+folders or files), but as well to specific types of items. Say you have folders in
+your project set up to be chapter breaks—it is then useful to say that all chapter
+
+1
+ The first iteration pre–dates the Windows version, and was so basic that most people would be
+outraged if we still used it today!
+
+
+                                                                                         747
+                                                         E.1. Compile Overhauled
+
+
+headings ought to have a page break before them. Instead of saying “folders have
+breaks”, we are now saying only this kind of item in the binder has a break—and
+if we use files for chapters instead, then it naturally inherits that same behaviour
+without having to go in and change compile settings.
+   Since a chunk of text can now formally be a “scene” that means other chunks
+of text can be “not scenes” and thus not have any separation between them, al-
+lowing you to outline far deeper than your readers will ever be aware of.
+
+
+E.1.2 Front and Back Matter Locking
+For one thing there is now a concept of “back matter” to begin with, which will
+be welcome news to those in need of such. Furthermore we’ve made it so you
+can lock front and back matter folders to file types, meaning whenever you se-
+lect between ePub, PDF and so forth, specific different groups of front and back
+matter pages can be automatically applied to your compile settings. Read more
+about locking settings to file type, in Front & Back Matter (section 23.4.1).
+   For those who write more than one volume into a single project, the front/
+back matter feature has been modified to allow for automatic selection of pre-
+liminary and ending material, depending on which volume you currently have
+selected for compile. This can be combined with the already existing feature
+to automatically switch between front/back matter sets based on the type of file
+being compiled. Refer to Linking Front/Back Matter to Compile Groups (sec-
+tion 23.4.1) for tips on setting up your projects to work this way.
+
+
+E.1.3 Preserve Formatting in Markdown Compile
+In the past, the Format ▸ Preserve Formatting feature would have been used to gen-
+erate code spans and code blocks with Markdown-based output. This capability
+has been removed, as it is now served by styles. Use the “Code Block” and “Code
+Span” styles provided in the stock set, or if you create your own, set them up
+in your compile settings using the MultiMarkdown and Pandoc Options (sec-
+tion 24.13) compile format pane.
+   The Treat “Preserve Formatting” as raw markup option, (used in conjunc-
+tion with the Convert rich text to MultiMarkdown setting both in the compile
+options for Markdown-based formats (section 23.4.3)), will cause marked text to
+pass through the compiler untouched. This option will mainly be of interest to
+those that use the iOS version of Scrivener, with its equivalent capability. If you
+are only using a Mac or PC to compile, it is usually best to use a dedicated style
+instead (with the Treat as raw markup option enabled for it in the Styles compile
+format pane).
+   If one has a lot of Markdown blended into their document, it first might be
+worthwhile to consider whether the full rich-text conversion system is the right
+tool for the job. If it is, and you still need lots of Markdown, the secondary option
+to Escape special characters can be disabled. This is a “riskier” setting that may
+require additional proofing, as accidental usage of Markdown may occur where
+
+                                                                                 748
+                                                       E.1. Compile Overhauled
+
+
+punctuation is used in ways that match its syntax (for example, an asterisk after
+a word to mark a casual footnote might confuse a Markdown converter, which
+uses asterisks to denote emphatic text).
+
+
+E.1.4 Print with Footnotes
+In the past, if you wanted to print or generate a PDF out of Scrivener with proper
+end of page footnotes, you had to compile to another program that could do this
+form of typesetting. Scrivener now typesets its own footnotes for Print and PDF
+compiling. If that’s all you were needing a word processor for, that’s hopefully
+one less tool you need to get work done!
+
+
+E.1.5 Markdown to RTF Conversion
+In the past, those using basic Markdown for italics and bold in their text could
+make use of an option in the Transformations compile option pane to convert
+these to rich text formatting, when using any of Scrivener’s native export for-
+mats. This option has been replaced by the Convert MultiMarkdown to rich
+text in notes and text compile option, in the compile overview screen under
+General Options (subsection 23.4.3).
+  Of note, it now treats text and notes as properly formed Markdown, rather
+than simply extracting asterisk marked phrases from an otherwise rich text based
+document. If your project is not properly formed, use of this checkbox may
+produce undesirable results—such as paragraphs all being glued together, since
+Markdown require a clear line of space between each paragraph.
+
+
+E.1.6 Importing Legacy Compile Presets
+We recognise that you may have invested a lot of time in your compile settings.
+Should you choose to upgrade a project that is a work in progress, you will find
+its compile settings will be reset to default. If you would like to carry over the
+original settings into a new format, refer to the instructions for importing your
+settings into a new version 3 format (subsection 23.2.7).
+
+
+E.1.7 Post-Processing Scripts
+Those advanced users looking to automate what Scrivener does after compiling,
+or to tweak how it makes use of Pandoc and MultiMarkdown, will be interested
+to know that you can now have the compiler set to trigger an executable upon
+conclusion, passing along the finished document as an argument. Those adept
+in scripting can even write their own extensive workflows to handle the docu-
+ment before finalising it, and having Scrivener produce the finished file in the
+intended save folder (for example, your LaTeX project can be compiled directly
+to PDF by having Scrivener invoke latexmk or pdflatex). This capability is avail-
+
+
+                                                                              749
+                                      E.2. Section Types, Page Breaks and As-Is
+
+
+able to both plain-text and plain MultiMarkdown compile outputs. Read more
+about the Processing compile format pane (section 24.21).
+
+
+E.2 Section Types, Page Breaks and As-Is
+Any talk of the changes made to compile would not be complete without men-
+tioning section types (section 7.6), a new way of assigning meaning to the folders
+and text items in your binder, such as “chapter”, “subsection” or even specific
+types such as “table” or “figure”. By categorising items using natural terms, and
+telling the compiler what those things should look like, you can do away with
+the more abstract notion of formatting by levels and icon types.
+   All of this has made the concept of using individual checkboxes for page breaks
+and such a bit obsolete. If a thing by its nature involves a page break, such as
+chapter, then we don’t need a separate checkbox to click on.
+
+  — Page Break Before: page breaks are now a function of how a type is for-
+    matted by the compiler. By and large you should find the default settings
+    and templates provide a useful set of types to choose from, with useful set-
+    tings applied to them. To use the above example, if in the past you’ve used
+    this checkbox for front matter sections, you’ll find most of the compile for-
+    mats contain a layout specifically designed for front matter which includes
+    a page break.
+      For those upgrading their projects from 2.x, be aware that items marked
+      with “Page Break Before” will be assigned to a special “Section Start” type,
+      created for upgraded projects alone. This should be considered a transi-
+      tional type, but it will allow your project to continue functioning roughly
+      as it was before.
+  — Compile As-Is: this checkbox is as well no longer in the inspector or specif-
+    ically assigned to items. The choice to print a section type “as-is” is some-
+    thing you now make when setting up your project’s compile settings. You
+    might for example want to create types for Tables and Equations, both of
+    which are mapped to compile as-is in the end, but remain distinct for their
+    purpose in the project itself.
+      Upgraded projects will be scanned for the use of “as-is”, and a special “N/
+      A” section type will be created for projects that made use of the checkbox,
+      with all items that used it assigned to that type and automatically mapped
+      to the special “As-Is” section format in the compiler. Thus they should
+      continue working as they did before.
+
+
+E.3 Stylesheets
+Ye olde formatting presets have become proper stylesheets. You will find much of
+the toolset has a similar usage from what you are accustomed to in older versions
+
+                                                                              750
+                                                                   E.3. Stylesheets
+
+
+of Scrivener. The dropdown button is in the same location on the Format Bar,
+and for the most part you can use them in day to day writing, similarly to how
+you used presets.
+   The main difference will be when compiling: styles now operate on the as-
+sumption that the formatting you use in the editor is intended to be printed
+as-is in the output, to the best of the output format’s ability.
+   Styles are, as formatting presets were, strictly optional! If you never had much
+use for the preset feature in the past then don’t feel you have to learn anything
+about styles going forward. If you’re interested in using styles as a pure writing
+tool, refer to Styles That Do Nothing (subsection 17.4.4).
+   For all other questions, head on over to Styles and Stylesheets (chapter 17) to
+see what’s new.
+
+
+E.3.1 Converting Formatting Presets to Styles
+Do you have a bunch of Formatting Presets from previous versions of Scrivener
+that you’d like to convert to styles? We won’t do that for you because styles are
+now project-specific, but it is easy to set up styles from a prepared sample:
+
+   1. Using the older version of Scrivener, create a new blank project.
+   2. For each Formatting Preset, type in the name of it into the editor, then
+      select the text and apply the preset.
+   3. Quit the older copy of Scrivener and open & upgrade this project in the
+      current version.
+   4. For each line of text you created to store the formatting of a preset, se-
+      lect the text and create a style from it using the procedures for doing so
+      (subsection 17.3.2).
+
+   Once you have your presets all copied over and working to your expectations
+as styles in the sample project, you can make this stylesheet the global default in
+the Editing: Formatting options tab (subsection B.3.2), by clicking the Set Styles
+Defaults… button. Existing projects will need to import this style list from an-
+other project, with the Format ▸ Style ▸ Import Styles… menu command. So long
+as you keep the sample project around for a bit, it will make a convenient target
+for importing from.
+   Updating an older project to use these styles can usually be easily done with the
+Edit ▸ Select ▸ Select Similar Formatting command. The style can now be applied to
+the bulk selection of text.
+
+
+E.3.2 Preserve Formatting is Deprecated
+In the past, the “Preserve Formatting” tool was the go-to method for preserving
+the look of specific pieces of text, when one was otherwise using the compiler to
+
+
+                                                                                751
+                                                          E.4. Project Bookmarks
+
+
+normalise and clean up the formatting of the output. This capability still exists
+for backwards compatibility, but you should use the new styles feature for this
+specific purpose, going forward.
+   A secondary use for this feature, in the past, was to pass through raw markup
+to HTML-based formats (like ebooks and web pages). This is also now a task that
+Styles should handle, going forward, and you will find these old options removed
+from Preserve Formatting. There are still a few odd uses for preserve formatting
+(subsection 15.7.5).
+
+
+E.4 Project Bookmarks
+Project notes are dead, long live project notes! That’s right, the feature formerly
+known as Project Notes, a core part of Scrivener since its early Mac-only beta
+days, is no more. The good news is that if you’ve benefitted from using them
+in the past, then you should find it possible to continue working in a familiar
+fashion going forward, and in fact you may find yourself using the new features
+in ways you hadn’t before.
+   When we took a look at this feature, and what we could do to improve the
+Project Notes window, it became clear that the whole idea had outgrown itself a
+little. You couldn’t link to them, export them or even search through them—and
+making it possible to do these things felt like replicating what already exists: the
+binder.
+   At the same time we realised there were a number of features in Scrivener that
+were all kind of offering the same thing, but in different and disconnected ways.
+The result of their combination is something we can concisely refer to as a single
+new feature, Project Bookmarks:
+
+   1. Project References in the inspector sidebar.
+   2. Favorites made it possible to place items in choice positions within any
+      menu that let you pick a binder item from it (such as the “Go To” menu).
+   3. And of course, Project Notes, both in the inspector sidebar and window,
+      themselves.
+
+   The combination of these features can be thought of very simply: if you want
+to make a particular document globally accessible, either as a reference or for the
+purpose of taking down notes, then bookmark the item. The Inspector sidebar
+for bookmarks was expanded to include a built-in editor below the list.
+   For those that preferred Project Notes in a window, the Quick Reference panel
+(also new to Windows) now sports a project bookmark sidebar, mimicking all of
+what the old window could do.
+
+
+
+
+                                                                                752
+                                                            E.5. Writing History
+
+
+
+   Reference Links are No Longer Named
+   In the past you could provide a description to a reference. This field has
+   been left out of the new design, with the only text in the bookmark list
+   being the name of the item being referred to. Thus any descriptions you
+   used in the past will be discarded when upgrading the project, and you
+   should be aware that changing the name of a bookmark will directly re-
+   name the item in the binder, not how you refer to it in the list.
+
+   A side-effect of this merger meant that what we referred to as document ref-
+erences in older versions of Scrivener also now benefit from this expanded in-
+spector pane. Now all of those cross-references between items in the binder are
+instantly accessible without even going anywhere in the main editors. You can
+of course still do that too—references are just as powerful as they always have
+been.
+   For those upgrading Project Notes, you will be presented with a dialogue box
+informing you of where these notes have been imported into the binder. All of
+your old Favourites and References will be automatically upgraded to work with
+the new system.
+  — Read more about the new features in Project and Document Bookmarks
+    (section 10.3).
+  — If you’d like to read further into the background of this design change,
+    we’ve posted an article to our blog on the topic.
+
+
+E.5 Writing History
+Your daily progress, whether it be in going from zero to a goal, or from a bloated
+work that badly needs trimming down to size, can be tracked using a new tool:
+Writing History (subsection 20.1.4). Accessed via the Project ▸ Writing History…
+menu command, it not only does some simple summation and calculation for
+you, but allows for easy export to CSV format, where the raw data can be taken
+into a spreadsheet.
+
+
+E.6 Custom Metadata Overhauled
+We’ve added new types of custom metadata that you can use to enhance your
+record-keeping. In addition to the trusty old text field, there are now list drop-
+downs, checkboxes and dedicated date & time fields.
+
+
+E.7 Snapshot Manager
+If you’re anything like me, you take a lot of snapshots, and furthermore you ask
+the software to take a lot of snapshots for you as well. This is great for keeping
+
+                                                                                753
+                                                        E.8. Enhanced Outlining
+
+
+a track record of your progress safe as it develops over time—but it can mean a
+lot of clutter builds up, especially in those projects that end up being used for
+years at a time. Eventually even the most ardent data hoarders might come to
+admit that a bad revision of something that was written five years ago maybe
+isn’t worth hanging on to.
+   The Documents ▸ Snapshots ▸ Snapshot Manager tool has been added to help
+keep the clutter at bay, and to find those old odd snippets you lost to edits years
+ago. You can not only specifically search for text through all snapshots, you can
+search by date as well, and once you have a search result you can prune the re-
+sults from the project with one easy click. For example, search for <2y to find all
+snapshots created over two years ago and delete them all.
+   Read more about it in The Snapshots Manager (subsection 15.8.4).
+
+
+E.8 Enhanced Outlining
+The outliner has always been a place where you can pack a lot of information
+into the view, and thus an integral component in getting that sense of overview
+that Scrivener can provide, down to the word counts of individual chunks of text
+or keyword listings.
+   We wanted to broaden what the outliner can be used for however, as many
+people also prefer this kind of device as a creative tool. To that end we’ve added
+a few aesthetic options that can be used to present the outline as a more content-
+focused tool, and as well some settings to have it emulate the iOS style listings,
+made popular on macOS by Mail and a few other programs.
+
+  — Using a Fixed Row Height (subsection 8.3.7): the outliner has always ex-
+    panded the height of each row to match the amount of content you put
+    into it. This content-biased approach means you never miss a word, but
+    it can sometimes be more efficient if every row takes up the same amount
+    of height. Scrolling becomes more predictable and static, and content is
+    easier to parcel out with the eye.
+  — A bounty of new options have been added for adjusting the look of the
+    outliner. Take a look in the Appearance: Outliner options tab (subsec-
+    tion B.5.8).
+
+
+E.9 Dark Mode and Themes
+For those that find the harsh white light of typical computer software an eye-
+strain, a collection of darker interface themes has been added, under Win-
+dow ▸ Themes ▸ .
+
+
+
+
+                                                                               754
+                                                   E.10. The Devil in the Details
+
+
+E.10 The Devil in the Details
+We’ve gone over most of the major differences between versions 2 and 3, what
+remains are a few of the smaller changes that are worth making note of. It would
+not be possible to list every single change in the software, so this list will con-
+centrate on those changes that could impact how you’ve used version 2 in the
+past.
+
+Subdocument counts in binder If you used the global setting that prints the
+     subdocument counts as a numeral to the right of containers in the binder,
+     you will be interested to know where that feature has been moved to. It
+     is now a project-specific setting, toggled with the View/Outline/Show Sub-
+     document Counts in Binder menu command.
+
+Dragging Links into Documents One of the simplest methods for creating a
+     link to a document from the text you are currently working on is to drag
+     and drop the document you wish to link to into the text editor. In Scriv-
+     ener 2, you were required to hold down the Alt key while doing so. In
+     Scrivener 3 you can just drag and drop the document straight in (sec-
+     tion 10.1). Meanwhile Option-dragging now pastes the content of the
+     dragged document into the editor where you drop.
+
+Editor Header Bar Icon Menu Since the very beginning, Scrivener has always
+     presented a few useful commands pertaining to the document you are
+     working on, in the header bar icon beside the title of the document you
+     are editing..
+      As for the icon itself, that is now something you can drag, just like drag-
+      ging the document itself from the binder; this form of dragging is just as
+      powerful as that. You can move an item to a new location, assign it to a
+      collection, create a hyperlink to it from another text, drag it to a second
+      header bar to load the document twice, and so on. In fact, whenever you
+      see an item icon, try dragging it, chances are it will act as a proxy for the
+      item itself.
+
+“Go To” Menu in Header Icon Menu When viewing a Scrivenings session in
+     the past, the “Go To” menu, found when clicking upon the header bar icon
+     menu (which incidentally is now a right-click anywhere in the header bar),
+     you would be given a simplified table of contents for the current session.
+     This was nice, as you could easily jump around from one section to an-
+     other within the text you were currently working on—but it could also get
+     in the way if you’re used to the feature letting you go anywhere at all in the
+     binder.
+      When in a Scrivenings session, you will note a new button on the right
+      hand side of the header bar (Figure E.1). Click this to view a concise table
+      of contents for the current Scrivenings session.
+
+
+                                                                               755
+                                                      E.10. The Devil in the Details
+
+
+
+
+   Figure E.1   The new “Navigate to Section” button, first in this series of buttons
+                found on the right side of the header bar.
+
+
+Excluding a Project from Backups If you have updated a project that was ex-
+     cluded from automatic backups, it will go on as excluded. However you
+     should know that the option to toggle this setting has been moved from
+     the File menu into Project ▸ Project Settings…, under the Backup tab. While
+     there, you may also note it is now possible to select a custom backup folder
+     on a per project basis.
+
+Changing Composition Backdrop If you’ve enjoyed the ability to set a photo-
+    graph or texture to the background of your full screen writing environ-
+    ment, you’ll want to know that option (along with many other project spe-
+    cific options by the way) has been moved to the Project/Project Settings…
+    panel, under “Background Images” in the sidebar. Everything else about
+    the feature should be familiar.
+
+Project Properties are Compile Settings Instead of setting up the title of your
+     work, author’s name and so forth in a project setting panel, this is now
+     done directly in the main compile interface, under the “metadata” dog tag
+     icon on the right hand side. For projects that have been upgraded from
+     the 2.x format, you should find the information from Project Properties
+     migrated over to the new location for you.
+
+Modified Default Highlight Colours The set of default highlight colours that
+     Scrivener makes available in the Format ▸ Highlight ▸ submenu have been
+     modernised. If you have upgraded a project that made use of highlights
+     in the previous version, you will find that colours do not match the old
+     highlights. This will mainly be of impact if you use the Edit ▸ Find ▸ Find by
+     Formatting… tool to locate highlights of a specific colour. If you want to
+     “upgrade” your existing highlights, you could use that same tool to search
+     for the old colours, and simply set the highlight to the new colour (from
+     that point on you could very easily alternate between ShiftG to find the
+     next old highlight and CtrlShiftH to apply the new colour.
+
+The Text Editor Uses Fixed Width by Default In the past, Scrivener’s default
+     text editing mode displayed text the full width of the editor, no matter
+     how wide it was. This meant that if the editor grew very wide, text lines
+     could become unreadably long. Scrivener’s default way of presenting text
+     is now to a fixed width column, one that will respect the relative number of
+     characters that can be seen on a single line, no matter the zoom level—or
+     what some might think of as “margins” (though they have nothing to do
+     with how the document will print or compile). If you do not like this new
+     way of working as a default, you can switch it off in the Appearance: Main
+
+                                                                                        756
+                                                             E.10. The Devil in the Details
+
+
+       Editor options tab, under Use fixed width editor (subsection B.5.7). You
+       can also adjust the width of the text column in this panel, and whether or
+       not it should be left-aligned or centred within the editor.
+
+Custom Categories for Project Templates You can now organise your project
+     templates into custom categories in the new project template chooser. Re-
+     fer to Custom Categories (section 5.4.3) for more information.
+
+Copy items between open projects Binder items can now more easily be filed
+     to other open projects, similarly to how the Scratchpad can do. You will
+     find a new submenu, Documents ▸ Copy to Project ▸ , which is organised by
+     all open projects. Within each project submenu you can target a specific
+     item to file the selected items from this project, into.
+       As with the “Move To” command, your last target will be remembered, and
+       supplied to a convenience command, Documents ▸ Copy To “X” Project Again.
+
+Sync Folders Will Need to be Updated If you’ve been using the File ▸ Sync ▸ with
+      External Folder… feature in prior versions of Scrivener, you should be aware
+      that necessary internal changes have made it so that an existing sync folder
+      will need to be rebuilt from scratch with the new version. The best result
+      will be to sync the project one last time to this folder so that it is fully up
+      to date, before upgrading, and then delete the folder and create a new one
+      after you’ve upgraded the project in the new version of Scrivener.
+
+Project Settings Unified In the past, many of a project’s settings were scattered
+     throughout different dialogues and menu commands. While most of the
+     visual preferences that pertain to how a project looks are still located in the
+     standard View menu, the rest have all been gathered into a single dialogue,
+     accessed through Project ▸ Project Settings… (Appendix C).2 , the following
+     features have been folded into this pane:
+
+         — Setting the Document Templates folder, previously set with the
+           Project ▸ Set Selection as Templates Folder menu command.
+         — Custom project formatting overrides, found in the old Project ▸ Text
+           Preferences… pane.
+         — The auto-completion list, previously found in the Project ▸ Auto-
+           Complete List… menu command.
+         — Composition mode’s backdrop, which was previously set with the
+           View ▸ Composition Backtop ▸ submenu.
+
+2
+ It is worth noting that a project’s global metadata, such as the author and title of the work, has
+been moved into the File ▸ Compile… pane, and generally you can now set that universally in the
+new General: Author Information options tab.
+
+
+
+                                                                                              757
+                                                  E.10. The Devil in the Details
+
+
+        — Disabling automated project backups, previously toggled with
+          File ▸ Back Up ▸ Exclude From Automatic Backups.
+
+MultiMarkdown 6 Support Scrivener now fully supports MultiMarkdown ver-
+     sion 6, and integrates version 6.2.3 in the application. The most noticeable
+     difference will be the removal of the MMD to RTF compile format, which
+     is no longer supported, and the addition of a native OpenOffice ODT for-
+     mat. No longer will you need to compile to Flat XML and use LibreOffice
+     to make the final conversion.
+      The other notable difference between MMD 5 and 6 is how the metadata
+      is handled for LATEX documents. If you have been using your own cus-
+      tom metadata in your compile Formats, you will likely need to update the
+      metadata keys you use to work with MMD 6. Instead of using a general
+      purpose “LaTeX Input” metadata key to include boilerplate files, there are
+      now dedicated “LaTeX Leader” and “LaTeX Begin” keys. The former is used
+      to establish the initial preamble, the latter to provide any further pream-
+      ble after the insertion of document-specific metadata keys such as the title
+      and author. Scrivener will of course make use of the new system with all
+      of its built-in LATEX document class selections.
+      Lastly we have added support for the Tufte (Book) document class for MMD
+      to LATEX and PDF compile formats.
+
+Project and Text Statistics The “Project Statistics” and “Text Statistics”
+     panes have been combined into a single feature, Project ▸ Statistics…
+     (CtrlShiftS), with two tabs. The latter now has every feature the
+     former once had exclusively, and vice versa. To get statistics on a single
+     text document, view it in the editor alone and then use the “Selected
+     Documents” tab. You can click on statistics in the footer bar of the editor
+     and get much of the same information provided here.
+
+
+   Compiled draft statistics may alter
+   While we’re on the topic, it’s worth mentioning that you might see a dif-
+   ference in your overall compiled draft count. This is most likely going
+   to be a side-effect of your compile settings having been reset to default
+   when the project was upgraded. If you were using options in version 1
+   that added a significant amount of text (like for example all of your doc-
+   ument notes) then upon checking your word count in version 3 that num-
+   ber will have dropped.
+
+
+Inserting Media Time Stamps It is now possible to insert the current time
+      stamp into the text editor, while running audio/visual media in the other
+      split. The menu command (Insert ▸ Media Time Stamp) does not by default
+
+
+                                                                                758
+                                                      E.11. Menu Reorganisation
+
+
+      have a keyboard shortcut, but one can be added if you anticipate making
+      heavy use of this feature (section A.1).
+      A new script format, Format ▸ Scriptwriting ▸ Transcript, designed especially
+      for the transcription of audio and video material, has been added to the
+      software. You can put a media file into one split and write in another. The
+      current time stamp will be inserted when you press the Tab key on a new
+      line. In conjunction with the CtrlEnter shortcut to pause & play the media
+      while you type, Scrivener can be an effective subtitling and transcription
+      tool.
+
+Bulk Keyword Management Improved In the past, managing keyword assign-
+     ments at a large scale was limited to bulk assignment, by dragging key-
+     words from the Project Keywords pane (section 10.4.5) onto selected items
+     in the background window. It is now possible to right-click (or use the
+     • • • button) on selected keywords to assign or remove keywords from the
+     selected documents in the background.
+
+LaTeX Compile Support Improved For the MultiMarkdown to LATEX compile
+     file type, we have added five new compile formats, to make switching be-
+     tween common document classes simpler. With one click you can go from
+     formatting your work in a screen-friendly “Modern” look, to a formal ar-
+     ticle design. Further documentation on the formats is provided in Multi-
+     Markdown LaTeX and PDF (section D.6).
+      For those looking to print a simple outline of topics, the “Markdown Out-
+      line” compile format now has a better default look when used in conjunc-
+      tion with MMD to TeX or PDF.
+      In addition to this, those looking to use Scrivener as a pure LaTeX edit-
+      ing platform (with no Markdown-based conversion) now have a dedicated
+      project template they can start from, in the Non-Fiction category: “Gen-
+      eral Non-Fiction (LaTeX)”. This project template is designed to be used for
+      the composition of LATEX directly, but as well it features partial support for
+      generating LATEX syntax from Scrivener’s built-in formatting features.
+
+                                                             Return to chapter ⤴
+
+
+E.11 Menu Reorganisation
+The main menu, from File to Window, has been completely rethought. We’ve
+also introduced two new major menus, “Navigate” and “Insert”, the former fo-
+cusing on project window navigation of all sorts, and the latter now lists all of
+the various types of things that can be inserted into text, from images to the cur-
+rent date and time. If you make heavy use of the menus in Scrivener, you may
+notice more than a few things have been moved around, but hopefully you find
+the changes to be logical and easy to adjust to. As before, the Menus & Keyboard
+
+
+                                                                                759
+                                                      E.12. Updates to Version 3
+
+
+Shortcuts (Appendix A) appendix provides a complete reference on every menu
+command.
+  You can also search for a menu command you recall by name, from the Help
+menu.
+
+
+E.12 Updates to Version 3
+We are constantly looking to improve Scrivener. The remainder of this section
+will document significant changes since its initial 3.0 release in the Spring of
+2021. For a complete list of all modifications and bug fixes, refer to the release
+notes page on our website.
+
+
+Version 3.1.5
+Framework update
+The underlying programming tools used to create Scrivener have been upgraded
+for future proofing and access to modern capabilities. By and large this will not
+result in any changes to your use of Scrivener, but there are a few things to be
+aware of that result from this transition:
+
+  — Scrivener is now 64-bit only, and has a minimum Windows requirement
+    of version 10. Those using older 32-bit machines or Windows 8 will remain
+    on 3.1.4, where we will continue to provide critical bug fixes and security
+    updates. If your machine is not eligible to run 3.1.5, you will not see an
+    update notification for it.
+  — Some small improvements to high-resolution displays are present, such as
+    better visibility for spell check underlining.
+  — Your current application settings will be automatically upgraded to a new
+    storage area that older versions of Scrivener will not see. In most cases this
+    change will be entirely unnoticed. However it does mean that should you
+    reinstall 3.1.4 or earlier versions, settings changes will be made to a sepa-
+    rate area that the newer versions will not use. This will be done to avoid
+    incompatibilities with how some settings are saved in the new framework,
+    such as default fonts.
+      It is safe to export your settings from one version and import them into
+      another. Review how to do so in [Option Presets and Themes].
+  — If you have previously customised the Format Bar or main application
+    toolbar, you may notice that spacers will be collapsed. These can be eas-
+    ily fixed by removing the “gap” entry and then adding it back, via the
+    View ▸ Customize Toolbars… menu command, or by simply clicking the Re-
+    store Defaults button in the lower left corner of the toolbar customisation
+    window.
+
+                                                                              760
+                                                      E.12. Updates to Version 3
+
+
+Keyboard shortcut adjustments
+Various keyboard shortcuts have been modified to improve consistency and com-
+patibility with Windows 10, and more pervasively, Windows 11. Chances are you
+were not using these shortcuts anyway, as they would have conflicted with global
+shortcuts the operating system reserves. Refer to the full release notes page for
+a complete listing of which shortcuts have changed, and to what.
+   These changes will only apply to new installations. If you would like to up-
+date an existing configuration, then click the Reset All button, found below the
+shortcut list in the Keyboard options tab (section B.7) (but do be aware this will
+overwrite any customisations you have made to shortcuts).
+   The following lists some notable adjustments:
+
+  — AltF4 now closes individual project windows instead of the entire appli-
+    cation.
+  — Use CtrlAltF4 to close the whole program.
+  — Keyboard shortcut access has been improved for Quick Reference win-
+    dows. Explore the menu bar in these windows to see what is now pos-
+    sible. (These improvements do not require you to update your keyboard
+    shortcut layout.)
+
+Learned word list updated
+Those that have “learned” or “ignored” words with the spell check tool should be
+aware that the file used to save these words will be automatically upgraded to a
+new format. Thus if the previous version of Scrivener is reinstalled it will go on
+using the older file, meaning additions made within the older version will not be
+marked in the newer file, and vice versa.
+  To view or manage these files, use the File ▸ Show Application Support Folder
+menu command, and look for the new wordlists.txt file (the older version will
+remain as wordlists.ini).
+  It is safe to copy and paste entries from the old file into the new one, but not
+the other way around.
+
+Opt-in Beta Channel
+For those interested in getting an early look at the next major update, or who
+would like to help test the software, you can now opt into beta builds as they are
+made available. Enable Check for beta updates, in the General: Startup options
+tab (subsection B.2.1), and use the Help ▸ Check for Updates menu command to
+check for any current betas. The software will now alert you to any newer ver-
+sion, whether it be a beta build or stable, unless it has been previously ignored
+from the update alert window.
+
+
+
+
+                                                                              761
+                                                         E.12. Updates to Version 3
+
+
+Version 3.1.4.1
+Command to reset list indenting to defaults
+A menu command has been added (Format ▸ List ▸ Reset Indents to Defaults) that
+will convert the selected lists’ indenting to factory default. This can be used to
+repair list indenting, as well as to make formatting uniform, particularly where
+some lists have been created in the Mac version.
+
+
+Version 3.1.3
+Default styles for new projects
+It is now possible to save your preferred styles into settings, so that all newly cre-
+ated projects will use them, instead of the default set (unless the project template
+itself that you use to create the project has its own styles saved into it). Refer to
+the documentation on default formatting for further details (subsection B.3.2).
+
+New separators options for merging and appending text
+Previously, when merging documents together (subsection 15.4.2) they would al-
+ways be separated by an empty line. You can now select what type of separation
+to insert between merged documents, and as well when using various functions
+that append selected text to other documents. These settings are found in the
+General: Separators settings tab (subsection B.2.8).
+
+Styles are now mapped to ebook and Markdown equivalents
+Previously, styles that would have a unique purpose in ebooks or Markdown did
+not map to those purposes. Now, the Block Quote, Code Block and Code Span
+styles will translate to native markup rather than a formatted equivalent. Unless
+you have customised your styles or compile formats, you should find this new
+capability starts working without any adjustments. Refer to the HTML Elements
+(section 24.8) and MultiMarkdown and Pandoc Options (section 24.13) compile
+format panes, for where these are set up.
+
+
+Version 3.1.2
+Control over link and bookmark behaviour
+Options have been added to the Behaviors: Document Links settings tab (sub-
+section B.4.2) that allow for greater control over how internal links and Book-
+marks work when used.
+
+Bulk application of custom list metadata
+It is now possible to batch or bulk assign a value to many items at once, if the
+custom metadata field is of a list type (subsection C.4.5). Read more on how to
+
+                                                                                  762
+                                                     E.12. Updates to Version 3
+
+
+do this (subsection 10.4.7).
+
+Drag text to create new binder items
+Text can be dragged from any context, whether in Scrivener or from other soft-
+ware, into the binder to create new items from the snippet of dropped text. Text
+can also be appended to text items that you drop text on to, as opposed to be-
+tween existing items.
+
+
+
+
+                                                                            763
+
