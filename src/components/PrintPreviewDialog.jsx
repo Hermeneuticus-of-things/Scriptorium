@@ -45,9 +45,9 @@ export default function PrintPreviewDialog({ api, dir, project, options, onClose
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal print-preview" role="dialog" aria-label={t('cmd.printPreview')} onClick={(e) => e.stopPropagation()} style={{ width: 'min(1000px, 94vw)', maxWidth: '94vw' }}>
+      <div className="modal print-preview" role="dialog" aria-label={t('cmd.printPreview')} onClick={(e) => e.stopPropagation()}>
         <h2>{t('cmd.printPreview')}</h2>
-        <div className="row" style={{ alignItems: 'center', gap: 12 }}>
+        <div className="row print-preview-controls" style={{ alignItems: 'center', gap: 12 }}>
           <label>
             {t('ui.printPreview.pagina')}
             <input type="number" min="1" max={Math.max(1, count)} value={page} onChange={(e) => setPage(Math.min(Math.max(1, Number(e.target.value) || 1), Math.max(1, count)))} style={{ width: 64 }} />
@@ -66,11 +66,11 @@ export default function PrintPreviewDialog({ api, dir, project, options, onClose
             <span className="muted" data-testid="print-preview-format">{t('ui.pageSetupDialog.format')}: {t(FORMAT_KEYS[res.setup.format])}</span>
           )}
         </div>
-        <div style={{ height: '70vh', marginTop: 8, background: 'var(--panel, #ddd)' }}>
+        <div className="print-preview-frame">
           {busy && <p>{t('ui.printPreview.se_genereaza')}</p>}
           {src && <iframe key={src} title={t('cmd.printPreview')} src={src} style={{ width: '100%', height: '100%', border: 0 }} />}
         </div>
-        <div className="actions">
+        <div className="actions print-preview-actions">
           <button onClick={onClose}>{t('btn.close')}</button>
           {api.savePrintPdf && (
             <button disabled={!res?.token} onClick={act(() => api.savePrintPdf(res.token))}>{t('ui.printPreview.salveaza_pdf')}</button>

@@ -940,6 +940,13 @@ legend { color: var(--muted); padding: 0 var(--sp-1); }
 .quickref-head strong { min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; }
 .quickref-head button { flex-shrink: 0; }
 .modal.compile-dialog { width: min(var(--compile-content-width), calc(100vw - var(--window-gutter))); max-width: calc(100vw - var(--window-gutter)); max-height: calc(100vh - var(--window-gutter)); }
+.modal.print-preview { width: min(1000px, calc(100vw - 2 * var(--window-gutter))); max-width: calc(100vw - 2 * var(--window-gutter)); height: min(900px, calc(100vh - 2 * var(--window-gutter))); max-height: calc(100vh - 2 * var(--window-gutter)); min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.print-preview > h2, .print-preview-controls, .print-preview-actions { flex: 0 0 auto; }
+.print-preview-controls { flex-wrap: wrap; min-width: 0; }
+.print-preview-frame { flex: 1 1 auto; min-height: 0; overflow: hidden; margin-top: var(--sp-2); background: var(--panel, #ddd); position: relative; }
+.print-preview-frame > p { margin: var(--sp-3); }
+.print-preview-actions { margin-top: var(--sp-2); border-top: 1px solid var(--line); padding-top: var(--sp-2); justify-content: flex-end; background: var(--paper); }
+@media (max-height: 560px) { .modal.print-preview { height: calc(100vh - 16px); } .print-preview-frame { min-height: 80px; } }
 
 /* Compact, explicit optional-service controls. Hidden AI does not occupy toolbar space. */
 .ai-status[hidden] { display: none; }
