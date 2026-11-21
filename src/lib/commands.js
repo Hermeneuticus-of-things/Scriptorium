@@ -73,6 +73,13 @@ export const DEFAULT_KEYS = {
   // Romanian and other European layouts, used to type characters).
   toggleInspector: 'Ctrl+Shift+I',
   toggleBinder: 'Ctrl+Shift+B',
+  // T1 — Move Focus To (Anexa A.6): F6 ciclarea panourilor, Ctrl+Shift+1..4 ținte directe.
+  focusCycle: 'F6',
+  focusCycleBack: 'Shift+F6',
+  focusEditor: 'Ctrl+Shift+1',
+  focusBinder: 'Ctrl+Shift+2',
+  focusInspector: 'Ctrl+Shift+3',
+  focusAi: 'Ctrl+Shift+4',
   compile: 'Ctrl+Shift+E',
   quickRef: 'Ctrl+Shift+R',
   snapshot: 'Ctrl+5',
