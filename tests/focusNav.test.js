@@ -74,6 +74,7 @@ describe('T1 — cablaj în aplicație', () => {
     expect(app).toContain('data-focus-pane="binder"');
     expect(app).toContain('data-focus-pane="inspector"');
     expect(app).toContain('data-focus-pane="ai"');
+    expect(app).toContain('data-focus-pane="split"');
     expect(src('src/lib/menuLayout.js')).toContain("['menu.focus', ['focusCycle'");
   });
 });

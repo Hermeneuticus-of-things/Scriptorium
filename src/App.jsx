@@ -4194,7 +4194,7 @@ export default function App({ api: apiProp }) {
             )}
           </div>
           {splitNode && view === 'editor' && (
-            <div className={`pane second ${editorAreaClass}`}>
+            <div className={`pane second ${editorAreaClass}`} data-focus-pane="split" tabIndex={-1}>
               <div className="pane-head">
                 <PaneNav pane="split" history={splitNav} titleOf={titleOfNode} onBack={() => splitStep(-1)} onForward={() => splitStep(1)} onJump={splitJump} />
                 <span className="pane-title" title={splitNode.title}>{splitNode.title}</span>
