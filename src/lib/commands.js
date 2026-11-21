@@ -73,6 +73,7 @@ export const DEFAULT_KEYS = {
   // Romanian and other European layouts, used to type characters).
   toggleInspector: 'Ctrl+Shift+I',
   toggleBinder: 'Ctrl+Shift+B',
+  helpFinder: 'Ctrl+Shift+H',
   compile: 'Ctrl+Shift+E',
   quickRef: 'Ctrl+Shift+R',
   snapshot: 'Ctrl+5',

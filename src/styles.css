@@ -963,3 +963,13 @@ details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1)
 .signals-dialog .signals-grupa ul { margin: var(--sp-1) 0; padding-left: var(--sp-3); font-size: var(--font-ui-sm); }
 .signals-dialog .signals-line { opacity: .6; }
 .signals-dialog .signals-rule { font-weight: 600; }
+
+/* Help Finder omnibox (PS-HELP-001 §3–§5): ajutor + comenzi într-o singură căutare. */
+.help-finder { min-width: 32rem; max-width: 45rem; }
+.help-finder-q { width: 100%; font-size: var(--font-ui-md, 14px); padding: var(--sp-2); }
+.help-finder-results { max-height: 46vh; overflow: auto; display: flex; flex-direction: column; gap: 2px; margin: var(--sp-2) 0; }
+.help-finder-row { text-align: left; padding: var(--sp-1) var(--sp-2); border: 0; border-radius: var(--radius); background: none; cursor: pointer; }
+.help-finder-row.on, .help-finder-row:focus-visible { background: var(--panel-subtle, rgba(127,127,127,.12)); }
+.help-finder-title { font-weight: 600; }
+.help-finder-row kbd { font-size: var(--font-ui-sm, 12px); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 4px; }
+.help-finder h3.small { margin: var(--sp-2) 0 var(--sp-1) 0; }

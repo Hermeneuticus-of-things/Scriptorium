@@ -124,7 +124,7 @@ const ro = {
   'cmd.convertFootnoteToLinked': 'Convertește notele de subsol inline în note legate', 'cmd.convertLinkedToFootnote': 'Convertește notele legate în note de subsol inline',
   'cmd.copyAsToC': 'Copiază documentele ca cuprins',
   'cmd.styles': 'Stiluri…', 'cmd.irep': 'I-REP / I-EDIT', 'cmd.ai': 'Asistent AI', 'cmd.settings': 'Setări program…',
-  'cmd.simpleRepairs': 'Reparații simple (fără AI)…', 'cmd.signals': 'Semnale pe text (fără AI)…',
+  'cmd.simpleRepairs': 'Reparații simple (fără AI)…', 'cmd.helpFinder': 'Caută ajutor și comenzi…', 'cmd.signals': 'Semnale pe text (fără AI)…',
   'cmd.shortcuts': 'Scurtături de tastatură…', 'cmd.layouts': 'Aranjamente salvate…', 'cmd.layout': 'Layout: {name}',
   // buttons
   'btn.save': 'Salvează', 'btn.cancel': 'Anulează', 'btn.ok': 'OK', 'btn.close': 'Închide', 'btn.choose': 'Alege…',
@@ -365,7 +365,7 @@ const en = {
   'cmd.convertFootnoteToLinked': 'Convert inline footnotes to linked footnotes', 'cmd.convertLinkedToFootnote': 'Convert linked footnotes to inline footnotes',
   'cmd.copyAsToC': 'Copy Documents as ToC',
   'cmd.styles': 'Styles…', 'cmd.irep': 'I-REP / I-EDIT', 'cmd.ai': 'AI assistant', 'cmd.settings': 'Program settings…',
-  'cmd.simpleRepairs': 'Simple repairs (no AI)…', 'cmd.signals': 'Signals on the text (no AI)…',
+  'cmd.simpleRepairs': 'Simple repairs (no AI)…', 'cmd.helpFinder': 'Search help and commands…', 'cmd.signals': 'Signals on the text (no AI)…',
   'cmd.shortcuts': 'Keyboard shortcuts…', 'cmd.layouts': 'Saved layouts…', 'cmd.layout': 'Layout: {name}',
   'btn.save': 'Save', 'btn.cancel': 'Cancel', 'btn.ok': 'OK', 'btn.close': 'Close', 'btn.choose': 'Choose…',
   'btn.default': 'Default', 'btn.add': 'Add', 'btn.remove': 'Remove', 'btn.delete': 'Delete', 'btn.apply': 'Apply',
