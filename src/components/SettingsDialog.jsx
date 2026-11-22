@@ -107,6 +107,8 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
     scratchOnTop: init.scratchOnTop !== false,
     scratchFolder: init.scratchFolder || '',
     dtedLanguage: init.dtedLanguage || 'ro',
+    mergeSeparator: init.mergeSeparator || 'asterisks',
+    mergeSeparatorCustom: init.mergeSeparatorCustom || '',
   });
   const set = (k) => (e) => {
     const v = e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e;
@@ -424,6 +426,15 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
     corrections: (
       <>
         {check('smartQuotes', t('set.smartQuotes'))}
+        <label className="row">
+          {t('set.mergeSeparator')}
+          <select value={s.mergeSeparator || 'asterisks'} onChange={set('mergeSeparator')}>
+            <option value="asterisks">{t('set.mergeSeparatorAsterisks')}</option>
+            <option value="blank">{t('set.mergeSeparatorBlank')}</option>
+            <option value="custom">{t('set.mergeSeparatorCustom')}</option>
+          </select>
+          {(s.mergeSeparator || 'asterisks') === 'custom' && <input type="text" maxLength="40" value={s.mergeSeparatorCustom || ''} placeholder="* * *" onChange={set('mergeSeparatorCustom')} />}
+        </label>
         {check('smartDashes', t('set.smartDashes'))}
         {check('smartEllipsis', t('set.smartEllipsis'))}
         {check('smartFractions', t('ui.settingsDialog.fractii_1_2_3_4'))}

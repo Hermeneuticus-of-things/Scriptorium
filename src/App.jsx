@@ -786,6 +786,9 @@ export default function App({ api: apiProp }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.ui = settings?.uiStyle || 'classic';
     document.documentElement.style.setProperty('--editor-font-size', `${settings?.fontSize || 18}px`);
+    // S3-B.APP.43/44: marginile editorului, ca variabile CSS consumate de suprafața de scriere.
+    document.documentElement.style.setProperty('--ed-pad-x', `${Math.max(0, Math.min(200, Number(settings?.editorPadX ?? 48)))}px`);
+    document.documentElement.style.setProperty('--ed-pad-y', `${Math.max(0, Math.min(200, Number(settings?.editorPadY ?? 24)))}px`);
   }, [settings]);
 
   const report = useCallback((e) => setError(e?.message || String(e)), []);
@@ -2371,7 +2374,10 @@ export default function App({ api: apiProp }) {
     await flush();
     const [first, ...rest] = nodes;
     await api.takeSnapshot(dir, first.id, tr('ui.app.automat_inainte_de_unire')).catch(report);
-    const html = nodes.map((n) => docsNow()[n.id] || '').join('<p>* * *</p>');
+    // S3-B.GEN.15: separatorul de unire e configurabil (linie de pauză / rând liber / custom).
+    const sepMode = settings.mergeSeparator || 'asterisks';
+    const sep = sepMode === 'blank' ? '<p><br></p>' : sepMode === 'custom' ? `<p>${String(settings.mergeSeparatorCustom || '').slice(0, 40)}</p>` : '<p>* * *</p>';
+    const html = nodes.map((n) => docsNow()[n.id] || '').join(sep);
     const notes = await Promise.all(nodes.map((n) => api.readDoc(dir, n.id, 'notes')));
     const synopsis = nodes.map((n) => n.synopsis).filter(Boolean).join('\n');
     const keywords = [...new Set(nodes.flatMap((n) => n.keywords || []))];
