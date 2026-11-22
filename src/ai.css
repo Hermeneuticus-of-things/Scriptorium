@@ -110,3 +110,14 @@
 /* Previzualizarea andocării magnetice: dreptunghiul țintă apare sub panou în timpul drag-ului. */
 .ai-dock-preview { position: fixed; z-index: 39; border: 2px dashed var(--accent, #58a6ff); border-radius: var(--radius-lg, 8px);
   background: rgba(88, 166, 255, .12); pointer-events: none; }
+
+/* Coada de revizuire (PLAN-AI-DEDICAT Etapa 2, principii A2UI): card per schimbare. */
+.ai-review-queue { display: flex; flex-direction: column; gap: var(--sp-2); }
+.ai-issue { border: 1px solid var(--line, #ddd); border-left: 3px solid var(--accent, #58a6ff); border-radius: var(--radius, 6px); padding: var(--sp-2); }
+.ai-issue.accepted { border-left-color: #2a2; opacity: .85; }
+.ai-issue-frag del { color: #b00; text-decoration: line-through; }
+.ai-issue-frag ins { color: #080; text-decoration: none; font-weight: 600; }
+.ai-issue-frag del, .ai-issue-frag ins { overflow-wrap: anywhere; }
+.ai-issue-actions { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-1); }
+.ai-issue-actions button { font-size: var(--font-ui-sm, 12px); padding: 2px 8px; }
+.ai-issue-ctx { overflow-wrap: anywhere; }

@@ -35,6 +35,7 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
  const [task,setTask]=useState('proofread'),[scope,setScope]=useState('auto'),[instructions,setInstructions]=useState(''),[question,setQuestion]=useState('');
  const [busy,setBusy]=useState(null),[applying,setApplying]=useState(false),[live,setLive]=useState(''),[elapsed,setElapsed]=useState(0),[result,setResult]=useState(null),[error,setError]=useState(null),[usedBy,setUsedBy]=useState(''),[guard,setGuard]=useState(null);
  const [history,setHistory]=useState(()=>sessionHistory.list()),[contextInfo,setContextInfo]=useState(null);
+  const [accepted,setAccepted]=useState(null),[reviewSeg,setReviewSeg]=useState(null);
  const runIdRef=useRef(''),mounted=useRef(true),runRef=useRef(null);
  const cancel=()=>{runIdRef.current='';setBusy(null);setLive('');api.cancelAi?.().catch(()=>{})};
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;if(runIdRef.current){runIdRef.current='';api.cancelAi?.().catch(()=>{})}}},[api]);
@@ -63,12 +64,20 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
    if(!mounted.current||runIdRef.current!==runId)return;
    const entry=sessionHistory.add({action,text:res.text,before:range?.before||text,question:action==='ask'?question:'',docId:node.id,docTitle:node.title,projectDir,projectTitle,provider:res.provider||aiLabel,model:res.model||aiModel});
    setHistory(sessionHistory.list());setUsedBy(providerText(res.provider,res.model));setResult({...entry,selection,range,handle,contextSnapshot:context});
+   const seg=(res.action==='proofread'||res.action==='revise')?diffSegments(range?.before||text,res.text):null;setReviewSeg(seg);setAccepted(null);
   }catch(e){if(mounted.current&&runIdRef.current===runId)setError({message:e.message,action})}
   finally{if(mounted.current&&runIdRef.current===runId){runIdRef.current='';setBusy(null)}}
  };
  runRef.current=run;
- const accept=async(forceKind,overrideGuard=false)=>{
-  const r=result;if(!r||applying)return;
+ const accept=async(forceKind,overrideGuard=false)=>{ // Coada de revizuire: aplicarea = textul cu subsetul acceptat, prin aceeași cale
+ // tranzacțională existentă (snapshot + applyTextProposal — protecțiile rămân).
+ let rSub=null;
+ if(reviewSeg&&accepted&&!overrideGuard){
+   const text2=applySubset(result.before,result.text,accepted);
+   if(text2!==result.before)rSub={...result,text:text2};
+ }
+ const rUse=rSub||result;
+  const r=rUse;if(!r||applying)return;
   const ed=r.handle?.editor,kind=forceKind||actionKind(r.action);
   if(r.docId!==node.id||r.projectDir!==projectDir||(ed&&!stillThere(ed,r.range))){setError({message:tr('ui.aiWorkspace.stale')});return}
   if(ed&&!ed.isEditable){setError({message:tr('ui.aiWorkspace.readOnly')});return}
@@ -135,7 +144,46 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
   {error&&<div className="ai-error" role="alert"><span>{error.message}</span>{error.settings?<button type="button" className="link" onClick={()=>onOpenSettings('ai')}>{tr('ui.aiPanel.setari_ai')}</button>:error.action&&<button type="button" className="link" onClick={()=>run(error.action)}>{tr('ui.aiPanel.reincearca')}</button>}</div>}
   {result&&<div className="ai-result"><h3>{tr(kind==='read'?'ui.aiWorkspace.analysis':'ui.aiWorkspace.proposal')} — {label(result.action)}</h3><p className="muted small">{tr('ui.aiWorkspace.resultTarget',{title:result.docTitle,scope:result.selection?tr('ui.aiPanel.textul_selectat'):tr('ui.aiWorkspace.wholeDocument')})}</p>
    {parts?(noChange(parts)?<p className="ok">{tr('ui.aiPanel.nicio_corectura_necesara')}</p>:<div className="ai-diff" aria-label={tr('ui.aiPanel.diferente_inainte_dupa')}>{parts.map((p,i)=>p.added?<ins key={i}>{p.value}</ins>:p.removed?<del key={i}>{p.value}</del>:<span key={i}>{p.value}</span>)}</div>):<pre className="ai-stream">{result.text}</pre>}
-   {guard&&guard.length>0&&<div className="ai-guard" role="alert"><p>{tr('ui.aiPanel.fraze_fixate_atinse')}</p><ul>{guard.map((f,i)=><li key={i}>«{f}»</li>)}</ul><div className="ai-actions"><button type="button" className="primary" disabled={applying} onClick={()=>accept(undefined,true)}>{tr('ui.aiPanel.accepta_oricum')}</button><button type="button" disabled={applying} onClick={reject}>{tr('ui.aiWorkspace.reject')}</button></div></div>}
+   {guard&&guard.length>0&&<div className="ai-guard" role="alert"><p>{tr('ui.aiPanel.fraze_fixate_atinse')}</p><ul>{guard.map((f,i)=><li key={i}>«{f}»</li>)}</ul>
+   {reviewSeg&&kind==='replace'&&!guard&&(()=>{
+     const acc=accepted||new Set();
+     const total=reviewSeg.changes.length;
+     const remaining=total-acc.size;
+     return (
+       <div className="ai-review-queue" role="list" aria-label={tr('ui.aiReview.title')}>
+         <p className="muted small">{tr('ui.aiReview.title')} — {remaining}/{total} {tr('ui.aiReview.remaining')}</p>
+         {reviewSeg.changes.map((c)=>{
+           const isAcc=acc.has(c.i);
+           const isRej=typeof accepted?.has==='function'&&false; // respinsele = non-acceptate; afișate ca pendinte
+           const ctx=changeContext(result.before,c.removed);
+           return (
+             <div key={c.i} role="listitem" className={`ai-issue${isAcc?' accepted':''}`}>
+               <div className="ai-issue-frag"><del>{c.removed}</del> <ins>{c.added}</ins></div>
+               <div className="muted small ai-issue-ctx">{ctx.lead}⟦…⟧{ctx.trail}</div>
+               <div className="ai-issue-actions">
+                 <button type="button" className={isAcc?'primary':''} disabled={applying}
+                   onClick={()=>setAccepted(new Set([...acc,c.i]))}>
+                   {isAcc?tr('ui.aiReview.accepted'):tr('ui.aiReview.accept')}
+                 </button>
+                 {!isAcc&&<button type="button" disabled={applying} onClick={()=>{const n2=new Set(acc);n2.delete(c.i);setAccepted(n2)}}>{tr('ui.aiReview.reject')}</button>}
+               </div>
+             </div>
+           );
+         })}
+         <div className="ai-issue-actions">
+           <button type="button" className="primary" disabled={applying||!remaining}
+             onClick={()=>{setAccepted(new Set(reviewSeg.changes.map((c)=>c.i)));}}>{tr('ui.aiReview.acceptRemaining')}</button>
+           <button type="button" disabled={applying||!acc.size}
+             onClick={()=>{setAccepted(null);}}>{tr('ui.aiReview.clear')}</button>
+         </div>
+         <details className="ai-config"><summary>{tr('ui.aiReview.fullDiff')}</summary>
+           <div className="ai-diff" aria-label={tr('ui.aiPanel.diferente_inainte_dupa')}>{parts.map((p,i)=>p.added?<ins key={i}>{p.value}</ins>:p.removed?<del key={i}>{p.value}</del>:<span key={i}>{p.value}</span>)}</div>
+         </details>
+       </div>
+     );
+   })()}
+
+   <div className="ai-actions"><button type="button" className="primary" disabled={applying} onClick={()=>accept(undefined,true)}>{tr('ui.aiPanel.accepta_oricum')}</button><button type="button" disabled={applying} onClick={reject}>{tr('ui.aiWorkspace.reject')}</button></div></div>}
    <div className="ai-actions">
     {['feedback','consistency'].includes(result.action)&&<button type="button" className="primary" disabled={Boolean(busy||applying)} onClick={()=>run('revise',result)}>{tr('ui.aiWorkspace.proposeRepair')}</button>}
     {kind==='replace'&&parts&&!noChange(parts)&&<button type="button" className="primary" disabled={applying} onClick={()=>accept()}>{tr('ui.aiWorkspace.apply')}</button>}
