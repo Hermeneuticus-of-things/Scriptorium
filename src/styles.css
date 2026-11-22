@@ -982,3 +982,13 @@ details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1)
 .help-finder-title { font-weight: 600; }
 .help-finder-row kbd { font-size: var(--font-ui-sm, 12px); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 4px; }
 .help-finder h3.small { margin: var(--sp-2) 0 var(--sp-1) 0; }
+
+/* What's New (PS-HELP-001 §19): jurnalul de schimbări în tab-ul Help. */
+.help-news { font-family: var(--font-ui, system-ui); font-size: var(--font-ui-sm, 12px); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+
+/* EmptyState (PS-HELP-001 §13): zona goală explică și oferă acțiunea. */
+.empty-state { padding: var(--sp-3); text-align: center; display: flex; flex-direction: column; gap: var(--sp-1); align-items: center; }
+.empty-state.compact { padding: var(--sp-2); }
+.empty-state-title { margin: 0; font-weight: 600; }
+.empty-state-hint { margin: 0; max-width: 34em; }
+.empty-state-action { margin-top: var(--sp-1); }

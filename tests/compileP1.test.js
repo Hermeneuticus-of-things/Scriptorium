@@ -76,9 +76,11 @@ describe('predefined formats', () => {
   it('every preset compiles to DOCX, EPUB and HTML', async () => {
     for (const p of F.PRESETS) {
       const html = compile.compileHtml(makeProject(), read, { format: fmt(p.id) });
-      expect(html, p.id).toContain('Textul gării.');
+      // „Schiță" arată intenționat doar titlurile (outline) — fără corpul textului.
+      if (p.id !== 'schita') expect(html, p.id).toContain('Textul gării.');
+      else expect(html, p.id).not.toContain('Textul gării.');
       const docx = await compile.compileDocx(makeProject(), read, { format: fmt(p.id) });
-      expect(docText(await zipText(docx, 'word/document.xml')), p.id).toContain('Textul peronului.');
+      if (p.id !== 'schita') expect(docText(await zipText(docx, 'word/document.xml')), p.id).toContain('Textul peronului.');
       const epub = await compile.compileEpub(makeProject(), read, { format: fmt(p.id) });
       expect(Object.keys((await JSZip.loadAsync(epub)).files).some((f) => /ch\d+\.xhtml$/.test(f)), p.id).toBe(true);
     }

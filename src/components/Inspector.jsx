@@ -9,6 +9,7 @@ import { buildExtensions } from '../editor/extensions.js';
 import { parseAnnotations, updateComment, updateFootnote } from '../lib/panelsExtra.js';
 import BookmarksPanel from './BookmarksPanel.jsx';
 import { t as tr, uiLocale } from '../lib/i18n.js';
+import EmptyState from './EmptyState.jsx';
 import { moveTo, labelTitleOf, noneLabel, noneStatus, statusTitleOf, synopsisFromText, parseNumberField, customIconOf, CUSTOM_ICON_PREFIX } from '../lib/projectSettings.js';
 import ProjectNotesTabs from './ProjectNotesTabs.jsx';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
@@ -438,7 +439,7 @@ function AnnotationsPane({ items, editable, canAdd, authorName, onAdd, onJump, o
         </div>
       )}
       {hint && <p className="muted small annot-hint" role="status">{hint}</p>}
-      {items.length === 0 && <p className="muted">{tr('ui.inspector.annot_empty')}</p>}
+      {items.length === 0 && <EmptyState compact title={tr('ui.inspector.annot_empty')} hint={tr('ui.inspector.annot_hint')} />}
       <ul className="annot-list">
         {shown.map(({ it, no }) => {
           return (

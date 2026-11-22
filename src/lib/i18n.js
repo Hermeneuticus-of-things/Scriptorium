@@ -170,6 +170,8 @@ const ro = {
   'set.replacements': 'Înlocuiri automate', 'set.replaceFrom': 'Înlocuiește', 'set.replaceTo': 'Cu',
   'set.paraIndent': 'Indentare implicită a paragrafului (em)', 'set.paraSpacing': 'Spațiu după paragraf (em)',
   'set.defaultView': 'Vizualizare implicită', 'set.showInvisibles': 'Arată caracterele invizibile', 'cmd.preserveFormat': 'Păstrează formatarea (bloc neatins la compilare)', 'cmd.convertDefaultDraft': 'Convertește Manuscrisul la formatarea implicită…', 'cmd.convertDefaultAll': 'Convertește tot proiectul la formatarea implicită…', 'cmd.copyholder': 'Deschide ca referință', 'cmd.copyholderClose': 'Închide panoul de referință',
+
+  'cmd.resetIndents': 'Resetează indentările listelor',
   'set.autoBacklinks': 'Adaugă automat legătura înapoi (în bookmark-urile documentului țintă)',
   'set.backupOnClose': 'Backup automat la închidere', 'set.backupEvery': 'Și la fiecare (minute, 0 = nu)', 'set.backupKeep': 'Păstrează ultimele',
   'set.backupDir': 'Folder backup (gol = lângă proiect)', 'set.backupDirPh': 'lângă proiect, în <Nume>.backups', 'set.openBackupFolder': 'Deschide folderul de backup', 'set.backupToDir': 'Ultimul folder „Backup în…”', 'set.backupToDirHint': 'Se actualizează automat la Fișier → Backup în…; doar informativ, diferit de folderul backup automat de mai sus.',
@@ -419,6 +421,8 @@ const en = {
   'set.replacements': 'Auto-replacements', 'set.replaceFrom': 'Replace', 'set.replaceTo': 'With',
   'set.paraIndent': 'Default paragraph indent (em)', 'set.paraSpacing': 'Space after paragraph (em)',
   'set.defaultView': 'Default view', 'set.showInvisibles': 'Show invisible characters', 'cmd.preserveFormat': 'Preserve formatting (block left as is by Compile)', 'cmd.convertDefaultDraft': 'Convert the Manuscript to default formatting…', 'cmd.convertDefaultAll': 'Convert the whole project to default formatting…', 'cmd.copyholder': 'Open as reference', 'cmd.copyholderClose': 'Close reference pane',
+
+  'cmd.resetIndents': 'Reset List Indents',
   'set.autoBacklinks': 'Add back-links automatically (to the target document bookmarks)',
   'set.backupOnClose': 'Automatic backup on close', 'set.backupEvery': 'And every (minutes, 0 = never)', 'set.backupKeep': 'Keep the latest',
   'set.backupDir': 'Backup folder (empty = next to project)', 'set.backupDirPh': 'next to project, in <Name>.backups', 'set.openBackupFolder': 'Open backup folder', 'set.backupToDir': 'Last “Backup to…” folder', 'set.backupToDirHint': 'Updated automatically by File → Backup to…; read-only, separate from the automatic backup folder above.',
@@ -561,11 +565,11 @@ export function cmdLabel(id, fallback) {
 // Built-in Compile formats and styles keep their stored (Romanian) names; only the display is
 // translated, and only while the user has not renamed them.
 const BUILTIN_EN = {
-  format: { manuscris: 'Standard manuscript', paperback: 'Printed book (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'A5 PDF for reading', implicit: 'Default', times: 'Times New Roman (double-spaced)', courier: 'Courier (classic manuscript)', 'roman-parti': 'Novel with numbered parts', nonfictiune: 'Non-fiction', povestire: 'Short story', 'scenariu-film': 'Screenplay', 'piesa-teatru': 'Stage play', 'scenariu-bd': 'Comic script', 'scenariu-radio': 'Radio script', poezie: 'Poetry', 'ebook-fictiune': 'Fiction e-book', corectura: 'Proof copy' },
+  format: { manuscris: 'Standard manuscript', paperback: 'Printed book (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'A5 PDF for reading', implicit: 'Default', times: 'Times New Roman (double-spaced)', courier: 'Courier (classic manuscript)', 'roman-parti': 'Novel with numbered parts', nonfictiune: 'Non-fiction', povestire: 'Short story', 'scenariu-film': 'Screenplay', 'piesa-teatru': 'Stage play', 'scenariu-bd': 'Comic script', 'scenariu-radio': 'Radio script', poezie: 'Poetry', 'ebook-fictiune': 'Fiction e-book', corectura: 'Proof copy', schita: 'Outline (table of contents)', 'latex-memoir': 'LaTeX book (memoir)', 'latex-report': 'LaTeX report (report)' },
   style: { ilustratie: 'Illustration', accent: 'Accent', sanscrit: 'Sanskrit term', 'citat-bloc': 'Block quote', motto: 'Epigraph', scrisoare: 'Letter', centrat: 'Centered', separator: 'Scene separator' },
 };
 const BUILTIN_RO = {
-  format: { manuscris: 'Manuscris standard', paperback: 'Carte tipărită (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'Citire PDF A5', implicit: 'Implicit (Default)', times: 'Times New Roman (dublu spațiat)', courier: 'Courier (manuscris clasic)', 'roman-parti': 'Roman cu părți numerotate', nonfictiune: 'Non-ficțiune', povestire: 'Povestire', 'scenariu-film': 'Scenariu de film', 'piesa-teatru': 'Piesă de teatru', 'scenariu-bd': 'Scenariu de bandă desenată', 'scenariu-radio': 'Scenariu radio', poezie: 'Poezie', 'ebook-fictiune': 'E-book ficțiune', corectura: 'Exemplar de corectură' },
+  format: { manuscris: 'Manuscris standard', paperback: 'Carte tipărită (paperback)', ebook: 'E-book', modern: 'Modern', 'pdf-a5': 'Citire PDF A5', implicit: 'Implicit (Default)', times: 'Times New Roman (dublu spațiat)', courier: 'Courier (manuscris clasic)', 'roman-parti': 'Roman cu părți numerotate', nonfictiune: 'Non-ficțiune', povestire: 'Povestire', 'scenariu-film': 'Scenariu de film', 'piesa-teatru': 'Piesă de teatru', 'scenariu-bd': 'Scenariu de bandă desenată', 'scenariu-radio': 'Scenariu radio', poezie: 'Poezie', 'ebook-fictiune': 'E-book ficțiune', corectura: 'Exemplar de corectură', schita: 'Schiță (cuprins)', 'latex-memoir': 'LaTeX carte (memoir)', 'latex-report': 'LaTeX raport (report)' },
   style: { ilustratie: 'Ilustrație', accent: 'Accent', sanscrit: 'Termen sanscrit', 'citat-bloc': 'Citat bloc', motto: 'Motto', scrisoare: 'Scrisoare', centrat: 'Centrat', separator: 'Separator de scenă' },
 };
 /** Display name of a built-in format/style ({ id, name }); renamed or user items show their own name. */

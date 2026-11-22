@@ -59,7 +59,7 @@ const fmt = (id, patch = {}) => ({ ...JSON.parse(JSON.stringify(F.PRESETS.find((
 
 describe('compile formats', () => {
   it('ships the Romanian presets', () => {
-    expect(F.PRESETS.map((p) => p.name)).toEqual(['Manuscris standard', 'Carte tipărită (paperback)', 'E-book', 'Modern', 'Citire PDF A5', 'Implicit (Default)', 'Times New Roman (dublu spațiat)', 'Courier (manuscris clasic)', 'Roman cu părți numerotate', 'Non-ficțiune', 'Povestire', 'Scenariu de film', 'Piesă de teatru', 'Scenariu de bandă desenată', 'Scenariu radio', 'Poezie', 'E-book ficțiune', 'Exemplar de corectură']);
+    expect(F.PRESETS.map((p) => p.name)).toEqual(['Manuscris standard', 'Carte tipărită (paperback)', 'E-book', 'Modern', 'Citire PDF A5', 'Implicit (Default)', 'Times New Roman (dublu spațiat)', 'Courier (manuscris clasic)', 'Roman cu părți numerotate', 'Non-ficțiune', 'Povestire', 'Scenariu de film', 'Piesă de teatru', 'Scenariu de bandă desenată', 'Scenariu radio', 'Poezie', 'E-book ficțiune', 'Exemplar de corectură', 'Schiță (cuprins)', 'LaTeX carte (memoir)', 'LaTeX raport (report)']);
     const ms = F.PRESETS[0];
     // Default manuscript: body Georgia 10pt, chapter titles 12pt bold, section subtitles 10pt bold.
     expect(ms.typography).toMatchObject({ fontFamily: 'Georgia', fontSizePt: 10, lineSpacing: 2 });

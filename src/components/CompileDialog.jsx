@@ -1354,6 +1354,8 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
                     ['removeHighlights', tr('ui.compileDialog.elimina_evidentierile')],
                     ['removeColors', tr('ui.compileDialog.elimina_culorile_textului')],
                     ['linksToText', tr('ui.compileDialog.legaturile_interne_devin_text_simplu')],
+                    ['criticMarkup', tr('ui.compileDialog.critic_markup')],
+                    ['italicToUnderline', tr('ui.compileDialog.italic_subliniere')],
                   ].map(([k, label]) => (
                     <label key={k} className="check">
                       <input type="checkbox" checked={Boolean(xf[k])} onChange={(e) => setIn(['transforms', k], e.target.checked)} /> {label}

@@ -3574,6 +3574,7 @@ export default function App({ api: apiProp }) {
     ['format', 'selectAllWithStyle', tr('cmd.selectAllWithStyle'), () => activeHandle()?.selectAllWithStyle(), !stylePara],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
+    ['format', 'resetIndents', tr('cmd.resetIndents'), () => activeHandle()?.editor?.chain().focus().setParagraphFormat({ indentLeft: null, firstIndent: null }).run()],
     ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
     ['format', 'convertDefaultAll', tr('cmd.convertDefaultAll'), () => convertFormattingAll().catch(report), !project],
     ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],

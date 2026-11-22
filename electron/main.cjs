@@ -551,6 +551,14 @@ handle('project:release', (e) => {
   releaseWindow(e.sender.id);
   return true;
 });
+// What's New (PS-HELP-001 §19): CHANGELOG.md din aplicație, pentru tab-ul „Noutăți" din Help.
+handle('app:changelog', () => {
+  try {
+    return fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
+  } catch {
+    return '';
+  }
+});
 handle('app:instanceInfo', () => {
   const current = installationInfo.currentInstallation({ app, packageVersion: require('../package.json').version });
   const installations = installationInfo.describeInstallations({

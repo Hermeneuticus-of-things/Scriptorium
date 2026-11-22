@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { quickSearchProject, quickSearchRows, quickNav, quickOpenMode, quickRevealPhrase, handoffCriteria } from '../lib/quickSearch.js';
 import { findNode } from '../lib/tree.js';
 import { t } from '../lib/i18n.js';
+import EmptyState from './EmptyState.jsx';
 import AnchoredPopover from './AnchoredPopover.jsx';
 
 // Quick Search (Scrivener 3 §11.5): an omnibox-style popup that jumps to a
@@ -100,7 +101,7 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
               {label('texts', results.texts.length)}
             </>
           ) : (
-            query.trim() && <p className="muted qs-empty">{t('ui.quickSearch.niciun_rezultat')}</p>
+            query.trim() && <EmptyState compact title={t('ui.quickSearch.niciun_rezultat')} hint={t('ui.quickSearch.reformuleaza')} />
           )}
         </div>
         <div className="qs-footer">

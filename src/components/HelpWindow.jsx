@@ -7,14 +7,14 @@ import { buildIndex, searchManual, resolveTopic, terms, fold, CONTEXT_TOPICS } f
 
 const UI = {
   ro: {
-    title: 'Ajutor Pneuma Sofer', manual: 'Manual', shortcuts: 'Scurtături', placeholders: 'Substituenți', syntax: 'Sintaxă',
+    title: 'Ajutor Pneuma Sofer', manual: 'Manual', shortcuts: 'Scurtături', placeholders: 'Substituenți', syntax: 'Sintaxă', news: 'Noutăți', newsEmpty: 'Jurnalul de schimbări nu e disponibil în această instalare.',
     search: 'Caută în manual…', results: 'Rezultate', none: 'Niciun rezultat.', back: 'Înapoi', forward: 'Înainte', close: 'Închide',
     tutorial: 'Pornește tutorialul', command: 'Comandă', key: 'Scurtătură', fixed: 'Taste fixe (editor și binder)', code: 'Cod', meaning: 'Ce înseamnă',
     custom: 'personalizată', scriptMode: 'Script Mode: Tab și Enter', element: 'Element', tab: 'Tab →', enter: 'Enter →', def: 'Element implicit',
     phNote: 'Substituenții se scriu în text, în prefixe/sufixe de secțiune, în antet și subsol. Un cod necunoscut rămâne neschimbat.',
   },
   en: {
-    title: 'Pneuma Sofer Help', manual: 'Manual', shortcuts: 'Shortcuts', placeholders: 'Placeholders', syntax: 'Syntax',
+    title: 'Pneuma Sofer Help', manual: 'Manual', shortcuts: 'Shortcuts', placeholders: 'Placeholders', syntax: 'Syntax', news: "What's New", newsEmpty: 'The changelog is not available in this install.',
     search: 'Search the manual…', results: 'Results', none: 'No results.', back: 'Back', forward: 'Forward', close: 'Close',
     tutorial: 'Start the tutorial', command: 'Command', key: 'Shortcut', fixed: 'Fixed keys (editor and binder)', code: 'Code', meaning: 'Meaning',
     custom: 'custom', scriptMode: 'Script Mode: Tab and Enter', element: 'Element', tab: 'Tab →', enter: 'Enter →', def: 'Default element',
@@ -22,7 +22,7 @@ const UI = {
   },
 };
 
-const TABS = ['manual', 'shortcuts', 'placeholders', 'syntax'];
+const TABS = ['manual', 'shortcuts', 'placeholders', 'syntax', 'news'];
 
 // Wraps every occurrence of the search terms in <mark> inside the rendered section.
 function highlight(root, ts) {
@@ -62,6 +62,9 @@ function highlight(root, ts) {
 export default function HelpWindow({ initialTopic, initialTab = 'manual', onClose, onStartTutorial, settings }) {
   const lang = getLanguage() === 'en' ? 'en' : 'ro';
   const L = UI[lang];
+  // What's New (PS-HELP-001 §19): CHANGELOG.md direct din aplicație.
+  const [news, setNews] = useState('');
+  useEffect(() => { window.api?.changelog?.().then(setNews).catch(() => {}); }, []);
   const manual = useMemo(() => getManual(lang), [lang]);
   const index = useMemo(() => buildIndex(manual), [manual]);
   const first = useMemo(() => {
@@ -268,6 +271,12 @@ export default function HelpWindow({ initialTopic, initialTab = 'manual', onClos
                     </table>
                   </section>
                 ))}
+              </article>
+            )}
+            {tab === 'news' && (
+              <article>
+                <h1>{L.news}</h1>
+                {news ? <pre className="help-news">{news}</pre> : <p className="help-muted">{L.newsEmpty}</p>}
               </article>
             )}
           </main>

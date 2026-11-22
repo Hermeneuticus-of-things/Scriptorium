@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('api', {
   newProject: (title, templateId) => call('project:new', title, templateId),
   openProject: (dir) => call('project:open', dir),
   instanceInfo: () => call('app:instanceInfo'),
+  changelog: () => call('app:changelog'),
   onProjectInstanceConflict: (fn) => {
     const listener = (_e, info) => fn(info);
     ipcRenderer.on('project:instance-conflict', listener);
