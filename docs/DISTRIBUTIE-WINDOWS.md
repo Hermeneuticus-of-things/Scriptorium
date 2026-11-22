@@ -47,6 +47,32 @@ program poate declanșa din nou avertismentul (hash nou = reputație nouă de co
 Nu există pași care depind de certificate, secrete de semnare sau scope-uri speciale de
 token. Workflow-ul se poate edita cu orice PAT cu drepturi de push obișnuite.
 
+## 4. Unde găsește aplicația update-ul — locul canonic (UN SINGUR LOC, mereu)
+
+**Aplicațiile instalate iau update-ul de aici, și numai de aici:**
+
+```
+https://api.github.com/repos/Hermeneuticus-of-things/Scriptorium/releases/latest
+```
+
+Mecanismul (lib/updater.cjs): updaterul întreabă API-ul GitHub pentru release-ul marcat
+**Latest** al repo-ului `Hermeneuticus-of-things/Scriptorium`, compară versiunea din
+package.json a release-ului cu `app.getVersion()`, descarcă asset-ul Windows potrivit
+(`PneumaSofer-Setup-<versiune>.exe`) și verifică SHA-256 din `SHA256SUMS` înainte de instalare.
+
+**Regulă pentru oricine face un update viitor (gata automatizat):**
+1. Mărești `version` în `package.json` (singura sursă de adevăr a numărului).
+2. Faci push pe `main`.
+3. Workflow-ul `Windows` (GitHub Actions) rulează automat: build → teste → e2e → installer
+   → publică **Release cu tag `v<version>`** → release-ul nou devine automat „Latest”.
+4. Aplicațiile instalate îl văd singure (verificare zilnică + la focus, sau
+   Ajutor → „Caută actualizări…”). Nimic de actualizat manual nicăieri — link-ul de update
+   e mereu același, pentru că „Latest” îl mută workflow-ul.
+
+Deci: **nu se pune niciodată un link de update cu număr de versiune în cod sau README** —
+ambele citesc „latest”. README-ul linkuiește `releases/latest`; updaterul întreabă API-ul
+`releases/latest`. O versiune nouă publicată = update vizibil peste tot, instant.
+
 ## 4. Integritate, nu identitate
 
 `SHA256SUMS` din Release permite verificarea că fișierul descărcat e **exact** fișierul

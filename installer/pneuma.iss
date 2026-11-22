@@ -64,7 +64,6 @@ en.InstallingApp=Closing Pneuma Sofer…
 en.CommandLine=Command line:
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "addtopath"; Description: "{cm:AddToPath}"; GroupDescription: "{cm:CommandLine}"; Flags: unchecked
 
 [Files]
@@ -77,7 +76,10 @@ Source: "pneuma-mcp.cmd"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\resources\app\build\icon.ico"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\resources\app\build\icon.ico"; Tasks: desktopicon
+; Scurtătura de desktop se creează ÎNTOTDEAUNA (directivă autor 23.11): la instalările
+; silențioase făcute de updater dialogul de task-uri nu apare — icoana trebuie să existe.
+; Pin în taskbar: Start → caută „Pneuma Sofer” → clic dreapta → „Pin to taskbar”.
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\resources\app\build\icon.ico"
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent

@@ -638,6 +638,8 @@ Cartea mea.scribner/
 </details>
 
 
+**De reținut: Pneuma Sofer lucrează extraordinar de bine fără AI.** Scrierea, organizarea, dictarea, corecturile, căutările, backup-ul și exportul sunt complete și rămân pe calculatorul tău. Tot ce înseamnă AI stă ascuns până îl activezi tu din Setări; un scriitor care nu îl vrea nu vede niciun gram de AI în program.
+
 ## Licență
 
 MIT. Vezi [`LICENSE`](LICENSE).
