@@ -84,3 +84,15 @@
 .ai-panel .ai-guard { border: 1px solid var(--line, #ddd6); border-left: 3px solid #c33; border-radius: var(--radius); padding: var(--sp-2); }
 .ai-panel .ai-guard p { margin: 0 0 var(--sp-1) 0; font-size: var(--font-ui-sm, 12px); }
 .ai-panel .ai-guard ul { margin: var(--sp-1) 0; padding-left: var(--sp-3); font-size: var(--font-ui-sm, 12px); }
+
+/* Starea motorului AI (idle/gândire/flux/gata) — vizibilă mereu, lângă model (directiva UX §1). */
+.ai-panel .ai-status { display: inline-block; margin-left: var(--sp-1); padding: 1px 8px; border-radius: 999px; font-size: 11px; border: 1px solid var(--line, #ddd6); }
+.ai-panel .ai-status.idle { color: var(--muted); }
+.ai-panel .ai-status.busy { border-color: var(--accent, #58a6ff); color: var(--accent, #58a6ff); }
+.ai-panel .ai-status.ready { border-color: #2a2; color: #2a2; }
+
+/* Chips contextuale (§6): derivate din starea documentului — click = acțiunea pornește. */
+.ai-panel .ai-ctx-chips { margin-bottom: var(--sp-2); }
+.ai-panel .ai-chip-action { cursor: pointer; background: none; font-size: var(--font-ui-sm, 12px); line-height: 1; padding: 5px 8px; border: 1px solid var(--line, #ddd6); border-radius: 999px; color: var(--muted); }
+.ai-panel .ai-chip-action:hover:not(:disabled) { border-color: var(--accent, #58a6ff); color: var(--text); }
+.ai-panel .ai-chip-action:disabled { opacity: .5; cursor: default; }

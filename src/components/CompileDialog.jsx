@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { tabKeys } from '../lib/tabKeys.js';
 import { styleCss, stylesOf } from '../lib/styles.js';
 import { moveItem } from '../lib/projectSettings.js';
@@ -202,6 +202,25 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState('');
   const [preview, setPreview] = useState(null);
+  const previewBox = useRef(null);
+  // Previzualizarea nu mai lățește dialogul: panou propriu, scroll propriu, zoom cu «potrivire».
+  const [previewZoom, setPreviewZoom] = useState(0);
+    const fitPreview = () => {
+    if (previewZoom) return; // zoom manual: nu rescriem scala
+    const box = previewBox.current?.querySelector('.cd-preview-scroll');
+    const frame = box?.querySelector('iframe');
+    if (!box || !frame) return;
+    try {
+      const doc = frame.contentDocument;
+      const w = Math.max(doc?.documentElement?.scrollWidth || 0, doc?.body?.scrollWidth || 0);
+      if (w > 0 && w > box.clientWidth) {
+        frame.style.width = `${w}px`;
+        frame.style.transform = `scale(${box.clientWidth / w})`;
+        frame.style.transformOrigin = '0 0';
+        frame.style.height = `${(box.clientHeight || box.clientWidth * 1.5) / (box.clientWidth / w)}px`;
+      } else { frame.style.width = '100%'; frame.style.transform = ''; }
+    } catch { /* sandbox: fără acces — rămâne 100% */ }
+  };
 
   const folders = useMemo(() => folderOptions(project.tree), [project.tree]);
   const images = useMemo(() => imageItems(project.tree), [project.tree]);
@@ -611,7 +630,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide compile-dialog" role="dialog" aria-label={tr('ui.compileDialog.compileaza')} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal wide compile-dialog${preview !== null ? ' with-preview' : ''}`} role="dialog" aria-label={tr('ui.compileDialog.compileaza')} onClick={(e) => e.stopPropagation()}>
         <style>{CSS}</style>
         <h2>{tr('ui.compileDialog.compileaza')}</h2>
         <div className="cd-top">
@@ -1154,20 +1173,38 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
               )}
             </div>
           </section>
+                  {preview !== null && (
+            <div className="cd-preview" ref={previewBox} aria-label={tr('ui.common.previzualizare')}>
+              <div className="row cd-preview-head">
+                <strong>{tr('ui.common.previzualizare')}</strong>
+                <label className="small">
+                  {tr('ui.compileDialog.zoom_previzualizare')}
+                  <select value={previewZoom} onChange={(e) => setPreviewZoom(Number(e.target.value))} aria-label={tr('ui.compileDialog.zoom_previzualizare')}>
+                    <option value={0}>{tr('ui.compileDialog.zoom_potrivire')}</option>
+                    <option value={50}>50%</option>
+                    <option value={75}>75%</option>
+                    <option value={100}>100%</option>
+                    <option value={150}>150%</option>
+                  </select>
+                </label>
+                <button type="button" onClick={() => setPreview(null)}>{tr('ui.compileDialog.inchide_previzualizarea')}</button>
+              </div>
+              <div className="cd-preview-scroll">
+                {/* «Potrivire»: pagina compilată se scalată la lățimea panoului, nu lățește dialogul. */}
+                <iframe
+                  title={tr('ui.common.previzualizare')} sandbox="" srcDoc={preview}
+                  style={previewZoom ? { width: `${10000 / previewZoom}vw`, maxWidth: 'none', transform: `scale(${previewZoom / 100})`, transformOrigin: '0 0' } : { width: '100%' }}
+                  onLoad={fitPreview}
+                />
+              </div>
+            </div>
+        )}
         </div>
 
-        {preview !== null && (
-          <div className="cd-preview">
-            <div className="row">
-              <strong>{tr('ui.common.previzualizare')}</strong>
-              <button type="button" onClick={() => setPreview(null)}>{tr('ui.compileDialog.inchide_previzualizarea')}</button>
-            </div>
-            <iframe title={tr('ui.common.previzualizare')} sandbox="" srcDoc={preview} />
-          </div>
-        )}
+
 
         {done && <p className="ok">Salvat: {done}</p>}
-        <div className="actions">
+        <div className="actions cd-actions">
           <button type="button" onClick={onClose}>{tr('btn.close')}</button>
           <button type="button" onClick={persist}>{tr('ui.compileDialog.salveaza_setarile')}</button>
           <button type="button" disabled={busy} onClick={showPreview}>{tr('ui.common.previzualizare')}</button>
@@ -1588,6 +1625,19 @@ const CSS = `
 .compile-dialog .cd-table input:not([type=checkbox]){width:100%;min-width:5em}
 .compile-dialog .cd-chips{display:flex;flex-wrap:wrap;gap:.6em;align-items:center;margin:.3em 0}
 .compile-dialog .cd-hf-label{min-width:4em}
-.compile-dialog .cd-preview iframe{width:100%;height:50vh;border:1px solid var(--line,#ccc);background:#fff}
+.compile-dialog .cd-preview{border:1px solid var(--line,#ddd);border-radius:var(--radius,6px);display:flex;flex-direction:column;min-height:0}
+.compile-dialog .cd-preview-head{gap:.8em;align-items:center;padding:.4em .6em;border-bottom:1px solid var(--line,#ddd);background:var(--panel,transparent)}
+.compile-dialog .cd-preview-scroll{flex:1;min-height:0;overflow:auto;background:#fff}
+.compile-dialog .cd-preview iframe{width:100%;height:100%;min-height:320px;border:0;background:#fff}
+.compile-dialog .cd-actions{position:sticky;bottom:calc(-20px);margin:0 -24px -20px;padding:10px 24px;background:var(--paper,#fff);border-top:1px solid var(--line,#ddd);border-radius:0 0 var(--radius-lg,8px) var(--radius-lg,8px);z-index:2}
+/* Cu preview deschis: formularul și previzualizarea unul lângă altul pe ecrane late; panoul de preview nu lățește dialogul. */
+@media (min-width:1100px){
+  .compile-dialog.with-preview{width:min(1500px,97vw)}
+  .compile-dialog.with-preview .cd-body{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);align-items:start}
+  .compile-dialog.with-preview .cd-preview{position:sticky;top:0;height:min(78vh,900px)}
+}
+@media (max-width:1099px){
+  .compile-dialog.with-preview .cd-preview{height:55vh}
+}
 .compile-dialog .small{font-size:.85em}
 `;
