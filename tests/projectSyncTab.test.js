@@ -44,7 +44,7 @@ const setSelect = async (el, value) => {
 
 describe('projectSync helpers', () => {
   it('draft from an unset project inherits everything', () => {
-    expect(makeSyncDraft({})).toEqual({ auto: false, format: '', notesFormat: '', includeNotes: '', includeTrashed: false, numericPrefix: true });
+    expect(makeSyncDraft({})).toEqual({ auto: false, format: '', notesFormat: '', includeNotes: '', includeTrashed: false, numericPrefix: true, collectionId: '' });
     expect(applySyncDraft({ title: 'X', syncFolder: '/f' }, makeSyncDraft({}))).toEqual({ title: 'X', syncFolder: '/f' });
   });
   it('round-trips the six keys and drops inherited ones', () => {
@@ -97,7 +97,7 @@ describe('Project Settings › Sync tab', () => {
   });
   it('has RO and EN labels for every sync key', () => {
     const keys = Object.keys(uiRo).filter((k) => k === 'ui.ps.sincronizare' || k.startsWith('ui.ps.sync_'));
-    expect(keys.length).toBe(14); // sync_ + trashed + numeric (RO/EN)
+    expect(keys.length).toBe(16); // sync_ + trashed + numeric + collection (RO/EN)
     for (const k of keys) expect(uiEn[k]).toBeTruthy();
   });
 });

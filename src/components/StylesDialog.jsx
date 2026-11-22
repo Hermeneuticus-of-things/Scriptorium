@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { STYLE_KINDS, duplicateShortcuts, isParaStyle, normalizeShortcut, stylesOf } from '../lib/styles.js';
+import { paragraphCss } from '../editor/formatting.js';
 import { t, builtinName } from '../lib/i18n.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
 
@@ -21,6 +22,17 @@ function slug(name, taken) {
 // Project stylesheet editor (Scrivener: Format > Style > Show Styles Panel / Redefine).
 export default function StylesDialog({ api, project, currentLook, onSave, onClose, onError }) {
   const [styles, setStyles] = useState(() => structuredClone(stylesOf(project)));
+  // T6 (Anexa E, „Set Styles Defaults"): formatarea curentă din editor (currentLook —
+  // atributele paragrafului la cursor) devine default-ul documentelor noi (project.defaultDocHtml).
+  const [defMsg, setDefMsg] = useState('');
+  const setCurrentAsDefault = () => {
+    if (!currentLook) { setDefMsg(t('ui.styles.defaultNoEditor')); return; }
+    const css = paragraphCss(currentLook);
+    const bold = currentLook.bold ? '<strong> </strong>' : ' ';
+    const html = css ? `<p style="${css}">${bold}</p>` : '<p><br></p>';
+    onSave({ ...project, defaultDocHtml: html });
+    setDefMsg(t('ui.styles.defaultSet'));
+  };
   const [sel, setSel] = useState(0);
   const [dirty, setDirty] = useState(false);
   const st = styles[sel];
@@ -178,6 +190,8 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
               </p>
               <div className="ai-actions">
                 <button onClick={redefine} disabled={!currentLook} title={t('ui.stylesDialog.preia_aspectul_textului_selectat_in')}>{t('ui.stylesDialog.redefineste_din_selectie')}</button>
+                <button onClick={setCurrentAsDefault} disabled={!currentLook} title={t('ui.styles.defaultHint')}>{t('ui.styles.defaultButton')}</button>
+                {defMsg && <span className="muted small">{defMsg}</span>}
                 <button onClick={remove}>{t('ui.stylesDialog.sterge_stilul')}</button>
               </div>
             </div>

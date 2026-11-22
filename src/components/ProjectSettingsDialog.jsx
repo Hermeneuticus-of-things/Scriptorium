@@ -707,6 +707,13 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             <label className="check">
               <input type="checkbox" className="ps-sync-numeric" checked={x.sync.numericPrefix} onChange={(e) => setSy({ numericPrefix: e.target.checked })} /> {tr('ui.ps.sync_numeric')}
             </label>
+            <label>
+              {tr('ui.ps.sync_collection')}
+              <select className="ps-sync-collection" value={x.sync.collectionId || ''} onChange={(e) => setSy({ collectionId: e.target.value })}>
+                <option value="">{tr('ui.ps.sync_collection_all')}</option>
+                {(project.collections || []).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+              </select>
+            </label>
             <div className="row">
               <label>
                 {tr('ui.ps.sync_format')}

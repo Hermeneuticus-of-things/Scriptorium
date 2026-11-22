@@ -58,6 +58,26 @@ describe('T6 — Reset List Indents (Anexa E 3.1.4.1)', () => {
   });
 });
 
+describe('T6b — Set Styles Defaults (defaultDocHtml)', () => {
+  it('crearea de documente noi folosește project.defaultDocHtml când există', () => {
+    const app = src('src/App.jsx');
+    const hits = app.match(/projectRef.current.defaultDocHtml/g) || [];
+    expect(hits.length).toBe(2);
+  });
+  it('StylesDialog: butonul implicită prin currentLook + paragraphCss', () => {
+    const sd = src('src/components/StylesDialog.jsx');
+    expect(sd).toContain('setCurrentAsDefault');
+    expect(sd).toContain('paragraphCss(currentLook)');
+    expect(sd).toContain('defaultDocHtml: html');
+  });
+  it('etichete RO/EN', () => {
+    const i = src('src/lib/i18n-ui.js');
+    for (const k of ['ui.styles.defaultButton', 'ui.styles.defaultSet', 'ui.styles.defaultNoEditor']) {
+      expect(i.match(new RegExp('"' + k + '"', 'g'))?.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
+
 describe('PS-HELP 4-5 — What\u2019s New + EmptyState', () => {
   it('tab „Noutăți" în Help, cu conținut din app:changelog', () => {
     const hw = src('src/components/HelpWindow.jsx');

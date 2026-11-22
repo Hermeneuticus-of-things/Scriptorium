@@ -95,6 +95,28 @@ describe('folderSync — Trashed Files + prefix numeric (S3-B.SHR, T4c)', () => 
     expect(folderSync.syncOptions({ syncIncludeTrashed: true, syncNumericPrefix: false })).toMatchObject({ includeTrashed: true, numericPrefix: false });
     expect(folderSync.syncOptions({})).toMatchObject({ includeTrashed: false, numericPrefix: true });
   });
+  it('filtrul pe colecție: doar documentele din colecția aleasă intră în Draft', () => {
+    const p2 = {
+      title: 'T',
+      collections: [{ id: 'col1', title: 'Col', ids: ['a'] }],
+      syncCollectionId: 'col1',
+      tree: [
+        { id: 'draft', root: 'draft', type: 'folder', children: [n('a'), n('b')] },
+      ],
+    };
+    const d = tmp();
+    const m = folderSync.syncOut(p2, d, () => '<p>x</p>');
+    expect(Object.keys(m.files)).toEqual(['a']);
+    expect(m.files.a.file).toContain('Draft/');
+    fs.rmSync(d, { recursive: true, force: true });
+  });
+  it('fără colecție setată: tot Draft-ul', () => {
+    const p2 = { title: 'T', collections: [], tree: [{ id: 'draft', root: 'draft', type: 'folder', children: [n('a'), n('b')] }] };
+    const d = tmp();
+    const m = folderSync.syncOut(p2, d, () => '<p>x</p>');
+    expect(Object.keys(m.files).sort()).toEqual(['a', 'b']);
+    fs.rmSync(d, { recursive: true, force: true });
+  });
   it('draft/apply sync: cele șase chei', () => {
     expect(SYNC_KEYS).toContain('syncIncludeTrashed');
     expect(SYNC_KEYS).toContain('syncNumericPrefix');

@@ -3349,7 +3349,7 @@ export default function App({ api: apiProp }) {
     binderHistory.current = historyPush(binderHistory.current, pj.tree, tree);
     saveProject({ ...pj, tree, newLinkFolderId: folderId || '' });
     setDocs((d) => ({ ...d, [node.id]: '<p></p>' }));
-    api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
+    api.writeDoc(dir, node.id, 'docs', projectRef.current.defaultDocHtml || '<p></p>').catch(report);
     return node;
   };
   const openLink = (id) => {
@@ -4223,7 +4223,7 @@ export default function App({ api: apiProp }) {
                   const node = newNode('text');
                   setTree(updateNode(project.tree, folderId, { children: [...(f.children || []), node] }));
                   setDocs((d) => ({ ...d, [node.id]: '<p></p>' }));
-                  api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
+                  api.writeDoc(dir, node.id, 'docs', projectRef.current.defaultDocHtml || '<p></p>').catch(report);
                 }}
                 folder={selected && selected.children ? selected : findParent(project.tree, selectedId) || project.tree[0]}
                 onOpen={(id) => {
