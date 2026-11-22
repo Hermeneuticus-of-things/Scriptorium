@@ -82,3 +82,25 @@ export function changeContext(before, removed, width = 40) {
   const trail = before.slice(i + removed.length, i + removed.length + width).trimEnd();
   return { lead: (lead ? '…' : '') + lead, trail: trail + (trail ? '…' : '') };
 }
+
+/**
+ * Etapa 3 (PLAN-AI-DEDICAT): constatări individuale din rezultatele de tip „read"
+ * (Critica/Consistența/analize). Parsare tolerantă: linii cu numerotare („1.", „1)"),
+ * buline („•", „-"), coduri de regulă („R5", „R11:") sau „Probleme în …". Fallback: null
+ * dacă nu se disting cel puțin 2 constatări (textul rămâne afișat ca analysis obișnuit).
+ */
+export function parseFindings(text) {
+  const lines = String(text || '').split('\n').filter((l) => l.trim());
+  if (lines.length < 2) return null;
+  const starts = /^(?:\d{1,2}[.))]\s+|[-•*]\s+|(?:R\d{1,2}|NANO|MICRO|MEZZO|MACRO|MAHA)[^a-zăâîșț]*[A-ZĂÂÎȘȚ„])/i;
+  const items = [];
+  for (const l of lines) {
+    if (starts.test(l.trim())) items.push(l.trim());
+    else if (items.length) items[items.length - 1] += ' ' + l.trim();
+  }
+  if (items.length < 2) return null;
+  return items.map((t, i) => {
+    const title = t.slice(0, 90);
+    return { i, title, text: t };
+  });
+}

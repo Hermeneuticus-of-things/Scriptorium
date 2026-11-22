@@ -4,6 +4,7 @@ import {insertable} from '../lib/inlineInsert.js';
 import {actionKind,diffParts,noChange,providerText,sessionHistory} from '../lib/aiSession.js';
 import {applyTextProposal} from '../lib/aiTextProposal.js';
 import {touchedFixedPhrases} from '../lib/fixedPhrases.js';
+import {diffSegments,applySubset,changeContext,parseFindings} from '../lib/aiReviewQueue.js';
 import '../ai.css';
 import {t as tr,uiLocale} from '../lib/i18n.js';
 import {bookTypeLabel} from '../lib/bookTypes.js';
@@ -36,6 +37,7 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
  const [busy,setBusy]=useState(null),[applying,setApplying]=useState(false),[live,setLive]=useState(''),[elapsed,setElapsed]=useState(0),[result,setResult]=useState(null),[error,setError]=useState(null),[usedBy,setUsedBy]=useState(''),[guard,setGuard]=useState(null);
  const [history,setHistory]=useState(()=>sessionHistory.list()),[contextInfo,setContextInfo]=useState(null);
   const [accepted,setAccepted]=useState(null),[reviewSeg,setReviewSeg]=useState(null);
+  const [findings,setFindings]=useState(null);
  const runIdRef=useRef(''),mounted=useRef(true),runRef=useRef(null);
  const cancel=()=>{runIdRef.current='';setBusy(null);setLive('');api.cancelAi?.().catch(()=>{})};
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;if(runIdRef.current){runIdRef.current='';api.cancelAi?.().catch(()=>{})}}},[api]);
@@ -60,11 +62,12 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
   const runId=`r${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`;runIdRef.current=runId;
   setTask(action==='ask'?task:action);setBusy({action,started:Date.now()});setElapsed(0);setLive('');setError(null);setResult(null);
   try{
-   const res=await api.runAi({action,text,question:action==='ask'?question:instructions,analysis:basis?.text||'',runId,context:contextText,lang:action==='translate'?translateTo:undefined,dir: projectDir || undefined,projectTitle,documentTitle:node.title,textScope:selection?'selection':'document'});
+   const res=await api.runAi({action,text,question:action==='ask'?question:(basis?.question||instructions),analysis:basis?.text||'',runId,context:contextText,lang:action==='translate'?translateTo:undefined,dir: projectDir || undefined,projectTitle,documentTitle:node.title,textScope:selection?'selection':'document'});
    if(!mounted.current||runIdRef.current!==runId)return;
    const entry=sessionHistory.add({action,text:res.text,before:range?.before||text,question:action==='ask'?question:'',docId:node.id,docTitle:node.title,projectDir,projectTitle,provider:res.provider||aiLabel,model:res.model||aiModel});
    setHistory(sessionHistory.list());setUsedBy(providerText(res.provider,res.model));setResult({...entry,selection,range,handle,contextSnapshot:context});
    const seg=(res.action==='proofread'||res.action==='revise')?diffSegments(range?.before||text,res.text):null;setReviewSeg(seg);setAccepted(null);
+   const findings=(res.action==='feedback'||res.action==='consistency')?parseFindings(res.text):null;setFindings(findings);
   }catch(e){if(mounted.current&&runIdRef.current===runId)setError({message:e.message,action})}
   finally{if(mounted.current&&runIdRef.current===runId){runIdRef.current='';setBusy(null)}}
  };
@@ -143,7 +146,23 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
   {busy&&<div className="ai-live" aria-live="polite"><p>{label(busy.action)} · {elapsed}s <button type="button" className="link" onClick={cancel}>{tr('ui.aiPanel.anuleaza_esc')}</button></p>{live&&<pre className="ai-stream">{live}</pre>}</div>}
   {error&&<div className="ai-error" role="alert"><span>{error.message}</span>{error.settings?<button type="button" className="link" onClick={()=>onOpenSettings('ai')}>{tr('ui.aiPanel.setari_ai')}</button>:error.action&&<button type="button" className="link" onClick={()=>run(error.action)}>{tr('ui.aiPanel.reincearca')}</button>}</div>}
   {result&&<div className="ai-result"><h3>{tr(kind==='read'?'ui.aiWorkspace.analysis':'ui.aiWorkspace.proposal')} — {label(result.action)}</h3><p className="muted small">{tr('ui.aiWorkspace.resultTarget',{title:result.docTitle,scope:result.selection?tr('ui.aiPanel.textul_selectat'):tr('ui.aiWorkspace.wholeDocument')})}</p>
-   {parts?(noChange(parts)?<p className="ok">{tr('ui.aiPanel.nicio_corectura_necesara')}</p>:<div className="ai-diff" aria-label={tr('ui.aiPanel.diferente_inainte_dupa')}>{parts.map((p,i)=>p.added?<ins key={i}>{p.value}</ins>:p.removed?<del key={i}>{p.value}</del>:<span key={i}>{p.value}</span>)}</div>):<pre className="ai-stream">{result.text}</pre>}
+   {kind==='read'&&findings&&(()=>{return (
+     <div className="ai-review-queue" role="list" aria-label={tr('ui.aiReview.findings')}>
+       <p className="muted small">{tr('ui.aiReview.findings')} — {findings.length}</p>
+       {findings.map((c)=>(
+         <div key={c.i} role="listitem" className="ai-issue">
+           <div className="ai-issue-title">{c.title}</div>
+           {c.text!==c.title&&<div className="muted small ai-issue-ctx">{c.text.slice(c.title.length,240)}</div>}
+           <div className="ai-issue-actions">
+             <button type="button" disabled={applying||!hasKey}
+               onClick={()=>run('revise',{...result, question:tr('ui.aiReview.fixOnly',{p:c.title})})}>
+               {tr('ui.aiReview.fixOnly')}
+             </button>
+           </div>
+         </div>
+       ))}
+     </div>
+   );})()}   {parts?(noChange(parts)?<p className="ok">{tr('ui.aiPanel.nicio_corectura_necesara')}</p>:<div className="ai-diff" aria-label={tr('ui.aiPanel.diferente_inainte_dupa')}>{parts.map((p,i)=>p.added?<ins key={i}>{p.value}</ins>:p.removed?<del key={i}>{p.value}</del>:<span key={i}>{p.value}</span>)}</div>):<pre className="ai-stream">{result.text}</pre>}
    {guard&&guard.length>0&&<div className="ai-guard" role="alert"><p>{tr('ui.aiPanel.fraze_fixate_atinse')}</p><ul>{guard.map((f,i)=><li key={i}>«{f}»</li>)}</ul>
    {reviewSeg&&kind==='replace'&&!guard&&(()=>{
      const acc=accepted||new Set();
