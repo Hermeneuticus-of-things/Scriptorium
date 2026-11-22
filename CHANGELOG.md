@@ -117,3 +117,34 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
    - Instalator: `release\PneumaSofer-Setup-1.0.0.exe` (Inno Setup 6).
    - **Instalat local:** buildul Windows a fost verificat după instalare → `ProductVersion: 1.0.0.0`.
    - Toate etichetele "Beta" eliminate din `package.json` (versiune `1.0.0`), interfață și documentație.
+
+# Pneuma Sofer v1.3.0
+
+## Fereastra AI — autonomă, cu context vizibil
+- Fereastra AI are container propriu (`.ai-window`), separat fizic de coloana Inspectorului; Inspector rămâne instrument de măsură, AI rămâne zonă de propuneri.
+- Chip-uri de context mereu vizibile (carte / document / nivel / tipul cărții) + acțiuni rapide din contextul curent (rescrie/corectează selecția, continuă textul, sinopsis capitol, „în stilul cărții").
+- Indicator de stare lângă model: inactiv / gândire / scrie / aplică / gata.
+- Prompt starters: un click pe acțiune pornește sarcina.
+
+## Motor universal de scriere + pachet de carte
+- Metoda „write-for-me" distilată în system promptul fiecărui apel AI (doza de intervenție, anti-amprentă, nu rescrii ce funcționează).
+- Pachetul cărții (AI ▸ Setări AI (carte)): fraze fixate (nu se ating niciodată) și formule oprite (zero apariții), cu prioritate maximă.
+- Garda frazelor fixate: propunerea care le-ar schimba se blochează cu confirmare explicită, decizia intră în registru.
+- Registru de decizii și provenance (ai-audit.jsonl în proiect): actor, model, hash-uri, decizie, semantică formă/sens/conținut.
+
+## Reparații simple și Semnale (fără AI)
+- Unelte ▸ Reparații simple (fără AI)…: ghilimele românești, spații duble, majuscule, caractere invizibile — diff înainte de aplicare, snapshot automat.
+- Unelte ▸ Semnale pe text (fără AI)…: ritm + semnale de limbă, deterministe, fără model.
+
+## Ajutor
+- Ctrl+Shift+H: ajutor și comenzi într-o singură căutare — exactă, fuzzy, sinonime, întrebări naturale; Command Finder peste comenzile reale.
+- Manualul (F1) rămâne sursa completă.
+
+## Navigare și organizare (Scrivener parity, tranșele T1–T3)
+- F6/Shift+F6: mutarea focusului între panouri; Ctrl+Shift+1..4 ținte directe.
+- Comenzi noi: Trimite la gunoi, Grupează/Degrupează, Copy To…, Textul selectat ca titlu, Golește titlul, Selectează cu subdocumentele, Copiază textul documentelor, Arată dosarul Manuscris, Extinde/Restrânge tot în Binder; Word Joiner, linie orizontală, ghilimele drepte, eliminare/editare legături.
+- Corkboard: dublu-click pe fundal creează fișă nouă.
+- Setări: separator configurabil la unirea documentelor; margini editor configurabile.
+
+## Compile
+- Previzualizarea nu mai umflă dialogul: panou propriu cu zoom „Potrivire la lățime" și bară de acțiuni mereu vizibilă.
