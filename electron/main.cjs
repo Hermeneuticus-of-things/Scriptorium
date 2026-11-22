@@ -1,9 +1,11 @@
 'use strict';
 const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage, shell, clipboard, net } = require('electron');
+const { Worker } = require('worker_threads');
 const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
 const aiRules = require('../lib/aiRules.cjs');
+const aiAudit = require('../lib/aiAudit.cjs');
 const { loadHtml } = require('../lib/loadHtml.cjs');
 const teamStore = require('../lib/teamStore.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
@@ -26,6 +28,8 @@ const { fileToHtml, splitHtml } = require('../lib/docxImport.cjs');
 const bundle = require('../lib/bundle.cjs');
 const projectWatch = require('../lib/projectWatch.cjs');
 const snapshotSearch = require('../lib/snapshotSearch.cjs');
+const projectInstanceLock = require('../lib/projectInstanceLock.cjs');
+const installationInfo = require('../lib/installationInfo.cjs');
 
 // Portable build: keep settings next to the .exe instead of %APPDATA%.
 // The data folder name stays "Scribner" after the rename to "Pneuma Sofer" so existing users keep
@@ -62,6 +66,55 @@ function projectBackupSettings(dir, s = backupSettings()) {
 }
 
 let backupRunning = null;
+let backupWorker = null;
+let backupJobSeq = 0;
+const backupJobs = new Map();
+
+function ensureBackupWorker() {
+  if (backupWorker) return backupWorker;
+  backupWorker = new Worker(path.join(__dirname, 'backupWorker.cjs'));
+  backupWorker.on('message', (message) => {
+    const job = backupJobs.get(message.id);
+    if (!job) return;
+    backupJobs.delete(message.id);
+    if (message.ok) job.resolve(message.value);
+    else {
+      const error = new Error(message.error?.message || 'Operația de backup a eșuat.');
+      if (message.error?.code) error.code = message.error.code;
+      job.reject(error);
+    }
+  });
+  backupWorker.on('error', (error) => {
+    for (const job of backupJobs.values()) job.reject(error);
+    backupJobs.clear();
+    backupWorker = null;
+  });
+  backupWorker.on('exit', (code) => {
+    if (code !== 0 && backupJobs.size) {
+      const error = new Error(`Workerul de backup s-a oprit (${code}).`);
+      for (const job of backupJobs.values()) job.reject(error);
+      backupJobs.clear();
+    }
+    backupWorker = null;
+  });
+  return backupWorker;
+}
+
+function runBackupJob(operation, ...args) {
+  const worker = ensureBackupWorker();
+  return new Promise((resolve, reject) => {
+    const id = ++backupJobSeq;
+    backupJobs.set(id, { resolve, reject });
+    worker.postMessage({ id, operation, args });
+  });
+}
+
+function stopBackupWorker() {
+  if (!backupWorker) return;
+  const worker = backupWorker;
+  backupWorker = null;
+  worker.terminate().catch(() => {});
+}
 // Backs up the touched projects `want(dir, resolvedSettings)` accepts (default: all not excluded).
 async function backupAll(want = (_dir, ps) => !ps.backupExcluded) {
   const s = backupSettings();
@@ -77,7 +130,7 @@ async function backupAll(want = (_dir, ps) => !ps.backupExcluded) {
   backupRunning = (async () => {
     for (const [dir, ps] of list) {
       try {
-        await backup.backupProject(dir, ps.backupDir || undefined, ps.backupKeep, backup.backupOptions(ps));
+        await runBackupJob('backupProject', dir, ps.backupDir || undefined, ps.backupKeep, backup.backupOptions(ps));
       } catch (err) {
         console.error('Backup eșuat pentru', dir, err);
         dirtyDirs.add(path.resolve(dir));
@@ -210,6 +263,22 @@ function rememberRecent(dir, title) {
 // is open in at most one window (lib/projectWatch.cjs createClaimRegistry).
 const liveWindow = (wcId) => BrowserWindow.getAllWindows().find((w) => !w.isDestroyed() && w.webContents.id === wcId && !w.webContents.isCrashed());
 const claims = projectWatch.createClaimRegistry({ isAlive: (wcId) => Boolean(liveWindow(wcId)) });
+const processClaims = projectInstanceLock.createProjectInstanceLock({
+  root: path.join(app.getPath('appData'), 'Pneuma Sofer', 'project-locks'),
+  version: require('../package.json').version,
+  execPath: process.execPath,
+});
+
+function sendProjectConflict(sender, owner) {
+  if (!sender || sender.isDestroyed()) return;
+  sender.send('project:instance-conflict', {
+    projectDir: owner?.projectDir || '',
+    pid: owner?.pid || null,
+    version: owner?.version || '',
+    execPath: owner?.execPath || '',
+    startedAt: owner?.startedAt || '',
+  });
+}
 
 // Returns false (and focuses the other window) when the project is open elsewhere.
 function claimDir(sender, dir) {
@@ -222,12 +291,19 @@ function claimDir(sender, dir) {
     }
     return false;
   }
+  const processResult = processClaims.claim(dir);
+  if (!processResult.ok) {
+    claims.release(sender.id);
+    sendProjectConflict(sender, processResult.owner);
+    return false;
+  }
   return true;
 }
 
 // Frees the window's project (closed, crashed, reloaded, back to start screen).
 function releaseWindow(wcId) {
   const dir = claims.release(wcId);
+  if (dir) processClaims.release(dir);
   closeWatchers(wcId);
   if (dir && !claims.ownerOf(dir)) {
     bases.delete(dir);
@@ -475,6 +551,14 @@ handle('project:release', (e) => {
   releaseWindow(e.sender.id);
   return true;
 });
+handle('app:instanceInfo', () => {
+  const current = installationInfo.currentInstallation({ app, packageVersion: require('../package.json').version });
+  const installations = installationInfo.describeInstallations({
+    current,
+    installations: installationInfo.listKnownInstallations({ currentExe: process.execPath }),
+  });
+  return { current, installations, projectLockDir: path.join(app.getPath('appData'), 'Pneuma Sofer', 'project-locks') };
+});
 handle('window:fullScreen', (e, on) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   if (!win) return false;
@@ -656,6 +740,11 @@ handle('project:open', async (e, dirArg) => {
   } catch {
     /* missing: the open below reports it */
   }
+  const processOwner = processClaims.ownerOf(dir);
+  if (processOwner && processOwner.pid !== process.pid) {
+    sendProjectConflict(e.sender, processOwner);
+    return null;
+  }
   // Already open in another window: focus it and leave this one as it is.
   const owner = claims.ownerOf(dir);
   if (owner !== null && owner !== e.sender.id) {
@@ -669,7 +758,7 @@ handle('project:open', async (e, dirArg) => {
   if (!reopening) releaseWindow(e.sender.id);
   if (!claimDir(e.sender, dir)) return null;
   rememberRecent(dir, project.title);
-  if (!reopening) backup.backupOnOpen(dir, projectBackupSettings(dir));
+  if (!reopening) runBackupJob('backupOnOpen', dir, projectBackupSettings(dir)).catch((err) => console.error('Backup la deschidere eșuat', err));
   return { dir, project };
 });
 
@@ -1149,7 +1238,7 @@ handle('bookmark:openFile', async (_e, dir, file) => {
 handle('backup:now', async (_e, dir) => {
   assertOpened(dir);
   const s = projectBackupSettings(dir); // manual: works even when excluded; keep from the project override
-  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
+  return runBackupJob('backupProject', dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 // File > Back Up To…: one backup in a folder chosen in a dialog (remembered as the next default).
 handle('backup:to', async (e, dir) => {
@@ -1162,14 +1251,14 @@ handle('backup:to', async (e, dir) => {
   });
   if (res.canceled || !res.filePaths[0]) return null;
   writeSettings({ ...readSettings(), backupToDir: res.filePaths[0] });
-  return backup.backupProject(dir, res.filePaths[0], s.backupKeep, backup.backupOptions(s));
+  return runBackupJob('backupProject', dir, res.filePaths[0], s.backupKeep, backup.backupOptions(s));
 });
 // Manual save: a backup when "back up on each manual save" is on, throttled to once a minute.
 handle('backup:onSave', async (_e, dir) => {
   assertOpened(dir);
   const s = projectBackupSettings(dir);
   if (!s.backupOnSave || s.backupExcluded || !saveBackupDue(dir)) return null;
-  return backup.backupProject(dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
+  return runBackupJob('backupProject', dir, s.backupDir || undefined, s.backupKeep, backup.backupOptions(s));
 });
 handle('backup:list', (_e, dir) => {
   assertOpened(dir);
@@ -1179,7 +1268,7 @@ handle('backup:restore', async (_e, dir, file) => {
   assertOpened(dir);
   const allowed = backup.listBackups(dir, backupSettings().backupDir || undefined).some((b) => b.file === file);
   if (!allowed) throw new Error('Backup necunoscut.');
-  const target = await backup.restoreBackup(file, path.dirname(dir));
+  const target = await runBackupJob('restoreBackup', file, path.dirname(dir));
   const project = store.loadProject(target);
   releaseWindow(_e.sender.id);
   if (!claimDir(_e.sender, target)) throw new Error('Proiectul restaurat este deschis în altă fereastră.');
@@ -1415,7 +1504,26 @@ handle('ai:run', (_e, payload) => {
         try { if (!_e.sender.isDestroyed()) _e.sender.send('ai:delta', { runId, delta }); } catch { /* window gone */ }
       }
     : undefined;
-  return aiRuns.track(_e.sender.id, (signal) => ai.runAction({ ...rest, ...getAiConfig(), rules, signal, onDelta }), timeoutMs);
+  return aiRuns.track(_e.sender.id, async (signal) => {
+    const res = await ai.runAction({ ...rest, ...getAiConfig(), rules, signal, onDelta });
+    // Provenance (registru de decizii): modelul, acțiunea, hash-ul promptului și al regulilor
+    // (pachetul cărții inclus) se înregistrează la fiecare generare, append-only.
+    aiAudit.append(dir, {
+      actor: 'agent', action: rest.action, model: res.model || String(rest.provider || ''),
+      promptHash: aiAudit.sha(String(rest.question || '') + '|' + String(rest.text || '').slice(0, 2000)),
+      rulesHash: aiAudit.sha(rules), decision: 'generat',
+    });
+    return res;
+  }, timeoutMs);
+});
+
+// Deciziile autorului (acceptat / respins / fraze fixate atinse) intră în același registru;
+// restore-ul și respingerea nu șterg nimic — fiecare eveniment e nou.
+handle('ai:audit', (_e, { dir, action, decision, note, model } = {}) => {
+  if (!dir) throw new Error('Registrul de audit al AI se păstrează în proiect.');
+  assertOpened(dir);
+  aiAudit.append(dir, { actor: 'autor', action, decision, note, model });
+  return true;
 });
 
 // Cancels every AI request started by this window (panels and bulk jobs).
@@ -1651,11 +1759,23 @@ app.on('before-quit', (event) => {
   quitting = true;
   backupAll(onClose).finally(() => app.quit());
 });
+app.on('will-quit', () => {
+  processClaims.releaseAll();
+  stopBackupWorker();
+});
 
 // Single instance: a second launch focuses the existing app instead of starting
 // another process (several windows live inside the one instance).
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
+  try {
+    dialog.showMessageBoxSync({
+      type: 'info',
+      title: 'Pneuma Sofer este deja deschis',
+      message: `Această lansare Pneuma Sofer v${app.getVersion()} nu a fost deschisă.`,
+      detail: 'Rulează deja o altă instanță. Folosește fereastra existentă pentru a evita versiuni sau proiecte concurente.',
+    });
+  } catch { /* the first instance may have closed while this notice was shown */ }
   app.quit();
 } else {
   app.on('second-instance', () => {

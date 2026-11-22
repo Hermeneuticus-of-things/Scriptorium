@@ -18,6 +18,8 @@ import { buildEditorialContext } from './lib/editorialContext.js';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
+import SimpleRepairsDialog from './components/SimpleRepairsDialog.jsx';
+import SignalsDialog from './components/SignalsDialog.jsx';
 import QuickRef from './components/QuickRef.jsx';
 import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
@@ -130,6 +132,7 @@ import {
   historyUndo,
   historyRedo,
 } from './lib/tree.js';
+import { listFixedPhrases } from './lib/fixedPhrases.js';
 import { importDestination } from './lib/importFolder.js';
 import { listTemplates, cloneFromTemplate, templateTargetParent } from './lib/documentTemplates.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
@@ -277,6 +280,7 @@ export default function App({ api: apiProp }) {
   const [dir, setDir] = useState(null);
   const [project, setProject] = useState(null);
   const [docsState, setDocs] = useState({}); // id -> html cache (main text)
+  const loadingDocs = useRef(new Map()); // id -> in-flight read; prevents duplicate IPC on fast navigation
   // Typing does not go through React state on every keystroke: re-rendering App (and every
   // project-wide derived value: word counts, auto-complete words, target checks, binder,
   // inspector) cost ~30 ms per key on a 50k-word document. The newest text of each edited
@@ -311,6 +315,25 @@ export default function App({ api: apiProp }) {
   useEffect(() => () => clearTimeout(typedTimer.current), []);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  useEffect(() => {
+    if (!dir || !project || !selectedId || docsState[selectedId] !== undefined) return undefined;
+    const node = findNode(project.tree, selectedId);
+    if (!node || node.type !== 'text' || node.children) return undefined;
+    if (loadingDocs.current.has(selectedId)) return undefined;
+    // The read outlives re-renders of this effect: dropping its result on cleanup left the
+    // document empty until it was selected again (no one restarted the read). Only a read
+    // that belongs to another project is discarded.
+    const read = Promise.resolve(api.readDoc(dir, selectedId, 'docs'))
+      .then((html) => {
+        if (dirNowRef.current !== dir) return;
+        diskDocs.current.set(selectedId, String(html ?? ''));
+        setDocs((d) => (d[selectedId] === undefined ? { ...d, [selectedId]: String(html ?? '') } : d));
+      })
+      .catch((error) => console.error('[pneuma] document lazy-load failed:', error));
+    loadingDocs.current.set(selectedId, read);
+    read.finally(() => loadingDocs.current.delete(selectedId));
+    return undefined;
+  }, [api, dir, project, selectedId, docsState]);
   const [conflict, setConflict] = useState(null); // { id, title, pieces, html } (ConflictDialog)
   const team = useTeam({ api, dir, settings, docId: selectedId });
   // D&TED dictation (text at the cursor, or replacing the selection) and audio transcription.
@@ -749,7 +772,7 @@ export default function App({ api: apiProp }) {
   const queuedRef = useRef(0);
   const retryTimer = useRef(null);
   const [sessionStart, setSessionStart] = useState(null); // {words, chars} at the session's start; null = take it now
-  const [widths, setWidths] = useState({ binder: 260, side: 320 });
+  const [widths, setWidths] = useState({ binder: 260, side: 320, ai: 380 });
   const [nav, setNav] = useState({ stack: [], index: -1 });
   const editorRefs = useRef(new Map()); // id -> Editor handle (main, scrivenings, split)
   const activeId = useRef(null); // last focused document for AI / split
@@ -782,6 +805,14 @@ export default function App({ api: apiProp }) {
   }, [settings]);
 
   const report = useCallback((e) => setError(e?.message || String(e)), []);
+  useEffect(() => {
+    if (!api.onProjectInstanceConflict) return undefined;
+    return api.onProjectInstanceConflict((info = {}) => {
+      const version = info.version ? ` versiunea ${info.version}` : '';
+      const pathText = info.execPath ? ` Executabil: ${info.execPath}` : '';
+      setError(`Proiectul este deja deschis de altă instanță${version}.${pathText} Nu îl deschid din nou pentru a evita conflicte.`);
+    });
+  }, [api]);
   const prevTargetCounts = useRef({});
   useEffect(() => {
     if (!showFloatInspector || !selectedId || !dir) return;
@@ -1200,15 +1231,26 @@ export default function App({ api: apiProp }) {
         setDialog('importReport');
       }
       const all = flatten(res.project.tree).filter((n) => !n.root);
-      const entries = await Promise.all(all.map(async (n) => [n.id, await api.readDoc(res.dir, n.id, 'docs')]));
-      const cache = Object.fromEntries(entries);
       const ui = loadUi(res.dir);
+      const firstText = flatten(res.project.tree[0].children).find((n) => n.type === 'text');
+      const start = ui.selectedId && findNode(res.project.tree, ui.selectedId) ? ui.selectedId : firstText ? firstText.id : res.project.tree[0].id;
+      const initial = all.find((n) => n.id === start && n.type === 'text') || null;
+      const entries = initial ? [[initial.id, await api.readDoc(res.dir, initial.id, 'docs')]] : [];
+      const cache = Object.fromEntries(entries);
       dropTyped();
       diskDocs.current = new Map(entries);
       // A queue left from a session closed while the folder was away: shown and sent now.
       if (dirNowRef.current && dirNowRef.current !== res.dir) parkQueue(dirNowRef.current);
       const left = loadQueue(res.dir);
       if (left) {
+        const queuedIds = [...new Set(Object.entries(left)
+          .filter(([key]) => key.endsWith('|docs'))
+          .map(([key]) => key.split('|')[0])
+          .filter((id) => cache[id] === undefined))];
+        if (queuedIds.length) {
+          const queuedDisk = await Promise.all(queuedIds.map(async (id) => [id, await api.readDoc(res.dir, id, 'docs').catch(() => '')]));
+          for (const [id, html] of queuedDisk) cache[id] = html || '';
+        }
         const ids = new Set(all.map((n) => n.id));
         let n = 0;
         for (const [k, item] of Object.entries(left)) {
@@ -1240,8 +1282,6 @@ export default function App({ api: apiProp }) {
       setDocs(cache);
       setDir(res.dir);
       setProject(res.project);
-      const firstText = flatten(res.project.tree[0].children).find((n) => n.type === 'text');
-      const start = ui.selectedId && findNode(res.project.tree, ui.selectedId) ? ui.selectedId : firstText ? firstText.id : res.project.tree[0].id;
       setSelectedId(start);
       setSelectedIds(new Set([start]));
       setNav({ stack: [start], index: 0 });
@@ -1262,6 +1302,7 @@ export default function App({ api: apiProp }) {
       // here dominated the open stall (profilat — CPU profiler). By idle time the counts memo
       // has warmed countCache, so this reuses cached numbers instead of re-reading everything.
       deferIdle(() => {
+        if (entries.length !== all.filter((n) => n.type === 'text').length) return;
         const countsAtOpen = {};
         for (const [id, h] of entries) {
           const hit = countCache.current.get(id);
@@ -1272,7 +1313,6 @@ export default function App({ api: apiProp }) {
         const totalAtOpen = Object.entries(countsAtOpen).reduce((s, [id, c]) => s + (trashIds.has(id) ? 0 : c), 0);
         api.recordHistory?.(res.dir, { draft: draftAtOpen, total: totalAtOpen }).catch(() => {});
       });
-      setSettings(await api.getSettings());
     },
     [api],
   );
@@ -3251,6 +3291,10 @@ export default function App({ api: apiProp }) {
       writeDocNow(aiNode.id, html);
     },
     onSynopsis: (text) => patchNode(aiNode.id, { synopsis: text }),
+    // Semnalele (măsură, fără AI) au propria suprafață — invocabile de aici, dar nu stau în AI.
+    onOpenSignals: () => { flush().then(() => setDialog('signals')); },
+    // Garda frazelor fixate (pachetul cărții): propunerea AI nu le schimbă fără confirmare.
+    fixedPhrases: listFixedPhrases(project?.editorialProfile?.fixedPhrases || ''),
     onOpenSettings: openSettings,
     translateTo: LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo,
     request: aiRequest,
@@ -3512,6 +3556,10 @@ export default function App({ api: apiProp }) {
     ['file', 'exportBundle', tr('cmd.exportBundle'), () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', tr('cmd.importBundle'), () => api.importBundle().then(openResult).catch(report), !api.importBundle],
     ['tools', 'research', tr('cmd.research'), () => setShowResearch((v) => !v), !api.ragQuery],
+    // Reparații simple (directivă autor): deterministe, fără AI — casă proprie în Unelte, nu în fereastra AI.
+    ['tools', 'simpleRepairs', tr('cmd.simpleRepairs'), () => flush().then(() => setDialog('simpleRepairs')), !selected || selected.type !== 'text'],
+    // Panou de semnale (directivă autor): măsură deterministă (ritm + semnale de limbă), fără AI.
+    ['tools', 'signals', tr('cmd.signals'), () => flush().then(() => setDialog('signals')), !selected || selected.type !== 'text'],
     ['tools', 'glossaries', tr('cmd.glossaries'), () => generateGlossaries().catch(report)],
     ['file', 'editorPackage', tr('cmd.editorPackage'), () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(tr('ui.app.pachet_creat_in_x_x', { dir: r.dir, length: r.files.length }))).catch(report), !api.editorPackage],
     ['file', 'saveTemplate', tr('cmd.saveTemplate'), () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
@@ -4014,7 +4062,7 @@ export default function App({ api: apiProp }) {
                 onAiPropose={runInlineAi}
                 onAiError={report}
                 scriptFormat={scriptFormat}
-                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
+                key={`${selected.id}-${docsState[selected.id] === undefined ? 'loading' : 'ready'}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
                 historyKey={selected.id}
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
@@ -4272,8 +4320,9 @@ export default function App({ api: apiProp }) {
           )}
         </section>
 
-        {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
-        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir) || (showAi && aiEnabled && aiNode)) && selected && !composition && (
+        {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off).
+            Directiva autor: Inspectorul este Inspector — AI-ul are propria fereastră (.ai-window), niciodată coloana Inspectorului. */}
+        {(showInspector || (showResearch && dir)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
             <div className="side" style={{ width: widths.side }}>
@@ -4357,46 +4406,53 @@ export default function App({ api: apiProp }) {
                   onImportWeb={api.importWebPage ? importWebSource : undefined}
                 />
               )}
-              {false && null /* I-REP/I-EDIT mutat în fereastra AI (directivă autor): nu mai înghesuie Inspectorul */}
-              {showAi && aiEnabled && aiNode && (
-                <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
-                  <div className="side-ai-head">
-                    <strong>{tr('ui.aiWorkspace.title')}</strong>
-                    <div className="side-ai-actions">
-                      <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
-                      </button>
-                    </div>
+            </div>
+          </>
+        )}
+
+        {/* Fereastra AI: container propriu, separat de coloana Inspectorului (directivă autor). Doar AI — reparațiile
+            deterministe (fără AI) stau în Unelte › Reparații simple…. */}
+        {(showAi && aiEnabled && aiNode) && selected && !composition && (
+          <>
+            <div className="resizer" onMouseDown={startResize('ai')} role="separator" aria-label={tr('ui.app.latime_fereastra_ai')} />
+            <div className="ai-window" style={{ width: widths.ai || 380 }}>
+              <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
+                <div className="side-ai-head">
+                  <strong>{tr('ui.aiWorkspace.title')}</strong>
+                  <div className="side-ai-actions">
+                    <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+                    </button>
                   </div>
-                  {(showEditorial && editorialNode) ? (
-                    <>
-                      <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
-                        <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
-                        <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
-                      </div>
-                      <EditorialPanel
-                        project={project}
-                        dir={dir}
-                        aiEnabled={aiEnabled}
-                        key={'ed-side-' + editorialNode.id}
-                        api={api}
-                        hasKey={settings.hasApiKey}
-                        aiLabel={settings.aiLabel}
-                        aiModel={settings.aiModel}
-                        profile={profileFor(project)}
-                        node={editorialNode}
-                        html={docs[editorialNode.id] || ''}
-                        chapter={chapterDocs}
-                        editorialTabReq={editorialTabReq}
-                        onError={report}
-                        onClose={() => { setShowEditorial(false); setEditorialTabReq(null); }}
-                      />
-                    </>
-                  ) : (
-                  <AiPanel {...aiPanelProps} />
-                  )}
-                </section>
-              )}
+                </div>
+                {(showEditorial && editorialNode) ? (
+                  <>
+                    <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
+                      <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
+                      <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
+                    </div>
+                    <EditorialPanel
+                      project={project}
+                      dir={dir}
+                      aiEnabled={aiEnabled}
+                      key={'ed-side-' + editorialNode.id}
+                      api={api}
+                      hasKey={settings.hasApiKey}
+                      aiLabel={settings.aiLabel}
+                      aiModel={settings.aiModel}
+                      profile={profileFor(project)}
+                      node={editorialNode}
+                      html={docs[editorialNode.id] || ''}
+                      chapter={chapterDocs}
+                      editorialTabReq={editorialTabReq}
+                      onError={report}
+                      onClose={() => { setShowEditorial(false); setEditorialTabReq(null); }}
+                    />
+                  </>
+                ) : (
+                <AiPanel {...aiPanelProps} />
+                )}
+              </section>
             </div>
           </>
         )}
@@ -4844,6 +4900,24 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
       {dialog === 'importWeb' && <WebImportDialog onImport={(o) => importWeb(o).catch(report)} onClose={() => setDialog(null)} />}
+      {dialog === 'simpleRepairs' && selected && selected.type === 'text' && (
+        <SimpleRepairsDialog
+          node={selected}
+          html={docs[selected.id] || ''}
+          onApply={(html) => {
+            api.takeSnapshot?.(dir, selected.id, tr('ui.simpleRepairs.snapshot')).finally(() => {
+              setEditorHtml(selected.id, html);
+              writeDocNow(selected.id, html);
+              setDialog(null);
+              setToast(tr('ui.simpleRepairs.done'));
+            }).catch(report);
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'signals' && selected && selected.type === 'text' && (
+        <SignalsDialog node={selected} html={docs[selected.id] || ''} onClose={() => setDialog(null)} />
+      )}
       {dialog === 'import' && <ImportDialog api={api} target={findNode(project.tree, importDestination(project, project.tree, null) || '')?.title || selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
       {quickRefs.map((q) => {
         const n = findNode(project.tree, q.id);

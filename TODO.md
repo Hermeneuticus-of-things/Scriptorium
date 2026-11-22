@@ -38,7 +38,7 @@ Lista de execuție curentă este mai jos; criteriile și dovezile sunt în [back
 - [x] Navigare/selectare după stil implementată, cu teste unitare; semantica intervalului primul–ultimul și toate contextele rămân QA-03.
 - [x] Fișe index cu culori/cutting guides și outline indentat implementate; outputul fizic și matricea completă rămân QA-03.
 - [x] Protecția modificărilor nesalvate și ergonomia ADL/Binder/ID-uri/servicii livrate în 1.1.0; QA-01/02/06 nu înseamnă lipsa acestor funcții.
-- [x] Release 1.1.0 pe main prin PR #68, CI trecut, installer/portabil publicate, instalare pe laptop și credentiale păstrate; Karma lăsată deschisă. Nu s-au testat traduceri live pe carte.
+- [x] Release 1.1.0 pe main prin PR #68, CI trecut, installer/portabil publicate și instalare locală verificată. Nu s-au testat traduceri live pe proiectul de test.
 
 Dovezi deja executate: 1.988 teste unitare trecute, 3 sărite; E2E/FLOWS separate trecute; 324 acțiuni Binder cu cazul eșuat remediat și retestat. Aceste numere nu certifică cele 5.515 cazuri din matrice. Vezi [raportul de verificare](docs/RELEASE-1.1.0-VERIFICATION.md).
 
