@@ -38,6 +38,11 @@ describe('helpSearch — nivelurile §4.3', () => {
     expect(plain).toEqual(ctx.sort(() => 0) || plain); // același set, altă ordine
     expect(new Set(ctx)).toEqual(new Set(plain));
   });
+  it('interogarea vidă respectă contractul de obiect (fără crash la montare)', () => {
+    const r = helpSearch('', BASE);
+    expect(r).toEqual({ results: [], weak: false, intent: 'run' });
+    expect(() => r.results.filter(Boolean)).not.toThrow();
+  });
   it('E/§4.5 fără rezultate: semnal slab, fără inventare', () => {
     const r = helpSearch('kumquat quantum', BASE);
     expect(r.results).toHaveLength(0);

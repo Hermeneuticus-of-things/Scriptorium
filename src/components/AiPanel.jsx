@@ -108,13 +108,20 @@ export default function AiPanel({api,hasKey,node,getText,hasSelection,getContext
     {scopeLabel&&<span className="ai-chip ai-chip-scope">{scopeLabel}</span>}
     {bookType&&<span className="ai-chip">{tr('ui.aiWorkspace.bookTypeTag',{type:bookTypeLabel(bookType,uiLocale())})}</span>}
   </div>
-  <p className="muted small ai-provider">{tr('ui.aiWorkspace.model')}: {usedBy||providerText(aiLabel,aiModel)}</p>
+  <p className="muted small ai-provider">{tr('ui.aiWorkspace.model')}: {usedBy||providerText(aiLabel,aiModel)}{' '}<span className={`ai-status ${busy?'busy':applying?'busy':result?'ready':'idle'}`}>{busy?(live?tr('ui.aiWorkspace.statusStreaming'):tr('ui.aiWorkspace.statusThinking')):applying?tr('ui.aiWorkspace.statusApplying'):result?tr('ui.aiWorkspace.statusReady'):tr('ui.aiWorkspace.statusIdle')}</span></p>
   {onOpenSignals&&<p className="small"><button type="button" className="link" onClick={onOpenSignals}>{tr('ui.aiWorkspace.signals')}</button></p>}
   <details className="ai-config"><summary>{tr('ui.aiWorkspace.configuration')}</summary><button type="button" onClick={()=>onOpenSettings('ai')}>{tr('ui.aiWorkspace.programSettings')}</button>{onOpenProjectSettings&&<button type="button" onClick={onOpenProjectSettings}>{tr('ui.aiWorkspace.bookRules')}</button>}{onOpenFormatting&&<button type="button" onClick={onOpenFormatting}>{tr('ui.aiWorkspace.formatting')}</button>}</details>
   {!hasKey&&<div className="ai-setup" role="note"><p>{tr('ui.aiWorkspace.configure')}</p><button type="button" onClick={()=>onOpenSettings('ai')}>{tr('ui.aiPanel.deschide_setari_ai')}</button></div>}
   {!containerScope&&<div className="ai-taskbar"><label>{tr('ui.aiWorkspace.scope')}<select aria-label={tr('ui.aiWorkspace.scope')} value={scope} disabled={Boolean(busy||applying)} onChange={e=>setScope(e.target.value)}><option value="auto">{tr('ui.aiWorkspace.autoScope')}</option><option value="selection" disabled={!hasSelection()}>{tr('ui.aiPanel.textul_selectat')}</option><option value="document">{tr('ui.aiWorkspace.wholeDocument')}</option></select></label></div>}
   {containerScope&&<p className="muted small">{tr('ui.aiWorkspace.containerNote')}</p>}
   <p className="muted small">{tr('ui.aiWorkspace.starters')}</p>
+  <div className="ai-chip-row ai-ctx-chips" aria-label={tr('ui.aiWorkspace.contextChips')}>
+   {!containerScope&&hasSelection()&&<button type="button" className="ai-chip ai-chip-action" disabled={Boolean(busy||applying)} onClick={()=>{setScope('selection');run('revise')}}>{tr('ui.aiWorkspace.chipReselect')}</button>}
+   {!containerScope&&hasSelection()&&<button type="button" className="ai-chip ai-chip-action" disabled={Boolean(busy||applying)} onClick={()=>{setScope('selection');run('proofread')}}>{tr('ui.aiWorkspace.chipProofreadSel')}</button>}
+   <button type="button" className="ai-chip ai-chip-action" disabled={Boolean(busy||applying)||!hasKey} onClick={()=>run('continue')}>{tr('ui.aiWorkspace.chipContinue')}</button>
+   <button type="button" className="ai-chip ai-chip-action" disabled={Boolean(busy||applying)||!hasKey} onClick={()=>run('summarize')}>{tr('ui.aiWorkspace.chipSynopsis')}</button>
+   {bookType&&<button type="button" className="ai-chip ai-chip-action" disabled={Boolean(busy||applying)||!hasKey} onClick={()=>run('revise')}>{tr('ui.aiWorkspace.chipStyle')}</button>}
+  </div>
   <div className="ai-starters" role="group" aria-label={tr('ui.aiWorkspace.task')}>
    {available.map(([id,title,hint])=><button key={id} type="button" className={`ai-starter${task===id&&!busy?' on':''}`} title={hint} disabled={Boolean(busy||applying)||!hasKey} onClick={()=>{setTask(id);run(id)}}>{title}</button>)}
   </div>

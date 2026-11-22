@@ -161,6 +161,14 @@ export default function AppearancePane({ s, setS, set, comp, setComp, pickBgImag
             {t('set.fontSize')}
             <input type="number" min="12" max="32" value={s.fontSize} onChange={set('fontSize')} />
           </label>
+          <label>
+            {t('set.editorPadX')}
+            <input type="number" min="0" max="200" value={s.editorPadX ?? 48} onChange={set('editorPadX')} />
+          </label>
+          <label>
+            {t('set.editorPadY')}
+            <input type="number" min="0" max="200" value={s.editorPadY ?? 24} onChange={set('editorPadY')} />
+          </label>
         </div>
         <div className="row">
           <label>

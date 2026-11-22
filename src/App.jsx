@@ -112,6 +112,7 @@ import {
   convertNode,
   sortChildren,
   groupIntoFolder,
+  ungroupFolder,
   docLink,
   siblingInOrder,
   moveNode,
@@ -134,6 +135,7 @@ import {
   historyRedo,
 } from './lib/tree.js';
 import { listFixedPhrases } from './lib/fixedPhrases.js';
+import { nextTarget, applyFocus } from './lib/focusNav.js';
 import { importDestination } from './lib/importFolder.js';
 import { listTemplates, cloneFromTemplate, templateTargetParent } from './lib/documentTemplates.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
@@ -629,6 +631,8 @@ export default function App({ api: apiProp }) {
   }, [api, learnPair]);
   useEffect(() => (api.onSpellReplaced ? api.onSpellReplaced(({ from, to }) => learnPair(from, to)) : undefined), [api, learnPair]);
   const [help, setHelp] = useState(null);
+  // T1: ultima țintă de focus (ref, nu state — fără rerandare); ciclarea F6/Shift+F6.
+  const focusTargetRef = useRef('editor');
   const [helpFinder, setHelpFinder] = useState(false);
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
@@ -804,6 +808,9 @@ export default function App({ api: apiProp }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.ui = settings?.uiStyle || 'classic';
     document.documentElement.style.setProperty('--editor-font-size', `${settings?.fontSize || 18}px`);
+    // S3-B.APP.43/44: marginile editorului, ca variabile CSS consumate de suprafața de scriere.
+    document.documentElement.style.setProperty('--ed-pad-x', `${Math.max(0, Math.min(200, Number(settings?.editorPadX ?? 48)))}px`);
+    document.documentElement.style.setProperty('--ed-pad-y', `${Math.max(0, Math.min(200, Number(settings?.editorPadY ?? 24)))}px`);
   }, [settings]);
 
   const report = useCallback((e) => setError(e?.message || String(e)), []);
@@ -2406,7 +2413,10 @@ export default function App({ api: apiProp }) {
     await flush();
     const [first, ...rest] = nodes;
     await api.takeSnapshot(dir, first.id, tr('ui.app.automat_inainte_de_unire')).catch(report);
-    const html = nodes.map((n) => docsNow()[n.id] || '').join('<p>* * *</p>');
+    // S3-B.GEN.15: separatorul de unire e configurabil (linie de pauză / rând liber / custom).
+    const sepMode = settings.mergeSeparator || 'asterisks';
+    const sep = sepMode === 'blank' ? '<p><br></p>' : sepMode === 'custom' ? `<p>${String(settings.mergeSeparatorCustom || '').slice(0, 40)}</p>` : '<p>* * *</p>';
+    const html = nodes.map((n) => docsNow()[n.id] || '').join(sep);
     const notes = await Promise.all(nodes.map((n) => api.readDoc(dir, n.id, 'notes')));
     const synopsis = nodes.map((n) => n.synopsis).filter(Boolean).join('\n');
     const keywords = [...new Set(nodes.flatMap((n) => n.keywords || []))];
@@ -3248,6 +3258,19 @@ export default function App({ api: apiProp }) {
     await api.exportScript(fmt, h.getHtml(), selected?.title || 'Scenariu');
   };
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+  // T1 — navigarea din tastatură între panouri (docs/audit/scrivener3, Anexa A.6).
+  const focusState = () => ({ hideBinder, splitOpen: Boolean(splitId), showInspector: showInspector || (showResearch && dir), showAi: showAi && aiEnabled });
+  const focusPane = (target) => {
+    if (target === 'binder' && hideBinder) setHideBinder(false);
+    if (target === 'inspector' && !showInspector && !(showResearch && dir)) setShowInspector(true);
+    if (target === 'ai' && !showAi) setShowAi(true);
+    if (target === 'split' && !splitId) return; // split inexistent → fără efect (nu-l inventăm)
+    focusTargetRef.current = target;
+    applyFocus(target, {
+      root: document,
+      focusEditor: () => (target === 'split' ? editorRefs.current.get(`split:${splitId}`) : activeHandle())?.editor?.commands?.focus?.(),
+    });
+  };
   // Nivelul AI ales din meniul contextual are prioritate; altfel documentul activ.
   const scopedAiNode = aiScope ? findNode(project.tree, aiScope.nodeId) : null;
   const aiNode = scopedAiNode || (activeId.current && findNode(project.tree, activeId.current)) || selected;
@@ -3464,6 +3487,13 @@ export default function App({ api: apiProp }) {
     ['document', 'split', tr('cmd.split'), () => splitDocument(false)],
     ['view', 'quickRef', tr('cmd.quickRef'), () => selected && !selected.root && openQuickRef(selected.id)],
     ['nav', 'goto', tr('cmd.goto'), () => setDialog('goto')],
+    // T1 (Anexa A — Move Focus To): navigarea panourilor din tastatură; panoul închis se deschide.
+    ['nav', 'focusCycle', tr('cmd.focusCycle'), () => focusPane(nextTarget(focusTargetRef.current, focusState(), 1))],
+    ['nav', 'focusCycleBack', tr('cmd.focusCycleBack'), () => focusPane(nextTarget(focusTargetRef.current, focusState(), -1))],
+    ['nav', 'focusEditor', tr('cmd.focusEditor'), () => focusPane('editor'), !selected],
+    ['nav', 'focusBinder', tr('cmd.focusBinder'), () => focusPane('binder')],
+    ['nav', 'focusInspector', tr('cmd.focusInspector'), () => focusPane('inspector'), !selected],
+    ['nav', 'focusAi', tr('cmd.focusAi'), () => focusPane('ai'), !aiEnabled],
     ['nav', 'searchResults', tr('cmd.searchResults'), () => {
       if (!(project.collections || []).some((c) => c.id === SEARCH_RESULTS_ID)) saveProject(ensureSearchResults(project));
       setActiveCollectionId(SEARCH_RESULTS_ID);
@@ -3487,6 +3517,35 @@ export default function App({ api: apiProp }) {
     ['project', 'team', tr('cmd.team'), () => setDialog('team'), !api.teamFiles],
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],
+    // T2 (Anexa A — goluri P1/P2): organizare la alegerea curentă, din meniu, nu doar din meniul contextual.
+    ['document', 'moveToTrash', tr('cmd.moveToTrash'), () => trashSelection(), !selected || Boolean(selected.root) || inTrash(selectedId)],
+    ['document', 'groupDocuments', tr('cmd.groupDocuments'), () => groupItems(selectionList()), selectedIds.size < 1],
+    ['document', 'ungroup', tr('cmd.ungroup'), () => {
+      const next = ungroupFolder(project.tree, selectedId);
+      if (next === project.tree) return;
+      setTreeU(next);
+      setToast(tr('ui.app.dosar_degrupat'));
+    }, !selected || selected.type !== 'folder' || !(selected.children || []).length || Boolean(selected.root)],
+    ['document', 'copyTo', tr('cmd.copyTo'), () => setDialog('copyTo'), !selected || Boolean(selected.root)],
+    ['document', 'setSelTextAsTitle', tr('cmd.setSelTextAsTitle'), () => {
+      const t = (activeHandle()?.getSelectionText() || '').trim();
+      if (!t) return;
+      patchNode(selectedId, { title: t.slice(0, 200) });
+    }, !selected || !(activeHandle()?.getSelectionText() || '').trim()],
+    ['document', 'clearTitle', tr('cmd.clearTitle'), () => patchNode(selectedId, { title: '' }), !selected || Boolean(selected.root)],
+    ['edit', 'selectWithSubdocs', tr('cmd.selectWithSubdocs'), () => {
+      const all = [selectedId, ...flatten(findNode(project.tree, selectedId)?.children || []).map((n) => n.id)];
+      setSelectedIds(new Set(all));
+      setSelectedId(selectedId);
+    }, !selected || Boolean(selected.root)],
+    ['edit', 'copyTextOfDocs', tr('cmd.copyTextOfDocs'), async () => {
+      const text = selectionList().map((id) => htmlToText(docsNow()[id] || '')).filter((x) => x.trim()).join('\n\n');
+      await navigator.clipboard?.writeText(text);
+      setToast(tr('ui.app.text_copiat'));
+    }, selectedIds.size < 1],
+    ['nav', 'revealDraft', tr('cmd.revealDraft'), () => { const r = project.tree.find((x) => x.root === 'draft'); if (r) go(r.id); }, !project?.tree?.length],
+    ['view', 'expandAll', tr('cmd.expandAll'), () => window.dispatchEvent(new CustomEvent('pneuma:binder-set-all-collapsed', { detail: { collapsed: false } }))],
+    ['view', 'collapseAll', tr('cmd.collapseAll'), () => window.dispatchEvent(new CustomEvent('pneuma:binder-set-all-collapsed', { detail: { collapsed: true } }))],
     ['document', 'copyAsToC', tr('cmd.copyAsToC'), () => copyAsToCCommand().catch(report), !selectedId],
     ['document', 'duplicate', tr('cmd.duplicate'), (payload) => selectedIds.size > 1 ? copyItems(selectionList(), selectionList().at(-1), 'after').catch(report) : duplicateSelection(payload?.includeChildren !== false)],
     ['document', 'snapshot', tr('cmd.snapshot'), async () => {
@@ -3900,6 +3959,7 @@ export default function App({ api: apiProp }) {
         {!hideBinder && !composition && (<>
         <div
           className={`binder-col ${fileDrop ? 'file-drop' : ''}`}
+          data-focus-pane="binder" tabIndex={-1}
           style={{ width: widths.binder }}
           onDragOver={(e) => {
             if (!dragHasFiles(e.dataTransfer) || !api.addMediaData) return;
@@ -4210,7 +4270,7 @@ export default function App({ api: apiProp }) {
             )}
           </div>
           {splitNode && view === 'editor' && (
-            <div className={`pane second ${editorAreaClass}`}>
+            <div className={`pane second ${editorAreaClass}`} data-focus-pane="split" tabIndex={-1}>
               <div className="pane-head">
                 <PaneNav pane="split" history={splitNav} titleOf={titleOfNode} onBack={() => splitStep(-1)} onForward={() => splitStep(1)} onJump={splitJump} />
                 <span className="pane-title" title={splitNode.title}>{splitNode.title}</span>
@@ -4328,7 +4388,7 @@ export default function App({ api: apiProp }) {
         {(showInspector || (showResearch && dir)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
-            <div className="side" style={{ width: widths.side }}>
+            <div className="side" data-focus-pane="inspector" tabIndex={-1} style={{ width: widths.side }}>
               {showInspector && (
                 <Inspector
                   key={`insp-${selected.id}-${notesRev}`}
@@ -4418,7 +4478,7 @@ export default function App({ api: apiProp }) {
         {(showAi && aiEnabled && aiNode) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('ai')} role="separator" aria-label={tr('ui.app.latime_fereastra_ai')} />
-            <div className="ai-window" style={{ width: widths.ai || 380 }}>
+            <div className="ai-window" data-focus-pane="ai" tabIndex={-1} style={{ width: widths.ai || 380 }}>
               <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
                 <div className="side-ai-head">
                   <strong>{tr('ui.aiWorkspace.title')}</strong>
@@ -4952,6 +5012,16 @@ export default function App({ api: apiProp }) {
           />
         );
       })}
+      {dialog === 'copyTo' && (
+        <PickNodeDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
+          title={tr('ui.app.copiaza_selectia_in')}
+          items={moveTargets(project.tree, selectionList())}
+          onPick={(id) => copyItems(selectionList(), id, 'inside').catch(report)}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'moveTo' && (
         <PickNodeDialog
           variant="popover"

@@ -165,7 +165,15 @@ export function editorMenus(ctx) {
       { label: L('titleCase'), action: transform(titleCase) },
       '-',
       { label: L('curlyQuotes'), action: transform(curlyQuotes) },
+      { label: L('straightQuotes'), action: transform((t) => t.replace(/[„”]/g, '"')) },
       { label: L('plainText'), action: on((c) => c.unsetAllMarks().run()) },
+    ] },
+    { label: L('t2Insert'), submenu: [
+      { label: L('wordJoiner'), action: on((c) => c.insertContent('⁠').run()) },
+      { label: L('horizontalLine'), action: on((c) => c.insertContent('<hr>').run()) },
+      '-',
+      { label: L('removeLink'), action: on((c) => c.extendMarkRange('link').unsetLink().run()) },
+      { label: L('openLinkEditor'), action: on((c) => { const href = window.prompt(L('linkUrl'), c.getAttributes('link')?.href || 'https://'); if (href) c.extendMarkRange('link').setLink({ href }).run(); }) },
     ] },
     { label: L('textTidy'), submenu: [
       { label: L('tidySpaces'), action: tidy('spaces') },

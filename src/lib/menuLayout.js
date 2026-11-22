@@ -37,7 +37,7 @@ export const SUBMENUS = {
   ],
   document: [['menu.snapshots', ['snapshot', 'snapshotTitled', 'snapshotSelection', 'snapshotManager']]],
   edit: [
-    ['menu.select', ['selectWord', 'selectSentence', 'selectParagraph']],
+    ['menu.select', ['selectWord', 'selectSentence', 'selectParagraph', 'selectWithSubdocs']],
     ['menu.find', ['findDoc', 'findNext', 'findPrev', 'findUseSel', 'findProject', 'findFormat', 'advSearch']],
   ],
   // Script modes: the ids are generated (script_<format>), matched by prefix.
@@ -58,6 +58,7 @@ export const SUBMENUS = {
     ['menu.inProject', ['findSel', 'researchSel', 'glossaryAdd']],
     // NotebookLM moved to the AI menu (AI isolation 2026-10-27).
   ],
+  nav: [['menu.focus', ['focusCycle', 'focusCycleBack', 'focusEditor', 'focusBinder', 'focusInspector', 'focusAi']]],
   ai: [
     ['menu.aiSelection', ['aiResearchSel', 'aiDefineSel', 'aiProofreadSel', 'aiTranslateSel', 'researchAskSel']],
     ['menu.aiBook', ['aiBulkSynopsis', 'aiConsistency', 'aiZoomReview']],

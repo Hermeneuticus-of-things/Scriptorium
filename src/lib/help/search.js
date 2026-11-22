@@ -64,7 +64,7 @@ function scoreArticle(q, art) {
 // Căutare în articole; rezultate sortate, cu tip, dificultate și acțiune asociată (§4.4).
 export function helpSearch(query, articles, { context = '', limit = 12 } = {}) {
   const q = String(query || '').trim();
-  if (!q) return [];
+  if (!q) return { results: [], weak: false, intent: 'run' }; // contract obiect și pentru interogare vidă
   const out = [];
   for (const art of articles) {
     const { score } = scoreArticle(q, art);
