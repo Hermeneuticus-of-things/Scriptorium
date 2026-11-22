@@ -155,3 +155,30 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
 - Când AI e oprit (starea implicită la prima pornire), **nu mai există nicio urmă de AI în program**: niciun meniu AI, fără I-REP/I-EDIT, fără setări AI separate, fără MCP, fără NotebookLM. Programul arată și merge ca un program de scris clasic.
 - Activarea e self-service din **Program → Setări → Chei și conturi**: pui cheia (sau alegi un model local, fără cheie) + bifezi „Funcții AI" — abia atunci apare meniul AI.
 - Motivul: unii scriitori pot fi oribilați de prezența AI-ului; programul trebuie să se prezinte ca instrument de scris cărți, cu AI ca opțiune la final.
+
+# Pneuma Sofer v1.4.0
+
+## Organizare
+- **Copiază selecția în alt proiect** (Documente): dialog cu proiectele recente sau „Alege alt dosar…" — id-uri noi, text, note și snapshot-uri copiate; nimic nu se mută din proiectul curent.
+- **Nume adaptiv**: documentele fără titlu se arată în Binder după sinopsis sau după primele cuvinte din text — doar afișare, titlul stocat rămâne gol.
+
+## Sincronizare cu folder extern
+- **Include documentele din Coș** — subdosarul dedicat „Trashed Files".
+- **Prefix numeric on/off** în numele fișierelor sincronizate.
+- **Sincronizează doar colecția** aleasă (Draft-ul filtrat, în ordinea binderului; notele nefiltrate).
+
+## Compile
+- **3 formate noi** (total 21): „Schiță (cuprins)" (doar titluri), „LaTeX carte (memoir)" și „LaTeX raport (report)" — clasa LaTeX vine din format.
+- **CriticMarkup**: comentarii, revizii și evidențieri → `{>>…<<}` `{++…++}` `{--…--}` `{==…==}`.
+- **Cursivul devine subliniere** (transformare de compile).
+
+## Stiluri și formatare
+- **Resetează indentările listelor** (Format).
+- **Formatarea curentă = implicită pentru documente noi** (panoul de stiluri; project.defaultDocHtml).
+
+## Ajutor
+- **Tab „Noutăți"** în fereastra Help — jurnalul de schimbări direct din program.
+- **Zonele goale** (QuickSearch, comentarii) explică ce reprezintă zona și ce poți face — componentă unificată în tot programul.
+
+## Auditul de paritate Scrivener 3
+- Toate golurile P2 închise: replacements de proiect și Convert notation verificate ca implementate (audit învechit); Copy To Project, adaptive naming, filtre sync, CriticMarkup, LaTeX, Set Styles Defaults livrate. Registrul: docs/audit/scrivener3/comparison_registry.md (799 intrări, S3-O.25–29 închise, W.08 → COMPLETE).
