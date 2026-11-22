@@ -142,7 +142,7 @@ describe('corkboard keyboard', () => {
 });
 
 describe('default shortcuts (Windows)', () => {
-  it('match Scrivener for the common commands and do not conflict', () => {
+  it('match aplicația de referință for the common commands and do not conflict', () => {
     expect(DEFAULT_KEYS).toMatchObject({
       newText: 'Ctrl+N', newFolder: 'Ctrl+Shift+N', split: 'Ctrl+K', splitTitle: 'Ctrl+Shift+K',
       viewEditor: 'Ctrl+1', viewCorkboard: 'Ctrl+2', viewOutline: 'Ctrl+3', findProject: 'Ctrl+Shift+F',

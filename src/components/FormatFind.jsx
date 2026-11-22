@@ -20,7 +20,7 @@ const CHAR_LABELS = {
   subscript: 'ui.formatFind.subscript',
 };
 
-// Find by formatting (Scrivener Edit → Find → Find by Formatting): steps through
+// Find by formatting (aplicația de referință Edit → Find → Find by Formatting): steps through
 // comments, footnotes, annotations, highlights, colours, revisions, styles, bookmarks,
 // then character formats, links, images and preserved formatting (§11.6.7–11.6.10).
 export default function FormatFind({ editor, styles = [], onClose }) {

@@ -9,7 +9,7 @@ import { findNode, flatten } from '../src/lib/tree.js';
 import { uiRo, uiEn } from '../src/lib/i18n-ui.js';
 import { dictionaries } from '../src/lib/i18n.js';
 
-// Document Templates (Scrivener 3 §7.5): the templates folder holds child documents that
+// Document Templates (aplicația de referință §7.5): the templates folder holds child documents that
 // act as templates; "New from Template" deep-clones one into a target container.
 
 const seq = () => { let n = 0; return () => `n${++n}`; };
@@ -84,7 +84,7 @@ describe('cloneFromTemplate', () => {
     expect(newNode.includeInCompile).toBe(true);
     expect(newNode.type).toBe('text');
   });
-  it('clones into a text document too (Scrivener file group)', () => {
+  it('clones into a text document too (aplicația de referință file group)', () => {
     const { tree: next, newNode } = cloneFromTemplate(baseTree(), 'tplScene', 's1');
     expect(findNode(next, 's1').children.map((n) => n.id)).toEqual([newNode.id]);
   });

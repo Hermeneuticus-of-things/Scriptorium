@@ -19,7 +19,7 @@ function slug(name, taken) {
   return id;
 }
 
-// Project stylesheet editor (Scrivener: Format > Style > Show Styles Panel / Redefine).
+// Project stylesheet editor (aplicația de referință: Format > Style > Show Styles Panel / Redefine).
 export default function StylesDialog({ api, project, currentLook, onSave, onClose, onError }) {
   const [styles, setStyles] = useState(() => structuredClone(stylesOf(project)));
   // T6 (Anexa E, „Set Styles Defaults"): formatarea curentă din editor (currentLook —

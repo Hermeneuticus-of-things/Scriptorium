@@ -16,7 +16,7 @@ export function findNode(tree, id) {
   return found;
 }
 
-// Adaptive naming (T4, S3-O.04, Scrivener §6.3.1): un document fără titlu se arată după
+// Adaptive naming (T4, S3-O.04, aplicația de referință §6.3.1): un document fără titlu se arată după
 // sinopsis (primul rând) sau după primele cuvinte din text — doar pentru AFIȘARE; titlul
 // stocat rămâne gol până îl scrie autorul.
 export function displayTitle(node, docText) {

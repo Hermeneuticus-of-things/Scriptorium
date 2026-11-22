@@ -1,4 +1,4 @@
-// Pure HTML operations on notation (Scrivener 3 §18.4.1 strip, §18.4.5 convert),
+// Pure HTML operations on notation (aplicația de referință §18.4.1 strip, §18.4.5 convert),
 // for document-wide and project-wide passes (the editor-level counterpart is
 // src/lib/noteConvert.js, which works on a ProseMirror state instead).
 //

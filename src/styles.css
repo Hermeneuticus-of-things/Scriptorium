@@ -872,7 +872,7 @@ legend { color: var(--muted); padding: 0 var(--sp-1); }
 .about-path { overflow-wrap: anywhere; word-break: break-word; }
 .about-installations { margin: 8px 0 0; padding-left: 18px; font-size: var(--font-ui-sm); }
 
-/* Quick Search (Scrivener 3 §11.5): omnibox popup, top-aligned like a URL bar. */
+/* Quick Search (aplicația de referință §11.5): omnibox popup, top-aligned like a URL bar. */
 .modal.quick-search { position: fixed; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, 94vw); padding: 10px 12px; gap: var(--sp-2); }
 .quick-search input { width: 100%; font-size: var(--font-ui-md); padding: var(--sp-2) var(--sp-2); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); color: inherit; }
 .qs-results { max-height: 50vh; overflow: auto; display: flex; flex-direction: column; gap: var(--sp-2); }

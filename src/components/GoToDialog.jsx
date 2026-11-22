@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import AnchoredPopover from './AnchoredPopover.jsx';
 import { t } from '../lib/i18n.js';
 
-// Quick jump to any document by title (Scrivener: Navigate > Go To, Ctrl+G).
+// Quick jump to any document by title (aplicația de referință: Navigate > Go To, Ctrl+G).
 export default function GoToDialog({ items, onGo, onClose, variant = 'modal', anchor }) {
   const [q, setQ] = useState('');
   const [i, setI] = useState(0);

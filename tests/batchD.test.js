@@ -34,7 +34,7 @@ const docsOf = (dir) => (id) => {
 };
 
 describe('templates', () => {
-  it('ships Scrivener-like templates with categories', () => {
+  it('ships aplicația de referință-like templates with categories', () => {
     const ids = templates.listTemplates().map((t) => t.id);
     for (const id of ['shortStory', 'screenplay', 'stagePlay', 'essay', 'thesis', 'lectureNotes', 'recipes', 'poetry', 'novelFormatted']) expect(ids).toContain(id);
     const groups = templates.groupTemplates(templates.listTemplates()).map((g) => g.category);

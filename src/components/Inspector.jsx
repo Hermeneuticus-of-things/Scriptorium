@@ -545,7 +545,7 @@ function AnnotationItem({ it, no, editable, editing, setEditing, authorName, onJ
   );
 }
 
-// Synopsis image (Scrivener: Inspector > Synopsis > image). Stored as node.synopsisImage = media file name.
+// Synopsis image (aplicația de referință: Inspector > Synopsis > image). Stored as node.synopsisImage = media file name.
 function SynopsisImagePicker({ api, dir, node, onPatch, onError }) {
   const [url, setUrl] = useState(null);
   useEffect(() => {
@@ -584,7 +584,7 @@ function SynopsisImagePicker({ api, dir, node, onPatch, onError }) {
   );
 }
 
-// Custom metadata (Scrivener: Text, Checkbox, List, Date), defined in project.customFields.
+// Custom metadata (aplicația de referință: Text, Checkbox, List, Date), defined in project.customFields.
 function CustomFields({ project, node, onPatch }) {
   const fields = project.customFields || [];
   if (!fields.length) return null;
@@ -655,7 +655,7 @@ function CustomFields({ project, node, onPatch }) {
 
 export const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥', '🧭', '🗝️', '📌', '🕯️', '🌿', '🌊', '⛰️', '🏛️', '👤', '👥', '🗺️', '📅', '🔬', '📚', '✉️', '🎭'];
 
-// Icon, section type, lock, favorite and bookmarks (Scrivener: Inspector > Bookmarks).
+// Icon, section type, lock, favorite and bookmarks (aplicația de referință: Inspector > Bookmarks).
 const BM_SCOPE_KEY = 'pneuma-bookmarks-scope';
 function CustomIconImg({ api, dir, file }) {
   const [url, setUrl] = useState(null);
@@ -842,7 +842,7 @@ function DocumentExtras({ api, dir, project, node, onPatch, linkTargets, onOpen,
   );
 }
 
-// Read-only facts: dates, section type, Scrivener origin, bookmarks.
+// Read-only facts: dates, section type, aplicația de referință origin, bookmarks.
 function MetaTable({ project, node }) {
   const fmt = (d) => (d ? new Date(d).toLocaleString(uiLocale()) : '');
   const rows = [

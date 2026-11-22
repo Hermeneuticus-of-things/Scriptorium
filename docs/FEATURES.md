@@ -15,7 +15,7 @@ Sursele sunt programul de referință, din cunoașterea mea, și documentația c
 |---|---|---|
 | [x] | 0.1 | Proiect nou |
 | [x] | 0.2 | Proiect nou din șablon (Gol, Roman, Roman cu părți, Povestiri, Non-ficțiune) |
-| [x] | 0.3 | Șabloane Scrivener complete: Novel (with Parts), Short Story (format manuscris), Screenplay, Stage Play, Non-Fiction (Essay, Thesis, Lecture Notes, Recipe Collection), Poetry, Blank, Novel Formatted — toate, grupate pe categorii în Acasă |
+| [x] | 0.3 | Șabloane aplicația de referință complete: Novel (with Parts), Short Story (format manuscris), Screenplay, Stage Play, Non-Fiction (Essay, Thesis, Lecture Notes, Recipe Collection), Poetry, Blank, Novel Formatted — toate, grupate pe categorii în Acasă |
 | [x] | 0.3 | Salvează proiectul ca șablon (titlu, categorie, descriere, icoană) — copie în userData/templates, listat pe categorii în Acasă, ștergere |
 | [x] | 0.1 | Deschide proiect, proiecte recente |
 | [x] | 0.3 | Recente: șterge lista, fixează proiecte favorite |
@@ -26,7 +26,7 @@ Sursele sunt programul de referință, din cunoașterea mea, și documentația c
 | [x] | 0.3 | Backup: la deschidere, la salvarea manuală, opțiunea zip/nezipat, nume cu dată — la deschidere (setarea backupOnOpen), închidere, interval, manual; zip sau folder (backupZip) |
 | [x] | 0.1 | Import `.scriv` (.scriv) |
 | [~] | 0.2 | Import .scriv **fără pierderi** (vezi secțiunea Q) |
-| [x] | 0.3 | Import Scrivener 1 și 2 (Files/Docs/N.rtf) |
+| [x] | 0.3 | Import aplicația de referință 1 și 2 (Files/Docs/N.rtf) |
 | [x] | 0.2 | Import Word (.docx), text, Markdown, cu împărțire în documente |
 | [x] | 0.3 | Import: RTF, ODT, HTML, OPML, Final Draft (.fdx), Fountain, PDF, imagini, audio/video, pagini web |
 | [x] | 0.3 | Import and Split cu separator ales (deja la DOCX/TXT/MD; de extins la RTF/ODT) — dialogul Import acceptă DOCX/RTF/ODT/TXT/MD/HTML/Fountain/FDX cu toate modurile de împărțire |
@@ -35,11 +35,11 @@ Sursele sunt programul de referință, din cunoașterea mea, și documentația c
 | [x] | 0.1 | Compile: DOCX, PDF, EPUB, HTML |
 | [x] | 0.3 | Export fișiere: documentele ca DOCX/RTF/ODT/TXT/MD cu structura de foldere, cu note și metadate |
 | [x] | 0.3 | Export OPML, Export metadate CSV |
-| [x] | 0.4 | Export ca proiect Scrivener (.scriv) |
+| [x] | 0.4 | Export ca proiect aplicația de referință (.scriv) |
 | [x] | 0.3 | Page Setup / Print Setup — hârtie, orientare, margini, font (userData/page-setup.json), folosite la tipărire și previzualizare |
 | [x] | 0.3 | Print Current Document, Print Preview — previzualizare PDF (document curent / selecție / Compile → Tipărire) cu buton de tipărire |
 | [x] | 0.4 | Sync cu folder extern (Dropbox/Drive), RTF/TXT/FDX/Fountain, formate separate draft și notes, sync la deschidere/închidere — RTF/TXT/MD/FDX/Fountain, formate separate Draft/Notes, sync automat (project.syncAuto), conflicte cu snapshot |
-| [-] | 1.0 | Sync cu aplicația mobilă (Scrivener iOS: Dropbox). Exclus pentru format, înlocuit de PWA/sync propriu — format proprietar al aplicației iOS; înlocuit de sync prin folder extern și pachete PWA |
+| [-] | 1.0 | Sync cu aplicația mobilă (aplicația de referință iOS: Dropbox). Exclus pentru format, înlocuit de PWA/sync propriu — format proprietar al aplicației iOS; înlocuit de sync prin folder extern și pachete PWA |
 | [x] | 0.3 | Proprietăți proiect: titlu, autor, prenume, nume, abreviere titlu |
 
 ## B. Editare (Edit)
@@ -55,7 +55,7 @@ Sursele sunt programul de referință, din cunoașterea mea, și documentația c
 | [x] | 0.3 | Adnotări inline (text colorat în corpul documentului) și conversie inline ↔ comentariu |
 | [x] | 0.2 | Note de subsol (în text, editabile cu dublu-clic) |
 | [x] | 0.3 | Note de subsol în Inspector (legate) vs inline, conversie între ele |
-| [x] | 0.3 | Scrivener Links (legătură internă spre alt document, `[[`) |
+| [x] | 0.3 | aplicația de referință Links (legătură internă spre alt document, `[[`) |
 | [x] | 0.3 | Hyperlink extern, editare, eliminare |
 | [x] | 0.3 | Bookmark-uri în text (legături de tip bookmark) — semne de carte în text (meniul Semne de carte: adaugă, listă, salt, ștergere) |
 | [x] | 0.2 | Find & Replace în proiect (regex, cuvinte întregi, majuscule) |
@@ -315,7 +315,7 @@ Sursele sunt programul de referință, din cunoașterea mea, și documentația c
 
 Ce conține un proiect `.scriv` și unde ajunge în Pneuma Sofer:
 
-| Stare | Element Scrivener | Ajunge în |
+| Stare | Element aplicația de referință | Ajunge în |
 |---|---|---|
 | [x] | Binder: Draft, Research, Trash, foldere, documente, ordinea | arbore |
 | [x] | Titlu | titlu |
@@ -327,7 +327,7 @@ Ce conține un proiect `.scriv` și unde ajunge în Pneuma Sofer:
 | [x] | RTF: imagini `\pict` (PNG/JPEG/EMF), `\NeXTGraphic` | imagini |
 | [x] | RTF: stiluri `<$Scr_H::n>` / `<$Scr_Ps::n>` / `<$Scr_Cs::n>` + `styles.xml` | titluri, citate, stiluri |
 | [x] | RTF: hyperlink extern | link |
-| [x] | RTF: Scrivener Link (spre UUID) | link intern |
+| [x] | RTF: aplicația de referință Link (spre UUID) | link intern |
 | [x] | RTF: comentarii legate (`scrivcmt://` + `content.comments`), autor, culoare, dată | comentariu |
 | [x] | RTF: note de subsol legate (Footnote="Yes") | notă de subsol |
 | [x] | RTF: note de subsol inline (`\Scrv_fn` … `\end_Scrv_fn`) | notă de subsol |
@@ -355,7 +355,7 @@ Ce conține un proiect `.scriv` și unde ajunge în Pneuma Sofer:
 | [x] | `Settings/compile.xml` (format, replacements, metadate) | păstrat |
 | [x] | Corkboard freeform (poziții), Outline (stări) | păstrat |
 | [x] | Proprietăți proiect (titlu, autor) | proiect |
-| [x] | Orice altceva necunoscut | copia completă a proiectului original, păstrată în `scrivener-original/` |
+| [x] | Orice altceva necunoscut | copia completă a proiectului original, păstrată integral în folderul de backup al importului |
 | [x] | formatul `.scriv` 1/2 (`Files/Docs/N.rtf`) | la fel ca formatul 3 |
 | [x] | Raport de import: câte elemente, ce s-a convertit, ce s-a păstrat doar în copie | dialog |
 
@@ -363,12 +363,12 @@ Ce conține un proiect `.scriv` și unde ajunge în Pneuma Sofer:
 
 | Funcție | Motiv |
 |---|---|
-| Sync Dropbox cu Scrivener iOS | Format proprietar al aplicației mobile; înlocuit de sync prin folder extern și PWA |
+| Sync Dropbox cu aplicația de referință iOS | Format proprietar al aplicației mobile; înlocuit de sync prin folder extern și PWA |
 | Simplenote / Index Card sync | Servicii închise sau abandonate |
 | MathType | Program comercial extern; înlocuit de editor de formule MathML (v1.0) |
 | Bibliografie EndNote/Bookends | Integrare Zotero (deschis) în schimb |
 
-## S. Peste Scrivener (Pneuma Sofer)
+## S. Peste aplicația de referință (Pneuma Sofer)
 
 | Stare | Ver. | Funcție |
 |---|---|---|

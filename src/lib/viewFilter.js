@@ -1,4 +1,4 @@
-// Filter bar for the Corkboard & Outliner views (Scrivener 3 §11.4, p. 229–233):
+// Filter bar for the Corkboard & Outliner views (aplicația de referință §11.4, p. 229–233):
 // narrows the current container's items to a flat list of matches in binder order.
 // Pure: no React, no DOM (html goes through ./search.js). Matching is case- and
 // diacritics-insensitive — the same NFD fold as typeAhead in ./tree.js.
@@ -39,7 +39,7 @@ function tester(re) {
 }
 
 /**
- * Filters a container's subtree to a flat list of matches (Scrivener 3 §11.4).
+ * Filters a container's subtree to a flat list of matches (aplicația de referință §11.4).
  * @param {Array} nodes candidate nodes — a container's children or a whole tree;
  *   compile exclusion is inherited within these nodes only, so exclusions on
  *   ancestors above them are not seen.

@@ -4,7 +4,7 @@ const require = createRequire(import.meta.url);
 const compile = require('../lib/compile.cjs');
 const F = require('../lib/compileFormats.cjs');
 
-// Project-level replacements (Scrivener 3 §23.4.4): ordered list on the project root,
+// Project-level replacements (aplicația de referință §23.4.4): ordered list on the project root,
 // applied by the compile engine before the format's own replacements.
 function makeProject(extra = {}) {
   return {

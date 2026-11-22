@@ -85,7 +85,7 @@ describe('keywords', () => {
   });
 });
 
-describe('system "Search Results" collection (Scrivener §11.1.1)', () => {
+describe('system "Search Results" collection (aplicația de referință §11.1.1)', () => {
   it('is created once with a fixed id and never duplicated', () => {
     const p1 = ensureSearchResults({});
     expect(p1.collections).toHaveLength(1);

@@ -178,7 +178,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   const setCork = (patch) => folder && onPatch(folder.id, { cork: { ...cork, ...patch } });
   const colors = Object.fromEntries(project.labels.map((l) => [l.name, l.color]));
   const keywordColors = Object.fromEntries((project.keywordDefs || []).map((k) => [k.name, k.color]));
-  // Filtered (Scrivener 3 §11.4): a flat list of matches replaces the container's
+  // Filtered (aplicația de referință §11.4): a flat list of matches replaces the container's
   // children — no add, no drag, no reorder while it is active.
   const filtered = Boolean(filterNodes);
   const items = filtered ? filterNodes : folder?.children || [];
@@ -219,7 +219,7 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   const cardClass = (n) => `${drag === n.id ? 'dragging' : ''} ${hint && hint.id === n.id ? `drop-${hint.pos}` : ''}`;
   const focusCard = (id) => setTimeout(() => boardRef.current?.querySelector(`[data-card-id="${CSS.escape(id)}"]`)?.focus(), 0);
   // Keyboard on a focused card: arrows move between cards (↑/↓ by visual row), Enter edits
-  // the title, Ctrl+Enter opens the document, Ctrl+←/→ reorders (Scrivener corkboard).
+  // the title, Ctrl+Enter opens the document, Ctrl+←/→ reorders (aplicația de referință corkboard).
   const onKey = (e, n) => {
     // In lines mode Ctrl+←/→ reorders within the card's own row.
     const order = (cork.mode === 'lines' ? items.filter((x) => groupKey(x) === groupKey(n)) : items).map((x) => x.id);

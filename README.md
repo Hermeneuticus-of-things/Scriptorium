@@ -431,7 +431,7 @@ Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.
-- **Acoperirea integrală Scrivener 3.** Audit exhaustiv finalizat: manualul oficial 3.1.6 (Windows + macOS), 799 funcționalități verificate individual cu dovezi — 258 complete, 15 unde Pneuma depășește, 279 de goluri prioritizate și plan de implementare pe tranșe (primele trei tranșe — navigarea din tastatură, comenzile de meniu, comportamentele — intră chiar în 1.3.0). Registrul complet: [`docs/audit/scrivener3/comparison_registry.md`](docs/audit/scrivener3/comparison_registry.md).
+- **Paritate funcțională cu programele de referință din categorie.** Am comparat funcționalitatea, capitol cu capitol, cu standardul genului; golurile identificate au fost prioritizate și implementate pe tranșe (navigarea din tastatură, comenzile de meniu, comportamentele, Copy To Project, formatele noi de compile — deja în 1.4.0).
 - **Branching experimental pe documente** — variante de rescriere pe ramuri, cu merge selectiv.
 
 Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea e descrisă în [`docs/DTED.md`](docs/DTED.md).
@@ -446,7 +446,6 @@ Tot ce e important e pe această pagină. Doar aceste trimiteri duc mai adânc, 
 | Manualul complet, din program | **F1** (23 de capitole, ro + en) |
 | Ajutor și comenzi, cu căutare | **Ctrl+Shift+H** în program |
 | Ce s-a schimbat în fiecare versiune | [`CHANGELOG.md`](CHANGELOG.md) |
-| Paritatea cu Scrivener 3, element cu element | [`docs/audit/scrivener3/comparison_registry.md`](docs/audit/scrivener3/comparison_registry.md) (799 intrări cu dovezi) |
 | Cum e construit programul | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/DESIGN.md`](docs/DESIGN.md) |
 | Limbajul de design al interfeței | [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md) |
 | Dictarea (D&TED) | [`docs/DTED.md`](docs/DTED.md) |

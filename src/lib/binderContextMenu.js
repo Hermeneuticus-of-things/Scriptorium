@@ -49,7 +49,7 @@ export function buildBinderContextMenu(options) {
       item('newText', tr('cmd.newText'), () => cb.add('text'), { shortcut: 'Ctrl+N' }),
       item('newFolder', tr('cmd.newFolder'), () => cb.add('folder'), { shortcut: 'Ctrl+Shift+N' }),
     ];
-    // Nesting as in Scrivener 3: on a document WITHOUT children the default add places a
+    // Nesting as in aplicația de referință: on a document WITHOUT children the default add places a
     // sibling, so the explicit "inside" variants live in a nested submenu (top-level density
     // unchanged). On a document with children the default add already goes inside.
     if (cb.addInside && single && node.type === 'text' && !hasChildren) add.push(group('binder.addInside', 'ui.binder.addInside', [

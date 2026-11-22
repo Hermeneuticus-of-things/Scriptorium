@@ -436,7 +436,7 @@
 /* ---------- corkboard cards ---------- */
 [data-ui='classic'] .card header { align-items: center; }
 [data-ui='classic'] .card .card-title { display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Scrivener cards carry no inline "open" link; keep it, but quiet until hover/focus */
+/* aplicația de referință cards carry no inline "open" link; keep it, but quiet until hover/focus */
 [data-ui='classic'] .card .card-open { font: 400 11px var(--sc-font); color: var(--sc-link); opacity: 0; transition: opacity .1s; }
 [data-ui='classic'] .card:hover .card-open, [data-ui='classic'] .card:focus-within .card-open, [data-ui='classic'] .card.selected .card-open { opacity: 1; }
 /* selected card: Windows highlight ring around the index card */
@@ -451,7 +451,7 @@
 [data-ui='classic'] .cork-line h3 .muted { color: var(--sc-muted); }
 
 /* ---------- outliner ---------- */
-/* titles are plain text (Scrivener), not blue links */
+/* titles are plain text (aplicația de referință), not blue links */
 [data-ui='classic'] .outliner .title-cell button.link { color: var(--sc-text); text-align: left; }
 [data-ui='classic'] .outliner .cell-edit { resize: none; min-height: 0; padding: 0; line-height: 1.35; color: var(--sc-muted); overflow: hidden; }
 [data-ui='classic'] .outliner td select { min-height: 20px; padding: 0 2px; border-color: transparent; background: transparent; }
@@ -473,7 +473,7 @@
    Toolbar items were allowed to shrink and wrap their text, so at ~1024px the
    segmented view control got clipped ("Edito") and menu labels broke over 3 lines.
    Items keep their natural width; the row wraps (menus drop to a second row, like
-   Scrivener's menubar + toolbar), and below 1280px the big buttons go icon-only
+   aplicației de referință menubar + toolbar), and below 1280px the big buttons go icon-only
    (icons only; labels stay as tooltips). */
 [data-ui='classic'] .toolbar { flex-wrap: wrap; row-gap: 2px; }
 [data-ui='classic'] .toolbar > *, [data-ui='classic'] .toolbar .menu > button { flex-shrink: 0; white-space: nowrap; }
@@ -495,7 +495,7 @@
 
 /* ---------- in-dialog tab strips (Statistics, History…) ----------
    These tablists rendered as loose pill buttons (the active one as a blue
-   "primary" button). Windows/Scrivener uses a tab control on a panel edge.
+   "primary" button). Windows/aplicația de referință uses a tab control on a panel edge.
    The Options/Project Settings left category lists are excluded. */
 [data-ui='classic'] .modal:not(.settings-dialog):not(.ps-dialog) > .tabs[role='tablist'] {
   gap: 0; flex-wrap: wrap; border-bottom: 1px solid var(--sc-line-2); margin-bottom: 0;
@@ -521,7 +521,7 @@
 
 /* ---------- split editor ----------
    Each pane rendered its own full format bar; in a vertical split at laptop
-   widths both wrapped to 6-7 rows and ate half the editor. Scrivener has one
+   widths both wrapped to 6-7 rows and ate half the editor. aplicația de referință has one
    format bar that follows the focused editor: show the second pane's bar only
    while that pane has focus, and hide the first pane's bar meanwhile. */
 [data-ui='classic'] .workspace.split .pane.second .format-bar { display: none; }

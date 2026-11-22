@@ -1,4 +1,4 @@
-// Quick Search (Scrivener 3 §11.5): a jump-list search that finds documents by
+// Quick Search (aplicația de referință §11.5): a jump-list search that finds documents by
 // typed phrase. Exact-phrase matching, case- and diacritics-insensitive, with
 // results grouped in three sections: titles (exact or begins-with first),
 // synopses, then text with context around the first hit. Trash is excluded.

@@ -1,5 +1,5 @@
 'use strict';
-// v0.4 IPC handlers: export as Scrivener project, external-folder sync, bibliography import,
+// v0.4 IPC handlers: export as aplicația de referință project, external-folder sync, bibliography import,
 // LaTeX / Pandoc / MultiMarkdown export.
 //
 // main.cjs registration (one line, next to ioHandlers):
@@ -59,7 +59,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     return res.filePath;
   };
 
-  // File > Export > As Scrivener Project
+  // File > Export > As aplicația de referință Project
   handle('v04:exportScriv', async (e, dir, project) => {
     assertOpened(dir);
     const parent = await pickFolder(e, 'Exportă ca proiect .scriv: alege folderul');
@@ -76,7 +76,7 @@ module.exports = function register({ handle, dialog, BrowserWindow, store, asser
     return { folder: target, files: Object.keys(manifest.files).length, format: manifest.format, formats: manifest.formats };
   });
 
-  // File > Sync > With External Folder (read back). Scrivener behaviour: the external version wins,
+  // File > Sync > With External Folder (read back). comportamentul aplicației de referință: the external version wins,
   // but for conflicts (both sides edited) a snapshot of the project version is taken first.
   // New external files are written as new docs; the renderer inserts them into the binder
   // (folder 'draft' → Manuscript, 'notes' → Research).

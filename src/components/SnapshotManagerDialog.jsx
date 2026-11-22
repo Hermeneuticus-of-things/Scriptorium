@@ -1,4 +1,4 @@
-// Snapshots Manager (the whole project, parity with Scrivener §15.8.4): every snapshot of every
+// Snapshots Manager (the whole project, parity with aplicația de referință §15.8.4): every snapshot of every
 // document grouped by document (title + binder path), search in titles/dates/text (plain or
 // regex), multi-select (Ctrl/Shift) with confirmed mass delete, export of one snapshot as
 // .html/.txt through the native save dialog, and the same compare view as the Inspector.

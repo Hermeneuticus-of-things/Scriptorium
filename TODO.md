@@ -47,7 +47,7 @@ Dovezi deja executate: 1.988 teste unitare trecute, 3 sărite; E2E/FLOWS separat
 ## Istoric de sesiuni — checklisturi anterioare
 
 ## Session 2026-10-23
-### Request: program tip Scrivener + extensii
+### Request: program tip aplicația de referință + extensii
 - [x] Scaffold Electron + Vite + React
 - [x] Format proiect + store (lib/store.cjs)
 - [x] Binder, editor, corkboard, inspector (sinopsis, note, etichete, status, snapshot-uri, țintă cuvinte)
@@ -80,7 +80,7 @@ Rezumat: v0.1.0 construită și testată (vitest + Chromium). De verificat pe Wi
 
 ## Session 2026-10-23 (3)
 ### Request: roadmap pas cu pas
-- [x] 1.1 Import Scrivener fără pierderi (+ media, raport, metadate, istoric)
+- [x] 1.1 Import aplicația de referință fără pierderi (+ media, raport, metadate, istoric)
 - [~] 1.2 I-REP / I-EDIT (lipsește test cu Claude real, editare liste cuvinte)
 - [ ] 1.3 Server MCP pentru agenți AI
 - [ ] 1.4 Paste and Match Style, Ctrl+F, Split with title, Duplicare, spelling ro
@@ -170,7 +170,7 @@ Rezumat: greșelile corectate o dată se corectează singure.
 
 ### Request: interfață aerisită (după ce termină I-REP/I-EDIT, care lucrează în App.jsx)
 - [x] Meniu „AI” unic: Asistent AI, I-REP / I-EDIT, cercetare cu AI, acțiuni AI pe selecție, NotebookLM, setări AI, Conectează la Claude (MCP); ascuns cu AI oprit (I-REP rămâne)
-- [x] Bara de sus fără aglomerare: butoanele rare mutate în meniuri derulante; grupare pe Fișier / Editare / Vizualizare / Proiect / Document / Unelte / AI / Ajutor, ca în Scrivener
+- [x] Bara de sus fără aglomerare: butoanele rare mutate în meniuri derulante; grupare pe Fișier / Editare / Vizualizare / Proiect / Document / Unelte / AI / Ajutor, ca în aplicația de referință
 - [x] FormatBar: comenzile rare în meniuri derulante; ce nu încape trece în „Mai mult ▾”
 - [x] Verificat la 900 px și 1366 px, temă luminoasă și întunecată; scurtăturile neschimbate
 - [x] Personalizează bara de instrumente — v0.8.4
@@ -265,8 +265,8 @@ Rezumat: greșelile corectate o dată se corectează singure.
 - [ ] Skill mcp-builder cu evaluări pentru serverul MCP
 
 ## Session 2026-10-30
-### Request: Quick Search ca în Scrivener 3 (audit cap. 11 din manualul oficial, 2026-10-30)
-- [x] Dovezi: docs/SCRIVENER-SEARCH-EVIDENCE.md — cele 6 unelte de căutare din Scrivener 3, cu citate + pagini din manualul inclus în instalare
+### Request: Quick Search ca în aplicația de referință (audit cap. 11 din manualul oficial, 2026-10-30)
+- [x] Dovezi: docs/SEARCH-EVIDENCE.md — cele 6 unelte de căutare din aplicația de referință, cu citate + pagini din manualul inclus în instalare
 - [x] Quick Search (§11.5): src/lib/quickSearch.js (pur) + src/components/QuickSearch.jsx + wiring în App.jsx; Ctrl+O; frază exactă, diacritice-insensibil; secțiuni Titluri/Sinopse/Text; Esc golește apoi închide; handoff „Căutare completă în proiect" (fraza → operator exact); Find preseed-at la deschiderea rezultatului; i18n ro/en; 13 teste unitare (tests/quickSearch.test.js); suita completă verde (841 trecute); build OK
 - [x] Goluri P1 (2026-10-30): operatori Starts/Ends with (buildTerms, ancorare la marginea de cuvânt), Invert Results (criteriul invert; interogare goală + invert = toate nodurile care trec de filtre), sortare rezultate (binder/titlu ro/dată + Descrescător) — în dialog + i18n; 20 teste în projectSearch.test.js; suita 851 trecute; build OK
 - [x] Goluri P2 (2026-10-30): parseQuery — ghilimele în any/all, excludere cu „-" (și fraze), wildcard „*", mdate:/cdate: (an/lună/zi, d/m/y relative, >, <, AND cu textul); 29 teste în projectSearch.test.js; suita 860 trecute; build OK

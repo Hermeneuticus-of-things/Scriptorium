@@ -85,7 +85,5 @@ recomandare, nu ca risc introdus în acest PR.
 - [Typography for Long-Form Reading — Designer Daily](https://www.designer-daily.com/typography-for-long-form-reading-designing-pages-people-actually-finish-213373)
 - [Book typography & readability — Writelight Group](https://writelightgroup.com/2025/10/book-typography-readability/)
 - [Distraction-free writing (focus/typewriter) — Zoho Writer](https://help.zoho.com/portal/fr/community/topic/tip-2-the-road-to-distraction-free-writing?page=13)
-- [Track Your Word Count and Progress with Scrivener](https://writerunboxed.com/2016/06/30/track-your-word-count-and-progress-with-scrivener/)
-- [Writing Targets and Alerts in Scrivener](https://www.alicianovo.com/post/writing-targets-and-x-in-scrivener)
 - [Clipboard / paste cleanup patterns — Syncfusion RTE docs](https://help.syncfusion.com/rich-text-editor-sdk/react/rich-text-editor/clipboard-cleanup)
 - [Copy and Paste accessibility tips — ALA](https://www.ala.org/accessibility/copy-and-paste-tips)

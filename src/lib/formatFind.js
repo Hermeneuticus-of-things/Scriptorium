@@ -1,4 +1,4 @@
-// Find by Formatting detectors over editor HTML strings (Scrivener 3 §11.6.7–11.6.10):
+// Find by Formatting detectors over editor HTML strings (aplicația de referință §11.6.7–11.6.10):
 // character formats, links, images and preserved (verbatim) text. Parsing uses the same
 // tag/text segment approach as search.js, so the detectors run in Node tests as well as
 // in the renderer: FormatFind shows the hit count from here (editor.getHTML()) while

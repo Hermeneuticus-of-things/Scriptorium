@@ -11,12 +11,12 @@ import { KEYWORD_MIME, keywordDropTargets } from '../lib/collections.js';
 import { labelColorIn as labelColorInOf, labelTint } from '../lib/settingsDefaults.js';
 
 function iconFor(node, templateFolderId) {
-  // The Document Templates folder gets its own icon (Scrivener's "T" folder, §7.5.1).
+  // The Document Templates folder gets its own icon (aplicației de referință "T" folder, §7.5.1).
   if (templateFolderId && node.id === templateFolderId) return <TemplatesIcon />;
   if (node.root === 'trash') return <TrashIcon />;
   if (node.root === 'draft') return <DraftIcon />;
   if (node.root === 'research') return <ResearchIcon />;
-  // Custom icon chosen in the Inspector (an emoji); Scrivener icon names fall through.
+  // Custom icon chosen in the Inspector (an emoji); aplicația de referință icon names fall through.
   if (node.icon && /\p{Extended_Pictographic}/u.test(node.icon)) return node.icon;
   if (node.type === 'file') {
     const mime = node.media?.mime || '';
@@ -66,7 +66,7 @@ export default function Binder({ project, docs, docTextFor, selectedId, selected
     else if (mode === 'open') {
       if (onOpenItem) onOpenItem(id);
       else onSelect(id, {});
-      // "Edit document": the cursor goes into the editor (Scrivener)
+      // "Edit document": the cursor goes into the editor (aplicația de referință)
       onFocusEditor?.(id);
     } else if (mode === 'quickRef') {
       if (isRootNode || !onQuickRef) return false;
@@ -86,7 +86,7 @@ export default function Binder({ project, docs, docTextFor, selectedId, selected
   const typed = useRef({ text: '', at: 0 });
   const renameOutcome = useRef(null); // 'commit' (Enter) | 'cancel' (Esc) | null (blur)
   const autoExpand = useRef({ id: null, timer: 0 });
-  // New items arrive in rename mode (Scrivener): open the ancestors and edit the title.
+  // New items arrive in rename mode (aplicația de referință): open the ancestors and edit the title.
   useEffect(() => {
     if (!renameId) return;
     const trail = [];
@@ -209,7 +209,7 @@ export default function Binder({ project, docs, docTextFor, selectedId, selected
     if (!ctrl && !alt) anchorRef.current = id;
     onSelect(id, { ctrl, shift, alt });
   };
-  // Hovering a closed container during a drag opens it after a short delay (Scrivener).
+  // Hovering a closed container during a drag opens it after a short delay (aplicația de referință).
   const hoverExpand = (node, pos) => {
     const a = autoExpand.current;
     const wants = node.children && node.children.length && collapsed[node.id] && pos === 'inside';

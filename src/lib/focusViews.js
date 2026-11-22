@@ -5,7 +5,7 @@
 // owns the focus, and it is never cleared on blur.)
 // Pure module: the app supplies the row-delete action, so everything stays testable.
 
-/** The three main views as engine surface ids (Ctrl+1 / Ctrl+2 / Ctrl+3, Scrivener-like). */
+/** The three main views as engine surface ids (Ctrl+1 / Ctrl+2 / Ctrl+3, stil clasic). */
 export const VIEW_SURFACES = {
   scrivenings: 'view.scrivenings',
   corkboard: 'view.corkboard',

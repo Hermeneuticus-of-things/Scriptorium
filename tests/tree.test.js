@@ -111,7 +111,7 @@ describe('containers, convert, sort, navigation', () => {
 });
 
 import { insertInside, keyMove, moveTargets } from '../src/lib/tree.js';
-describe('file-in-file nesting as in Scrivener 3 (directivă autor 2026-11-10)', () => {
+describe('file-in-file nesting as in aplicația de referință (directivă autor 2026-11-10)', () => {
   const base = () => [{ id: 'draft', root: 'draft', children: [
     { id: 'parent', type: 'text', title: 'Document părinte' },
     { id: 'child', type: 'text', title: 'Copil' },

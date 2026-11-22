@@ -1,4 +1,4 @@
-# Ionuț Application Design Language
+# Application Design Language (ADL)
 
 **Version:** v1.0 · **Date:** 2026-11-01 (Europe/Paris)
 
@@ -87,13 +87,13 @@ An implementer — human or any AI — holding **only this document plus the cod
 
 **How to ask:** as a yes/no choice (a yes/no widget if the tool has one; otherwise a clear one-line question). Exact wording:
 
-> **Use the Ionuț Application Design Language for this project? (yes / no)**
+> **Use the Application Design Language (ADL) for this project? (yes / no)**
 > It covers UX and UI: focus levels, core function in front, complete menus, compact controls, the Hallmark visual floor.
 
 **What to do with the answer:**
 
-- **Yes** → load this document (or the skill), follow every section, and run the §17 checklist before handing over UI work. Record the answer in the project (e.g. one line in the README, `AGENTS.md`, or project instructions: `Design language: Ionuț ADL — yes`).
-- **No** → do not apply these rules to that project; do not mention them again unless the caller asks. Record `Design language: Ionuț ADL — no`.
+- **Yes** → load this document (or the skill), follow every section, and run the §17 checklist before handing over UI work. Record the answer in the project (e.g. one line in the README, `AGENTS.md`, or project instructions: `Design language: ADL — yes`).
+- **No** → do not apply these rules to that project; do not mention them again unless the caller asks. Record `Design language: ADL — no`.
 - **No answer yet** → do not design or write UI; wait. You may do non-UI work meanwhile.
 - **Never assume silently** — not from a previous project, not from memory, not because the skill is installed.
 
@@ -616,7 +616,7 @@ Hallmark holds a hard floor and then gets out of the way. It deals themes from a
 
 ### 15.3 The Floor — non-waivable rules that apply to app UI
 
-These bind every Hallmark output and, under this design language, every app surface drawn for a project that adopted Ionuț ADL. None are waivable. (Full gate list lives in the skill's `references/gates.md`; this is the Floor that always applies to **app UI**, stated so an implementer does not need another doc for the house bans.)
+These bind every Hallmark output and, under this design language, every app surface drawn for a project that adopted ADL. None are waivable. (Full gate list lives in the skill's `references/gates.md`; this is the Floor that always applies to **app UI**, stated so an implementer does not need another doc for the house bans.)
 
 1. **Tokens only** — every colour and font goes through a declared token (`:root` or theme block). No literal colour or `font-family` past the token block.
 2. **Motion discipline** — never `transition: all`; never animate `width`, `height`, `top`, or `left`. Prefer `transform` / `opacity`. Every animation has a `prefers-reduced-motion: reduce` fallback; content remains usable with scripting off (§8, §13).
@@ -660,7 +660,7 @@ When the user names Hallmark for a **new** page or UI:
 6. **Build hero first**, then the rest; stamp; tokens; log.
 7. **Sweep** — `sloplint --render` until Floor clean; fix or waive Reflex; answer Finish; finish review in fresh context; close with the material ask.
 
-**App screens and components** under Ionuț ADL still obey §2–§14 and §15.3–§15.4 even when a full Hallmark page flow is not run.
+**App screens and components** under ADL still obey §2–§14 and §15.3–§15.4 even when a full Hallmark page flow is not run.
 
 ### 15.6 How the product foundation reinforces focus levels
 
@@ -700,7 +700,7 @@ When the user names Hallmark for a **new** page or UI:
 - **Out of scope:** recreating cork texture pixel-for-pixel; custom brand illustrations unless asked; waiving Floor gates; inventing facts to fill empty UI.
 - **Correct:** Floor-clean settings on warm paper; a dealt theme for a new landing page; corkboard start screen as product foundation; translucent menu over opaque editor.
 - **Avoid:** treating corkboard colours as "all of Hallmark"; purple-blue gradients; emoji toolbar icons; silent redesign of an existing screen; glass body panels.
-- **What this is NOT:** not a second product language beside Ionuț ADL; not permission to decorate; not a replacement for §4 sizes or §8 contrast; not Hallmark = one palette.
+- **What this is NOT:** not a second product language beside ADL; not permission to decorate; not a replacement for §4 sizes or §8 contrast; not Hallmark = one palette.
 
 
 ---
@@ -754,4 +754,4 @@ When the user names Hallmark for a **new** page or UI:
 
 This document stands alone. An AI or developer reading **only this file plus the codebase** can implement every rule — adoption, focus levels, core function, the practical rules, the Hallmark visual floor, and maintenance — without any other design document or external guideline. Credited sources are already written out here in full. Where something cannot be implemented as written, fix this document (§16); do not improvise around it.
 
-*Ionuț Application Design Language — design application language · design logic language — UX and UI rules for every application.*
+*Application Design Language (ADL) — design application language · design logic language — UX and UI rules for every application.*

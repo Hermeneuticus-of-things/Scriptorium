@@ -1,4 +1,4 @@
-// Document templates (Scrivener 3 §7.5): a project field (`templateFolder`) points at a
+// Document templates (aplicația de referință §7.5): a project field (`templateFolder`) points at a
 // folder whose child documents act as templates. "New from Template" deep-clones one of
 // them (children included, fresh ids, same title) into the target container.
 // Pure helpers only — document contents (docs/notes) live outside the tree and are

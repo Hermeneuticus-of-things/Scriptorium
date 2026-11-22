@@ -195,7 +195,7 @@ export function posDistribution(text, lang = 'ro') {
     .sort((a, b) => b.count - a.count);
 }
 
-/** Pages for a word/character count (Scrivener-like defaults). */
+/** Pages for a word/character count (stil clasic defaults). */
 export function toPages(count, unit = 'Words', perPage = unit === 'Characters' ? 1800 : 250) {
   return Math.ceil((Number(count) || 0) / Math.max(1, perPage));
 }

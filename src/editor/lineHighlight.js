@@ -1,4 +1,4 @@
-// Current-line highlight (Scrivener "Highlight current line") and configurable fade
+// Current-line highlight (aplicația de referință "Highlight current line") and configurable fade
 // for focus modes. The line is measured from the caret's screen coordinates and drawn
 // as an overlay behind the text, so it follows wrapped lines, not whole paragraphs.
 import { Extension } from '@tiptap/core';

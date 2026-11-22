@@ -1,4 +1,4 @@
-// Paragraph and character formatting beyond StarterKit (Scrivener "Format" menu):
+// Paragraph and character formatting beyond StarterKit (aplicația de referință "Format" menu):
 // per-paragraph spacing/indents/tab stops/direction, small caps and all caps,
 // text bookmarks, page breaks, image size/alignment, select word/sentence/paragraph,
 // copy/paste formatting, "Convert to Default Formatting" and find by formatting.
@@ -25,7 +25,7 @@ function styleValue(el, prop) {
 
 export const PARA_FORMAT_ATTRS = ['lineHeight', 'spaceBefore', 'spaceAfter', 'firstIndent', 'indentLeft', 'indentRight', 'tabStops', 'dir'];
 
-// Tab stop types (Scrivener/Word): left, center, right, decimal.
+// Tab stop types (aplicația de referință/Word): left, center, right, decimal.
 export const TAB_TYPES = ['left', 'center', 'right', 'decimal'];
 const TAB_LETTER = { left: '', center: 'c', right: 'r', decimal: 'd' };
 const TAB_BY_LETTER = { l: 'left', c: 'center', r: 'right', d: 'decimal' };
@@ -428,7 +428,7 @@ export const FORMAT_KINDS = [
 // §11.6.7–11.6.10 kinds (charFormat/link/image/preserve) are appended in FormatFind.jsx,
 // with labels from i18n-ui; here only their ProseMirror detection.
 
-// StarterKit marks plus Superscript/Subscript (Scrivener "character format", §11.6.7).
+// StarterKit marks plus Superscript/Subscript (aplicația de referință "character format", §11.6.7).
 const CHAR_MARKS = ['bold', 'italic', 'underline', 'strike', 'superscript', 'subscript'];
 
 /**

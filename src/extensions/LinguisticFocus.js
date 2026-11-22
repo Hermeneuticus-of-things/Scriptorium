@@ -1,4 +1,4 @@
-// Linguistic Focus (Scrivener: View > Linguistic Focus): dims every word except
+// Linguistic Focus (aplicația de referință: View > Linguistic Focus): dims every word except
 // the chosen part of speech. Uses the heuristic tagger in ../lib/pos.js.
 // Commands: setLinguisticFocus(cls | null, lang?) with cls in noun/verb/adj/adv/conj/pron/prep.
 // The chosen words also carry `.pos-focus`, so a highlight style (body.lf-highlight) can colour

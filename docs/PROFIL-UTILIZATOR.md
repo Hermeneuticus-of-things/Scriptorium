@@ -1,6 +1,6 @@
 # Profilul utilizatorului-țintă Pneuma Sofer (directivă autor, 23.11.2026)
 
-**Baza de referință pentru toate deciziile de produs**: analiza de paritate Scrivener, funcțiile
+**Baza de referință pentru toate deciziile de produs**: analiza de paritate aplicația de referință, funcțiile
 noi, sistemul Help (Help Center, Smart Search, Contextual Help, Tips & Tricks), fluxurile de
 lucru și prioritizarea tranșelor. Publicul-țintă = **oamenii care scriu, documentează,
 structurează, dezvoltă și gestionează texte de mari dimensiuni**, pe proiecte care durează
@@ -61,7 +61,7 @@ lucrări de specialitate).
 
 ## Dificultățile transversale (ce ne obligă la design)
 
-Din cercetarea 2025–2026 (Scrivener, Novelcrafter, Dabble, complaining threads) și din
+Din cercetarea 2025–2026 (aplicația de referință, Novelcrafter, Dabble, complaining threads) și din
 directiva autorului:
 
 1. **Complexitate în plus** — uneltele mature au curba de învățare abruptă → Help-ul
@@ -83,7 +83,7 @@ directiva autorului:
   (metadate), Compile (pentru export curat) — mapeate pe `uiComponentIds` din schema articolelor.
 - **Tips & Tricks pe fluxuri reale:** „structura unei cărți cu 40 de capitole", „cum țin lore-ul
   la zi într-o serie", „pregătesc manuscrisul pentru comisie".
-- **Fără presupunerea că utilizatorul știe Scrivener** — paritatea se implementează, dar
+- **Fără presupunerea că utilizatorul știe aplicația de referință** — paritatea se implementează, dar
   denumirile și ajutorul stau în limba scriitorului român.
 
 ## Regula de gardă

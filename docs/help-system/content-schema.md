@@ -22,7 +22,7 @@ What's New) consumă aceeași bază. Fără texte duplicate per funcție.
   relatedArticles: ['help.binder.split', 'help.binder.merge'],
   uiComponentIds: ['binder', 'binder.item'],   // selectori stabili pentru tururi/ajutor contextual
   commandIds: ['revealBinder'],               // ID-uri din registrul de comenzi real
-  workflowIds: ['S3-W.03'],                   // trimitere la docs/audit/scrivener3/workflows.md
+  workflowIds: ['S3-W.03'],                   // trimitere la docs/audit/parity/workflows.md
   platform: 'all',                            // all|win|mac
   minAppVersion: '1.0',
   language: 'ro',

@@ -1,6 +1,6 @@
 # Pneuma Sofer — Roadmap Deterministic v1.0.0 (Release Stable / General Availability)
 
-Acest roadmap conține pașii atomici pentru trecerea definitivă a aplicației **Pneuma Sofer** de la stadiul de Beta (`v0.13.x`) la **v1.0.0 Stable (General Availability)**, conform standardelor Ionuț ADL și auditului complet de producție.
+Acest roadmap conține pașii atomici pentru trecerea definitivă a aplicației **Pneuma Sofer** de la stadiul de Beta (`v0.13.x`) la **v1.0.0 Stable (General Availability)**, conform standardelor ADL și auditului complet de producție.
 
 ## Faza 1: Consolidarea Core & Stabilității Arhitecturale (v0.99.0)
 1. [x] **Adopție ADL & Widget:** Widget Yes/No integrat în `App.jsx` + stocare persistentă în `localStorage`.

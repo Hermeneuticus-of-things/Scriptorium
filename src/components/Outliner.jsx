@@ -6,7 +6,7 @@ import { t, uiLocale } from '../lib/i18n.js';
 import { labelTint } from '../lib/settingsDefaults.js';
 import { labelTitleOf, noneLabel, noneStatus, statusTitleOf } from '../lib/projectSettings.js';
 
-// Columns the outline can show (Scrivener: Outliner > Columns).
+// Columns the outline can show (aplicația de referință: Outliner > Columns).
 const BASE_COLUMNS = (project) => ([
   { id: 'synopsis', label: t('ui.advancedSearchDialog.sinopsis') },
   { id: 'label', label: labelTitleOf(project, t) },
@@ -95,7 +95,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
   };
 
   const rows = useMemo(() => {
-    // Filtered (Scrivener 3 §11.4): flat match list in binder order, no sort.
+    // Filtered (aplicația de referință §11.4): flat match list in binder order, no sort.
     if (filterNodes) return filterNodes.map((n) => ({ n, depth: 0 }));
     const out = [];
     const visit = (nodes, depth) => {
@@ -120,7 +120,7 @@ export default function Outliner({ project, root, counts, onOpen, onPatch, onMov
 
   const focusRow = (id) => setTimeout(() => bodyRef.current?.querySelector(`tr[data-row-id="${CSS.escape(id)}"]`)?.focus(), 0);
   // Keyboard on a focused row: ↑/↓/Home/End move, ←/→ collapse/expand, Enter / F2 edit the
-  // title, Ctrl+Enter opens the document (Scrivener outliner).
+  // title, Ctrl+Enter opens the document (aplicația de referință outliner).
   const onRowKey = (e, n) => {
     if (e.target !== e.currentTarget) return;
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {

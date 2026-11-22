@@ -1,16 +1,16 @@
-// Style navigation (Scrivener 3 §17.4.1 — Select Style Range, Next/Previous in Same Style,
+// Style navigation (aplicația de referință §17.4.1 — Select Style Range, Next/Previous in Same Style,
 // Select All with Style). Pure: a ProseMirror doc + a caret position in, ranges out —
 // testable in Node without an editor; the Editor handle and App registry only dispatch.
 //
 // What counts as an identifiable paragraph style ("decizie de stil", parity item P1 #27):
 // - a named paragraph style, i.e. the `styleName` attribute (data-style) set on a
 //   paragraph/heading — what the project stylesheet (src/lib/styles.js) applies;
-// - a bare heading, identified by its outline level as "heading:<level>" — Scrivener's
+// - a bare heading, identified by its outline level as "heading:<level>" — aplicației de referință
 //   Heading 1/2/3 are stock styles, so navigation must work on headings without data-style;
 // - a plain paragraph without styleName has NO identifiable style: the four commands are
 //   disabled there (hasIdentifiableStyle is the gate).
 // "Select All with Style" parity decision (task P1 #27): tiptap supports a single selection,
-// so it selects from the FIRST to the LAST paragraph with the style, like Scrivener's
+// so it selects from the FIRST to the LAST paragraph with the style, like aplicației de referință
 // documented "selects from first to last".
 
 /**

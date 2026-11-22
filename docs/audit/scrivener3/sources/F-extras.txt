@@ -1,24 +1,0 @@
-Extras Pack
-
-
-
-
-          F
-A number of examples throughout this manual have been provided for you to
-work with in a hands-on fashion. There is a downloadable “extras pack” from
-our website, that you can obtain using the following instructions:
-
-   1. Visit the User Guides download section on our web page.
-  2. Beneath “Scrivener” on the left, select the “Extras Pack” option from the
-     “Select Format” dropdown menu.
-   3. Click the red download button to the left.
-  4. If your browser has not already done so, extract the folder from the down-
-     loaded .zip file and place it somewhere convenient.
-
-  The files are all numbered so you can easily find them in the folder.
-
-
-
-
-                                                                           765
-

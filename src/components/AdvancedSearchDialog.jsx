@@ -109,7 +109,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
   const toggleOpt = (k) => () => setOpts((o) => ({ ...o, [k]: !o[k] }));
   const toggleFilter = (k, v) => setFilters((f) => ({ ...f, [k]: toggleIn(f[k], v) }));
 
-  // Scrivener §11.3: Swap exchanges the contents of the Replace and With fields.
+  // aplicația de referință §11.3: Swap exchanges the contents of the Replace and With fields.
   const swap = () => {
     setQuery(replacement);
     setReplacement(query);
@@ -149,7 +149,7 @@ export default function AdvancedSearchDialog({ project, docs, readNotes, onOpen,
   const hasQuery = Boolean(query) && !invalid;
   const hasFilter = filters.labels.length || filters.statuses.length || filters.keywords.length;
 
-  // Scrivener §11.1.1: the last search used lands in the system "Search Results"
+  // aplicația de referință §11.1.1: the last search used lands in the system "Search Results"
   // collection and survives reopening. Recorded when a result is opened and once
   // more at close, so the stored criteria match what the user actually used.
   const latestRef = useRef({ criteria, hasQuery });

@@ -1,6 +1,6 @@
 # Set de test GREU — dictare D&TED (ASR eek/Parakeet + rezumator OpenLLM-Ro)
 
-> **NU rulați testele pe motor fără OK explicit de la Ionuț.** Setul e *pregătit*: `hyp/` și
+> **NU rulați testele pe motor fără OK explicit de la owner.** Setul e *pregătit*: `hyp/` și
 > `results/` sunt goale intenționat. Scorer-ul doar compară fișiere text deja produse.
 
 ## 1. Ce este și la ce folosește

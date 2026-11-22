@@ -48,7 +48,7 @@ export function moveNode(tree, id, targetId, position) {
   return produce(tree, (t) => {
     const node = detach(t, id);
     const target = findNode(t, targetId);
-    // A text document can hold sub-documents too (Scrivener "file group").
+    // A text document can hold sub-documents too (aplicația de referință "file group").
     if (position === 'inside' && (target.children || target.type === 'text')) {
       (target.children ||= []).push(node);
       return;
@@ -81,7 +81,7 @@ export function insertNear(tree, selectedId, node) {
   });
 }
 
-// Nesting as in Scrivener 3: any document can hold sub-documents ("file group"). Explicitly
+// Nesting as in aplicația de referință: any document can hold sub-documents ("file group"). Explicitly
 // creates the children list when the target document does not have one yet. Roots and missing
 // targets return the same tree reference (no mutation).
 export function insertInside(tree, parentId, node) {
@@ -163,7 +163,7 @@ export function moveTargets(tree, excludeIds = []) {
       // selection would be silently refused by moveNode).
       if (n.root === 'trash' || excludeIds.includes(n.id)) continue;
       // Folders and plain documents are both valid "Move to" targets: moveNode nests
-      // inside a document even before it has children (Scrivener file-in-file).
+      // inside a document even before it has children (aplicația de referință file-in-file).
       if (n.children || n.type === 'text') {
         out.push({ id: n.id, title: n.title, depth });
         visit(n.children || [], depth + 1);
@@ -234,7 +234,7 @@ export function keyMove(tree, id, dir) {
   const idx = list.findIndex((n) => n.id === id);
   if (dir === 'up' && idx > 0) return moveNode(tree, id, list[idx - 1].id, 'before');
   if (dir === 'down' && idx < list.length - 1) return moveNode(tree, id, list[idx + 1].id, 'after');
-  // A document without children becomes a container on indent (Scrivener file-in-file).
+  // A document without children becomes a container on indent (aplicația de referință file-in-file).
   if (dir === 'indent' && idx > 0 && (list[idx - 1].children || list[idx - 1].type === 'text')) return moveNode(tree, id, list[idx - 1].id, 'inside');
   if (dir === 'outdent' && parent && !parent.root) return moveNode(tree, id, parent.id, 'after');
   return tree;
@@ -264,7 +264,7 @@ export function duplicateNode(tree, id, { withChildren = true, newId = () => cry
   return { tree: next, pairs, id: copy.id };
 }
 
-// Text <-> folder (Scrivener "Convert to Folder / Convert to File"). Text keeps its
+// Text <-> folder (aplicația de referință "Convert to Folder / Convert to File"). Text keeps its
 // sub-documents either way; an empty children list is dropped from a text.
 export function convertNode(tree, id, type) {
   return produce(tree, (t) => {
@@ -337,7 +337,7 @@ export function visibleRows(nodes, isOpen, isVisible = () => true, depth = 0, pa
   return out;
 }
 
-// Arrow-key navigation over visible rows (Windows tree-view conventions, as in Scrivener):
+// Arrow-key navigation over visible rows (Windows tree-view conventions, as in aplicația de referință):
 // ↑/↓ previous/next row, Home/End first/last, ← collapses an open container or goes to the
 // parent, → expands a closed container or goes to its first child.
 // Returns {select: id|null, expand: id|null, collapse: id|null}.

@@ -1,5 +1,5 @@
 /* Help window. Uses the app tokens (--bg, --panel, --paper, --text, --muted, --line, --accent)
-   and, under [data-ui='classic'], the Scrivener-like chrome tokens. */
+   and, under [data-ui='classic'], the stil clasic chrome tokens. */
 
 .help-backdrop {
   position: fixed; inset: 0; z-index: 1000;
@@ -69,7 +69,7 @@
 .help-table th { color: var(--muted); font-weight: 600; }
 .help-content table:not(.help-table) td { padding: 3px 12px 3px 0; }
 
-/* Classic (Scrivener-like) chrome */
+/* Classic (stil clasic) chrome */
 [data-ui='classic'] .help-window { font: 12px/1.35 var(--sc-font); background: var(--sc-chrome); border-color: var(--sc-line-2); border-radius: 2px; }
 [data-ui='classic'] .help-head { background: var(--sc-chrome-2); border-color: var(--sc-line); }
 [data-ui='classic'] .help-head button { background: var(--sc-btn); border: 1px solid var(--sc-line); border-radius: 2px; color: var(--sc-text); }

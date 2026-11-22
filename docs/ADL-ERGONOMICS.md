@@ -1,6 +1,6 @@
 # Pneuma Sofer — contract ADL pentru orientare și ergonomie
 
-Sursa de referință: [Ionuț Application Design Language](https://github.com/Hermeneuticus-of-things/ionut-design-language). Această specificație adaptează cerințele proprietarului aplicației din 10 noiembrie 2026. Nu este un certificat de conformitate al tuturor suprafețelor.
+Sursa de referință: [Application Design Language (ADL)](https://github.com/Hermeneuticus-of-things/ionut-design-language). Această specificație adaptează cerințele proprietarului aplicației din 10 noiembrie 2026. Nu este un certificat de conformitate al tuturor suprafețelor.
 
 ## Invarianta principală
 

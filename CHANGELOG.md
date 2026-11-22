@@ -70,7 +70,7 @@
 - Formatare document/manuscris din meniuri și toolbar (#70).
 - Fereastră AI dedicată cu 30 de tipuri de carte și mod persistat (#71).
 - Spațiere meniuri: separatoare logice și deduplicare comenzi (#72).
-- Binder: imbricare ca în Scrivener 3 — „Adaugă în interior" pe documente, Mută în… cu documente ca țintă (#73).
+- Binder: imbricare ca în aplicația de referință — „Adaugă în interior" pe documente, Mută în… cu documente ca țintă (#73).
 - Panou AI andocat (dock/undock) + context AI pe niveluri: carte/manuscris/capitol/secțiune/paragrafe (#74).
 - Popover-uri in-page (GoTo, Mută în, Adaugă la final, Quick Search și toate prompturile mici) în loc de modale; acordeoane quiet în Setări; toolbar ADL regroupat (#75).
 - Dictare și voce ONLINE: serviciu STT compatibil OpenAI (cheie criptată) și Speechify ca motor de redare (#76).
@@ -102,7 +102,7 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
    - Componenta `AdlAdoptionWidget` integrată în `App.jsx` + stocare preferință `ionut_adl_adopted` în `localStorage`.
    - Stilurile aferente în `AdlAdoptionWidget.css`.
 2. **Fundație Opaque & Design:**
-   - `scrivener-theme.css` refactorizată pentru warm opaque foundations (corkboard, hârtie, suprafețe).
+   - `classic-theme.css` refactorizată pentru warm opaque foundations (corkboard, hârtie, suprafețe).
 3. **Focus Engine & Stive per Fereastră (ADL §2):**
    - `focusEngine.js` actualizat pentru stive active per fereastră, comutare suprafețe și cascadă Escape.
 4. **Audit UI & Panouri Opțiuni (A1-A12):**
@@ -140,7 +140,7 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
 - Ctrl+Shift+H: ajutor și comenzi într-o singură căutare — exactă, fuzzy, sinonime, întrebări naturale; Command Finder peste comenzile reale.
 - Manualul (F1) rămâne sursa completă.
 
-## Navigare și organizare (Scrivener parity, tranșele T1–T3)
+## Navigare și organizare (aplicația de referință parity, tranșele T1–T3)
 - F6/Shift+F6: mutarea focusului între panouri; Ctrl+Shift+1..4 ținte directe.
 - Comenzi noi: Trimite la gunoi, Grupează/Degrupează, Copy To…, Textul selectat ca titlu, Golește titlul, Selectează cu subdocumentele, Copiază textul documentelor, Arată dosarul Manuscris, Extinde/Restrânge tot în Binder; Word Joiner, linie orizontală, ghilimele drepte, eliminare/editare legături.
 - Corkboard: dublu-click pe fundal creează fișă nouă.
@@ -180,5 +180,5 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
 - **Tab „Noutăți"** în fereastra Help — jurnalul de schimbări direct din program.
 - **Zonele goale** (QuickSearch, comentarii) explică ce reprezintă zona și ce poți face — componentă unificată în tot programul.
 
-## Auditul de paritate Scrivener 3
-- Toate golurile P2 închise: replacements de proiect și Convert notation verificate ca implementate (audit învechit); Copy To Project, adaptive naming, filtre sync, CriticMarkup, LaTeX, Set Styles Defaults livrate. Registrul: docs/audit/scrivener3/comparison_registry.md (799 intrări, S3-O.25–29 închise, W.08 → COMPLETE).
+## Auditul de paritate aplicația de referință
+- Toate golurile P2 închise: replacements de proiect și Convert notation verificate ca implementate (audit învechit); Copy To Project, adaptive naming, filtre sync, CriticMarkup, LaTeX, Set Styles Defaults livrate. Registrul: docs/audit/parity/comparison_registry.md (799 intrări, S3-O.25–29 închise, W.08 → COMPLETE).

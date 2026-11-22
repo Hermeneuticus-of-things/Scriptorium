@@ -1,9 +1,9 @@
 ---
 name: ionut-application-design-language
-description: Ionuț Application Design Language (also "design application language" / "design logic language") — UX and UI rules for every app. For ANY AI (OpenCode, Claude, Cursor, GitHub Copilot, Grok Bot, or any other). At the start of every new project, before any UI work, ask the caller yes/no whether to use this design language; apply it only on yes. Covers focus levels, core function, complete menus, scales, dropdowns, a11y, full Hallmark skill (Floor, themes-as-materials, deal/draw, sloplint) plus our warm opaque product foundation and Liquid Glass chrome effects, maintenance with version bumps.
+description: Application Design Language (ADL) (also "design application language" / "design logic language") — UX and UI rules for every app. For ANY AI (OpenCode, Claude, Cursor, GitHub Copilot, Grok Bot, or any other). At the start of every new project, before any UI work, ask the caller yes/no whether to use this design language; apply it only on yes. Covers focus levels, core function, complete menus, scales, dropdowns, a11y, full Hallmark skill (Floor, themes-as-materials, deal/draw, sloplint) plus our warm opaque product foundation and Liquid Glass chrome effects, maintenance with version bumps.
 ---
 
-# Ionuț Application Design Language — skill
+# Application Design Language (ADL) — skill
 
 **Version:** v1.0 · **Date:** 2026-11-01 (Europe/Paris) — must match the full document header; every change bumps both (§16).
 
@@ -15,11 +15,11 @@ description: Ionuț Application Design Language (also "design application langua
 
 At the start of **every new project** (new repo, new app, or a new product area the caller calls a new project), **before** proposing layouts or writing UI code, ask exactly this, as a yes/no widget if your tool has one, else as one clear question:
 
-> **Use the Ionuț Application Design Language for this project? (yes / no)**
+> **Use the Application Design Language (ADL) for this project? (yes / no)**
 > It covers UX and UI: focus levels, core function in front, complete menus, compact controls, full Hallmark skill (Floor, themes-as-materials) plus our warm opaque product foundation (Liquid Glass only as chrome effects).
 
-- **Yes** → follow every rule below (and the full file), run the checklist before handing over UI work. Record `Design language: Ionuț ADL — yes` in README / `AGENTS.md` / project instructions.
-- **No** → do not apply; do not bring it up again unless asked. Record `Design language: Ionuț ADL — no`.
+- **Yes** → follow every rule below (and the full file), run the checklist before handing over UI work. Record `Design language: ADL — yes` in README / `AGENTS.md` / project instructions.
+- **No** → do not apply; do not bring it up again unless asked. Record `Design language: ADL — no`.
 - **No answer yet** → no UI work; non-UI work is fine.
 - **Never assume silently** — not from past projects, memory, or because this skill is installed. Ask once per project, not per task.
 

@@ -145,7 +145,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   }, [globalsLoaded, all, formatId]);
   const [collectionId, setCollectionId] = useState(pc.collectionId || '');
   const [trackChanges, setTrackChanges] = useState(Boolean(pc.trackChanges));
-  // Project-level replacements (Scrivener 3 §23.4.4): one list per project, shared by
+  // Project-level replacements (aplicația de referință §23.4.4): one list per project, shared by
   // every format; the engine applies it before the format's own replacements.
   const [projReps, setProjReps] = useState(() => (Array.isArray(project.replacements) ? clone(project.replacements) : []));
   // Manual collections and saved searches (their documents are found when compiling).
@@ -162,7 +162,7 @@ export default function CompileDialog({ api, dir, project, selectionIds = [], on
   const [statuses, setStatuses] = useState(pc.statuses || []);
   const [keywords, setKeywords] = useState(pc.keywords || []);
   const [filterInvert, setFilterInvert] = useState(Boolean(pc.filterInvert));
-  // View filter of the Contents list (Scrivener §23.4.1, P1 #29): by item type and by label.
+  // View filter of the Contents list (aplicația de referință §23.4.1, P1 #29): by item type and by label.
   const [contentFilter, setContentFilter] = useState(pc.contentFilter || 'all');
   const [contentLabel, setContentLabel] = useState(pc.contentLabel || '');
   // Front/back matter per output: {pdf: id | '-'}; missing = the general choice above.

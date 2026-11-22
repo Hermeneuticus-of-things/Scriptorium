@@ -83,7 +83,7 @@ const levelControls = (root) =>
 const popItems = (pop) => [...pop.querySelectorAll(CONTROLS)].filter((el) => !el.disabled && el.closest('.menu-pop') === pop);
 const triggerOf = (pop) => pop.parentElement?.querySelector(':scope > button');
 
-// Scrivener keeps the format bar on one row; whatever does not fit goes into a trailing
+// aplicația de referință keeps the format bar on one row; whatever does not fit goes into a trailing
 // "»" menu. Groups carry a priority (0 = always wanted: style, B/I/U, comment, footnote,
 // link, highlight); when space runs out the lowest-priority groups go first, whatever
 // their position, and visible groups stay in bar order. Group widths are measured while
@@ -503,7 +503,7 @@ export default function FormatBar({
     setTimeout(() => editor.commands.focus(), 0);
   };
 
-  // Style navigation (Scrivener §17.4.1): same ranges as the registry commands — the pure
+  // Style navigation (aplicația de referință §17.4.1): same ranges as the registry commands — the pure
   // module computes at click time, disabled while the caret is on an unstyled paragraph.
   const styleNav = (nav) => {
     const r = nav(editor.state.doc, editor.state.selection.from);

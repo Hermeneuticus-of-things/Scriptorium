@@ -134,7 +134,7 @@ function Reorder({ i, n, pinFirst, onMove }) {
   );
 }
 
-// Project settings (Scrivener: Project > Project Settings).
+// Project settings (aplicația de referință: Project > Project Settings).
 export default function ProjectSettingsDialog({ project, folders, onSave, onClose, api, dir, initialTab }) {
   const [d, setD] = useState(() => makeDraft(project));
   const [tab, setTab] = useState(initialTab || 'sectiuni');

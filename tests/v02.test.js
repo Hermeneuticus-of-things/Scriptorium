@@ -60,7 +60,7 @@ describe('history', () => {
       { date: '2026-10-02', draft: 300, total: 300, draftWords: 900, imported: false },
     ]);
   });
-  it('merges days imported from Scrivener with measured days', () => {
+  it('merges days imported from aplicația de referință with measured days', () => {
     const dir = tmp;
     fs.writeFileSync(path.join(dir, 'history.json'), JSON.stringify({ days: { '2026-09-30': { draftWritten: 1200, totalWritten: 1300, imported: true } } }));
     history.recordHistory(dir, { draft: 5000, total: 6000 }, new Date(2026, 9, 1, 9));

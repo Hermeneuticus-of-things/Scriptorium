@@ -678,7 +678,7 @@ export default function App({ api: apiProp }) {
   const [copyholder, setCopyholder] = useState(null); // {id, editable} | null
   const copyScroll = useRef(new Map()); // doc id -> scrollTop of the copyholder pane
   const [searchSeed, setSearchSeed] = useState('');
-  // View > Filter (Scrivener 3 §11.4) over the corkboard / outliner; filterNotes
+  // View > Filter (aplicația de referință §11.4) over the corkboard / outliner; filterNotes
   // caches notes read for the text/notes option (notes are not kept in App state).
   const [viewFilter, setViewFilter] = useState({ open: false, query: '', regex: false, includeTextNotes: false, draftScope: 'any', compileScope: 'all', meta: { mode: 'any', field: 'label', value: '' } });
   const [filterNotes, setFilterNotes] = useState({});
@@ -1204,7 +1204,7 @@ export default function App({ api: apiProp }) {
 
   const setTree = useCallback((tree) => saveProject({ ...project, tree }), [project, saveProject]);
   // Binder structure changes (add, move, trash, restore) are undoable with Ctrl+Z while the
-  // binder has focus, as in Scrivener. Metadata edits made in between are preserved.
+  // binder has focus, as in aplicația de referință. Metadata edits made in between are preserved.
   const binderHistory = useRef(emptyHistory());
   const [renameId, setRenameId] = useState(null);
   const setTreeU = (tree) => {
@@ -1378,7 +1378,7 @@ export default function App({ api: apiProp }) {
   const titleOfNode = (id) => { const n = project && findNode(project.tree, id); return n ? n.title : null; };
   const toggleLockPane = (pane = activePaneRef.current) => setPaneLocks((l) => ({ ...l, [pane]: !l[pane] }));
 
-  // --- View > Filter (Scrivener 3 §11.4): narrows the corkboard / outliner to a flat list ---
+  // --- View > Filter (aplicația de referință §11.4): narrows the corkboard / outliner to a flat list ---
   // The container being filtered: the selected folder, or the parent of the selected item.
   const viewFilterContainer =
     project && (view === 'corkboard' || view === 'outline')
@@ -1575,7 +1575,7 @@ export default function App({ api: apiProp }) {
   };
 
   // New items go after the selection (inside it when it is a folder), are selected and put in
-  // rename mode in the binder (Scrivener); Enter on the title then moves the cursor to the editor.
+  // rename mode in the binder (aplicația de referință); Enter on the title then moves the cursor to the editor.
   // The folder a new item lands in (same rule as insertNear).
   const parentForNew = (anchorId) => {
     const sel = anchorId && findNode(project.tree, anchorId);
@@ -1590,7 +1590,7 @@ export default function App({ api: apiProp }) {
   };
   const addItem = (type, title, html, anchorId = selectedId, opts = {}) => {
     const node = Object.assign(newNode(type, title), newNodeDefaults(project));
-    // Nesting as in Scrivener 3: { inside: true } creates the item inside the target document.
+    // Nesting as in aplicația de referință: { inside: true } creates the item inside the target document.
     const parent = opts.inside && anchorId ? (findNode(project.tree, anchorId) || parentForNew(anchorId)) : parentForNew(anchorId);
     const tpl = type === 'text' && html == null && !title ? defaultTemplateFor(project, parent) : null;
     let tplHtml = null;
@@ -1723,7 +1723,7 @@ export default function App({ api: apiProp }) {
     const nextSel = selectionAfterRemoval(tree, ids);
     for (const id of ids) tree = moveToTrash(tree, id);
     setTreeU(tree);
-    // like Scrivener: the selection moves to the neighbour, not into the trash
+    // like aplicația de referință: the selection moves to the neighbour, not into the trash
     const sel = nextSel && findNode(tree, nextSel) ? nextSel : tree[0].id;
     setSelectedId(sel);
     setSelectedIds(new Set([sel]));
@@ -2212,7 +2212,7 @@ export default function App({ api: apiProp }) {
     go(splitId);
     setSplitId(a);
   };
-  // Layouts (Window > Saved layouts…, Scrivener 3 §12.3): named window arrangements kept at
+  // Layouts (Window > Saved layouts…, aplicația de referință §12.3): named window arrangements kept at
   // application level (settings.layouts), so they are offered in every project. The payload
   // captures only arrangement — never selectedId (project content, not layout); persistence of
   // the applied values continues through the existing saveUi effect.
@@ -2283,7 +2283,7 @@ export default function App({ api: apiProp }) {
     if (node && !node.root && !node.children) setCopyholder((c) => ({ id, editable: c?.id === id ? c.editable : false }));
   };
 
-  // Quick Reference: floating panels with another document (Scrivener: Open in Quick Reference).
+  // Quick Reference: floating panels with another document (aplicația de referință: Open in Quick Reference).
   const openQuickRef = (id) =>
     setQuickRefs((q) => (q.some((x) => x.id === id) ? q : [...q, { id, x: 120 + q.length * 30, y: 90 + q.length * 30 }]));
 
@@ -2292,7 +2292,7 @@ export default function App({ api: apiProp }) {
     if (id) go(id);
   };
 
-  // New from Template (Scrivener 3 §7.5): deep-clones the template (children included,
+  // New from Template (aplicația de referință §7.5): deep-clones the template (children included,
   // fresh ids, same title) into the target container, then copies the document contents
   // (docs/notes live outside the tree) for every cloned node.
   const newFromTemplate = async (tpl, targetParentId = null) => {
@@ -2402,7 +2402,7 @@ export default function App({ api: apiProp }) {
     setDocs((d) => ({ ...d, [second.id]: parts.after }));
     await api.writeDoc(dir, second.id, 'docs', parts.after).catch(report);
     go(second.id);
-    focusEditor(second.id); // Scrivener: the cursor continues in the new part
+    focusEditor(second.id); // aplicația de referință: the cursor continues in the new part
   };
 
   const mergeSelection = async () => {
@@ -2442,7 +2442,7 @@ export default function App({ api: apiProp }) {
     if (fields.includes('notes')) for (const n of flatten(project.tree)) if (!n.root) notesById[n.id] = await api.readDoc(dir, n.id, 'notes');
     const terms = buildTerms(criteria);
     if (!terms || !terms.length) return 0;
-    // Scrivener §11.3: archived snapshot text is replaced too — only when the text field is
+    // aplicația de referință §11.3: archived snapshot text is replaced too — only when the text field is
     // ticked (a snapshot IS the document's text) and only if the api can both list and rewrite
     // snapshot html; no backend exposes a snapshot write yet, so the pass stays inert until one does.
     const rewriteSnapshots = Boolean(criteria.affectSnapshots) && fields.includes('text') && typeof api.updateSnapshotHtml === 'function';
@@ -2527,7 +2527,7 @@ export default function App({ api: apiProp }) {
     return total;
   };
 
-  // --- notation strip / convert (Scrivener 3 §18.4.1, §18.4.5) ----------------------------
+  // --- notation strip / convert (aplicația de referință §18.4.1, §18.4.5) ----------------------------
   // Same flow as Replace All: flush, snapshot every changed document, write, mirror into
   // state and any open editor. The confirm shows exactly what will be removed.
   const NOTATION_KINDS = {
@@ -2808,7 +2808,7 @@ export default function App({ api: apiProp }) {
   const [selWords, setSelWords] = useState(0);
   useEffect(() => setSelWords(0), [selectedId]);
   // Caret on a paragraph with an identifiable style (named style or bare heading): enables the
-  // Format › style navigation commands (Scrivener §17.4.1). Reported on transitions by Editor.
+  // Format › style navigation commands (aplicația de referință §17.4.1). Reported on transitions by Editor.
   const [stylePara, setStylePara] = useState(false);
   const statusChars = useMemo(() => htmlToText(selectedHtml).replace(/\s+/g, ' ').trim().length, [selectedHtml]);
   const projectStyles = stylesOf(project);
@@ -2888,7 +2888,7 @@ export default function App({ api: apiProp }) {
           return;
         }
       }
-      // Filter bar (Scrivener 3 §11.4): Ctrl+F has no default command key, so it is
+      // Filter bar (aplicația de referință §11.4): Ctrl+F has no default command key, so it is
       // handled here, only while a corkboard or outliner is the active view.
       if (combo === 'Ctrl+F' && (view === 'corkboard' || view === 'outline')) {
         e.preventDefault();
@@ -3075,7 +3075,7 @@ export default function App({ api: apiProp }) {
   const inTrash = (id) => rootOf(project.tree, id)?.id === trashRoot.id;
   const scrivListNodes = scrivList && view === 'editor' ? scriveningsList(project.tree, scrivList.ids) : null;
   const isFolderView = Boolean(scrivListNodes) || (selected && selected.children && view === 'editor');
-  // A text container shows its own text first, then its sub-documents (Scrivener file group).
+  // A text container shows its own text first, then its sub-documents (aplicația de referință file group).
   const scrivSections = scrivListNodes || (isFolderView ? [...(selected.type === 'text' ? [selected] : []), ...flatten(selected.children).filter((n) => n.type === 'text')] : []);
   // Binder shows the hoisted folder only; separators are displayed as a rule.
   const hoistNode = hoistId ? findNode(project.tree, hoistId) : null;
@@ -3389,7 +3389,7 @@ export default function App({ api: apiProp }) {
   const favorites = flatten(project.tree).filter((n) => n.favorite && !inTrash(n.id));
   const canContain = selected && !selected.root && selected.type !== 'file';
 
-  // „Copy Documents as ToC" (Scrivener §22.2, P1 #28): selecția din binder ca cuprins static
+  // „Copy Documents as ToC" (aplicația de referință §22.2, P1 #28): selecția din binder ca cuprins static
   // cu tab-uri, gata de lipit în draft — dosar selectat aduce întregul subarbore, document
   // text doar pe el; titlurile documentelor text poartă `<$p>`, completat la compilare.
   const copyAsToCCommand = async () => {
@@ -3454,7 +3454,7 @@ export default function App({ api: apiProp }) {
     // { label: tr('cmd.settings'), action: () => setDialog('settings') },
   ];
 
-  // View > Filter (Scrivener 3 §11.4): opens only over a corkboard or outliner.
+  // View > Filter (aplicația de referință §11.4): opens only over a corkboard or outliner.
   const openViewFilter = () => {
     if (view !== 'corkboard' && view !== 'outline') return;
     setViewFilter((f) => ({ ...f, open: true }));
@@ -3586,7 +3586,7 @@ export default function App({ api: apiProp }) {
     ['format', 'formatDocument', tr('cmd.formatDocument'), () => openDocumentFormatting('document'), !alignmentTargets(project?.tree, 'document', selectedId).length],
     ['format', 'formatManuscript', tr('cmd.formatManuscript'), () => openDocumentFormatting('draft'), !alignmentTargets(project?.tree, 'draft').length],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
-    // Style navigation (Scrivener §17.4.1, P1 #27): the Editor handle re-reads the caret at
+    // Style navigation (aplicația de referință §17.4.1, P1 #27): the Editor handle re-reads the caret at
     // click time and returns false on an unstyled paragraph — the disabled flag below only
     // mirrors that state for the menus (reported on transitions via onSelectionStyle).
     ['format', 'selectStyleRange', tr('cmd.selectStyleRange'), () => activeHandle()?.selectStyleRange(), !stylePara],

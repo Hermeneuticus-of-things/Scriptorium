@@ -44,7 +44,7 @@ export const DEFAULT_KEYS = {
   newText: 'Ctrl+N',
   newFolder: 'Ctrl+Shift+N',
   findProject: 'Ctrl+Shift+F',
-  // Quick Search (Scrivener 3 §11.5) omnibox: Ctrl+O keeps the browser
+  // Quick Search (aplicația de referință §11.5) omnibox: Ctrl+O keeps the browser
   // address-bar metaphor; Ctrl+G is Go To, Ctrl+K is split. Ctrl+Alt is
   // avoided (AltGr on Romanian layouts).
   quickSearch: 'Ctrl+O',
@@ -92,7 +92,7 @@ export const DEFAULT_KEYS = {
   print: 'Ctrl+P',
   fullScreen: 'Ctrl+Shift+F11',
   revealBinder: 'Ctrl+Alt+R',
-  // Scrivener's Format > Show Ruler is Ctrl+Shift+R, already Quick Reference here.
+  // aplicației de referință Format > Show Ruler is Ctrl+Shift+R, already Quick Reference here.
   toggleRuler: 'Ctrl+Alt+Shift+R',
 };
 

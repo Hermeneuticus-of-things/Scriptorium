@@ -32,10 +32,10 @@ const withDefaults = (v) => ({
   footer: { ...DEFAULT_PAGE_SETUP.footer, ...(v?.footer || {}) },
 });
 
-// File > Page Setup (Scrivener: File > Page Setup…): paper, orientation, margins and the running
+// File > Page Setup (aplicația de referință: File > Page Setup…): paper, orientation, margins and the running
 // header/footer used by Print and Print Preview. Saved in the project (project.pageSetup) through
 // onSave; Compile keeps its own page settings.
-// format (P1 #30, Scrivener §26): what Print prints — manuscript (the Compile pipeline),
+// format (P1 #30, aplicația de referință §26): what Print prints — manuscript (the Compile pipeline),
 // index cards (the binder as cards) or outline (hierarchical list with synopses); the card size
 // applies to the index cards. onPreview(setup): opens Print Preview with the edited setup.
 export default function PageSetupDialog({ api, project, onSave, onPreview, onClose, onError }) {

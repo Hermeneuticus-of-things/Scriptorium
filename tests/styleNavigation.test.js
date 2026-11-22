@@ -1,4 +1,4 @@
-// Style navigation (Scrivener 3 §17.4.1 — P1 #27): Select Style Range, Next/Previous in
+// Style navigation (aplicația de referință §17.4.1 — P1 #27): Select Style Range, Next/Previous in
 // Same Style, Select All with Style. The pure module works on a ProseMirror doc + caret
 // position, so it is tested here in Node with a minimal schema (real editor: Editor.jsx
 // handle + App registry); the wiring describe reads the sources, like focusSplit/i18n do.
@@ -112,7 +112,7 @@ describe('nextStyleBlock / prevStyleBlock — Next/Previous in Same Style', () =
   });
 });
 
-describe('allStyleRange — Select All with Style (primul → ultimul, ca în Scrivener)', () => {
+describe('allStyleRange — Select All with Style (primul → ultimul, ca în aplicația de referință)', () => {
   const d = doc(p('unu', 'a'), p('doi', 'b'), p('trei', 'a'), p('patru', 'c'), p('cinci', 'a'));
   it('intervalul de la primul la ultimul cu stilul dat, cu număr de instanțe', () => {
     expect(allStyleRange(d, posIn(d, 0))).toEqual({ from: posIn(d, 0), to: posIn(d, 4) + 5, count: 3 });
