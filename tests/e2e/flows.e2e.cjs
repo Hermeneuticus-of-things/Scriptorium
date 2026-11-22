@@ -291,7 +291,8 @@ const flat = (nodes, out = []) => {
     await win.keyboard.press('Control+End');
     await win.keyboard.type(' TEXT DUPĂ SNAPSHOT');
     await save();
-    check('text changed after snapshot', /TEXT DUPĂ SNAPSHOT/.test(docOnDisk(alfa.id)));
+    // Hardened (CI): flush-ul pe disc poate întârzia pe runner încărcat — poll, nu un singur check.
+    check('text changed after snapshot', Boolean(await waitFor(() => /TEXT DUPĂ SNAPSHOT/.test(docOnDisk(alfa.id)), 4000)), docOnDisk(alfa.id).slice(-80));
     if (!(await win.locator('.side').count())) await cmd('toggleInspector');
     await win.locator('.side button[aria-label="Snapshot-uri"]').click();
     const row = win.locator('.snapshots li', { has: win.locator('strong', { hasText: /^Snapshot / }) }).first();
