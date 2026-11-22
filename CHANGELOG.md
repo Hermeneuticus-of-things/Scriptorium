@@ -1,5 +1,15 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.2.8 — 19 noiembrie 2026
+
+- Curățare de publicare: repository-ul, installerul și asseturile release nu includ proiecte de test, corpusuri private, rapoarte locale sau căi personale.
+- Testele pentru corpus mare acceptă acum calea numai prin `PNEUMA_CORPUS_DIR`, fără fixture inclus în codul public.
+- Textele și documentația folosesc căi portabile și formulări generice pentru mediul local.
+- Updaterul păstrează descărcarea verificată prin SHA-256 și selectează numai installerul sau portabilul Windows din release.
+- Instanțele duplicate sunt explicate și refuzate clar; aceeași carte primește un lock inter-proces, iar Despre afișează versiunea și executabilul activ.
+
+---
+
 ## 1.2.6 — 14 noiembrie 2026
 
 - **AI în pagină (ciclul A)**: fereastra AI flotantă este înlocuită de panoul andocat unic; **micro-toolbar AI în editor** la selecție (Rescriere/Rezumat/Revizuire/Întreabă) cu **propunere aplicată în text și Accept/Respinge** (Respinge = undo simplu, snapshot automat înainte) (#96).
@@ -7,7 +17,7 @@
 - **Lectura unificat** — View → Lectura are o singură poartă (panoul de focus); dialogul de replici se deschide din panou; dublura de comenzi eliminată (#98).
 - **Fix anti-churn formatare** — re-aplicarea aceleiași formatari nu mai rescrie fișierele și nu mai raportează „documente modificate" fără schimbare vizibilă; valoarea efectivă (moștenită pe span-uri) e comparată înainte de scriere (#98).
 - **Registrul cărții redenumit** în interfață (fără „Codex") (#98).
-- Continuare: verificat pe Karma copie (1.9M cuvinte) — sweep 196 comenzi curat, statistici corecte, formatare aplicată real pe disc și în editor (#93, #94, #98).
+- Continuare: verificare extinsă pe o carte mare de test — sweep de comenzi curat, statistici corecte, formatare aplicată real pe disc și în editor (#93, #94, #98).
 
 ---
 
@@ -105,5 +115,5 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
    - Vite production bundle: build trecut cu succes.
    - Executabil portabil: `release\PneumaSofer-1.0.0-portabil.exe` (~107 MB).
    - Instalator: `release\PneumaSofer-Setup-1.0.0.exe` (Inno Setup 6).
-   - **Instalat pe laptop:** `C:\Users\Ionut\AppData\Local\Programs\Pneuma Sofer\Pneuma Sofer.exe` → `ProductVersion: 1.0.0.0`.
+   - **Instalat local:** buildul Windows a fost verificat după instalare → `ProductVersion: 1.0.0.0`.
    - Toate etichetele "Beta" eliminate din `package.json` (versiune `1.0.0`), interfață și documentație.
