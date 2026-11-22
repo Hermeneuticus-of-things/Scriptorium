@@ -1,0 +1,572 @@
+Scrivener’s
+Compile Formats
+
+
+
+
+       D
+                                                                       D.1. Default
+
+
+This appendix will document the built-in compile formats made available in the
+Scrivener installation, as well as those formats that have been supplied within
+a few of its project templates exclusively. We hope that by and large the use of
+these formats is intuitive, but if you wish to modify them or better understand
+how they work, this section will provide information on their use.
+   Given that not every format is available to every type of file you can export
+with the compiler, the list has been broken up by rough category of file type.
+
+
+D.1 Default
+Meant as a very simple format, its layouts will pass through editor formatting and
+“glue together” the pieces in your draft folder with little alteration or complexity.
+  — Folders will still generate page breaks by default, and it comes with a few
+    layout choices for adding additional headings as need be.
+  — The current page number will be added centre-aligned to the page footer.
+    No other headers or footers will be applied.
+  This is a good starting point for your own formats, or as a basic way to export
+projects that do not require any special compilation options. It’s also a good
+option if you’d rather defer formatting for work in another word processor or
+desktop publishing program.
+
+
+D.2 Word processing and Web
+These formats pertain to the print, PDF, RTF, DOC, DOCX, ODT and HTML types.
+
+
+D.2.1 Enumerated Outline
+If you need a basic outline of topics (taken from the binder titles) alone in an
+indented list, this format is a good starting point. Unlike most formats, it will
+not export any text, only the titles of documents. The four section layouts that
+come with this format provide different spacing and numbering schemes for
+your outline. You can use any mix of styles for different types of documents
+in your project.
+   To create your own numbering schemes, duplicate the format and use one
+of the existing Section Layouts as a starting point. The placeholders used to
+generate numbering is set in the “Title Options” tab (subsection 24.2.4).
+   The amount of indent applied per level can be adjusted with the Add indent
+per outline level setting, in the Transformations format option pane.
+
+
+D.2.2 Full Indented Outline
+Presents an indented, easy to read outline that includes titles and synopses for
+all binder levels. The provided layouts provide a choice between alphanumeric
+
+                                                                                 733
+                                                  D.2. Word processing and Web
+
+
+numbering, hierarchical or no numbering at all. Refer to “Enumerated Outline”
+in the previous section for tips on adjusting the indent and numbering styles.
+
+
+D.2.3 Manuscript (Courier)
+Formats your book using standard Courier 12pt type and a number of common
+conventions such as scene separators as hash marks, double-spacing, underlined
+emphasis (instead of italic), page numbers, standard page headers and so forth. It
+has broad set of section layouts capable of handling a book with parts, chapters,
+scenes and titled sections. It is thus equipped to work with all of our built-in
+book generating project templates, fiction and non-fiction alike.
+
+Common Alterations
+Empty lines instead of hash mark
+By default, the stock compile formats considers empty lines that you create in the
+editor to signify minor breaks in the text, such as scene transitions or changes
+in topic. Some formats, such as submission manuscripts, require a more clear
+signal of such a break than a mere empty line, and commonly use a single hash
+mark (#) to do so. If you desire empty lines for such breaks instead, then use the
+following steps to change how this works:
+
+   1. Open File ▸ Compile… and double-click on the compile Format you want to
+      alter, such as Manuscript (Courier), in the left-most sidebar to edit it.
+   2. Select the Separators pane (section 24.3) in the left sidebar of the compile
+      Format Designer window.
+   3. Examine each of the Layouts in the list, and clear the text field for any that
+      have a hash or other symbol in Blank line separator field.
+      Optional: also set the Separator between sections dropdown to “Empty
+      line”, from “Custom”.
+   4. Give the format a better name at the top, and consider saving this to “My
+      Formats” so you can make use of it in other projects in the future.
+   5. Click the Save button to confirm your changes.
+
+Italic emphasis instead of underscoring
+If you require emphasis to be in italic instead of underscoring, edit the Format
+(as described previously in step 1) and disable the Convert italics to underlines
+setting, in the Transformations compile format pane (section 24.12).
+
+
+
+
+                                                                                734
+                                                  D.2. Word processing and Web
+
+
+D.2.4 Manuscript (Times)
+Functionally very similar to the Courier manuscript format, only using Times
+New Roman, another commonly required typeface for submission manuscript.
+Scene separators remain hash marks, double-spacing, page headers and so forth.
+Italics will be rendered as italic text rather than underscored. It provides the
+same array of layouts as the Courier format.
+   The separator style of using hash marks can be altered using the same tech-
+nique described previously, for the Courier variant.
+
+
+D.2.5 Modern
+Providing a fresh look, this layout is designed printing your own copies or gener-
+ating PDFs for proofing. It includes a full complement of layout designs, working
+with all of our book generating project templates.
+
+Common Alterations
+Empty lines instead of symbol
+Refer to the notes for the Courier (Manuscript) format (section D.2.3).
+
+
+D.2.6 Outline Document
+This layout is designed for printing full outline information (title and synopsis),
+but in a standard document layout rather than an indented outline format. It
+also has several layouts to choose from that only export the title, which could be
+useful for some projects where larger categorical groupings like parts and chap-
+ters may not have any specific synopses of note and just need to insert a sectional
+break. The page footer contains the title of the work, author’s name, date and
+page number, separated from the page with a dividing line.
+
+
+D.2.7 Paperback (6′′ x 9′′)
+Functionally similar to the previous, this Format is optimised to work with stan-
+dard paperback sizes in the U.S.1
+
+Common Alterations
+Paragraph spacing instead of indents
+Using empty lines to signify paragraph breaks, instead of indents, is a simple
+adjustment to make. This checklist will also demonstrate how styles can be used
+within a compile format, a technique that will be useful if you require fully styled
+output in your desktop publishing or word processing workflow:
+
+1
+    Or should we say, “optimized”.
+
+                                                                                735
+                                                          D.2. Word processing and Web
+
+
+    1. Open File ▸ Compile… and double-click on the compile Format you want to
+       alter, such as Paperback (6 ′′ × 9 ′′ ), in the left-most sidebar to edit it.
+    2. Select the Styles pane (section 24.4) in the compile Format Designer win-
+       dow’s left sidebar, and then select the “Body” style within that pane.
+    3. Using the standard indent and tab stop ruler (subsection 15.7.1), drag the
+       first-line indent marker all the way to the left.
+    4. Click on the line-height dropdown button, and select “Other…” at the bot-
+       tom of the menu.
+    5. Set Paragraph spacing after to the desired amount, such as 6pts, and click
+       OK.
+       With your desired formatting now declared in one central location, you
+       need only apply that style to all of the cases where paragraph text would
+       be used.
+    6. Click on the Section Layouts pane in the left sidebar. For every Layout that
+       has a checkmark in the Text column:
+
+          a) Click into the sample text.
+          b) Use the styles dropdown on the far left to select the “Body” style
+             you’ve prepared. You should see the desired formatting appear.
+
+       Optional: you may want to set the various headings in the other Layouts
+       to styles as well, now that you are here and know how to do it.2
+    7. Give the format a better name at the top, and consider saving this to “My
+       Formats” so you can make use of it in other projects in the future.
+    8. Click the Save button to confirm your changes.
+
+
+D.2.8 Paperback (5.06′′ x 7.81′′)
+A format designed to produce a typographically pleasing layout that could be
+taken into a word processor or desktop publishing program for self-publication
+with little effort. As with the other book generating formats, it is designed to
+provide a full spread of layouts to accommodate many different book styles and
+structural setups.
+
+2
+ By using logical “Heading 1”, “Heading 2” and so forth styles your document will have an outline
+which some software may use for navigation aids, as well as facilitating the construction of a
+dynamic table of contents.
+
+
+
+
+                                                                                            736
+                                                 D.2. Word processing and Web
+
+
+D.2.9 Proof Copy
+A useful preset for internal proofing. It will reformat your script to double-
+spacing so you can easily take notes, and prints a disclaimer after each section
+heading as well as in the header, making it easy to send out “Not for distribution”
+copies to your proofing team.
+
+Common Alterations
+Empty lines instead of hashes
+Refer to the notes for the Courier (Manuscript) format (section D.2.3).
+
+
+D.2.10 Script or Screenplay
+This format is also available to the scriptwriting formats, and is documented
+there (subsection D.4.1).
+
+
+D.2.11 Vellum Export
+Available only to the DOCX file type, this Format is designed to convey your work
+to the Vellum book creation tool, for macOS.
+   It is best used with styled text (chapter 17), which Vellum depends heavily upon
+to correctly format your work. For the most part, you may use Scrivener’s styles
+intuitively and should find they all work as expected when imported into Vellum.
+This compile Format will check for the stock style names used by Scrivener and
+convert them to style names that are expected by Vellum. If you use your own
+style names, you may want to edit the Format’s list, in the Styles compile format
+pane (section 24.4).
+   Additional style support is provided to (though not defined by default in stock
+projects):
+
+  — Epigraph
+  — Dedication
+  — Book Title
+  — Book Subtitle
+  — Author
+
+  Simply create any style from this list in your project by name, to have the For-
+mat pick it up and handle it appropriately.
+  Since this format produces a document tuned to work with one specific pro-
+gram as a transfer medium, it is not expected for it to look “right” in other pro-
+grams, or when viewed on its own.
+
+
+
+                                                                               737
+                                                           D.3. Ebook Publishing
+
+
+D.3 Ebook Publishing
+Since most ebook readers will handle the majority of the typesetting, choosing
+a format will be more about getting the basic building blocks together, than ex-
+erting total control over the appearance.
+
+
+D.3.1 Ebook
+A suitable format for ebook design. Electronic books generally require basic and
+flexible designs in order to be displayed on many devices, from cellular phones
+to tablet computers to dedicated black & white e-ink displays. This is a good
+starting point for your own formats when creating ebook formats.
+   If you have a lot of experience in ebook design, you may find starting from
+a simpler default to be easier, as this format is built to be used with very little
+customisation, and thus assumes a lot.
+
+
+D.3.2 Ebook Screenplay
+When publishing a screenplay intended for display on an ebook device or reader
+software, you’ll want to use this format, which has a stylesheet designed to print
+the various scripting elements in a format mimicking a screenplay. Since the av-
+erage reader won’t have a screen large enough to truly display a standard screen-
+play, some of these elements will be estimated, or designed to merely suggest
+what they would look like on a typical printed page.
+
+
+D.3.3 Outline Document
+This format is also available to the general word processing and web formats,
+and is documented there (subsection D.2.6).
+
+
+D.4 Scriptwriting Formats
+Available to Print, PDF, the word processing formats, HTML, Final Draft and Foun-
+tain file types.
+
+
+D.4.1 Script or Screenplay
+Most of the formatting will already be done in place, from the scriptwriting set-
+tings. The compile format itself is only concerned with page settings and con-
+verting “smart” punctuation to “dumb”. Most of your script should be assigned
+to the stock “Text Section” Layout.
+   When used with Print or PDF, the compiler will handle the page layout for
+you. We consider this to be “proofing/reading quality”, in the sense that it may
+not match the layout (and thus total page count) of output created by programs
+designed to create industry standard screenplays.
+
+                                                                               738
+                                                 D.5. Plain Text and Markdown-Based
+
+
+D.5 Plain Text and Markdown-Based
+These formats are displayed when using the TXT, MultiMarkdown or Pandoc
+based types.
+
+
+D.5.1 Enumerated Outline
+This format is also available to the general word processing and web formats, and
+is documented there (subsection D.2.1). The main difference of note to plain-text
+usage is that the indenting used to indicate hierarchy will be converted to literal
+whitespace for plain-text. Those using a Markdown-based format should use the
+“Markdown Outline” format instead.
+
+
+D.5.2 Markdown Outline
+If you are looking to convert the outline of your project into a Markdown-style
+indented bullet or enumerated list, then this format will be preferable to the
+standard “Enumerated Outline” format, in that it has been designed specifically
+to generate valid Markdown lists. This format also has embedded within it a
+simple LaTeX design.
+   You can either assign all of your project’s section types to one of the listing
+types, or mix and match based on type—though keep in mind that the end result
+must conform to what Markdown will expect: a strict use of bullets or enumer-
+ation per list.
+   Be aware that when using some methods of filtering or narrowing down the
+Draft folder, the result may not produce a valid Markdown list, as Scrivener may
+insert indent whitespacing that in effect causes the list to become a code block.
+This should be a simple matter to clean up in a text editor.
+
+
+D.5.3 Plain Text Manuscript
+Designed to serve as a basic plain-text manuscript with emphasised headers, it
+is a good format if you want a hard long-term backup of your manuscript. Since
+it is formatted using plain-text conventions, it will last for many decades, if not
+centuries, to come. It’s also a good format for sharing text through mechanisms
+that better use plain-text for transmission, such as email, newsletters, readme
+files and so forth.
+
+
+D.5.4 Plain Text Screenplay
+For integration with software that can import plain-text formatted screenplays3 .
+This format will convert spacing and indents to literal whitespace, as well as
+
+3
+ Not to be confused with Fountain, which is a newer format that uses a Markdown style approach
+to writing screenplays.
+
+
+                                                                                          739
+                                             D.5. Plain Text and Markdown-Based
+
+
+pad the text file with enough whitespace to print 1′′ margins when printed using
+12pt Courier. The result will be identical to a formatted screenplay, or what one
+would get when using a typewriter. Refer to Exporting Scripts (subsection 23.5.1)
+if you want to modify the format or make your own.
+
+
+D.5.5 Basic MultiMarkdown & Pandoc
+The Markdown converters that the compiler integrates with will be doing the
+bulk of the actual formatting itself, so the compile Formats designed for use with
+them will primarily be concerned with establishing the structure of your docu-
+ment.
+   Through the three layouts provided, you can print sections as headings, head-
+ings with text or text alone. The heading-based layouts will automatically insert
+the appropriate number of hashes to match your outline hierarchy with heading
+structure depth.
+   It is also convert the default project styles (where applicable) to logical syntax:
+
+  — Block quotes will have a > prefixing each paragraph.
+  — Code blocks will be tab-indented and code spans will have backticks sur-
+    rounding them.
+  — Captions, when properly placed adjacent to figures or tables, will be em-
+    bedded in the syntax.
+
+  The stylesheet also includes CriticMarkup support, if you create and use styles
+by the names of “Addition”, “Deletion” and “Highlight” in your project. Inline
+annotations will also export as CriticMarkup comments.
+  For those wishing to use Pandoc for conversion, a similar Format will be pro-
+vided called “Basic Pandoc”.
+
+
+D.5.6 MMD OpenOffice Document
+A simple extension of the Basic format, this variant is available when using Mul-
+tiMarkdown to OpenOffice (.odt) or Flat XML (.fodt) file types. This format pro-
+vides indexing capabilities, where you can mark terms in your text to be indexed,
+or supply hidden indexing keywords from the text editor.
+  To make use of this format’s capabilities, create two styles in your project:
+
+  — Index Term: this Character style should be used to highlight printed words
+    or phrases that should also be present in the index.
+  — Index Key: this Character style is meant to insert invisible indexing keys
+    into the main text.
+      Indexing terms can be grouped into hierarchies by typing the full hierar-
+      chy into the styled text, separating the path with any one of the following
+
+
+                                                                                  740
+                                                    D.6. MultiMarkdown LaTeX
+
+
+      characters: ”/ : !” (the latter symbol will be of use to those also creating
+      LaTeX documents and wishing to use the same indexing keys for both).
+      For example, Major/Minor/Term will nest the indexing word ‘Term’ into
+      the ‘Minor’ group, which itself will be nested into the ‘Major’ group. You
+      may also use simpler Group:Term hierarchies (to also demonstrate the
+      other separator).
+
+  These styles will only insert the necessary indexing markings into the docu-
+ment, they will not cause an actual index to be generated at the end of your file.
+Use your word processor to insert an index using the formatting options you
+require.
+  Comments and inline annotations will be converted to native OpenDocument
+comments, if they are included in the output in your compile settings.
+
+
+D.5.7 Pandoc Word Document
+This variant of the Basic Pandoc format will only be available when using Pandoc
+to Microsoft Word (.docx). It provides identical features as the “MMD OpenOf-
+fice Document” Format, documented above, save for the extended abilities to
+provide hierarchical grouping.
+
+
+D.6 MultiMarkdown LaTeX
+When selecting “MultiMarkdown → LaTeX (.tex)” as the compile file type, the for-
+mats listed in this section will become available. With the exception of the Mod-
+ern (Custom LaTeX) format, the available document classes use designs created
+by Fletcher Penny, the developer of MultiMarkdown.
+
+   Looking for LaTeX Without the Pain?
+   These formats can be made use of with very minimal, or even no Multi-
+   Markdown usage at all. With the Convert rich text to MultiMarkdown
+   option in the General options area of the compile overview screen (sec-
+   tion 23.4.3). A project that has been composed quite ordinarily, using
+   Scrivener’s rich text features, could take advantage of the high quality
+   typesetting that this workflow affords.
+
+  The LaTeX formats have a few common features available to them:
+
+  — In addition to the basic Section Layouts the “Basic MultiMarkdown” For-
+    mat uses, the LaTeX-oriented formats include the following:
+
+         – Text Section with Break: using a method suitable for each format that
+           supports this layout, a scene or section break of some sort will be
+           inserted between binder items that have been assigned to this layout.
+
+                                                                              741
+                                                             D.6. MultiMarkdown LaTeX
+
+
+            – Unnumbered Chapter: the alternative syntax for a \chapter* com-
+              mand will be used, leaving the heading unnumbered and omitted
+              from the table of contents (where applicable).
+            – Unnumbered Section: as above, only using the \section* command.
+
+     — Stylesheet support is expanded to include additional optional features. To
+       take advantage of these styles, you will need to create them in your project
+       (copying the name and type of style):
+
+            – Index Key (character style): use this style to mark text as being an in-
+              dex key. For example if “word” were marked with such a style, then
+              it would be compiled as \index{word}.
+            – Index Term (character style): similarly, this leaves the marked word
+              visible in the output, for those cases where the key and the phrase
+              are the same: word \index{word}.4
+            – Raw LaTeX (character style): use this to mark out any ranges of text in
+              your document that should be treated as raw LaTeX syntax, as Mul-
+              tiMarkdown will otherwise encode the special punctuation so that it
+              prints as visible text in the output.
+            – Attribution (paragraph style): with the memoir-based formats (which
+              include all but the “Book (Tufte)” format), the \sourceatright com-
+              mand will be used on the marked text.
+
+
+      Import Extended LaTeX Styles from the Extras Pack
+      If you would like to add the extended LaTeX and MultiMarkdown styles,
+      used by these compile formats, to your project, you will find an example
+      project containing them in the Extras Pack (Appendix F).
+         Using “9-extended_latex_stylesheet.scriv” as a source project, follow-
+      ing the instructions provided in Copying Stylesheets Between Projects
+      (section 17.5). Further tips and instructions can be found within that
+      project itself.
+
+
+D.6.1 Article (Memoir)
+Uses a layout of the expansive Memoir LaTeX document class that has been
+tuned to mimic how the stock article class works. The benefit of using this
+class is the wealth of customisation options available to Memoir in general.
+   The compile format adds a metadata setting for “Base Header Level” to 2,
+which means the top level heading will be considered a chapter rather than a
+
+4
+    This style cannot be used in conjunction with full RTF to MultiMarkdown conversion.
+
+                                                                                          742
+                                                      D.6. MultiMarkdown LaTeX
+
+
+part. Chapters will be formatted as major section headings rather than using
+page breaks and special formatting. If you would prefer a different top level head-
+ing, adjust this setting in the Metadata compile format pane (section 24.10).
+
+
+D.6.2 Book (Memoir)
+A fairly stock implementation of the Memoir book class, which is generally useful
+for non-fiction as well. This is a great starting point if you wish to build your own
+design from scratch (in fact this user manual you are reading made its humble
+beginnings using this boilerplate).
+
+
+D.6.3 Book (Tufte)
+A document class with a design inspired by the books of Edward Tufte. This for-
+mat supplies a few additional optional styles that you can make use of by adding
+them to your project:
+
+  — Full Width Text (paragraph style): This will typeset the marked paragraphs
+    full-width, into the right margin area, using the fullwidth environment.
+  — Margin Note (character style): Places an unnumbered margin note along-
+    side the paragraph the marked text is within, much like a footnote, but
+    without the cross-reference markings.
+
+   Images will be placed in the main text block, and should be no wider than
+310 points. If you wish to make use of this system’s margin figures or full-width
+figures, you would need to create your own styles for doing so.
+   Section breaks will use the \newthought command, supplied by this package.
+This has the effect of adding an empty line of space between sections, suppress-
+ing the indent on the first paragraph of the next section, and setting the first
+three words to all-capitals. If you would like to adjust how many words are cap-
+italised, create a duplicate of this format, and edit the regular expression in its
+Replacements compile format pane (section 24.14). For example, to select the
+first four words (the number “3” is used, because the fourth word is selected af-
+terward, without the space following that word):
+
+^@@((?:\S+\s+){3}\S+)
+
+  It should be noted that at the time of this writing, this class cannot be typeset
+using the XeLaTeX engine.
+
+
+D.6.4 Manuscript (Courier)
+Using a simple design put together by Fletcher Penney, this will typeset your
+document using a traditional submission manuscript format: 12pt Courier will
+be used for all text, with 1′′ margins and double-spaced lines. There are a few
+peculiarities of this format to be aware of:
+
+                                                                                 743
+                                                     D.6. MultiMarkdown LaTeX
+
+
+  — This format does not handle parts, and so in most cases you should set
+    the Base Header Level to “2”, in your project’s compile metadata settings
+    (section 23.4.2).
+  — Bold text has no treatment, you should use simple emphasis alone (which
+    will be underscored in the output).
+  — Chapter breaks will be untitled, and section breaks will simply insert a “#”
+    between scenes.
+  — Other non-fiction oriented commands, such as footnotes, tables and so
+    forth, should not be expected to work.
+
+
+D.6.5 Modern (Custom LaTeX)
+Unlike the other formats, this one has been designed by Literature & Latte, based
+upon its “Modern” compile format for RTF and other traditional printing meth-
+ods. That aside, it is a modified version of the Memoir system in article format.
+All of the settings for it are stored directly within the compile format itself. You
+can easily modify how it works from the LaTeX Options compile format pane
+(section 24.11).
+
+   For Best Results, use XeLaTeX
+   This design makes use of system fonts, and as such it will look much nicer
+   when typeset using the XeLaTeX engine, rather than pdflatex But it has
+   been set up to handle non-system fonts as a fallback. It will also use a
+   standard three-asterisk section break instead of a Unicode glyph, in this
+   fallback mode.
+
+
+
+
+                                                                                744
+
