@@ -2,15 +2,26 @@
 
 Program gratuit de scris cărți lungi, în română și engleză: textul stă pe fișe, câte una pentru fiecare scenă sau capitol, iar la final primești cartea întreagă.
 
-**[Descarcă Pneuma Sofer 1.1.0 pentru Windows](../../releases/latest)**
+**[Descarcă Pneuma Sofer 1.3.0 pentru Windows](../../releases/latest)**
 
-[Schimbări și verificări pentru 1.1.0](docs/RELEASE-1.1.0-VERIFICATION.md). AI și serviciile externe sunt opționale; scrierea, organizarea, salvarea și exportul funcționează fără ele.
+[Schimbări în v1.3.0](CHANGELOG.md). AI și serviciile externe sunt opționale; scrierea, organizarea, salvarea și exportul funcționează fără ele.
 
 <p align="center">
   <img src="./assets/readme/hero.png" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">
 </p>
 
 Design language: Ionuț ADL — yes. *(Vezi `docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md` și `docs/ADL-AUDIT.md`.)*
+
+## Nou în 1.3.0
+
+| Noutate | Pe scurt | Vezi în mișcare |
+|---|---|---|
+| **Fereastra AI autonomă** | container propriu, separat de Inspector; chips de context, acțiuni dintr-un click, stare vizibilă (inactiv / gândire / scrie / gata) | [GIF mai jos](#ai-opțional-într-un-singur-loc) |
+| **Motor universal de scriere + pachetul cărții** | metoda de scriere în fiecare apel AI; frazele fixate nu se ating, formulele oprite sunt zero; fiecare schimbare trece prin gardă și intră în registrul de decizii | [AI, opțional](#ai-opțional-într-un-singur-loc) |
+| **Reparații simple și Semnale (fără AI)** | corecturi deterministe cu diff și snapshot automat; ritm și semnale de limbă, fără model, fără costuri | [Corectezi](#corectezi) |
+| **Ajutor și comenzi într-o singură căutare** | **Ctrl+Shift+H**: întrebi în limbaj natural, găsești articolul sau comanda reală și o execuți | [Interfața](#interfața) |
+| **Navigare din tastatură** | **F6/Shift+F6** mută focusul între panouri; **Ctrl+Shift+1..4** te duce direct la editor, binder, inspector, fereastră AI | [Interfața](#interfața) |
+| **Compile preview REPARAT** | previzualizarea nu mai umflă dialogul: panou propriu cu zoom „Potrivire la lățime" și bara de acțiuni mereu vizibilă | [Compilezi](#compilezi) |
 
 ## 1. Ce este
 
@@ -139,6 +150,15 @@ Recunoașterea vorbirii e **în Pneuma Sofer** și lucrează **pe calculatorul t
 
 Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, punctuația și repetițiile, apoi le repară cu un clic. Când corectezi de mână un cuvânt subliniat, programul ține minte și data viitoare îl corectează singur. Cuvintele străine și transliterările (de exemplu sanscrita în IAST: ā, ī, ṛ, ś) rămân neatinse.
 
+**Reparații simple și Semnale — unelte de măsură, fără AI.** Din *Unelte* ai două instrumente noi care nu folosesc niciun model:
+
+- **Reparații simple (fără AI)…** — corecturile mecanice (ghilimele românești, spații duble, majusculă la început de paragraf, caractere invizibile) îți arată mai întâi diferențele și abia apoi le aplică, cu snapshot automat înainte. Fără prompt, fără costuri.
+- **Semnale pe text (fără AI)…** — ritmul frazelor și semnalele de limbă (calcuri, pasiv, repetiții, schelă de text generat), ca instrument de măsură. *Semnale, nu verdicte*: citești fiecare pe caz; textul bun al autorului nu trebuie să cadă.
+
+<p align="center">
+  <img src="./docs/assets/gif/05-semnale.gif" width="100%" alt="Semnale pe text: ritmul frazelor și grupurile de semnale de limbă, într-un panou determinist, fără AI">
+</p>
+
 <details>
 <summary><strong>Repetiții apropiate, asistentul AI, versiuni</strong></summary>
 
@@ -151,10 +171,14 @@ Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, p
 **Textul tău e protejat.** Ce scrii de mână devine text al autorului. Revizia cu AI nu schimbă, nu mută și nu șterge niciun paragraf scris de tine; doar semnalează, iar modificările tale se notează.
 
 <p align="center">
-  <img src="./assets/readme/ai.png" width="100%" alt="Asistentul AI arată corectura cuvânt cu cuvânt, cu înainte și după">
+  <img src="./docs/assets/gif/01-ai-corectura.gif" width="100%" alt="Fereastra AI: alegi Corectură dintr-un click, răspunsul se scrie în timp real, vezi diferențele și accepți — totul într-un panou separat de Inspector">
 </p>
 
 Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce îți place. Merge cu Anthropic, OpenAI, Google Gemini, NVIDIA NIM, OpenRouter și alții, sau cu un model care rulează pe calculatorul tău. Îl poți opri complet din Setări.
+
+**Fereastra AI — autonomă și cu context vizibil.** De la 1.3.0, asistentul stă în fereastra lui, separată de Inspector: Inspectorul măsoară (structură, metadate, snapshot-uri), AI-ul propune. Fereastra arată tot timpul asupra ce lucrează — cartea, documentul, nivelul (selecție, capitol, toată cartea) — ca chips mici sus. Acțiunile pornește dintr-un click (prompt starters), iar lângă model vezi starea: *inactiv / gândire / scrie / aplică / gata*.
+
+**Pachetul cărții — regulile tale, respectate la gramă.** În *AI → Setări AI (carte)…* îți pui frazele fixate („nu se ating, nici la corectură, nici la rescriere") și formulele oprite („zero apariții în textul livrat"). Ele au prioritate maximă în fața modelului: orice propunere care ar atinge o frază fixată se blochează și te întreabă explicit — și decizia ta (acceptată sau respinsă) intră în registrul de decizii al proiectului, cu actor, model și tipul schimbării (formă / sens / conținut). Metoda generală de scriere (doza de intervenție, ritm, anti-amprentă) e în fiecare apel; specificul cărții vine doar din pachetul tău — deci motorul același lucrează pe orice carte.
 
 <p align="center">
   <img src="./assets/readme/snapshots.png" width="100%" alt="Două versiuni ale aceluiași text, comparate una lângă alta">
@@ -249,7 +273,13 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 | Fountain, Final Draft (.fdx) | scenarii |
 | Text simplu | orice altceva |
 
-*Tipărire / previzualizare* îți arată paginile înainte de orice. Proiectul întreg se poate exporta și ca `.scriv`, din meniul *Fișier*.
+*Tipărire / previzualizare* îți arată paginile înainte de orice. De la 1.3.0, previzualizarea stă în propriul panou, lângă formular — nu mai umflă dialogul — cu zoom **„Potrivire la lățime"** (pagina 6 × 9 se scalează, nu te împinge în scroll), iar bara cu *Salvează setările / Compilează* rămâne mereu vizibilă jos.
+
+<p align="center">
+  <img src="./docs/assets/gif/03-compile-preview.gif" width="100%" alt="Compile: previzualizarea în panou propriu, cu zoom Potrivire la lățime și bara de acțiuni mereu vizibilă">
+</p>
+
+Proiectul întreg se poate exporta și ca `.scriv`, din meniul *Fișier*.
 
 **4. Tipurile de secțiune.** Fiecare bucată din binder are un tip: *Parte*, *Capitol*, *Secțiune*, *Scenă*, *Pagină de titlu*. Implicit, dosarele sunt capitole, documentele cu subdocumente sunt „capitol cu text”, iar documentele simple sunt scene; poți schimba tipul oricărei bucăți din Inspector. În fila *Secțiuni* hotărăști pentru fiecare tip cum apare: cu titlu sau fără, cu un prefix ca „Capitolul <$n>” sau „Partea <$n:Words>” („Partea Unu”), cu majuscule, aliniat la centru sau la stânga, pe pagină nouă sau nu, cu text sau doar cu titlu. Scenele, de obicei, apar fără titlu, despărțite de un separator.
 
@@ -300,6 +330,18 @@ Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire
 </p>
 
 Sus vezi doar ce folosești des; restul stă în meniuri ordonate. Din *Program → Personalizează bara de instrumente* alegi singur butoanele și le muți cu mouse-ul. Tot ce ține de AI stă într-un singur meniu. Rigla (Ctrl+Alt+Shift+R) arată indentările și tab-urile, ca în Word.
+
+**Fereastra în mâini, din tastatură.** **F6** (înapoi: Shift+F6) mută focusul pe panoul următor — binder, editor, split, inspector, fereastră AI — în ordinea în care le vezi pe ecran; panoul închis se deschide singur când îi ceri focusul. Ținte directe: **Ctrl+Shift+1..4** (editor / binder / inspector / AI).
+
+<p align="center">
+  <img src="./docs/assets/gif/04-focus-f6.gif" width="100%" alt="F6 mută focusul între binder, editor și inspector, în ordinea vizuală">
+</p>
+
+**Ajutor și comenzi, într-o singură căutare.** **Ctrl+Shift+H** deschide fereastra în care poți întreba în limbajul tău — „cum revin la o versiune anterioară", „cum export în PDF" — și primești două feluri de răspuns, clar separate: **Cum se face** (articole și proceduri) și **Comenzi** (comenzile reale ale programului, cu scurtătura lor; Enter le execută). Înțelege greșelile de tastare și sinonimele; nimic nu se execută fără click, iar comenzile blocate nu pornesc din căutare. Manualul complet rămâne la **F1**.
+
+<p align="center">
+  <img src="./docs/assets/gif/02-help-finder.gif" width="100%" alt="Ctrl+Shift+H: întrebare în limbaj natural, rezultate separate în Cum se face și Comenzi">
+</p>
 
 <details>
 <summary><strong>Meniul AI și rigla</strong></summary>
@@ -352,7 +394,8 @@ Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.
-- **Golurile din auditul de paritate cu Scrivener 3**: manualul oficial (capitolele 1–26) a fost comparat capitol cu capitol cu Pneuma Sofer; diferențele sunt prioritizate în [`docs/PARITY-AUDIT-NEXT-CHAPTERS.md`](docs/PARITY-AUDIT-NEXT-CHAPTERS.md) (5 goluri P1: Snapshots Manager, selectarea textului după stil, cuprinsul cu numere de pagină, lista de conținut din Compile, printarea fișelor și a outline-ului).
+- **Acoperirea integrală Scrivener 3.** Audit exhaustiv finalizat: manualul oficial 3.1.6 (Windows + macOS), 799 funcționalități verificate individual cu dovezi — 258 complete, 15 unde Pneuma depășește, 279 de goluri prioritizate și plan de implementare pe tranșe (primele trei tranșe — navigarea din tastatură, comenzile de meniu, comportamentele — intră chiar în 1.3.0). Registrul complet: [`docs/audit/scrivener3/comparison_registry.md`](docs/audit/scrivener3/comparison_registry.md).
+- **Branching experimental pe documente** — variante de rescriere pe ramuri, cu merge selectiv.
 
 Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea e descrisă în [`docs/DTED.md`](docs/DTED.md).
 
