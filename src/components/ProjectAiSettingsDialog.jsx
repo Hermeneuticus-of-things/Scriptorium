@@ -22,6 +22,10 @@ const readScope = (dir) => {
 
 export default function ProjectAiSettingsDialog({ api, dir, project, onSave, onClose, onError }) {
   const [rules, setRules] = useState(project?.editorialProfile?.aiRules || '');
+  // Pachetul de carte (universal): stratul de sus al motorului AI — frazele fixate nu se ating,
+  // formulele oprite apar de zero ori în textul livrat. Orice carte își aduce propriul pachet.
+  const [fixedPhrases, setFixedPhrases] = useState(project?.editorialProfile?.fixedPhrases || '');
+  const [bannedFormulas, setBannedFormulas] = useState(project?.editorialProfile?.bannedFormulas || '');
   const [scope, setScope] = useState(() => readScope(dir));
   const [mcp, setMcp] = useState(null);
   const [bookType, setBookType] = useState(project?.bookType || '');
@@ -43,11 +47,13 @@ export default function ProjectAiSettingsDialog({ api, dir, project, onSave, onC
       }
       if (project) {
         const typeChanged = bookType !== (project.bookType || '');
-        const rulesChanged = rules !== (project.editorialProfile?.aiRules || '');
+        const rulesChanged = rules !== (project.editorialProfile?.aiRules || '')
+          || fixedPhrases !== (project.editorialProfile?.fixedPhrases || '')
+          || bannedFormulas !== (project.editorialProfile?.bannedFormulas || '');
         if (typeChanged || rulesChanged) {
           const next = { ...project };
           if (typeChanged) next.bookType = bookType || null;
-          if (rulesChanged) next.editorialProfile = { ...(next.editorialProfile || {}), aiRules: rules };
+          if (rulesChanged) next.editorialProfile = { ...(next.editorialProfile || {}), aiRules: rules, fixedPhrases, bannedFormulas };
           onSave(next);
           return;
         }
@@ -146,6 +152,15 @@ export default function ProjectAiSettingsDialog({ api, dir, project, onSave, onC
                 {t('set.aiRules')}
                 <textarea rows={4} value={rules} onChange={(e) => setRules(e.target.value)} placeholder={t('set.aiRulesPlaceholder')} />
               </label>
+              <label>
+                {t('set.fixedPhrases')}
+                <textarea rows={3} value={fixedPhrases} onChange={(e) => setFixedPhrases(e.target.value)} placeholder={t('set.fixedPhrasesPlaceholder')} />
+              </label>
+              <label>
+                {t('set.bannedFormulas')}
+                <textarea rows={3} value={bannedFormulas} onChange={(e) => setBannedFormulas(e.target.value)} placeholder={t('set.bannedFormulasPlaceholder')} />
+              </label>
+              <p className="muted small">{t('set.bookPackageInfo')}</p>
             </fieldset>
             {dir && (
               <fieldset>

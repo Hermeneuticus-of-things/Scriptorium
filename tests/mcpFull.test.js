@@ -206,6 +206,7 @@ const PRELOAD_COVERAGE = {
   instanceInfo: 'gui: identificarea instanței în Despre (local, nu prin MCP)',
   onProjectInstanceConflict: 'gui: garda anti-instânțe dublă (IPC intern, nu prin MCP)',
   runAi: 'gui: AI (clientul MCP este AI-ul; editorial_round dă promptul rundei)',
+  aiAudit: 'gui: registru de decizii și provenance al AI (în proiect, nu prin MCP)',
   onAiDelta: 'gui: AI',
   testAi: 'gui: AI',
   nlmExport: 'export_notebooklm',

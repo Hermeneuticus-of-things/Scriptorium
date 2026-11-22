@@ -195,6 +195,7 @@ contextBridge.exposeInMainWorld('api', {
   removeDictionaryWord: (word) => call('spell:removeWord', word),
   cancelAi: () => call('ai:cancel'),
   runAi: (payload) => call('ai:run', payload),
+  aiAudit: (payload) => call('ai:audit', payload),
   // Streamed answer text of runAi({ runId }): fn({ runId, delta }).
   onAiDelta: (fn) => {
     const listener = (_e, p) => fn(p);

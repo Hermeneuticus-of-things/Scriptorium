@@ -965,3 +965,10 @@ html body .backdrop .modal.document-formatting-dialog { width: min(var(--setting
 details.set-acc { border: 1px solid var(--line, #ddd4); border-radius: var(--radius); padding: var(--sp-1) var(--sp-2); margin: var(--sp-2) 0; }
 details.set-acc > summary { cursor: pointer; font-weight: 600; font-size: var(--font-ui); color: var(--muted); list-style-position: inside; }
 details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1); }
+
+/* Panou de semnale (măsură, fără AI): limbaj și formă de instrument de măsură. */
+.signals-dialog .signals-ritm { font-size: var(--font-ui-sm); white-space: pre-wrap; margin: 0; }
+.signals-dialog .signals-grupa summary { font-size: var(--font-ui-sm); font-weight: 600; cursor: pointer; margin-top: var(--sp-1); }
+.signals-dialog .signals-grupa ul { margin: var(--sp-1) 0; padding-left: var(--sp-3); font-size: var(--font-ui-sm); }
+.signals-dialog .signals-line { opacity: .6; }
+.signals-dialog .signals-rule { font-weight: 600; }

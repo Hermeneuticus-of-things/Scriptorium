@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store.cjs');
 const aiRules = require('../lib/aiRules.cjs');
+const aiAudit = require('../lib/aiAudit.cjs');
 const { loadHtml } = require('../lib/loadHtml.cjs');
 const teamStore = require('../lib/teamStore.cjs');
 const { importScriv } = require('../lib/scrivImport.cjs');
@@ -1503,7 +1504,26 @@ handle('ai:run', (_e, payload) => {
         try { if (!_e.sender.isDestroyed()) _e.sender.send('ai:delta', { runId, delta }); } catch { /* window gone */ }
       }
     : undefined;
-  return aiRuns.track(_e.sender.id, (signal) => ai.runAction({ ...rest, ...getAiConfig(), rules, signal, onDelta }), timeoutMs);
+  return aiRuns.track(_e.sender.id, async (signal) => {
+    const res = await ai.runAction({ ...rest, ...getAiConfig(), rules, signal, onDelta });
+    // Provenance (registru de decizii): modelul, acțiunea, hash-ul promptului și al regulilor
+    // (pachetul cărții inclus) se înregistrează la fiecare generare, append-only.
+    aiAudit.append(dir, {
+      actor: 'agent', action: rest.action, model: res.model || String(rest.provider || ''),
+      promptHash: aiAudit.sha(String(rest.question || '') + '|' + String(rest.text || '').slice(0, 2000)),
+      rulesHash: aiAudit.sha(rules), decision: 'generat',
+    });
+    return res;
+  }, timeoutMs);
+});
+
+// Deciziile autorului (acceptat / respins / fraze fixate atinse) intră în același registru;
+// restore-ul și respingerea nu șterg nimic — fiecare eveniment e nou.
+handle('ai:audit', (_e, { dir, action, decision, note, model } = {}) => {
+  if (!dir) throw new Error('Registrul de audit al AI se păstrează în proiect.');
+  assertOpened(dir);
+  aiAudit.append(dir, { actor: 'autor', action, decision, note, model });
+  return true;
 });
 
 // Cancels every AI request started by this window (panels and bulk jobs).
