@@ -40,7 +40,7 @@
 .ruler-handle.right { bottom: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 7px solid var(--muted, #666); }
 .ruler-tab { top: 4px; width: 8px; height: 8px; transform: translateX(0); border-left: 2px solid var(--text, #333); border-bottom: 2px solid var(--text, #333); }
 .ruler-tab.removing { opacity: .3; }
-/* Tab stop glyphs (Word/Scrivener style): └ left, ┴ center, ┘ right, ┴· decimal */
+/* Tab stop glyphs (Word/aplicația de referință style): └ left, ┴ center, ┘ right, ┴· decimal */
 .ruler-tab.tab-center, .ruler-tab-glyph.tab-center { border-left: 0; width: 10px; transform: translateX(-5px); background: linear-gradient(var(--text, #333), var(--text, #333)) center top / 2px 100% no-repeat; }
 .ruler-tab.tab-right, .ruler-tab-glyph.tab-right { border-left: 0; border-right: 2px solid var(--text, #333); transform: translateX(-100%); }
 .ruler-tab.tab-decimal, .ruler-tab-glyph.tab-decimal { border-left: 0; width: 10px; transform: translateX(-5px); background: linear-gradient(var(--text, #333), var(--text, #333)) center top / 2px 100% no-repeat, radial-gradient(circle, var(--text, #333) 1.2px, transparent 1.6px) 100% 0 / 4px 4px no-repeat; }

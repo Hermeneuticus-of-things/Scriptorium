@@ -32,7 +32,7 @@ describe('rtfToHtml v2', () => {
       },
     });
     expect(html).toContain('<span data-comment="Verifică data" data-color="#ffd666" data-author="Ed" class="comment">comentat</span>');
-    // Footnote="Yes" entry = Scrivener linked footnote: kept as a mark over its anchor
+    // Footnote="Yes" entry = aplicația de referință linked footnote: kept as a mark over its anchor
     expect(html).toContain('<span data-linked-footnote="Sursa: arhiva" class="linked-footnote">nota</span>');
     expect(html).toContain('data-annotation="Fără ancoră"');
   });
@@ -44,7 +44,7 @@ describe('rtfToHtml v2', () => {
     expect(html).not.toContain('Scrv');
   });
 
-  it('Scrivener links and external links', () => {
+  it('aplicația de referință links and external links', () => {
     const rtf = H + String.raw`{\field{\*\fldinst{HYPERLINK "scrivlnk://1A2B3C4D-1111-2222-3333-444455556666"}}{\fldrslt Capitolul 2}} și {\field{\*\fldinst{HYPERLINK "https://ex.ro/a"}}{\fldrslt site}}}`;
     const html = rtfToHtml(rtf, { linkFor: (u) => (u.startsWith('1A2B') ? 'scribner://doc/NEW' : null) });
     expect(html).toContain('<a href="scribner://doc/NEW" class="internal-link">Capitolul 2</a>');
@@ -82,7 +82,7 @@ describe('rtfToHtml v2', () => {
     expect(html).toContain('x <span data-char-style="emphasis">acc</span> y');
   });
 
-  it('named paragraph/character styles keep their names (stylesheet and Scrivener markers)', () => {
+  it('named paragraph/character styles keep their names (stylesheet and aplicația de referință markers)', () => {
     const rtf = String.raw`{\rtf1\ansi{\stylesheet{\s0 Normal;}{\s3 Motto;}{\*\cs4 Accent;}{\*\cs5 Code Span;}}\pard\s3 Sus\par\pard\plain Normal {\cs4 tare} și {\cs5 cod}\par\pard <$Scr_Ps::2>Scris<!$Scr_Ps::2>\par}`;
     const seen = [];
     const html = rtfToHtml(rtf, { styleNames: { 2: 'Scrisoare' }, styleId: (name, kind) => (seen.push([name, kind]), name === 'Accent' ? 'accent-x' : name.toLowerCase().replace(/ /g, '-')) });
@@ -90,7 +90,7 @@ describe('rtfToHtml v2', () => {
     expect(seen).toEqual(expect.arrayContaining([['Motto', 'para'], ['Accent', 'char'], ['Code Span', 'char'], ['Scrisoare', 'para']]));
   });
 
-  it('inline note groups scope \\uc: no stray "?" after a footnote or annotation (as Scrivener writes them)', () => {
+  it('inline note groups scope \\uc: no stray "?" after a footnote or annotation (as aplicația de referință writes them)', () => {
     // .scriv content.rtf: \uc0 is set inside the note group; after the group the outer \uc1 applies again
     const fn = rtfToHtml(String.raw`{\rtf1\ansi\ansicpg1252\uc1 a{\Scrv_fn=\uc0 not\u259 \end_Scrv_fn} \u259?b\u351?\par}`);
     expect(fn).toBe('<p>a<span data-footnote="notă" class="footnote"></span> ăbş</p>');

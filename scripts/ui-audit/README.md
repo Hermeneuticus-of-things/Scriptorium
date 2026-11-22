@@ -35,7 +35,7 @@ exact cazul în care „captura nu apărea" / apărea conținut greșit. PrintWi
 acoperită **sau pe un desktop virtual inactiv**; UI Automation la fel nu cere fereastra vizibilă.
 
 De aceea ferestrele de captură se țin pe un **desktop dedicat (Desktop 3)**: `place-desktop3.ps1
--Process Scrivener` le mută acolo (modulul `VirtualDesktop`). Meniurile și dialogurile deschise în timpul
+-Process aplicația de referință` le mută acolo (modulul `VirtualDesktop`). Meniurile și dialogurile deschise în timpul
 capturii apar pe Desktop 3, nu pe ecranul de lucru al utilizatorului, iar captura funcționează cu Desktop
 3 inactiv. Captura Pneuma Sofer (Playwright) desenează pagina direct, deci e deja independentă de desktop.
 

@@ -107,6 +107,8 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
     scratchOnTop: init.scratchOnTop !== false,
     scratchFolder: init.scratchFolder || '',
     dtedLanguage: init.dtedLanguage || 'ro',
+    mergeSeparator: init.mergeSeparator || 'asterisks',
+    mergeSeparatorCustom: init.mergeSeparatorCustom || '',
   });
   const set = (k) => (e) => {
     const v = e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e;
@@ -425,6 +427,15 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
     corrections: (
       <>
         {check('smartQuotes', t('set.smartQuotes'))}
+        <label className="row">
+          {t('set.mergeSeparator')}
+          <select value={s.mergeSeparator || 'asterisks'} onChange={set('mergeSeparator')}>
+            <option value="asterisks">{t('set.mergeSeparatorAsterisks')}</option>
+            <option value="blank">{t('set.mergeSeparatorBlank')}</option>
+            <option value="custom">{t('set.mergeSeparatorCustom')}</option>
+          </select>
+          {(s.mergeSeparator || 'asterisks') === 'custom' && <input type="text" maxLength="40" value={s.mergeSeparatorCustom || ''} placeholder="* * *" onChange={set('mergeSeparatorCustom')} />}
+        </label>
         {check('smartDashes', t('set.smartDashes'))}
         {check('smartEllipsis', t('set.smartEllipsis'))}
         {check('smartFractions', t('ui.settingsDialog.fractii_1_2_3_4'))}
@@ -909,8 +920,11 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
 
   return (
     <div className="modal-backdrop" onClick={() => (!dirty || window.confirm(t('ui.settingsDialog.renunti'))) && cancel()}>
-      <div className="modal settings-dialog" role="dialog" aria-label={aiOnly ? t('cmd.aiSettings') : t('set.title')} onClick={(e) => e.stopPropagation()} onChangeCapture={() => setDirty(true)}>
+      <div className="modal settings-dialog" role="dialog" aria-label={aiOnly ? t('cmd.aiSettings') : t('set.title')} aria-describedby="settings-scope" onClick={(e) => e.stopPropagation()} onChangeCapture={() => setDirty(true)}>
         <h2>{aiOnly ? t('cmd.aiSettings').replace(/…$/, '') : t('set.title')}</h2>
+        <p id="settings-scope" className="surface-scope" role="note">
+          {aiOnly ? t('ui.settingsDialog.scopeAiProgram') : t('ui.settingsDialog.scopeProgram')}
+        </p>
         <div className="tabs" role="tablist" hidden={aiOnly}>
           {visibleTabs.map((k) => (
             <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'primary' : ''} data-hint={k === 'accounts' ? 'services-tab' : undefined} onClick={() => setTab(k)}>
@@ -920,9 +934,9 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
         </div>
         <div role="tabpanel" style={{ minHeight: 0, marginTop: 8 }}>{panes[tab]}</div>
         <div className="actions">
-          {dirty && <span className="muted" role="status">{t('ui.settingsDialog.unsaved')}</span>}
+          {dirty && <span className="muted settings-dirty" role="status">{t('ui.settingsDialog.unsaved')}</span>}
           <button onClick={cancel}>{t('btn.cancel')}</button>
-          <button className="primary" onClick={save}>{t('btn.save')}</button>
+          <button className="primary" onClick={save}>{t('ui.settingsDialog.saveProgram')}</button>
         </div>
       </div>
     </div>

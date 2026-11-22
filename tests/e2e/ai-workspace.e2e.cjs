@@ -21,7 +21,7 @@ const createHarness = require('./full-app-harness.cjs');
     await H.p.getByRole('tab', { name: 'Asistent', exact: true }).click().catch(() => {});
   };
   const windowUp = () => H.p.locator('.ai-workspace');
-  const sideUp = () => H.p.locator('.side .side-ai');
+  const sideUp = () => H.p.locator('.ai-window .side-ai');
   const openContextFor = async (id) => {
     await H.row(id).click({ button: 'right' });
     // Meniul vizibil e .ctx-menu (position:fixed); wrapper-ul .ctx-menu-root are înălțime 0.
@@ -71,7 +71,7 @@ const createHarness = require('./full-app-harness.cjs');
     act: async () => {
       await openContextFor('doc-a');
       await H.p.getByText('Capitolul: ', { exact: false }).first().click();
-      await H.p.waitForSelector('.side .side-ai', { timeout: 10000 });
+      await H.p.waitForSelector('.ai-window .side-ai', { timeout: 10000 });
     },
     verify: async () => {
       const s = sideUp();
@@ -95,7 +95,7 @@ const createHarness = require('./full-app-harness.cjs');
       await openWindow();
     },
     verify: async () => {
-      const text = await H.p.textContent('.ai-book-context');
+      const text = await H.p.textContent('.ai-chip-row');
       H.assert(text.includes('Tip carte: Roman istoric'), 'Book type tag missing in the AI context header');
     },
   });

@@ -34,7 +34,7 @@ const docsOf = (dir) => (id) => {
 };
 
 describe('templates', () => {
-  it('ships Scrivener-like templates with categories', () => {
+  it('ships aplicația de referință-like templates with categories', () => {
     const ids = templates.listTemplates().map((t) => t.id);
     for (const id of ['shortStory', 'screenplay', 'stagePlay', 'essay', 'thesis', 'lectureNotes', 'recipes', 'poetry', 'novelFormatted']) expect(ids).toContain(id);
     const groups = templates.groupTemplates(templates.listTemplates()).map((g) => g.category);
@@ -144,7 +144,7 @@ describe('folder sync formats', () => {
   });
 
   it('reads sync options and auto-sync actions from the project', () => {
-    expect(folderSync.syncOptions({ syncFormat: 'md', syncDraftFormat: 'fountain' })).toEqual({ format: 'md', draftFormat: 'fountain', notesFormat: 'md', includeNotes: true });
+    expect(folderSync.syncOptions({ syncFormat: 'md', syncDraftFormat: 'fountain' })).toEqual({ collectionId: '', format: 'md', draftFormat: 'fountain', notesFormat: 'md', includeNotes: true, includeTrashed: false, numericPrefix: true });
     expect(folderSync.syncOptions({ syncFormat: 'x' }).format).toBe('rtf');
     expect(folderSync.autoSyncAction({ syncFolder: '/x' }, 'open')).toBeNull();
     expect(folderSync.autoSyncAction({ syncFolder: '/x', syncAuto: true }, 'open')).toBe('in');

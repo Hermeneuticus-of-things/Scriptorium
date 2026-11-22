@@ -156,7 +156,7 @@ textarea { resize: vertical; width: 100%; }
 .format-bar button { min-width: var(--ctl-lg); min-height: var(--ctl-lg); }
 .page { max-width: var(--editor-page-width, 62em); width: 100%; margin: 24px auto 40vh; padding: 40px 56px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,.05); }
 .doc-title { margin: 0 0 1em; font-weight: 500; color: var(--muted); font-size: 15px; }
-.prose .ProseMirror { outline: none; min-height: 50vh; font-family: var(--editor-font, Georgia, 'Times New Roman', serif); font-size: var(--editor-font-size); line-height: var(--editor-line-height, 1.5); }
+.prose .ProseMirror { outline: none; min-height: 50vh; padding: var(--ed-pad-y, 24px) var(--ed-pad-x, 48px); font-family: var(--editor-font, Georgia, 'Times New Roman', serif); font-size: var(--editor-font-size); line-height: var(--editor-line-height, 1.5); }
 .prose .ProseMirror p { text-indent: var(--para-indent, 0); margin-bottom: var(--para-spacing, .6em); }
 /* Lists and quotes keep their own typography: no automatic first-line indent. */
 .prose .ProseMirror li p, .prose .ProseMirror blockquote p { text-indent: 0; }
@@ -260,6 +260,8 @@ label.check { flex-direction: row; align-items: center; gap: var(--sp-1); color:
 .modal-x { position: absolute; top: 8px; right: 10px; width: var(--ctl-lg); height: var(--ctl-lg); display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--muted); font-size: var(--icon-md); line-height: 1; border-radius: var(--radius); cursor: pointer; z-index: 6; }
 .modal-x:hover, .modal-x:focus-visible { background: var(--panel); color: inherit; }
 .modal h2 { margin: 0; }
+.surface-scope { margin: -6px 0 0; padding: 6px 8px; border-left: 3px solid var(--accent, #4a6fa5); background: var(--panel); color: var(--muted); font-size: var(--font-ui-sm); }
+.settings-dirty { margin-right: auto; }
 /* AI status on the toolbar: a green dot when AI is on with a key, red otherwise, and a box to toggle it. */
 /* flex-direction: row — the generic `label` rule stacks it in a column, which drew a ~55px
    tall pill over the Inspector button and pushed the toolbar past the 32–40 strip (T9). */
@@ -864,8 +866,15 @@ legend { color: var(--muted); padding: 0 var(--sp-1); }
 .about-licenses th, .about-licenses td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .about-licenses .about-group th { padding-top: 12px; color: var(--muted); font-weight: 600; }
 .about-licenses .about-flag { color: var(--danger); white-space: nowrap; }
+.about-instance { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 10px 12px; margin: 12px 0; background: var(--panel-subtle, rgba(127, 127, 127, .06)); }
+.about-instance h4 { margin: 0 0 4px; }
+.about-instance dl { display: grid; grid-template-columns: minmax(150px, auto) 1fr; gap: var(--sp-1) var(--sp-2); margin: 8px 0 0; font-size: var(--font-ui-sm); }
+.about-instance dt { color: var(--muted); }
+.about-instance dd { margin: 0; }
+.about-path { overflow-wrap: anywhere; word-break: break-word; }
+.about-installations { margin: 8px 0 0; padding-left: 18px; font-size: var(--font-ui-sm); }
 
-/* Quick Search (Scrivener 3 §11.5): omnibox popup, top-aligned like a URL bar. */
+/* Quick Search (aplicația de referință §11.5): omnibox popup, top-aligned like a URL bar. */
 .modal.quick-search { position: fixed; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, 94vw); padding: 10px 12px; gap: var(--sp-2); }
 .quick-search input { width: 100%; font-size: var(--font-ui-md); padding: var(--sp-2) var(--sp-2); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); color: inherit; }
 .qs-results { max-height: 50vh; overflow: auto; display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -958,3 +967,30 @@ html body .backdrop .modal.document-formatting-dialog { width: min(var(--setting
 details.set-acc { border: 1px solid var(--line, #ddd4); border-radius: var(--radius); padding: var(--sp-1) var(--sp-2); margin: var(--sp-2) 0; }
 details.set-acc > summary { cursor: pointer; font-weight: 600; font-size: var(--font-ui); color: var(--muted); list-style-position: inside; }
 details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1); }
+
+/* Panou de semnale (măsură, fără AI): limbaj și formă de instrument de măsură. */
+.signals-dialog .signals-ritm { font-size: var(--font-ui-sm); white-space: pre-wrap; margin: 0; }
+.signals-dialog .signals-grupa summary { font-size: var(--font-ui-sm); font-weight: 600; cursor: pointer; margin-top: var(--sp-1); }
+.signals-dialog .signals-grupa ul { margin: var(--sp-1) 0; padding-left: var(--sp-3); font-size: var(--font-ui-sm); }
+.signals-dialog .signals-line { opacity: .6; }
+.signals-dialog .signals-rule { font-weight: 600; }
+
+/* Help Finder omnibox (PS-HELP-001 §3–§5): ajutor + comenzi într-o singură căutare. */
+.help-finder { min-width: 32rem; max-width: 45rem; }
+.help-finder-q { width: 100%; font-size: var(--font-ui-md, 14px); padding: var(--sp-2); }
+.help-finder-results { max-height: 46vh; overflow: auto; display: flex; flex-direction: column; gap: 2px; margin: var(--sp-2) 0; }
+.help-finder-row { text-align: left; padding: var(--sp-1) var(--sp-2); border: 0; border-radius: var(--radius); background: none; cursor: pointer; }
+.help-finder-row.on, .help-finder-row:focus-visible { background: var(--panel-subtle, rgba(127,127,127,.12)); }
+.help-finder-title { font-weight: 600; }
+.help-finder-row kbd { font-size: var(--font-ui-sm, 12px); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 4px; }
+.help-finder h3.small { margin: var(--sp-2) 0 var(--sp-1) 0; }
+
+/* What's New (PS-HELP-001 §19): jurnalul de schimbări în tab-ul Help. */
+.help-news { font-family: var(--font-ui, system-ui); font-size: var(--font-ui-sm, 12px); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+
+/* EmptyState (PS-HELP-001 §13): zona goală explică și oferă acțiunea. */
+.empty-state { padding: var(--sp-3); text-align: center; display: flex; flex-direction: column; gap: var(--sp-1); align-items: center; }
+.empty-state.compact { padding: var(--sp-2); }
+.empty-state-title { margin: 0; font-weight: 600; }
+.empty-state-hint { margin: 0; max-width: 34em; }
+.empty-state-action { margin-top: var(--sp-1); }

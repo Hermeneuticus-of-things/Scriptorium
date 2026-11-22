@@ -1,4 +1,4 @@
-// Static table of contents (Scrivener 3 §22.1–22.2, P1 #28). Pure module, no DOM.
+// Static table of contents (aplicația de referință §22.1–22.2, P1 #28). Pure module, no DOM.
 //
 // Two helpers:
 //   buildTocText(tree, {ids})      — the binder selection as a static ToC text: one line per

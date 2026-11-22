@@ -1,4 +1,4 @@
-// Quick Search (Scrivener 3 §11.5): a jump-list search that finds documents by
+// Quick Search (aplicația de referință §11.5): a jump-list search that finds documents by
 // typed phrase. Exact-phrase matching, case- and diacritics-insensitive, with
 // results grouped in three sections: titles (exact or begins-with first),
 // synopses, then text with context around the first hit. Trash is excluded.
@@ -45,7 +45,7 @@ export function handoffCriteria(query) {
 
 // Plain-text cache keyed by document id, invalidated by content: on a big book the
 // search runs on every keystroke, and re-parsing the whole book's HTML per keystroke
-// (2358 DOM parses on Karma) stalls the renderer. Only changed documents are re-parsed.
+// (thousands of DOM parses on a large book) stalls the renderer. Only changed documents are re-parsed.
 // The folded (case/diacritics-insensitive) form is cached too — folding a whole book
 // per keystroke costs as much as parsing it.
 const plainCache = new Map(); // id -> { src, plain, folded }

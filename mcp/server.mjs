@@ -369,7 +369,7 @@ const server = new McpServer(
   { name: 'pneuma', version: '0.3.0' },
   {
     instructions:
-      'Pneuma Sofer: program de scris cărți lungi. Unelte pentru proiectele .scribner date la pornire sau din lista recentă (argumentul project = numele sau calea; project_info, list_binder, read_document, write_document, search, compile…). Un proiect Scrivener (.scriv) se citește pe loc cu scriv_outline și scriv_read sau se importă cu import_scriv. Fiecare scriere face întâi un snapshot.',
+      'Pneuma Sofer: program de scris cărți lungi. Unelte pentru proiectele .scribner date la pornire sau din lista recentă (argumentul project = numele sau calea; project_info, list_binder, read_document, write_document, search, compile…). Un proiect aplicația de referință (.scriv) se citește pe loc cu scriv_outline și scriv_read sau se importă cu import_scriv. Fiecare scriere face întâi un snapshot.',
   },
 );
 

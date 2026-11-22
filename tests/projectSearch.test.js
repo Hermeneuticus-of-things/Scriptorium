@@ -131,7 +131,7 @@ describe('replaceInFields', () => {
   });
 });
 
-describe('replaceSnapshotHtml (Scrivener §11.3)', () => {
+describe('replaceSnapshotHtml (aplicația de referință §11.3)', () => {
   it('replaces the archived html like the document text, markup intact', () => {
     const re = buildRegex({ query: 'pădure' });
     const r = replaceSnapshotHtml('<p>Ana în <em>pădure</em>.</p>', re, 'codru');
@@ -143,7 +143,7 @@ describe('replaceSnapshotHtml (Scrivener §11.3)', () => {
   });
 });
 
-describe('startsWith / endsWith operators (Scrivener §11.2.1)', () => {
+describe('startsWith / endsWith operators (aplicația de referință §11.2.1)', () => {
   it('matches only at a word edge', () => {
     // a word that BEGINS with „pădur" (Pădurea, pădure) matches; nothing begins with „dure",
     // while „pădure" (word-final) ends with it.
@@ -161,7 +161,7 @@ describe('startsWith / endsWith operators (Scrivener §11.2.1)', () => {
   });
 });
 
-describe('invert results (Scrivener §11.1.2)', () => {
+describe('invert results (aplicația de referință §11.1.2)', () => {
   it('returns the nodes that do NOT match, trash still hidden', () => {
     // folder „f" is an item too and does not match, so it is listed inverted
     const res = searchProject(project, docs, notes, { query: 'pădure', invert: true });
@@ -182,7 +182,7 @@ describe('invert results (Scrivener §11.1.2)', () => {
   });
 });
 
-describe('sorting results (Scrivener §11.1.1)', () => {
+describe('sorting results (aplicația de referință §11.1.1)', () => {
   const titled = {
     tree: [
       { id: 'draft', root: 'draft', title: 'Manuscris', children: [
@@ -206,7 +206,7 @@ describe('sorting results (Scrivener §11.1.1)', () => {
   });
 });
 
-describe('special search terms (Scrivener §11.1.3)', () => {
+describe('special search terms (aplicația de referință §11.1.3)', () => {
   it('mixes quoted phrases with All Words', () => {
     expect(ids(searchProject(project, docs, notes, { query: 'Ana "în pădure"', operator: 'all' }))).toEqual(['a']);
     expect(ids(searchProject(project, docs, notes, { query: 'Ana "în pădure"', operator: 'any' }))).toEqual(['a', 'b', 'r']);
@@ -225,7 +225,7 @@ describe('special search terms (Scrivener §11.1.3)', () => {
   });
 });
 
-describe('date search syntax mdate:/cdate: (Scrivener §11.1.3, Table 11.1)', () => {
+describe('date search syntax mdate:/cdate: (aplicația de referință §11.1.3, Table 11.1)', () => {
   // Dates relative to NOW: the '7d'/'<1y' queries must not break as the calendar advances.
   const daysAgoIso = (n) => new Date(Date.now() - n * 86400000).toISOString();
   const dated = {
@@ -264,7 +264,7 @@ describe('date search syntax mdate:/cdate: (Scrivener §11.1.3, Table 11.1)', ()
   });
 });
 
-describe('search scope options (Scrivener 3 §11.1.2 Options)', () => {
+describe('search scope options (aplicația de referință §11.1.2 Options)', () => {
   it('draftOnly restricts results to the draft root', () => {
     expect(ids(searchProject(project, docs, notes, { query: 'pădure', draftOnly: true }))).toEqual(['a', 'c']);
   });

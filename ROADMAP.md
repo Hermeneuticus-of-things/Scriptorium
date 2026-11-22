@@ -1,4 +1,4 @@
-## Ionuț Application Design Language
+## Application Design Language (ADL)
 
 Governing UI rules for **every application** (general — not product-specific): [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md) · skill: [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.SKILL.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.SKILL.md).
 
@@ -107,7 +107,7 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 | [x] | Compile DOCX / PDF A5 / EPUB 3 / HTML cu note de subsol reale, comentariile eliminate |
 | [x] | Panouri redimensionabile, starea proiectului memorată, teme (luminos/întunecat/sepia), mod compunere |
 | [x] | Asistent AI Claude: corectură, sinopsis, continuare, critică, consistență, întrebări |
-| [x] | Import Scrivener fără pierderi (testat pe un proiect de test complet; neverificat încă pe un proiect real mare) |
+| [x] | Import aplicația de referință fără pierderi (testat pe un proiect de test complet; neverificat încă pe un proiect real mare) |
 | [~] | I-REP / I-EDIT (motor de reguli pentru română, bucle micro/mezzo/macro, panou, VKB2 implementat; verificat cu simulator, nu cu Claude real) |
 | [x] | AI opțional: programul funcționează complet și fără AI |
 
@@ -121,7 +121,7 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 - [x] RTF: liste cu buline/numerotate, tabele, salt de pagină, imagini PNG/JPEG (EMF/WMF păstrate byte cu byte)
 - [x] Comentarii legate (`scrivcmt://` + `content.comments`: text, autor, culoare), note de subsol legate
 - [x] Note de subsol inline (`\Scrv_fn`) și adnotări inline (`\Scrv_annot`)
-- [x] Scrivener Links (refăcute spre documentele noi), linkuri externe
+- [x] aplicația de referință Links (refăcute spre documentele noi), linkuri externe
 - [x] Stiluri: stylesheet RTF + markeri `<$Scr_…::n>` cu `styles.xml` (titluri, citate, emfază)
 - [x] Placeholdere `<$…>` păstrate ca text
 - [x] Note, sinopsis, etichete (cu culori), statusuri, Include in Compile
@@ -134,8 +134,8 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 - [x] Copia completă a proiectului original în `scrivener-original/`
 - [x] Vizualizare media în editor (imagine, PDF, audio, video), icoane pe tip în binder
 - [x] Raport de import (ce s-a convertit, ce a rămas doar în copie)
-- [x] Inspector: metadate personalizate editabile (Text/Checkbox/List/Date), tip de secțiune, date, icoană, țintă, origine Scrivener, bookmark-uri
-- [x] Istoric importat afișat în Writing History (marcat „Scrivener”)
+- [x] Inspector: metadate personalizate editabile (Text/Checkbox/List/Date), tip de secțiune, date, icoană, țintă, origine aplicația de referință, bookmark-uri
+- [x] Istoric importat afișat în Writing History (marcat „aplicația de referință”)
 - [x] Compile: documente-container incluse cu copiii lor, adnotări și imagini EMF eliminate, media sărită
 - [ ] Verificare pe un proiect .scriv real, mare
 
@@ -184,14 +184,14 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 - [x] Revision Mode (5 runde colorate), acceptarea tuturor sau a unei runde, eliminate la Compile
 - [x] Adnotări inline din bara editorului, conversie adnotare ↔ comentariu
 - [x] Conversie adnotare / notă inline ↔ notă legată
-- [x] Scrivener Links `[[ ]]` (Ctrl+clic deschide documentul) și linkuri externe (Ctrl+L)
+- [x] aplicația de referință Links `[[ ]]` (Ctrl+clic deschide documentul) și linkuri externe (Ctrl+L)
 - [x] Page View (A5), Text Zoom 75–200%, semne de paragraf, caractere în bara de stare
 - [x] Linguistic Focus: dialog, paragraf, frază; evidențierea paragrafului curent
 - [x] Linguistic Focus pe părți de vorbire: etichetare RO/EN cu liste, terminații și context (≈87% RO, ≈96% EN pe texte noi)
 - [x] Composition: fundal, lățimea textului, opacitatea paginii, pagină de hârtie
 - [x] Composition: Inspector plutitor
 - [x] Transformations: majuscule, minuscule, Title Case, propoziție, spații duble, ghilimele, cratime
-- [x] Insert: dată, placeholdere Scrivener, caractere speciale (inclusiv diacritice sanscrite), linie / salt de pagină
+- [x] Insert: dată, placeholdere aplicația de referință, caractere speciale (inclusiv diacritice sanscrite), linie / salt de pagină
 - [x] Copy Special (text simplu, Markdown, HTML, HTML fără note)
 - [x] Auto-complete cu nume din proiect (Tab)
 
@@ -260,7 +260,7 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 
 - [x] Script Mode: Screenplay, Stage Play, Comic, BBC Radio; elemente cu Tab/Enter; export FDX și Fountain
 - [x] Sync cu folder extern (Dropbox/Drive), RTF/TXT/MD, conflicte cu snapshot
-- [x] Export ca proiect Scrivener (.scriv)
+- [x] Export ca proiect aplicația de referință (.scriv)
 - [x] Mai multe ferestre de proiect
 - [x] Name Generator, Text-to-speech, Dictare, Scratchpad
 - [x] Import Zotero, bibliografie
@@ -279,12 +279,12 @@ Când o acțiune nu merge pentru că ceva e **blocat** sau **nesetat**, nu lăs�
 
 | Funcție | Motiv |
 |---|---|
-| Sync Dropbox cu Scrivener iOS | Format proprietar al aplicației mobile; în locul lui vin sync prin folder extern și PWA |
+| Sync Dropbox cu aplicația de referință iOS | Format proprietar al aplicației mobile; în locul lui vin sync prin folder extern și PWA |
 | Simplenote / Index Card | Servicii închise |
 | MathType | Program comercial; în locul lui vine un editor MathML |
 | EndNote / Bookends | În locul lor vine Zotero |
 
-## 6. Ajutor (ca în Scrivener)
+## 6. Ajutor (ca în aplicația de referință)
 
 - [x] Meniu Ajutor: manual (F1), ajutor pentru vederea curentă, scurtături, placeholders, sintaxă Markdown / Fountain / Script Mode, raportează o problemă, despre
 - [x] Manual complet în română (22 de capitole, căutare cu evidențiere), variantă scurtă în engleză
@@ -382,7 +382,7 @@ Stare: [x] făcut în v0.9.9 · [~] parțial · [ ] de făcut
     - [ ] Bara de sus implicită (Binder, Adaugă, Dosar, vederi, căutare, Referință rapidă, Compunere, Compile, Inspector)
     - [ ] Bara documentului comună pentru ambele panouri (meniul titlului, blocare pe loc)
     - [ ] Comparare și restul ferestrelor: Cuvinte cheie, Colecții, Import/Export, Generator de nume, Referință rapidă, meniuri
-11. [x] Mesajul „niciun server MCP Scrivener”: serverul Pneuma Sofer citește și proiecte .scriv pe loc (`scriv_outline`, `scriv_read`), are prompts și resurse.
+11. [x] Mesajul „niciun server MCP aplicația de referință”: serverul Pneuma Sofer citește și proiecte .scriv pe loc (`scriv_outline`, `scriv_read`), are prompts și resurse.
 12. [x] Import pornind și de la fișierul `.scrivx` (nu doar de la folderul `.scriv`), în aplicație și în MCP; `scriv_search` în proiectul .scriv. Exportul scrie un folder `.scriv` complet (cu `.scrivx` în el).
 13. [x] Evaluare MCP după ghidul mcp-builder: `mcp/eval/` (carte de test + 10 întrebări) verificată de `tests/mcpEval.test.js`; adnotări readOnly/destructive pe fiecare unealtă; `read_document` arată și ținta.
 14. [ ] Bug-uri rămase din vânătoarea pe niveluri (lista din TODO.md, secțiunea 25.10).
@@ -1184,7 +1184,7 @@ Constatări (verificate pe partea Pneuma Sofer, care e inspectabilă complet):
   dreapta) sau pe un ecran liber; infrastructura (Desktop 3 + PrintWindow + OCR) e gata.
 
 ### Compile (capturat pe Desktop 3, 13 secțiuni)
-Clasicul (stil Scrivener 3): „Compile For" (ieșire), 11 formate predefinite, Section Layouts cu
+Clasicul (stil aplicația de referință): „Compile For" (ieșire), 11 formate predefinite, Section Layouts cu
 previzualizare, atribuire tip de secțiune per document, front/back matter. Pneuma Sofer (`CompileDialog.jsx`,
 `lib/compileFormats.cjs`): ieșiri docx/pdf/epub/print + altele, formate predefinite, front/back matter
 **per ieșire** (peste clasic). Partea avansată de **Section Layouts per tip de secțiune** (editor de
@@ -1200,7 +1200,7 @@ extrasele proprii păstrate (AI, MCP, dictare). Goluri reale găsite și reparat
 și „Deschide folderul de backup" (Opțiuni).
 
 ### Metodă nouă: inventar din resursele binare (fără capturi)
-`scripts/ui-audit/extract-qm.py` citește tabela de traduceri Qt a programului clasic (`ScrivenerApp_ro.qm`)
+`scripts/ui-audit/extract-qm.py` citește tabela de traduceri Qt a programului clasic (`aplicația de referințăApp_ro.qm`)
 și scoate, ca text, **toate** etichetele de interfață grupate pe componentă (context Qt): 6702 intrări,
 ~70 de componente (meniuri, Opțiuni pe sub-pagini, Compile + sub-editoare, Inspector, Corkboard, Ținte,
 Statistici, Scratchpad, Generator de nume, Teme etc.). E doar **observație** a inventarului (ce elemente
@@ -1223,7 +1223,7 @@ are deja: `SmallCaps`/`AllCaps` (`src/editor/formatting.js`), indentări `firstI
 specific-engleze (Capitalize 'i', ordinale) sau native (font hinting). **Verdict: paritate/superset.**
 
 ### Verdict final audit 5 (metoda pe text, din resursele binare)
-Comparație pe ~70 de componente ale interfeței (toate etichetele din `ScrivenerApp_ro.qm`). La fiecare,
+Comparație pe ~70 de componente ale interfeței (toate etichetele din `aplicația de referințăApp_ro.qm`). La fiecare,
 Pneuma Sofer are deja funcția — **paritate sau superset**, cu extrasele proprii peste (AI, MCP, dictare, RAG,
 fracții, per-output front/back matter). Goluri reale găsite în tot auditul și reparate: 2 — „Curățare text"
 (meniuri) și „Deschide folderul de backup" (Opțiuni). Rest: aliniere opțională minoră (ex. Corkboard

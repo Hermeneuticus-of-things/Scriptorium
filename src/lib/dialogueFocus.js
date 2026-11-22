@@ -1,4 +1,4 @@
-// Dialogue Focus (Scrivener 3 §20.3.2): shows only the dialogue lines of the
+// Dialogue Focus (aplicația de referință §20.3.2): shows only the dialogue lines of the
 // project, for proofing who-says-what without reading the narration. A
 // paragraph counts as dialogue when it contains a quoted span — Romanian „…”
 // (second level «…» counts too), falling back to straight quotes. Pure: no

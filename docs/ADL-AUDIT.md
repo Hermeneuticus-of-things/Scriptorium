@@ -1,4 +1,4 @@
-# Audit Ionuț Application Design Language (ADL) — Pneuma Sofer
+# Audit Application Design Language (ADL) (ADL) — Pneuma Sofer
 
 Data: 2026-11-05. Aplicare deep pe cod + UI + UX + cauze-rădăcină (§17 checklist), cu focar pe
 instabilitatea raportată de autor (editare + dictare). Skill: `ionut-application-design-language`.
@@ -42,7 +42,7 @@ popover, apăsare = re-căutare în popover (fără ieșire din pagină); timeou
 
 | Item | Stare |
 |---|---|
-| Adoption + înregistrare („Design language: Ionuț ADL — yes") | ✅ acest doc + plan |
+| Adoption + înregistrare („Design language: ADL — yes") | ✅ acest doc + plan |
 | Focus ca motor (stive, routing, dispatch, restore exact) | 🟡 motor + teste + popover/setări legate; restul suprafețelor incremental |
 | Focus ≠ selecție | 🟡 motorul le ține separat; UI-ul păstrează selecția inactivă |
 | Core function (editor) cel mai mare, activ la deschidere | ✅ |

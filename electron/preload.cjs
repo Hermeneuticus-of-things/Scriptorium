@@ -18,8 +18,17 @@ contextBridge.exposeInMainWorld('api', {
   listTemplates: () => call('templates:list'),
   newProject: (title, templateId) => call('project:new', title, templateId),
   openProject: (dir) => call('project:open', dir),
+  instanceInfo: () => call('app:instanceInfo'),
+  changelog: () => call('app:changelog'),
+  onProjectInstanceConflict: (fn) => {
+    const listener = (_e, info) => fn(info);
+    ipcRenderer.on('project:instance-conflict', listener);
+    return () => ipcRenderer.removeListener('project:instance-conflict', listener);
+  },
   saveProject: (dir, project) => call('project:save', dir, project),
   readDoc: (dir, id, kind) => call('doc:read', dir, id, kind),
+  pickProjectDir: () => call('project:pickDir'),
+  copyIntoProject: (dir, target, ids) => call('project:copyInto', dir, target, ids),
   writeDoc: (dir, id, kind, html) => call('doc:write', dir, id, kind, html),
   takeSnapshot: (dir, id, name) => call('snap:take', dir, id, name),
   listSnapshots: (dir, id) => call('snap:list', dir, id),
@@ -189,6 +198,7 @@ contextBridge.exposeInMainWorld('api', {
   removeDictionaryWord: (word) => call('spell:removeWord', word),
   cancelAi: () => call('ai:cancel'),
   runAi: (payload) => call('ai:run', payload),
+  aiAudit: (payload) => call('ai:audit', payload),
   // Streamed answer text of runAi({ runId }): fn({ runId, delta }).
   onAiDelta: (fn) => {
     const listener = (_e, p) => fn(p);

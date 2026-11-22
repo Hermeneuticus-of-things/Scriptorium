@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { quickSearchProject, quickSearchRows, quickNav, quickOpenMode, quickRevealPhrase, handoffCriteria } from '../lib/quickSearch.js';
 import { findNode } from '../lib/tree.js';
 import { t } from '../lib/i18n.js';
+import EmptyState from './EmptyState.jsx';
 import AnchoredPopover from './AnchoredPopover.jsx';
 
-// Quick Search (Scrivener 3 §11.5): an omnibox-style popup that jumps to a
+// Quick Search (aplicația de referință §11.5): an omnibox-style popup that jumps to a
 // document by title, synopsis or text. Results come in three labelled
 // sections; Enter opens the selected row (the find tool is seeded with the
-// phrase, as in Scrivener); the handoff button continues into the full
+// phrase, as in aplicația de referință); the handoff button continues into the full
 // Project Search dialog with the same phrase. Modifier opens (manual p. 235):
 // Shift = Quick Reference panel, Alt = the other editor split.
 export default function QuickSearch({ project, docs, currentTitle = '', onOpen, onFullSearch, onClose, variant = 'modal', anchor }) {
@@ -29,7 +30,7 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
   const onKeyDown = (e) => {
     if (e.key === 'Escape') {
       e.preventDefault();
-      // Scrivener: Esc clears the field first, then a second Esc closes the tool.
+      // aplicația de referință: Esc clears the field first, then a second Esc closes the tool.
       if (query) setQuery('');
       else onClose();
       return;
@@ -100,7 +101,7 @@ export default function QuickSearch({ project, docs, currentTitle = '', onOpen, 
               {label('texts', results.texts.length)}
             </>
           ) : (
-            query.trim() && <p className="muted qs-empty">{t('ui.quickSearch.niciun_rezultat')}</p>
+            query.trim() && <EmptyState compact title={t('ui.quickSearch.niciun_rezultat')} hint={t('ui.quickSearch.reformuleaza')} />
           )}
         </div>
         <div className="qs-footer">

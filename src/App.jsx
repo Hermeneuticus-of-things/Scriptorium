@@ -18,6 +18,10 @@ import { buildEditorialContext } from './lib/editorialContext.js';
 import EditorialPanel from './components/EditorialPanel.jsx';
 import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
+import SimpleRepairsDialog from './components/SimpleRepairsDialog.jsx';
+import SignalsDialog from './components/SignalsDialog.jsx';
+import HelpFinderDialog from './components/HelpFinderDialog.jsx';
+import CopyToProjectDialog from './components/CopyToProjectDialog.jsx';
 import QuickRef from './components/QuickRef.jsx';
 import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
@@ -109,6 +113,7 @@ import {
   convertNode,
   sortChildren,
   groupIntoFolder,
+  ungroupFolder,
   docLink,
   siblingInOrder,
   moveNode,
@@ -130,6 +135,8 @@ import {
   historyUndo,
   historyRedo,
 } from './lib/tree.js';
+import { listFixedPhrases } from './lib/fixedPhrases.js';
+import { nextTarget, applyFocus } from './lib/focusNav.js';
 import { importDestination } from './lib/importFolder.js';
 import { listTemplates, cloneFromTemplate, templateTargetParent } from './lib/documentTemplates.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
@@ -277,6 +284,7 @@ export default function App({ api: apiProp }) {
   const [dir, setDir] = useState(null);
   const [project, setProject] = useState(null);
   const [docsState, setDocs] = useState({}); // id -> html cache (main text)
+  const loadingDocs = useRef(new Map()); // id -> in-flight read; prevents duplicate IPC on fast navigation
   // Typing does not go through React state on every keystroke: re-rendering App (and every
   // project-wide derived value: word counts, auto-complete words, target checks, binder,
   // inspector) cost ~30 ms per key on a 50k-word document. The newest text of each edited
@@ -311,6 +319,25 @@ export default function App({ api: apiProp }) {
   useEffect(() => () => clearTimeout(typedTimer.current), []);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  useEffect(() => {
+    if (!dir || !project || !selectedId || docsState[selectedId] !== undefined) return undefined;
+    const node = findNode(project.tree, selectedId);
+    if (!node || node.type !== 'text' || node.children) return undefined;
+    if (loadingDocs.current.has(selectedId)) return undefined;
+    // The read outlives re-renders of this effect: dropping its result on cleanup left the
+    // document empty until it was selected again (no one restarted the read). Only a read
+    // that belongs to another project is discarded.
+    const read = Promise.resolve(api.readDoc(dir, selectedId, 'docs'))
+      .then((html) => {
+        if (dirNowRef.current !== dir) return;
+        diskDocs.current.set(selectedId, String(html ?? ''));
+        setDocs((d) => (d[selectedId] === undefined ? { ...d, [selectedId]: String(html ?? '') } : d));
+      })
+      .catch((error) => console.error('[pneuma] document lazy-load failed:', error));
+    loadingDocs.current.set(selectedId, read);
+    read.finally(() => loadingDocs.current.delete(selectedId));
+    return undefined;
+  }, [api, dir, project, selectedId, docsState]);
   const [conflict, setConflict] = useState(null); // { id, title, pieces, html } (ConflictDialog)
   const team = useTeam({ api, dir, settings, docId: selectedId });
   // D&TED dictation (text at the cursor, or replacing the selection) and audio transcription.
@@ -605,6 +632,10 @@ export default function App({ api: apiProp }) {
   }, [api, learnPair]);
   useEffect(() => (api.onSpellReplaced ? api.onSpellReplaced(({ from, to }) => learnPair(from, to)) : undefined), [api, learnPair]);
   const [help, setHelp] = useState(null);
+  // T1: ultima țintă de focus (ref, nu state — fără rerandare); ciclarea F6/Shift+F6.
+  const focusTargetRef = useRef('editor');
+  const [helpFinder, setHelpFinder] = useState(false);
+  const [copyToOpen, setCopyToOpen] = useState(false);
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [settingsTab, setSettingsTab] = useState('');
@@ -647,7 +678,7 @@ export default function App({ api: apiProp }) {
   const [copyholder, setCopyholder] = useState(null); // {id, editable} | null
   const copyScroll = useRef(new Map()); // doc id -> scrollTop of the copyholder pane
   const [searchSeed, setSearchSeed] = useState('');
-  // View > Filter (Scrivener 3 §11.4) over the corkboard / outliner; filterNotes
+  // View > Filter (aplicația de referință §11.4) over the corkboard / outliner; filterNotes
   // caches notes read for the text/notes option (notes are not kept in App state).
   const [viewFilter, setViewFilter] = useState({ open: false, query: '', regex: false, includeTextNotes: false, draftScope: 'any', compileScope: 'all', meta: { mode: 'any', field: 'label', value: '' } });
   const [filterNotes, setFilterNotes] = useState({});
@@ -749,7 +780,7 @@ export default function App({ api: apiProp }) {
   const queuedRef = useRef(0);
   const retryTimer = useRef(null);
   const [sessionStart, setSessionStart] = useState(null); // {words, chars} at the session's start; null = take it now
-  const [widths, setWidths] = useState({ binder: 260, side: 320 });
+  const [widths, setWidths] = useState({ binder: 260, side: 320, ai: 380 });
   const [nav, setNav] = useState({ stack: [], index: -1 });
   const editorRefs = useRef(new Map()); // id -> Editor handle (main, scrivenings, split)
   const activeId = useRef(null); // last focused document for AI / split
@@ -779,9 +810,20 @@ export default function App({ api: apiProp }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.ui = settings?.uiStyle || 'classic';
     document.documentElement.style.setProperty('--editor-font-size', `${settings?.fontSize || 18}px`);
+    // S3-B.APP.43/44: marginile editorului, ca variabile CSS consumate de suprafața de scriere.
+    document.documentElement.style.setProperty('--ed-pad-x', `${Math.max(0, Math.min(200, Number(settings?.editorPadX ?? 48)))}px`);
+    document.documentElement.style.setProperty('--ed-pad-y', `${Math.max(0, Math.min(200, Number(settings?.editorPadY ?? 24)))}px`);
   }, [settings]);
 
   const report = useCallback((e) => setError(e?.message || String(e)), []);
+  useEffect(() => {
+    if (!api.onProjectInstanceConflict) return undefined;
+    return api.onProjectInstanceConflict((info = {}) => {
+      const version = info.version ? ` versiunea ${info.version}` : '';
+      const pathText = info.execPath ? ` Executabil: ${info.execPath}` : '';
+      setError(`Proiectul este deja deschis de altă instanță${version}.${pathText} Nu îl deschid din nou pentru a evita conflicte.`);
+    });
+  }, [api]);
   const prevTargetCounts = useRef({});
   useEffect(() => {
     if (!showFloatInspector || !selectedId || !dir) return;
@@ -1162,7 +1204,7 @@ export default function App({ api: apiProp }) {
 
   const setTree = useCallback((tree) => saveProject({ ...project, tree }), [project, saveProject]);
   // Binder structure changes (add, move, trash, restore) are undoable with Ctrl+Z while the
-  // binder has focus, as in Scrivener. Metadata edits made in between are preserved.
+  // binder has focus, as in aplicația de referință. Metadata edits made in between are preserved.
   const binderHistory = useRef(emptyHistory());
   const [renameId, setRenameId] = useState(null);
   const setTreeU = (tree) => {
@@ -1200,15 +1242,26 @@ export default function App({ api: apiProp }) {
         setDialog('importReport');
       }
       const all = flatten(res.project.tree).filter((n) => !n.root);
-      const entries = await Promise.all(all.map(async (n) => [n.id, await api.readDoc(res.dir, n.id, 'docs')]));
-      const cache = Object.fromEntries(entries);
       const ui = loadUi(res.dir);
+      const firstText = flatten(res.project.tree[0].children).find((n) => n.type === 'text');
+      const start = ui.selectedId && findNode(res.project.tree, ui.selectedId) ? ui.selectedId : firstText ? firstText.id : res.project.tree[0].id;
+      const initial = all.find((n) => n.id === start && n.type === 'text') || null;
+      const entries = initial ? [[initial.id, await api.readDoc(res.dir, initial.id, 'docs')]] : [];
+      const cache = Object.fromEntries(entries);
       dropTyped();
       diskDocs.current = new Map(entries);
       // A queue left from a session closed while the folder was away: shown and sent now.
       if (dirNowRef.current && dirNowRef.current !== res.dir) parkQueue(dirNowRef.current);
       const left = loadQueue(res.dir);
       if (left) {
+        const queuedIds = [...new Set(Object.entries(left)
+          .filter(([key]) => key.endsWith('|docs'))
+          .map(([key]) => key.split('|')[0])
+          .filter((id) => cache[id] === undefined))];
+        if (queuedIds.length) {
+          const queuedDisk = await Promise.all(queuedIds.map(async (id) => [id, await api.readDoc(res.dir, id, 'docs').catch(() => '')]));
+          for (const [id, html] of queuedDisk) cache[id] = html || '';
+        }
         const ids = new Set(all.map((n) => n.id));
         let n = 0;
         for (const [k, item] of Object.entries(left)) {
@@ -1240,8 +1293,6 @@ export default function App({ api: apiProp }) {
       setDocs(cache);
       setDir(res.dir);
       setProject(res.project);
-      const firstText = flatten(res.project.tree[0].children).find((n) => n.type === 'text');
-      const start = ui.selectedId && findNode(res.project.tree, ui.selectedId) ? ui.selectedId : firstText ? firstText.id : res.project.tree[0].id;
       setSelectedId(start);
       setSelectedIds(new Set([start]));
       setNav({ stack: [start], index: 0 });
@@ -1262,6 +1313,7 @@ export default function App({ api: apiProp }) {
       // here dominated the open stall (profilat — CPU profiler). By idle time the counts memo
       // has warmed countCache, so this reuses cached numbers instead of re-reading everything.
       deferIdle(() => {
+        if (entries.length !== all.filter((n) => n.type === 'text').length) return;
         const countsAtOpen = {};
         for (const [id, h] of entries) {
           const hit = countCache.current.get(id);
@@ -1272,7 +1324,6 @@ export default function App({ api: apiProp }) {
         const totalAtOpen = Object.entries(countsAtOpen).reduce((s, [id, c]) => s + (trashIds.has(id) ? 0 : c), 0);
         api.recordHistory?.(res.dir, { draft: draftAtOpen, total: totalAtOpen }).catch(() => {});
       });
-      setSettings(await api.getSettings());
     },
     [api],
   );
@@ -1327,7 +1378,7 @@ export default function App({ api: apiProp }) {
   const titleOfNode = (id) => { const n = project && findNode(project.tree, id); return n ? n.title : null; };
   const toggleLockPane = (pane = activePaneRef.current) => setPaneLocks((l) => ({ ...l, [pane]: !l[pane] }));
 
-  // --- View > Filter (Scrivener 3 §11.4): narrows the corkboard / outliner to a flat list ---
+  // --- View > Filter (aplicația de referință §11.4): narrows the corkboard / outliner to a flat list ---
   // The container being filtered: the selected folder, or the parent of the selected item.
   const viewFilterContainer =
     project && (view === 'corkboard' || view === 'outline')
@@ -1524,7 +1575,7 @@ export default function App({ api: apiProp }) {
   };
 
   // New items go after the selection (inside it when it is a folder), are selected and put in
-  // rename mode in the binder (Scrivener); Enter on the title then moves the cursor to the editor.
+  // rename mode in the binder (aplicația de referință); Enter on the title then moves the cursor to the editor.
   // The folder a new item lands in (same rule as insertNear).
   const parentForNew = (anchorId) => {
     const sel = anchorId && findNode(project.tree, anchorId);
@@ -1539,7 +1590,7 @@ export default function App({ api: apiProp }) {
   };
   const addItem = (type, title, html, anchorId = selectedId, opts = {}) => {
     const node = Object.assign(newNode(type, title), newNodeDefaults(project));
-    // Nesting as in Scrivener 3: { inside: true } creates the item inside the target document.
+    // Nesting as in aplicația de referință: { inside: true } creates the item inside the target document.
     const parent = opts.inside && anchorId ? (findNode(project.tree, anchorId) || parentForNew(anchorId)) : parentForNew(anchorId);
     const tpl = type === 'text' && html == null && !title ? defaultTemplateFor(project, parent) : null;
     let tplHtml = null;
@@ -1672,7 +1723,7 @@ export default function App({ api: apiProp }) {
     const nextSel = selectionAfterRemoval(tree, ids);
     for (const id of ids) tree = moveToTrash(tree, id);
     setTreeU(tree);
-    // like Scrivener: the selection moves to the neighbour, not into the trash
+    // like aplicația de referință: the selection moves to the neighbour, not into the trash
     const sel = nextSel && findNode(tree, nextSel) ? nextSel : tree[0].id;
     setSelectedId(sel);
     setSelectedIds(new Set([sel]));
@@ -2161,7 +2212,7 @@ export default function App({ api: apiProp }) {
     go(splitId);
     setSplitId(a);
   };
-  // Layouts (Window > Saved layouts…, Scrivener 3 §12.3): named window arrangements kept at
+  // Layouts (Window > Saved layouts…, aplicația de referință §12.3): named window arrangements kept at
   // application level (settings.layouts), so they are offered in every project. The payload
   // captures only arrangement — never selectedId (project content, not layout); persistence of
   // the applied values continues through the existing saveUi effect.
@@ -2232,7 +2283,7 @@ export default function App({ api: apiProp }) {
     if (node && !node.root && !node.children) setCopyholder((c) => ({ id, editable: c?.id === id ? c.editable : false }));
   };
 
-  // Quick Reference: floating panels with another document (Scrivener: Open in Quick Reference).
+  // Quick Reference: floating panels with another document (aplicația de referință: Open in Quick Reference).
   const openQuickRef = (id) =>
     setQuickRefs((q) => (q.some((x) => x.id === id) ? q : [...q, { id, x: 120 + q.length * 30, y: 90 + q.length * 30 }]));
 
@@ -2241,7 +2292,7 @@ export default function App({ api: apiProp }) {
     if (id) go(id);
   };
 
-  // New from Template (Scrivener 3 §7.5): deep-clones the template (children included,
+  // New from Template (aplicația de referință §7.5): deep-clones the template (children included,
   // fresh ids, same title) into the target container, then copies the document contents
   // (docs/notes live outside the tree) for every cloned node.
   const newFromTemplate = async (tpl, targetParentId = null) => {
@@ -2351,7 +2402,7 @@ export default function App({ api: apiProp }) {
     setDocs((d) => ({ ...d, [second.id]: parts.after }));
     await api.writeDoc(dir, second.id, 'docs', parts.after).catch(report);
     go(second.id);
-    focusEditor(second.id); // Scrivener: the cursor continues in the new part
+    focusEditor(second.id); // aplicația de referință: the cursor continues in the new part
   };
 
   const mergeSelection = async () => {
@@ -2364,7 +2415,10 @@ export default function App({ api: apiProp }) {
     await flush();
     const [first, ...rest] = nodes;
     await api.takeSnapshot(dir, first.id, tr('ui.app.automat_inainte_de_unire')).catch(report);
-    const html = nodes.map((n) => docsNow()[n.id] || '').join('<p>* * *</p>');
+    // S3-B.GEN.15: separatorul de unire e configurabil (linie de pauză / rând liber / custom).
+    const sepMode = settings.mergeSeparator || 'asterisks';
+    const sep = sepMode === 'blank' ? '<p><br></p>' : sepMode === 'custom' ? `<p>${String(settings.mergeSeparatorCustom || '').slice(0, 40)}</p>` : '<p>* * *</p>';
+    const html = nodes.map((n) => docsNow()[n.id] || '').join(sep);
     const notes = await Promise.all(nodes.map((n) => api.readDoc(dir, n.id, 'notes')));
     const synopsis = nodes.map((n) => n.synopsis).filter(Boolean).join('\n');
     const keywords = [...new Set(nodes.flatMap((n) => n.keywords || []))];
@@ -2388,7 +2442,7 @@ export default function App({ api: apiProp }) {
     if (fields.includes('notes')) for (const n of flatten(project.tree)) if (!n.root) notesById[n.id] = await api.readDoc(dir, n.id, 'notes');
     const terms = buildTerms(criteria);
     if (!terms || !terms.length) return 0;
-    // Scrivener §11.3: archived snapshot text is replaced too — only when the text field is
+    // aplicația de referință §11.3: archived snapshot text is replaced too — only when the text field is
     // ticked (a snapshot IS the document's text) and only if the api can both list and rewrite
     // snapshot html; no backend exposes a snapshot write yet, so the pass stays inert until one does.
     const rewriteSnapshots = Boolean(criteria.affectSnapshots) && fields.includes('text') && typeof api.updateSnapshotHtml === 'function';
@@ -2473,7 +2527,7 @@ export default function App({ api: apiProp }) {
     return total;
   };
 
-  // --- notation strip / convert (Scrivener 3 §18.4.1, §18.4.5) ----------------------------
+  // --- notation strip / convert (aplicația de referință §18.4.1, §18.4.5) ----------------------------
   // Same flow as Replace All: flush, snapshot every changed document, write, mirror into
   // state and any open editor. The confirm shows exactly what will be removed.
   const NOTATION_KINDS = {
@@ -2754,7 +2808,7 @@ export default function App({ api: apiProp }) {
   const [selWords, setSelWords] = useState(0);
   useEffect(() => setSelWords(0), [selectedId]);
   // Caret on a paragraph with an identifiable style (named style or bare heading): enables the
-  // Format › style navigation commands (Scrivener §17.4.1). Reported on transitions by Editor.
+  // Format › style navigation commands (aplicația de referință §17.4.1). Reported on transitions by Editor.
   const [stylePara, setStylePara] = useState(false);
   const statusChars = useMemo(() => htmlToText(selectedHtml).replace(/\s+/g, ' ').trim().length, [selectedHtml]);
   const projectStyles = stylesOf(project);
@@ -2834,7 +2888,7 @@ export default function App({ api: apiProp }) {
           return;
         }
       }
-      // Filter bar (Scrivener 3 §11.4): Ctrl+F has no default command key, so it is
+      // Filter bar (aplicația de referință §11.4): Ctrl+F has no default command key, so it is
       // handled here, only while a corkboard or outliner is the active view.
       if (combo === 'Ctrl+F' && (view === 'corkboard' || view === 'outline')) {
         e.preventDefault();
@@ -3021,7 +3075,7 @@ export default function App({ api: apiProp }) {
   const inTrash = (id) => rootOf(project.tree, id)?.id === trashRoot.id;
   const scrivListNodes = scrivList && view === 'editor' ? scriveningsList(project.tree, scrivList.ids) : null;
   const isFolderView = Boolean(scrivListNodes) || (selected && selected.children && view === 'editor');
-  // A text container shows its own text first, then its sub-documents (Scrivener file group).
+  // A text container shows its own text first, then its sub-documents (aplicația de referință file group).
   const scrivSections = scrivListNodes || (isFolderView ? [...(selected.type === 'text' ? [selected] : []), ...flatten(selected.children).filter((n) => n.type === 'text')] : []);
   // Binder shows the hoisted folder only; separators are displayed as a rule.
   const hoistNode = hoistId ? findNode(project.tree, hoistId) : null;
@@ -3035,6 +3089,27 @@ export default function App({ api: apiProp }) {
     : activeCollection ? collectionNodes(project, activeCollection, docs, collectionNotes).map((n) => n.id) : null;
   const colorIn = labelColorInOf(settings);
   const dropKeyword = (ids, name) => saveProject(addKeywordToDocs(projectRef.current, ids, name));
+  // T2+ (EDIT.31–34): mutarea selecției din tastatură.
+  const moveSel = (dir) => {
+    const node = selected && findNode(project.tree, selected.id);
+    if (!node || node.root) return;
+    const parent = findParent(project.tree, node.id);
+    const list = parent ? parent.children : project.tree;
+    const i = list.findIndex((x) => x.id === node.id);
+    let tree = project.tree;
+    if (dir === 'up' && i > 0) tree = moveNode(tree, node.id, list[i - 1].id, 'before');
+    else if (dir === 'down' && i >= 0 && i < list.length - 1) tree = moveNode(tree, node.id, list[i + 1].id, 'after');
+    else if (dir === 'left' && parent && parent.id !== project.tree[0]?.id) {
+      const gp = findParent(project.tree, parent.id);
+      if (gp) tree = moveNode(tree, node.id, gp.id, 'inside');
+    } else if (dir === 'right' && node.children && node.children.length) {
+      tree = moveNode(tree, node.id, node.children[0].id, 'before');
+    }
+    if (tree === project.tree) return;
+    binderHistory.current = historyPush(binderHistory.current, project.tree, tree);
+    setTreeU(tree);
+    saveProject({ ...projectRef.current, tree });
+  };
   const groupItems = (ids) => {
     const folder = newNode('folder', tr('ui.binder.grup_nou'));
     const tree = groupIntoFolder(project.tree, ids, folder);
@@ -3206,6 +3281,19 @@ export default function App({ api: apiProp }) {
     await api.exportScript(fmt, h.getHtml(), selected?.title || 'Scenariu');
   };
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
+  // T1 — navigarea din tastatură între panouri (docs/audit/scrivener3, Anexa A.6).
+  const focusState = () => ({ hideBinder, splitOpen: Boolean(splitId), showInspector: showInspector || (showResearch && dir), showAi: showAi && aiEnabled });
+  const focusPane = (target) => {
+    if (target === 'binder' && hideBinder) setHideBinder(false);
+    if (target === 'inspector' && !showInspector && !(showResearch && dir)) setShowInspector(true);
+    if (target === 'ai' && !showAi) setShowAi(true);
+    if (target === 'split' && !splitId) return; // split inexistent → fără efect (nu-l inventăm)
+    focusTargetRef.current = target;
+    applyFocus(target, {
+      root: document,
+      focusEditor: () => (target === 'split' ? editorRefs.current.get(`split:${splitId}`) : activeHandle())?.editor?.commands?.focus?.(),
+    });
+  };
   // Nivelul AI ales din meniul contextual are prioritate; altfel documentul activ.
   const scopedAiNode = aiScope ? findNode(project.tree, aiScope.nodeId) : null;
   const aiNode = scopedAiNode || (activeId.current && findNode(project.tree, activeId.current)) || selected;
@@ -3251,6 +3339,10 @@ export default function App({ api: apiProp }) {
       writeDocNow(aiNode.id, html);
     },
     onSynopsis: (text) => patchNode(aiNode.id, { synopsis: text }),
+    // Semnalele (măsură, fără AI) au propria suprafață — invocabile de aici, dar nu stau în AI.
+    onOpenSignals: () => { flush().then(() => setDialog('signals')); },
+    // Garda frazelor fixate (pachetul cărții): propunerea AI nu le schimbă fără confirmare.
+    fixedPhrases: listFixedPhrases(project?.editorialProfile?.fixedPhrases || ''),
     onOpenSettings: openSettings,
     translateTo: LANG_NAMES[settings.translateTo || 'ro'] || settings.translateTo,
     request: aiRequest,
@@ -3278,7 +3370,7 @@ export default function App({ api: apiProp }) {
     binderHistory.current = historyPush(binderHistory.current, pj.tree, tree);
     saveProject({ ...pj, tree, newLinkFolderId: folderId || '' });
     setDocs((d) => ({ ...d, [node.id]: '<p></p>' }));
-    api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
+    api.writeDoc(dir, node.id, 'docs', projectRef.current.defaultDocHtml || '<p></p>').catch(report);
     return node;
   };
   const openLink = (id) => {
@@ -3297,7 +3389,7 @@ export default function App({ api: apiProp }) {
   const favorites = flatten(project.tree).filter((n) => n.favorite && !inTrash(n.id));
   const canContain = selected && !selected.root && selected.type !== 'file';
 
-  // „Copy Documents as ToC" (Scrivener §22.2, P1 #28): selecția din binder ca cuprins static
+  // „Copy Documents as ToC" (aplicația de referință §22.2, P1 #28): selecția din binder ca cuprins static
   // cu tab-uri, gata de lipit în draft — dosar selectat aduce întregul subarbore, document
   // text doar pe el; titlurile documentelor text poartă `<$p>`, completat la compilare.
   const copyAsToCCommand = async () => {
@@ -3362,7 +3454,7 @@ export default function App({ api: apiProp }) {
     // { label: tr('cmd.settings'), action: () => setDialog('settings') },
   ];
 
-  // View > Filter (Scrivener 3 §11.4): opens only over a corkboard or outliner.
+  // View > Filter (aplicația de referință §11.4): opens only over a corkboard or outliner.
   const openViewFilter = () => {
     if (view !== 'corkboard' && view !== 'outline') return;
     setViewFilter((f) => ({ ...f, open: true }));
@@ -3418,6 +3510,13 @@ export default function App({ api: apiProp }) {
     ['document', 'split', tr('cmd.split'), () => splitDocument(false)],
     ['view', 'quickRef', tr('cmd.quickRef'), () => selected && !selected.root && openQuickRef(selected.id)],
     ['nav', 'goto', tr('cmd.goto'), () => setDialog('goto')],
+    // T1 (Anexa A — Move Focus To): navigarea panourilor din tastatură; panoul închis se deschide.
+    ['nav', 'focusCycle', tr('cmd.focusCycle'), () => focusPane(nextTarget(focusTargetRef.current, focusState(), 1))],
+    ['nav', 'focusCycleBack', tr('cmd.focusCycleBack'), () => focusPane(nextTarget(focusTargetRef.current, focusState(), -1))],
+    ['nav', 'focusEditor', tr('cmd.focusEditor'), () => focusPane('editor'), !selected],
+    ['nav', 'focusBinder', tr('cmd.focusBinder'), () => focusPane('binder')],
+    ['nav', 'focusInspector', tr('cmd.focusInspector'), () => focusPane('inspector'), !selected],
+    ['nav', 'focusAi', tr('cmd.focusAi'), () => focusPane('ai'), !aiEnabled],
     ['nav', 'searchResults', tr('cmd.searchResults'), () => {
       if (!(project.collections || []).some((c) => c.id === SEARCH_RESULTS_ID)) saveProject(ensureSearchResults(project));
       setActiveCollectionId(SEARCH_RESULTS_ID);
@@ -3441,6 +3540,36 @@ export default function App({ api: apiProp }) {
     ['project', 'team', tr('cmd.team'), () => setDialog('team'), !api.teamFiles],
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],
+    // T2 (Anexa A — goluri P1/P2): organizare la alegerea curentă, din meniu, nu doar din meniul contextual.
+    ['document', 'moveToTrash', tr('cmd.moveToTrash'), () => trashSelection(), !selected || Boolean(selected.root) || inTrash(selectedId)],
+    ['document', 'groupDocuments', tr('cmd.groupDocuments'), () => groupItems(selectionList()), selectedIds.size < 1],
+    ['document', 'ungroup', tr('cmd.ungroup'), () => {
+      const next = ungroupFolder(project.tree, selectedId);
+      if (next === project.tree) return;
+      setTreeU(next);
+      setToast(tr('ui.app.dosar_degrupat'));
+    }, !selected || selected.type !== 'folder' || !(selected.children || []).length || Boolean(selected.root)],
+    ['document', 'copyTo', tr('cmd.copyTo'), () => setDialog('copyTo'), !selected || Boolean(selected.root)],
+    ['document', 'copyToProject', tr('cmd.copyToProject'), () => setCopyToOpen(true), !selected || Boolean(selected.root)],
+    ['document', 'setSelTextAsTitle', tr('cmd.setSelTextAsTitle'), () => {
+      const t = (activeHandle()?.getSelectionText() || '').trim();
+      if (!t) return;
+      patchNode(selectedId, { title: t.slice(0, 200) });
+    }, !selected || !(activeHandle()?.getSelectionText() || '').trim()],
+    ['document', 'clearTitle', tr('cmd.clearTitle'), () => patchNode(selectedId, { title: '' }), !selected || Boolean(selected.root)],
+    ['edit', 'selectWithSubdocs', tr('cmd.selectWithSubdocs'), () => {
+      const all = [selectedId, ...flatten(findNode(project.tree, selectedId)?.children || []).map((n) => n.id)];
+      setSelectedIds(new Set(all));
+      setSelectedId(selectedId);
+    }, !selected || Boolean(selected.root)],
+    ['edit', 'copyTextOfDocs', tr('cmd.copyTextOfDocs'), async () => {
+      const text = selectionList().map((id) => htmlToText(docsNow()[id] || '')).filter((x) => x.trim()).join('\n\n');
+      await navigator.clipboard?.writeText(text);
+      setToast(tr('ui.app.text_copiat'));
+    }, selectedIds.size < 1],
+    ['nav', 'revealDraft', tr('cmd.revealDraft'), () => { const r = project.tree.find((x) => x.root === 'draft'); if (r) go(r.id); }, !project?.tree?.length],
+    ['view', 'expandAll', tr('cmd.expandAll'), () => window.dispatchEvent(new CustomEvent('pneuma:binder-set-all-collapsed', { detail: { collapsed: false } }))],
+    ['view', 'collapseAll', tr('cmd.collapseAll'), () => window.dispatchEvent(new CustomEvent('pneuma:binder-set-all-collapsed', { detail: { collapsed: true } }))],
     ['document', 'copyAsToC', tr('cmd.copyAsToC'), () => copyAsToCCommand().catch(report), !selectedId],
     ['document', 'duplicate', tr('cmd.duplicate'), (payload) => selectedIds.size > 1 ? copyItems(selectionList(), selectionList().at(-1), 'after').catch(report) : duplicateSelection(payload?.includeChildren !== false)],
     ['document', 'snapshot', tr('cmd.snapshot'), async () => {
@@ -3457,7 +3586,7 @@ export default function App({ api: apiProp }) {
     ['format', 'formatDocument', tr('cmd.formatDocument'), () => openDocumentFormatting('document'), !alignmentTargets(project?.tree, 'document', selectedId).length],
     ['format', 'formatManuscript', tr('cmd.formatManuscript'), () => openDocumentFormatting('draft'), !alignmentTargets(project?.tree, 'draft').length],
     ['format', 'styles', tr('cmd.styles'), () => setDialog('styles')],
-    // Style navigation (Scrivener §17.4.1, P1 #27): the Editor handle re-reads the caret at
+    // Style navigation (aplicația de referință §17.4.1, P1 #27): the Editor handle re-reads the caret at
     // click time and returns false on an unstyled paragraph — the disabled flag below only
     // mirrors that state for the menus (reported on transitions via onSelectionStyle).
     ['format', 'selectStyleRange', tr('cmd.selectStyleRange'), () => activeHandle()?.selectStyleRange(), !stylePara],
@@ -3466,6 +3595,9 @@ export default function App({ api: apiProp }) {
     ['format', 'selectAllWithStyle', tr('cmd.selectAllWithStyle'), () => activeHandle()?.selectAllWithStyle(), !stylePara],
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
+    ['format', 'resetIndents', tr('cmd.resetIndents'), () => activeHandle()?.editor?.chain().focus().setParagraphFormat({ indentLeft: null, firstIndent: null }).run()],
+    ['format', 'smallCaps', tr('cmd.smallCaps'), () => activeHandle()?.editor?.chain().focus().toggleSmallCaps().run()],
+    ['format', 'smallCapsOff', tr('cmd.smallCapsOff'), () => activeHandle()?.editor?.chain().focus().toggleSmallCaps().toggleSmallCaps().run()],
     ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
     ['format', 'convertDefaultAll', tr('cmd.convertDefaultAll'), () => convertFormattingAll().catch(report), !project],
     ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
@@ -3512,11 +3644,16 @@ export default function App({ api: apiProp }) {
     ['file', 'exportBundle', tr('cmd.exportBundle'), () => flush().then(() => api.exportBundle(dir)).catch(report), !api.exportBundle],
     ['file', 'importBundle', tr('cmd.importBundle'), () => api.importBundle().then(openResult).catch(report), !api.importBundle],
     ['tools', 'research', tr('cmd.research'), () => setShowResearch((v) => !v), !api.ragQuery],
+    // Reparații simple (directivă autor): deterministe, fără AI — casă proprie în Unelte, nu în fereastra AI.
+    ['tools', 'simpleRepairs', tr('cmd.simpleRepairs'), () => flush().then(() => setDialog('simpleRepairs')), !selected || selected.type !== 'text'],
+    // Panou de semnale (directivă autor): măsură deterministă (ritm + semnale de limbă), fără AI.
+    ['tools', 'signals', tr('cmd.signals'), () => flush().then(() => setDialog('signals')), !selected || selected.type !== 'text'],
     ['tools', 'glossaries', tr('cmd.glossaries'), () => generateGlossaries().catch(report)],
     ['file', 'editorPackage', tr('cmd.editorPackage'), () => flush().then(() => api.editorPackage(dir, project)).then((r) => r && setToast(tr('ui.app.pachet_creat_in_x_x', { dir: r.dir, length: r.files.length }))).catch(report), !api.editorPackage],
     ['file', 'saveTemplate', tr('cmd.saveTemplate'), () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
     ['file', 'pageSetup', tr('cmd.pageSetup'), () => setDialog('pageSetup'), !api.getPageSetup],
     ['file', 'printPreview', tr('cmd.printPreview'), () => openPrintPreview(), !api.printPreview],
+    ['help', 'helpFinder', tr('cmd.helpFinder'), () => setHelpFinder(true)],
     ['help', 'help', 'Manualul Pneuma Sofer', () => setHelp({ topic: null, tab: 'manual' })],
     ['help', 'helpContext', tr('cmd.helpContext'), () => setHelp({ topic: helpContext(), tab: 'manual' })],
     ['help', 'helpShortcuts', tr('cmd.helpShortcuts'), () => setHelp({ topic: null, tab: 'shortcuts' })],
@@ -3545,7 +3682,13 @@ export default function App({ api: apiProp }) {
     ['project', 'autoCompleteList', tr('cmd.autoCompleteList'), () => setDialog('autoComplete')],
     ['edit', 'autoComplete', tr('cmd.autoComplete'), () => autoCompleteWord()],
     ['window', 'fullScreen', 'Ecran complet', toggleFullScreen],
-    ['document', 'moveTo', tr('cmd.moveTo'), () => setDialog('moveTo'), !selectionList().length],
+    ['document', 'moveTo', tr('cmd.moveTo'),
+    // T2+ (Anexa A, EDIT.31–34): mutarea selecției din tastatură — Sus/Jos = ordine în părinte;
+    // Stânga = la părintele părintelui (înăuntru e prin drag/Move To), Dreapta = în primul copil-vecin.
+    ['document', 'moveUp', tr('cmd.moveUp'), () => moveSel('up'), !selected || Boolean(selected.root)],
+    ['document', 'moveDown', tr('cmd.moveDown'), () => moveSel('down'), !selected || Boolean(selected.root)],
+    ['document', 'moveLeft', tr('cmd.moveLeft'), () => moveSel('left'), !selected || Boolean(selected.root)],
+    ['document', 'moveRight', tr('cmd.moveRight'), () => moveSel('right'), !selected || Boolean(selected.root)], () => setDialog('moveTo'), !selectionList().length],
     ['document', 'toggleSeparator', tr('cmd.toggleSeparator'), toggleSeparator, !selectionList().length],
     ['document', 'restoreTrash', tr('cmd.restoreTrash'), restoreSelection, !selectionList().some((id) => inTrash(id))],
     ['edit', 'appendSelection', tr('cmd.appendSelection'), () => setDialog('appendTo')],
@@ -3849,6 +3992,7 @@ export default function App({ api: apiProp }) {
         {!hideBinder && !composition && (<>
         <div
           className={`binder-col ${fileDrop ? 'file-drop' : ''}`}
+          data-focus-pane="binder" tabIndex={-1}
           style={{ width: widths.binder }}
           onDragOver={(e) => {
             if (!dragHasFiles(e.dataTransfer) || !api.addMediaData) return;
@@ -3887,6 +4031,7 @@ export default function App({ api: apiProp }) {
           </div>
         )}
         <Binder
+          docTextFor={(id) => docs[id] || ''}
           binderEnter={settings.binderEnter}
           binderDoubleClick={settings.binderDoubleClick}
           snapCounts={snapCounts}
@@ -4014,7 +4159,7 @@ export default function App({ api: apiProp }) {
                 onAiPropose={runInlineAi}
                 onAiError={report}
                 scriptFormat={scriptFormat}
-                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
+                key={`${selected.id}-${docsState[selected.id] === undefined ? 'loading' : 'ready'}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
                 historyKey={selected.id}
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
@@ -4107,7 +4252,7 @@ export default function App({ api: apiProp }) {
                   const node = newNode('text');
                   setTree(updateNode(project.tree, folderId, { children: [...(f.children || []), node] }));
                   setDocs((d) => ({ ...d, [node.id]: '<p></p>' }));
-                  api.writeDoc(dir, node.id, 'docs', '<p></p>').catch(report);
+                  api.writeDoc(dir, node.id, 'docs', projectRef.current.defaultDocHtml || '<p></p>').catch(report);
                 }}
                 folder={selected && selected.children ? selected : findParent(project.tree, selectedId) || project.tree[0]}
                 onOpen={(id) => {
@@ -4159,7 +4304,7 @@ export default function App({ api: apiProp }) {
             )}
           </div>
           {splitNode && view === 'editor' && (
-            <div className={`pane second ${editorAreaClass}`}>
+            <div className={`pane second ${editorAreaClass}`} data-focus-pane="split" tabIndex={-1}>
               <div className="pane-head">
                 <PaneNav pane="split" history={splitNav} titleOf={titleOfNode} onBack={() => splitStep(-1)} onForward={() => splitStep(1)} onJump={splitJump} />
                 <span className="pane-title" title={splitNode.title}>{splitNode.title}</span>
@@ -4272,11 +4417,12 @@ export default function App({ api: apiProp }) {
           )}
         </section>
 
-        {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off). */}
-        {(showInspector || (showEditorial && editorialNode) || (showResearch && dir) || (showAi && aiEnabled && aiNode)) && selected && !composition && (
+        {/* Only panels that will actually render open the side column (Research alone; no empty column when AI is off).
+            Directiva autor: Inspectorul este Inspector — AI-ul are propria fereastră (.ai-window), niciodată coloana Inspectorului. */}
+        {(showInspector || (showResearch && dir)) && selected && !composition && (
           <>
             <div className="resizer" onMouseDown={startResize('side')} role="separator" aria-label={tr('ui.app.latime_panou_lateral')} />
-            <div className="side" style={{ width: widths.side }}>
+            <div className="side" data-focus-pane="inspector" tabIndex={-1} style={{ width: widths.side }}>
               {showInspector && (
                 <Inspector
                   key={`insp-${selected.id}-${notesRev}`}
@@ -4291,6 +4437,7 @@ export default function App({ api: apiProp }) {
                   linkTargets={linkTargets}
                   onOpen={openLink}
                   onPatch={(patch) => patchNode(selected.id, patch)}
+                  onPatchMulti={selectedIds.size > 1 ? (patch) => { for (const id of selectionList()) patchNode(id, patch); } : null}
                   onNotesChange={(html) => queueWrite(selected.id, 'notes', html)}
                   onProjectNotesChange={(html) => queueWrite('project-notes', 'notes', html)}
                   onRestore={(html) => {
@@ -4357,46 +4504,53 @@ export default function App({ api: apiProp }) {
                   onImportWeb={api.importWebPage ? importWebSource : undefined}
                 />
               )}
-              {false && null /* I-REP/I-EDIT mutat în fereastra AI (directivă autor): nu mai înghesuie Inspectorul */}
-              {showAi && aiEnabled && aiNode && (
-                <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
-                  <div className="side-ai-head">
-                    <strong>{tr('ui.aiWorkspace.title')}</strong>
-                    <div className="side-ai-actions">
-                      <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
-                      </button>
-                    </div>
+            </div>
+          </>
+        )}
+
+        {/* Fereastra AI: container propriu, separat de coloana Inspectorului (directivă autor). Doar AI — reparațiile
+            deterministe (fără AI) stau în Unelte › Reparații simple…. */}
+        {(showAi && aiEnabled && aiNode) && selected && !composition && (
+          <>
+            <div className="resizer" onMouseDown={startResize('ai')} role="separator" aria-label={tr('ui.app.latime_fereastra_ai')} />
+            <div className="ai-window" data-focus-pane="ai" tabIndex={-1} style={{ width: widths.ai || 380 }}>
+              <section className="side-ai" aria-label={tr('ui.aiWorkspace.title')}>
+                <div className="side-ai-head">
+                  <strong>{tr('ui.aiWorkspace.title')}</strong>
+                  <div className="side-ai-actions">
+                    <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+                    </button>
                   </div>
-                  {(showEditorial && editorialNode) ? (
-                    <>
-                      <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
-                        <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
-                        <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
-                      </div>
-                      <EditorialPanel
-                        project={project}
-                        dir={dir}
-                        aiEnabled={aiEnabled}
-                        key={'ed-side-' + editorialNode.id}
-                        api={api}
-                        hasKey={settings.hasApiKey}
-                        aiLabel={settings.aiLabel}
-                        aiModel={settings.aiModel}
-                        profile={profileFor(project)}
-                        node={editorialNode}
-                        html={docs[editorialNode.id] || ''}
-                        chapter={chapterDocs}
-                        editorialTabReq={editorialTabReq}
-                        onError={report}
-                        onClose={() => { setShowEditorial(false); setEditorialTabReq(null); }}
-                      />
-                    </>
-                  ) : (
-                  <AiPanel {...aiPanelProps} />
-                  )}
-                </section>
-              )}
+                </div>
+                {(showEditorial && editorialNode) ? (
+                  <>
+                    <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
+                      <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
+                      <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
+                    </div>
+                    <EditorialPanel
+                      project={project}
+                      dir={dir}
+                      aiEnabled={aiEnabled}
+                      key={'ed-side-' + editorialNode.id}
+                      api={api}
+                      hasKey={settings.hasApiKey}
+                      aiLabel={settings.aiLabel}
+                      aiModel={settings.aiModel}
+                      profile={profileFor(project)}
+                      node={editorialNode}
+                      html={docs[editorialNode.id] || ''}
+                      chapter={chapterDocs}
+                      editorialTabReq={editorialTabReq}
+                      onError={report}
+                      onClose={() => { setShowEditorial(false); setEditorialTabReq(null); }}
+                    />
+                  </>
+                ) : (
+                <AiPanel {...aiPanelProps} />
+                )}
+              </section>
             </div>
           </>
         )}
@@ -4517,6 +4671,13 @@ export default function App({ api: apiProp }) {
             <div className="actions"><span className="spacer" /><button onClick={() => setAiReport(null)}>{tr('btn.close')}</button></div>
           </div>
         </div>
+      )}
+      {helpFinder && (
+        <HelpFinderDialog
+          commands={Object.values(commands).filter((c) => !c.hidden)}
+          onClose={() => setHelpFinder(false)}
+          onRunCommand={(c) => { if (!c.disabled) c.run(); }}
+        />
       )}
       {help && <HelpWindow initialTopic={help.topic} initialTab={help.tab} settings={settings} onClose={() => setHelp(null)} onStartTutorial={startTutorial} />}
       {dialog === 'saveTemplate' && <SaveTemplateDialog api={api} dir={dir} project={project} onSaved={(t) => setToast(tr('ui.app.sablon_salvat_x', { title: t.title }))} onClose={() => setDialog(null)} onError={report} />}
@@ -4844,6 +5005,24 @@ export default function App({ api: apiProp }) {
       )}
       {dialog === 'importReport' && importStats && <ImportReport report={importStats} onClose={() => setDialog(null)} />}
       {dialog === 'importWeb' && <WebImportDialog onImport={(o) => importWeb(o).catch(report)} onClose={() => setDialog(null)} />}
+      {dialog === 'simpleRepairs' && selected && selected.type === 'text' && (
+        <SimpleRepairsDialog
+          node={selected}
+          html={docs[selected.id] || ''}
+          onApply={(html) => {
+            api.takeSnapshot?.(dir, selected.id, tr('ui.simpleRepairs.snapshot')).finally(() => {
+              setEditorHtml(selected.id, html);
+              writeDocNow(selected.id, html);
+              setDialog(null);
+              setToast(tr('ui.simpleRepairs.done'));
+            }).catch(report);
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'signals' && selected && selected.type === 'text' && (
+        <SignalsDialog node={selected} html={docs[selected.id] || ''} onClose={() => setDialog(null)} />
+      )}
       {dialog === 'import' && <ImportDialog api={api} target={findNode(project.tree, importDestination(project, project.tree, null) || '')?.title || selected?.title || ''} onImported={importParts} onClose={() => setDialog(null)} onError={report} />}
       {quickRefs.map((q) => {
         const n = findNode(project.tree, q.id);
@@ -4868,6 +5047,30 @@ export default function App({ api: apiProp }) {
           />
         );
       })}
+      {copyToOpen && (
+        <CopyToProjectDialog
+          recent={(settings.recent || [])}
+          currentDir={dir}
+          count={selectionList().length}
+          onCopy={async (target) => {
+            const r = await api.copyIntoProject(dir, target, selectionList());
+            setCopyToOpen(false);
+            setToast(tr('ui.copyToProject.done', { n: r.count, f: r.files }));
+          }}
+          onClose={() => setCopyToOpen(false)}
+          onError={report}
+        />
+      )}
+      {dialog === 'copyTo' && (
+        <PickNodeDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
+          title={tr('ui.app.copiaza_selectia_in')}
+          items={moveTargets(project.tree, selectionList())}
+          onPick={(id) => copyItems(selectionList(), id, 'inside').catch(report)}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'moveTo' && (
         <PickNodeDialog
           variant="popover"

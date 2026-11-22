@@ -17,7 +17,7 @@ const CSS = `
 .filter-pop select { max-width: 170px; }
 `;
 
-// Filter bar above the Corkboard / Outliner (Scrivener 3 §11.4): one row, live
+// Filter bar above the Corkboard / Outliner (aplicația de referință §11.4): one row, live
 // results. Esc clears the text first, then closes; Done closes and the view
 // shows the container unfiltered again.
 export default function FilterBar({ project, filter, onChange, onDone, matches = null }) {

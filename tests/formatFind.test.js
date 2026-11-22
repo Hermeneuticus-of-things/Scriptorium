@@ -1,4 +1,4 @@
-// Find by Formatting detectors (Scrivener 3 §11.6.7–11.6.10) — node environment: pure
+// Find by Formatting detectors (aplicația de referință §11.6.7–11.6.10) — node environment: pure
 // HTML-string parsing, no DOM. Navigation ranges come from findFormatting, tested here
 // against a minimal ProseMirror schema and (with the real editor) in formatting.test.js.
 import { describe, it, expect } from 'vitest';

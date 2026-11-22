@@ -1,4 +1,4 @@
-// .scriv import from files shaped as Scrivener itself writes them (not via our exporter),
+// .scriv import from files shaped as aplicația de referință itself writes them (not via our exporter),
 // plus the 'v04:exportScriv' handler wiring (snapshots + writing history).
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRequire } from 'module';

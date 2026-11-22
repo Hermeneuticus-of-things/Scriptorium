@@ -1,4 +1,4 @@
-// Named styles (Scrivener "Styles"): paragraph styles set data-style on a paragraph,
+// Named styles (aplicația de referință "Styles"): paragraph styles set data-style on a paragraph,
 // character styles wrap text in span[data-char-style]. The look is plain data so
 // the same definition drives the editor, the compiled HTML/EPUB and DOCX.
 

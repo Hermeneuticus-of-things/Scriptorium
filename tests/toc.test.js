@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildTocText, evalPagePlaceholders } from '../src/lib/toc.js';
 
-// Binder like the parity examples (Scrivener §22.1–22.2): a Draft with chapters and scenes.
+// Binder like the parity examples (aplicația de referință §22.1–22.2): a Draft with chapters and scenes.
 const TREE = [
   { id: 'draft', root: 'draft', type: 'folder', title: 'Manuscris', children: [
     { id: 'c1', type: 'folder', title: 'Plecarea', children: [

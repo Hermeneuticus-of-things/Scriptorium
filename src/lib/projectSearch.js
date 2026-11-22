@@ -13,7 +13,7 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Returns the list of regexes to test. operator 'all' -> one per word (each must
 // match somewhere); 'any' -> one alternation; 'exact' or regex -> whole query;
-// 'startsWith'/'endsWith' (Scrivener §11.2.1) -> the query anchored at a word edge.
+// 'startsWith'/'endsWith' (aplicația de referință §11.2.1) -> the query anchored at a word edge.
 // Plain any/all path (no special syntax) — kept for callers that want the raw terms;
 // searchProject itself goes through parseQuery, which adds quotes/exclusions/wildcard.
 export function buildTerms(criteria) {
@@ -39,7 +39,7 @@ export function buildTerms(criteria) {
   return [buildRegex({ query: words.map(escapeRe).join('|'), regex: true, ...base })];
 }
 
-// --- Special search terms (Scrivener §11.1.3), active for the any/all operators ---
+// --- Special search terms (aplicația de referință §11.1.3), active for the any/all operators ---
 // `Bob "black car"`  -> word AND exact phrase (quoted tokens count as words)
 // `Lydia -Dovahkiin` -> hyphen excludes; works on phrases too: `Lydia -"Needs Proofing"`
 // `*`                -> universal wildcard: everything (combinable with filters)
@@ -126,7 +126,7 @@ export function parseQuery(criteria) {
     const dm = /^(m|c)date:(.+)$/i.exec(t);
     if (dm) {
       const cond = parseDateToken(dm[1].toLowerCase() === 'm' ? 'modified' : 'created', dm[2]);
-      if (!cond) continue; // not a real date value: ignore the token, like Scrivener's grey modes
+      if (!cond) continue; // not a real date value: ignore the token, like aplicației de referință grey modes
       out.dates.push(cond);
       continue;
     }
@@ -201,7 +201,7 @@ export function compileExcluded(tree) {
 }
 
 // Binder selection scope: the chosen items plus every descendant, so a selected
-// chapter folder covers its whole subtree (Scrivener §11.1.2).
+// chapter folder covers its whole subtree (aplicația de referință §11.1.2).
 function selectionExpanded(tree, ids) {
   const wanted = new Set(ids);
   const out = new Set();
@@ -256,7 +256,7 @@ const hasFilter = (c) => Boolean(c.labels?.length || c.statuses?.length || c.key
  * Searches the whole project.
  * @returns {{node, fields: Object<string, number>, snippets: Array}[]} in binder
  * order, or sorted by criteria.sort ('title' with Romanian collation, 'created';
- * criteria.sortDesc flips either). criteria.invert (Scrivener §11.1.2) returns the
+ * criteria.sortDesc flips either). criteria.invert (aplicația de referință §11.1.2) returns the
  * nodes that do NOT match the criteria; trash stays hidden unless includeTrash.
  * Empty query + at least one label/status/keyword filter -> every node passing the filters.
  * Scope options (§11.1.2): criteria.draftOnly restricts to the draft root;
@@ -379,7 +379,7 @@ function replacePlain(text, re, replacement) {
 /**
  * Replaces re in the selected fields of one document.
  * fields default: ['title', 'synopsis', 'text', 'notes']; 'custom' covers the plain-string
- * values of node.custom (single or inside arrays), other types are left alone (Scrivener §11.3).
+ * values of node.custom (single or inside arrays), other types are left alone (aplicația de referință §11.3).
  * @returns {{node, docHtml, notesHtml, count}} node is a shallow copy (never mutated).
  */
 export function replaceInFields(node, docHtml, notesHtml, re, replacement, fields = ['title', 'synopsis', 'text', 'notes']) {
@@ -404,7 +404,7 @@ export function replaceInFields(node, docHtml, notesHtml, re, replacement, field
     notes = r.html;
     count += r.count;
   }
-  // Custom metadata (Scrivener §11.3): only plain strings are replaced, in single values
+  // Custom metadata (aplicația de referință §11.3): only plain strings are replaced, in single values
   // and inside arrays; numbers/booleans are data, not prose. The copy always carries the
   // (possibly unchanged) custom object when the field is selected.
   if (fields.includes('custom') && node.custom && typeof node.custom === 'object') {
@@ -436,7 +436,7 @@ export function replaceInFields(node, docHtml, notesHtml, re, replacement, field
   return { node: next, docHtml: doc, notesHtml: notes, count };
 }
 
-// Scrivener §11.3: the archived text of snapshots is replaced too. Pure over one
+// aplicația de referință §11.3: the archived text of snapshots is replaced too. Pure over one
 // snapshot's html ({file, name, date, html} payload); the caller lists and persists them.
 export function replaceSnapshotHtml(html, re, replacement) {
   return replaceInHtml(html, re, replacement);

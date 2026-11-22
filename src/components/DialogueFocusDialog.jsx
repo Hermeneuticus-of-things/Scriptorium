@@ -3,7 +3,7 @@ import { dialogueFocus } from '../lib/dialogueFocus.js';
 import { flatten } from '../lib/tree.js';
 import { t } from '../lib/i18n.js';
 
-// Dialogue Focus (Scrivener 3 §20.3.2): proofing view listing only the dialogue
+// Dialogue Focus (aplicația de referință §20.3.2): proofing view listing only the dialogue
 // lines, grouped by document. Clicking a line opens its document.
 export default function DialogueFocusDialog({ project, docs, onOpen, onClose }) {
   const [expanded, setExpanded] = useState(() => new Set());

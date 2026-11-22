@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { STYLE_KINDS, duplicateShortcuts, isParaStyle, normalizeShortcut, stylesOf } from '../lib/styles.js';
+import { paragraphCss } from '../editor/formatting.js';
 import { t, builtinName } from '../lib/i18n.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
 
@@ -18,21 +19,35 @@ function slug(name, taken) {
   return id;
 }
 
-// Project stylesheet editor (Scrivener: Format > Style > Show Styles Panel / Redefine).
+// Project stylesheet editor (aplicația de referință: Format > Style > Show Styles Panel / Redefine).
 export default function StylesDialog({ api, project, currentLook, onSave, onClose, onError }) {
   const [styles, setStyles] = useState(() => structuredClone(stylesOf(project)));
+  // T6 (Anexa E, „Set Styles Defaults"): formatarea curentă din editor (currentLook —
+  // atributele paragrafului la cursor) devine default-ul documentelor noi (project.defaultDocHtml).
+  const [defMsg, setDefMsg] = useState('');
+  const setCurrentAsDefault = () => {
+    if (!currentLook) { setDefMsg(t('ui.styles.defaultNoEditor')); return; }
+    const css = paragraphCss(currentLook);
+    const bold = currentLook.bold ? '<strong> </strong>' : ' ';
+    const html = css ? `<p style="${css}">${bold}</p>` : '<p><br></p>';
+    onSave({ ...project, defaultDocHtml: html });
+    setDefMsg(t('ui.styles.defaultSet'));
+  };
   const [sel, setSel] = useState(0);
+  const [dirty, setDirty] = useState(false);
   const st = styles[sel];
   const dupes = duplicateShortcuts(styles);
 
-  const patch = (p) => setStyles((all) => all.map((x, i) => (i === sel ? { ...x, ...p } : x)));
+  const patch = (p) => { setDirty(true); setStyles((all) => all.map((x, i) => (i === sel ? { ...x, ...p } : x))); };
   const add = () => {
+    setDirty(true);
     const id = slug(t('ui.stylesDialog.stil_nou_2'), new Set(styles.map((s) => s.id)));
     setStyles((all) => [...all, { ...EMPTY(), id }]);
     setSel(styles.length);
   };
   const remove = () => {
     if (!window.confirm(t('ui.stylesDialog.stergi_stilul_x_textul_care', { name: st.name }))) return;
+    setDirty(true);
     setStyles((all) => all.filter((_, i) => i !== sel));
     setSel(0);
   };
@@ -46,6 +61,7 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
       if (!incoming) return;
       const mode = await uiPrompt(t('ui.stylesDialog.stilurile_cu_acelasi_nume_pastreaza'), t('ui.stylesDialog.pastreaza'));
       if (mode === null) return;
+      setDirty(true);
       setStyles((all) => {
         const out = [...all];
         for (const s of incoming) {
@@ -60,11 +76,16 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
       onError(e);
     }
   };
+  const close = () => {
+    if (dirty && !window.confirm(t('ui.settingsDialog.renunti'))) return;
+    onClose();
+  };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide" role="dialog" aria-label={t('ui.stylesDialog.stiluri')} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={close}>
+      <div className="modal wide" role="dialog" aria-label={t('ui.stylesDialog.stiluri')} aria-describedby="styles-scope" onClick={(e) => e.stopPropagation()}>
         <h2>{t('ui.stylesDialog.stiluri')}</h2>
+        <p id="styles-scope" className="surface-scope" role="note">{t('ui.stylesDialog.scopeProject')}</p>
         <div className="styles-layout">
           <ul className="style-list">
             {styles.map((s, i) => (
@@ -169,6 +190,8 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
               </p>
               <div className="ai-actions">
                 <button onClick={redefine} disabled={!currentLook} title={t('ui.stylesDialog.preia_aspectul_textului_selectat_in')}>{t('ui.stylesDialog.redefineste_din_selectie')}</button>
+                <button onClick={setCurrentAsDefault} disabled={!currentLook} title={t('ui.styles.defaultHint')}>{t('ui.styles.defaultButton')}</button>
+                {defMsg && <span className="muted small">{defMsg}</span>}
                 <button onClick={remove}>{t('ui.stylesDialog.sterge_stilul')}</button>
               </div>
             </div>
@@ -178,7 +201,8 @@ export default function StylesDialog({ api, project, currentLook, onSave, onClos
           <button onClick={add}>{t('ui.stylesDialog.stil_nou_3')}</button>
           {api.readStylesFromProject && <button onClick={importFrom}>{t('ui.stylesDialog.importa_din_alt_proiect')}</button>}
           <span className="spacer" />
-          <button onClick={onClose}>{t('btn.cancel')}</button>
+          {dirty && <span className="muted settings-dirty" role="status">{t('ui.settingsDialog.unsaved')}</span>}
+          <button onClick={close}>{t('btn.cancel')}</button>
           <button className="primary" onClick={() => onSave(styles)}>{t('btn.save')}</button>
         </div>
       </div>

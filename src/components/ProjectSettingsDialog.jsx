@@ -134,17 +134,20 @@ function Reorder({ i, n, pinFirst, onMove }) {
   );
 }
 
-// Project settings (Scrivener: Project > Project Settings).
+// Project settings (aplicația de referință: Project > Project Settings).
 export default function ProjectSettingsDialog({ project, folders, onSave, onClose, api, dir, initialTab }) {
   const [d, setD] = useState(() => makeDraft(project));
   const [tab, setTab] = useState(initialTab || 'sectiuni');
   const [errors, setErrors] = useState([]);
   const [x, setX] = useState(() => makeExtras(project));
   const [iconErr, setIconErr] = useState('');
-  const setBk = (p) => setX((o) => ({ ...o, backup: { ...o.backup, ...p } }));
-  const setTg = (p) => setX((o) => ({ ...o, targets: { ...o.targets, ...p } }));
-  const setEd = (p) => setX((o) => ({ ...o, editorial: { ...o.editorial, ...p } }));
-  const setSy = (p) => setX((o) => ({ ...o, sync: { ...o.sync, ...p } }));
+  const [dirty, setDirty] = useState(false);
+  const updateD = (fn) => { setDirty(true); setD(fn); };
+  const updateX = (fn) => { setDirty(true); setX(fn); };
+  const setBk = (p) => updateX((o) => ({ ...o, backup: { ...o.backup, ...p } }));
+  const setTg = (p) => updateX((o) => ({ ...o, targets: { ...o.targets, ...p } }));
+  const setEd = (p) => updateX((o) => ({ ...o, editorial: { ...o.editorial, ...p } }));
+  const setSy = (p) => updateX((o) => ({ ...o, sync: { ...o.sync, ...p } }));
 
   const tabKeys = (e) => {
     const ids = TABS().map(([id]) => id);
@@ -157,8 +160,8 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
     e.currentTarget.querySelectorAll('[role=tab]')[k]?.focus();
   };
 
-  const set = (p) => setD((x) => ({ ...x, ...p }));
-  const setList = (key, fn) => setD((x) => ({ ...x, [key]: fn(x[key]) }));
+  const set = (p) => updateD((x) => ({ ...x, ...p }));
+  const setList = (key, fn) => updateD((x) => ({ ...x, [key]: fn(x[key]) }));
   const patchAt = (key, i, p) => setList(key, (arr) => arr.map((it, k) => (k === i ? { ...it, ...p } : it)));
   const removeAt = (key, i) => setList(key, (arr) => arr.filter((_, k) => k !== i));
   const move = (key, pinFirst) => (i, delta) => setList(key, (arr) => moveItem(arr, i, delta, pinFirst));
@@ -178,10 +181,15 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
       importFolder: x.importFolder,
       inboxFolder: x.inboxFolder,
     }, x.sync));
+    setDirty(false);
+  };
+  const close = () => {
+    if (dirty && !window.confirm(tr('ui.settingsDialog.renunti'))) return;
+    onClose();
   };
 
   const fullFromParts = () => set({ author: [d.authorFirst, d.authorLast].filter(Boolean).join(' ') });
-  const doImport = (data) => setD((cur) => importMetaSettings(cur, data));
+  const doImport = (data) => updateD((cur) => importMetaSettings(cur, data));
   // The export takes what the dialog shows now (unsaved edits included).
   const draftProject = () => {
     try {
@@ -270,10 +278,13 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
     });
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal wide ps-dialog" role="dialog" aria-label={tr('ui.projectSettingsDialog.setarile_proiectului')} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={close}>
+      <div className="modal wide ps-dialog" role="dialog" aria-label={tr('ui.projectSettingsDialog.setarile_proiectului')} aria-describedby="project-settings-scope" onClick={(e) => e.stopPropagation()}>
         <style>{CSS}</style>
         <h2>{tr('ui.projectSettingsDialog.setarile_proiectului')}</h2>
+        <p id="project-settings-scope" className="surface-scope" role="note">
+          {tr('ui.projectSettingsDialog.scopeProject', { title: project?.title || tr('group.project') })}
+        </p>
         <div className="ps-tabs" role="tablist" aria-orientation="vertical" aria-label={tr('ui.projectSettingsDialog.sectiuni_setari')} onKeyDown={tabKeys}>
           {TABS().map(([id, label]) => (
             <button
@@ -504,7 +515,7 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
                     onClick={() => {
                       if (t.orig && !window.confirm(tr('ui.projectSettingsDialog.stergi_tipul_de_sectiune_x', { title: t.title }))) return;
                       const removedId = t.id;
-                      setD((x) => ({
+                      updateD((x) => ({
                         ...x,
                         sectionTypes: x.sectionTypes.filter((_, k) => k !== i),
                         sectionTypeLevels: Object.fromEntries(
@@ -588,14 +599,14 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
             <p className="muted small">{tr('ui.ps.template_folder_dual_hint')}</p>
             <label>
               {tr('ui.projectSettingsDialog.dosar_pentru_importuri')}
-              <select value={x.importFolder || ''} onChange={(e) => setX((o) => ({ ...o, importFolder: e.target.value || null }))}>
+              <select value={x.importFolder || ''} onChange={(e) => updateX((o) => ({ ...o, importFolder: e.target.value || null }))}>
                 <option value="">(Cercetare)</option>
                 {(folders || []).map((f) => <option key={f.id} value={f.id}>{f.path || f.title}</option>)}
               </select>
             </label>
             <label>
               {tr('ui.projectSettingsDialog.dosar_pentru_notele_trimise_din')}
-              <select value={x.inboxFolder || ''} onChange={(e) => setX((o) => ({ ...o, inboxFolder: e.target.value || null }))}>
+              <select value={x.inboxFolder || ''} onChange={(e) => updateX((o) => ({ ...o, inboxFolder: e.target.value || null }))}>
                 <option value="">(Cercetare)</option>
                 {(folders || []).map((f) => <option key={f.id} value={f.id}>{f.path || f.title}</option>)}
               </select>
@@ -604,14 +615,14 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         )}
 
         {tab === 'formatare' && (
-          <DefaultFormatPane value={x.defaultFormatting} onChange={(v) => setX((o) => ({ ...o, defaultFormatting: v }))} />
+          <DefaultFormatPane value={x.defaultFormatting} onChange={(v) => updateX((o) => ({ ...o, defaultFormatting: v }))} />
         )}
 
         {tab === 'autocomplete' && (
           <div className="fields">
             <label>
               {tr('ui.projectSettingsDialog.lista_de_auto_completare_cate')}
-              <textarea rows={10} value={x.autoComplete} onChange={(e) => setX((o) => ({ ...o, autoComplete: e.target.value }))} placeholder={tr('ui.projectSettingsDialog.nume_de_personaje_locuri_termeni')} />
+              <textarea rows={10} value={x.autoComplete} onChange={(e) => updateX((o) => ({ ...o, autoComplete: e.target.value }))} placeholder={tr('ui.projectSettingsDialog.nume_de_personaje_locuri_termeni')} />
             </label>
             <p className="muted">{tr('ui.projectSettingsDialog.termenii_sunt_propusi_in_timpul')}</p>
             <p className="muted small">{tr('ui.ps.autocomplete_dual_hint')}</p>
@@ -660,15 +671,15 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         {tab === 'backup' && (
           <div className="fields">
             <label className="check">
-              <input type="checkbox" checked={x.backup.exclude} onChange={(e) => setBk({ exclude: e.target.checked })} /> {tr('ui.projectSettingsDialog.exclude_acest_proiect_din_backup')}
+              <input type="checkbox" className="ps-backup-exclude" checked={x.backup.exclude} onChange={(e) => setBk({ exclude: e.target.checked })} /> {tr('ui.projectSettingsDialog.exclude_acest_proiect_din_backup')}
             </label>
             <label className="check">
-              <input type="checkbox" checked={x.backup.override} disabled={x.backup.exclude} onChange={(e) => setBk({ override: e.target.checked })} /> {tr('ui.projectSettingsDialog.setari_proprii_de_backup_pentru')}
+              <input type="checkbox" className="ps-backup-override" checked={x.backup.override} disabled={x.backup.exclude} onChange={(e) => setBk({ override: e.target.checked })} /> {tr('ui.projectSettingsDialog.setari_proprii_de_backup_pentru')}
             </label>
             {x.backup.override && !x.backup.exclude && (
               <>
                 <label className="check">
-                  <input type="checkbox" checked={x.backup.onClose} onChange={(e) => setBk({ onClose: e.target.checked })} /> {tr('ui.projectSettingsDialog.backup_la_inchidere')}
+                  <input type="checkbox" className="ps-backup-on-close" checked={x.backup.onClose} onChange={(e) => setBk({ onClose: e.target.checked })} /> {tr('ui.projectSettingsDialog.backup_la_inchidere')}
                 </label>
                 <div className="row">
                   <label>{tr('ui.projectSettingsDialog.la_fiecare_minute_0_niciodata')}<input type="number" min="0" step="5" value={x.backup.everyMin} onChange={(e) => setBk({ everyMin: e.target.value })} /></label>
@@ -690,6 +701,19 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               <input type="checkbox" className="ps-sync-auto" checked={x.sync.auto} onChange={(e) => setSy({ auto: e.target.checked })} /> {tr('ui.ps.sync_auto')}
             </label>
             <p className="muted small">{tr('ui.ps.sync_auto_hint')}</p>
+            <label className="check">
+              <input type="checkbox" className="ps-sync-trashed" checked={x.sync.includeTrashed} onChange={(e) => setSy({ includeTrashed: e.target.checked })} /> {tr('ui.ps.sync_trashed')}
+            </label>
+            <label className="check">
+              <input type="checkbox" className="ps-sync-numeric" checked={x.sync.numericPrefix} onChange={(e) => setSy({ numericPrefix: e.target.checked })} /> {tr('ui.ps.sync_numeric')}
+            </label>
+            <label>
+              {tr('ui.ps.sync_collection')}
+              <select className="ps-sync-collection" value={x.sync.collectionId || ''} onChange={(e) => setSy({ collectionId: e.target.value })}>
+                <option value="">{tr('ui.ps.sync_collection_all')}</option>
+                {(project.collections || []).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+              </select>
+            </label>
             <div className="row">
               <label>
                 {tr('ui.ps.sync_format')}
@@ -728,8 +752,9 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
         )}
 
         <div className="actions">
-          <button type="button" onClick={onClose}>{tr('btn.cancel')}</button>
-          <button type="button" className="primary" onClick={save}>{tr('btn.save')}</button>
+          {dirty && <span className="muted settings-dirty" role="status">{tr('ui.settingsDialog.unsaved')}</span>}
+          <button type="button" onClick={close}>{tr('btn.cancel')}</button>
+          <button type="button" className="primary" onClick={save}>{tr('ui.projectSettingsDialog.saveProject')}</button>
         </div>
       </div>
     </div>

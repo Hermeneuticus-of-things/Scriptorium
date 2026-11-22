@@ -2,7 +2,7 @@
 
 > Parent: [`../../CLAUDE.md`](../../CLAUDE.md)
 
-Tip: aplicație desktop (Electron + React + TipTap). Program de scris tip Scrivener + import .scriv + Compile DOCX/PDF/EPUB + asistent Claude.
+Tip: aplicație desktop (Electron + React + TipTap). Program de scris tip aplicația de referință + import .scriv + Compile DOCX/PDF/EPUB + asistent Claude.
 
 ## Hartă
 - `electron/main.cjs` IPC, dialoguri, setări (cheia API criptată cu safeStorage), export PDF
@@ -14,6 +14,6 @@ Tip: aplicație desktop (Electron + React + TipTap). Program de scris tip Scrive
 - `tests/` vitest (`npm test`)
 
 ## Reguli
-- Implementare proprie, fără cod sau resurse din Scrivener.
+- Implementare proprie, fără cod sau resurse din aplicația de referință.
 - Tot accesul la disc și la API trece prin procesul main; renderer-ul nu are Node.
 - În textele pentru utilizator (interfață, ajutor, README, imagini) nu se dau nume de alte programe de scris și nici comparații cu ele; formatul de fișier `.scriv` și comanda de import rămân numite funcțional.

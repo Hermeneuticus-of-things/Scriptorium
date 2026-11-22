@@ -2,12 +2,12 @@
 
 Stare: **finalizat, versiunea 1**. Documentul este contractul complet al formatului — ce conține un
 proiect, cum se numesc fișierele, cum se versionează și cum se traduce către și dinspre formatul
-Scrivener (`.scriv`). Nu se inventează un format nou: este același din 2025, înainte de redenumirea
+aplicația de referință (`.scriv`). Nu se inventează un format nou: este același din 2025, înainte de redenumirea
 în Pneuma Sofer, și rămâne stabil.
 
 ## 1. Principiu
 
-Un proiect Pneuma Sofer este un **dosar** `<Nume>.scribner` — exact ca un `.scriv` Scrivener, care
+Un proiect Pneuma Sofer este un **dosar** `<Nume>.scribner` — exact ca un `.scriv` aplicația de referință, care
 tot dosar este. Înăuntru, totul e **text deschis**: JSON pentru structură și metadate, HTML pentru
 text, UTF-8. Fără fișier binar opac, fără lock-ul bazelor de date — dosarul merge direct pe
 OneDrive/Dropbox/NAS (sincronizare la nivel de fișier) și poate fi citit cu orice editor.
@@ -27,7 +27,7 @@ OneDrive/Dropbox/NAS (sincronizare la nivel de fișier) și poate fi citit cu or
   history.json                 istoricul de scriere (sesiuni)
   agent-log.jsonl              jurnalul apelurilor agentului MCP
   follow.json                  starea urmăririi vault-ului (circuitul MCP vault ↔ Pneuma)
-  scrivener-original/          la import din .scriv: pachetul original, copiat integral (nimic nu se pierde)
+  import-original/          la import din .scriv: pachetul original, copiat integral (nimic nu se pierde)
 ```
 
 `agent-log.jsonl`, `follow.json`, `editorial/` și `team/` sunt opționale: apar când se folosesc
@@ -61,7 +61,7 @@ fără migrare**. `store.cjs` validează `format` la încărcare.
   aplicațiile vechi refuză politicos un `2`, cele noi citesc oricând un `1`.
 - Proiectul **nu** se convertește „pe loc” la salvare: fișierele rămân în forma în care sunt.
 
-## 5. Interoperabilitate cu Scrivener (`.scriv`)
+## 5. Interoperabilitate cu aplicația de referință (`.scriv`)
 
 Ambele direcții sunt implementate propriu (fără biblioteci externe) și acoperite de **29 de teste
 de round-trip** (`tests/scrivRoundTrip.test.js`):
@@ -71,17 +71,17 @@ RTF-uri, notes, synopsis, `content.comments`, styles.xml, snapshots cu index.xml
 writing.history, Settings/compile.xml) și convertește tot ce are echivalent în Pneuma Sofer:
 binder cu root-uri, text (RTF → HTML), note, sinopse, comentarii + note legate, etichete, stări,
 cuvinte cheie, metadate personalizate, snapshot-uri, colecții, bookmark-uri, secțiuni de tip,
-ținte. Pachetul original se copiază integral în `scrivener-original/` — **importul nu pierde
+ținte. Pachetul original se copiază integral în folderul de backup al importului — **importul nu pierde
 niciodată nimic**, chiar dacă un element nu are echivalent.
 
-**Export (`lib/scrivExport.cjs`, `.scriv` format 3):** scrie un pachet pe care Scrivener îl
+**Export (`lib/scrivExport.cjs`, `.scriv` format 3):** scrie un pachet pe care aplicația de referință îl
 deschide direct: `<Name>.scrivx` (binder, etichete, stări, cuvinte cheie, CustomMetaDataSettings,
 SectionTypes, ProjectTargets, Collections, ProjectBookmarks, metadata per item), `Files/Data/
 <UUID>/` (content.rtf, notes.rtf, synopsis.txt, content.comments, snapshots + index.xml),
 ProjectNotes, styles.xml, writing.history.
 
 **Ce NU se traduce 1:1** (diferențe de model, documentate, nu pierderi accidentale): stilurile de
-paragraf Pneuma → numite în RTF unde Scrivener nu are echivalent direct; înlocuirile de proiect și
+paragraf Pneuma → numite în RTF unde aplicația de referință nu are echivalent direct; înlocuirile de proiect și
 formatele de compilare Pneuma nu există în `.scriv` (rămân în `project.json`, nu pleacă în
 export); profilul I-REP și circuitul vault sunt proprii Pneuma.
 
@@ -89,7 +89,7 @@ export); profilul I-REP și circuitul vault sunt proprii Pneuma.
 
 - Nu este `.scriv` nativ: fișierul principal e `project.json` (JSON), nu `scrivx` (XML). Motivul:
   schema e mai expresivă pentru funcțiile proprii (colecții vii, înlocuiri de proiect, profil
-  editorial) și citibilă programatic fără parser XML. **Compatibilitatea cu Scrivener se
+  editorial) și citibilă programatic fără parser XML. **Compatibilitatea cu aplicația de referință se
   asigură prin import/export lossless**, nu prin format identic — asta garantează și că un
-  proiect Pneuma Sofer se duce în Scrivener și se întoarce fără pierderi.
+  proiect Pneuma Sofer se duce în aplicația de referință și se întoarce fără pierderi.
 - Nu este un fișier unic zip: dosar deschis, sincronizabil fișier cu fișier.

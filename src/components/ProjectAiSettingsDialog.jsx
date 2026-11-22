@@ -22,12 +22,17 @@ const readScope = (dir) => {
 
 export default function ProjectAiSettingsDialog({ api, dir, project, onSave, onClose, onError }) {
   const [rules, setRules] = useState(project?.editorialProfile?.aiRules || '');
+  // Pachetul de carte (universal): stratul de sus al motorului AI — frazele fixate nu se ating,
+  // formulele oprite apar de zero ori în textul livrat. Orice carte își aduce propriul pachet.
+  const [fixedPhrases, setFixedPhrases] = useState(project?.editorialProfile?.fixedPhrases || '');
+  const [bannedFormulas, setBannedFormulas] = useState(project?.editorialProfile?.bannedFormulas || '');
   const [scope, setScope] = useState(() => readScope(dir));
   const [mcp, setMcp] = useState(null);
   const [bookType, setBookType] = useState(project?.bookType || '');
   const [detecting, setDetecting] = useState(false);
   const [suggestion, setSuggestion] = useState(null);
   const [detectError, setDetectError] = useState('');
+  const [dirty, setDirty] = useState(false);
   const kinds = [['docs', t('ui.researchChat.manuscris')], ['research', t('ui.advancedSearchDialog.cercetare')], ['notes', t('ui.advancedSearchDialog.note')]];
 
   const save = () => {
@@ -42,11 +47,13 @@ export default function ProjectAiSettingsDialog({ api, dir, project, onSave, onC
       }
       if (project) {
         const typeChanged = bookType !== (project.bookType || '');
-        const rulesChanged = rules !== (project.editorialProfile?.aiRules || '');
+        const rulesChanged = rules !== (project.editorialProfile?.aiRules || '')
+          || fixedPhrases !== (project.editorialProfile?.fixedPhrases || '')
+          || bannedFormulas !== (project.editorialProfile?.bannedFormulas || '');
         if (typeChanged || rulesChanged) {
           const next = { ...project };
           if (typeChanged) next.bookType = bookType || null;
-          if (rulesChanged) next.editorialProfile = { ...(next.editorialProfile || {}), aiRules: rules };
+          if (rulesChanged) next.editorialProfile = { ...(next.editorialProfile || {}), aiRules: rules, fixedPhrases, bannedFormulas };
           onSave(next);
           return;
         }
@@ -78,18 +85,29 @@ export default function ProjectAiSettingsDialog({ api, dir, project, onSave, onC
       const res = await api.runAi({ action: 'ask', text: sample, question: bookTypeDetectPrompt(), runId: 'bt' + Date.now().toString(36), dir, projectTitle: project.title, documentTitle: first.title, textScope: 'document' });
       const id = bookTypeFromReply(res?.text);
       if (!id) throw new Error(t('ui.projectAi.detectUnclear'));
-      setSuggestion(id);
+          setSuggestion(id);
     } catch (e) {
       setDetectError(e.message);
     } finally {
       setDetecting(false);
     }
   };
+  const close = () => {
+    const originalRules = project?.editorialProfile?.aiRules || '';
+    const originalType = project?.bookType || '';
+    const originalScope = readScope(dir);
+    const scopeChanged = JSON.stringify(scope) !== JSON.stringify(originalScope);
+    if (dirty || rules !== originalRules || bookType !== originalType || scopeChanged) {
+      if (!window.confirm(t('ui.settingsDialog.renunti'))) return;
+    }
+    onClose();
+  };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal settings-dialog project-ai-dialog" role="dialog" aria-label={t('cmd.aiProjectSettings')} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={close}>
+      <div className="modal settings-dialog project-ai-dialog" role="dialog" aria-label={t('cmd.aiProjectSettings')} aria-describedby="project-ai-scope" onClick={(e) => e.stopPropagation()} onChangeCapture={() => setDirty(true)}>
         <h2>{t('cmd.aiProjectSettings').replace(/.$/, '')}</h2>
+        <p id="project-ai-scope" className="surface-scope" role="note">{t('ui.projectAi.scope')}</p>
         <p className="muted small">{t('set.projectAiInfo')}</p>
         {!project ? (
           <p className="muted small">{t('set.aiRulesNoProject')}</p>
@@ -134,6 +152,15 @@ export default function ProjectAiSettingsDialog({ api, dir, project, onSave, onC
                 {t('set.aiRules')}
                 <textarea rows={4} value={rules} onChange={(e) => setRules(e.target.value)} placeholder={t('set.aiRulesPlaceholder')} />
               </label>
+              <label>
+                {t('set.fixedPhrases')}
+                <textarea rows={3} value={fixedPhrases} onChange={(e) => setFixedPhrases(e.target.value)} placeholder={t('set.fixedPhrasesPlaceholder')} />
+              </label>
+              <label>
+                {t('set.bannedFormulas')}
+                <textarea rows={3} value={bannedFormulas} onChange={(e) => setBannedFormulas(e.target.value)} placeholder={t('set.bannedFormulasPlaceholder')} />
+              </label>
+              <p className="muted small">{t('set.bookPackageInfo')}</p>
             </fieldset>
             {dir && (
               <fieldset>
@@ -167,7 +194,8 @@ export default function ProjectAiSettingsDialog({ api, dir, project, onSave, onC
           </>
         )}
         <div className="actions">
-          <button onClick={onClose}>{t('btn.cancel')}</button>
+          {dirty && <span className="muted settings-dirty" role="status">{t('ui.settingsDialog.unsaved')}</span>}
+          <button onClick={close}>{t('btn.cancel')}</button>
           <button className="primary" onClick={save} disabled={!project}>{t('btn.save')}</button>
         </div>
       </div>

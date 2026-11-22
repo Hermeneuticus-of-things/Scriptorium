@@ -3,7 +3,7 @@ import { TEMPLATES } from '../lib/templates.cjs';
 import { validateThesis, numberingOf, annexNumbering, tocFromStructure } from '../lib/thesisStructure.cjs';
 import { buildTocText } from '../src/lib/toc.js';
 
-// Șablonul „Teză academică" (directivă autor 2026-11-10, ca în Scrivener 3).
+// Șablonul „Teză academică" (directivă autor 2026-11-10, ca în aplicația de referință).
 const draft = () => TEMPLATES.thesis.draft;
 const research = () => TEMPLATES.thesis.research;
 

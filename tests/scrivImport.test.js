@@ -164,7 +164,7 @@ describe('lossless .scriv import', () => {
     expect(html).toContain('<p style="text-align: center">Titlu centrat</p>');
     expect(html).toContain('data-comment="Verifică sursa"');
     expect(html).toContain('data-author="Editor"');
-    // Footnote="Yes" comment = Scrivener linked footnote over its anchor
+    // Footnote="Yes" comment = aplicația de referință linked footnote over its anchor
     expect(html).toContain('nota<span data-linked-footnote="Tattvārtha Sūtra 8.1" class="linked-footnote"> </span>.');
     expect(html).toContain(`<a href="scribner://doc/${s2.id}" class="internal-link">Sub 1.2</a>`);
     expect(html).toContain('data-footnote="nota inline"');
@@ -196,8 +196,8 @@ describe('lossless .scriv import', () => {
     const rows = history.summarize(history.readHistory(dir));
     expect(rows[0]).toMatchObject({ date: '2024-01-03', draft: 850, total: 970, imported: true });
 
-    expect(fs.existsSync(path.join(dir, 'scrivener-original', 'Drumul.scrivx'))).toBe(true);
-    expect(fs.existsSync(path.join(dir, 'scrivener-original', 'Settings', 'compile.xml'))).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'import-original', 'Drumul.scrivx'))).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'import-original', 'Settings', 'compile.xml'))).toBe(true);
 
     expect(stats).toMatchObject({ documents: 5, media: 2, comments: 1, footnotes: 2, annotations: 2, snapshots: 1, links: 1, collections: 1, historyDays: 2, projectNotes: true });
     // Many small file writes (import + copy of the original .scriv): slow Windows runners need more than 5 s.

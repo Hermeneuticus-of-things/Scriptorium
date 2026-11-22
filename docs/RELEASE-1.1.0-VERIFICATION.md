@@ -4,7 +4,7 @@ Data: 10 noiembrie 2026. Versiune stabilă; nu este denumită beta.
 
 ## Schimbări livrate
 
-Fundația existentă Ionuț Application Design Language este păstrată și întărită: motor comun de focus, barieră modală, revenire la selecția editorului și dimensionare bazată pe tokenuri. Dialogul de alegere ADL nu mai întrerupe pornirea aplicației.
+Fundația existentă Application Design Language (ADL) este păstrată și întărită: motor comun de focus, barieră modală, revenire la selecția editorului și dimensionare bazată pe tokenuri. Dialogul de alegere ADL nu mai întrerupe pornirea aplicației.
 
 Meniurile Binder sunt construite dintr-un model contextual comun, cu tipuri diferite pentru document, dosar, media, rădăcini, Coș și colecții. Proprietățile sunt grupate; acțiunile de arbore și organizare sunt în submeniuri. Duplicarea documentului și duplicarea cu descendenți folosesc aceeași comandă și payload-uri distincte. Variantele imposibile sunt ascunse. Comenzile pentru element și selecție sunt diferențiate.
 

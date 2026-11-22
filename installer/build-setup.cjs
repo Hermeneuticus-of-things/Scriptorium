@@ -1,5 +1,9 @@
 // Builds release/PneumaSofer-Setup-<version>.exe with Inno Setup from release/win-unpacked.
 // Needs Windows with Inno Setup 6 (ISCC.exe on PATH or in the default install folders).
+// Distribuția NESIGNATĂ e o alegere deliberată a proiectului (docs/DISTRIBUTIE-WINDOWS.md):
+// fără certificat de code signing, fără secrete de semnare; integritatea se asigură prin
+// SHA256SUMS publicate în Release. SmartScreen poate afișa avertisment de reputație pentru
+// un executabil nesemnat — explicat pentru utilizatori în docs/SMARTSCREEN-UTILIZATOR.md.
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -18,8 +22,8 @@ if (!fs.existsSync(ico)) {
 const candidates = [
   process.env.ISCC,
   'ISCC.exe',
-  'C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe',
-  'C:\\Program Files\\Inno Setup 6\\ISCC.exe',
+  'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+  'C:\Program Files\Inno Setup 6\ISCC.exe',
   path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Inno Setup 6', 'ISCC.exe'),
 ].filter(Boolean);
 for (const iscc of candidates) {

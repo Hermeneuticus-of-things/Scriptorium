@@ -1,4 +1,4 @@
-// Project notes with several tabs (Scrivener: Project Notes).
+// Project notes with several tabs (aplicația de referință: Project Notes).
 // project.projectNotes = [{ id, title }]; each tab's text is stored as notes/<id>.html.
 // The first tab keeps id 'project-notes' so projects from older versions (one
 // notes/project-notes.html file) keep their notes.

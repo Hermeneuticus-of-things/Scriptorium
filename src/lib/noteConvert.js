@@ -1,5 +1,5 @@
 // Conversion between inline notes (atoms inside the text) and linked notes
-// (marks over a text range), Scrivener-style:
+// (marks over a text range), aplicația de referință-style:
 //   inline annotation  <->  comment            (node 'annotation' <-> mark 'comment')
 //   inline footnote    <->  linked footnote    (node 'footnote'   <-> mark 'linkedFootnote')
 // Pure ProseMirror: every function takes an EditorState and returns a Transaction

@@ -5,7 +5,7 @@
 // default applies. syncFolder is chosen by the first sync out and is never written here.
 
 export const SYNC_FORMATS = ['rtf', 'txt', 'md'];
-export const SYNC_KEYS = ['syncAuto', 'syncFormat', 'syncNotesFormat', 'syncIncludeNotes'];
+export const SYNC_KEYS = ['syncAuto', 'syncFormat', 'syncNotesFormat', 'syncIncludeNotes', 'syncIncludeTrashed', 'syncNumericPrefix', 'syncCollectionId'];
 
 /** Dialog draft: '' means "as in Settings › Sharing". */
 export function makeSyncDraft(project = {}) {
@@ -14,6 +14,9 @@ export function makeSyncDraft(project = {}) {
     format: typeof project.syncFormat === 'string' ? project.syncFormat : '',
     notesFormat: typeof project.syncNotesFormat === 'string' ? project.syncNotesFormat : '',
     includeNotes: project.syncIncludeNotes === true ? 'yes' : project.syncIncludeNotes === false ? 'no' : '',
+    includeTrashed: project.syncIncludeTrashed === true,
+    numericPrefix: project.syncNumericPrefix !== false,
+    collectionId: typeof project.syncCollectionId === 'string' ? project.syncCollectionId : '',
   };
 }
 
@@ -27,6 +30,9 @@ export function applySyncDraft(project, draft) {
   if (s.notesFormat) out.syncNotesFormat = s.notesFormat;
   if (s.includeNotes === 'yes') out.syncIncludeNotes = true;
   else if (s.includeNotes === 'no') out.syncIncludeNotes = false;
+  if (s.includeTrashed) out.syncIncludeTrashed = true;
+  if (s.numericPrefix === false) out.syncNumericPrefix = false;
+  if (s.collectionId) out.syncCollectionId = s.collectionId;
   return out;
 }
 

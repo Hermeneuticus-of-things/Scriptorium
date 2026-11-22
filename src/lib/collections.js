@@ -45,7 +45,7 @@ export function deleteCollection(project, collectionId) {
   return next;
 }
 
-// The special "Search Results" collection (Scrivener §11.1.1, p. 219): fixed id,
+// The special "Search Results" collection (aplicația de referință §11.1.1, p. 219): fixed id,
 // always present, cannot be removed, and stores the last search used — so it
 // survives closing and reopening the project.
 export const SEARCH_RESULTS_ID = 'search-results';

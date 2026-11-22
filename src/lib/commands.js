@@ -44,7 +44,7 @@ export const DEFAULT_KEYS = {
   newText: 'Ctrl+N',
   newFolder: 'Ctrl+Shift+N',
   findProject: 'Ctrl+Shift+F',
-  // Quick Search (Scrivener 3 §11.5) omnibox: Ctrl+O keeps the browser
+  // Quick Search (aplicația de referință §11.5) omnibox: Ctrl+O keeps the browser
   // address-bar metaphor; Ctrl+G is Go To, Ctrl+K is split. Ctrl+Alt is
   // avoided (AltGr on Romanian layouts).
   quickSearch: 'Ctrl+O',
@@ -73,6 +73,14 @@ export const DEFAULT_KEYS = {
   // Romanian and other European layouts, used to type characters).
   toggleInspector: 'Ctrl+Shift+I',
   toggleBinder: 'Ctrl+Shift+B',
+  // T1 — Move Focus To (Anexa A.6): F6 ciclarea panourilor, Ctrl+Shift+1..4 ținte directe.
+  focusCycle: 'F6',
+  focusCycleBack: 'Shift+F6',
+  focusEditor: 'Ctrl+Shift+1',
+  focusBinder: 'Ctrl+Shift+2',
+  focusInspector: 'Ctrl+Shift+3',
+  focusAi: 'Ctrl+Shift+4',
+  helpFinder: 'Ctrl+Shift+H',
   compile: 'Ctrl+Shift+E',
   quickRef: 'Ctrl+Shift+R',
   snapshot: 'Ctrl+5',
@@ -84,7 +92,7 @@ export const DEFAULT_KEYS = {
   print: 'Ctrl+P',
   fullScreen: 'Ctrl+Shift+F11',
   revealBinder: 'Ctrl+Alt+R',
-  // Scrivener's Format > Show Ruler is Ctrl+Shift+R, already Quick Reference here.
+  // aplicației de referință Format > Show Ruler is Ctrl+Shift+R, already Quick Reference here.
   toggleRuler: 'Ctrl+Alt+Shift+R',
 };
 

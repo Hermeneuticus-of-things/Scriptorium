@@ -76,8 +76,12 @@ describe('menu layout', () => {
     expect(spec.find((m) => m.label === 'group.file').items.find((x) => x.items).items[0].id).toBe('import');
   });
   it('AI-only list and submenu labels are translated', () => {
-    expect(AI_ONLY_COMMANDS.has('irep')).toBe(false);
-    expect(AI_ONLY_COMMANDS.has('aiSettings')).toBe(false);
+    // Directivă autor 22.11.2026: cu AI oprit, TOATE poartile AI dispar — inclusiv I-REP
+    // și setările AI (activarea e self-service în Program → Setări, nu prin meniu).
+    expect(AI_ONLY_COMMANDS.has('irep')).toBe(true);
+    expect(AI_ONLY_COMMANDS.has('aiSettings')).toBe(true);
+    expect(AI_ONLY_COMMANDS.has('mcpConnect')).toBe(true);
+    expect(AI_ONLY_COMMANDS.has('nlmExport')).toBe(true);
     for (const defs of Object.values(SUBMENUS)) for (const [k] of defs) for (const l of ['ro', 'en']) expect(dictionaries[l][k], k).toBeTruthy();
   });
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { version as APP_VERSION } from '../../package.json';
 import { t } from '../lib/i18n.js';
 import { ABOUT_LICENSES, REPO_URL, DTED_URL } from '../lib/aboutInfo.js';
@@ -8,6 +8,12 @@ const GROUPS = ['app', 'runtime', 'npm', 'whisper', 'tts', 'dted'];
 // Help → About Pneuma Sofer. Mirrors D&TED's „ℹ Despre": name, subtitle, version, what it does,
 // a short note on the shared D&TED engine, and the licences of every bundled / downloaded component.
 export default function AboutDialog({ onClose }) {
+  const [instance, setInstance] = useState(null);
+  useEffect(() => {
+    let active = true;
+    window.api?.instanceInfo?.().then((info) => { if (active) setInstance(info); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal wide about-dialog" role="dialog" aria-modal="true" aria-labelledby="about-title" onClick={(e) => e.stopPropagation()}>
@@ -19,6 +25,24 @@ export default function AboutDialog({ onClose }) {
           {t('ui.about.source')}{' '}
           <a href={REPO_URL} target="_blank" rel="noreferrer">{REPO_URL}</a>
         </p>
+        <section className="about-instance" aria-labelledby="about-instance-title">
+          <h4 id="about-instance-title">Identitatea instalării</h4>
+          <p className="muted">Verifică versiunea și executabilul care rulează acum, ca să nu confunzi copii diferite ale aplicației.</p>
+          {instance ? (
+            <dl>
+              <dt>Versiune activă</dt><dd>{instance.current?.version || APP_VERSION}</dd>
+              <dt>Executabil activ</dt><dd className="about-path">{instance.current?.exePath || 'necunoscut'}</dd>
+              <dt>Copii instalate detectate</dt><dd>{instance.installations?.length || 1}</dd>
+            </dl>
+          ) : <p className="muted">Se verifică instalările detectabile…</p>}
+          {instance?.installations?.length > 1 && (
+            <ul className="about-installations">
+              {instance.installations.map((item) => (
+                <li key={item.exePath}><strong>{item.version || 'versiune necunoscută'}</strong> — {item.current ? 'activă' : 'altă copie'} — <span className="about-path">{item.exePath}</span></li>
+              ))}
+            </ul>
+          )}
+        </section>
         <section>
           <h4>D&amp;TED</h4>
           <p>{t('ui.about.dted_note')}</p>

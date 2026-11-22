@@ -6,3 +6,11 @@ dist-web/
 # Local package builds (do not commit binaries)
 dist-packages/
 
+# Local agent/test state; never publish paths, logs or private fixtures.
+.claude-flow/sessions/
+.work/
+outputs/
+
+pneuma-sync-*
+s1-*
+docs/assets/gif/frames/

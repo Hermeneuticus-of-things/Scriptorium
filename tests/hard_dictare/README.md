@@ -1,6 +1,6 @@
 # Set de test GREU — dictare D&TED (ASR eek/Parakeet + rezumator OpenLLM-Ro)
 
-> **NU rulați testele pe motor fără OK explicit de la Ionuț.** Setul e *pregătit*: `hyp/` și
+> **NU rulați testele pe motor fără OK explicit de la owner.** Setul e *pregătit*: `hyp/` și
 > `results/` sunt goale intenționat. Scorer-ul doar compară fișiere text deja produse.
 
 ## 1. Ce este și la ce folosește
@@ -9,7 +9,7 @@ un scorer, ca să măsurăm reproductibil cât de bine scrie D&TED ce s-a spus: 
 punctuație (fiecare semn), numere/date, entități, și dacă rezumatul inventează ceva.
 Rezultatele sunt comparabile între versiuni ale motorului (Python → C++ nativ, v3 → eek RO, CPU → CUDA).
 
-Căi: Windows (canonic) `C:\Users\Ionut\dted-hard-test\` ·
+Căi: Windows (canonic) `<USER_HOME>\dted-hard-test\` ·
 Linux box `/workspace/dted/repo/teste/hard_dictare/` (oglindă identică, necomisă) ·
 GitHub (de urcat) `Hermeneuticus-of-things/Scriptorium` → `tests/hard_dictare/`.
 
@@ -74,7 +74,7 @@ Lipsa unui fișier nu oprește scorul — proba apare ca „lipsește ipoteza”
 
 ## 5. Rulare scorer
 ```powershell
-cd C:\Users\Ionut\dted-hard-test
+cd <USER_HOME>\dted-hard-test
 python score.py --manifest manifest.json --normalize-numbers           # toate
 python score.py --manifest manifest.json --only 16_numere_date         # una (FĂRĂ normalize: verifică formatul)
 python score.py --manifest manifest.json --hyp-dir D:\rulari\eek_x --out results\eek_x.json
@@ -145,3 +145,4 @@ Pragurile se schimbă din `thresholds.json` fără a modifica codul.
 3. Opțional praguri în `thresholds.json` sub cheia categoriei; un semn nou → `MARKS` + `_marks_of` în `score.py`.
 4. Verifică scorer-ul cu gold ca ipoteză (`--hyp-dir gold` → totul PASS), apoi sincronizează Windows ↔ box.
 5. Real: înregistrează după `RECORDING.md`, pune `"source": "real: …"`.
+

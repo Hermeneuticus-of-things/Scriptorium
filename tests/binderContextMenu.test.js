@@ -70,7 +70,7 @@ describe('AI pe niveluri din meniul contextual (directivă autor 2026-11-10)', (
     expect(grp(run('a', {}, true).f)).toBeUndefined();
   });
 });
-describe('Adaugă în interior pe documente (Scrivener file-in-file)', () => {
+describe('Adaugă în interior pe documente (aplicația de referință file-in-file)', () => {
   it('text fără copii are submenu-ul în interior în grupul Adaugă, cu Document și Dosar', () => {
     const f = fixture('a', { callbacks: { add: vi.fn(), addInside: vi.fn() } });
     const addGroup = group(f.items, 'binder.add');

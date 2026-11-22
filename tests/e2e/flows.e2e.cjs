@@ -291,7 +291,8 @@ const flat = (nodes, out = []) => {
     await win.keyboard.press('Control+End');
     await win.keyboard.type(' TEXT DUPĂ SNAPSHOT');
     await save();
-    check('text changed after snapshot', /TEXT DUPĂ SNAPSHOT/.test(docOnDisk(alfa.id)));
+    // Hardened (CI): flush-ul pe disc poate întârzia pe runner încărcat — poll, nu un singur check.
+    check('text changed after snapshot', Boolean(await waitFor(() => /TEXT DUPĂ SNAPSHOT/.test(docOnDisk(alfa.id)), 4000)), docOnDisk(alfa.id).slice(-80));
     if (!(await win.locator('.side').count())) await cmd('toggleInspector');
     await win.locator('.side button[aria-label="Snapshot-uri"]').click();
     const row = win.locator('.snapshots li', { has: win.locator('strong', { hasText: /^Snapshot / }) }).first();
@@ -496,7 +497,13 @@ const flat = (nodes, out = []) => {
     await win.evaluate(() => window.api.setSettings({aiProvider:'ollama',aiBaseUrl:'http://127.0.0.1:11434',aiModel:'qwopus-iq4xs:latest'}));
     await sleep(350);
     // AI menu: native and in-app; "Conectează la Claude (MCP)…" opens its dialog.
-    check('native menu has AI', menuLabels.includes('AI'), menuLabels.join(' | '));
+    // Recapture: cu AI invizibil când e oprit (directiva 22.11), meniul AI apare DOAR după
+    // configurarea providerului — lista capturată mai sus e dinaintea fixture-ului.
+    const menuLabelsAfterAi = await app.evaluate(({ Menu }) => {
+      const m = global.__lastMenu || Menu.getApplicationMenu();
+      return m ? m.items.map((i) => i.label) : [];
+    });
+    check('native menu has AI', menuLabelsAfterAi.includes('AI'), menuLabelsAfterAi.join(' | '));
     // AI isolation (2026-10-27): the desktop toolbar has no AI menu copy (the native menu has it;
     // the toolbar keeps only the AI on/off status). The browser build keeps the menubar.
     check('no AI menu duplicate on the desktop toolbar', (await win.locator('header.toolbar .menu > button', { hasText: /^AI/ }).count()) === 0);

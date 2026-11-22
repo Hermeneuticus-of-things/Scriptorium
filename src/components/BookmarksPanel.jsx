@@ -4,7 +4,7 @@ import { t } from '../lib/i18n.js';
 import { moveTo } from '../lib/projectSettings.js';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
 
-// Project bookmarks with preview (Scrivener: Project Bookmarks).
+// Project bookmarks with preview (aplicația de referință: Project Bookmarks).
 // Props:
 //   bookmarks   project.bookmarks = [{ id, title? } | { file, title } | { url, title? }]
 //               (id = binder node id, file = a file on disk, url = a web address)

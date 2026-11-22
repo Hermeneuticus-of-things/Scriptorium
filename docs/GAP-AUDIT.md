@@ -10,11 +10,11 @@ Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H
 
 ## Findings that contradict the checklist
 
-- The help (`manual.ro.js`, `manual.en.js`) and the checklist (B: "Scrivener Links `[[`") promised
+- The help (`manual.ro.js`, `manual.en.js`) and the checklist (B: "aplicația de referință Links `[[`") promised
   typing `[[` for an internal link, but no code implemented it. **Fixed** (see below).
 - The status bar had hard-coded Romanian (`selectate`, `Manuscris:`, `Sesiune`, `Zoom text`) and the
   Composition targets overlay had `Document:`/`Sesiune:` untranslated. **Fixed**.
-- Snapshot compare was word-level only (checklist said "compare", Scrivener offers four levels). **Fixed**.
+- Snapshot compare was word-level only (checklist said "compare", aplicația de referință offers four levels). **Fixed**.
 
 ## Table
 
@@ -96,7 +96,7 @@ Effort: S (< 1 day) · M (days) · L (week+). Value for a novelist/translator: H
 | Word with split, web page, OPML, Final Draft, Fountain, .scriv | present | lib/docxImport.cjs:2; lib/importers.cjs:2; src/App.jsx:1193 | – | H |
 | Export files, .scriv export | present | lib/exporters.cjs; lib/scrivExport.cjs | – | M |
 | Sync with external folder | present | electron/v04Handlers.cjs:10; lib/folderSync.cjs | – | M |
-| Sync with Scrivener iOS | excluded | proprietary mobile format | L | M |
+| Sync with aplicația de referință iOS | excluded | proprietary mobile format | L | M |
 | Backups (zip, on open/close/interval) | present | lib/backup.cjs:158 | – | H |
 | Zotero / bibliography | present | lib/zotero.cjs:2; lib/bibliography.cjs | – | M |
 | **Application** | | | | |

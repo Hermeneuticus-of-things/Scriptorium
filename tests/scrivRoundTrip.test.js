@@ -159,7 +159,7 @@ const byTitle = (tree, title) => {
   return found;
 };
 
-describe('Scrivener export -> import round trip', () => {
+describe('aplicația de referință export -> import round trip', () => {
   let src;
   let res;
   let imp;
@@ -366,7 +366,7 @@ describe('Scrivener export -> import round trip', () => {
   });
 });
 
-describe('Scrivener RTF writer details', () => {
+describe('aplicația de referință RTF writer details', () => {
   const back = (html, ctx = {}) => {
     const r = htmlToScrivRtf(html, ctx);
     const comments = Object.fromEntries(r.comments.map((c) => [c.id, { text: c.text, footnote: c.footnote, color: c.color, author: c.author }]));
@@ -396,14 +396,14 @@ describe('Scrivener RTF writer details', () => {
   });
 });
 
-describe('Scrivener import edge cases', () => {
+describe('aplicația de referință import edge cases', () => {
   const U = { a: '11111111-1111-4111-8111-111111111111', gone: '99999999-9999-4999-8999-999999999999', c: '22222222-2222-4222-8222-222222222222' };
   it('comment anchored across paragraphs marks both paragraphs', () => {
     const rtf = `{\\rtf1\\ansi {\\field{\\*\\fldinst HYPERLINK "scrivcmt://${U.c}"}{\\fldrslt unu\\par doi}} trei\\par}`;
     const html = rtfToHtml(rtf, { comments: { [U.c]: { text: 'n', footnote: false } } });
     expect(html).toBe('<p><span data-comment="n" class="comment">unu</span></p><p><span data-comment="n" class="comment">doi</span> trei</p>');
   });
-  it('Scrivener Link to a deleted item keeps the text; the link stays a raw scrivlnk:// (not internal)', () => {
+  it('aplicația de referință Link to a deleted item keeps the text; the link stays a raw scrivlnk:// (not internal)', () => {
     const rtf = `{\\rtf1\\ansi {\\field{\\*\\fldinst HYPERLINK "scrivlnk://${U.gone}"}{\\fldrslt vezi}}\\par}`;
     const html = rtfToHtml(rtf, { linkFor: () => null });
     expect(html).toBe(`<p><a href="scrivlnk://${U.gone}">vezi</a></p>`);
@@ -415,8 +415,8 @@ describe('Scrivener import edge cases', () => {
   it('comment entry whose anchor is gone is kept at the end of the text', () => {
     expect(rtfToHtml('{\\rtf1\\ansi text\\par}', { comments: { [U.c]: { text: 'orfan', footnote: false } } })).toBe('<p>text</p><p><span data-annotation="orfan" class="annotation"></span></p>');
   });
-  it('a Scrivener inline footnote group scopes \\uc: no stray "?" after it', () => {
-    // As Scrivener writes it: {\Scrv_fn=...\end_Scrv_fn}; the closing brace restores the outer \uc1.
+  it('a aplicația de referință inline footnote group scopes \\uc: no stray "?" after it', () => {
+    // As aplicația de referință writes it: {\Scrv_fn=...\end_Scrv_fn}; the closing brace restores the outer \uc1.
     expect(rtfToHtml('{\\rtf1\\ansi\\uc1 a{\\Scrv_fn=n\\end_Scrv_fn} \\u259?\\par}')).toBe('<p>a<span data-footnote="n" class="footnote"></span> ă</p>');
     expect(rtfToHtml('{\\rtf1\\ansi\\uc1 a{\\Scrv_annot\\text=\\uc0 x\\end_Scrv_annot} \\u259?\\par}')).toBe('<p>a<span data-annotation="x" class="annotation"></span> ă</p>');
   });

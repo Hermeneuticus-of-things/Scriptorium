@@ -9,6 +9,7 @@ import { buildExtensions } from '../editor/extensions.js';
 import { parseAnnotations, updateComment, updateFootnote } from '../lib/panelsExtra.js';
 import BookmarksPanel from './BookmarksPanel.jsx';
 import { t as tr, uiLocale } from '../lib/i18n.js';
+import EmptyState from './EmptyState.jsx';
 import { moveTo, labelTitleOf, noneLabel, noneStatus, statusTitleOf, synopsisFromText, parseNumberField, customIconOf, CUSTOM_ICON_PREFIX } from '../lib/projectSettings.js';
 import ProjectNotesTabs from './ProjectNotesTabs.jsx';
 import { uiPrompt } from '../lib/uiPrompt.jsx';
@@ -124,7 +125,7 @@ function Section({ id, title, open: openByDefault = false, children }) {
   );
 }
 
-export default function Inspector({
+export default function Inspector({ onPatchMulti = null, 
   api, dir, project, node: selectedNode, html: selectedHtml, words: selectedWords, allKeywords, linkTargets = [], onOpen, onPatch: onPatchSelected,
   onNotesChange: onNotesSelected, onProjectNotesChange, onRestore, onError, flush,
   // Optional (batch C): lock, comments, per-id callbacks.
@@ -208,7 +209,7 @@ export default function Inspector({
               <div className="row">
                 <label>
                   {labelTitleOf(project, tr)}
-                  <select value={node.label} onChange={(e) => onPatch({ label: e.target.value })}>
+                  <select value={node.label} onChange={(e) => (onPatchMulti ? onPatchMulti({ label: e.target.value }) : onPatch({ label: e.target.value }))}>
                     {project.labels.map((l) => (
                       <option key={l.name} value={l.name}>{noneLabel(l.name, tr)}</option>
                     ))}
@@ -216,7 +217,7 @@ export default function Inspector({
                 </label>
                 <label>
                   {statusTitleOf(project, tr)}
-                  <select value={node.status} onChange={(e) => onPatch({ status: e.target.value })}>
+                  <select value={node.status} onChange={(e) => (onPatchMulti ? onPatchMulti({ status: e.target.value }) : onPatch({ status: e.target.value }))}>
                     {project.statuses.map((s) => (
                       <option key={s} value={s}>{noneStatus(s, tr)}</option>
                     ))}
@@ -438,7 +439,7 @@ function AnnotationsPane({ items, editable, canAdd, authorName, onAdd, onJump, o
         </div>
       )}
       {hint && <p className="muted small annot-hint" role="status">{hint}</p>}
-      {items.length === 0 && <p className="muted">{tr('ui.inspector.annot_empty')}</p>}
+      {items.length === 0 && <EmptyState compact title={tr('ui.inspector.annot_empty')} hint={tr('ui.inspector.annot_hint')} />}
       <ul className="annot-list">
         {shown.map(({ it, no }) => {
           return (
@@ -544,7 +545,7 @@ function AnnotationItem({ it, no, editable, editing, setEditing, authorName, onJ
   );
 }
 
-// Synopsis image (Scrivener: Inspector > Synopsis > image). Stored as node.synopsisImage = media file name.
+// Synopsis image (aplicația de referință: Inspector > Synopsis > image). Stored as node.synopsisImage = media file name.
 function SynopsisImagePicker({ api, dir, node, onPatch, onError }) {
   const [url, setUrl] = useState(null);
   useEffect(() => {
@@ -583,7 +584,7 @@ function SynopsisImagePicker({ api, dir, node, onPatch, onError }) {
   );
 }
 
-// Custom metadata (Scrivener: Text, Checkbox, List, Date), defined in project.customFields.
+// Custom metadata (aplicația de referință: Text, Checkbox, List, Date), defined in project.customFields.
 function CustomFields({ project, node, onPatch }) {
   const fields = project.customFields || [];
   if (!fields.length) return null;
@@ -654,7 +655,7 @@ function CustomFields({ project, node, onPatch }) {
 
 export const ICONS = ['📄', '📁', '📝', '⭐', '❗', '❓', '💡', '🔥', '🧭', '🗝️', '📌', '🕯️', '🌿', '🌊', '⛰️', '🏛️', '👤', '👥', '🗺️', '📅', '🔬', '📚', '✉️', '🎭'];
 
-// Icon, section type, lock, favorite and bookmarks (Scrivener: Inspector > Bookmarks).
+// Icon, section type, lock, favorite and bookmarks (aplicația de referință: Inspector > Bookmarks).
 const BM_SCOPE_KEY = 'pneuma-bookmarks-scope';
 function CustomIconImg({ api, dir, file }) {
   const [url, setUrl] = useState(null);
@@ -841,7 +842,7 @@ function DocumentExtras({ api, dir, project, node, onPatch, linkTargets, onOpen,
   );
 }
 
-// Read-only facts: dates, section type, Scrivener origin, bookmarks.
+// Read-only facts: dates, section type, aplicația de referință origin, bookmarks.
 function MetaTable({ project, node }) {
   const fmt = (d) => (d ? new Date(d).toLocaleString(uiLocale()) : '');
   const rows = [

@@ -99,7 +99,7 @@ export const Footnote = Node.create({
   },
 });
 
-// Linked footnote (Scrivener "linked footnote"): a mark over the anchor text,
+// Linked footnote (aplicația de referință "linked footnote"): a mark over the anchor text,
 // <span data-linked-footnote="note" class="linked-footnote">anchor</span>.
 export const LinkedFootnote = Mark.create({
   name: 'linkedFootnote',
@@ -129,7 +129,7 @@ export const LinkedFootnote = Mark.create({
   },
 });
 
-// Inline annotation (Scrivener "inline annotation"): a note inside the text that never compiles.
+// Inline annotation (aplicația de referință "inline annotation"): a note inside the text that never compiles.
 export const Annotation = Node.create({
   name: 'annotation',
   group: 'inline',
@@ -161,7 +161,7 @@ export const Annotation = Node.create({
   },
 });
 
-// Images the editor cannot display (EMF/WMF/PICT from Word/Scrivener): kept byte-for-byte.
+// Images the editor cannot display (EMF/WMF/PICT from Word/aplicația de referință): kept byte-for-byte.
 export const UnsupportedImage = Node.create({
   name: 'unsupportedImage',
   group: 'inline',

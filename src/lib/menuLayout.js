@@ -20,11 +20,15 @@ export const MENU_GROUPS = ['app', 'file', 'project', 'edit', 'insert', 'format'
 export const PROGRAM_COMMANDS = ['settings', 'shortcuts', 'customizeToolbar'];
 export const tierOf = (group) => Object.keys(MENU_TIERS).find((k) => MENU_TIERS[k].includes(group)) || null;
 
-// Commands that need Claude: left out of every menu (and shortcut) while AI is off.
-// I-REP, NotebookLM and "AI settings" (to turn AI back on) stay.
+// Commands that need AI: left out of every menu (and shortcut) while AI is off (directivă autor
+// 22.11.2026: un scriitor care nu vrea AI nu trebuie să vadă nicio urmă de AI — nici măcar meniul).
+// Toate — inclusiv I-REP/I-EDIT, setările AI, MCP și NotebookLM — revin când AI e activat din
+// Program → Setări (cheie + bifa „Funcții AI"); Programul merge integral fără ele.
 export const AI_ONLY_COMMANDS = new Set([
   'ai', 'mcpConnect', 'aiBulkSynopsis', 'aiConsistency', 'aiZoomReview',
   'aiResearchSel', 'aiDefineSel', 'aiTranslateSel', 'aiProofreadSel', 'researchAskSel', 'iedit',
+  'irep', 'aiCancelJob', 'aiSettings', 'aiProjectSettings',
+  'nlmExport', 'nlmOpen', 'nlmAskSel', 'nlmConsultSel',
 ]);
 
 // Submenus per menu: [label key, command ids]. A submenu takes the place of its first command.
@@ -37,7 +41,7 @@ export const SUBMENUS = {
   ],
   document: [['menu.snapshots', ['snapshot', 'snapshotTitled', 'snapshotSelection', 'snapshotManager']]],
   edit: [
-    ['menu.select', ['selectWord', 'selectSentence', 'selectParagraph']],
+    ['menu.select', ['selectWord', 'selectSentence', 'selectParagraph', 'selectWithSubdocs']],
     ['menu.find', ['findDoc', 'findNext', 'findPrev', 'findUseSel', 'findProject', 'findFormat', 'advSearch']],
   ],
   // Script modes: the ids are generated (script_<format>), matched by prefix.
@@ -58,6 +62,7 @@ export const SUBMENUS = {
     ['menu.inProject', ['findSel', 'researchSel', 'glossaryAdd']],
     // NotebookLM moved to the AI menu (AI isolation 2026-10-27).
   ],
+  nav: [['menu.focus', ['focusCycle', 'focusCycleBack', 'focusEditor', 'focusBinder', 'focusInspector', 'focusAi']]],
   ai: [
     ['menu.aiSelection', ['aiResearchSel', 'aiDefineSel', 'aiProofreadSel', 'aiTranslateSel', 'researchAskSel']],
     ['menu.aiBook', ['aiBulkSynopsis', 'aiConsistency', 'aiZoomReview']],

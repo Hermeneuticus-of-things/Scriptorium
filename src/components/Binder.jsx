@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { containerIds, dragIds, iconTint } from '../lib/panelsExtra.js';
+import { displayTitle } from '../lib/treeCore.js';
 import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
 import { DocumentIcon, DraftIcon, FolderIcon, Icon, ResearchIcon, TemplatesIcon, TrashIcon } from './Icons.jsx';
 import ContextMenu from './ContextMenu.jsx';
@@ -10,12 +11,12 @@ import { KEYWORD_MIME, keywordDropTargets } from '../lib/collections.js';
 import { labelColorIn as labelColorInOf, labelTint } from '../lib/settingsDefaults.js';
 
 function iconFor(node, templateFolderId) {
-  // The Document Templates folder gets its own icon (Scrivener's "T" folder, §7.5.1).
+  // The Document Templates folder gets its own icon (aplicației de referință "T" folder, §7.5.1).
   if (templateFolderId && node.id === templateFolderId) return <TemplatesIcon />;
   if (node.root === 'trash') return <TrashIcon />;
   if (node.root === 'draft') return <DraftIcon />;
   if (node.root === 'research') return <ResearchIcon />;
-  // Custom icon chosen in the Inspector (an emoji); Scrivener icon names fall through.
+  // Custom icon chosen in the Inspector (an emoji); aplicația de referință icon names fall through.
   if (node.icon && /\p{Extended_Pictographic}/u.test(node.icon)) return node.icon;
   if (node.type === 'file') {
     const mime = node.media?.mime || '';
@@ -40,7 +41,7 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onAi, onAddInside, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate, onRestore }) {
+export default function Binder({ project, docs, docTextFor, selectedId, selectedIds, onSelect, onAdd, onAi, onAddInside, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate, onRestore }) {
   const colorIn = labelColorInOf({ labelColorIn });
   const tintIcons = labelTintIcons ?? (labelColorIn ? colorIn.icons : Boolean(project.labelTintIcons));
   const rowTint = (node) => (colorIn.binder && node.label && labelColor[node.label] ? labelTint(labelColor[node.label]) : '');
@@ -65,7 +66,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     else if (mode === 'open') {
       if (onOpenItem) onOpenItem(id);
       else onSelect(id, {});
-      // "Edit document": the cursor goes into the editor (Scrivener)
+      // "Edit document": the cursor goes into the editor (aplicația de referință)
       onFocusEditor?.(id);
     } else if (mode === 'quickRef') {
       if (isRootNode || !onQuickRef) return false;
@@ -74,6 +75,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     return true;
   };
   const [collapsed, setCollapsed] = useState({});
+
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState('');
   const [drag, setDrag] = useState(null); // array of dragged ids
@@ -84,7 +86,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
   const typed = useRef({ text: '', at: 0 });
   const renameOutcome = useRef(null); // 'commit' (Enter) | 'cancel' (Esc) | null (blur)
   const autoExpand = useRef({ id: null, timer: 0 });
-  // New items arrive in rename mode (Scrivener): open the ancestors and edit the title.
+  // New items arrive in rename mode (aplicația de referință): open the ancestors and edit the title.
   useEffect(() => {
     if (!renameId) return;
     const trail = [];
@@ -119,6 +121,15 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealId]);
   const setAllCollapsed = (value) => setCollapsed(value ? Object.fromEntries(containerIds(project.tree).filter((id) => !project.tree.some((r) => r.id === id)).map((id) => [id, true])) : {});
+  // T2 (View ▸ Expand/Collapse All): comanda globală din meniu ajunge la starea locală de
+  // colaps prin eveniment — Binder stăpânește colapsul, meniul nu-i cunoaște interiorul.
+  const setAllRef = useRef(null);
+  setAllRef.current = setAllCollapsed;
+  useEffect(() => {
+    const onSetAll = (e) => setAllRef.current?.(Boolean(e.detail?.collapsed));
+    window.addEventListener('pneuma:binder-set-all-collapsed', onSetAll);
+    return () => window.removeEventListener('pneuma:binder-set-all-collapsed', onSetAll);
+  }, []);
   const doDrop = (ids, targetId, pos, copy) => {
     const list = ids.filter((id) => id !== targetId);
     if (!list.length) return;
@@ -181,10 +192,14 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
       ? filterIds.map((id) => ({ id, depth: 0, parentId: null, container: false, open: false }))
       : visibleRows(project.tree, (n) => Boolean(query) || !collapsed[n.id], visible);
   const titleOf = (id) => {
-    let t = '';
-    const find = (ns) => (ns || []).some((n) => (n.id === id ? ((t = n.title), true) : find(n.children)));
+    let n = null;
+    const find = (ns) => (ns || []).some((m) => (m.id === id ? ((n = m), true) : find(m.children)));
     find(project.tree);
-    return t;
+    if (!n) return '';
+    const t = String(n.title || '').trim();
+    if (t) return t;
+    // T4 (S3-O.04): nume adaptiv — sinopsisul sau primele cuvinte din text, doar afișat.
+    return displayTitle(n, docTextFor ? docTextFor(id) : '');
   };
   const select = (id, { ctrl = false, shift = false, alt = false } = {}) => {
     if (shift && !ctrl && !alt && onRangeSelect) {
@@ -194,7 +209,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     if (!ctrl && !alt) anchorRef.current = id;
     onSelect(id, { ctrl, shift, alt });
   };
-  // Hovering a closed container during a drag opens it after a short delay (Scrivener).
+  // Hovering a closed container during a drag opens it after a short delay (aplicația de referință).
   const hoverExpand = (node, pos) => {
     const a = autoExpand.current;
     const wants = node.children && node.children.length && collapsed[node.id] && pos === 'inside';

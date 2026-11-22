@@ -231,7 +231,7 @@ const Editor = forwardRef(function Editor(
           }
           return false;
         },
-        // Scrivener Links: Ctrl/Cmd+click (or any click when read-only) opens the target document.
+        // aplicația de referință Links: Ctrl/Cmd+click (or any click when read-only) opens the target document.
         handleClick: (_view, _pos, event) => {
           const a = event.target.closest && event.target.closest('a[href]');
           if (!a) return false;
@@ -293,7 +293,7 @@ const Editor = forwardRef(function Editor(
     return true;
   }
 
-  // Style navigation (Scrivener §17.4.1): computes the range with the pure module at call
+  // Style navigation (aplicația de referință §17.4.1): computes the range with the pure module at call
   // time and applies it as the selection; false when the caret has no identifiable style.
   function runStyleNav(nav) {
     if (!editor || editor.isDestroyed) return false;
@@ -374,7 +374,7 @@ const Editor = forwardRef(function Editor(
         if (replaceChangedRange(tr, htmlToDoc(h, editor.schema))) editor.view.dispatch(tr.setMeta('preventUpdate', true).setMeta('addToHistory', false));
       },
       selectAround: (kind) => Boolean(editor && !editor.isDestroyed && selectAround(editor.view, undefined, kind)),
-      // Format › Navigare după stil (Scrivener §17.4.1). All four read the caret position at
+      // Format › Navigare după stil (aplicația de referință §17.4.1). All four read the caret position at
       // call time; false tells the caller there was no identifiable style to act on.
       selectStyleRange: () => runStyleNav(styleRangeAt),
       nextInSameStyle: () => runStyleNav(nextStyleBlock),
@@ -498,7 +498,7 @@ const Editor = forwardRef(function Editor(
       addInlineFootnote: () => actionsRef.current.addFootnote?.(),
       addAnnotation: () => actionsRef.current.addAnnotation?.(),
       insertImage: () => actionsRef.current.insertImage?.(),
-      // useSelectionAsTitle=false: plain split at the cursor (Scrivener "Split at Selection").
+      // useSelectionAsTitle=false: plain split at the cursor (aplicația de referință "Split at Selection").
       splitAtCursor: (useSelectionAsTitle = true) => {
         if (!editor) return null;
         const { state } = editor;

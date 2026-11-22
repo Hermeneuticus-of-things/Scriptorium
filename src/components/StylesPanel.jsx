@@ -7,7 +7,7 @@ import { allStyleRange, hasIdentifiableStyle, nextStyleBlock, prevStyleBlock, st
 
 // Styles side panel (Format › Styles › Panel): the project's paragraph and character styles;
 // a click applies, the style under the cursor is marked, + makes one from the selection,
-// ⮃/⮁ jump to the previous/next paragraph with the caret's style (Scrivener §17.2.3/§17.4.1).
+// ⮃/⮁ jump to the previous/next paragraph with the caret's style (aplicația de referință §17.2.3/§17.4.1).
 export default function StylesPanel({ editor, styles = [], onStylesChange, onManage, onClose, readOnly }) {
   const cur = useEditorState({
     editor,

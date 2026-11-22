@@ -54,7 +54,7 @@ describe('RTF import', () => {
   });
 });
 
-describe('Scrivener import', () => {
+describe('aplicația de referință import', () => {
   it('decodes character references in .scrivx and strips a BOM from synopsis.txt', () => {
     const scriv = path.join(tmp, 'Test.scriv');
     const data = path.join(scriv, 'Files', 'Data');

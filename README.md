@@ -2,15 +2,24 @@
 
 Program gratuit de scris cărți lungi, în română și engleză: textul stă pe fișe, câte una pentru fiecare scenă sau capitol, iar la final primești cartea întreagă.
 
-**[Descarcă Pneuma Sofer 1.1.0 pentru Windows](../../releases/latest)**
+**[Descarcă ultima versiune pentru Windows](../../releases/latest)**
 
-[Schimbări și verificări pentru 1.1.0](docs/RELEASE-1.1.0-VERIFICATION.md). AI și serviciile externe sunt opționale; scrierea, organizarea, salvarea și exportul funcționează fără ele.
+[Schimbările din ultima versiune](CHANGELOG.md). **Pneuma Sofer lucrează extraordinar de bine fără AI** — scrierea, organizarea, dictarea, corecturile, căutările, backup-ul și exportul sunt complete și rămân pe calculatorul tău. Tot ce înseamnă AI stă ascuns până îl activezi tu din Setări; un scriitor care nu îl vrea nu vede niciun gram de AI în program.
 
 <p align="center">
   <img src="./assets/readme/hero.png" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">
 </p>
 
-Design language: Ionuț ADL — yes. *(Vezi `docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md` și `docs/ADL-AUDIT.md`.)*
+## Noutăți din ultima versiune
+
+| Noutate | Pe scurt | Vezi în mișcare |
+|---|---|---|
+| **Reparații simple și Semnale (fără AI)** | corecturi deterministe cu diff și snapshot automat; ritm și semnale de limbă, fără model, fără costuri | [Corectezi](#corectezi) |
+| **Ajutor și comenzi într-o singură căutare** | **Ctrl+Shift+H**: întrebi în limbaj natural, găsești articolul sau comanda reală și o execuți | [Interfața](#interfața) |
+| **Navigare din tastatură** | **F6/Shift+F6** mută focusul între panouri; **Ctrl+Shift+1..4** te duce direct la editor, binder, inspector, fereastră AI | [Interfața](#interfața) |
+| **Compile preview REPARAT** | previzualizarea nu mai umflă dialogul: panou propriu cu zoom „Potrivire la lățime" și bara de acțiuni mereu vizibilă | [Compilezi](#compilezi) |
+| **Fereastra AI autonomă** | container propriu, separat de Inspector; chips de context, acțiuni dintr-un click, stare vizibilă (inactiv / gândire / scrie / gata) | [AI, la final](#ai-doar-dacă-îl-vrei-opțional) |
+| **Motor universal de scriere + pachetul cărții** | metoda de scriere în fiecare apel AI; frazele fixate nu se ating, formulele oprite sunt zero; fiecare schimbare trece prin gardă și intră în registrul de decizii | [AI, la final](#ai-doar-dacă-îl-vrei-opțional) |
 
 ## 1. Ce este
 
@@ -18,7 +27,23 @@ Pneuma Sofer e un program gratuit de scris cărți lungi, în română și engle
 
 ## 2. Pentru cine
 
-Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânească pe bucăți.
+**Pentru scriitori** — cei care lucrează cu documente ample, informație densă, structuri ramificate, surse, capitole, revizuiri și continuitate editorială, pe proiecte care pot dura luni sau ani:
+
+| Cine | Ce scrie și ce ține în program |
+|---|---|
+| **Romancieri și prozatori** | romane, serii literare, personaje, cronologii, continuitate narativă, documentare |
+| **Autori SF, fantasy, ficțiune speculativă** | universuri, lumi fictive, genealogii, reguli interne, lore și documentație |
+| **Autori de nonficțiune și eseuri** | cărți tematice, eseuri extinse, biografii, texte documentare |
+| **Cercetători și autori academici** | teze, disertații, articole, bibliografie, surse și organizarea informației |
+| **Autori de tratate și lucrări de specialitate** | sisteme conceptuale ample, terminologie, capitole interdependente, referințe |
+| **Traducători** | texte sursă, terminologie, note, comparații între versiuni, coerență contextuală |
+| **Jurnaliști de investigație, autori documentari** | dosare, interviuri, cronologii, verificarea informației |
+| **Autori de manuale și materiale educaționale** | lecții, module, explicații, exemple, referințe |
+| **Autori de serii de cărți și proiecte editoriale** | continuitate între volume, arhive, planificare pe proiecte extinse |
+
+Suportul pentru scenarii există și el în program, dar nu pentru acest public e gândit Pneuma Sofer.
+
+Profilul complet al utilizatorului-țintă — categorii, nevoi, dificultăți, criterii de design pentru Help și fluxuri — e în [`docs/PROFIL-UTILIZATOR.md`](docs/PROFIL-UTILIZATOR.md) și e baza de referință pentru toate deciziile de produs.
 
 <p align="center">
   <img src="./assets/readme/for-whom.svg" width="100%" alt="Pentru cine e: scrii o carte, traduci o carte, scrii o lucrare">
@@ -26,17 +51,18 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 
 ## 3. Ce face
 
-| Funcția | Pe scurt |
-|---|---|
-| [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, cronologie, legături între documente |
-| [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic |
-| [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
-| [Corectezi](#corectezi) | revizie fără AI, corecturi învățate, asistent AI opțional, versiuni |
-| [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri |
-| [Cauți](#cauți-oriunde) | căutare rapidă, căutare avansată, căutare după formatare |
-| [Agenți AI](#ai-opțional-într-un-singur-loc) | Claude sau Codex lucrează direct în carte, dacă vrei |
-| [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate |
-| [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când |
+| Funcția | Pe scurt | În mișcare |
+|---|---|---|
+| [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, reordonate cu tragerea, legături între documente | 🎬 GIF |
+| [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic | 🎬 GIF |
+| [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția | — |
+| [Corectezi](#corectezi) | revizie fără AI, semnale de măsură, versiuni | 🎬 GIF |
+| [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri | 🎬 GIF |
+| [Cauți oriunde](#cauți-oriunde) | căutare rapidă, avansată, după formatare | 🎬 GIF |
+| [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate, cu previzualizare | 🎬 GIF |
+| [Interfața](#interfața) | focus din tastatură (F6), ajutor cu căutare, riglă | 🎬 GIF |
+| [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când | — |
+| [AI, doar dacă îl vrei](#ai-doar-dacă-îl-vrei-opțional) | asistent, I-EDIT, agenți prin MCP — invizibil până îl activezi din Setări | 🎬 GIF |
 
 ## 4. Cum face
 
@@ -62,10 +88,10 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 ### Scrii pe fișe
 
 <p align="center">
-  <img src="./assets/readme/corkboard.png" width="100%" alt="Panoul de fișe: fiecare scenă cu titlul, rezumatul și starea ei">
+  <img src="./docs/assets/gif/01-corkboard-move.gif" width="100%" alt="Pe panoul de fișe, fișa „Al doilea document" se trage înaintea lui „Capitol verificat": cardul alunecă, iar în binder, în stânga, ordinea capitolelor se schimbă odată cu ea — textul rămâne legat de fișa lui">
 </p>
 
-Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-ul și textul se mută odată cu ea. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text.
+Fiecare scenă are fișa ei, cu un rezumat de două rânduri. În animație vezi mișcarea de bază: **tragi fișa „Al doilea document" înaintea lui „Capitol verificat"**, cardul alunecă pe panou, iar în binder — lista din stânga — ordinea capitolelor se schimbă imediat. Textul nu se atinge: rămâne legat de fișa lui, unde o pui tu. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text.
 
 <details>
 <summary><strong>Cronologie, legături între documente, panoul de referință</strong></summary>
@@ -74,9 +100,19 @@ Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-u
   <img src="./assets/readme/timeline.png" width="100%" alt="Cronologia: scenele pe zile, câte un fir pentru fiecare personaj">
 </p>
 
-Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor. O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o citești și fără internet. *Vizualizare → Focus lingvistic* îți colorează substantivele sau verbele, ca să vezi unde se îngroașă textul.
+Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor — pentru un roman cu 20 de personaje, e diferența dintre „credeam că" și „știu".
 
-**Legături între documente.** Scrii `[[Matei]]` și textul devine legătură către fișa lui Matei. Dacă documentul nu există încă, de exemplu `[[Titlu nou]]`, programul îți propune să-l creeze pe loc. În Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el. Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, liniate ca pe hârtie, colorate după etichetă.
+<p align="center">
+  <img src="./docs/assets/gif/06-timeline.gif" width="100%" alt="Cronologia: scenele cărții așezate pe zile, câte un fir pentru fiecare personaj">
+</p> O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o citești și fără internet. *Vizualizare → Focus lingvistic* îți colorează substantivele sau verbele, ca să vezi unde se îngroașă textul.
+
+**Legături între documente.** Scrii `[[Matei]]` și textul devine legătură către fișa lui Matei. Dacă documentul nu există încă, de exemplu `[[Nume nou]]`, programul îți propune pe loc: „Îl creez și îl leg?" — un click și fișa există, legată. În animație se vede exact momentul propunerii, cu alegerea dosarului și butonul „Creează și leagă".
+
+<p align="center">
+  <img src="./docs/assets/gif/05-wiki-link.gif" width="100%" alt="În timp ce scrii „[[Nume nou]]", programul propune: „Îl creez și îl leg?" cu butoanele „Același dosar ca documentul curent" și „Creează și leagă"">
+</p>
+
+În Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el. Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, liniate ca pe hârtie, colorate după etichetă.
 
 <p align="center">
   <img src="./assets/readme/reference.png" width="100%" alt="Panoul de referință: scena Drumul deschisă doar pentru citire lângă scena la care scrii">
@@ -84,15 +120,19 @@ Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înai
 
 *Vizualizare → Deschide ca referință* pune alt document lângă cel la care scrii, doar de citit: planul, o scenă veche sau originalul. Bifezi *Editabil* dacă vrei totuși să-l schimbi.
 
+<p align="center">
+  <img src="./docs/assets/gif/04-reference-quickref.gif" width="100%" alt="Panoul de referință deschis lângă editor: scena veche rămâne vizibilă în timp ce scrii în documentul curent">
+</p>
+
 </details>
 
 ### Traduci
 
 <p align="center">
-  <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
+  <img src="./docs/assets/gif/02-translate-side.gif" width="100%" alt="Documentul original în panou principal și traducerea în al doilea panou, cu chenar verde pe cel în care scrii; din meniul Unelte se deschide submeniul Traducere cu DeepL, Google Translate și dicționare">
 </p>
 
-Pui fișierul Word primit de la editură și Pneuma Sofer îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă; fereastra în care scrii are chenar verde, cealaltă e ușor estompată. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+Pui fișierul Word primit de la editură și Pneuma Sofer îl împarte pe capitole. În animație: **originalul într-un panou, traducerea în celălalt** — panoul în care scrii are chenar verde, celălalt e ușor estompat, ca să nu te rătăcești. Din meniul Unelte îți sunt mereu la un clic DeepL, Google Translate, sinonimele și dicționarele. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
 
 Fără nicio configurare, traducerea folosește serviciul public gratuit al Google, marcat în program „Google (fără cheie)”: neoficial și fără garanții. Cu o cheie Google Cloud Translation sau conectat cu contul Google, folosești API-ul oficial; se configurează din *Setări → Servicii și conturi → Google Cloud Translation*, cu butonul „Conectează cu Google” (consimțământ în browser, fără parolă salvată).
 
@@ -114,7 +154,7 @@ Clic dreapta pe un cuvânt și ai la îndemână:
   <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Pneuma Sofer: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
 </p>
 
-Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spații și majusculă la început de frază.
+Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spații și majusculă la început de frază. *Bara de jos arată nivelul microfonului în timp real, cu Pauză, Stop și Anulează — recunoașterea e locală, pe calculatorul tău, fără internet.*
 
 - **Text nou:** fără selecție, textul intră la cursor.
 - **Modificare:** selectezi un cuvânt, o frază sau un paragraf și dictezi; ce spui înlocuiește selecția, iar un singur Ctrl+Z te întoarce la textul vechi.
@@ -139,6 +179,15 @@ Recunoașterea vorbirii e **în Pneuma Sofer** și lucrează **pe calculatorul t
 
 Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, punctuația și repetițiile, apoi le repară cu un clic. Când corectezi de mână un cuvânt subliniat, programul ține minte și data viitoare îl corectează singur. Cuvintele străine și transliterările (de exemplu sanscrita în IAST: ā, ī, ṛ, ś) rămân neatinse.
 
+**Reparații simple și Semnale — unelte de măsură, fără AI.** Din *Unelte* ai două instrumente noi care nu folosesc niciun model:
+
+- **Reparații simple (fără AI)…** — corecturile mecanice (ghilimele românești, spații duble, majusculă la început de paragraf, caractere invizibile) îți arată mai întâi diferențele și abia apoi le aplică, cu snapshot automat înainte. Fără prompt, fără costuri.
+- **Semnale pe text (fără AI)…** — ritmul frazelor și semnalele de limbă (calcuri, pasiv, repetiții, schelă de text generat), ca instrument de măsură. *Semnale, nu verdicte*: citești fiecare pe caz; textul bun al autorului nu trebuie să cadă.
+
+<p align="center">
+  <img src="./docs/assets/gif/05-semnale.gif" width="100%" alt="Semnale pe text: ritmul frazelor și grupurile de semnale de limbă, într-un panou determinist, fără AI">
+</p>
+
 <details>
 <summary><strong>Repetiții apropiate, asistentul AI, versiuni</strong></summary>
 
@@ -151,10 +200,14 @@ Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, p
 **Textul tău e protejat.** Ce scrii de mână devine text al autorului. Revizia cu AI nu schimbă, nu mută și nu șterge niciun paragraf scris de tine; doar semnalează, iar modificările tale se notează.
 
 <p align="center">
-  <img src="./assets/readme/ai.png" width="100%" alt="Asistentul AI arată corectura cuvânt cu cuvânt, cu înainte și după">
+  <img src="./docs/assets/gif/01-ai-corectura.gif" width="100%" alt="Fereastra AI: alegi Corectură dintr-un click, răspunsul se scrie în timp real, vezi diferențele și accepți — totul într-un panou separat de Inspector">
 </p>
 
 Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce îți place. Merge cu Anthropic, OpenAI, Google Gemini, NVIDIA NIM, OpenRouter și alții, sau cu un model care rulează pe calculatorul tău. Îl poți opri complet din Setări.
+
+**Fereastra AI — autonomă și cu context vizibil.** De la 1.3.0, asistentul stă în fereastra lui, separată de Inspector: Inspectorul măsoară (structură, metadate, snapshot-uri), AI-ul propune. Fereastra arată tot timpul asupra ce lucrează — cartea, documentul, nivelul (selecție, capitol, toată cartea) — ca chips mici sus. Acțiunile pornește dintr-un click (prompt starters), iar lângă model vezi starea: *inactiv / gândire / scrie / aplică / gata*.
+
+**Pachetul cărții — regulile tale, respectate la gramă.** În *AI → Setări AI (carte)…* îți pui frazele fixate („nu se ating, nici la corectură, nici la rescriere") și formulele oprite („zero apariții în textul livrat"). Ele au prioritate maximă în fața modelului: orice propunere care ar atinge o frază fixată se blochează și te întreabă explicit — și decizia ta (acceptată sau respinsă) intră în registrul de decizii al proiectului, cu actor, model și tipul schimbării (formă / sens / conținut). Metoda generală de scriere (doza de intervenție, ritm, anti-amprentă) e în fiecare apel; specificul cărții vine doar din pachetul tău — deci motorul același lucrează pe orice carte.
 
 <p align="center">
   <img src="./assets/readme/snapshots.png" width="100%" alt="Două versiuni ale aceluiași text, comparate una lângă alta">
@@ -167,7 +220,7 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 ### Cercetezi
 
 <p align="center">
-  <img src="./assets/readme/research.png" width="100%" alt="Panoul Cercetare în proiect: o întrebare și o întrebare de continuare, răspunsuri cu trimiteri [1], [2], sursele folosite și întrebări propuse sub răspuns">
+  <img src="./docs/assets/gif/07-research-ask.gif" width="100%" alt="Panoul Cercetare: întrebarea se scrie în câmp, iar răspunsul vine cu trimiteri [1], [2] către pasajele din sursele proiectului">
 </p>
 
 În **Cercetare → Întreabă** discuți cu sursele tale: primești răspunsul cu trimiteri [1], [2], iar un clic te duce la pasaj. Continui discuția, alegi ce surse folosește (manuscrisul, cercetarea, notele sau anumite dosare), aduci PDF, Word, text sau pagini web și salvezi răspunsul ca notă ori îl inserezi în text, cu trimiterile ca note de subsol. Fără AI, panoul doar caută în surse. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT** sau **Manus**, gata împărțită.
@@ -180,37 +233,17 @@ Căutarea avansată înțelege **operatorii** „începe cu cuvântul" / „se t
 
 **Căutare după formatare** (Ctrl+Alt+F) găsește text după stiluri de caracter, linkuri, imagini sau text păstrat (preserve), iar corkboard-ul și outline-ul au **bare de filtrare** (Ctrl+F în vederea lor) care restrâng fișele la ce cauți. Uneltele adaugă **Focalizarea pe dialoguri**: toate replicile din proiect, într-un singur panou, pentru corectură.
 
-### AI, opțional, într-un singur loc
-
-Tot ce folosește AI stă grupat și se pornește sau se oprește dintr-un singur loc: pastila AI din bară și *Setări → Chei și conturi*. Fără AI, programul merge întreg; verificarea I-REP și reparațiile sigure rămân.
-
-Rundele I-EDIT și I-REP arată răspunsul AI pe măsură ce se scrie, cu cronometru și anulare cu Esc, plus o estimare înainte de rulare: „Estimare: 7 documente × 3 bucle ≈ 21 apeluri AI”. Rezultatele serviciilor (gramatică, sinonime, traducere, dicționare) apar în pagină, lângă selecție, nu într-o fereastră peste text.
-
-- **Asistentul AI** — corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce vrei.
-- **I-EDIT** — runde editoriale pe tot textul, cu regulile tale.
-- **Bucla de reparare (I-REP cu AI)** — repară problemele semnalate și reverifică.
-- **În surse / NotebookLM** — întrebi sursele tale; cu un notebook configurat, chiar cu întrebări de continuare până primește răspuns.
-- **Traducere și definiții** — DeepL/Google și explicații AI direct din meniul cuvântului.
-- **Agenți AI prin MCP** — Claude sau Codex lucrează direct în carte (mai jos).
-
-Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic — dialogul detectează ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie configurarea fiecăruia dintr-un clic, cu copie de siguranță. Agentul primește peste 80 de unelte (citire/scriere documente, binder, căutare, snapshot-uri, Compile, import/export, revizie). Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
-
-> [!IMPORTANT]
-> **O vorbă despre AI.** Oricât de bun ar fi modelul și oricât te-ar ajuta, AI-ul nu garantează originalitatea. Poate combina idei, deschide perspective și stimula creativitatea, dar se bazează pe ceea ce a învățat deja. Noutatea autentică apare din experiența, intuiția și gândirea ta, nu din simpla reformulare a unor idei existente.
->
-> Mai mult, răspunsurile AI-ului sunt influențate de valorile, regulile și interesele companiilor care îl dezvoltă, inclusiv de felul în care acestea stabilesc ce poate spune și cum. Astfel, fără să-ți dai seama, poți ajunge să reproduci viziunea lor asupra lumii, crezând că este propria ta gândire.
->
-> Pneuma Sofer merge întreg și fără AI: scrisul rămâne al tău, iar AI-ul îl pornești sau îl oprești oricând, dintr-un singur loc. Folosește-l ca pe un instrument de scris mai inteligent, care elimină fricțiunile și birocrația editorială, nu ca pe un înlocuitor al gândirii sau al creativității tale. Tehnologia trebuie să-ți elibereze scrisul, nu să-l scrie în locul tău.
-
-Pentru **NotebookLM**, secțiunea *Servicii și conturi* are un buton dedicat de logare: se deschide o fereastră în care te autentifici o dată pe Google; sesiunea rămâne doar în calculatorul tău și e folosită de serverul NotebookLM la întrebările pe surse.
-
 ### Compilezi
 
 <p align="center">
   <img src="./assets/readme/compile.png" width="100%" alt="Fereastra Compilează: formatele predefinite în stânga, formatul de ieșire și filele de setări în dreapta">
 </p>
 
-*Fișier → Compilează…* adună bucățile într-o singură carte. Pașii sunt mereu aceiași: alegi ce intră, alegi forma, apeși *Compilează*. Formatele gata făcute acoperă manuscrisul pentru editură, cartea tipărită 6 × 9 in, e-book-ul și PDF-ul de citit; ieșirea poate fi Word, PDF, EPUB, ODT, RTF, HTML, Markdown, LaTeX, Fountain sau Final Draft.
+<p align="center">
+  <img src="./docs/assets/gif/03-compile-content.gif" width="100%" alt="Fereastra Compilează: bifezi ce capitole intră în carte, alegi formatul și previzualizarea arată rezultatul; bara Închide / Salvează / Compilează rămâne mereu vizibilă">
+</p>
+
+*Fișier → Compilează…* adună bucățile într-o singură carte. În animație vezi pașii: bifezi ce intră (un capitol debifat dispare din previzualizare), alegi forma, apeși *Compilează* — iar bara de acțiuni rămâne fixă jos, oricât ai derula. Formatele gata făcute acoperă manuscrisul pentru editură, cartea tipărită 6 × 9 in, e-book-ul și PDF-ul de citit; ieșirea poate fi Word, PDF, EPUB, ODT, RTF, HTML, Markdown, LaTeX, Fountain sau Final Draft.
 
 <details>
 <summary><strong>Compile pas cu pas: conținut, formate, secțiuni, pagină, tipografie</strong></summary>
@@ -249,7 +282,13 @@ Formatele predefinite nu se modifică: apeși *Duplică*, redenumești copia și
 | Fountain, Final Draft (.fdx) | scenarii |
 | Text simplu | orice altceva |
 
-*Tipărire / previzualizare* îți arată paginile înainte de orice. Proiectul întreg se poate exporta și ca `.scriv`, din meniul *Fișier*.
+*Tipărire / previzualizare* îți arată paginile înainte de orice. De la 1.3.0, previzualizarea stă în propriul panou, lângă formular — nu mai umflă dialogul — cu zoom **„Potrivire la lățime"** (pagina 6 × 9 se scalează, nu te împinge în scroll), iar bara cu *Salvează setările / Compilează* rămâne mereu vizibilă jos.
+
+<p align="center">
+  <img src="./docs/assets/gif/03-compile-preview.gif" width="100%" alt="Compile: previzualizarea în panou propriu, cu zoom Potrivire la lățime și bara de acțiuni mereu vizibilă">
+</p>
+
+Proiectul întreg se poate exporta și ca `.scriv`, din meniul *Fișier*.
 
 **4. Tipurile de secțiune.** Fiecare bucată din binder are un tip: *Parte*, *Capitol*, *Secțiune*, *Scenă*, *Pagină de titlu*. Implicit, dosarele sunt capitole, documentele cu subdocumente sunt „capitol cu text”, iar documentele simple sunt scene; poți schimba tipul oricărei bucăți din Inspector. În fila *Secțiuni* hotărăști pentru fiecare tip cum apare: cu titlu sau fără, cu un prefix ca „Capitolul <$n>” sau „Partea <$n:Words>” („Partea Unu”), cu majuscule, aliniat la centru sau la stânga, pe pagină nouă sau nu, cu text sau doar cu titlu. Scenele, de obicei, apar fără titlu, despărțite de un separator.
 
@@ -301,6 +340,20 @@ Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire
 
 Sus vezi doar ce folosești des; restul stă în meniuri ordonate. Din *Program → Personalizează bara de instrumente* alegi singur butoanele și le muți cu mouse-ul. Tot ce ține de AI stă într-un singur meniu. Rigla (Ctrl+Alt+Shift+R) arată indentările și tab-urile, ca în Word.
 
+**Cauți oriunde, dintr-o singură linie.** **Ctrl+O** deschide Căutarea rapidă — bați câteva litere și apar instant rezultatele pe Titluri, Sinopse și Text.
+
+**Fereastra în mâini, din tastatură.** **F6** (înapoi: Shift+F6) mută focusul pe panoul următor — binder, editor, split, inspector, fereastră AI — în ordinea în care le vezi pe ecran; panoul închis se deschide singur când îi ceri focusul. Ținte directe: **Ctrl+Shift+1..4** (editor / binder / inspector / AI).
+
+<p align="center">
+  <img src="./docs/assets/gif/04-focus-f6.gif" width="100%" alt="F6 mută focusul între binder, editor și inspector, în ordinea vizuală">
+</p>
+
+**Ajutor și comenzi, într-o singură căutare.** **Ctrl+Shift+H** deschide fereastra în care poți întreba în limbajul tău — „cum revin la o versiune anterioară", „cum export în PDF" — și primești două feluri de răspuns, clar separate: **Cum se face** (articole și proceduri) și **Comenzi** (comenzile reale ale programului, cu scurtătura lor; Enter le execută). Înțelege greșelile de tastare și sinonimele; nimic nu se execută fără click, iar comenzile blocate nu pornesc din căutare. Manualul complet rămâne la **F1**.
+
+<p align="center">
+  <img src="./docs/assets/gif/02-help-finder.gif" width="100%" alt="Ctrl+Shift+H: întrebare în limbaj natural, rezultate separate în Cum se face și Comenzi">
+</p>
+
 <details>
 <summary><strong>Meniul AI și rigla</strong></summary>
 
@@ -344,6 +397,32 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
   <img src="./assets/readme/sync.svg" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
 </p>
 
+### AI, doar dacă îl vrei (opțional)
+
+**Cei care scriu cărți trebuie să știe asta din start: Pneuma Sofer e un program care te ajută să scrii cărți — nu un soft de AI.** Lucrează extraordinar de bine fără AI, iar AI-ul e doar o opțiune, la final, pentru cei care îl vor. Când e oprit (starea implicită), **nu apare nicăieri**: niciun meniu, niciun buton, nicio fereastră — programul arată și merge ca un program de scris clasic. Îl activezi din *Program → Setări → Chei și conturi* (cheie + bifa „Funcții AI") și abia atunci apare meniul AI, cu tot ce e mai jos.
+
+Tot ce folosește AI stă grupat într-un singur meniu și se pornește sau se oprește dintr-un singur loc: pastila AI din bară și *Setări → Chei și conturi*.
+
+Rundele I-EDIT și I-REP arată răspunsul AI pe măsură ce se scrie, cu cronometru și anulare cu Esc, plus o estimare înainte de rulare: „Estimare: 7 documente × 3 bucle ≈ 21 apeluri AI”. Rezultatele serviciilor (gramatică, sinonime, traducere, dicționare) apar în pagină, lângă selecție, nu într-o fereastră peste text.
+
+- **Asistentul AI** — corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce vrei.
+- **I-EDIT** — runde editoriale pe tot textul, cu regulile tale.
+- **Bucla de reparare (I-REP cu AI)** — repară problemele semnalate și reverifică.
+- **În surse / NotebookLM** — întrebi sursele tale; cu un notebook configurat, chiar cu întrebări de continuare până primește răspuns.
+- **Traducere și definiții** — DeepL/Google și explicații AI direct din meniul cuvântului.
+- **Agenți AI prin MCP** — Claude sau Codex lucrează direct în carte (mai jos).
+
+Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic — dialogul detectează ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie configurarea fiecăruia dintr-un clic, cu copie de siguranță. Agentul primește peste 80 de unelte (citire/scriere documente, binder, căutare, snapshot-uri, Compile, import/export, revizie). Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
+
+> [!IMPORTANT]
+> **O vorbă despre AI.** Oricât de bun ar fi modelul și oricât te-ar ajuta, AI-ul nu garantează originalitatea. Poate combina idei, deschide perspective și stimula creativitatea, dar se bazează pe ceea ce a învățat deja. Noutatea autentică apare din experiența, intuiția și gândirea ta, nu din simpla reformulare a unor idei existente.
+>
+> Mai mult, răspunsurile AI-ului sunt influențate de valorile, regulile și interesele companiilor care îl dezvoltă, inclusiv de felul în care acestea stabilesc ce poate spune și cum. Astfel, fără să-ți dai seama, poți ajunge să reproduci viziunea lor asupra lumii, crezând că este propria ta gândire.
+>
+> Pneuma Sofer merge întreg și fără AI: scrisul rămâne al tău, iar AI-ul îl pornești sau îl oprești oricând, dintr-un singur loc. Folosește-l ca pe un instrument de scris mai inteligent, care elimină fricțiunile și birocrația editorială, nu ca pe un înlocuitor al gândirii sau al creativității tale. Tehnologia trebuie să-ți elibereze scrisul, nu să-l scrie în locul tău.
+
+Pentru **NotebookLM**, secțiunea *Servicii și conturi* are un buton dedicat de logare: se deschide o fereastră în care te autentifici o dată pe Google; sesiunea rămâne doar în calculatorul tău și e folosită de serverul NotebookLM la întrebările pe surse.
+
 ## 8. Ce urmează
 
 Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
@@ -352,9 +431,26 @@ Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.
-- **Golurile din auditul de paritate cu Scrivener 3**: manualul oficial (capitolele 1–26) a fost comparat capitol cu capitol cu Pneuma Sofer; diferențele sunt prioritizate în [`docs/PARITY-AUDIT-NEXT-CHAPTERS.md`](docs/PARITY-AUDIT-NEXT-CHAPTERS.md) (5 goluri P1: Snapshots Manager, selectarea textului după stil, cuprinsul cu numere de pagină, lista de conținut din Compile, printarea fișelor și a outline-ului).
+- **Paritate funcțională cu programele de referință din categorie.** Am comparat funcționalitatea, capitol cu capitol, cu standardul genului; golurile identificate au fost prioritizate și implementate pe tranșe (navigarea din tastatură, comenzile de meniu, comportamentele, Copy To Project, formatele noi de compile — deja în 1.4.0).
+- **Branching experimental pe documente** — variante de rescriere pe ramuri, cu merge selectiv.
 
 Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea e descrisă în [`docs/DTED.md`](docs/DTED.md).
+
+
+## Documentație, pe scurt
+
+Tot ce e important e pe această pagină. Doar aceste trimiteri duc mai adânc, când ai nevoie:
+
+| Vrei… | Unde |
+|---|---|
+| Manualul complet, din program | **F1** (23 de capitole, ro + en) |
+| Ajutor și comenzi, cu căutare | **Ctrl+Shift+H** în program |
+| Ce s-a schimbat în fiecare versiune | [`CHANGELOG.md`](CHANGELOG.md) |
+| Cum e construit programul | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/DESIGN.md`](docs/DESIGN.md) |
+| Limbajul de design al interfeței | [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md) |
+| Dictarea (D&TED) | [`docs/DTED.md`](docs/DTED.md) |
+| Planul următoarelor versiuni | [`ROADMAP.md`](ROADMAP.md) |
+| Cum raportezi o problemă | secțiunea [Ai găsit o problemă?](#ai-găsit-o-problemă) de mai jos |
 
 ## 9. Instalare, întrebări, probleme
 
@@ -393,6 +489,8 @@ $env:GITHUB_TOKEN='token-ul-tău'; irm -Headers @{Authorization="Bearer $env:GIT
 </details>
 
 Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `pneuma` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
+
+**La prima rulare, Windows poate afișa „Windows protected your PC".** E un mesaj de reputație pentru programe noi, nesemnate digital (alegere deliberată a proiectului), nu o detecție de virus. Vezi ghidul pas cu pas: [Ce înseamnă avertismentul SmartScreen și ce faci](docs/SMARTSCREEN-UTILIZATOR.md) — inclusiv cum verifici fișierul descărcat cu `SHA256SUMS` din Release, înainte să apeși „Run anyway".
 
 Pentru dictare, motorul de recunoaștere a vorbirii se descarcă din program, la prima folosire (în jur de 590 MB, o singură dată); nu e inclus în installer, ca acesta să rămână mic.
 
@@ -539,6 +637,8 @@ Cartea mea.scribner/
 
 </details>
 
+
+**De reținut: Pneuma Sofer lucrează extraordinar de bine fără AI.** Scrierea, organizarea, dictarea, corecturile, căutările, backup-ul și exportul sunt complete și rămân pe calculatorul tău. Tot ce înseamnă AI stă ascuns până îl activezi tu din Setări; un scriitor care nu îl vrea nu vede niciun gram de AI în program.
 
 ## Licență
 

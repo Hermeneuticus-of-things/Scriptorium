@@ -407,25 +407,25 @@ export function registerFullTools(ctx) {
     if (hiddenPath(abs) || hiddenPath(fs.realpathSync.native(abs))) throw new Error('Nu citesc din foldere ascunse.');
     return abs;
   };
-  // Scrivener projects (.scriv) read in place, without importing: an agent asked about a .scriv
+  // aplicația de referință projects (.scriv) read in place, without importing: an agent asked about a .scriv
   // finds them here (read only; import_scriv turns one into a Pneuma Sofer project).
   tool(
     'scriv_outline',
-    'Citește binder-ul unui proiect Scrivener (folderul .scriv sau fișierul .scrivx) fără să-l importe: titlu, tip, nivel și id pentru fiecare element. Doar citire.',
+    'Citește binder-ul unui proiect aplicația de referință (folderul .scriv sau fișierul .scrivx) fără să-l importe: titlu, tip, nivel și id pentru fiecare element. Doar citire.',
     { scriv_path: z.string() },
     (_dir, { scriv_path }) => scrivOutline(scrivSource(scriv_path)),
     { global: true },
   );
   tool(
     'scriv_read',
-    'Textul unui element dintr-un proiect Scrivener (.scriv), ca text simplu, fără import (kind: content sau notes). Id-ul vine din scriv_outline. Doar citire.',
+    'Textul unui element dintr-un proiect aplicația de referință (.scriv), ca text simplu, fără import (kind: content sau notes). Id-ul vine din scriv_outline. Doar citire.',
     { scriv_path: z.string(), id: z.string(), kind: z.enum(['content', 'notes']).default('content') },
     (_dir, { scriv_path, id, kind }) => scrivRead(scrivSource(scriv_path), id, kind),
     { global: true },
   );
   tool(
     'scriv_search',
-    'Caută cuvinte în textele unui proiect Scrivener (.scriv sau fișierul .scrivx), fără import: elementele găsite, cu un fragment în jurul potrivirii. Doar citire.',
+    'Caută cuvinte în textele unui proiect aplicația de referință (.scriv sau fișierul .scrivx), fără import: elementele găsite, cu un fragment în jurul potrivirii. Doar citire.',
     { scriv_path: z.string(), query: z.string().min(1), limit: z.number().int().min(1).max(500).default(50) },
     (_dir, { scriv_path, query, limit }) => scrivSearch(scrivSource(scriv_path), query, { limit }),
     { global: true },
@@ -433,7 +433,7 @@ export function registerFullTools(ctx) {
 
   tool(
     'import_scriv',
-    'Importă un proiect Scrivener întreg (folderul .scriv sau fișierul .scrivx din el) ca proiect Pneuma Sofer nou în dest_dir. Proiectul nou devine disponibil în această sesiune.',
+    'Importă un proiect aplicația de referință întreg (folderul .scriv sau fișierul .scrivx din el) ca proiect Pneuma Sofer nou în dest_dir. Proiectul nou devine disponibil în această sesiune.',
     { scriv_path: z.string(), dest_dir: z.string() },
     (_dir, { scriv_path, dest_dir }) => {
       const src = scrivSource(scriv_path);
