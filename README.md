@@ -2,7 +2,7 @@
 
 Program gratuit de scris cărți lungi, în română și engleză: textul stă pe fișe, câte una pentru fiecare scenă sau capitol, iar la final primești cartea întreagă.
 
-**[Descarcă Pneuma Sofer 1.3.0 pentru Windows](../../releases/latest)**
+**[Descarcă ultima versiune pentru Windows](../../releases/latest)**
 
 [Schimbări în v1.3.0](CHANGELOG.md). AI și serviciile externe sunt opționale; scrierea, organizarea, salvarea și exportul funcționează fără ele.
 
@@ -12,7 +12,7 @@ Program gratuit de scris cărți lungi, în română și engleză: textul stă p
 
 Design language: Ionuț ADL — yes. *(Vezi `docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md` și `docs/ADL-AUDIT.md`.)*
 
-## Nou în 1.3.0
+## Noutăți din ultima versiune
 
 | Noutate | Pe scurt | Vezi în mișcare |
 |---|---|---|
@@ -398,6 +398,23 @@ Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
 - **Branching experimental pe documente** — variante de rescriere pe ramuri, cu merge selectiv.
 
 Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea e descrisă în [`docs/DTED.md`](docs/DTED.md).
+
+
+## Documentație, pe scurt
+
+Tot ce e important e pe această pagină. Doar aceste trimiteri duc mai adânc, când ai nevoie:
+
+| Vrei… | Unde |
+|---|---|
+| Manualul complet, din program | **F1** (23 de capitole, ro + en) |
+| Ajutor și comenzi, cu căutare | **Ctrl+Shift+H** în program |
+| Ce s-a schimbat în fiecare versiune | [`CHANGELOG.md`](CHANGELOG.md) |
+| Paritatea cu Scrivener 3, element cu element | [`docs/audit/scrivener3/comparison_registry.md`](docs/audit/scrivener3/comparison_registry.md) (799 intrări cu dovezi) |
+| Cum e construit programul | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/DESIGN.md`](docs/DESIGN.md) |
+| Limbajul de design (Ionuț ADL) | [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md) |
+| Dictarea (D&TED) | [`docs/DTED.md`](docs/DTED.md) |
+| Planul următoarelor versiuni | [`ROADMAP.md`](ROADMAP.md) |
+| Cum raportezi o problemă | secțiunea [Ai găsit o problemă?](#ai-găsit-o-problemă) de mai jos |
 
 ## 9. Instalare, întrebări, probleme
 
