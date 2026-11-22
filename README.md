@@ -29,7 +29,23 @@ Pneuma Sofer e un program gratuit de scris cărți lungi, în română și engle
 
 ## 2. Pentru cine
 
-Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânească pe bucăți.
+**Pentru scriitori** — cei care lucrează cu documente ample, informație densă, structuri ramificate, surse, capitole, revizuiri și continuitate editorială, pe proiecte care pot dura luni sau ani:
+
+| Cine | Ce scrie și ce ține în program |
+|---|---|
+| **Romancieri și prozatori** | romane, serii literare, personaje, cronologii, continuitate narativă, documentare |
+| **Autori SF, fantasy, ficțiune speculativă** | universuri, lumi fictive, genealogii, reguli interne, lore și documentație |
+| **Autori de nonficțiune și eseuri** | cărți tematice, eseuri extinse, biografii, texte documentare |
+| **Cercetători și autori academici** | teze, disertații, articole, bibliografie, surse și organizarea informației |
+| **Autori de tratate și lucrări de specialitate** | sisteme conceptuale ample, terminologie, capitole interdependente, referințe |
+| **Traducători** | texte sursă, terminologie, note, comparații între versiuni, coerență contextuală |
+| **Jurnaliști de investigație, autori documentari** | dosare, interviuri, cronologii, verificarea informației |
+| **Autori de manuale și materiale educaționale** | lecții, module, explicații, exemple, referințe |
+| **Autori de serii de cărți și proiecte editoriale** | continuitate între volume, arhive, planificare pe proiecte extinse |
+
+Suportul pentru scenarii există și el în program, dar nu pentru acest public e gândit Pneuma Sofer.
+
+Profilul complet al utilizatorului-țintă — categorii, nevoi, dificultăți, criterii de design pentru Help și fluxuri — e în [`docs/PROFIL-UTILIZATOR.md`](docs/PROFIL-UTILIZATOR.md) și e baza de referință pentru toate deciziile de produs.
 
 <p align="center">
   <img src="./assets/readme/for-whom.svg" width="100%" alt="Pentru cine e: scrii o carte, traduci o carte, scrii o lucrare">
@@ -37,17 +53,18 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 
 ## 3. Ce face
 
-| Funcția | Pe scurt |
-|---|---|
-| [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, cronologie, legături între documente |
-| [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic |
-| [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția |
-| [Corectezi](#corectezi) | revizie fără AI, corecturi învățate, asistent AI opțional, versiuni |
-| [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri |
-| [Cauți](#cauți-oriunde) | căutare rapidă, căutare avansată, căutare după formatare |
-| [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate |
-| [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când |
-| [AI, doar dacă îl vrei](#ai-doar-dacă-îl-vrei-opțional) | asistent, I-EDIT, agenți prin MCP — invizibil până îl activezi din Setări |
+| Funcția | Pe scurt | În mișcare |
+|---|---|---|
+| [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, reordonate cu tragerea, legături între documente | 🎬 GIF |
+| [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic | 🎬 GIF |
+| [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția | — |
+| [Corectezi](#corectezi) | revizie fără AI, semnale de măsură, versiuni | 🎬 GIF |
+| [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri | 🎬 GIF |
+| [Cauți oriunde](#cauți-oriunde) | căutare rapidă, avansată, după formatare | 🎬 GIF |
+| [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate, cu previzualizare | 🎬 GIF |
+| [Interfața](#interfața) | focus din tastatură (F6), ajutor cu căutare, riglă | 🎬 GIF |
+| [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când | — |
+| [AI, doar dacă îl vrei](#ai-doar-dacă-îl-vrei-opțional) | asistent, I-EDIT, agenți prin MCP — invizibil până îl activezi din Setări | 🎬 GIF |
 
 ## 4. Cum face
 
@@ -73,10 +90,10 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 ### Scrii pe fișe
 
 <p align="center">
-  <img src="./assets/readme/corkboard.png" width="100%" alt="Panoul de fișe: fiecare scenă cu titlul, rezumatul și starea ei">
+  <img src="./docs/assets/gif/01-corkboard-move.gif" width="100%" alt="Pe panoul de fișe, fișa „Al doilea document" se trage înaintea lui „Capitol verificat": cardul alunecă, iar în binder, în stânga, ordinea capitolelor se schimbă odată cu ea — textul rămâne legat de fișa lui">
 </p>
 
-Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-ul și textul se mută odată cu ea. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text.
+Fiecare scenă are fișa ei, cu un rezumat de două rânduri. În animație vezi mișcarea de bază: **tragi fișa „Al doilea document" înaintea lui „Capitol verificat"**, cardul alunecă pe panou, iar în binder — lista din stânga — ordinea capitolelor se schimbă imediat. Textul nu se atinge: rămâne legat de fișa lui, unde o pui tu. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text.
 
 <details>
 <summary><strong>Cronologie, legături între documente, panoul de referință</strong></summary>
@@ -85,9 +102,19 @@ Fiecare scenă are fișa ei, cu un rezumat de două rânduri. O muți cu mouse-u
   <img src="./assets/readme/timeline.png" width="100%" alt="Cronologia: scenele pe zile, câte un fir pentru fiecare personaj">
 </p>
 
-Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor. O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o citești și fără internet. *Vizualizare → Focus lingvistic* îți colorează substantivele sau verbele, ca să vezi unde se îngroașă textul.
+Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor — pentru un roman cu 20 de personaje, e diferența dintre „credeam că" și „știu".
 
-**Legături între documente.** Scrii `[[Matei]]` și textul devine legătură către fișa lui Matei. Dacă documentul nu există încă, de exemplu `[[Titlu nou]]`, programul îți propune să-l creeze pe loc. În Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el. Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, liniate ca pe hârtie, colorate după etichetă.
+<p align="center">
+  <img src="./docs/assets/gif/06-timeline.gif" width="100%" alt="Cronologia: scenele cărții așezate pe zile, câte un fir pentru fiecare personaj">
+</p> O pagină web pusă în Cercetare se salvează cu tot cu imagini, așa că o citești și fără internet. *Vizualizare → Focus lingvistic* îți colorează substantivele sau verbele, ca să vezi unde se îngroașă textul.
+
+**Legături între documente.** Scrii `[[Matei]]` și textul devine legătură către fișa lui Matei. Dacă documentul nu există încă, de exemplu `[[Nume nou]]`, programul îți propune pe loc: „Îl creez și îl leg?" — un click și fișa există, legată. În animație se vede exact momentul propunerii, cu alegerea dosarului și butonul „Creează și leagă".
+
+<p align="center">
+  <img src="./docs/assets/gif/05-wiki-link.gif" width="100%" alt="În timp ce scrii „[[Nume nou]]", programul propune: „Îl creez și îl leg?" cu butoanele „Același dosar ca documentul curent" și „Creează și leagă"">
+</p>
+
+În Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el. Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, liniate ca pe hârtie, colorate după etichetă.
 
 <p align="center">
   <img src="./assets/readme/reference.png" width="100%" alt="Panoul de referință: scena Drumul deschisă doar pentru citire lângă scena la care scrii">
@@ -95,15 +122,19 @@ Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înai
 
 *Vizualizare → Deschide ca referință* pune alt document lângă cel la care scrii, doar de citit: planul, o scenă veche sau originalul. Bifezi *Editabil* dacă vrei totuși să-l schimbi.
 
+<p align="center">
+  <img src="./docs/assets/gif/04-reference-quickref.gif" width="100%" alt="Panoul de referință deschis lângă editor: scena veche rămâne vizibilă în timp ce scrii în documentul curent">
+</p>
+
 </details>
 
 ### Traduci
 
 <p align="center">
-  <img src="./assets/readme/translate.png" width="100%" alt="Originalul englez în stânga și traducerea română în dreapta, pe același ecran">
+  <img src="./docs/assets/gif/02-translate-side.gif" width="100%" alt="Documentul original în panou principal și traducerea în al doilea panou, cu chenar verde pe cel în care scrii; din meniul Unelte se deschide submeniul Traducere cu DeepL, Google Translate și dicționare">
 </p>
 
-Pui fișierul Word primit de la editură și Pneuma Sofer îl împarte pe capitole. Ții originalul într-o parte și traducerea în cealaltă; fereastra în care scrii are chenar verde, cealaltă e ușor estompată. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
+Pui fișierul Word primit de la editură și Pneuma Sofer îl împarte pe capitole. În animație: **originalul într-un panou, traducerea în celălalt** — panoul în care scrii are chenar verde, celălalt e ușor estompat, ca să nu te rătăcești. Din meniul Unelte îți sunt mereu la un clic DeepL, Google Translate, sinonimele și dicționarele. La final trimiți înapoi un singur fișier Word, cu notele de subsol la locul lor.
 
 Fără nicio configurare, traducerea folosește serviciul public gratuit al Google, marcat în program „Google (fără cheie)”: neoficial și fără garanții. Cu o cheie Google Cloud Translation sau conectat cu contul Google, folosești API-ul oficial; se configurează din *Setări → Servicii și conturi → Google Cloud Translation*, cu butonul „Conectează cu Google” (consimțământ în browser, fără parolă salvată).
 
@@ -125,7 +156,7 @@ Clic dreapta pe un cuvânt și ai la îndemână:
   <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Pneuma Sofer: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
 </p>
 
-Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spații și majusculă la început de frază.
+Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spații și majusculă la început de frază. *Bara de jos arată nivelul microfonului în timp real, cu Pauză, Stop și Anulează — recunoașterea e locală, pe calculatorul tău, fără internet.*
 
 - **Text nou:** fără selecție, textul intră la cursor.
 - **Modificare:** selectezi un cuvânt, o frază sau un paragraf și dictezi; ce spui înlocuiește selecția, iar un singur Ctrl+Z te întoarce la textul vechi.
@@ -191,7 +222,7 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 ### Cercetezi
 
 <p align="center">
-  <img src="./assets/readme/research.png" width="100%" alt="Panoul Cercetare în proiect: o întrebare și o întrebare de continuare, răspunsuri cu trimiteri [1], [2], sursele folosite și întrebări propuse sub răspuns">
+  <img src="./docs/assets/gif/07-research-ask.gif" width="100%" alt="Panoul Cercetare: întrebarea se scrie în câmp, iar răspunsul vine cu trimiteri [1], [2] către pasajele din sursele proiectului">
 </p>
 
 În **Cercetare → Întreabă** discuți cu sursele tale: primești răspunsul cu trimiteri [1], [2], iar un clic te duce la pasaj. Continui discuția, alegi ce surse folosește (manuscrisul, cercetarea, notele sau anumite dosare), aduci PDF, Word, text sau pagini web și salvezi răspunsul ca notă ori îl inserezi în text, cu trimiterile ca note de subsol. Fără AI, panoul doar caută în surse. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT** sau **Manus**, gata împărțită.
@@ -210,7 +241,11 @@ Căutarea avansată înțelege **operatorii** „începe cu cuvântul" / „se t
   <img src="./assets/readme/compile.png" width="100%" alt="Fereastra Compilează: formatele predefinite în stânga, formatul de ieșire și filele de setări în dreapta">
 </p>
 
-*Fișier → Compilează…* adună bucățile într-o singură carte. Pașii sunt mereu aceiași: alegi ce intră, alegi forma, apeși *Compilează*. Formatele gata făcute acoperă manuscrisul pentru editură, cartea tipărită 6 × 9 in, e-book-ul și PDF-ul de citit; ieșirea poate fi Word, PDF, EPUB, ODT, RTF, HTML, Markdown, LaTeX, Fountain sau Final Draft.
+<p align="center">
+  <img src="./docs/assets/gif/03-compile-content.gif" width="100%" alt="Fereastra Compilează: bifezi ce capitole intră în carte, alegi formatul și previzualizarea arată rezultatul; bara Închide / Salvează / Compilează rămâne mereu vizibilă">
+</p>
+
+*Fișier → Compilează…* adună bucățile într-o singură carte. În animație vezi pașii: bifezi ce intră (un capitol debifat dispare din previzualizare), alegi forma, apeși *Compilează* — iar bara de acțiuni rămâne fixă jos, oricât ai derula. Formatele gata făcute acoperă manuscrisul pentru editură, cartea tipărită 6 × 9 in, e-book-ul și PDF-ul de citit; ieșirea poate fi Word, PDF, EPUB, ODT, RTF, HTML, Markdown, LaTeX, Fountain sau Final Draft.
 
 <details>
 <summary><strong>Compile pas cu pas: conținut, formate, secțiuni, pagină, tipografie</strong></summary>
@@ -306,6 +341,8 @@ Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire
 </p>
 
 Sus vezi doar ce folosești des; restul stă în meniuri ordonate. Din *Program → Personalizează bara de instrumente* alegi singur butoanele și le muți cu mouse-ul. Tot ce ține de AI stă într-un singur meniu. Rigla (Ctrl+Alt+Shift+R) arată indentările și tab-urile, ca în Word.
+
+**Cauți oriunde, dintr-o singură linie.** **Ctrl+O** deschide Căutarea rapidă — bați câteva litere și apar instant rezultatele pe Titluri, Sinopse și Text.
 
 **Fereastra în mâini, din tastatură.** **F6** (înapoi: Shift+F6) mută focusul pe panoul următor — binder, editor, split, inspector, fereastră AI — în ordinea în care le vezi pe ecran; panoul închis se deschide singur când îi ceri focusul. Ținte directe: **Ctrl+Shift+1..4** (editor / binder / inspector / AI).
 
