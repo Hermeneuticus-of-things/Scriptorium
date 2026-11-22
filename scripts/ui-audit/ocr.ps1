@@ -16,7 +16,7 @@ $bigPath = [IO.Path]::ChangeExtension((Resolve-Path $Png).Path, ".x$S.png"); $bi
 
 $tess = Get-Command tesseract -ErrorAction SilentlyContinue
 if ($tess) {
-  $data = if ($env:OCR_TESSDATA) { $env:OCR_TESSDATA } else { 'C:\Users\Ionut\AppData\Local\ui-audit-tessdata' }
+  $data = if ($env:OCR_TESSDATA) { $env:OCR_TESSDATA } else { (Join-Path $env:LOCALAPPDATA 'ui-audit-tessdata') }
   $lang = if ($env:OCR_LANG) { $env:OCR_LANG } else { 'ron+eng' }
   $psm = if ($env:OCR_PSM) { $env:OCR_PSM } else { '6' }
   # TSV gives per-word boxes: level page block par line word left top width height conf text
@@ -54,3 +54,5 @@ foreach ($l in $res.Lines) {
   if ($w) { "{0}`t{1}`t{2}" -f [int]($w[0].BoundingRect.Y / $S), [int]($w[0].BoundingRect.X / $S), (($w | ForEach-Object Text) -join ' ') }
 }
 Remove-Item $bigPath -ErrorAction SilentlyContinue
+
+
