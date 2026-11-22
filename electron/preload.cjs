@@ -26,6 +26,8 @@ contextBridge.exposeInMainWorld('api', {
   },
   saveProject: (dir, project) => call('project:save', dir, project),
   readDoc: (dir, id, kind) => call('doc:read', dir, id, kind),
+  pickProjectDir: () => call('project:pickDir'),
+  copyIntoProject: (dir, target, ids) => call('project:copyInto', dir, target, ids),
   writeDoc: (dir, id, kind, html) => call('doc:write', dir, id, kind, html),
   takeSnapshot: (dir, id, name) => call('snap:take', dir, id, name),
   listSnapshots: (dir, id) => call('snap:list', dir, id),

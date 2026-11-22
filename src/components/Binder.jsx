@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { containerIds, dragIds, iconTint } from '../lib/panelsExtra.js';
+import { displayTitle } from '../lib/treeCore.js';
 import { binderNav, rangeIds, typeAhead, visibleRows } from '../lib/tree.js';
 import { DocumentIcon, DraftIcon, FolderIcon, Icon, ResearchIcon, TemplatesIcon, TrashIcon } from './Icons.jsx';
 import ContextMenu from './ContextMenu.jsx';
@@ -40,7 +41,7 @@ function matches(node, query, docs) {
 
 const rowDomId = (id) => `binder-node-${String(id).replace(/[^\w-]/g, '_')}`;
 
-export default function Binder({ project, docs, selectedId, selectedIds, onSelect, onAdd, onAi, onAddInside, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate, onRestore }) {
+export default function Binder({ project, docs, docTextFor, selectedId, selectedIds, onSelect, onAdd, onAi, onAddInside, onRename, onMove, onTrash, onEmptyTrash, onKeyMove, filterIds = null, filterTitle = '', binderEnter = null, binderDoubleClick = 'rename', onOpenItem, onQuickRef, onCopy, onMoveMany, labelTintIcons, revealId = null, onUndo, renameId = null, onRenameDone, onFocusEditor, onRangeSelect, onPatchItems, onSetTemplateFolder, labelColorIn = null, collections = null, activeCollectionId = null, onAddToCollection, onNewCollection, onRemoveFromCollection, onConvert, onSortChildren, onGroup, onCopyLink, onSnapshot, onDuplicate, onShowInExplorer, onDropKeyword, snapCounts = null, templates = null, onNewFromTemplate, onRestore }) {
   const colorIn = labelColorInOf({ labelColorIn });
   const tintIcons = labelTintIcons ?? (labelColorIn ? colorIn.icons : Boolean(project.labelTintIcons));
   const rowTint = (node) => (colorIn.binder && node.label && labelColor[node.label] ? labelTint(labelColor[node.label]) : '');
@@ -191,10 +192,14 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
       ? filterIds.map((id) => ({ id, depth: 0, parentId: null, container: false, open: false }))
       : visibleRows(project.tree, (n) => Boolean(query) || !collapsed[n.id], visible);
   const titleOf = (id) => {
-    let t = '';
-    const find = (ns) => (ns || []).some((n) => (n.id === id ? ((t = n.title), true) : find(n.children)));
+    let n = null;
+    const find = (ns) => (ns || []).some((m) => (m.id === id ? ((n = m), true) : find(m.children)));
     find(project.tree);
-    return t;
+    if (!n) return '';
+    const t = String(n.title || '').trim();
+    if (t) return t;
+    // T4 (S3-O.04): nume adaptiv — sinopsisul sau primele cuvinte din text, doar afișat.
+    return displayTitle(n, docTextFor ? docTextFor(id) : '');
   };
   const select = (id, { ctrl = false, shift = false, alt = false } = {}) => {
     if (shift && !ctrl && !alt && onRangeSelect) {

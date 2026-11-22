@@ -21,6 +21,7 @@ import ImportReport from './components/ImportReport.jsx';
 import SimpleRepairsDialog from './components/SimpleRepairsDialog.jsx';
 import SignalsDialog from './components/SignalsDialog.jsx';
 import HelpFinderDialog from './components/HelpFinderDialog.jsx';
+import CopyToProjectDialog from './components/CopyToProjectDialog.jsx';
 import QuickRef from './components/QuickRef.jsx';
 import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
@@ -634,6 +635,7 @@ export default function App({ api: apiProp }) {
   // T1: ultima țintă de focus (ref, nu state — fără rerandare); ciclarea F6/Shift+F6.
   const focusTargetRef = useRef('editor');
   const [helpFinder, setHelpFinder] = useState(false);
+  const [copyToOpen, setCopyToOpen] = useState(false);
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [settingsTab, setSettingsTab] = useState('');
@@ -3527,6 +3529,7 @@ export default function App({ api: apiProp }) {
       setToast(tr('ui.app.dosar_degrupat'));
     }, !selected || selected.type !== 'folder' || !(selected.children || []).length || Boolean(selected.root)],
     ['document', 'copyTo', tr('cmd.copyTo'), () => setDialog('copyTo'), !selected || Boolean(selected.root)],
+    ['document', 'copyToProject', tr('cmd.copyToProject'), () => setCopyToOpen(true), !selected || Boolean(selected.root)],
     ['document', 'setSelTextAsTitle', tr('cmd.setSelTextAsTitle'), () => {
       const t = (activeHandle()?.getSelectionText() || '').trim();
       if (!t) return;
@@ -3998,6 +4001,7 @@ export default function App({ api: apiProp }) {
           </div>
         )}
         <Binder
+          docTextFor={(id) => docs[id] || ''}
           binderEnter={settings.binderEnter}
           binderDoubleClick={settings.binderDoubleClick}
           snapCounts={snapCounts}
@@ -5012,6 +5016,20 @@ export default function App({ api: apiProp }) {
           />
         );
       })}
+      {copyToOpen && (
+        <CopyToProjectDialog
+          recent={(settings.recent || [])}
+          currentDir={dir}
+          count={selectionList().length}
+          onCopy={async (target) => {
+            const r = await api.copyIntoProject(dir, target, selectionList());
+            setCopyToOpen(false);
+            setToast(tr('ui.copyToProject.done', { n: r.count, f: r.files }));
+          }}
+          onClose={() => setCopyToOpen(false)}
+          onError={report}
+        />
+      )}
       {dialog === 'copyTo' && (
         <PickNodeDialog
           variant="popover"

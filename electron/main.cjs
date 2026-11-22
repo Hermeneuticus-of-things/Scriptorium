@@ -820,6 +820,55 @@ handle('project:save', (e, dir, project) => {
   return true;
 });
 
+// T4 (S3-A.DOC.21 / audit ch. 6–7): „Copiază selecția în…" — ALT proiect. Ținta trebuie să
+// fie deschisă în sesiune sau recentă (regula de scriere din main.cjs:50) sau aleasă prin
+// dialog (io:pickProjectDir). Structura se clonează cu id-uri noi; docs/notes se copiază.
+const { selectionForCopy, insertIntoTree } = require('../lib/copyIntoProject.cjs');
+handle('project:pickDir', async (e) => {
+  const res = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender), {
+    title: 'Alege proiectul țintă (folder .scribner)',
+    properties: ['openDirectory'],
+  });
+  if (res.canceled || !res.filePaths[0]) return null;
+  const dirPicked = res.filePaths[0];
+  try { store.loadProject(dirPicked, { readOnly: true }); } catch { throw new Error('Folderul ales nu e un proiect Pneuma Sofer.'); }
+  return dirPicked;
+});
+handle('project:copyInto', (e, dir, targetDir, ids) => {
+  assertOpened(dir);
+  const target = path.resolve(targetDir || '');
+  if (target === path.resolve(dir)) throw new Error('Ținta e același proiect.');
+  const opened = openedDirs.has(target);
+  const recent = readSettings().recent || [];
+  const allowed = opened || recent.some((r) => path.resolve(r.dir) === target) || recent.some((r) => path.resolve(r.dir) === target + '.scribner');
+  if (!allowed) throw new Error('Proiectul țintă trebuie deschis, recent, sau ales prin dialog.');
+  const srcProj = store.loadProject(dir, { readOnly: true });
+  const sel = selectionForCopy(srcProj.tree, ids || []);
+  if (!sel) return { count: 0, files: 0 };
+  const targetProj = store.loadProject(target);
+  const before = JSON.stringify(targetProj.tree);
+  insertIntoTree(targetProj.tree, sel.nodes);
+  let files = 0;
+  for (const [fromId, toId] of sel.pairs) {
+    for (const kind of ['docs', 'notes']) {
+      const srcFile = path.join(dir, kind, fromId + '.html');
+      if (!fs.existsSync(srcFile)) continue;
+      fs.mkdirSync(path.join(target, kind), { recursive: true });
+      fs.copyFileSync(srcFile, path.join(target, kind, toId + '.html'));
+      if (kind === 'docs') files += 1;
+    }
+    // snapshots: copiem istoricul, dacă există
+    const srcSnaps = path.join(dir, 'snapshots', fromId);
+    if (fs.existsSync(srcSnaps)) {
+      const dst = path.join(target, 'snapshots', toId);
+      fs.mkdirSync(dst, { recursive: true });
+      for (const f of fs.readdirSync(srcSnaps)) fs.copyFileSync(path.join(srcSnaps, f), path.join(dst, f));
+    }
+  }
+  store.saveProject(target, targetProj);
+  if (JSON.stringify(targetProj.tree) === before) return { count: 0, files: 0 };
+  return { count: sel.nodes.length, files, target };
+});
 handle('doc:read', (_e, dir, id, kind) => {
   assertOpened(dir);
   kind = kind === 'notes' ? 'notes' : 'docs';

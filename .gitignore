@@ -11,3 +11,5 @@ dist-packages/
 .work/
 outputs/
 
+pneuma-sync-*
+s1-*

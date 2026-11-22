@@ -15,3 +15,16 @@ export function findNode(tree, id) {
   });
   return found;
 }
+
+// Adaptive naming (T4, S3-O.04, Scrivener §6.3.1): un document fără titlu se arată după
+// sinopsis (primul rând) sau după primele cuvinte din text — doar pentru AFIȘARE; titlul
+// stocat rămâne gol până îl scrie autorul.
+export function displayTitle(node, docText) {
+  const t = String((node && node.title) || '').trim();
+  if (t) return t;
+  const syn = String((node && node.synopsis) || '').trim();
+  if (syn) return syn.split('\n')[0].slice(0, 80);
+  const text = String(docText || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (text) return text.slice(0, 80);
+  return '';
+}

@@ -701,6 +701,12 @@ export default function ProjectSettingsDialog({ project, folders, onSave, onClos
               <input type="checkbox" className="ps-sync-auto" checked={x.sync.auto} onChange={(e) => setSy({ auto: e.target.checked })} /> {tr('ui.ps.sync_auto')}
             </label>
             <p className="muted small">{tr('ui.ps.sync_auto_hint')}</p>
+            <label className="check">
+              <input type="checkbox" className="ps-sync-trashed" checked={x.sync.includeTrashed} onChange={(e) => setSy({ includeTrashed: e.target.checked })} /> {tr('ui.ps.sync_trashed')}
+            </label>
+            <label className="check">
+              <input type="checkbox" className="ps-sync-numeric" checked={x.sync.numericPrefix} onChange={(e) => setSy({ numericPrefix: e.target.checked })} /> {tr('ui.ps.sync_numeric')}
+            </label>
             <div className="row">
               <label>
                 {tr('ui.ps.sync_format')}
