@@ -148,3 +148,10 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
 
 ## Compile
 - Previzualizarea nu mai umflă dialogul: panou propriu cu zoom „Potrivire la lățime" și bară de acțiuni mereu vizibilă.
+
+# Pneuma Sofer v1.3.1
+
+## AI complet invizibil până îl activezi tu (directivă autor)
+- Când AI e oprit (starea implicită la prima pornire), **nu mai există nicio urmă de AI în program**: niciun meniu AI, fără I-REP/I-EDIT, fără setări AI separate, fără MCP, fără NotebookLM. Programul arată și merge ca un program de scris clasic.
+- Activarea e self-service din **Program → Setări → Chei și conturi**: pui cheia (sau alegi un model local, fără cheie) + bifezi „Funcții AI" — abia atunci apare meniul AI.
+- Motivul: unii scriitori pot fi oribilați de prezența AI-ului; programul trebuie să se prezinte ca instrument de scris cărți, cu AI ca opțiune la final.

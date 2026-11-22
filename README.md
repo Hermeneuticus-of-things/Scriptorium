@@ -4,7 +4,7 @@ Program gratuit de scris cărți lungi, în română și engleză: textul stă p
 
 **[Descarcă ultima versiune pentru Windows](../../releases/latest)**
 
-[Schimbările din ultima versiune](CHANGELOG.md). AI și serviciile externe sunt opționale; scrierea, organizarea, salvarea și exportul funcționează fără ele.
+[Schimbările din ultima versiune](CHANGELOG.md). **Pneuma Sofer lucrează extraordinar de bine fără AI** — scrierea, organizarea, dictarea, corecturile, căutările, backup-ul și exportul sunt complete și rămân pe calculatorul tău. Tot ce înseamnă AI stă ascuns până îl activezi tu din Setări; un scriitor care nu îl vrea nu vede niciun gram de AI în program.
 
 <p align="center">
   <img src="./assets/readme/hero.png" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">
@@ -16,12 +16,12 @@ Design language: Ionuț ADL — yes. *(Vezi `docs/IONUT_APPLICATION_DESIGN_LANGU
 
 | Noutate | Pe scurt | Vezi în mișcare |
 |---|---|---|
-| **Fereastra AI autonomă** | container propriu, separat de Inspector; chips de context, acțiuni dintr-un click, stare vizibilă (inactiv / gândire / scrie / gata) | [GIF mai jos](#ai-opțional-într-un-singur-loc) |
-| **Motor universal de scriere + pachetul cărții** | metoda de scriere în fiecare apel AI; frazele fixate nu se ating, formulele oprite sunt zero; fiecare schimbare trece prin gardă și intră în registrul de decizii | [AI, opțional](#ai-opțional-într-un-singur-loc) |
 | **Reparații simple și Semnale (fără AI)** | corecturi deterministe cu diff și snapshot automat; ritm și semnale de limbă, fără model, fără costuri | [Corectezi](#corectezi) |
 | **Ajutor și comenzi într-o singură căutare** | **Ctrl+Shift+H**: întrebi în limbaj natural, găsești articolul sau comanda reală și o execuți | [Interfața](#interfața) |
 | **Navigare din tastatură** | **F6/Shift+F6** mută focusul între panouri; **Ctrl+Shift+1..4** te duce direct la editor, binder, inspector, fereastră AI | [Interfața](#interfața) |
 | **Compile preview REPARAT** | previzualizarea nu mai umflă dialogul: panou propriu cu zoom „Potrivire la lățime" și bara de acțiuni mereu vizibilă | [Compilezi](#compilezi) |
+| **Fereastra AI autonomă** | container propriu, separat de Inspector; chips de context, acțiuni dintr-un click, stare vizibilă (inactiv / gândire / scrie / gata) | [AI, la final](#ai-doar-dacă-îl-vrei-opțional) |
+| **Motor universal de scriere + pachetul cărții** | metoda de scriere în fiecare apel AI; frazele fixate nu se ating, formulele oprite sunt zero; fiecare schimbare trece prin gardă și intră în registrul de decizii | [AI, la final](#ai-doar-dacă-îl-vrei-opțional) |
 
 ## 1. Ce este
 
@@ -45,9 +45,9 @@ Pentru oricine are de scris sau de tradus un text lung și vrea să-l stăpânea
 | [Corectezi](#corectezi) | revizie fără AI, corecturi învățate, asistent AI opțional, versiuni |
 | [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri |
 | [Cauți](#cauți-oriunde) | căutare rapidă, căutare avansată, căutare după formatare |
-| [Agenți AI](#ai-opțional-într-un-singur-loc) | Claude sau Codex lucrează direct în carte, dacă vrei |
 | [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate |
 | [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când |
+| [AI, doar dacă îl vrei](#ai-doar-dacă-îl-vrei-opțional) | asistent, I-EDIT, agenți prin MCP — invizibil până îl activezi din Setări |
 
 ## 4. Cum face
 
@@ -203,30 +203,6 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 Căutarea avansată înțelege **operatorii** „începe cu cuvântul" / „se termină cu", **inversarea rezultatelor** (ce NU se potrivește), **sortarea** (binder, titlu A-Z/Z-A, dată), **termenii speciali** („frază exactă", -excludere, wildcard cu *), **sintaxa de date** (`mdate:2026-05`, `cdate:<2y`), filtrul Draft / selecție / Included-Excluded, și ține rezultatele într-o **colecție vie** („Rezultatele căutării") care se actualizează la fiecare deschidere. *Înlocuire* are, pe lângă format, și metadatele personalizate, snapshot-uri („Include snapshot-urile") și schimbă titlurile.
 
 **Căutare după formatare** (Ctrl+Alt+F) găsește text după stiluri de caracter, linkuri, imagini sau text păstrat (preserve), iar corkboard-ul și outline-ul au **bare de filtrare** (Ctrl+F în vederea lor) care restrâng fișele la ce cauți. Uneltele adaugă **Focalizarea pe dialoguri**: toate replicile din proiect, într-un singur panou, pentru corectură.
-
-### AI, opțional, într-un singur loc
-
-Tot ce folosește AI stă grupat și se pornește sau se oprește dintr-un singur loc: pastila AI din bară și *Setări → Chei și conturi*. Fără AI, programul merge întreg; verificarea I-REP și reparațiile sigure rămân.
-
-Rundele I-EDIT și I-REP arată răspunsul AI pe măsură ce se scrie, cu cronometru și anulare cu Esc, plus o estimare înainte de rulare: „Estimare: 7 documente × 3 bucle ≈ 21 apeluri AI”. Rezultatele serviciilor (gramatică, sinonime, traducere, dicționare) apar în pagină, lângă selecție, nu într-o fereastră peste text.
-
-- **Asistentul AI** — corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce vrei.
-- **I-EDIT** — runde editoriale pe tot textul, cu regulile tale.
-- **Bucla de reparare (I-REP cu AI)** — repară problemele semnalate și reverifică.
-- **În surse / NotebookLM** — întrebi sursele tale; cu un notebook configurat, chiar cu întrebări de continuare până primește răspuns.
-- **Traducere și definiții** — DeepL/Google și explicații AI direct din meniul cuvântului.
-- **Agenți AI prin MCP** — Claude sau Codex lucrează direct în carte (mai jos).
-
-Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic — dialogul detectează ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie configurarea fiecăruia dintr-un clic, cu copie de siguranță. Agentul primește peste 80 de unelte (citire/scriere documente, binder, căutare, snapshot-uri, Compile, import/export, revizie). Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
-
-> [!IMPORTANT]
-> **O vorbă despre AI.** Oricât de bun ar fi modelul și oricât te-ar ajuta, AI-ul nu garantează originalitatea. Poate combina idei, deschide perspective și stimula creativitatea, dar se bazează pe ceea ce a învățat deja. Noutatea autentică apare din experiența, intuiția și gândirea ta, nu din simpla reformulare a unor idei existente.
->
-> Mai mult, răspunsurile AI-ului sunt influențate de valorile, regulile și interesele companiilor care îl dezvoltă, inclusiv de felul în care acestea stabilesc ce poate spune și cum. Astfel, fără să-ți dai seama, poți ajunge să reproduci viziunea lor asupra lumii, crezând că este propria ta gândire.
->
-> Pneuma Sofer merge întreg și fără AI: scrisul rămâne al tău, iar AI-ul îl pornești sau îl oprești oricând, dintr-un singur loc. Folosește-l ca pe un instrument de scris mai inteligent, care elimină fricțiunile și birocrația editorială, nu ca pe un înlocuitor al gândirii sau al creativității tale. Tehnologia trebuie să-ți elibereze scrisul, nu să-l scrie în locul tău.
-
-Pentru **NotebookLM**, secțiunea *Servicii și conturi* are un buton dedicat de logare: se deschide o fereastră în care te autentifici o dată pe Google; sesiunea rămâne doar în calculatorul tău și e folosită de serverul NotebookLM la întrebările pe surse.
 
 ### Compilezi
 
@@ -385,6 +361,32 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 <p align="center">
   <img src="./assets/readme/sync.svg" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
 </p>
+
+### AI, doar dacă îl vrei (opțional)
+
+**Cei care scriu cărți trebuie să știe asta din start: Pneuma Sofer e un program care te ajută să scrii cărți — nu un soft de AI.** Lucrează extraordinar de bine fără AI, iar AI-ul e doar o opțiune, la final, pentru cei care îl vor. Când e oprit (starea implicită), **nu apare nicăieri**: niciun meniu, niciun buton, nicio fereastră — programul arată și merge ca un program de scris clasic. Îl activezi din *Program → Setări → Chei și conturi* (cheie + bifa „Funcții AI") și abia atunci apare meniul AI, cu tot ce e mai jos.
+
+Tot ce folosește AI stă grupat într-un singur meniu și se pornește sau se oprește dintr-un singur loc: pastila AI din bară și *Setări → Chei și conturi*.
+
+Rundele I-EDIT și I-REP arată răspunsul AI pe măsură ce se scrie, cu cronometru și anulare cu Esc, plus o estimare înainte de rulare: „Estimare: 7 documente × 3 bucle ≈ 21 apeluri AI”. Rezultatele serviciilor (gramatică, sinonime, traducere, dicționare) apar în pagină, lângă selecție, nu într-o fereastră peste text.
+
+- **Asistentul AI** — corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce vrei.
+- **I-EDIT** — runde editoriale pe tot textul, cu regulile tale.
+- **Bucla de reparare (I-REP cu AI)** — repară problemele semnalate și reverifică.
+- **În surse / NotebookLM** — întrebi sursele tale; cu un notebook configurat, chiar cu întrebări de continuare până primește răspuns.
+- **Traducere și definiții** — DeepL/Google și explicații AI direct din meniul cuvântului.
+- **Agenți AI prin MCP** — Claude sau Codex lucrează direct în carte (mai jos).
+
+Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic — dialogul detectează ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie configurarea fiecăruia dintr-un clic, cu copie de siguranță. Agentul primește peste 80 de unelte (citire/scriere documente, binder, căutare, snapshot-uri, Compile, import/export, revizie). Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
+
+> [!IMPORTANT]
+> **O vorbă despre AI.** Oricât de bun ar fi modelul și oricât te-ar ajuta, AI-ul nu garantează originalitatea. Poate combina idei, deschide perspective și stimula creativitatea, dar se bazează pe ceea ce a învățat deja. Noutatea autentică apare din experiența, intuiția și gândirea ta, nu din simpla reformulare a unor idei existente.
+>
+> Mai mult, răspunsurile AI-ului sunt influențate de valorile, regulile și interesele companiilor care îl dezvoltă, inclusiv de felul în care acestea stabilesc ce poate spune și cum. Astfel, fără să-ți dai seama, poți ajunge să reproduci viziunea lor asupra lumii, crezând că este propria ta gândire.
+>
+> Pneuma Sofer merge întreg și fără AI: scrisul rămâne al tău, iar AI-ul îl pornești sau îl oprești oricând, dintr-un singur loc. Folosește-l ca pe un instrument de scris mai inteligent, care elimină fricțiunile și birocrația editorială, nu ca pe un înlocuitor al gândirii sau al creativității tale. Tehnologia trebuie să-ți elibereze scrisul, nu să-l scrie în locul tău.
+
+Pentru **NotebookLM**, secțiunea *Servicii și conturi* are un buton dedicat de logare: se deschide o fereastră în care te autentifici o dată pe Google; sesiunea rămâne doar în calculatorul tău și e folosită de serverul NotebookLM la întrebările pe surse.
 
 ## 8. Ce urmează
 
