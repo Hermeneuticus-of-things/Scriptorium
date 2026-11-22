@@ -496,7 +496,13 @@ const flat = (nodes, out = []) => {
     await win.evaluate(() => window.api.setSettings({aiProvider:'ollama',aiBaseUrl:'http://127.0.0.1:11434',aiModel:'qwopus-iq4xs:latest'}));
     await sleep(350);
     // AI menu: native and in-app; "Conectează la Claude (MCP)…" opens its dialog.
-    check('native menu has AI', menuLabels.includes('AI'), menuLabels.join(' | '));
+    // Recapture: cu AI invizibil când e oprit (directiva 22.11), meniul AI apare DOAR după
+    // configurarea providerului — lista capturată mai sus e dinaintea fixture-ului.
+    const menuLabelsAfterAi = await app.evaluate(({ Menu }) => {
+      const m = global.__lastMenu || Menu.getApplicationMenu();
+      return m ? m.items.map((i) => i.label) : [];
+    });
+    check('native menu has AI', menuLabelsAfterAi.includes('AI'), menuLabelsAfterAi.join(' | '));
     // AI isolation (2026-10-27): the desktop toolbar has no AI menu copy (the native menu has it;
     // the toolbar keeps only the AI on/off status). The browser build keeps the menubar.
     check('no AI menu duplicate on the desktop toolbar', (await win.locator('header.toolbar .menu > button', { hasText: /^AI/ }).count()) === 0);
