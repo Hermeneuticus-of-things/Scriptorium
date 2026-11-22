@@ -10,8 +10,6 @@ Program gratuit de scris cărți lungi, în română și engleză: textul stă p
   <img src="./assets/readme/hero.png" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">
 </p>
 
-Design language: Ionuț ADL — yes. *(Vezi `docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md` și `docs/ADL-AUDIT.md`.)*
-
 ## Noutăți din ultima versiune
 
 | Noutate | Pe scurt | Vezi în mișcare |
@@ -450,7 +448,7 @@ Tot ce e important e pe această pagină. Doar aceste trimiteri duc mai adânc, 
 | Ce s-a schimbat în fiecare versiune | [`CHANGELOG.md`](CHANGELOG.md) |
 | Paritatea cu Scrivener 3, element cu element | [`docs/audit/scrivener3/comparison_registry.md`](docs/audit/scrivener3/comparison_registry.md) (799 intrări cu dovezi) |
 | Cum e construit programul | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/DESIGN.md`](docs/DESIGN.md) |
-| Limbajul de design (Ionuț ADL) | [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md) |
+| Limbajul de design al interfeței | [`docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md`](docs/IONUT_APPLICATION_DESIGN_LANGUAGE.md) |
 | Dictarea (D&TED) | [`docs/DTED.md`](docs/DTED.md) |
 | Planul următoarelor versiuni | [`ROADMAP.md`](ROADMAP.md) |
 | Cum raportezi o problemă | secțiunea [Ai găsit o problemă?](#ai-găsit-o-problemă) de mai jos |

@@ -81,7 +81,7 @@
 
 ## 1.1.0 — 10 noiembrie 2026
 
-- Fundație Ionuț ADL, focus modal sigur și revenire la selecția editorului; fără prompt ADL la pornire.
+- Fundație ADL (limbajul de design al proiectului), focus modal sigur și revenire la selecția editorului; fără prompt ADL la pornire.
 - Meniuri Binder contextuale, Proprietăți/Organizare/Arbore grupate și duplicare unificată cu payload.
 - Selector unic rapid pentru spațiere; comenzi imposibile ascunse și identificatori comuni.
 - Protecție Salvează/Renunță/Anulează la închidere și reload, splash/skeleton și hint-uri ghidate.
@@ -98,7 +98,7 @@
 Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General Availability)**, cu toate fazele din `DETERMINISTIC_ROADMAP.md` executate, validate și instalate pe Windows.
 
 ### Detalii Implementare & Pași Finalizați
-1. **Adopția Ionuț ADL & Widget:**
+1. **Adopția ADL & Widget:**
    - Componenta `AdlAdoptionWidget` integrată în `App.jsx` + stocare preferință `ionut_adl_adopted` în `localStorage`.
    - Stilurile aferente în `AdlAdoptionWidget.css`.
 2. **Fundație Opaque & Design:**
