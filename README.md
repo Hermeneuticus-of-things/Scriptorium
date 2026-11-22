@@ -490,6 +490,8 @@ $env:GITHUB_TOKEN='token-ul-tău'; irm -Headers @{Authorization="Bearer $env:GIT
 
 Programul de instalare are tot într-un singur fișier: aplicația, ajutorul, serverul MCP pentru agenți AI și comanda `pneuma` (o bifezi dacă o vrei în PATH). Nu mai descarci nimic separat.
 
+**La prima rulare, Windows poate afișa „Windows protected your PC".** E un mesaj de reputație pentru programe noi, nesemnate digital (alegere deliberată a proiectului), nu o detecție de virus. Vezi ghidul pas cu pas: [Ce înseamnă avertismentul SmartScreen și ce faci](docs/SMARTSCREEN-UTILIZATOR.md) — inclusiv cum verifici fișierul descărcat cu `SHA256SUMS` din Release, înainte să apeși „Run anyway".
+
 Pentru dictare, motorul de recunoaștere a vorbirii se descarcă din program, la prima folosire (în jur de 590 MB, o singură dată); nu e inclus în installer, ca acesta să rămână mic.
 
 O versiune nouă apare în Releases de fiecare dată când iese, automat.
