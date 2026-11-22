@@ -41,7 +41,8 @@
         "dir",
         "portable"
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "legalTrademarks": "Pneuma Sofer"
     },
     "directories": {
       "output": "release",
@@ -87,5 +88,6 @@
   },
   "overrides": {
     "minimatch@>=7.0.0 <11.0.1": "^11.0.1"
-  }
+  },
+  "author": "Pneuma Sofer"
 }
