@@ -5,11 +5,29 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const ROOT = path.resolve(__dirname, '..', '..');
 const OUT = 'D:/OpenCode/pneuma-demo-capturi';
 process.env.PNEUMA_FULL_QA_DIR = path.join(OUT, '_qa');
 fs.mkdirSync(OUT, { recursive: true });
 const createHarness = require('./full-app-harness.cjs');
 
+// Garanție „testez pe ultima versiune": build-ul din dist/ trebuie mai nou decât orice sursă.
+const distAge = fs.statSync(path.join(ROOT, 'dist', 'index.html')).mtimeMs;
+let newest = 0;
+for (const root of ['src', 'electron', 'lib']) {
+  const rec = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p2 = path.join(d, e.name);
+      if (e.isDirectory()) rec(p2);
+      else newest = Math.max(newest, fs.statSync(p2).mtimeMs);
+    }
+  };
+  rec(path.join(ROOT, root));
+}
+if (newest > distAge) {
+  console.error('BUILD ÎNVECHIT: dist e mai vechi decât sursele. Rulează întâi `npx vite build`.');
+  process.exit(2);
+}
 (async () => {
   const H = await createHarness('demo');
   await H.launch();
@@ -28,7 +46,7 @@ const createHarness = require('./full-app-harness.cjs');
     await H.shot('03-inspectorul-separat-de-AI');
 
     // Help Finder: întrebare în limbaj natural
-    await H.command('helpFinder');
+    await H.native(['Ajutor', 'Caută ajutor și comenzi…']);
     await H.p.waitForSelector('.help-finder', { timeout: 8000 });
     await H.p.fill('.help-finder-q', 'cum export manuscrisul în pdf');
     await H.p.waitForTimeout(500);
