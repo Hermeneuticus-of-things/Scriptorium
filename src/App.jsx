@@ -609,6 +609,8 @@ export default function App({ api: apiProp }) {
   }, [api, learnPair]);
   useEffect(() => (api.onSpellReplaced ? api.onSpellReplaced(({ from, to }) => learnPair(from, to)) : undefined), [api, learnPair]);
   const [help, setHelp] = useState(null);
+  // T1: ultima țintă de focus (ref, nu state — fără rerandare); ciclarea F6/Shift+F6.
+  const focusTargetRef = useRef('editor');
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [settingsTab, setSettingsTab] = useState('');
@@ -3210,9 +3212,7 @@ export default function App({ api: apiProp }) {
     await api.exportScript(fmt, h.getHtml(), selected?.title || 'Scenariu');
   };
   const activeHandle = () => editorRefs.current.get(activeId.current) || editorRefs.current.get(selectedId);
-  // T1 — navigarea din tastatură între panouri (docs/audit/scrivener3, Anexa A.6): ultima țintă
-  // e ținută într-un ref; ciclarea F6/Shift+F6 urmează ordinea vizuală stânga→dreapta.
-  const focusTargetRef = useRef('editor');
+  // T1 — navigarea din tastatură între panouri (docs/audit/scrivener3, Anexa A.6).
   const focusState = () => ({ hideBinder, splitOpen: Boolean(splitId), showInspector: showInspector || (showResearch && dir), showAi: showAi && aiEnabled });
   const focusPane = (target) => {
     if (target === 'binder' && hideBinder) setHideBinder(false);
