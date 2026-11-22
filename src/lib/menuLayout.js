@@ -37,7 +37,7 @@ export const SUBMENUS = {
   ],
   document: [['menu.snapshots', ['snapshot', 'snapshotTitled', 'snapshotSelection', 'snapshotManager']]],
   edit: [
-    ['menu.select', ['selectWord', 'selectSentence', 'selectParagraph']],
+    ['menu.select', ['selectWord', 'selectSentence', 'selectParagraph', 'selectWithSubdocs']],
     ['menu.find', ['findDoc', 'findNext', 'findPrev', 'findUseSel', 'findProject', 'findFormat', 'advSearch']],
   ],
   // Script modes: the ids are generated (script_<format>), matched by prefix.

@@ -111,6 +111,7 @@ import {
   convertNode,
   sortChildren,
   groupIntoFolder,
+  ungroupFolder,
   docLink,
   siblingInOrder,
   moveNode,
@@ -3471,6 +3472,35 @@ export default function App({ api: apiProp }) {
     ['project', 'team', tr('cmd.team'), () => setDialog('team'), !api.teamFiles],
     ['document', 'splitTitle', tr('cmd.splitTitle'), () => splitDocument(true)],
     ['document', 'merge', tr('cmd.merge'), mergeSelection],
+    // T2 (Anexa A — goluri P1/P2): organizare la alegerea curentă, din meniu, nu doar din meniul contextual.
+    ['document', 'moveToTrash', tr('cmd.moveToTrash'), () => trashSelection(), !selected || Boolean(selected.root) || inTrash(selectedId)],
+    ['document', 'groupDocuments', tr('cmd.groupDocuments'), () => groupItems(selectionList()), selectedIds.size < 1],
+    ['document', 'ungroup', tr('cmd.ungroup'), () => {
+      const next = ungroupFolder(project.tree, selectedId);
+      if (next === project.tree) return;
+      setTreeU(next);
+      setToast(tr('ui.app.dosar_degrupat'));
+    }, !selected || selected.type !== 'folder' || !(selected.children || []).length || Boolean(selected.root)],
+    ['document', 'copyTo', tr('cmd.copyTo'), () => setDialog('copyTo'), !selected || Boolean(selected.root)],
+    ['document', 'setSelTextAsTitle', tr('cmd.setSelTextAsTitle'), () => {
+      const t = (activeHandle()?.getSelectionText() || '').trim();
+      if (!t) return;
+      patchNode(selectedId, { title: t.slice(0, 200) });
+    }, !selected || !(activeHandle()?.getSelectionText() || '').trim()],
+    ['document', 'clearTitle', tr('cmd.clearTitle'), () => patchNode(selectedId, { title: '' }), !selected || Boolean(selected.root)],
+    ['edit', 'selectWithSubdocs', tr('cmd.selectWithSubdocs'), () => {
+      const all = [selectedId, ...flatten(findNode(project.tree, selectedId)?.children || []).map((n) => n.id)];
+      setSelectedIds(new Set(all));
+      setSelectedId(selectedId);
+    }, !selected || Boolean(selected.root)],
+    ['edit', 'copyTextOfDocs', tr('cmd.copyTextOfDocs'), async () => {
+      const text = selectionList().map((id) => htmlToText(docsNow()[id] || '')).filter((x) => x.trim()).join('\n\n');
+      await navigator.clipboard?.writeText(text);
+      setToast(tr('ui.app.text_copiat'));
+    }, selectedIds.size < 1],
+    ['nav', 'revealDraft', tr('cmd.revealDraft'), () => { const r = project.tree.find((x) => x.root === 'draft'); if (r) go(r.id); }, !project?.tree?.length],
+    ['view', 'expandAll', tr('cmd.expandAll'), () => window.dispatchEvent(new CustomEvent('pneuma:binder-set-all-collapsed', { detail: { collapsed: false } }))],
+    ['view', 'collapseAll', tr('cmd.collapseAll'), () => window.dispatchEvent(new CustomEvent('pneuma:binder-set-all-collapsed', { detail: { collapsed: true } }))],
     ['document', 'copyAsToC', tr('cmd.copyAsToC'), () => copyAsToCCommand().catch(report), !selectedId],
     ['document', 'duplicate', tr('cmd.duplicate'), (payload) => selectedIds.size > 1 ? copyItems(selectionList(), selectionList().at(-1), 'after').catch(report) : duplicateSelection(payload?.includeChildren !== false)],
     ['document', 'snapshot', tr('cmd.snapshot'), async () => {
@@ -4929,6 +4959,16 @@ export default function App({ api: apiProp }) {
           />
         );
       })}
+      {dialog === 'copyTo' && (
+        <PickNodeDialog
+          variant="popover"
+          anchor={{ x: Math.max(24, Math.round((window.innerWidth || 1200) / 2 - 230)), y: 56 }}
+          title={tr('ui.app.copiaza_selectia_in')}
+          items={moveTargets(project.tree, selectionList())}
+          onPick={(id) => copyItems(selectionList(), id, 'inside').catch(report)}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'moveTo' && (
         <PickNodeDialog
           variant="popover"
