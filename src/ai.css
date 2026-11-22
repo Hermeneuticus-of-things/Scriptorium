@@ -96,3 +96,17 @@
 .ai-panel .ai-chip-action { cursor: pointer; background: none; font-size: var(--font-ui-sm, 12px); line-height: 1; padding: 5px 8px; border: 1px solid var(--line, #ddd6); border-radius: 999px; color: var(--muted); }
 .ai-panel .ai-chip-action:hover:not(:disabled) { border-color: var(--accent, #58a6ff); color: var(--text); }
 .ai-panel .ai-chip-action:disabled { opacity: .5; cursor: default; }
+
+/* Panou AI FLOTANT (directivă autor 23.11): detașabil, trăgabil de antet, redimensionabil,
+   cu andocare magnetică înapoi în colțul din dreapta. */
+.ai-float { position: fixed; z-index: 40; display: flex; flex-direction: column; min-height: 0;
+  background: var(--paper, var(--panel, #fff)); border: 1px solid var(--line, #ddd); border-radius: var(--radius-lg, 8px);
+  box-shadow: 0 10px 36px rgba(0,0,0,.28); overflow: hidden; }
+.ai-float .side-ai { flex: 1; min-height: 0; overflow: auto; }
+.ai-float-head { cursor: move; user-select: none; background: var(--panel, transparent); }
+.ai-float-resize { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, var(--line, #ccc) 50%); }
+
+/* Previzualizarea andocării magnetice: dreptunghiul țintă apare sub panou în timpul drag-ului. */
+.ai-dock-preview { position: fixed; z-index: 39; border: 2px dashed var(--accent, #58a6ff); border-radius: var(--radius-lg, 8px);
+  background: rgba(88, 166, 255, .12); pointer-events: none; }

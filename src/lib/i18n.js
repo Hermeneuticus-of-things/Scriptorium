@@ -172,7 +172,8 @@ const ro = {
   'set.defaultView': 'Vizualizare implicită', 'set.showInvisibles': 'Arată caracterele invizibile', 'cmd.preserveFormat': 'Păstrează formatarea (bloc neatins la compilare)', 'cmd.convertDefaultDraft': 'Convertește Manuscrisul la formatarea implicită…', 'cmd.convertDefaultAll': 'Convertește tot proiectul la formatarea implicită…', 'cmd.copyholder': 'Deschide ca referință', 'cmd.copyholderClose': 'Închide panoul de referință',
 
   'cmd.resetIndents': 'Resetează indentările listelor',
-  'cmd.smallCaps': 'Small-caps',
+
+  'cmd.fullWidth': 'Lățime liberă (text pe tot panoul)',  'cmd.smallCaps': 'Small-caps',
   'cmd.smallCapsOff': 'Fără small-caps',
   'cmd.moveUp': 'Mută selecția sus',
   'cmd.moveDown': 'Mută selecția jos',
@@ -429,7 +430,8 @@ const en = {
   'set.defaultView': 'Default view', 'set.showInvisibles': 'Show invisible characters', 'cmd.preserveFormat': 'Preserve formatting (block left as is by Compile)', 'cmd.convertDefaultDraft': 'Convert the Manuscript to default formatting…', 'cmd.convertDefaultAll': 'Convert the whole project to default formatting…', 'cmd.copyholder': 'Open as reference', 'cmd.copyholderClose': 'Close reference pane',
 
   'cmd.resetIndents': 'Reset List Indents',
-  'cmd.smallCaps': 'Small caps',
+
+  'cmd.fullWidth': 'Full width (text across the pane)',  'cmd.smallCaps': 'Small caps',
   'cmd.smallCapsOff': 'Remove small caps',
   'cmd.moveUp': 'Move Selection Up',
   'cmd.moveDown': 'Move Selection Down',

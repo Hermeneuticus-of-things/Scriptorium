@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildMenuLayout, SUBMENUS } from '../src/lib/menuLayout.js';
+import fs from 'fs';
 import { readingLensItems } from '../src/lib/readingLenses.js';
 
 describe('menu dedupe Soft UI', () => {
@@ -7,6 +8,13 @@ describe('menu dedupe Soft UI', () => {
     const reading = SUBMENUS.view.find((d) => d[0] === 'menu.reading');
     expect(reading[1]).toEqual(['linguisticFocus']); // o singură poartă: dialogul de replici e din panoul LF
     expect(reading[1]).not.toContain('posNouns');
+  });
+
+  it('top-level Vizualizare has no posNouns/posVerbs/posOff duplicates (directivă 23.11)', () => {
+    const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+    for (const id of ['posNouns', 'posVerbs', 'posOff']) {
+      expect(app).not.toContain(`'view', '${id}'`);
+    }
   });
 
   it('reading submenu labels: Focus lingvistic substantive/verbe appear once from lenses', () => {

@@ -137,6 +137,7 @@ import {
 } from './lib/tree.js';
 import { listFixedPhrases } from './lib/fixedPhrases.js';
 import { nextTarget, applyFocus } from './lib/focusNav.js';
+import { startDrag, startResize, snapRect, snapZone, defaultRect } from './lib/floatWindow.js';
 import { importDestination } from './lib/importFolder.js';
 import { listTemplates, cloneFromTemplate, templateTargetParent } from './lib/documentTemplates.js';
 import { autoSynopsis, lookupUrl } from './lib/textTools.js';
@@ -402,6 +403,33 @@ export default function App({ api: apiProp }) {
   const [view, setView] = useState('editor');
   const [showInspector, setShowInspector] = useState(true);
   const [showAi, setShowAi] = useState(false);
+  const [aiPanelMode, setAiPanelMode] = useState(true); // true=andocat (coloană), false=flotant
+  const [aiFloat, setAiFloat] = useState(null); // {x,y,w,h} pentru modul flotant
+  const [aiDockPreview, setAiDockPreview] = useState(null); // 'right'|'left'|'top'|'bottom'
+  // Panou AI flotant pe motorul unitar (lib/floatWindow.js): drag de antet, resize din colț,
+  // previzualizare de andocare magnetică pe margini + comiterea dreptunghiului andocat.
+  useEffect(() => {
+    if (aiPanelMode || !showAi) return;
+    const el = aiFloatRef.current || document.querySelector('.ai-float');
+    if (!el) return;
+    const viewport = () => ({ innerWidth: window.innerWidth, innerHeight: window.innerHeight });
+    const rect = () => aiFloat || defaultRect({ innerWidth: window.innerWidth, innerHeight: window.innerHeight }, [], 420, 560);
+    const offDrag = startDrag({
+      header: el.querySelector('.ai-float-head'),
+      viewport, rect,
+      setRect: (r) => setAiFloat(r),
+      onPreview: (zone) => setAiDockPreview(zone),
+      onEnd: ({ rect: finalRect }) => { setAiFloat(finalRect); setAiDockPreview(null); },
+      magnet: 90,
+    });
+    const offResize = startResize({
+      grip: el.querySelector('.ai-float-resize'),
+      viewport, rect,
+      setRect: (r) => setAiFloat(r),
+    });
+    return () => { offDrag(); offResize(); };
+  }, [aiPanelMode, showAi, aiFloat]);
+
   // AI placement (ADL §4.2, directivă autor 2026-11-10): fereastră flotantă SAU panou lateral mare;
   // modul persistat în starea UI. aiScope = nivelul de lucru ales din meniul contextual.
   const [aiScope, setAiScope] = useState(null); // {nodeId, level: 'book'|'manuscript'|'chapter'|'section'|'selection'}
@@ -634,6 +662,7 @@ export default function App({ api: apiProp }) {
   const [help, setHelp] = useState(null);
   // T1: ultima țintă de focus (ref, nu state — fără rerandare); ciclarea F6/Shift+F6.
   const focusTargetRef = useRef('editor');
+  const aiFloatRef = useRef(null);
   const [helpFinder, setHelpFinder] = useState(false);
   const [copyToOpen, setCopyToOpen] = useState(false);
   const [showScratch, setShowScratch] = useState(false);
@@ -1188,8 +1217,8 @@ export default function App({ api: apiProp }) {
 
   // Remember UI state per project.
   useEffect(() => {
-    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, splitId, copyholder, paneLocks });
-  }, [dir, selectedId, view, widths, showInspector, splitId, copyholder, paneLocks]);
+    if (dir) saveUi(dir, { selectedId, view, widths, showInspector, aiPanelMode, aiFloat, splitId, copyholder, paneLocks });
+  }, [dir, selectedId, view, widths, showInspector, aiPanelMode, aiFloat, splitId, copyholder, paneLocks]);
 
   const saveProject = useCallback(
     (next) => {
@@ -1298,6 +1327,8 @@ export default function App({ api: apiProp }) {
       setNav({ stack: [start], index: 0 });
       setView(ui.view || settingsRef.current?.defaultView || 'editor');
       if (ui.widths) setWidths(ui.widths);
+      if (ui.aiPanelMode !== undefined) setAiPanelMode(Boolean(ui.aiPanelMode));
+      if (ui.aiFloat) setAiFloat(ui.aiFloat);
       if (ui.showInspector !== undefined) setShowInspector(ui.showInspector);
       setSplitId(ui.splitId && findNode(res.project.tree, ui.splitId) ? ui.splitId : null);
       setPaneLocks(ui.paneLocks && typeof ui.paneLocks === 'object' ? { main: Boolean(ui.paneLocks.main), split: Boolean(ui.paneLocks.split) } : {});
@@ -2255,7 +2286,7 @@ export default function App({ api: apiProp }) {
     let outlinerColumns;
     try { outlinerColumns = JSON.parse(localStorage.getItem(OUTLINER_COLUMNS_KEY) || 'null') || undefined; } catch { /* none */ }
     const board = selected && selected.children ? selected : selectedId ? findParent(project.tree, selectedId) : null;
-    return { view, showInspector, showAi, showEditorial, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
+    return { view, showInspector, showAi, showEditorial, aiPanelMode, aiFloat, hideBinder, widths, editorView, splitId, copyholder, outlinerColumns, cork: board?.cork ? { folderId: board.id, ...board.cork } : undefined };
   };
   const [layoutRev, setLayoutRev] = useState(0);
   const applyLayout = (l) => {
@@ -2273,6 +2304,8 @@ export default function App({ api: apiProp }) {
     setShowAi(Boolean(l.showAi));
     setShowEditorial(Boolean(l.showEditorial));
     setHideBinder(Boolean(l.hideBinder));
+    if (l.aiPanelMode !== undefined) setAiPanelMode(Boolean(l.aiPanelMode));
+    if (l.aiFloat) setAiFloat(l.aiFloat);
     if (l.widths) setWidths(l.widths);
     if (l.editorView) setEditorView(l.editorView);
     if (!l.split) setSplitId(null);
@@ -3601,6 +3634,7 @@ export default function App({ api: apiProp }) {
     ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
     ['format', 'convertDefaultAll', tr('cmd.convertDefaultAll'), () => convertFormattingAll().catch(report), !project],
     ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
+    ['view', 'fullWidth', tr('cmd.fullWidth'), () => setEditorView({ ...editorViewRef.current, fullWidth: !editorViewRef.current.fullWidth, pageView: false }), !selected],
     ['ai', 'irep', aiEnabled ? 'I-REP / I-EDIT' : 'I-REP', () => { setShowEditorial((v) => !v); setShowAi(true); }],
     ['ai', 'iedit', tr('cmd.iedit'), () => { setShowEditorial(true); setShowAi(true); setEditorialTabReq({ tab: 'edit', n: Date.now() }); }, !aiEnabled],
     ['ai', 'aiCancelJob', tr('cmd.aiCancelJob'), () => api.cancelAi().catch(report), !api.cancelAi],
@@ -3617,9 +3651,9 @@ export default function App({ api: apiProp }) {
     ['view', 'viewTimeline', 'Cronologie', () => showWholeBook('timeline')],
     ['view', 'viewRelations', tr('cmd.viewRelations'), () => showWholeBook('relations')],
     ['view', 'viewPacing', tr('cmd.viewPacing'), () => showWholeBook('pacing')],
-    ['view', 'posNouns', 'Focus lingvistic: substantive', () => setEditorView({ ...editorView, posFocus: editorView.posFocus === 'noun' ? '' : 'noun' })],
-    ['view', 'posVerbs', 'Focus lingvistic: verbe', () => setEditorView({ ...editorView, posFocus: editorView.posFocus === 'verb' ? '' : 'verb' })],
-    ['view', 'posOff', 'Focus lingvistic: oprit', () => setEditorView({ ...editorView, posFocus: '' })],
+    // Focus lingvistic: acces EXCLUSIV prin Vizualizare → Lectură (readingLensItems — directivă
+    // autor 23.11). Tuple-urile posNouns/posVerbs/posOff au fost eliminate din registru — apareau
+    // ca duplicate direct în meniul Vizualizare lângă submeniul Lectură.
     ['project', 'bookmarks', tr('cmd.bookmarks'), () => setDialog('bookmarks')],
     ['project', 'bookmarkAdd', tr('cmd.bookmarkAdd'), () => !(project.bookmarks || []).some((b) => b.id === selectedId) && saveProject({ ...project, bookmarks: [...(project.bookmarks || []), { id: selectedId, title: selected?.title }] }), !selectedId],
     ['project', 'projectNotes', tr('cmd.projectNotes'), () => setDialog('projectNotes')],
@@ -4510,7 +4544,7 @@ export default function App({ api: apiProp }) {
 
         {/* Fereastra AI: container propriu, separat de coloana Inspectorului (directivă autor). Doar AI — reparațiile
             deterministe (fără AI) stau în Unelte › Reparații simple…. */}
-        {(showAi && aiEnabled && aiNode) && selected && !composition && (
+        {(showAi && aiEnabled && aiNode) && selected && !composition && aiPanelMode && (
           <>
             <div className="resizer" onMouseDown={startResize('ai')} role="separator" aria-label={tr('ui.app.latime_fereastra_ai')} />
             <div className="ai-window" data-focus-pane="ai" tabIndex={-1} style={{ width: widths.ai || 380 }}>
@@ -4518,6 +4552,9 @@ export default function App({ api: apiProp }) {
                 <div className="side-ai-head">
                   <strong>{tr('ui.aiWorkspace.title')}</strong>
                   <div className="side-ai-actions">
+                    <button type="button" onClick={() => setAiPanelMode(false)} aria-label={tr('ui.aiWorkspace.float')} title={tr('ui.aiWorkspace.float')}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="11" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M8 4h11" fill="none" stroke="currentColor" strokeWidth="2"/></svg>
+                    </button>
                     <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
                     </button>
@@ -4553,6 +4590,61 @@ export default function App({ api: apiProp }) {
               </section>
             </div>
           </>
+        )}
+
+        {/* Panoul AI FLOTANT (detașabil, directivă autor 23.11): trăgabil de antet, redimensionabil
+            din colț, cu andocare „magnetică" înapoi în colțul din dreapta (buton + snap lângă margine). */}
+        {aiDockPreview && (() => { const pr = snapRect(aiDockPreview, { innerWidth: window.innerWidth, innerHeight: window.innerHeight }); return (
+          <div className="ai-dock-preview" style={{ left: pr.x, top: pr.y, width: pr.w, height: pr.h }} aria-hidden="true" />
+        ); })()}
+        {(showAi && aiEnabled && aiNode) && selected && !composition && !aiPanelMode && (
+          <div
+            ref={aiFloatRef}
+            className="ai-float"
+            data-focus-pane="ai"
+            tabIndex={-1}
+            style={{ left: aiFloat?.x ?? 120, top: aiFloat?.y ?? 90, width: aiFloat?.w ?? 420, height: aiFloat?.h ?? 560 }}
+          >
+            <div className="side-ai-head ai-float-head">
+              <strong>{tr('ui.aiWorkspace.title')}</strong>
+              <div className="side-ai-actions">
+                <button type="button" onClick={() => { setAiPanelMode(true); setAiFloat(null); }} aria-label={tr('ui.aiWorkspace.dock')} title={tr('ui.aiWorkspace.dock')}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="16" y="3" width="5" height="18" rx="1" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M4 5h9M4 12h9M4 19h9" fill="none" stroke="currentColor" strokeWidth="2"/></svg>
+                </button>
+                <button type="button" onClick={() => setShowAi(false)} aria-label={tr('btn.close')} title={tr('btn.close')}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+                </button>
+              </div>
+            </div>
+            {(showEditorial && editorialNode) ? (
+              <>
+                <div className="ai-ws-tabs" role="tablist" aria-label={tr('ui.aiWorkspace.spate')}>
+                  <button role="tab" aria-selected="false" onClick={() => setShowEditorial(false)}>{tr('ui.aiWorkspace.tabAsistent')}</button>
+                  <button role="tab" aria-selected="true" onClick={() => setShowEditorial(true)}>{tr('ui.aiWorkspace.tabEditorial')}</button>
+                </div>
+                <EditorialPanel
+                  project={project}
+                  dir={dir}
+                  aiEnabled={aiEnabled}
+                  key={'ed-float-' + editorialNode.id}
+                  api={api}
+                  hasKey={settings.hasApiKey}
+                  aiLabel={settings.aiLabel}
+                  aiModel={settings.aiModel}
+                  profile={profileFor(project)}
+                  node={editorialNode}
+                  html={docs[editorialNode.id] || ''}
+                  chapter={chapterDocs}
+                  editorialTabReq={editorialTabReq}
+                  onError={report}
+                  onClose={() => { setShowEditorial(false); setEditorialTabReq(null); }}
+                />
+              </>
+            ) : (
+              <AiPanel {...aiPanelProps} />
+            )}
+            <div className="ai-float-resize" />
+          </div>
         )}
       </div>
 

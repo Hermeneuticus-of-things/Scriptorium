@@ -994,3 +994,8 @@ details.set-acc[open] > summary { color: var(--text); margin-bottom: var(--sp-1)
 .empty-state-title { margin: 0; font-weight: 600; }
 .empty-state-hint { margin: 0; max-width: 34em; }
 .empty-state-action { margin-top: var(--sp-1); }
+
+/* Directivă autor 23.11: butoanele Save/Cancel ale dialogurilor lungi (ex. Setări AI project)
+   rămân mereu vizibile — bară de acțiuni lipicioasă la fundul modalului, peste scroll. */
+.modal > .actions { position: sticky; bottom: calc(-1 * var(--sp-3)); margin: var(--sp-3) calc(-1 * var(--sp-3)) calc(-1 * var(--sp-3)); padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  background: var(--paper); border-top: 1px solid var(--line); z-index: 3; }
