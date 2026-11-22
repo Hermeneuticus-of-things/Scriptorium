@@ -3089,6 +3089,27 @@ export default function App({ api: apiProp }) {
     : activeCollection ? collectionNodes(project, activeCollection, docs, collectionNotes).map((n) => n.id) : null;
   const colorIn = labelColorInOf(settings);
   const dropKeyword = (ids, name) => saveProject(addKeywordToDocs(projectRef.current, ids, name));
+  // T2+ (EDIT.31–34): mutarea selecției din tastatură.
+  const moveSel = (dir) => {
+    const node = selected && findNode(project.tree, selected.id);
+    if (!node || node.root) return;
+    const parent = findParent(project.tree, node.id);
+    const list = parent ? parent.children : project.tree;
+    const i = list.findIndex((x) => x.id === node.id);
+    let tree = project.tree;
+    if (dir === 'up' && i > 0) tree = moveNode(tree, node.id, list[i - 1].id, 'before');
+    else if (dir === 'down' && i >= 0 && i < list.length - 1) tree = moveNode(tree, node.id, list[i + 1].id, 'after');
+    else if (dir === 'left' && parent && parent.id !== project.tree[0]?.id) {
+      const gp = findParent(project.tree, parent.id);
+      if (gp) tree = moveNode(tree, node.id, gp.id, 'inside');
+    } else if (dir === 'right' && node.children && node.children.length) {
+      tree = moveNode(tree, node.id, node.children[0].id, 'before');
+    }
+    if (tree === project.tree) return;
+    binderHistory.current = historyPush(binderHistory.current, project.tree, tree);
+    setTreeU(tree);
+    saveProject({ ...projectRef.current, tree });
+  };
   const groupItems = (ids) => {
     const folder = newNode('folder', tr('ui.binder.grup_nou'));
     const tree = groupIntoFolder(project.tree, ids, folder);
@@ -3575,6 +3596,8 @@ export default function App({ api: apiProp }) {
     ['format', 'toggleRuler', tr('cmd.toggleRuler'), () => toggleView('ruler')],
     ['format', 'preserveFormat', tr('cmd.preserveFormat'), () => activeHandle()?.editor?.chain().focus().togglePreserveFormat().run()],
     ['format', 'resetIndents', tr('cmd.resetIndents'), () => activeHandle()?.editor?.chain().focus().setParagraphFormat({ indentLeft: null, firstIndent: null }).run()],
+    ['format', 'smallCaps', tr('cmd.smallCaps'), () => activeHandle()?.editor?.chain().focus().toggleSmallCaps().run()],
+    ['format', 'smallCapsOff', tr('cmd.smallCapsOff'), () => activeHandle()?.editor?.chain().focus().toggleSmallCaps().toggleSmallCaps().run()],
     ['format', 'convertDefaultDraft', tr('cmd.convertDefaultDraft'), () => convertFormattingDraft().catch(report), !project],
     ['format', 'convertDefaultAll', tr('cmd.convertDefaultAll'), () => convertFormattingAll().catch(report), !project],
     ['view', 'dialogueFocus', tr('cmd.dialogueFocus'), () => setDialog('dialoguefocus')],
@@ -3659,7 +3682,13 @@ export default function App({ api: apiProp }) {
     ['project', 'autoCompleteList', tr('cmd.autoCompleteList'), () => setDialog('autoComplete')],
     ['edit', 'autoComplete', tr('cmd.autoComplete'), () => autoCompleteWord()],
     ['window', 'fullScreen', 'Ecran complet', toggleFullScreen],
-    ['document', 'moveTo', tr('cmd.moveTo'), () => setDialog('moveTo'), !selectionList().length],
+    ['document', 'moveTo', tr('cmd.moveTo'),
+    // T2+ (Anexa A, EDIT.31–34): mutarea selecției din tastatură — Sus/Jos = ordine în părinte;
+    // Stânga = la părintele părintelui (înăuntru e prin drag/Move To), Dreapta = în primul copil-vecin.
+    ['document', 'moveUp', tr('cmd.moveUp'), () => moveSel('up'), !selected || Boolean(selected.root)],
+    ['document', 'moveDown', tr('cmd.moveDown'), () => moveSel('down'), !selected || Boolean(selected.root)],
+    ['document', 'moveLeft', tr('cmd.moveLeft'), () => moveSel('left'), !selected || Boolean(selected.root)],
+    ['document', 'moveRight', tr('cmd.moveRight'), () => moveSel('right'), !selected || Boolean(selected.root)], () => setDialog('moveTo'), !selectionList().length],
     ['document', 'toggleSeparator', tr('cmd.toggleSeparator'), toggleSeparator, !selectionList().length],
     ['document', 'restoreTrash', tr('cmd.restoreTrash'), restoreSelection, !selectionList().some((id) => inTrash(id))],
     ['edit', 'appendSelection', tr('cmd.appendSelection'), () => setDialog('appendTo')],
