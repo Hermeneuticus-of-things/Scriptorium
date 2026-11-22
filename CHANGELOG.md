@@ -182,3 +182,25 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
 
 ## Auditul de paritate aplicația de referință
 - Toate golurile P2 închise: replacements de proiect și Convert notation verificate ca implementate (audit învechit); Copy To Project, adaptive naming, filtre sync, CriticMarkup, LaTeX, Set Styles Defaults livrate. Registrul: docs/audit/parity/comparison_registry.md (799 intrări, S3-O.25–29 închise, W.08 → COMPLETE).
+
+# Pneuma Sofer v1.4.1
+
+## Panou AI — coada de revizuire editorială (PLAN-AI-DEDICAT Etapa 2+3, principii A2UI)
+- Rezultatele corecturii/revizuirii devin **carduri per schimbare**: fragment înainte/după, context din text, **Accept/Respinge individual**, „Acceptă tot ce a rămas", dif complet în details. Aplicarea subsetului = o singură scriere tranzacțională (snapshot + protecții).
+- Rezultatele Critică/Consistență devin **constatări individuale** cu „Repară doar fragmentul ăsta" — rundă de revizuire cu instrucțiunea specifică; rezultatul reîntră în coadă.
+- Fallback la dif monolitic când segmentarea nu e posibilă. Matricea A2UI: docs/PLAN-AI-A2UI.md.
+
+## Fereastra AI — detașabilă, cu andocare magnetică
+- Buton „Deschide ca panou flotant": panou trăgabil de antet, redimensionabil din colț, cu **previzualizare de andocare** pe margini (jumătate de ecran) și fixare; „Fixează în colțul din dreapta" pentru întoarcere; poziția/dimensiunea persistă.
+- src/lib/floatWindow.js: motor unitar pentru panouri flotante (17 teste).
+
+## Meniu Vizualizare
+- Focus lingvistic accesibil EXCLUSIV prin Vizualizare → Lectură (dublurile din meniul principal eliminate).
+
+## Dialoguri
+- Butoanele **Salvează/Anulează rămân mereu vizibile** în dialogurile lungi (bară de acțiuri lipicioasă) — audit Playwright pe 9 dialoguri.
+
+## Fixuri
+- Ecran alb React #310 (hook-uri după early-return) — la schimbarea documentului.
+- Importul aiReviewQueue lipsă din AiPanel (runtime crash la primul rezultat).
+- Test e2e flaky (snapshot cu poll-wait); e2e meniu nativ recapturat după fixture.
