@@ -121,7 +121,8 @@ export const DEFAULT_SETTINGS = {
   autoReplacements: [],
   learnCorrections: true,
   // Editing
-  paragraphIndent: 0,
+  paragraphIndent: 0, // legacy, in em; used only by settings saved before paragraphIndentCm existed
+  paragraphIndentCm: 0.7, // first-line indent of every body paragraph, in cm (book default)
   paragraphSpacing: 0.6,
   defaultView: 'editor',
   showInvisibles: false,
@@ -165,6 +166,14 @@ export function labelTint(color, alpha = 0.18) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+/** First-line indent for body paragraphs: cm (paragraphIndentCm, default 0.7); an older em value is kept
+ *  only when it was set (> 0) and no cm value has been saved yet. */
+export function paraIndentCss(raw, s = withDefaults(raw)) {
+  const legacyEm = Number(raw && raw.paragraphIndent) || 0;
+  if (legacyEm > 0 && (raw == null || raw.paragraphIndentCm == null)) return `${legacyEm}em`;
+  return `${Number(s.paragraphIndentCm) || 0}cm`;
+}
+
 /** Sets CSS custom properties on <html> from settings; empty values remove the variable. */
 export function applySettingsCss(settings, root = typeof document !== 'undefined' ? document.documentElement : null) {
   if (!root) return;
@@ -175,7 +184,7 @@ export function applySettingsCss(settings, root = typeof document !== 'undefined
     '--editor-line-height': s.lineHeight ? String(s.lineHeight) : '',
     '--editor-page-width': s.pageWidth ? `${Number(s.pageWidth)}em` : '',
     '--binder-font-size': s.binderFontSize ? `${Number(s.binderFontSize)}px` : '',
-    '--para-indent': `${Number(s.paragraphIndent) || 0}em`,
+    '--para-indent': paraIndentCss(settings, s),
     '--para-spacing': `${Number(s.paragraphSpacing) || 0}em`,
     '--accent': s.accentColor,
   };

@@ -73,7 +73,7 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
     autoCapitalize: Boolean(init.autoCapitalize),
     spellLanguages: (init.spellLanguages || []).join(', '),
     autoReplacements: (init.autoReplacements || []).map((r) => ({ ...r })),
-    paragraphIndent: init.paragraphIndent,
+    paragraphIndentCm: init.paragraphIndentCm ?? 0.7,
     paragraphSpacing: init.paragraphSpacing,
     defaultView: init.defaultView,
     showInvisibles: Boolean(init.showInvisibles),
@@ -297,7 +297,8 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
         binderFontSize: num(s.binderFontSize, 14),
         spellLanguages: s.spellLanguages.split(',').map((x) => x.trim()).filter(Boolean),
         autoReplacements: s.autoReplacements.filter((r) => r.from && r.from.trim()),
-        paragraphIndent: num(s.paragraphIndent, 0),
+        paragraphIndent: 0,
+        paragraphIndentCm: num(s.paragraphIndentCm, 0.7),
         paragraphSpacing: num(s.paragraphSpacing, 0.6),
         compBg: comp.bg,
         compWidth: Number(comp.width) || 40,
@@ -469,7 +470,7 @@ export default function SettingsDialog({ api, speechReady = { speechify: false, 
         <div className="row">
           <label>
             {t('set.paraIndent')}
-            <input type="number" min="0" max="5" step="0.5" value={s.paragraphIndent} onChange={set('paragraphIndent')} />
+            <input type="number" min="0" max="5" step="0.1" value={s.paragraphIndentCm} onChange={set('paragraphIndentCm')} />
           </label>
           <label>
             {t('set.paraSpacing')}
