@@ -80,6 +80,7 @@ export const DEFAULT_KEYS = {
   focusBinder: 'Ctrl+Shift+2',
   focusInspector: 'Ctrl+Shift+3',
   focusAi: 'Ctrl+Shift+4',
+  helpFinder: 'Ctrl+Shift+H',
   compile: 'Ctrl+Shift+E',
   quickRef: 'Ctrl+Shift+R',
   snapshot: 'Ctrl+5',

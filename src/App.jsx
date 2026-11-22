@@ -20,6 +20,7 @@ import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
 import SimpleRepairsDialog from './components/SimpleRepairsDialog.jsx';
 import SignalsDialog from './components/SignalsDialog.jsx';
+import HelpFinderDialog from './components/HelpFinderDialog.jsx';
 import QuickRef from './components/QuickRef.jsx';
 import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
@@ -282,6 +283,7 @@ export default function App({ api: apiProp }) {
   const [dir, setDir] = useState(null);
   const [project, setProject] = useState(null);
   const [docsState, setDocs] = useState({}); // id -> html cache (main text)
+  const loadingDocs = useRef(new Map()); // id -> in-flight read; prevents duplicate IPC on fast navigation
   // Typing does not go through React state on every keystroke: re-rendering App (and every
   // project-wide derived value: word counts, auto-complete words, target checks, binder,
   // inspector) cost ~30 ms per key on a 50k-word document. The newest text of each edited
@@ -316,6 +318,25 @@ export default function App({ api: apiProp }) {
   useEffect(() => () => clearTimeout(typedTimer.current), []);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  useEffect(() => {
+    if (!dir || !project || !selectedId || docsState[selectedId] !== undefined) return undefined;
+    const node = findNode(project.tree, selectedId);
+    if (!node || node.type !== 'text' || node.children) return undefined;
+    if (loadingDocs.current.has(selectedId)) return undefined;
+    // The read outlives re-renders of this effect: dropping its result on cleanup left the
+    // document empty until it was selected again (no one restarted the read). Only a read
+    // that belongs to another project is discarded.
+    const read = Promise.resolve(api.readDoc(dir, selectedId, 'docs'))
+      .then((html) => {
+        if (dirNowRef.current !== dir) return;
+        diskDocs.current.set(selectedId, String(html ?? ''));
+        setDocs((d) => (d[selectedId] === undefined ? { ...d, [selectedId]: String(html ?? '') } : d));
+      })
+      .catch((error) => console.error('[pneuma] document lazy-load failed:', error));
+    loadingDocs.current.set(selectedId, read);
+    read.finally(() => loadingDocs.current.delete(selectedId));
+    return undefined;
+  }, [api, dir, project, selectedId, docsState]);
   const [conflict, setConflict] = useState(null); // { id, title, pieces, html } (ConflictDialog)
   const team = useTeam({ api, dir, settings, docId: selectedId });
   // D&TED dictation (text at the cursor, or replacing the selection) and audio transcription.
@@ -612,6 +633,7 @@ export default function App({ api: apiProp }) {
   const [help, setHelp] = useState(null);
   // T1: ultima țintă de focus (ref, nu state — fără rerandare); ciclarea F6/Shift+F6.
   const focusTargetRef = useRef('editor');
+  const [helpFinder, setHelpFinder] = useState(false);
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [settingsTab, setSettingsTab] = useState('');
@@ -789,6 +811,14 @@ export default function App({ api: apiProp }) {
   }, [settings]);
 
   const report = useCallback((e) => setError(e?.message || String(e)), []);
+  useEffect(() => {
+    if (!api.onProjectInstanceConflict) return undefined;
+    return api.onProjectInstanceConflict((info = {}) => {
+      const version = info.version ? ` versiunea ${info.version}` : '';
+      const pathText = info.execPath ? ` Executabil: ${info.execPath}` : '';
+      setError(`Proiectul este deja deschis de altă instanță${version}.${pathText} Nu îl deschid din nou pentru a evita conflicte.`);
+    });
+  }, [api]);
   const prevTargetCounts = useRef({});
   useEffect(() => {
     if (!showFloatInspector || !selectedId || !dir) return;
@@ -1207,15 +1237,26 @@ export default function App({ api: apiProp }) {
         setDialog('importReport');
       }
       const all = flatten(res.project.tree).filter((n) => !n.root);
-      const entries = await Promise.all(all.map(async (n) => [n.id, await api.readDoc(res.dir, n.id, 'docs')]));
-      const cache = Object.fromEntries(entries);
       const ui = loadUi(res.dir);
+      const firstText = flatten(res.project.tree[0].children).find((n) => n.type === 'text');
+      const start = ui.selectedId && findNode(res.project.tree, ui.selectedId) ? ui.selectedId : firstText ? firstText.id : res.project.tree[0].id;
+      const initial = all.find((n) => n.id === start && n.type === 'text') || null;
+      const entries = initial ? [[initial.id, await api.readDoc(res.dir, initial.id, 'docs')]] : [];
+      const cache = Object.fromEntries(entries);
       dropTyped();
       diskDocs.current = new Map(entries);
       // A queue left from a session closed while the folder was away: shown and sent now.
       if (dirNowRef.current && dirNowRef.current !== res.dir) parkQueue(dirNowRef.current);
       const left = loadQueue(res.dir);
       if (left) {
+        const queuedIds = [...new Set(Object.entries(left)
+          .filter(([key]) => key.endsWith('|docs'))
+          .map(([key]) => key.split('|')[0])
+          .filter((id) => cache[id] === undefined))];
+        if (queuedIds.length) {
+          const queuedDisk = await Promise.all(queuedIds.map(async (id) => [id, await api.readDoc(res.dir, id, 'docs').catch(() => '')]));
+          for (const [id, html] of queuedDisk) cache[id] = html || '';
+        }
         const ids = new Set(all.map((n) => n.id));
         let n = 0;
         for (const [k, item] of Object.entries(left)) {
@@ -1247,8 +1288,6 @@ export default function App({ api: apiProp }) {
       setDocs(cache);
       setDir(res.dir);
       setProject(res.project);
-      const firstText = flatten(res.project.tree[0].children).find((n) => n.type === 'text');
-      const start = ui.selectedId && findNode(res.project.tree, ui.selectedId) ? ui.selectedId : firstText ? firstText.id : res.project.tree[0].id;
       setSelectedId(start);
       setSelectedIds(new Set([start]));
       setNav({ stack: [start], index: 0 });
@@ -1269,6 +1308,7 @@ export default function App({ api: apiProp }) {
       // here dominated the open stall (profilat — CPU profiler). By idle time the counts memo
       // has warmed countCache, so this reuses cached numbers instead of re-reading everything.
       deferIdle(() => {
+        if (entries.length !== all.filter((n) => n.type === 'text').length) return;
         const countsAtOpen = {};
         for (const [id, h] of entries) {
           const hit = countCache.current.get(id);
@@ -1279,7 +1319,6 @@ export default function App({ api: apiProp }) {
         const totalAtOpen = Object.entries(countsAtOpen).reduce((s, [id, c]) => s + (trashIds.has(id) ? 0 : c), 0);
         api.recordHistory?.(res.dir, { draft: draftAtOpen, total: totalAtOpen }).catch(() => {});
       });
-      setSettings(await api.getSettings());
     },
     [api],
   );
@@ -3581,6 +3620,7 @@ export default function App({ api: apiProp }) {
     ['file', 'saveTemplate', tr('cmd.saveTemplate'), () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
     ['file', 'pageSetup', tr('cmd.pageSetup'), () => setDialog('pageSetup'), !api.getPageSetup],
     ['file', 'printPreview', tr('cmd.printPreview'), () => openPrintPreview(), !api.printPreview],
+    ['help', 'helpFinder', tr('cmd.helpFinder'), () => setHelpFinder(true)],
     ['help', 'help', 'Manualul Pneuma Sofer', () => setHelp({ topic: null, tab: 'manual' })],
     ['help', 'helpContext', tr('cmd.helpContext'), () => setHelp({ topic: helpContext(), tab: 'manual' })],
     ['help', 'helpShortcuts', tr('cmd.helpShortcuts'), () => setHelp({ topic: null, tab: 'shortcuts' })],
@@ -4079,7 +4119,7 @@ export default function App({ api: apiProp }) {
                 onAiPropose={runInlineAi}
                 onAiError={report}
                 scriptFormat={scriptFormat}
-                key={`${selected.id}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
+                key={`${selected.id}-${docsState[selected.id] === undefined ? 'loading' : 'ready'}-${smartQuotes}-${Boolean(selected.locked)}-${Boolean(team.lockOf(selected.id))}-${corrKey}`}
                 historyKey={selected.id}
                 corrections={corrections}
                 defaultFormatting={project.defaultFormatting}
@@ -4590,6 +4630,13 @@ export default function App({ api: apiProp }) {
             <div className="actions"><span className="spacer" /><button onClick={() => setAiReport(null)}>{tr('btn.close')}</button></div>
           </div>
         </div>
+      )}
+      {helpFinder && (
+        <HelpFinderDialog
+          commands={Object.values(commands).filter((c) => !c.hidden)}
+          onClose={() => setHelpFinder(false)}
+          onRunCommand={(c) => { if (!c.disabled) c.run(); }}
+        />
       )}
       {help && <HelpWindow initialTopic={help.topic} initialTab={help.tab} settings={settings} onClose={() => setHelp(null)} onStartTutorial={startTutorial} />}
       {dialog === 'saveTemplate' && <SaveTemplateDialog api={api} dir={dir} project={project} onSaved={(t) => setToast(tr('ui.app.sablon_salvat_x', { title: t.title }))} onClose={() => setDialog(null)} onError={report} />}

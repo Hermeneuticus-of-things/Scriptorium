@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // Echivalența htmlToText: implementarea pură (string + textarea decode) trebuie să dea
 // EXACT același text ca referința DOM (div.textContent) — pe cazuri limită și, dacă
-// există local, pe toate documentele cărții Karma (corpus real, ~2358 fișiere).
+// este configurat explicit, pe un corpus mare local de test.
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -49,15 +49,15 @@ describe('htmlToText — echivalență cu implementarea DOM', () => {
     expect(htmlToText(big)).toBe(domReference(big));
   });
 
-  // Corpus real: toate documentele Karma, dacă proiectul copie există pe această mașină.
-  const KARMA_DOCS = 'D:/Cloude Code/PROJECTS/Pneuma Sofer  APP/perf/Karma-copie.scribner/docs';
-  if (fs.existsSync(KARMA_DOCS)) {
-    it('echivalență pe TOATE documentele Karma (corpus real)', () => {
-      const files = fs.readdirSync(KARMA_DOCS).filter((f) => f.endsWith('.html'));
+  // Corpus opțional: calea nu este niciodată inclusă în repository.
+  const CORPUS_DOCS = process.env.PNEUMA_CORPUS_DIR || '';
+  if (CORPUS_DOCS && fs.existsSync(CORPUS_DOCS)) {
+    it('echivalență pe toate documentele corpusului mare configurat', () => {
+      const files = fs.readdirSync(CORPUS_DOCS).filter((f) => f.endsWith('.html'));
       expect(files.length).toBeGreaterThan(1000);
       let mismatches = 0;
       for (const f of files) {
-        const html = fs.readFileSync(path.join(KARMA_DOCS, f), 'utf8');
+        const html = fs.readFileSync(path.join(CORPUS_DOCS, f), 'utf8');
         if (htmlToText(html) !== domReference(html)) {
           mismatches += 1;
           if (mismatches <= 3) console.error('MISMATCH', f, JSON.stringify({ got: htmlToText(html).slice(0, 120), want: domReference(html).slice(0, 120) }));
@@ -66,7 +66,7 @@ describe('htmlToText — echivalență cu implementarea DOM', () => {
       expect(mismatches).toBe(0);
     }, 300000);
   } else {
-    it('corpusul Karma nu există pe această mașină — cazurile locale acoperă echivalența', () => {
+    it('corpusul mare nu este configurat — cazurile locale acoperă echivalența', () => {
       expect(CASES.length).toBeGreaterThan(15);
     });
   }
