@@ -13,7 +13,7 @@ dovadă; o etapă blocantă → PARTIAL cu etapa numită.
 | S3-W.05 | Revizuire cu snapshot-uri | **COMPLETE** | Snapshot Manager cu căutare + comparare + restore (Anexa E; `snapshotSearch.cjs`) |
 | S3-W.06 | Corectură cu comentarii/adnotări/subsoluri | **PARTIAL** | strip/convert notații = gol P1 moștenit (ch. 18 audit); restul acoperit |
 | S3-W.07 | Metadate + căutare avansată | **COMPLETE** | Quick Search + operatori + colecții dinamice (ch. 11; SCRIVENER-SEARCH-EVIDENCE) |
-| S3-W.08 | Compile cu format personalizat | **PARTIAL** (mai aproape) | replacements la nivel de proiect rămâne; Schiță/LaTeX memoir+report + CriticMarkup + italic→underline LIVRATE în 1.3.1 (T5) |
+| S3-W.08 | Compile cu format personalizat | **COMPLETE** | replacements de proiect LIVRATE (verificat, CompileDialog), Schiță/LaTeX/CriticMarkup LIVRATE (T5) |
 | S3-W.09 | Export/print împachetat | **PARTIAL** (mai aproape) | LaTeX memoir/report + CriticMarkup livrate; Vellum = produs plătit terț (NOT_APPLICABLE, export DOCX intermediar); print fișe+outline COMPLETE |
 | S3-W.10 | Backup + restaurare + migrare | **COMPLETE** | backup per-minut + zip + restore UI; merge 3-way la schimbări externe = SUPERIOR (ch. 5) |
 | S3-W.11 | Sync cloud + partajare | **PARTIAL** (mai aproape) | Trashed Files + prefix numeric LIVRATE (T4); filtrul pe colecții rămâne; iOS = N/A documentat |

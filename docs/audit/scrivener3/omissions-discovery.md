@@ -30,6 +30,11 @@ Nu s-au eliminat elemente „similare" fără verificarea duplicatului real (col
 | S3-O.22 | Anexa E (3.1.4.1) | editare | Reset List Indents | appendix-d-e-f | nu | MISSING | P3 |
 | S3-O.23 | Anexa F | extras | Proiecte-exemplu scrise (sample projects) în pack | appendix-d-e-f | nu | MISSING | P4 |
 | S3-O.24 | cap. 14 | cloud | Sync cu IOS (Scrivener iOS) — partener de ecosistem, nu replicabil | ch14 | N/A documentat | NOT_APPLICABLE | — |
+| S3-O.25 | audit ch. 6-7 + Anexa A | organizare | Copy To Project + adaptive naming + filtre sync (Trashed/numeric/colecții) | ch01-07 | T4 | LIVRATE 22.11 (main) | închise |
+| S3-O.26 | audit Anexa D/E | compile | CriticMarkup + LaTeX memoir/report + preset Schiță | appendix-d-e-f | T5 | LIVRATE 22.11 (main) | închise |
+| S3-O.27 | audit Anexa E | stiluri | Set Styles Defaults (defaultDocHtml) | appendix-d-e-f | T6 | LIVRAT 22.11 (main) | închis |
+| S3-O.28 | audit ch. 23 | compile | Replacements la nivel de proiect — verificat LIVRAT anterior (projReps în CompileDialog) | NEXT-CHAPTERS | fals-negative | COMPLETE (audit actualizat) | închis |
+| S3-O.29 | audit ch. 18 | adnotări | Convert notation — verificat LIVRAT anterior (noteConvert, 4 conversii în editorMenus) | NEXT-CHAPTERS | fals-negative | COMPLETE (audit actualizat) | închis |
 
 **Regulă de mentenanță:** orice funcție Scrivener descoperită ulterior primește ID `S3-O.nn`
 aici + intrare în tabelul sursă aferent, înainte de implementare. Registrul nu se micșorează.
