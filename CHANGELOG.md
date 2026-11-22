@@ -204,3 +204,8 @@ Pneuma Sofer trece de la stadiul de Beta (`0.13.x`) la **v1.0.0 Stable (General 
 - Ecran alb React #310 (hook-uri după early-return) — la schimbarea documentului.
 - Importul aiReviewQueue lipsă din AiPanel (runtime crash la primul rezultat).
 - Test e2e flaky (snapshot cu poll-wait); e2e meniu nativ recapturat după fixture.
+
+# Pneuma Sofer v1.4.2
+
+## Corecturi
+- **Setările programului se salvează și se închid din nou**: „Salvează setările programului" și „Anulează" aruncau o eroare internă („A apărut o problemă", dialogul rămânea deschis) de la v1.2.6 — dialogul nu primea `onClose` între props. Salvarea funcționa, dar închiderea și confirmarea nu; acum totul curge normal. Test de regresie red-green (tests/settingsDialogClose.test.js).

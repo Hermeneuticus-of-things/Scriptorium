@@ -14,3 +14,6 @@ outputs/
 pneuma-sync-*
 s1-*
 docs/assets/gif/frames/
+
+# Playwright/e2e artifacts locale
+.qa/

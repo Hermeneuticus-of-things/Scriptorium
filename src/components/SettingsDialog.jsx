@@ -40,7 +40,7 @@ const tabLabel = (k) => {
 // (ProjectAiSettingsDialog). Their old code below is kept, hidden behind this flag (not deleted).
 const PROJECT_AI_IN_PROGRAM_DIALOG = false;
 
-export default function SettingsDialog({ api, speechReady = { speechify: false, stt: false }, settings, project, dir, onProjectChange, onSaved, onError, onShortcuts, onCheckUpdates, onProjectSettings, onProjectAi, initialTab, aiOnly = false }) {
+export default function SettingsDialog({ api, speechReady = { speechify: false, stt: false }, settings, project, dir, onProjectChange, onSaved, onError, onShortcuts, onCheckUpdates, onProjectSettings, onProjectAi, onClose, initialTab, aiOnly = false }) {
   const init = { ...DEFAULT_SETTINGS, ...settings };
   const [dirty, setDirty] = useState(false); // Esc / click outside asks before throwing edits away
   const [tab, setTab] = useState(() => (aiOnly ? 'ai' : TABS.includes(initialTab) && initialTab !== 'ai' ? initialTab : 'general'));
