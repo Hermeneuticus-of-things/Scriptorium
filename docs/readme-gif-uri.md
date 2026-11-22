@@ -1,9 +1,10 @@
 # GIF-urile din README — cum se refac (PS-HELP/README, 23.11.2026)
 
-Pagina principală (`README.md`) arată **mișcarea** interfeței, nu poze statice. Două scripturi
-Playwright capturează cadrele, iar ffmpeg le asamblează în GIF-uri paletizate.
+Pagina principală (`README.md`) arată **mișcare** în toate materialele vizuale. GIF-urile de flux
+sunt capturate cu Playwright pe fixture izolat, iar asseturile ilustrative sunt convertite
+reproductibil în GIF-uri cu zoom discret și loop infinit.
 
-## Refacerea GIF-urilor automate (11 din 12)
+## Refacerea GIF-urilor capturate cu Playwright (12 fluxuri)
 
 ```bash
 npx vite build
@@ -20,21 +21,23 @@ node tests/e2e/gif-readme.cjs     # 7 GIF-uri: corkboard-move, translate-side, c
 - Server AI mock local (OpenAI-compatible SSE pe 127.0.0.1:8899) pentru streaming-ul real
   din scena de corectură AI — fără cheie, fără internet.
 
-## Filmare manuală (1 din 12): `dictation-live.gif`
+## Conversia asseturilor ilustrative
 
-Dictarea cere serviciul **D&TED instalat + microfon** — nu poate fi capturată automat.
-Pe calculatorul cu D&TED:
+Imaginile istorice din `assets/readme/` nu mai sunt referite direct de pagina principală.
+Pentru fiecare există un GIF în `docs/assets/gif/readme-*.gif`, generat cu:
 
-1. Deschide un proiect, un document cu 2–3 fraze scrise.
-2. Pornește recorder-ul zonei ecranului (OBS/Win+G), **1180 px lățime recomandat**.
-3. Apasă **F9** → spune două propoziții → observă bara de dictare jos (nivelul microfonului,
-   Pauză, Stop) și textul apărând la ~4 secunde la cursor.
-4. Oprește. Tunde la 5–8 secunde. Salvează ca `docs/assets/gif/08-dictation-live.gif`
-   și leagă-l în secțiunea „Dictezi" din README (acolo e marcat locul).
+```bash
+node scripts/animate-readme-assets.cjs
+```
+
+Scriptul rasterizează SVG-urile cu Playwright, apoi `scripts/animate-readme-assets.py`
+creează cadre PIL la 900×540, cu paletă adaptivă și `loop=0`. Captura ilustrativă pentru
+dictare nu pretinde că înlocuiește un test D&TED cu microfon; fluxurile reale capturate
+de Playwright rămân în GIF-urile cu prefix numeric din `docs/assets/gif/`.
 
 ## Reguli pentru GIF-uri (directiva autor)
 
-- Durată 5–12 s, o singură acțiune clară pe animație.
+- Loop infinit (`loop=0`), o singură acțiune sau stare clară pe animație.
 - Cursorul/elementul care se mișcă trebuie să fie vizibil.
 - Alt-textul din README descrie exact ce se întâmplă, pentru un scriitor care nu știe ce
   e un „binder" sau un „compile format".

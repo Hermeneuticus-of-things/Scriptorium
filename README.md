@@ -2,12 +2,12 @@
 
 Program gratuit de scris cărți lungi, în română și engleză: textul stă pe fișe, câte una pentru fiecare scenă sau capitol, iar la final primești cartea întreagă.
 
-**[Descarcă ultima versiune pentru Windows](../../releases/latest)**
+**Versiunea publică: [Pneuma Sofer v1.4.1](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/tag/v1.4.1)** · **[Descarcă ultima versiune pentru Windows](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/latest)**
 
 [Schimbările din ultima versiune](CHANGELOG.md). **Pneuma Sofer lucrează extraordinar de bine fără AI** — scrierea, organizarea, dictarea, corecturile, căutările, backup-ul și exportul sunt complete și rămân pe calculatorul tău. Tot ce înseamnă AI stă ascuns până îl activezi tu din Setări; un scriitor care nu îl vrea nu vede niciun gram de AI în program.
 
 <p align="center">
-  <img src="./assets/readme/hero.png" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">
+  <img src="./docs/assets/gif/readme-hero.gif" width="100%" alt="Panoul de fișe al unui roman în Pneuma Sofer: fiecare scenă pe fișa ei, binderul în stânga, inspectorul în dreapta">
 </p>
 
 ## Noutăți din ultima versiune
@@ -46,7 +46,7 @@ Suportul pentru scenarii există și el în program, dar nu pentru acest public 
 Profilul complet al utilizatorului-țintă — categorii, nevoi, dificultăți, criterii de design pentru Help și fluxuri — e în [`docs/PROFIL-UTILIZATOR.md`](docs/PROFIL-UTILIZATOR.md) și e baza de referință pentru toate deciziile de produs.
 
 <p align="center">
-  <img src="./assets/readme/for-whom.svg" width="100%" alt="Pentru cine e: scrii o carte, traduci o carte, scrii o lucrare">
+  <img src="./docs/assets/gif/readme-for-whom.gif" width="100%" alt="Pentru cine este Pneuma Sofer: scriitori care organizează o carte, traducători care compară originalul cu traducerea și cercetători care își țin sursele lângă lucrare">
 </p>
 
 ## 3. Ce face
@@ -75,7 +75,7 @@ Profilul complet al utilizatorului-țintă — categorii, nevoi, dificultăți, 
 ## 5. Cum lucrezi
 
 <p align="center">
-  <img src="./assets/readme/workflow.svg" width="100%" alt="Patru pași: aduci textul, scrii pe fișe, verifici, primești cartea întreagă în DOCX, PDF sau EPUB">
+  <img src="./docs/assets/gif/readme-workflow.gif" width="100%" alt="Fluxul principal în patru pași: imporți textul, scrii pe fișe, verifici și primești cartea în DOCX, PDF sau EPUB">
 </p>
 
 1. **Aduci textul.** Pornești de la zero, dintr-un șablon, sau imporți Word, RTF, ODT, Markdown, pagini web, scenarii ori un proiect `.scriv`; capitolele devin fișe singure.
@@ -97,7 +97,7 @@ Fiecare scenă are fișa ei, cu un rezumat de două rânduri. În animație vezi
 <summary><strong>Cronologie, legături între documente, panoul de referință</strong></summary>
 
 <p align="center">
-  <img src="./assets/readme/timeline.png" width="100%" alt="Cronologia: scenele pe zile, câte un fir pentru fiecare personaj">
+  <img src="./docs/assets/gif/readme-timeline.gif" width="100%" alt="Cronologia: scenele pe zile, câte un fir pentru fiecare personaj">
 </p>
 
 Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înainte de editor — pentru un roman cu 20 de personaje, e diferența dintre „credeam că" și „știu".
@@ -115,7 +115,7 @@ Cronologia îți arată pe zile cine unde e, ca să prinzi contradicțiile înai
 În Inspector, la *Legături către acest document*, vezi toate locurile care trimit la el. Pe panoul de fișe alegi și cum arată fișele: colțuri rotunjite sau drepte, liniate ca pe hârtie, colorate după etichetă.
 
 <p align="center">
-  <img src="./assets/readme/reference.png" width="100%" alt="Panoul de referință: scena Drumul deschisă doar pentru citire lângă scena la care scrii">
+  <img src="./docs/assets/gif/readme-reference.gif" width="100%" alt="Panoul de referință: scena Drumul deschisă doar pentru citire lângă scena la care scrii">
 </p>
 
 *Vizualizare → Deschide ca referință* pune alt document lângă cel la care scrii, doar de citit: planul, o scenă veche sau originalul. Bifezi *Editabil* dacă vrei totuși să-l schimbi.
@@ -137,7 +137,7 @@ Pui fișierul Word primit de la editură și Pneuma Sofer îl împarte pe capito
 Fără nicio configurare, traducerea folosește serviciul public gratuit al Google, marcat în program „Google (fără cheie)”: neoficial și fără garanții. Cu o cheie Google Cloud Translation sau conectat cu contul Google, folosești API-ul oficial; se configurează din *Setări → Servicii și conturi → Google Cloud Translation*, cu butonul „Conectează cu Google” (consimțământ în browser, fără parolă salvată).
 
 <p align="center">
-  <img src="./assets/readme/context.png" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce (DeepL, Google Translate), Dicționare, Cercetare pe web, Asistent AI și În proiect">
+  <img src="./docs/assets/gif/readme-context.gif" width="100%" alt="Clic dreapta pe un cuvânt: meniul cu Traduce, dicționare, Cercetare pe web, Asistent AI și În proiect">
 </p>
 
 Clic dreapta pe un cuvânt și ai la îndemână:
@@ -151,7 +151,7 @@ Clic dreapta pe un cuvânt și ai la îndemână:
 ### Dictezi: D&TED – Dictare și transcriere
 
 <p align="center">
-  <img src="./assets/readme/dictation.png" width="100%" alt="Dictare în Pneuma Sofer: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
+  <img src="./docs/assets/gif/readme-dictation.gif" width="100%" alt="Dictare în Pneuma Sofer: textul spus apare în scena Începutul, iar jos e bara de dictare cu nivelul microfonului, Pauză, Stop și Anulează">
 </p>
 
 Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spații și majusculă la început de frază. *Bara de jos arată nivelul microfonului în timp real, cu Pauză, Stop și Anulează — recunoașterea e locală, pe calculatorul tău, fără internet.*
@@ -168,13 +168,13 @@ Recunoașterea vorbirii e **în Pneuma Sofer** și lucrează **pe calculatorul t
 **D&TED se actualizează din Pneuma Sofer.** Butonul *Caută actualizări D&TED…* (aceeași fereastră din Setări) arată versiunea ta și pe cea nouă de pe pagina D&TED și, la cerere, **descarcă, verifică și instalează** versiunea nouă în folderul tău de utilizator (fără drepturi de administrator). Instalarea nu se face orbește: mai întâi programul nou trebuie să răspundă la deschidere pe același protocol; dacă ceva nu merge, instalația veche rămâne pe loc, activă. Programul verifică singur, discret, la pornire și la trei zile (bifa „Caută actualizări D&TED automat") și te anunță când există versiune nouă.
 
 <p align="center">
-  <img src="./assets/readme/dtedmodel.png" width="100%" alt="Setări, Servicii și conturi, D&TED: lista modelelor de recunoaștere, cu eek optimizat pentru română ales și folosit acum">
+  <img src="./docs/assets/gif/readme-dtedmodel.gif" width="100%" alt="Setări, Servicii și conturi, D&TED: lista modelelor de recunoaștere, cu eek optimizat pentru română ales și folosit acum">
 </p>
 
 ### Corectezi
 
 <p align="center">
-  <img src="./assets/readme/irep.png" width="100%" alt="Revizia automată găsește ghilimele, spații și punctuație greșite">
+  <img src="./docs/assets/gif/readme-irep.gif" width="100%" alt="Revizia automată găsește ghilimele, spații și punctuație greșite">
 </p>
 
 Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, punctuația și repetițiile, apoi le repară cu un clic. Când corectezi de mână un cuvânt subliniat, programul ține minte și data viitoare îl corectează singur. Cuvintele străine și transliterările (de exemplu sanscrita în IAST: ā, ī, ṛ, ś) rămân neatinse.
@@ -192,7 +192,7 @@ Revizia automată, fără AI, găsește ghilimelele greșite, spațiile duble, p
 <summary><strong>Repetiții apropiate, asistentul AI, versiuni</strong></summary>
 
 <p align="center">
-  <img src="./assets/readme/repetition.png" width="100%" alt="Panoul de revizie cu secțiunea Repetiții apropiate (S70): scutul apare de două ori în fraze vecine">
+  <img src="./docs/assets/gif/readme-repetition.gif" width="100%" alt="Panoul de revizie cu secțiunea Repetiții apropiate (S70): scutul apare de două ori în fraze vecine">
 </p>
 
 **Repetiția apropiată.** Același cuvânt în aceeași frază sau în fraza vecină apare ca semnal: `⚠ REP L1 «scutul» ×2`. Un clic te duce la el; tu hotărăști dacă supără.
@@ -210,7 +210,7 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
 **Pachetul cărții — regulile tale, respectate la gramă.** În *AI → Setări AI (carte)…* îți pui frazele fixate („nu se ating, nici la corectură, nici la rescriere") și formulele oprite („zero apariții în textul livrat"). Ele au prioritate maximă în fața modelului: orice propunere care ar atinge o frază fixată se blochează și te întreabă explicit — și decizia ta (acceptată sau respinsă) intră în registrul de decizii al proiectului, cu actor, model și tipul schimbării (formă / sens / conținut). Metoda generală de scriere (doza de intervenție, ritm, anti-amprentă) e în fiecare apel; specificul cărții vine doar din pachetul tău — deci motorul același lucrează pe orice carte.
 
 <p align="center">
-  <img src="./assets/readme/snapshots.png" width="100%" alt="Două versiuni ale aceluiași text, comparate una lângă alta">
+  <img src="./docs/assets/gif/readme-snapshots.gif" width="100%" alt="Două versiuni ale aceluiași text, comparate una lângă alta">
 </p>
 
 Înainte de o rescriere mare faci o „poză” a textului; mai târziu compari versiunile și te întorci la cea bună.
@@ -236,7 +236,7 @@ Căutarea avansată înțelege **operatorii** „începe cu cuvântul" / „se t
 ### Compilezi
 
 <p align="center">
-  <img src="./assets/readme/compile.png" width="100%" alt="Fereastra Compilează: formatele predefinite în stânga, formatul de ieșire și filele de setări în dreapta">
+  <img src="./docs/assets/gif/readme-compile.gif" width="100%" alt="Fereastra Compilează: formatele predefinite în stânga, formatul de ieșire și filele de setări în dreapta">
 </p>
 
 <p align="center">
@@ -251,7 +251,7 @@ Căutarea avansată înțelege **operatorii** „începe cu cuvântul" / „se t
 **1. Ce intră în carte.** În fila *Conținut* alegi tot manuscrisul, un singur dosar sau doar selecția curentă, ori o colecție. Orice document poate fi scos din carte fără să-l ștergi: clic dreapta în binder și debifezi *Include în Compile* (titlul apare tăiat). Poți filtra după etichetă și după stare, de exemplu doar scenele „Final”. Tot aici adaugi materia de început (pagina de titlu automată cu titlu, subtitlu și autor, cuprinsul, un dosar cu dedicație sau prefață) și materia de final.
 
 <p align="center">
-  <img src="./assets/readme/compileContent.png" width="100%" alt="Fila Conținut: tot manuscrisul, un dosar sau selecția, materie de început și de final, pagină de titlu, cuprins, filtre după etichete și stări">
+  <img src="./docs/assets/gif/readme-compileContent.gif" width="100%" alt="Fila Conținut: manuscrisul sau selecția, materia de început și de final, pagina de titlu, cuprinsul și filtrele după etichete și stări">
 </p>
 
 **2. Forma: formatele de Compile.** În stânga ferestrei sunt formatele gata făcute:
@@ -293,7 +293,7 @@ Proiectul întreg se poate exporta și ca `.scriv`, din meniul *Fișier*.
 **4. Tipurile de secțiune.** Fiecare bucată din binder are un tip: *Parte*, *Capitol*, *Secțiune*, *Scenă*, *Pagină de titlu*. Implicit, dosarele sunt capitole, documentele cu subdocumente sunt „capitol cu text”, iar documentele simple sunt scene; poți schimba tipul oricărei bucăți din Inspector. În fila *Secțiuni* hotărăști pentru fiecare tip cum apare: cu titlu sau fără, cu un prefix ca „Capitolul <$n>” sau „Partea <$n:Words>” („Partea Unu”), cu majuscule, aliniat la centru sau la stânga, pe pagină nouă sau nu, cu text sau doar cu titlu. Scenele, de obicei, apar fără titlu, despărțite de un separator.
 
 <p align="center">
-  <img src="./assets/readme/compileSections.png" width="100%" alt="Fila Secțiuni: pentru fiecare tip de secțiune, titlu, prefix, litere, aliniere, pagină nouă, text și separator">
+  <img src="./docs/assets/gif/readme-compileSections.gif" width="100%" alt="Fila Secțiuni: pentru fiecare tip de secțiune, titlu, prefix, litere, aliniere, pagină nouă, text și separator">
 </p>
 
 **5. Separatoare și înlocuiri.** În *Separatoare* alegi ce se pune între scene (rând gol, „#”, „* * *”) și între bucăți de tipuri diferite. În *Înlocuiri* schimbi la Compile un text cu altul, cu sau fără majuscule, cuvânt întreg sau expresie regulată; textul tău din proiect rămâne neatins. Tab-ul **Înlocuiri** de la nivel de proiect ține o listă separată, comună tuturor formatelor, aplicată înaintea celor pe format — cu ordine, bifă activ/inactiv și editare chiar și pentru formatele integrate.
@@ -303,7 +303,7 @@ Proiectul întreg se poate exporta și ca `.scriv`, din meniul *Fișier*.
 **7. Pagina de tipar.** În fila *Pagină* alegi dimensiunea (A4, A5, Letter, 6 × 9 in sau personalizată), marginile sus, jos, interior și exterior, cu *margini în oglindă* pentru pagini față-verso. Antetul și subsolul au câte trei câmpuri (stânga, centru, dreapta), cu substituenți: titlul capitolului curent în antet, numărul paginii în subsol. Prima pagină a fiecărui capitol și paginile de la început (copertă, titlu, cuprins) rămân fără antet, iar numerotarea pornește de la textul cărții. Tot aici alegi fontul textului și al titlurilor, mărimea, spațierea și alineatul.
 
 <p align="center">
-  <img src="./assets/readme/compilePage.png" width="100%" alt="Fila Pagină: font, mărime, spațiere, dimensiunea 6 × 9 in, margini în oglindă, antet și subsol cu substituenții &lt;$projecttitle&gt; și &lt;$p&gt;">
+  <img src="./docs/assets/gif/readme-compilePage.gif" width="100%" alt="Fila Pagină: font, mărime, spațiere, dimensiunea 6 × 9 in, margini în oglindă, antet și subsol cu substituenții &lt;$projecttitle&gt; și &lt;$p&gt;">
 </p>
 
 | Substituent | Devine |
@@ -326,7 +326,7 @@ Proiectul întreg se poate exporta și ca `.scriv`, din meniul *Fișier*.
 **Câteva pagini pe hârtie.**
 
 <p align="center">
-  <img src="./assets/readme/pagesetup.png" width="100%" alt="Fereastra Configurare pagină: hârtie, orientare, margini, antet și subsol">
+  <img src="./docs/assets/gif/readme-pagesetup.gif" width="100%" alt="Fereastra Configurare pagină: hârtie, orientare, margini, antet și subsol">
 </p>
 
 Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire → Configurare pagină* alege formatul, marginile, antetul și subsolul. În aplicația desktop, *Previzualizare tipărire* îți arată paginile reale (zoom, Tipărește, Salvează PDF) înainte să le trimiți la imprimantă.
@@ -335,7 +335,7 @@ Vrei doar câteva pagini tipărite, fără toată cartea? *Fișier → Tipărire
 ### Interfața
 
 <p align="center">
-  <img src="./assets/readme/customize.png" width="100%" alt="Fereastra Personalizează bara de instrumente: elementele disponibile în stânga, cele din bară în dreapta">
+  <img src="./docs/assets/gif/readme-customize.gif" width="100%" alt="Fereastra Personalizează bara de instrumente: elementele disponibile în stânga, cele din bară în dreapta">
 </p>
 
 Sus vezi doar ce folosești des; restul stă în meniuri ordonate. Din *Program → Personalizează bara de instrumente* alegi singur butoanele și le muți cu mouse-ul. Tot ce ține de AI stă într-un singur meniu. Rigla (Ctrl+Alt+Shift+R) arată indentările și tab-urile, ca în Word.
@@ -358,13 +358,13 @@ Sus vezi doar ce folosești des; restul stă în meniuri ordonate. Din *Program 
 <summary><strong>Meniul AI și rigla</strong></summary>
 
 <p align="center">
-  <img src="./assets/readme/aimenu.png" width="100%" alt="Meniul AI deschis, cu submeniul AI pe selecție">
+  <img src="./docs/assets/gif/readme-aimenu.gif" width="100%" alt="Meniul AI deschis, cu submeniul AI pe selecție">
 </p>
 
 Meniul AI adună asistentul, revizia, AI pe selecție sau pe toată cartea, NotebookLM și setările. Dacă oprești AI-ul, în meniu rămân doar revizia fără AI și setările.
 
 <p align="center">
-  <img src="./assets/readme/ruler.png" width="100%" alt="Rigla deasupra textului, cu indentare și un tab care aliniază numerele de pagină">
+  <img src="./docs/assets/gif/readme-ruler.gif" width="100%" alt="Rigla deasupra textului, cu indentare și un tab care aliniază numerele de pagină">
 </p>
 
 Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat, la dreapta sau zecimal, pentru cifre aliniate la virgulă. În Word iese exact la fel.
@@ -374,7 +374,7 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 ## 7. Cum lucrați împreună
 
 <p align="center">
-  <img src="./assets/readme/team.png" width="100%" alt="Fereastra Echipă: cine lucrează acum, la ce document, și jurnalul cine ce a modificat, cu filtre pe document, persoană și perioadă">
+  <img src="./docs/assets/gif/readme-team.gif" width="100%" alt="Fereastra Echipă: cine lucrează acum, la ce document, și jurnalul cine ce a modificat, cu filtre pe document, persoană și perioadă">
 </p>
 
 **Același proiect, pe mai multe calculatoare.** Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe fiecare calculator îl deschizi din aplicație sau direct în Chrome ori Edge, fără instalare. Ce scrie unul apare la celălalt în câteva secunde.
@@ -386,7 +386,7 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 - **Blocare:** lacătul de lângă titlu blochează documentul pentru ceilalți; la ei se deschide doar pentru citire. Un calculator închis își pierde singur blocările după o jumătate de oră.
 - **Îmbinare:** schimbările făcute în paragrafe diferite se unesc singure. Același paragraf schimbat în două locuri: în bara de jos apare „Conflict”; un clic deschide fereastra cu cele două variante alături, unde alegi, pentru fiecare loc, varianta ta, a celuilalt sau pe amândouă. Varianta celuilalt rămâne oricum ca snapshot. Nu se pierde nimic.
 <p align="center">
-  <img src="./assets/readme/conflict.png" width="100%" alt="Același paragraf schimbat pe două calculatoare: cele două variante alături, cu alegerea a mea, a celuilalt sau amândouă">
+  <img src="./docs/assets/gif/readme-conflict.gif" width="100%" alt="Același paragraf schimbat pe două calculatoare: cele două variante alături, cu alegerea a mea, a celuilalt sau amândouă">
 </p>
 
 - **Fără conexiune:** dacă NAS-ul sau cloud-ul dispare, scrii mai departe. În bara de jos apare „În așteptare: 2 documente”, iar textul se trimite singur când revine folderul, chiar dacă între timp ai închis programul. Starea normală e „Sincronizat”.
@@ -394,7 +394,7 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 - **Agenții AI** (Claude, Codex prin MCP) apar în jurnal ca persoană separată, „agent”, și nu scriu în documentele blocate.
 
 <p align="center">
-  <img src="./assets/readme/sync.svg" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
+  <img src="./docs/assets/gif/readme-sync.gif" width="100%" alt="Proiectul stă într-un folder OneDrive, Dropbox, Google Drive sau pe NAS; îl deschizi din aplicație pe un calculator și din browser pe altul">
 </p>
 
 ### AI, doar dacă îl vrei (opțional)
@@ -533,7 +533,7 @@ Cât timp depozitul programului e privat, actualizatorul are nevoie de un token 
 ### Ai găsit o problemă?
 
 <p align="center">
-  <img src="./assets/readme/report.png" width="100%" alt="Fereastra Raportează o problemă: descrierea cu cuvintele tale, ce făceai înainte și detaliile tehnice completate automat">
+  <img src="./docs/assets/gif/readme-report.gif" width="100%" alt="Fereastra Raportează o problemă: descrierea cu cuvintele tale, ce făceai înainte și detaliile tehnice completate automat">
 </p>
 
 Nu trebuie să știi nimic tehnic:
@@ -560,7 +560,7 @@ pneuma ask "D:\Carti\Drumul spre munte.scribner" "Ce culoare au ochii lui Andrei
 ```
 
 <p align="center">
-  <img src="./assets/readme/cli.png" width="100%" alt="Fereastră PowerShell cu pneuma info, care arată titlul, autorul și numărul de cuvinte, apoi pneuma export-sources pentru NotebookLM și fișierele create">
+  <img src="./docs/assets/gif/readme-cli.gif" width="100%" alt="Fereastră PowerShell cu pneuma info, care arată titlul, autorul și numărul de cuvinte, apoi pneuma export-sources pentru NotebookLM și fișierele create">
 </p>
 
 Pentru scripturi și terminal, programul instalat are comanda `pneuma` (o bifezi la instalare, fără Node.js). Toate comenzile sunt în *Ajutor → Ce faci tu → Linia de comandă*.
