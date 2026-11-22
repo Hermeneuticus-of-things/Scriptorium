@@ -258,6 +258,8 @@ label.check { flex-direction: row; align-items: center; gap: var(--sp-1); color:
 .modal-x { position: absolute; top: 8px; right: 10px; width: var(--ctl-lg); height: var(--ctl-lg); display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--muted); font-size: var(--icon-md); line-height: 1; border-radius: var(--radius); cursor: pointer; z-index: 6; }
 .modal-x:hover, .modal-x:focus-visible { background: var(--panel); color: inherit; }
 .modal h2 { margin: 0; }
+.surface-scope { margin: -6px 0 0; padding: 6px 8px; border-left: 3px solid var(--accent, #4a6fa5); background: var(--panel); color: var(--muted); font-size: var(--font-ui-sm); }
+.settings-dirty { margin-right: auto; }
 /* AI status on the toolbar: a green dot when AI is on with a key, red otherwise, and a box to toggle it. */
 /* flex-direction: row — the generic `label` rule stacks it in a column, which drew a ~55px
    tall pill over the Inspector button and pushed the toolbar past the 32–40 strip (T9). */
@@ -862,6 +864,13 @@ legend { color: var(--muted); padding: 0 var(--sp-1); }
 .about-licenses th, .about-licenses td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .about-licenses .about-group th { padding-top: 12px; color: var(--muted); font-weight: 600; }
 .about-licenses .about-flag { color: var(--danger); white-space: nowrap; }
+.about-instance { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 10px 12px; margin: 12px 0; background: var(--panel-subtle, rgba(127, 127, 127, .06)); }
+.about-instance h4 { margin: 0 0 4px; }
+.about-instance dl { display: grid; grid-template-columns: minmax(150px, auto) 1fr; gap: var(--sp-1) var(--sp-2); margin: 8px 0 0; font-size: var(--font-ui-sm); }
+.about-instance dt { color: var(--muted); }
+.about-instance dd { margin: 0; }
+.about-path { overflow-wrap: anywhere; word-break: break-word; }
+.about-installations { margin: 8px 0 0; padding-left: 18px; font-size: var(--font-ui-sm); }
 
 /* Quick Search (Scrivener 3 §11.5): omnibox popup, top-aligned like a URL bar. */
 .modal.quick-search { position: fixed; left: 50%; top: 12vh; transform: translateX(-50%); width: min(560px, 94vw); padding: 10px 12px; gap: var(--sp-2); }
