@@ -20,6 +20,7 @@ import MediaView from './components/MediaView.jsx';
 import ImportReport from './components/ImportReport.jsx';
 import SimpleRepairsDialog from './components/SimpleRepairsDialog.jsx';
 import SignalsDialog from './components/SignalsDialog.jsx';
+import HelpFinderDialog from './components/HelpFinderDialog.jsx';
 import QuickRef from './components/QuickRef.jsx';
 import ShortcutsDialog from './components/ShortcutsDialog.jsx';
 import StylesDialog from './components/StylesDialog.jsx';
@@ -632,6 +633,7 @@ export default function App({ api: apiProp }) {
   const [help, setHelp] = useState(null);
   // T1: ultima țintă de focus (ref, nu state — fără rerandare); ciclarea F6/Shift+F6.
   const focusTargetRef = useRef('editor');
+  const [helpFinder, setHelpFinder] = useState(false);
   const [showScratch, setShowScratch] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [settingsTab, setSettingsTab] = useState('');
@@ -3624,6 +3626,7 @@ export default function App({ api: apiProp }) {
     ['file', 'saveTemplate', tr('cmd.saveTemplate'), () => flush().then(() => setDialog('saveTemplate')), !api.saveAsTemplate],
     ['file', 'pageSetup', tr('cmd.pageSetup'), () => setDialog('pageSetup'), !api.getPageSetup],
     ['file', 'printPreview', tr('cmd.printPreview'), () => openPrintPreview(), !api.printPreview],
+    ['help', 'helpFinder', tr('cmd.helpFinder'), () => setHelpFinder(true)],
     ['help', 'help', 'Manualul Pneuma Sofer', () => setHelp({ topic: null, tab: 'manual' })],
     ['help', 'helpContext', tr('cmd.helpContext'), () => setHelp({ topic: helpContext(), tab: 'manual' })],
     ['help', 'helpShortcuts', tr('cmd.helpShortcuts'), () => setHelp({ topic: null, tab: 'shortcuts' })],
@@ -4633,6 +4636,13 @@ export default function App({ api: apiProp }) {
             <div className="actions"><span className="spacer" /><button onClick={() => setAiReport(null)}>{tr('btn.close')}</button></div>
           </div>
         </div>
+      )}
+      {helpFinder && (
+        <HelpFinderDialog
+          commands={Object.values(commands).filter((c) => !c.hidden)}
+          onClose={() => setHelpFinder(false)}
+          onRunCommand={(c) => { if (!c.disabled) c.run(); }}
+        />
       )}
       {help && <HelpWindow initialTopic={help.topic} initialTab={help.tab} settings={settings} onClose={() => setHelp(null)} onStartTutorial={startTutorial} />}
       {dialog === 'saveTemplate' && <SaveTemplateDialog api={api} dir={dir} project={project} onSaved={(t) => setToast(tr('ui.app.sablon_salvat_x', { title: t.title }))} onClose={() => setDialog(null)} onError={report} />}
