@@ -318,7 +318,10 @@ function CorkboardBoard({ project, folder, onOpen, onPatch, onAdd, onMove, onReo
   }
 
   return (
-    <div ref={boardRef} className={corkClass(cork)} style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
+    <div
+      ref={boardRef}
+      onDoubleClick={(e) => { if (!e.target.closest('[data-card-id], textarea, input, button, header, .cork-head')) addCard(); }}
+      className={corkClass(cork)} style={{ '--card-w': `${width}px`, '--card-h': `${height}px`, '--card-gap': `${gap}px` }} data-ratio={cork.ratio}>
       <div className="cork-head">
         <h2>{folder?.title}</h2>
         {!filtered && <button onClick={addCard} title={t('ui.corkboard.fisa_noua_dupa_fisa_selectata')}>{t('ui.corkboard.fisa')}</button>}

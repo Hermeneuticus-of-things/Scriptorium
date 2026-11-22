@@ -74,6 +74,7 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     return true;
   };
   const [collapsed, setCollapsed] = useState({});
+
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState('');
   const [drag, setDrag] = useState(null); // array of dragged ids
@@ -119,6 +120,15 @@ export default function Binder({ project, docs, selectedId, selectedIds, onSelec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealId]);
   const setAllCollapsed = (value) => setCollapsed(value ? Object.fromEntries(containerIds(project.tree).filter((id) => !project.tree.some((r) => r.id === id)).map((id) => [id, true])) : {});
+  // T2 (View ▸ Expand/Collapse All): comanda globală din meniu ajunge la starea locală de
+  // colaps prin eveniment — Binder stăpânește colapsul, meniul nu-i cunoaște interiorul.
+  const setAllRef = useRef(null);
+  setAllRef.current = setAllCollapsed;
+  useEffect(() => {
+    const onSetAll = (e) => setAllRef.current?.(Boolean(e.detail?.collapsed));
+    window.addEventListener('pneuma:binder-set-all-collapsed', onSetAll);
+    return () => window.removeEventListener('pneuma:binder-set-all-collapsed', onSetAll);
+  }, []);
   const doDrop = (ids, targetId, pos, copy) => {
     const list = ids.filter((id) => id !== targetId);
     if (!list.length) return;

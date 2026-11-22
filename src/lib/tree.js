@@ -494,5 +494,19 @@ export function groupIntoFolder(tree, ids, folder) {
   });
 }
 
+// T2 (S3-A.DOC.17 Ungroup): inversul lui groupIntoFolder — copiii urcă în părintele
+// dosarului, la poziția dosarului; dosarul gol dispare. Rădăcinile nu se dezgrupează.
+export function ungroupFolder(tree, id) {
+  const node = findNode(tree, id);
+  if (!node || node.root || node.type !== 'folder' || !node.children?.length) return tree;
+  return produce(tree, (t) => {
+    const parent = findParent(t, id);
+    const list = parent ? parent.children : t;
+    const at = list.findIndex((n) => n.id === id);
+    const box = list.splice(at, 1)[0];
+    list.splice(at, 0, ...box.children);
+  });
+}
+
 // Link to one document of the project, usable in notes and other documents.
 export const docLink = (id) => `scribner://doc/${encodeURIComponent(id)}`;
