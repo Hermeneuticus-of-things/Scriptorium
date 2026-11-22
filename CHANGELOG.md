@@ -1,5 +1,12 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.4.2 — 22 noiembrie 2026
+
+- README-ul public este actualizat pentru v1.4.2 și păstrează demonstrațiile animate pentru scriitori, traducători și cercetători.
+- Versiunea din `package.json` și `package-lock.json` este aliniată la 1.4.2.
+
+---
+
 ## 1.2.8 — 19 noiembrie 2026
 
 - Curățare de publicare: repository-ul, installerul și asseturile release nu includ proiecte de test, corpusuri private, rapoarte locale sau căi personale.

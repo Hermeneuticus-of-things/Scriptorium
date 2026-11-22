@@ -2,7 +2,7 @@
 
 Program gratuit de scris cărți lungi, în română și engleză: textul stă pe fișe, câte una pentru fiecare scenă sau capitol, iar la final primești cartea întreagă.
 
-**Versiunea publică: [Pneuma Sofer v1.4.1](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/tag/v1.4.1)** · **[Descarcă ultima versiune pentru Windows](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/latest)**
+**Versiunea publică: [Pneuma Sofer v1.4.2](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/tag/v1.4.2)** · **[Descarcă ultima versiune pentru Windows](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/latest)**
 
 [Schimbările din ultima versiune](CHANGELOG.md). **Pneuma Sofer lucrează extraordinar de bine fără AI** — scrierea, organizarea, dictarea, corecturile, căutările, backup-ul și exportul sunt complete și rămân pe calculatorul tău. Tot ce înseamnă AI stă ascuns până îl activezi tu din Setări; un scriitor care nu îl vrea nu vede niciun gram de AI în program.
 
