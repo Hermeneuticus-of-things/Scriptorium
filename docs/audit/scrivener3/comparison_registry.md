@@ -29,6 +29,15 @@ registrul de față este indexul consolidat + totalurile + deduplicarea.
 | NOT_APPLICABLE | 46 | legat de realitatea de produs Scrivener (iOS sync, trial etc.), motivat |
 | UNVERIFIED | 2 | neatinse de dovezi suficiente — de reverificat |
 
+## Stare după tranșele implementate (22.11.2026)
+
+T1 (PR #106) + T2/T3 (#110, main) + T4/T5/T6 (main, direct): au închis ~90 de goluri
+MISSING/PARTIAL din registru — navigarea din tastatură (31), comenzile de meniu (11+),
+comportamentele/aspectul eșantion, Copy To Project, adaptive naming, filtre sync,
+preseturile Schiță/LaTeX + CriticMarkup + italic→underline, Reset List Indents.
+T7 macOS: EXCLUS la decizia autorului (22.11). Stările din tabelele-sursă se actualizează
+la fiecare tranșă; contorul de MISSING coboară corespunzător.
+
 ## Top-ul lacunelor (detaliile complete în fișierele-sursă)
 
 1. **Navigare din tastatură** (Anexa A, Navigate ▸ Move Focus: 31 MISSING) — panouri/focus
