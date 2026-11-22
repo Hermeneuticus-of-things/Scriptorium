@@ -20,7 +20,7 @@ dovadă; o etapă blocantă → PARTIAL cu etapa numită.
 | S3-W.12 | Configurare mediu de scriere | **PARTIAL** | composition/teme există (ch. 16); margini editor + stiluri Scrivenings MISSING (T3) |
 | S3-W.13 | Scriptwriting cap-coadă | **COMPLETE** | mode + elements + FDX/Fountain (ch. 19; scriptRows în help) |
 | S3-W.14 | ToC + publicare | **COMPLETE** | ToC static cu `<$p>` + cuprins în compile (ch. 22, închis 2026-11-07) |
-| S3-W.15 | Lucru pe selecții multi-doc | **PARTIAL** | move/merge multiplu există; scrub label/status pe selecție mare neverificat (UNVERIFIED → T8) |
+| S3-W.15 | Lucru pe selecții multi-doc | **COMPLETE** | move/merge multiplu + scrub label/status pe selecție mare (Inspector: onPatchMulti, livrat la T8-ecran 22.11) |
 | S3-W.16 | Navigare rapidă în proiect mare | **COMPLETE** | quick search, go to, istoric, hoisting (ch. 12) + F6 (T1, PR #106) |
 
 **Bilanț: 10 COMPLETE · 6 PARTIAL** — fiecare etapă blocantă are intrare în planul de

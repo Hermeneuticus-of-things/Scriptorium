@@ -4408,6 +4408,7 @@ export default function App({ api: apiProp }) {
                   linkTargets={linkTargets}
                   onOpen={openLink}
                   onPatch={(patch) => patchNode(selected.id, patch)}
+                  onPatchMulti={selectedIds.size > 1 ? (patch) => { for (const id of selectionList()) patchNode(id, patch); } : null}
                   onNotesChange={(html) => queueWrite(selected.id, 'notes', html)}
                   onProjectNotesChange={(html) => queueWrite('project-notes', 'notes', html)}
                   onRestore={(html) => {

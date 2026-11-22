@@ -125,7 +125,7 @@ function Section({ id, title, open: openByDefault = false, children }) {
   );
 }
 
-export default function Inspector({
+export default function Inspector({ onPatchMulti = null, 
   api, dir, project, node: selectedNode, html: selectedHtml, words: selectedWords, allKeywords, linkTargets = [], onOpen, onPatch: onPatchSelected,
   onNotesChange: onNotesSelected, onProjectNotesChange, onRestore, onError, flush,
   // Optional (batch C): lock, comments, per-id callbacks.
@@ -209,7 +209,7 @@ export default function Inspector({
               <div className="row">
                 <label>
                   {labelTitleOf(project, tr)}
-                  <select value={node.label} onChange={(e) => onPatch({ label: e.target.value })}>
+                  <select value={node.label} onChange={(e) => (onPatchMulti ? onPatchMulti({ label: e.target.value }) : onPatch({ label: e.target.value }))}>
                     {project.labels.map((l) => (
                       <option key={l.name} value={l.name}>{noneLabel(l.name, tr)}</option>
                     ))}
@@ -217,7 +217,7 @@ export default function Inspector({
                 </label>
                 <label>
                   {statusTitleOf(project, tr)}
-                  <select value={node.status} onChange={(e) => onPatch({ status: e.target.value })}>
+                  <select value={node.status} onChange={(e) => (onPatchMulti ? onPatchMulti({ status: e.target.value }) : onPatch({ status: e.target.value }))}>
                     {project.statuses.map((s) => (
                       <option key={s} value={s}>{noneStatus(s, tr)}</option>
                     ))}

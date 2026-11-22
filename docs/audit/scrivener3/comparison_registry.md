@@ -27,7 +27,7 @@ registrul de față este indexul consolidat + totalurile + deduplicarea.
 | PARTIAL | 81 | implementare incompletă — intră în plan |
 | MISSING | 279 | absent — intră în plan |
 | NOT_APPLICABLE | 46 | legat de realitatea de produs Scrivener (iOS sync, trial etc.), motivat |
-| UNVERIFIED | 2 | neatinse de dovezi suficiente — de reverificat |
+| UNVERIFIED | 0 | ambele reverificate la T8-ecran (22.11): Reveal Draft → COMPLETE (T2); scrub multi-doc → LIVRAT |
 
 ## Stare după tranșele implementate (22.11.2026)
 
