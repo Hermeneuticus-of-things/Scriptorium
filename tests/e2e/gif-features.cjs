@@ -56,7 +56,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const burst = async (scene, count, pause = 140) => { for (let k = 0; k < count; k++) { await shot(scene); await sleep(pause); } };
 
   const scenes = new Set();
-  const open = async (scene) => { if (!scenes.has(scene)) { fs.mkdirSync(frames(scene), { recursive: true }); scenes.add(scene); n = 0; } };
+  const open = async (scene) => { if (!scenes.has(scene)) { fs.rmSync(frames(scene), { recursive: true, force: true }); fs.mkdirSync(frames(scene), { recursive: true }); scenes.add(scene); n = 0; } };
 
   // Pregătire: proiect + AI pe serverul mock local
   // provider «custom»: keyless (needsKey=false) cu URL propriu — serverul mock local;
@@ -110,32 +110,33 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await shot('03-compile-preview');
   await H.p.getByRole('button', { name: /^Previzualizare/i }).click();
   await H.p.waitForSelector('.cd-preview', { timeout: 20000 });
-  await burst('03-compile-preview', 4, 220);
+  await burst('03-compile-preview', 7, 180);
   await H.p.locator('.cd-preview-head select').selectOption('100');
-  await burst('03-compile-preview', 3, 250);
+  await burst('03-compile-preview', 6, 180);
   await H.p.locator('.cd-preview-head select').selectOption('0');
-  await burst('03-compile-preview', 2, 250);
+  await burst('03-compile-preview', 5, 180);
   await H.p.keyboard.press('Escape');
   await H.p.waitForTimeout(200);
 
   // ===== Scena 4: F6 — focusul călătorește între panouri =====
   await open('04-focus-f6');
-  await shot('04-focus-f6');
+  await burst('04-focus-f6', 4, 180);
   for (let k = 0; k < 3; k++) {
     await H.p.keyboard.press('F6');
     await H.p.waitForTimeout(350);
-    await shot('04-focus-f6');
-    await shot('04-focus-f6');
+    await burst('04-focus-f6', 4, 180);
   }
 
   // ===== Scena 5: semnale pe text (măsură, fără AI) =====
   await open('05-semnale');
+  await H.command('viewEditor');
+  await burst('05-semnale', 4, 180);
   await H.command('signals');
   await H.p.waitForSelector('.signals-dialog', { timeout: 8000 }).catch(() => {});
   await H.p.waitForTimeout(500);
-  await burst('05-semnale', 3, 250);
+  await burst('05-semnale', 8, 180);
   const grupa = H.p.locator('.signals-grupa summary').first();
-  if (await grupa.count()) { await grupa.click(); await burst('05-semnale', 3, 250); }
+  if (await grupa.count()) { await grupa.click(); await burst('05-semnale', 6, 180); }
   await H.p.keyboard.press('Escape');
 
   await H.dispose();

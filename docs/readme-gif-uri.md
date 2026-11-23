@@ -1,44 +1,57 @@
-# GIF-urile din README — cum se refac (PS-HELP/README, 23.11.2026)
+# GIF-urile din README — capturi funcționale Playwright
 
-Pagina principală (`README.md`) arată **mișcare** în toate materialele vizuale. GIF-urile de flux
-sunt capturate cu Playwright pe fixture izolat, iar asseturile ilustrative sunt convertite
-reproductibil în GIF-uri cu zoom discret și loop infinit.
+README-ul folosește numai GIF-uri generate din aplicația Pneuma Sofer, pornită ca aplicație Electron și controlată prin Playwright. Nu se folosesc imagini statice cu zoom, animații decorative sau capturi ale unor proiecte personale.
 
-## Refacerea GIF-urilor capturate cu Playwright (12 fluxuri)
+## Regenerare
+
+Din rădăcina repository-ului:
 
 ```bash
 npx vite build
-node tests/e2e/gif-features.cjs   # 5 GIF-uri: AI corectură, Help Finder, compile preview, F6, semnale
-node tests/e2e/gif-readme.cjs     # 7 GIF-uri: corkboard-move, translate-side, compile-content,
-                                  #             reference-quickref, wiki-link, timeline, research-ask
+$env:SCRIBNER_NO_UPDATE_CHECK='1'
+node tests/e2e/gif-features.cjs
+node tests/e2e/gif-readme.cjs
 ```
 
-- Cadre: 7 fps, PNG în `docs/assets/gif/frames/<scena>/`, scalate la 1180 px, paletă
-  `palettegen=stats_mode=diff` + `paletteuse=dither=bayer` (2 treceri ffmpeg).
-- Ambele scripturi au **garda anti-build-învechit**: refuză rularea dacă `dist/` e mai vechi
-  decât sursele — testezi mereu ultima versiune (directivă autor).
-- Se rulează pe fixture izolat (`_qa` profile) — nu ating proiectele tale.
-- Server AI mock local (OpenAI-compatible SSE pe 127.0.0.1:8899) pentru streaming-ul real
-  din scena de corectură AI — fără cheie, fără internet.
+Pe Linux, echivalentul variabilei este `SCRIBNER_NO_UPDATE_CHECK=1`. Capturatoarele refuză buildurile învechite, folosesc un profil și un proiect fixture izolat și nu ating proiectele utilizatorului. În capturile AI se folosește numai serverul mock local al suitei, fără chei și fără internet.
 
-## Conversia asseturilor ilustrative
+La începutul fiecărei scene, scripturile șterg cadrele PNG vechi. Această curățare este obligatorie: un cadru rămas dintr-o execuție anterioară nu poate ajunge în GIF-ul nou.
 
-Imaginile istorice din `assets/readme/` nu mai sunt referite direct de pagina principală.
-Pentru fiecare există un GIF în `docs/assets/gif/readme-*.gif`, generat cu:
+## Scenele publicate
+
+| GIF | Ce acțiune reală demonstrează |
+|---|---|
+| `01-corkboard-move.gif` | Selectarea unei fișe și tragerea ei înaintea altei fișe; ordinea se schimbă în Corkboard și Binder. |
+| `01-ai-corectura.gif` | Selectarea textului, deschiderea AI, streamingul rezultatului mock, afișarea diferenței și acceptarea propunerii. |
+| `02-help-finder.gif` | Căutarea unei funcții în Help Finder și afișarea rezultatului/comenzii corespunzătoare. |
+| `02-translate-side.gif` | Deschiderea Editorului, împărțirea în două panouri și încărcarea documentului alăturat în panoul din dreapta. |
+| `03-compile-content.gif` | Deschiderea Compile, includerea/excluderea conținutului și intrarea în previzualizare. |
+| `03-compile-preview.gif` | Previzualizarea Compile în panou propriu și schimbarea zoomului. |
+| `04-focus-f6.gif` | Mutarea focusului între panourile aplicației cu F6. |
+| `04-reference-quickref.gif` | Deschiderea unui document ca referință lângă editor. |
+| `05-semnale.gif` | Deschiderea Semnale pe text și afișarea măsurătorilor deterministe, fără AI. |
+| `05-wiki-link.gif` | Tastarea unei legături `[[Nume nou]]` și afișarea propunerii „Creează și leagă”. |
+| `06-timeline.gif` | Deschiderea cronologiei proiectului și vizualizarea evenimentelor pe axa timpului. |
+| `07-research-ask.gif` | Deschiderea panoului Cercetare, introducerea unei întrebări și deschiderea listei de surse pentru alegerea documentelor. Captura nu pretinde un rezultat sau o conversație AI care nu sunt vizibile în cadre. |
+
+Fiecare GIF este asamblat cu FFmpeg din cadrele PNG corespunzătoare din `docs/assets/gif/frames/<scenă>/`, redimensionat la 1180 px lățime și scris cu extensia Netscape `loop=0` pentru redare automată și repetare infinită.
+
+## Verificare
+
+Verificarea minimă înainte de commit:
 
 ```bash
-node scripts/animate-readme-assets.cjs
+# referințele din README trebuie să fie GIF-uri existente
+node -e "const fs=require('fs'),p=fs.readFileSync('README.md','utf8'); const xs=[...p.matchAll(/docs\/assets\/gif\/([^\"')>]+\.gif)/g)].map(m=>m[1]); if(new Set(xs).size!==12 || xs.some(x=>!fs.existsSync('docs/assets/gif/'+x))) process.exit(1); console.log([...new Set(xs)])"
+
+# fiecare GIF funcțional trebuie să conțină markerul loop infinit
+node -e "const fs=require('fs'),path=require('path'); for(const f of fs.readdirSync('docs/assets/gif').filter(x=>/^\d.*\.gif$/.test(x))){const b=fs.readFileSync(path.join('docs/assets/gif',f)); if(!b.includes(Buffer.from('NETSCAPE2.0'))){throw Error('Lipsește loop=0: '+f)}}"
+
+git diff --check
 ```
 
-Scriptul rasterizează SVG-urile cu Playwright, apoi `scripts/animate-readme-assets.py`
-creează cadre PIL la 900×540, cu paletă adaptivă și `loop=0`. Captura ilustrativă pentru
-dictare nu pretinde că înlocuiește un test D&TED cu microfon; fluxurile reale capturate
-de Playwright rămân în GIF-urile cu prefix numeric din `docs/assets/gif/`.
+Înainte de publicare se inspectează vizual cel puțin un cadru din fiecare scenă și se verifică explicit că nu apare dialogul de actualizare, un proiect privat sau un cadru care nu corespunde textului alternativ din README.
 
-## Reguli pentru GIF-uri (directiva autor)
+## Ce nu este prezentat fără o captură verificabilă
 
-- Loop infinit (`loop=0`), o singură acțiune sau stare clară pe animație.
-- Cursorul/elementul care se mișcă trebuie să fie vizibil.
-- Alt-textul din README descrie exact ce se întâmplă, pentru un scriitor care nu știe ce
-  e un „binder" sau un „compile format".
-- GIF-urile existente NU se înlocuiesc fără motiv — se refac doar când se schimbă feature-ul.
+Dictarea live cu microfon și D&TED, lucrul în echipă și sincronizarea nu sunt folosite ca demonstrații GIF în README. Ele pot fi descrise separat numai dacă există o captură Playwright sau o testare reproductibilă care arată efectul real în aplicație. Asseturile istorice `docs/assets/gif/readme-*.gif` nu sunt sursa demonstrațiilor și nu trebuie reintroduse în README ca dovadă a funcțiilor.
