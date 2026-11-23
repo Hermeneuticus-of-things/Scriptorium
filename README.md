@@ -57,7 +57,7 @@ Profilul complet al utilizatorului-țintă — categorii, nevoi, dificultăți, 
 | [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic | 🎬 GIF |
 | [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția | — |
 | [Corectezi](#corectezi) | revizie fără AI, semnale de măsură, versiuni | 🎬 GIF |
-| [Cercetezi](#cercetezi) | întrebi sursele și primești răspuns cu trimiteri | 🎬 GIF |
+| [Cercetezi](#cercetezi) | formulezi întrebarea și alegi sursele folosite la căutare | 🎬 GIF |
 | [Cauți oriunde](#cauți-oriunde) | căutare rapidă, avansată, după formatare | 🎬 GIF |
 | [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate, cu previzualizare | 🎬 GIF |
 | [Interfața](#interfața) | focus din tastatură (F6), ajutor cu căutare, riglă | 🎬 GIF |
@@ -91,7 +91,7 @@ Profilul complet al utilizatorului-țintă — categorii, nevoi, dificultăți, 
   <img src="./docs/assets/gif/01-corkboard-move.gif" width="100%" alt="Pe panoul de fișe, fișa „Al doilea document" se trage înaintea lui „Capitol verificat": cardul alunecă, iar în binder, în stânga, ordinea capitolelor se schimbă odată cu ea — textul rămâne legat de fișa lui">
 </p>
 
-Fiecare scenă are fișa ei, cu un rezumat de două rânduri. În animație vezi mișcarea de bază: **tragi fișa „Al doilea document" înaintea lui „Capitol verificat"**, cardul alunecă pe panou, iar în binder — lista din stânga — ordinea capitolelor se schimbă imediat. Textul nu se atinge: rămâne legat de fișa lui, unde o pui tu. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text.
+Fiecare scenă are fișa ei, cu un rezumat de două rânduri. În animație vezi mișcarea de bază: **tragi fișa „Al doilea document" înaintea lui „Capitol verificat"**, cardul alunecă pe panou, iar în binder — lista din stânga — ordinea capitolelor se schimbă imediat. Textul nu se atinge: rămâne legat de fișa lui, unde o pui tu. Îți pui o țintă, de exemplu 1.000 de cuvinte pe zi, și vezi cât ai scris. Personajele, locurile și cercetarea stau lângă text.
 
 <details>
 <summary><strong>Cronologie, legături între documente, panoul de referință</strong></summary>
@@ -199,7 +199,7 @@ Asistentul AI face corectură, rezumate sau o a doua părere; vezi exact ce schi
   <img src="./docs/assets/gif/07-research-ask.gif" width="100%" alt="Panoul Cercetare: se scrie o întrebare și se deschide lista de surse pentru a alege documentele folosite la căutare">
 </p>
 
-În **Cercetare** alegi sursele și scrii o întrebare sau o căutare. Captura arată deschiderea panoului, introducerea întrebării și deschiderea listei de surse pentru a alege documentele folosite la căutare; nu pretinde un răspuns AI sau citări care nu sunt vizibile în cadrul publicat. În aplicație poți alege manuscrisul, cercetarea, notele sau anumite dosare și poți aduce PDF, Word, text ori pagini web. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT** sau **Manus**, gata împărțită.
+În **Cercetare** deschizi panoul, formulezi o întrebare sau o căutare și alegi sursele folosite la căutare. GIF-ul arată exact acest flux: introducerea întrebării și deschiderea listei de surse. Nu pretinde un răspuns AI sau citări care nu sunt vizibile în cadrul publicat. În aplicație poți alege manuscrisul, cercetarea, notele sau anumite dosare și poți aduce PDF, Word, text ori pagini web. Cartea se poate trimite și în **NotebookLM**, **Gemini**, **ChatGPT** sau **Manus**, gata împărțită.
 
 ### Cauți oriunde
 
