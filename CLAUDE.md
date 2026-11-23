@@ -1,6 +1,6 @@
 # Pneuma Sofer — proiect
 
-> Parent: [`../../CLAUDE.md`](../../CLAUDE.md)
+Instrucțiunile acestui repository sunt în acest fișier.
 
 Tip: aplicație desktop (Electron + React + TipTap). Program de scris tip aplicația de referință + import .scriv + Compile DOCX/PDF/EPUB + asistent Claude.
 

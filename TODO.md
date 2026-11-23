@@ -2,7 +2,7 @@
 
 ## Backlog activ — versiunea de referință 1.1.0 (2026-11-10)
 
-Lista de execuție curentă este mai jos; criteriile și dovezile sunt în [backlogul activ din ROADMAP](ROADMAP.md#backlog-activ-după-110--10-noiembrie-2026). Secțiunile de sesiune de după această listă sunt ISTORIC, nu dovada că toate checkboxurile lor sunt încă neînchise azi. Funcție implementată, funcție parțială și test neexecutat sunt stări diferite.
+Lista de execuție curentă este mai jos; criteriile și dovezile sunt în [backlogul activ din ROADMAP](ROADMAP.md#backlog-activ-după-110-10-noiembrie-2026). Secțiunile de sesiune de după această listă sunt ISTORIC, nu dovada că toate checkboxurile lor sunt încă neînchise azi. Funcție implementată, funcție parțială și test neexecutat sunt stări diferite.
 
 ### P0 — verificare, nu reimplementare
 

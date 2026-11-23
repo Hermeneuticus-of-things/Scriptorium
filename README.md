@@ -55,7 +55,7 @@ Profilul complet al utilizatorului-țintă — categorii, nevoi, dificultăți, 
 |---|---|---|
 | [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, reordonate cu tragerea, legături între documente | 🎬 GIF |
 | [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic | 🎬 GIF |
-| [Dictezi](#dictezi-dted--dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția | — |
+| [Dictezi](#dictezi-dted-dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția | — |
 | [Corectezi](#corectezi) | revizie fără AI, semnale de măsură, versiuni | 🎬 GIF |
 | [Cercetezi](#cercetezi) | formulezi întrebarea și alegi sursele folosite la căutare | 🎬 GIF |
 | [Cauți oriunde](#cauți-oriunde) | căutare rapidă, avansată, după formatare | 🎬 GIF |
@@ -399,7 +399,7 @@ Tot ce e important e pe această pagină. Doar aceste trimiteri duc mai adânc, 
 
 ### Instalare
 
-Din pagina [Releases](../../releases/latest) descarci una dintre variante:
+Din pagina [Releases](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/latest) descarci una dintre variante:
 
 - **`PneumaSofer-Setup-<versiune>.exe`** e programul de instalare, cu wizard în română. Alegi folderul, primești scurtătură pe Desktop și în meniul Start, iar la final programul pornește. Nu cere drepturi de administrator; programul se pune în `AppData\Local\Programs\Pneuma Sofer`. La dezinstalare, cărțile tale rămân.
 - **`PneumaSofer-<versiune>-portabil.exe`** merge fără instalare, de oriunde, chiar de pe stick.
@@ -464,7 +464,7 @@ Cât timp depozitul programului e privat, actualizatorul are nevoie de un token 
 
 **Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
 
-**Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi-dted--dictare-și-transcriere).
+**Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi-dted-dictare-și-transcriere).
 
 **Pot lega un agent AI, ca Claude sau Codex?** Da, prin *AI → Conectează la Claude (MCP)*, fără Node.js. Pentru Codex, Gemini CLI, Cursor sau VS Code, comenzile sunt în *Ajutor → „Ce faci tu”*.
 
