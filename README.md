@@ -4,7 +4,7 @@ Program gratuit de scris cărți lungi, în română și engleză: textul stă p
 
 **Versiunea publică: [Pneuma Sofer v1.4.2](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/tag/v1.4.2)** · **[Descarcă ultima versiune pentru Windows](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/latest)**
 
-[Schimbările din ultima versiune](CHANGELOG.md). **Pneuma Sofer lucrează extraordinar de bine fără AI** — scrierea, organizarea, dictarea, corecturile, căutările, backup-ul și exportul sunt complete și rămân pe calculatorul tău. Tot ce înseamnă AI stă ascuns până îl activezi tu din Setări; un scriitor care nu îl vrea nu vede niciun gram de AI în program.
+[Schimbările din ultima versiune](CHANGELOG.md). **Pneuma Sofer poate fi folosit fără AI** pentru scriere, organizarea proiectului, căutare, backup și export. Datele proiectului rămân pe calculatorul tău; integrările externe și funcțiile AI sunt opționale și pot necesita configurare și validare pe sistemul tău.
 
 <p align="center">
   <img src="./docs/assets/gif/01-corkboard-move.gif" width="100%" alt="Panoul Corkboard din Pneuma Sofer: două fișe reale, selectare și reordonare prin tragere">
@@ -151,9 +151,9 @@ Apeși **F9** și vorbești. Textul apare cam la fiecare patru secunde, cu spaț
 - **Fișier → Importă → Transcrie fișier audio…**: un MP3, WAV, M4A, OGG sau FLAC devine document în Cercetare, pe paragrafe, cu ora din înregistrare.
 - Numele din carte le scrii o dată în *Setări → Servicii și conturi*, ca să fie recunoscute corect; înlocuirile tale automate se aplică și textului dictat.
 
-Recunoașterea vorbirii e **în Pneuma Sofer** și lucrează **pe calculatorul tău, fără internet**. Prima dată, din *Setări → Voce și traducere → Dictare și transcriere*, apeși *Descarcă motorul* (în jur de 590 MB, o singură dată; cu placă NVIDIA poți lua și varianta mai rapidă). Motorul e [whisper.cpp](https://github.com/ggml-org/whisper.cpp) cu modelul Whisper large-v3-turbo; amprenta fișierelor e verificată la descărcare. Pentru cea mai bună recunoaștere a românei, alege [D&TED](https://github.com/Hermeneuticus-of-things/dted) în locul lui: D&TED folosește modelul **eek**, antrenat pe română, cu aproape jumătate din greșeli (5,4% cuvinte greșite față de 10,9% la modelul standard). După *Verifică*, în aceeași fereastră alegi modelul și vezi care e folosit acum. Pneuma Sofer se leagă de D&TED prin modul serviciu (protocol 1) și alege singur modelul potrivit. Mai important, D&TED nu rămâne doar la română: aduce recunoaștere și pe alte limbi, iar lista crește cu fiecare versiune. O versiune de D&TED care nu vorbește acest protocol îți spune să o actualizezi.
+Recunoașterea vorbirii poate rula local, pe calculatorul tău, fără internet, folosind motorul disponibil și configurat în aplicație. Pneuma Sofer suportă whisper.cpp și, opțional, [D&TED](https://github.com/Hermeneuticus-of-things/dted) prin protocolul de serviciu documentat. D&TED este calea optimizată pentru română și folosește modelul **eek** în versiunile compatibile. Performanța și limbile disponibile depind de motorul și versiunea instalate; procentele de eroare din benchmarkuri nu sunt o garanție pentru fiecare sistem sau înregistrare.
 
-**D&TED se actualizează din Pneuma Sofer.** Butonul *Caută actualizări D&TED…* (aceeași fereastră din Setări) arată versiunea ta și pe cea nouă de pe pagina D&TED și, la cerere, **descarcă, verifică și instalează** versiunea nouă în folderul tău de utilizator (fără drepturi de administrator). Instalarea nu se face orbește: mai întâi programul nou trebuie să răspundă la deschidere pe același protocol; dacă ceva nu merge, instalația veche rămâne pe loc, activă. Programul verifică singur, discret, la pornire și la trei zile (bifa „Caută actualizări D&TED automat") și te anunță când există versiune nouă.
+**Actualizarea D&TED din aplicație este planificată, dar momentan este în așteptare.** D&TED rămâne o dependență opțională, iar instalarea sau actualizarea lui se face separat până când fluxul de update din Pneuma Sofer va fi implementat și validat. Vezi [`docs/DEPENDENCY_UPDATES.md`](docs/DEPENDENCY_UPDATES.md) și [`docs/DTED.md`](docs/DTED.md) pentru protocol și starea curentă.
 
 
 ### Corectezi
@@ -326,23 +326,16 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 ## 7. Cum lucrați împreună
 
 
-**Același proiect, pe mai multe calculatoare.** Pui folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS. Pe fiecare calculator îl deschizi din aplicație sau direct în Chrome ori Edge, fără instalare. Ce scrie unul apare la celălalt în câteva secunde.
+**Același proiect, pe mai multe calculatoare.** Poți păstra folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS și îl poți deschide pe rând din Pneuma Sofer. Aceasta este sincronizare la nivel de fișiere, nu editare simultană real-time; furnizorul de stocare poate crea copii de conflict.
 
-**Mai mulți oameni, aceeași carte.** Fiecare își scrie numele și alege o culoare în *Setări → Partajare → Echipă*. Fără nume, proiectul rămâne exact ca până acum.
+**Ce nu este încă livrat.** Serverul colaborativ pentru editare simultană, cursoare și selecții colorate, roluri, sugestii și coadă offline este planificat, nu trebuie considerat disponibil în versiunea curentă. Nu prezentăm ca implementate îmbinarea automată a paragrafelor, prezența live sau rezolvarea colaborativă a conflictelor.
 
-- **Cine lucrează acum:** lângă titlul documentului apare numele celui care îl are deschis; în bara de jos vezi câți sunteți.
-- **Cine ce a schimbat și când:** *Proiect → Echipă…* arată jurnalul cu persoana, data, cuvintele adăugate și șterse și un fragment, filtrat pe document, persoană și perioadă.
-- **Blocare:** lacătul de lângă titlu blochează documentul pentru ceilalți; la ei se deschide doar pentru citire. Un calculator închis își pierde singur blocările după o jumătate de oră.
-- **Îmbinare:** schimbările făcute în paragrafe diferite se unesc singure. Același paragraf schimbat în două locuri: în bara de jos apare „Conflict”; un clic deschide fereastra cu cele două variante alături, unde alegi, pentru fiecare loc, varianta ta, a celuilalt sau pe amândouă. Varianta celuilalt rămâne oricum ca snapshot. Nu se pierde nimic.
-
-- **Fără conexiune:** dacă NAS-ul sau cloud-ul dispare, scrii mai departe. În bara de jos apare „În așteptare: 2 documente”, iar textul se trimite singur când revine folderul, chiar dacă între timp ai închis programul. Starea normală e „Sincronizat”.
-- **Siguranță:** copiile de conflict făcute de OneDrive sau Dropbox sunt recunoscute și semnalate; dacă NAS-ul ori cloud-ul se deconectează, primești un mesaj și programul reia singur.
-- **Agenții AI** (Claude, Codex prin MCP) apar în jurnal ca persoană separată, „agent”, și nu scriu în documentele blocate.
+**Agenții AI** prin MCP sunt o integrare separată: pot lucra în proiect numai după configurare și cu limitele de siguranță descrise în documentația MCP.
 
 
 ### AI, doar dacă îl vrei (opțional)
 
-**Cei care scriu cărți trebuie să știe asta din start: Pneuma Sofer e un program care te ajută să scrii cărți — nu un soft de AI.** Lucrează extraordinar de bine fără AI, iar AI-ul e doar o opțiune, la final, pentru cei care îl vor. Când e oprit (starea implicită), **nu apare nicăieri**: niciun meniu, niciun buton, nicio fereastră — programul arată și merge ca un program de scris clasic. Îl activezi din *Program → Setări → Chei și conturi* (cheie + bifa „Funcții AI") și abia atunci apare meniul AI, cu tot ce e mai jos.
+**Cei care scriu cărți trebuie să știe asta din start: Pneuma Sofer este un program de scris, nu un produs dependent de AI.** Funcțiile de bază pentru scriere și organizare nu cer AI. Când AI este oprit, interfața AI este ascunsă; îl activezi din *Program → Setări → Chei și conturi* (cheie + bifa „Funcții AI") numai dacă vrei să folosești aceste integrări.
 
 Tot ce folosește AI stă grupat într-un singur meniu și se pornește sau se oprește dintr-un singur loc: pastila AI din bară și *Setări → Chei și conturi*.
 
@@ -362,19 +355,19 @@ Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze
 >
 > Mai mult, răspunsurile AI-ului sunt influențate de valorile, regulile și interesele companiilor care îl dezvoltă, inclusiv de felul în care acestea stabilesc ce poate spune și cum. Astfel, fără să-ți dai seama, poți ajunge să reproduci viziunea lor asupra lumii, crezând că este propria ta gândire.
 >
-> Pneuma Sofer merge întreg și fără AI: scrisul rămâne al tău, iar AI-ul îl pornești sau îl oprești oricând, dintr-un singur loc. Folosește-l ca pe un instrument de scris mai inteligent, care elimină fricțiunile și birocrația editorială, nu ca pe un înlocuitor al gândirii sau al creativității tale. Tehnologia trebuie să-ți elibereze scrisul, nu să-l scrie în locul tău.
+> Pneuma Sofer poate fi folosit pentru scriere și organizare fără AI. AI-ul îl pornești sau îl oprești din setările aplicației și îl folosești ca instrument opțional, nu ca înlocuitor al gândirii sau creativității tale.
 
 Pentru **NotebookLM**, secțiunea *Servicii și conturi* are un buton dedicat de logare: se deschide o fereastră în care te autentifici o dată pe Google; sesiunea rămâne doar în calculatorul tău și e folosită de serverul NotebookLM la întrebările pe surse.
 
 ## 8. Ce urmează
 
-Tot ce e descris mai sus e gata. Planul pentru versiunile următoare:
+Planul de mai jos conține funcții aflate în lucru sau încă neimplementate; nu le prezint ca disponibile în versiunea curentă:
 
 - **Scris în același timp în același document**, printr-un server Pneuma Sofer pe un calculator din rețea, pe NAS sau pe internet, cu cursorul și selecția celorlalți, colorate.
 - **Roluri:** autor, traducător, redactor (care doar comentează și propune) și cititor; **modificări propuse**, marcate până le accepți.
 - **Compararea versiunilor direct din jurnalul echipei.**
 - **Adnotări pe PDF-urile** din Cercetare.
-- **Paritate funcțională cu programele de referință din categorie.** Am comparat funcționalitatea, capitol cu capitol, cu standardul genului; golurile identificate au fost prioritizate și implementate pe tranșe (navigarea din tastatură, comenzile de meniu, comportamentele, Copy To Project, formatele noi de compile — deja în 1.4.0).
+- **Paritate funcțională cu programele de referință din categorie.** Comparația a ajutat la prioritizarea lucrărilor; unele îmbunătățiri sunt livrate, iar altele rămân parțiale sau de validat. Starea exactă este în [`ROADMAP.md`](ROADMAP.md).
 - **Branching experimental pe documente** — variante de rescriere pe ramuri, cu merge selectiv.
 
 Planul complet, cu detaliile tehnice, e în [`ROADMAP.md`](ROADMAP.md); dictarea e descrisă în [`docs/DTED.md`](docs/DTED.md).
@@ -458,11 +451,11 @@ Cât timp depozitul programului e privat, actualizatorul are nevoie de un token 
 
 **Pot aduce ce am scris deja?** Da: Word, RTF, ODT, Markdown, pagini web, scenarii Fountain sau Final Draft și proiecte `.scriv`.
 
-**Trebuie să folosesc AI?** Nu. Programul e complet fără el.
+**Trebuie să folosesc AI?** Nu. Scrierea și organizarea de bază nu depind de AI; integrările AI sunt opționale.
 
-**Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Da. Toate cheile și conturile stau într-un singur loc, în *Setări → Chei și conturi*: cheia AI (Anthropic, OpenAI, Gemini, NVIDIA NIM, OpenRouter, DeepSeek și alții; unele au și modele gratuite) și cheile serviciilor — traduci în program cu DeepL sau Google, verifici gramatica cu LanguageTool, asculți textul cu vocile Speechify, aduci bibliografia din Zotero. La fiecare se păstrează doar ce face integrarea să meargă (cheia API, uneori un ID), fără câmpuri de email și parolă care n-ajută la nimic; un link *Ce este?* îți arată ce face serviciul și *Unde găsesc cheia* te duce la pagina cheii, iar **Testează conexiunea** verifică pe loc. Orice alt cont îl ții la *Alte conturi*. Totul se păstrează criptat pe calculatorul tău.
+**Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Unele integrări sunt disponibile ca opțiuni, în funcție de versiunea aplicației, serviciu și configurarea ta. Cheile și conturile se gestionează din *Setări → Chei și conturi*. Ai nevoie de contul sau cheia cerută de serviciu, iar disponibilitatea și efectele reale trebuie verificate pe sistemul tău prin **Testează conexiunea**. Nu presupune că o integrare externă este validată doar pentru că apare în interfață.
 
-**Pot lucra și din browser sau de pe alt calculator?** Da. Pune proiectul într-un folder OneDrive, Dropbox, Google Drive sau pe un NAS și deschide-l în Chrome sau Edge. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
+**Pot deschide proiectul de pe alt calculator?** Poți păstra folderul proiectului într-un serviciu de sincronizare sau pe un NAS și îl poți deschide din Pneuma Sofer pe alt calculator. Folosește-l pe rând și verifică eventualele copii de conflict; editarea simultană real-time nu este încă disponibilă. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
 
 **Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi-dted-dictare-și-transcriere).
 
@@ -575,7 +568,7 @@ Cartea mea.scribner/
 </details>
 
 
-**De reținut: Pneuma Sofer lucrează extraordinar de bine fără AI.** Scrierea, organizarea, dictarea, corecturile, căutările, backup-ul și exportul sunt complete și rămân pe calculatorul tău. Tot ce înseamnă AI stă ascuns până îl activezi tu din Setări; un scriitor care nu îl vrea nu vede niciun gram de AI în program.
+**De reținut:** Pneuma Sofer poate fi folosit pentru scriere și organizarea proiectului fără AI. AI-ul și serviciile externe sunt opționale; funcțiile care depind de ele cer configurare și pot necesita verificare separată. Datele proiectului sunt gestionate local, conform setărilor și operațiilor pe care le alegi.
 
 ## Licență
 
