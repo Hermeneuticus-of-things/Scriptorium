@@ -34,7 +34,7 @@ La începutul fiecărei scene, scripturile șterg cadrele PNG vechi. Această cu
 | `06-timeline.gif` | Deschiderea cronologiei proiectului și vizualizarea evenimentelor pe axa timpului. |
 | `07-research-ask.gif` | Deschiderea panoului Cercetare, introducerea unei întrebări, selectarea unei surse și afișarea scope-ului ales. Captura nu pretinde un răspuns RAG sau o conversație AI verificată. |
 
-Fiecare GIF este asamblat cu FFmpeg din cadrele PNG corespunzătoare din `docs/assets/gif/frames/<scenă>/`, redimensionat la 1180 px lățime și scris cu extensia Netscape `loop=0` pentru redare automată și repetare infinită.
+Fiecare GIF este asamblat cu FFmpeg din cadrele PNG corespunzătoare din `docs/assets/gif/frames/<scenă>/`, redimensionat la 1180 px lățime și redat la 4 fps pentru lizibilitate. Scenele complexe folosesc cel puțin 20 de cadre când pașii o cer, iar stările finale sunt menținute suficient pentru citire. Fișierul este scris cu extensia Netscape `loop=0` pentru redare automată și repetare infinită.
 
 ## Verificare
 

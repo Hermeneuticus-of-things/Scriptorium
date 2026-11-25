@@ -100,6 +100,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   }
   await H.p.waitForTimeout(400);
   await burst('02-help-finder', 3, 220);
+  await burst('02-help-finder', 8, 240);
   await H.p.keyboard.press('Escape');
   await H.p.waitForTimeout(200);
 
@@ -126,6 +127,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     await H.p.waitForTimeout(350);
     await burst('04-focus-f6', 4, 180);
   }
+  await burst('04-focus-f6', 8, 240);
 
   // ===== Scena 5: semnale pe text (măsură, fără AI) =====
   await open('05-semnale');
@@ -137,6 +139,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await burst('05-semnale', 8, 180);
   const grupa = H.p.locator('.signals-grupa summary').first();
   if (await grupa.count()) { await grupa.click(); await burst('05-semnale', 6, 180); }
+  await burst('05-semnale', 8, 240);
   await H.p.keyboard.press('Escape');
 
   await H.dispose();
@@ -148,8 +151,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const FFMPEG = 'C:/Users/Ionut/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0.1-full_build/bin/ffmpeg.exe';
   for (const scene of scenes) {
     const gif = path.join(gifDir, scene + '.gif');
-    execSync(`"${FFMPEG}" -y -framerate 7 -i "${frames(scene)}/%04d.png" -vf "fps=7,scale=1180:-1:flags=lanczos,palettegen=stats_mode=diff" "${frames(scene)}/palette.png"`, { stdio: 'pipe' });
-    execSync(`"${FFMPEG}" -y -framerate 7 -i "${frames(scene)}/%04d.png" -i "${frames(scene)}/palette.png" -lavfi "fps=7,scale=1180:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=3" -loop 0 "${gif}"`, { stdio: 'pipe' });
+    execSync(`"${FFMPEG}" -y -framerate 4 -i "${frames(scene)}/%04d.png" -vf "fps=4,scale=1180:-1:flags=lanczos,palettegen=stats_mode=diff" "${frames(scene)}/palette.png"`, { stdio: 'pipe' });
+    execSync(`"${FFMPEG}" -y -framerate 4 -i "${frames(scene)}/%04d.png" -i "${frames(scene)}/palette.png" -lavfi "fps=4,scale=1180:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=3" -loop 0 "${gif}"`, { stdio: 'pipe' });
     console.log('GIF:', gif, Math.round(fs.statSync(gif).size / 1024) + ' KB');
   }
   console.log('GIF-URI GATA în docs/assets/gif/');

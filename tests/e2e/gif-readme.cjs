@@ -46,6 +46,7 @@ const createHarness = require('./full-app-harness.cjs');
   await H.p.mouse.up();
   await H.p.waitForTimeout(500);
   await burst('01-corkboard-move', 7, 180);
+  await burst('01-corkboard-move', 5, 240);
   // Închidem scena după demonstrație. Fixture-ul este izolat pentru captură, deci
   // nu refacem ordinea printr-un al doilea drag care poate schimba suprafața activă.
   await esc();
@@ -63,6 +64,7 @@ const createHarness = require('./full-app-harness.cjs');
   await H.row('doc-b').click({ modifiers: ['Alt'] });
   await H.p.waitForTimeout(500);
   await burst('02-translate-side', 6, 180);
+  await burst('02-translate-side', 10, 240);
   // Unelte ▸ Traducere (meniu in-app DOM — capturabil; cel nativ nu apare în screenshot-uri)
   const menuBar = H.p.locator('header .menu > button, .menu-bar > button').filter({ hasText: /^Unelte$/ }).first();
   if (await menuBar.count()) {
@@ -100,6 +102,7 @@ const createHarness = require('./full-app-harness.cjs');
   await H.p.waitForSelector('.quick-ref, [class*="quickref"]', { timeout: 8000 }).catch(() => {});
   await H.p.waitForTimeout(500);
   await burst('04-reference-quickref', 7, 180);
+  await burst('04-reference-quickref', 9, 240);
   // închide panourile quickref pentru curățenie
   const closeBtns = H.p.locator('[class*="quickref"] button[aria-label*="nchide"], .quick-ref button[aria-label*="nchide"]');
   const cb = await closeBtns.count();
@@ -121,6 +124,7 @@ const createHarness = require('./full-app-harness.cjs');
   // Enter pe propunere (sau Esc dacă nu apare) — comportamentul real al editorului
   const sug = H.p.locator('.tippy-box, [data-tippy-root], .suggestion, [class*="suggest"]');
   if (await sug.count()) { await H.p.keyboard.press('Enter'); await H.p.waitForTimeout(600); await burst('05-wiki-link', 6, 180); }
+  await burst('05-wiki-link', 10, 240);
   await esc();
   await H.save();
 
@@ -141,6 +145,7 @@ const createHarness = require('./full-app-harness.cjs');
   await H.p.waitForTimeout(700);
   await H.p.waitForSelector('.timeline-view svg', { timeout: 8000 });
   await burst('06-timeline', 7, 180);
+  await burst('06-timeline', 9, 240);
   await H.command('viewEditor');
   await esc();
 
@@ -194,8 +199,8 @@ const createHarness = require('./full-app-harness.cjs');
   const FFMPEG = 'C:/Users/Ionut/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0.1-full_build/bin/ffmpeg.exe';
   for (const scene of scenes) {
     const gif = path.join(gifDir, scene + '.gif');
-    execSync(`"${FFMPEG}" -y -framerate 7 -i "${frames(scene)}/%04d.png" -vf "fps=7,scale=1180:-1:flags=lanczos,palettegen=stats_mode=diff" "${frames(scene)}/palette.png"`, { stdio: 'pipe' });
-    execSync(`"${FFMPEG}" -y -framerate 7 -i "${frames(scene)}/%04d.png" -i "${frames(scene)}/palette.png" -lavfi "fps=7,scale=1180:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=3" -loop 0 "${gif}"`, { stdio: 'pipe' });
+    execSync(`"${FFMPEG}" -y -framerate 4 -i "${frames(scene)}/%04d.png" -vf "fps=4,scale=1180:-1:flags=lanczos,palettegen=stats_mode=diff" "${frames(scene)}/palette.png"`, { stdio: 'pipe' });
+    execSync(`"${FFMPEG}" -y -framerate 4 -i "${frames(scene)}/%04d.png" -i "${frames(scene)}/palette.png" -lavfi "fps=4,scale=1180:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=3" -loop 0 "${gif}"`, { stdio: 'pipe' });
     console.log('GIF:', gif, Math.round(fs.statSync(gif).size / 1024) + ' KB');
   }
   function frames(scene) { return path.join(OUT_FRAMES, scene); }
