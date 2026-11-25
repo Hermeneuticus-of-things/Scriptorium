@@ -1,89 +1,81 @@
 # Pneuma Sofer
 
-Program gratuit de scris cărți lungi, în română și engleză: textul stă pe fișe, câte una pentru fiecare scenă sau capitol, iar la final primești cartea întreagă.
+**Pneuma Sofer este un spațiu de lucru pentru cărți și proiecte lungi:** împarți manuscrisul în scene, capitole și note, le reordonezi fără să pierzi textul, lucrezi cu sursele lângă document și compilezi rezultatul într-un fișier final.
 
-**Versiunea publică: [Pneuma Sofer v1.4.2](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/tag/v1.4.2)** · **[Descarcă ultima versiune pentru Windows](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/latest)**
+Este destinat în primul rând **scriitorilor, traducătorilor și cercetătorilor** care lucrează cu texte ample, versiuni succesive și materiale de referință.
 
-[Schimbările din ultima versiune](CHANGELOG.md). **Pneuma Sofer poate fi folosit fără AI** pentru scriere, organizarea proiectului, căutare, backup și export. Datele proiectului rămân pe calculatorul tău; integrările externe și funcțiile AI sunt opționale și pot necesita configurare și validare pe sistemul tău.
+> **Pe scurt:** importă sau creează un proiect → lucrează pe fișe → verifică și organizează materialul → compilează cartea.
 
-<p align="center">
-  <img src="./docs/assets/gif/01-corkboard-move.gif" width="100%" alt="Panoul Corkboard din Pneuma Sofer: două fișe reale, selectare și reordonare prin tragere">
-</p>
+## Începe în 60 de secunde
 
-## Noutăți din ultima versiune
+1. **Descarcă Pneuma Sofer pentru Windows** din [ultima versiune publică](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/latest). Versiunea publică indicată în acest README este [v1.4.2](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/tag/v1.4.2).
+2. **Creează un proiect** sau importă un document existent. Poți porni de la un proiect nou ori de la formate acceptate de aplicație.
+3. **Scrie pe fișe:** fiecare scenă, capitol, notă sau sursă poate fi un document separat în binder. Ordinea documentelor poate deveni ordinea cărții.
+4. **Organizează materialul:** mută fișele, deschide un document de referință lângă text, caută în proiect și verifică versiunile înainte de modificări importante.
+5. **Compilează rezultatul:** deschide fluxul *Fișier → Compilează…*, alege formatul disponibil și verifică previzualizarea înainte de export.
 
-| Noutate | Pe scurt | Vezi în mișcare |
+![Panoul Corkboard din Pneuma Sofer: două fișe sunt selectate și reordonate prin tragere](./docs/assets/gif/01-corkboard-move.gif)
+
+## Pentru cine este
+
+### Pentru scriitori
+
+Pneuma Sofer ajută la organizarea romanelor, seriilor, eseurilor și cărților de nonficțiune în unități de lucru mai ușor de mutat și revizuit. Poți păstra scenele, personajele, locurile, cronologia și materialele de referință în același proiect.
+
+**Rezultatul urmărit:** vezi structura cărții și poți lucra la o scenă fără să pierzi imaginea de ansamblu.
+
+### Pentru traducători
+
+Poți ține documentul original lângă documentul în care lucrezi și poți folosi instrumentele de traducere sau dicționarele disponibile după configurarea necesară. Serviciile externe nu sunt presupuse automat și pot necesita chei, conturi sau conectare la internet.
+
+**Rezultatul urmărit:** compari originalul și traducerea în același proiect, păstrând notele și terminologia aproape de text.
+
+![Editorul Pneuma Sofer împărțit în două panouri: originalul în stânga și documentul alăturat în dreapta](./docs/assets/gif/02-translate-side.gif)
+
+### Pentru cercetători și autori academici
+
+Poți aduna surse, pagini salvate, note, referințe și capitole într-o structură unică. Instrumentele de cercetare și funcțiile AI depind de configurarea concretă a aplicației și a serviciilor externe; animația de mai jos arată întrebarea și alegerea surselor, nu garantează corectitudinea unui răspuns sau a citărilor.
+
+**Rezultatul urmărit:** păstrezi traseul dintre materialul consultat, notițele de lucru și capitolul în care folosești informația.
+
+![Fluxul Research din Pneuma Sofer: este formulată o întrebare și sunt selectate sursele folosite pentru căutare](./docs/assets/gif/07-research-ask.gif)
+
+## Fluxul principal
+
+| Etapă | Ce faci | Ce arată demonstrația |
 |---|---|---|
-| **Reparații simple și Semnale (fără AI)** | corecturi deterministe cu diff și snapshot automat; ritm și semnale de limbă, fără model, fără costuri | [Corectezi](#corectezi) |
-| **Ajutor și comenzi într-o singură căutare** | **Ctrl+Shift+H**: întrebi în limbaj natural, găsești articolul sau comanda reală și o execuți | [Interfața](#interfața) |
-| **Navigare din tastatură** | **F6/Shift+F6** mută focusul între panouri; **Ctrl+Shift+1..4** te duce direct la editor, binder, inspector, fereastră AI | [Interfața](#interfața) |
-| **Compile preview REPARAT** | previzualizarea nu mai umflă dialogul: panou propriu cu zoom „Potrivire la lățime" și bara de acțiuni mereu vizibilă | [Compilezi](#compilezi) |
-| **Fereastra AI autonomă** | container propriu, separat de Inspector; chips de context, acțiuni dintr-un click, stare vizibilă (inactiv / gândire / scrie / gata) | [AI, la final](#ai-doar-dacă-îl-vrei-opțional) |
-| **Motor universal de scriere + pachetul cărții** | metoda de scriere în fiecare apel AI; frazele fixate nu se ating, formulele oprite sunt zero; fiecare schimbare trece prin gardă și intră în registrul de decizii | [AI, la final](#ai-doar-dacă-îl-vrei-opțional) |
+| **1. Aduci materialul** | Creezi un proiect sau imporți documente acceptate de aplicație. | Demonstrațiile de import și deschidere trebuie citite împreună cu lista formatelor suportate. |
+| **2. Îl împarți în fișe** | Separi scenele, capitolele, notele și sursele și le pui în ordinea dorită. | GIF-ul Corkboard arată reordonarea fișelor prin tragere. |
+| **3. Lucrezi și verifici** | Scrii, compari versiuni, folosești documente de referință și cauți în proiect. | Fiecare GIF demonstrează numai acțiunea vizibilă din el, nu toate funcțiile descrise în secțiunea respectivă. |
+| **4. Compilezi** | Alegi conținutul și previzualizezi rezultatul înainte de export. | GIF-urile de Compile arată fluxul vizibil de selecție și previzualizare. |
 
-## 1. Ce este
+## Ce funcționează fără servicii externe
 
-Pneuma Sofer e un program gratuit de scris cărți lungi, în română și engleză. Un roman, o traducere sau o teză într-un singur fișier Word de 300 de pagini devine greu de stăpânit. Aici textul stă pe bucăți mici, câte una pentru fiecare scenă sau capitol. Le vezi, le muți și le găsești ușor. La final apeși un buton și primești cartea întreagă.
+Funcțiile de bază pentru scriere, organizarea proiectului, navigare, căutare și lucrul local cu fișierele proiectului sunt concepute să nu depindă de un serviciu AI. Funcțiile AI, traducerea prin servicii online, unele dicționare și integrările MCP/NotebookLM sunt opționale și pot necesita internet, conturi, chei API sau instalarea unor dependențe separate.
 
-## 2. Pentru cine
+Datele proiectului sunt păstrate local în structura proiectului. Pentru sincronizare prin folder, cloud sau NAS, tratează proiectul ca pe un set de fișiere și verifică apariția conflictelor; aceasta nu trebuie interpretată ca editare colaborativă în timp real.
 
-**Pentru scriitori** — cei care lucrează cu documente ample, informație densă, structuri ramificate, surse, capitole, revizuiri și continuitate editorială, pe proiecte care pot dura luni sau ani:
+## Ce vezi în demonstrații
 
-| Cine | Ce scrie și ce ține în program |
-|---|---|
-| **Romancieri și prozatori** | romane, serii literare, personaje, cronologii, continuitate narativă, documentare |
-| **Autori SF, fantasy, ficțiune speculativă** | universuri, lumi fictive, genealogii, reguli interne, lore și documentație |
-| **Autori de nonficțiune și eseuri** | cărți tematice, eseuri extinse, biografii, texte documentare |
-| **Cercetători și autori academici** | teze, disertații, articole, bibliografie, surse și organizarea informației |
-| **Autori de tratate și lucrări de specialitate** | sisteme conceptuale ample, terminologie, capitole interdependente, referințe |
-| **Traducători** | texte sursă, terminologie, note, comparații între versiuni, coerență contextuală |
-| **Jurnaliști de investigație, autori documentari** | dosare, interviuri, cronologii, verificarea informației |
-| **Autori de manuale și materiale educaționale** | lecții, module, explicații, exemple, referințe |
-| **Autori de serii de cărți și proiecte editoriale** | continuitate între volume, arhive, planificare pe proiecte extinse |
+GIF-urile din această pagină sunt capturi animate ale unor fluxuri din aplicație și pornesc automat în GitHub. Ele au rol demonstrativ:
 
-Suportul pentru scenarii există și el în program, dar nu pentru acest public e gândit Pneuma Sofer.
+- un GIF arată o acțiune concretă, nu validează automat toate afirmațiile din text;
+- GIF-ul de traducere arată editorul alăturat, nu calitatea unei traduceri automate;
+- GIF-ul de Research arată întrebarea și selecția surselor, nu acuratețea răspunsurilor sau a citărilor;
+- GIF-ul de Compile arată pașii vizibili de configurare și previzualizare, nu compatibilitatea cu orice combinație de sistem și cititor.
 
-Profilul complet al utilizatorului-țintă — categorii, nevoi, dificultăți, criterii de design pentru Help și fluxuri — e în [`docs/PROFIL-UTILIZATOR.md`](docs/PROFIL-UTILIZATOR.md) și e baza de referință pentru toate deciziile de produs.
+Pentru funcții în așteptare, limitări și statusuri de validare, consultă [ROADMAP.md](ROADMAP.md) și documentația tehnică.
 
-<p align="center">
-  <img src="./docs/assets/gif/02-translate-side.gif" width="100%" alt="Editorul Pneuma Sofer împărțit în două panouri: documentul original rămâne în stânga, iar documentul alăturat se deschide în dreapta">
-</p>
+## Instalare și documentație
 
-## 3. Ce face
+- [Descarcă Pneuma Sofer pentru Windows](https://github.com/Hermeneuticus-of-things/Scriptorium/releases/latest)
+- [Vezi schimbările versiunii curente](CHANGELOG.md)
+- [Consultă roadmap-ul](ROADMAP.md)
+- [Citește documentația proiectului](docs/)
 
-| Funcția | Pe scurt | În mișcare |
-|---|---|---|
-| [Scrii pe fișe](#scrii-pe-fișe) | scene și capitole pe fișe, reordonate cu tragerea, legături între documente | 🎬 GIF |
-| [Traduci](#traduci) | originalul lângă traducere; DeepL, Google Translate și dicționare la un clic | 🎬 GIF |
-| [Dictezi](#dictezi-dted-dictare-și-transcriere) | F9 și vorbești; textul apare la cursor sau înlocuiește selecția | — |
-| [Corectezi](#corectezi) | revizie fără AI, semnale de măsură, versiuni | 🎬 GIF |
-| [Cercetezi](#cercetezi) | formulezi întrebarea și alegi sursele folosite la căutare | 🎬 GIF |
-| [Cauți oriunde](#cauți-oriunde) | căutare rapidă, avansată, după formatare | 🎬 GIF |
-| [Compilezi](#compilezi) | cartea întreagă în Word, PDF, EPUB și alte formate, cu previzualizare | 🎬 GIF |
-| [Interfața](#interfața) | focus din tastatură (F6), ajutor cu căutare, riglă | 🎬 GIF |
-| [Lucrați împreună](#7-cum-lucrați-împreună) | același proiect pe mai multe calculatoare; cine ce a schimbat și când | — |
-| [AI, doar dacă îl vrei](#ai-doar-dacă-îl-vrei-opțional) | asistent, I-EDIT, agenți prin MCP — invizibil până îl activezi din Setări | 🎬 GIF |
+Dacă ești dezvoltator, continuă cu secțiunea de instalare pentru dezvoltare, comenzile de build și testele. Detaliile despre MCP, AI, furnizori externi și arhitectură trebuie păstrate în documentația tehnică, nu în traseul principal al utilizatorului nou.
 
-## 4. Cum face
-
-- **Pe bucăți.** Fiecare scenă, capitol, notă sau sursă e un document separat în *binder*, lista din stânga. Le aranjezi ca pe fișe; ordinea din binder e ordinea din carte.
-- **Pe calculatorul tău.** Proiectul e un folder cu fișiere text simple. Nu ai nevoie de cont și nici de internet; nimic nu pleacă din calculator dacă nu vrei.
-- **Fără să pierzi ceva.** Totul se salvează singur, copiile de siguranță se fac automat, iar înainte de o schimbare mare faci o „poză” a textului (snapshot), la care te poți întoarce.
-- **AI doar dacă vrei.** Programul e complet fără AI. Cu o cheie pusă de tine, asistentul propune, iar tu accepți; paragrafele scrise de tine nu sunt rescrise.
-- **La final, o singură carte.** *Compile* adună bucățile în formatul ales, cu pagina, titlurile și notele așezate cum hotărăști tu.
-
-## 5. Cum lucrezi
-
-<p align="center">
-  <img src="./docs/assets/gif/03-compile-content.gif" width="100%" alt="Flux real de Compile: alegi conținutul și vezi previzualizarea cărții în aplicație">
-</p>
-
-1. **Aduci textul.** Pornești de la zero, dintr-un șablon, sau imporți Word, RTF, ODT, Markdown, pagini web, scenarii ori un proiect `.scriv`; capitolele devin fișe singure.
-2. **Scrii pe fișe.** Scrii, muți, împarți și unești scene; ții personajele, locurile și cercetarea lângă text. Dacă vrei, dictezi.
-3. **Verifici.** Revizia găsește ghilimele, spații, punctuație și repetiții; compari versiunile; întrebi sursele.
-4. **Primești cartea.** *Fișier → Compilează…* și ai DOCX pentru editură, PDF pentru tipar sau EPUB pentru cititor.
-
-## 6. Funcțiile, pe rând
+## Funcțiile, pe rând
 
 ### Scrii pe fișe
 
@@ -323,7 +315,7 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 
 </details>
 
-## 7. Cum lucrați împreună
+## Cum lucrați împreună
 
 
 **Același proiect, pe mai multe calculatoare.** Poți păstra folderul proiectului în OneDrive, Dropbox, Google Drive sau pe un NAS și îl poți deschide pe rând din Pneuma Sofer. Aceasta este sincronizare la nivel de fișiere, nu editare simultană real-time; furnizorul de stocare poate crea copii de conflict.
@@ -335,31 +327,43 @@ Tragi de marcaje ca în Word. Un clic pe riglă pune un tab: la stânga, centrat
 
 ### AI, doar dacă îl vrei (opțional)
 
-**Cei care scriu cărți trebuie să știe asta din start: Pneuma Sofer este un program de scris, nu un produs dependent de AI.** Funcțiile de bază pentru scriere și organizare nu cer AI. Când AI este oprit, interfața AI este ascunsă; îl activezi din *Program → Setări → Chei și conturi* (cheie + bifa „Funcții AI") numai dacă vrei să folosești aceste integrări.
+Pneuma Sofer este utilizabil pentru scriere și organizarea proiectului fără AI. AI-ul nu este necesar pentru funcțiile de bază. Îl activezi numai dacă vrei să folosești un furnizor compatibil și configurezi cheia sau contul cerut în *Program → Setări → Chei și conturi*.
 
-Tot ce folosește AI stă grupat într-un singur meniu și se pornește sau se oprește dintr-un singur loc: pastila AI din bară și *Setări → Chei și conturi*.
+Când AI-ul este activ, interfața AI este separată de Inspector și afișează starea operației, progresul și posibilitatea de anulare. Răspunsurile sunt propuneri: citești rezultatul și alegi ce accepți. Activarea unui furnizor extern nu înseamnă că toate integrările sunt disponibile sau validate pe orice sistem.
 
-Rundele I-EDIT și I-REP arată răspunsul AI pe măsură ce se scrie, cu cronometru și anulare cu Esc, plus o estimare înainte de rulare: „Estimare: 7 documente × 3 bucle ≈ 21 apeluri AI”. Rezultatele serviciilor (gramatică, sinonime, traducere, dicționare) apar în pagină, lângă selecție, nu într-o fereastră peste text.
+**Funcții AI din aplicație:**
 
-- **Asistentul AI** — corectură, rezumate sau o a doua părere; vezi exact ce schimbă și accepți doar ce vrei.
-- **I-EDIT** — runde editoriale pe tot textul, cu regulile tale.
-- **Bucla de reparare (I-REP cu AI)** — repară problemele semnalate și reverifică.
-- **În surse / NotebookLM** — întrebi sursele tale; cu un notebook configurat, chiar cu întrebări de continuare până primește răspuns.
-- **Traducere și definiții** — DeepL/Google și explicații AI direct din meniul cuvântului.
-- **Agenți AI prin MCP** — Claude sau Codex lucrează direct în carte (mai jos).
+- **Asistent AI** — poate propune corecturi, rezumate sau explicații, în funcție de furnizorul configurat.
+- **I-EDIT** — rulează runde editoriale pe text, după regulile și profilul ales.
+- **I-REP** — repară problemele semnalate și reverifică rezultatul, când fluxul și furnizorul configurat permit acest lucru.
+- **Întrebări pe surse / NotebookLM** — funcționează numai după configurarea notebook-ului și a serverului necesar; răspunsul trebuie verificat de autor.
+- **Traducere și definiții cu servicii externe** — pot necesita DeepL, Google sau alt serviciu configurat; disponibilitatea depinde de cheie, cont, conexiune și versiunea serviciului.
 
-Dacă lucrezi cu un asistent AI ca Claude sau Codex, îl poți lăsa să lucreze direct în carte: citește capitolele, scrie rezumate, caută, face revizia. Din *AI → Conectează la Claude (MCP)* îl legi cu un clic — dialogul detectează ce clienți AI ai instalați (Claude Desktop, Claude Code, Cursor, Gemini CLI, OpenCode, Windsurf, VS Code, Codex) și scrie configurarea fiecăruia dintr-un clic, cu copie de siguranță. Agentul primește peste 80 de unelte (citire/scriere documente, binder, căutare, snapshot-uri, Compile, import/export, revizie). Înainte de fiecare modificare a lui se face o copie, iar tot ce face se notează. Nu e obligatoriu: programul merge la fel și fără.
+### Agenți externi prin MCP
 
-> [!IMPORTANT]
-> **O vorbă despre AI.** Oricât de bun ar fi modelul și oricât te-ar ajuta, AI-ul nu garantează originalitatea. Poate combina idei, deschide perspective și stimula creativitatea, dar se bazează pe ceea ce a învățat deja. Noutatea autentică apare din experiența, intuiția și gândirea ta, nu din simpla reformulare a unor idei existente.
->
-> Mai mult, răspunsurile AI-ului sunt influențate de valorile, regulile și interesele companiilor care îl dezvoltă, inclusiv de felul în care acestea stabilesc ce poate spune și cum. Astfel, fără să-ți dai seama, poți ajunge să reproduci viziunea lor asupra lumii, crezând că este propria ta gândire.
->
-> Pneuma Sofer poate fi folosit pentru scriere și organizare fără AI. AI-ul îl pornești sau îl oprești din setările aplicației și îl folosești ca instrument opțional, nu ca înlocuitor al gândirii sau creativității tale.
+MCP este o integrare separată de funcțiile AI din fereastra Pneuma Sofer. Un client extern, precum Claude Desktop, Claude Code, Codex, Cursor, Gemini CLI sau VS Code, poate folosi serverul MCP al proiectului numai după ce utilizatorul îl configurează explicit.
 
-Pentru **NotebookLM**, secțiunea *Servicii și conturi* are un buton dedicat de logare: se deschide o fereastră în care te autentifici o dată pe Google; sesiunea rămâne doar în calculatorul tău și e folosită de serverul NotebookLM la întrebările pe surse.
+Prin MCP, agentul poate primi un set de unelte pentru citirea proiectului, căutare, metadate, note, snapshot-uri, Compile și, dacă îi dai acces de scriere, pentru modificări. MCP nu pornește colaborare real-time și nu înseamnă că un agent extern are automat acces la toate proiectele sau la toate fișierele calculatorului.
 
-## 8. Ce urmează
+Pentru primul test, folosește modul **read-only**. Accesul de scriere trebuie activat numai pentru un proiect și un client în care ai încredere. Înainte de a permite modificări, verifică proiectul țintă, limitează calea cu `--project` și consultă jurnalul agentului și snapshot-urile create de aplicație.
+
+Configurarea instalată pornește serverul MCP fără Node.js:
+
+```bat
+claude mcp add pneuma --scope user -- cmd /c %LOCALAPPDATA%\Programs\Pneuma Sofer\pneuma-mcp.cmd
+```
+
+Pentru configurări JSON:
+
+```json
+"pneuma": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\Programs\\Pneuma Sofer\\pneuma-mcp.cmd", "--read-only"] }
+```
+
+`--read-only` permite numai citirea. `--project "<folder>.scribner"` limitează agentul la proiectul indicat. Pentru configurarea completă, permisiuni, tokenuri, acces prin rețea și anonimizarea numelor, consultă [`docs/MCP_ARHITECTURA.md`](docs/MCP_ARHITECTURA.md).
+
+> **Important:** AI-ul și MCP sunt opționale. Nu trimite textul proiectului către un serviciu extern fără să verifici furnizorul, setările, consimțământul și datele transmise. Răspunsurile AI nu sunt verificări de adevăr și nu înlocuiesc judecata autorului.
+
+## Ce urmează
 
 Planul de mai jos conține funcții aflate în lucru sau încă neimplementate; nu le prezint ca disponibile în versiunea curentă:
 
@@ -388,7 +392,7 @@ Tot ce e important e pe această pagină. Doar aceste trimiteri duc mai adânc, 
 | Planul următoarelor versiuni | [`ROADMAP.md`](ROADMAP.md) |
 | Cum raportezi o problemă | secțiunea [Ai găsit o problemă?](#ai-găsit-o-problemă) de mai jos |
 
-## 9. Instalare, întrebări, probleme
+## Instalare, întrebări, probleme
 
 ### Instalare
 
@@ -455,7 +459,7 @@ Cât timp depozitul programului e privat, actualizatorul are nevoie de un token 
 
 **Pot folosi DeepL, LanguageTool sau Speechify cu contul meu?** Unele integrări sunt disponibile ca opțiuni, în funcție de versiunea aplicației, serviciu și configurarea ta. Cheile și conturile se gestionează din *Setări → Chei și conturi*. Ai nevoie de contul sau cheia cerută de serviciu, iar disponibilitatea și efectele reale trebuie verificate pe sistemul tău prin **Testează conexiunea**. Nu presupune că o integrare externă este validată doar pentru că apare în interfață.
 
-**Pot deschide proiectul de pe alt calculator?** Poți păstra folderul proiectului într-un serviciu de sincronizare sau pe un NAS și îl poți deschide din Pneuma Sofer pe alt calculator. Folosește-l pe rând și verifică eventualele copii de conflict; editarea simultană real-time nu este încă disponibilă. Vezi [Cum lucrați împreună](#7-cum-lucrați-împreună).
+**Pot deschide proiectul de pe alt calculator?** Poți păstra folderul proiectului într-un serviciu de sincronizare sau pe un NAS și îl poți deschide din Pneuma Sofer pe alt calculator. Folosește-l pe rând și verifică eventualele copii de conflict; editarea simultană real-time nu este încă disponibilă. Vezi [Cum lucrați împreună](#cum-lucrați-împreună).
 
 **Pot dicta?** Da, cu F9. Motorul de recunoaștere se descarcă o dată, din Setări, apoi merge fără internet. Vezi [Dictezi](#dictezi-dted-dictare-și-transcriere).
 
@@ -463,7 +467,7 @@ Cât timp depozitul programului e privat, actualizatorul are nevoie de un token 
 
 **În ce limbă e?** Română sau engleză, la alegere.
 
-**Cât costă?** Nimic. E gratuit și cu cod deschis.
+**Cât costă?** Aplicația publicată poate fi descărcată și folosită conform condițiilor din [`LICENSE`](LICENSE). Verifică licența reală a versiunii înainte de redistribuire sau modificare.
 
 
 ### Ai găsit o problemă?
@@ -520,39 +524,24 @@ Pe un Windows cu Node.js 22+ și Inno Setup 6 instalate, dublu clic pe `installe
 
 **Interogare NotebookLM (întrebări de continuare).** Opțional: dacă pui un notebook în Setări → Chei și conturi și ai serverul `notebooklm-mcp` configurat în Claude, editorul poate deschide notebook-ul și întreba sursele cu întrebări de continuare până primește un răspuns, apoi îl folosește pentru o verificare (de pildă doctrină vs ornament, sau consistența cu sursele). Nu ține chei: autentificarea la NotebookLM e gestionată de serverul `notebooklm-mcp` prin sesiunea lui de browser (cookies) — Pneuma Sofer doar pornește acel server și îi cere răspunsuri. Fără notebook configurat, funcția e oprită și restul programului merge neschimbat.
 
-**Agenți AI prin MCP.** `mcp/server.mjs` dă oricărui client MCP acces la un proiect: citire și scriere, căutare, metadate, note, I-REP, snapshot-uri, Compile. Înainte de fiecare scriere face o copie, notează totul în `agent-log.jsonl` și nu calcă peste salvările aplicației. `--read-only` permite doar citirea. Tot ce face programul fără ferestre e disponibil și agentului: proiecte noi din șabloane, import (DOCX, RTF, ODT, HTML, Markdown, Fountain, FDX, OPML, pagini web, `.scriv`, bibliografie) și export (Compile în toate formatele, documente, `.scriv`, NotebookLM, pachetul PENTRU EDITOR, pachet web), note pe taburi, cuvinte cheie, etichete, statusuri, metadate, tipuri de secțiune, ținte, colecții, comentarii, note de subsol, împărțire, unire, duplicare, coș, comparare de snapshot-uri, statistici, cronologie, cercetare în proiect, glosar, căutări în dicționare, backup și I-EDIT fără AI.
+**Detalii tehnice MCP.** Secțiunea de mai sus descrie accesul și limitele. Serverul MCP nu este activ pentru un client extern până când utilizatorul nu îl configurează. Începe cu `--read-only`; folosește `--project` pentru a limita accesul la un singur proiect. Pentru permisiuni, tokenuri, acces prin rețea și anonimizarea numelor, consultă [`docs/MCP_ARHITECTURA.md`](docs/MCP_ARHITECTURA.md).
 
-Programul instalat pornește serverul fără Node.js. Comanda generală e aceeași pe orice calculator (Windows) și nu numește nicio carte: agentul vede proiectele din lista recentă din Pneuma Sofer.
+Configurarea serverului instalat pentru Claude:
 
 ```bat
 claude mcp add pneuma --scope user -- cmd /c %LOCALAPPDATA%\Programs\Pneuma Sofer\pneuma-mcp.cmd
 ```
 
-Pentru orice alt client cu configurare JSON (Claude Desktop, Cursor, Windsurf, LM Studio, Gemini; la VS Code cheia e `servers`):
+Configurare JSON pentru clienți compatibili:
 
 ```json
-"pneuma": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\Programs\\Pneuma Sofer\\pneuma-mcp.cmd"] }
+"pneuma": { "command": "cmd", "args": ["/c", "%LOCALAPPDATA%\\Programs\\Pneuma Sofer\\pneuma-mcp.cmd", "--read-only"] }
 ```
 
-`--read-only` la sfârșit permite doar citirea; `--project "<folder>.scribner"` limitează agentul la un singur proiect.
-
-**Ce primește clientul AI.** Unelte (peste 80, fiecare marcată „doar citire” sau „modifică”), resurse (`scribner://projects`, `scribner://binder`, `scribner://doc/<id>`, `scribner://ghid`) și șabloane de lucru (`revizie_capitol`, `rezumat_proiect`, `importa_scriv`). Fiecare scriere face întâi un snapshot și e notată în `agent-log.jsonl`; documentele blocate de colegi nu se ating.
-
-**Prin rețea** (alt calculator, server de acasă, tunel): `--http 9123` pornește serverul pe `http://127.0.0.1:9123/mcp` (Streamable HTTP). Fiecare cerere are nevoie de `Authorization: Bearer <token>` (din `--token` sau `SCRIBNER_MCP_TOKEN`; fără ele, tokenul se generează și se afișează o dată). `--host` schimbă adresa ascultată, de exemplu adresa Tailscale.
-
-**Nume private** (`--anonymize`, oprit implicit): doar numele scrise în `<proiect>/private-names.txt` ajung la modelul AI ca jetoane (`$ENT:PERSON:…`); `+email` și `+telefon` pe câte un rând ascund și emailurile și telefoanele. Personajele și datele inventate dintr-un roman rămân vizibile; jetoanele din ce scrie agentul înapoi redevin numele reale pe calculatorul tău. Toată arhitectura: `docs/MCP_ARHITECTURA.md`.
-
-Din cod sursă, cu Node.js:
-
-```bash
-claude mcp add pneuma -- node "/cale/Scriptorium/mcp/server.mjs" --project "/cale/Cartea mea.scribner"
-```
-
-Configurările pentru Claude Desktop, Codex, Gemini CLI, Cursor, Windsurf, LM Studio și VS Code sunt în manual, la *Ajutor → „Ce faci tu”*. Imaginile din acest README se refac cu `node scripts/readme-shots.cjs` (instrucțiunile sunt în capul scriptului).
-
+Pentru rularea din codul sursă, poți indica direct `mcp/server.mjs` și proiectul țintă. Configurările pentru clienții compatibili sunt documentate în manual, la *Ajutor → „Ce faci tu”*. Nu folosi acces de scriere înainte să verifici clientul, proiectul și jurnalul modificărilor.
 **Formate.** Import: DOCX, RTF, ODT, HTML, Markdown, Fountain, Final Draft, OPML, pagini web, BibTeX/CSL-JSON, `.scriv`. Export și Compile: DOCX, PDF, EPUB, HTML, RTF, ODT, Markdown, MultiMarkdown, text, LaTeX, Fountain, Final Draft, `.scriv`.
 
-**Formatul proiectului.** Un folder cu fișiere text simple, ușor de pus în git sau de sincronizat cu orice cloud. Schimbările făcute din afară se îmbină cu cele din aplicație.
+**Formatul proiectului.** Un folder cu fișiere text simple, ușor de pus în git sau de sincronizat cu orice cloud. Schimbările făcute din afară pot fi preluate când proiectul este redeschis, dar sincronizarea nu este un merge automat și poate produce copii de conflict; verifică rezultatul înainte de a continua lucrul.
 
 ```text
 Cartea mea.scribner/
