@@ -32,7 +32,7 @@ La începutul fiecărei scene, scripturile șterg cadrele PNG vechi. Această cu
 | `05-semnale.gif` | Deschiderea Semnale pe text și afișarea măsurătorilor deterministe, fără AI. |
 | `05-wiki-link.gif` | Tastarea unei legături `[[Nume nou]]` și afișarea propunerii „Creează și leagă”. |
 | `06-timeline.gif` | Deschiderea cronologiei proiectului și vizualizarea evenimentelor pe axa timpului. |
-| `07-research-ask.gif` | Deschiderea panoului Cercetare, introducerea unei întrebări și deschiderea listei de surse pentru alegerea documentelor. Captura nu pretinde un rezultat sau o conversație AI care nu sunt vizibile în cadre. |
+| `07-research-ask.gif` | Deschiderea panoului Cercetare, introducerea unei întrebări, selectarea unei surse și afișarea scope-ului ales. Captura nu pretinde un răspuns RAG sau o conversație AI verificată. |
 
 Fiecare GIF este asamblat cu FFmpeg din cadrele PNG corespunzătoare din `docs/assets/gif/frames/<scenă>/`, redimensionat la 1180 px lățime și scris cu extensia Netscape `loop=0` pentru redare automată și repetare infinită.
 

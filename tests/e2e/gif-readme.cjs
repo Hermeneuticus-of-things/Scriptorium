@@ -126,10 +126,20 @@ const createHarness = require('./full-app-harness.cjs');
 
   // ===== 6. timeline-contradiction: cronologia pe zile =====
   await open('06-timeline');
+  // Fixture-ul inițial nu are metadata de cronologie. O completăm în copia
+  // izolată ca GIF-ul să arate evenimente reale, nu doar un panou gol.
+  await H.fixture(async (pj) => {
+    const all = H.flat(pj.tree);
+    const a = all.find((n) => n.id === 'doc-a');
+    const b = all.find((n) => n.id === 'doc-b');
+    if (a) a.synopsis = 'Data: Ziua 1; POV: Ana; Locație: Atelier';
+    if (b) b.synopsis = 'Data: Ziua 3; POV: Matei; Locație: Gară';
+  });
   await H.command('viewEditor');
   await burst('06-timeline', 4, 180);
   await H.command('viewTimeline');
   await H.p.waitForTimeout(700);
+  await H.p.waitForSelector('.timeline-view svg', { timeout: 8000 });
   await burst('06-timeline', 7, 180);
   await H.command('viewEditor');
   await esc();
@@ -165,11 +175,17 @@ const createHarness = require('./full-app-harness.cjs');
         const source = H.p.locator('.research-sources input[type="checkbox"]:visible').first();
         if (await source.count()) { await source.scrollIntoViewIfNeeded(); await source.check(); await H.p.waitForTimeout(250); H.assert(await source.isChecked(), 'Research visible source checkbox was not selected'); await burst('07-research-ask', 5, 180); }
       }
-      const ask = H.p.locator('.research-chat button').filter({ hasText: /Caută|Search/i }).first();
-      if (await ask.count()) { await ask.click(); await H.p.waitForTimeout(500); await burst('07-research-ask', 7, 180); }
+      // Rezultatul demonstrat public este scope-ul ales: sursa bifată rămâne
+      // vizibilă ca chip în panou. Căutarea RAG depinde de backendul local și
+      // nu este prezentată drept răspuns verificat în acest GIF.
+      await H.p.waitForSelector('.research-chip', { timeout: 8000 });
+      await burst('07-research-ask', 7, 180);
     }
     await esc();
-  } catch (e) { console.log('research-ask: captura partiala — cadru pastrat ce s-a putut'); }
+  } catch (e) {
+    console.log('research-ask: captura partiala —', e && e.message ? e.message : e);
+    await burst('07-research-ask', 3, 180).catch(() => {});
+  }
 
   await H.dispose();
 

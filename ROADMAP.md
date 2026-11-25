@@ -4,7 +4,7 @@ Governing UI rules for **every application** (general — not product-specific):
 
 # Roadmap Pneuma Sofer
 
-Referință actuală: **1.1.0, 10 noiembrie 2026**. Stările curente și limitele de verificare sunt în backlogul activ de mai jos.
+Referință actuală: **1.4.2, 25 noiembrie 2026**. Stările curente și limitele de verificare sunt în backlogul activ de mai jos.
 Numerotările v0.2–v1.0 de mai jos sunt istorice, nu versiuni aflate acum în lucru și nici certificare de paritate completă.
 
 Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATURES.md). Fișierul de față e planul de lucru, în ordinea în care construiesc.
@@ -13,7 +13,7 @@ Inventarul detaliat, organizat pe meniuri, e în [`docs/FEATURES.md`](docs/FEATU
 
 ## Backlog activ după 1.1.0 — 10 noiembrie 2026
 
-Această secțiune este reperul de lucru curent și înlocuiește stările istorice contradictorii de mai jos. Versiunea 1.1.0 a fost publicată și instalată; aceasta nu înseamnă paritate integrală sau certificarea tuturor combinațiilor de funcții. Nu se reimplementează o funcție doar pentru că apare nebifată într-o sesiune veche.
+Această secțiune este reperul de lucru curent și înlocuiește stările istorice contradictorii de mai jos. Versiunea 1.4.2 este publicată; aceasta nu înseamnă paritate integrală sau certificarea tuturor combinațiilor de funcții. Nu se reimplementează o funcție doar pentru că apare nebifată într-o sesiune veche.
 
 Stări: **NEIMPLEMENTAT** = lipsește capabilitatea cerută; **PARȚIAL** = există un nucleu, dar nu întregul comportament; **DE VALIDAT** = există cod, însă lipsesc dovezile funcționale cerute; **DE TRIAT** = constatare istorică ce trebuie reconfirmată, nu bug actual certificat. Prioritățile ordonează lucrul, nu exclud controale din testare.
 
