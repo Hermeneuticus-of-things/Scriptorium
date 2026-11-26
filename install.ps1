@@ -36,7 +36,10 @@ try {
   } else {
     # Nu folosim /releases/latest: un release de documentație sau unul fără installer
     # poate fi mai nou decât ultima versiune instalabilă.
-    $releaseCandidates = @(Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases?per_page=100" -Headers $headers)
+    $releaseCandidates = @()
+    foreach ($item in (Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases?per_page=100" -Headers $headers)) {
+      $releaseCandidates += $item
+    }
   }
 } catch {
   if ("$_" -match '404|Not Found') { throw 'Nu găsesc versiunea publicată. Dacă depozitul e privat, pune înainte $env:GITHUB_TOKEN = ''token-ul tău''.' }
