@@ -1,5 +1,25 @@
 # Jurnal de lansare — Pneuma Sofer
 
+## 1.4.3 — 26 noiembrie 2026
+
+### Pentru utilizatori
+
+- Pagina publică a proiectului a fost refăcută în română: explică mai clar pentru cine este Pneuma Sofer, cum începi un proiect și ce funcții sunt disponibile, condiționate de servicii externe sau încă planificate.
+- Demonstrațiile din README au fost regenerate din aplicația Electron reală, cu fluxuri Playwright observabile și GIF-uri care pornesc automat. Capturile arată operațiuni reale precum organizarea în Binder, traducerea side-by-side, compilarea, previzualizarea, căutarea ajutorului, referințele rapide, timeline-ul și Research.
+- Afirmațiile despre colaborare, Research, traducere, D&TED și MCP au fost clarificate pentru a separa ce funcționează local de ce necesită configurare sau nu este încă demonstrat complet.
+- Instalatorul și actualizatorul Windows aleg numai release-uri publice care au efectiv un installer sau o versiune portabilă Windows. Release-urile de documentație, drafturile și versiunile fără asseturi nu mai pot fi alese accidental.
+- Descărcarea rămâne verificată prin SHA-256, iar scriptul de instalare este compatibil cu Windows PowerShell 5.1.
+
+Această versiune este în primul rând o versiune de documentație, demonstrație și fiabilitate a distribuției. Nu trebuie interpretată ca o lansare care adaugă un nou editor sau o funcție AI majoră.
+
+### Pentru dezvoltatori și administratori
+
+- Buildul Windows verifică teste unitare, E2E Electron, packaging, installerul Inno Setup, instalarea silențioasă și CLI-ul.
+- Release-ul include installerul, versiunea portabilă și `SHA256SUMS`.
+- Workflow-ul publică release-uri doar pentru taguri numerice de versiune, iar acțiunile artifact folosesc versiunile Node.js 24 compatibile.
+
+---
+
 ## 1.4.2 — 22 noiembrie 2026
 
 - README-ul public este actualizat pentru v1.4.2 și păstrează demonstrațiile animate pentru scriitori, traducători și cercetători.
