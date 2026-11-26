@@ -22,24 +22,40 @@ function Say($text) { Write-Host "Pneuma Sofer: $text" }
 
 if ($env:OS -ne 'Windows_NT') { throw 'Scriptul de instalare e doar pentru Windows. Pe alte sisteme, vezi README (din cod sursă).' }
 
+$portable = $env:SCRIBNER_PORTABLE -eq '1'
+# Accept both the current 'PneumaSofer-*' assets and the legacy 'Scribner-*' ones, so the CI dry run
+# passes against the last published release during the rename transition and older releases still install.
+$pattern = if ($portable) { '^(PneumaSofer|Scribner)-.*-portabil\.exe$' } else { '^(PneumaSofer|Scribner)-Setup-.*\.exe$' }
 $tag = $env:SCRIBNER_VERSION
-$api = if ($tag) { "https://api.github.com/repos/$Repo/releases/tags/$tag" } else { "https://api.github.com/repos/$Repo/releases/latest" }
-Say 'caut ultima versiune...'
+Say 'caut ultima versiune instalabilă...'
 $headers = @{ 'User-Agent' = 'pneuma-install'; 'Accept' = 'application/vnd.github+json' }
 if ($env:GITHUB_TOKEN) { $headers['Authorization'] = "Bearer $($env:GITHUB_TOKEN)" }
 try {
-  $release = Invoke-RestMethod -Uri $api -Headers $headers
+  if ($tag) {
+    $releaseCandidates = @(Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/tags/$tag" -Headers $headers)
+  } else {
+    # Nu folosim /releases/latest: un release de documentație sau unul fără installer
+    # poate fi mai nou decât ultima versiune instalabilă.
+    $releaseCandidates = @(Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases?per_page=100" -Headers $headers)
+  }
 } catch {
   if ("$_" -match '404|Not Found') { throw 'Nu găsesc versiunea publicată. Dacă depozitul e privat, pune înainte $env:GITHUB_TOKEN = ''token-ul tău''.' }
   throw
 }
 
-$portable = $env:SCRIBNER_PORTABLE -eq '1'
-# Accept both the current 'PneumaSofer-*' assets and the legacy 'Scribner-*' ones, so the CI dry run
-# passes against the last published release during the rename transition and older releases still install.
-$pattern = if ($portable) { '^(PneumaSofer|Scribner)-.*-portabil\.exe$' } else { '^(PneumaSofer|Scribner)-Setup-.*\.exe$' }
-$asset = $release.assets | Where-Object { $_.name -match $pattern } | Sort-Object { $_.name -notmatch '^PneumaSofer' } | Select-Object -First 1
-if (-not $asset) { throw "Nu am găsit fișierul de instalare în versiunea $($release.tag_name)." }
+$selected = $releaseCandidates |
+  Where-Object { -not $_.draft -and -not $_.prerelease } |
+  ForEach-Object {
+    $candidate = $_.assets | Where-Object { $_.name -match $pattern } |
+      Sort-Object { $_.name -notmatch '^PneumaSofer' } | Select-Object -First 1
+    if ($candidate) { [pscustomobject]@{ Release = $_; Asset = $candidate } }
+  } | Select-Object -First 1
+if (-not $selected) {
+  if ($tag) { throw "Nu am găsit fișierul de instalare în versiunea $tag." }
+  throw 'Nu am găsit niciun release public cu installer Windows.'
+}
+$release = $selected.Release
+$asset = $selected.Asset
 
 $dir = if ($portable) { [Environment]::GetFolderPath('Desktop') } else { Join-Path $env:TEMP 'pneuma-install' }
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
